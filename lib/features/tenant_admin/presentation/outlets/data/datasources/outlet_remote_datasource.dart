@@ -66,7 +66,7 @@ class OutletRemoteDatasource {
   }
 
   Future<List<OutletManagerOptionDto>> getManagerOptions() async {
-    // TODO: Confirm final staff/users manager lookup endpoint.
+    
     final response = await _dio.get<dynamic>(
       '/api/tenant-admin/staff/managers',
     );

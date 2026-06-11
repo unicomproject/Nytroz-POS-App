@@ -8,7 +8,6 @@ class TenantDashboardDto {
   });
 
   factory TenantDashboardDto.fromJson(Map<String, dynamic> json) {
-    // TODO: Confirm final backend response contract for /api/tenant-admin/dashboard.
     return TenantDashboardDto(
       metrics: _mapList(json['metrics'], TenantDashboardMetricDto.fromJson),
       salesThisWeek: json['salesThisWeek'] is Map
