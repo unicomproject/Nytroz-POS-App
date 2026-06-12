@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import 'domain/entities/tenant_admin_menu_item.dart';
 import 'presentation/layout/tenant_admin_layout.dart';
-import 'presentation/dashboard/presentation/screens/tenant_dashboard_screen.dart';
-import 'presentation/outlets/presentation/screens/add_outlet_screen.dart';
-import 'presentation/outlets/presentation/screens/edit_outlet_screen.dart';
-import 'presentation/outlets/presentation/screens/outlet_details_screen.dart';
-import 'presentation/outlets/presentation/screens/outlet_list_screen.dart';
+import 'dashboard/presentation/screens/tenant_dashboard_screen.dart';
+import 'outlets/presentation/screens/add_outlet_screen.dart';
+import 'outlets/presentation/screens/edit_outlet_screen.dart';
+import 'outlets/presentation/screens/outlet_details_screen.dart';
+import 'outlets/presentation/screens/outlet_list_screen.dart';
 import 'presentation/providers/tenant_admin_access_provider.dart';
 import 'presentation/providers/tenant_admin_context_provider.dart';
 import 'presentation/providers/tenant_admin_menu_provider.dart';

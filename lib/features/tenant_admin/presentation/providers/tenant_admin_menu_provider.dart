@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/usecases/get_tenant_admin_menu.dart';
 import '../../domain/entities/tenant_admin_menu_item.dart';
-import '../../domain/usecases/get_tenant_admin_menu.dart';
 import 'tenant_admin_context_provider.dart';
 
 final getTenantAdminMenuProvider = Provider<GetTenantAdminMenu>((ref) {
