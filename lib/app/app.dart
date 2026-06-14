@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../features/auth/presentation/providers/post_login_navigation_provider.dart';
 import '../features/auth/presentation/providers/session_provider.dart';
 import 'router/app_router.dart';
 
@@ -10,7 +11,9 @@ class NytrozPosApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(authHeaderSyncProvider);
     final session = ref.watch(authSessionProvider);
+    final postLoginRoute = ref.watch(postLoginRouteProvider);
 
     return MaterialApp.router(
       title: 'Nytroz POS',
@@ -22,7 +25,10 @@ class NytrozPosApp extends ConsumerWidget {
         scaffoldBackgroundColor: TenantAdminColors.background,
         useMaterial3: true,
       ),
-      routerConfig: createAppRouter(session),
+      routerConfig: createAppRouter(
+        session,
+        authenticatedInitialRoute: postLoginRoute.path,
+      ),
     );
   }
 }

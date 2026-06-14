@@ -1,0 +1,129 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/network/dio_provider.dart';
+import '../../../../core/storage/secure_storage_provider.dart';
+import '../../application/usecases/activate_device.dart';
+import '../../data/datasources/device_context_storage.dart';
+import '../../data/datasources/device_activation_remote_datasource.dart';
+import '../../data/repositories/device_activation_repository_impl.dart';
+import '../../domain/entities/pos_device_context.dart';
+import '../../domain/repositories/device_activation_repository.dart';
+
+class DeviceActivationState {
+  const DeviceActivationState({
+    this.deviceContext,
+    this.isSubmitting = false,
+    this.errorMessage,
+  });
+
+  final PosDeviceContext? deviceContext;
+  final bool isSubmitting;
+  final String? errorMessage;
+
+  bool get isTrusted => deviceContext?.isTrusted ?? false;
+
+  DeviceActivationState copyWith({
+    PosDeviceContext? deviceContext,
+    bool? isSubmitting,
+    String? errorMessage,
+    bool clearError = false,
+  }) {
+    return DeviceActivationState(
+      deviceContext: deviceContext ?? this.deviceContext,
+      isSubmitting: isSubmitting ?? this.isSubmitting,
+      errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
+    );
+  }
+}
+
+class DeviceActivationController extends StateNotifier<DeviceActivationState> {
+  DeviceActivationController(this._activateDevice, this._storage)
+      : super(const DeviceActivationState()) {
+    _restoreDeviceContext();
+  }
+
+  final ActivateDevice _activateDevice;
+  final DeviceContextStorage _storage;
+
+  Future<bool> activate({
+    required String activationCode,
+    required String deviceName,
+  }) async {
+    if (state.isSubmitting) {
+      return false;
+    }
+
+    state = state.copyWith(isSubmitting: true, clearError: true);
+
+    try {
+      final device = await _activateDevice(
+        DeviceActivationForm(
+          activationCode: activationCode,
+          deviceName: deviceName,
+          deviceFingerprint: 'pos-web-${Uri.base.host}-${Uri.base.port}',
+          deviceType: 'fixed_pos_tablet',
+          platform: 'web',
+          appVersion: 'dev',
+        ),
+      );
+      await _storage.save(device);
+      state = DeviceActivationState(deviceContext: device);
+      return true;
+    } on DeviceActivationException catch (error) {
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: error.message,
+      );
+      return false;
+    } catch (_) {
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: 'Device activation failed. Try again.',
+      );
+      return false;
+    }
+  }
+
+  Future<void> clear() async {
+    await _storage.clear();
+    state = const DeviceActivationState();
+  }
+
+  Future<void> _restoreDeviceContext() async {
+    final device = await _storage.read();
+    if (device == null) {
+      return;
+    }
+
+    state = DeviceActivationState(deviceContext: device);
+  }
+}
+
+final deviceActivationRemoteDatasourceProvider =
+    Provider<DeviceActivationRemoteDatasource>((ref) {
+  return DeviceActivationRemoteDatasource(ref.watch(appDioProvider));
+});
+
+final deviceActivationRepositoryProvider =
+    Provider<DeviceActivationRepository>((ref) {
+  return DeviceActivationRepositoryImpl(
+    ref.watch(deviceActivationRemoteDatasourceProvider),
+  );
+});
+
+final activateDeviceProvider = Provider<ActivateDevice>((ref) {
+  return ActivateDevice(ref.watch(deviceActivationRepositoryProvider));
+});
+
+final deviceContextStorageProvider = Provider<DeviceContextStorage>((ref) {
+  return DeviceContextStorage(ref.watch(secureStorageProvider));
+});
+
+final deviceActivationProvider =
+    StateNotifierProvider<DeviceActivationController, DeviceActivationState>(
+        (ref) {
+  return DeviceActivationController(
+    ref.watch(activateDeviceProvider),
+    ref.watch(deviceContextStorageProvider),
+  );
+});

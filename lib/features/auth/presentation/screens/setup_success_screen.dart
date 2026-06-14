@@ -20,7 +20,7 @@ class SetupSuccessScreen extends StatelessWidget {
           const SizedBox(height: TenantAdminSpacing.xl),
           TenantAdminPrimaryButton(
             label: 'Continue to login',
-            onPressed: () => context.go('/tenant-admin/login'),
+            onPressed: () => context.go('/tenant-login'),
           ),
         ],
       ),
