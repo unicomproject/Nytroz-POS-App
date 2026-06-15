@@ -100,7 +100,6 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
                       deviceName: sessionContext.deviceCode,
                       onBack: () => context.go('/pos/device-activation'),
                       onSubmit: _submitOpenTill,
-                      onPresetSelected: _setPresetAmount,
                     ),
                   ],
                 ),
@@ -136,7 +135,6 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
                         deviceName: sessionContext.deviceCode,
                         onBack: () => context.go('/pos/device-activation'),
                         onSubmit: _submitOpenTill,
-                        onPresetSelected: _setPresetAmount,
                       ),
                     ),
                   ),
@@ -147,11 +145,6 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
         ),
       ),
     );
-  }
-
-  void _setPresetAmount(double amount) {
-    _openingFloatController.text = amount.toStringAsFixed(2);
-    setState(() {});
   }
 
   Future<void> _submitOpenTill() async {
