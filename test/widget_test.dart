@@ -1,8 +1,16 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:nytroz_pos/app/app.dart';
+import 'package:nytroz_pos/core/access/pos_access_codes.dart';
+import 'package:nytroz_pos/core/network/dio_provider.dart';
+import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.dart';
+import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
+import 'package:nytroz_pos/features/auth/presentation/providers/post_login_navigation_provider.dart';
+import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/pos_shell/application/state/pos_home_dashboard_state.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_home_dashboard_provider.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/screens/pos_home_screen.dart';
@@ -86,6 +94,18 @@ Future<void> _pumpPosHome(
   required Size size,
   PosHomeDashboardState? dashboardState,
 }) async {
+  final testDio = Dio(
+    BaseOptions(
+      baseUrl: 'https://test.local',
+    ),
+  );
+  const testSession = AuthSession(
+    accessToken: 'test-access-token',
+    userId: 'test-user',
+    userDisplayName: 'Cashier',
+    permissionCodes: [PosPermissionCodes.viewHome],
+  );
+
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -94,6 +114,11 @@ Future<void> _pumpPosHome(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        appDioProvider.overrideWithValue(testDio),
+        authSessionStorageProvider.overrideWithValue(
+          const _TestAuthSessionStorage(testSession),
+        ),
+        postLoginRouteProvider.overrideWithValue(PostLoginRoute.posHome),
         if (dashboardState != null)
           posHomeDashboardProvider.overrideWithValue(dashboardState),
       ],
@@ -101,4 +126,20 @@ Future<void> _pumpPosHome(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+class _TestAuthSessionStorage extends AuthSessionStorage {
+  const _TestAuthSessionStorage(this.session)
+      : super(const FlutterSecureStorage());
+
+  final AuthSession session;
+
+  @override
+  Future<AuthSession?> read() async => session;
+
+  @override
+  Future<void> save(AuthSession session) async {}
+
+  @override
+  Future<void> clear() async {}
 }
