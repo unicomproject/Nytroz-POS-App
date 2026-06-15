@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
@@ -51,40 +53,55 @@ class DeviceActivationController extends StateNotifier<DeviceActivationState> {
   final DeviceContextStorage _storage;
 
   Future<bool> refreshCurrentDevice({required String deviceName}) async {
-    if (state.isRefreshing || state.isTrusted) {
+    if (state.isRefreshing) {
       return state.isTrusted;
     }
 
     state = state.copyWith(isRefreshing: true, clearError: true);
 
     try {
-      final fingerprint = await _storage.readOrCreateDeviceFingerprint();
-      var device = await _activateDevice.currentDevice(
-        DeviceActivationForm(
-          activationCode: '',
-          deviceName: deviceName,
-          deviceFingerprint: fingerprint,
-          deviceType: 'fixed_pos_tablet',
-          platform: 'web',
-          appVersion: 'dev',
-        ),
-      );
+      final candidates = uniqueFingerprints([
+        ...await _storage.readDeviceFingerprintCandidates(),
+        await _storage.readOrCreateDeviceFingerprint(),
+      ]);
+      PosDeviceContext? device;
 
-      final legacyFingerprint = legacyDeviceFingerprint();
-      if (device == null && fingerprint != legacyFingerprint) {
+      for (final fingerprint in candidates) {
+        developer.log(
+          'Checking current device for fingerprint=$fingerprint',
+          name: 'pos.session',
+        );
+
         device = await _activateDevice.currentDevice(
           DeviceActivationForm(
             activationCode: '',
             deviceName: deviceName,
-            deviceFingerprint: legacyFingerprint,
+            deviceFingerprint: fingerprint,
             deviceType: 'fixed_pos_tablet',
-            platform: 'web',
+            platform: currentDevicePlatform(),
             appVersion: 'dev',
           ),
         );
+
+        if (device != null) {
+          break;
+        }
       }
 
       if (device == null) {
+        developer.log(
+          'No trusted device found on server for known fingerprints.',
+          name: 'pos.session',
+        );
+        state = state.copyWith(isRefreshing: false);
+        return false;
+      }
+
+      if (!device.isTrusted || device.deviceId.trim().isEmpty) {
+        developer.log(
+          'Current device response was not trusted or missing deviceId.',
+          name: 'pos.session',
+        );
         state = state.copyWith(isRefreshing: false);
         return false;
       }
@@ -93,12 +110,20 @@ class DeviceActivationController extends StateNotifier<DeviceActivationState> {
       state = DeviceActivationState(deviceContext: device);
       return true;
     } on DeviceActivationException catch (error) {
+      developer.log(
+        'Current device restore failed: ${error.message}',
+        name: 'pos.session',
+      );
       state = state.copyWith(
         isRefreshing: false,
         errorMessage: error.message,
       );
       return false;
-    } catch (_) {
+    } catch (error) {
+      developer.log(
+        'Current device restore failed unexpectedly: $error',
+        name: 'pos.session',
+      );
       state = state.copyWith(isRefreshing: false);
       return false;
     }
@@ -122,7 +147,7 @@ class DeviceActivationController extends StateNotifier<DeviceActivationState> {
           deviceName: deviceName,
           deviceFingerprint: fingerprint,
           deviceType: 'fixed_pos_tablet',
-          platform: 'web',
+          platform: currentDevicePlatform(),
           appVersion: 'dev',
         ),
       );
@@ -149,13 +174,20 @@ class DeviceActivationController extends StateNotifier<DeviceActivationState> {
     state = const DeviceActivationState();
   }
 
-  Future<void> _restoreDeviceContext() async {
-    final device = await _storage.read();
-    if (device == null) {
+  /// Loads persisted device context into state if not already present.
+  Future<void> ensureHydrated() async {
+    if (state.deviceContext != null) {
       return;
     }
 
-    state = DeviceActivationState(deviceContext: device);
+    final device = await _storage.read();
+    if (device != null) {
+      state = DeviceActivationState(deviceContext: device);
+    }
+  }
+
+  Future<void> _restoreDeviceContext() async {
+    await ensureHydrated();
   }
 }
 

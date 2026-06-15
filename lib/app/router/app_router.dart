@@ -1,32 +1,70 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/pos_shell/pos_shell_router.dart';
 import '../../features/device_activation/device_activation_router.dart';
 import '../../features/till/till_router.dart';
 import '../../features/tenant_admin/tenant_admin_router.dart';
-import '../../features/auth/domain/entities/auth_session.dart';
+import '../../features/auth/presentation/providers/post_login_navigation_provider.dart';
+import '../../features/auth/presentation/providers/session_provider.dart';
+import '../../features/device_activation/presentation/providers/device_activation_provider.dart';
+import '../../features/till/presentation/providers/till_provider.dart';
 import '../../features/auth/auth_router.dart';
+import '../../shared/pos_session/pos_session_boot_screen.dart';
+import '../../shared/pos_session/pos_session_bootstrap_provider.dart';
 
-GoRouter createAppRouter(
-  AuthSession? session, {
-  String authenticatedInitialRoute = '/pos/device-activation',
-}) {
-  return GoRouter(
+class RouterRefreshNotifier extends ChangeNotifier {
+  void refresh() => notifyListeners();
+}
+
+final routerRefreshProvider = Provider<RouterRefreshNotifier>((ref) {
+  final notifier = RouterRefreshNotifier();
+  ref.onDispose(notifier.dispose);
+  ref.listen(authSessionProvider, (_, __) => notifier.refresh());
+  ref.listen(posSessionBootstrapProvider, (_, __) => notifier.refresh());
+  ref.listen(postLoginRouteProvider, (_, __) => notifier.refresh());
+  ref.listen(deviceActivationProvider, (previous, next) {
+    if (ref.read(posSessionBootstrapProvider).isReady) {
+      notifier.refresh();
+    }
+  });
+  ref.listen(tillProvider, (previous, next) {
+    if (ref.read(posSessionBootstrapProvider).isReady) {
+      notifier.refresh();
+    }
+  });
+  return notifier;
+});
+
+final appRouterProvider = Provider<GoRouter>((ref) {
+  final refresh = ref.watch(routerRefreshProvider);
+
+  final router = GoRouter(
+    refreshListenable: refresh,
     initialLocation: '/tenant-login',
     routes: [
       ...authRoutes(),
-      ...deviceActivationRoutes(session),
-      ...tillRoutes(session),
-      ...posShellRoutes(session),
+      GoRoute(
+        path: posSessionBootRoute,
+        builder: (context, state) => const PosSessionBootScreen(),
+      ),
+      ...deviceActivationRoutes(ref),
+      ...tillRoutes(ref),
+      ...posShellRoutes(ref),
       ...tenantAdminRoutes(),
     ],
     redirect: (context, state) {
+      final session = ref.read(authSessionProvider);
+      final bootstrap = ref.read(posSessionBootstrapProvider);
+      final authenticatedInitialRoute = ref.read(postLoginRouteProvider).path;
       final path = state.uri.path;
       final isAuthRoute = path == '/tenant-login' ||
           path.startsWith('/tenant-admin/payment') ||
           path.startsWith('/tenant-admin/setup');
       final isTenantAdminRoute = path.startsWith('/tenant-admin');
-      final isProtectedPosRoute = path == '/device-activation' ||
+      final isProtectedPosRoute = path == posSessionBootRoute ||
+          path == '/device-activation' ||
           path == '/open-till' ||
           path == '/till-open' ||
           path.startsWith('/pos/');
@@ -39,17 +77,42 @@ GoRouter createAppRouter(
         return '/tenant-login';
       }
 
-      if (path == '/tenant-login' && session != null) {
+      if (session != null && !bootstrap.isReady) {
+        if (path != posSessionBootRoute) {
+          return posSessionBootRoute;
+        }
+
+        return null;
+      }
+
+      if (path == posSessionBootRoute && bootstrap.isReady) {
         return authenticatedInitialRoute;
       }
 
-      if ((path == '/device-activation' || path == '/pos/device-activation') &&
-          session != null &&
-          authenticatedInitialRoute != '/pos/device-activation') {
-        return authenticatedInitialRoute;
+      if (path == '/tenant-login' && session != null) {
+        return bootstrap.isReady
+            ? authenticatedInitialRoute
+            : posSessionBootRoute;
+      }
+
+      if (bootstrap.isReady && session != null) {
+        if ((path == '/device-activation' || path == '/pos/device-activation') &&
+            authenticatedInitialRoute != PostLoginRoute.deviceActivation.path) {
+          return authenticatedInitialRoute;
+        }
+
+        if ((path == '/open-till' ||
+                path == '/till-open' ||
+                path == '/pos/open-till') &&
+            authenticatedInitialRoute == PostLoginRoute.posHome.path) {
+          return authenticatedInitialRoute;
+        }
       }
 
       return null;
     },
   );
-}
+
+  ref.onDispose(router.dispose);
+  return router;
+});
