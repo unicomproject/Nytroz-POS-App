@@ -9,4 +9,8 @@ class ActivateDevice {
   Future<PosDeviceContext> call(DeviceActivationForm form) {
     return _repository.activateDevice(form);
   }
+
+  Future<PosDeviceContext?> currentDevice(DeviceActivationForm form) {
+    return _repository.getCurrentDevice(form);
+  }
 }

@@ -18,6 +18,7 @@ class _DeviceActivationScreenState
     extends ConsumerState<DeviceActivationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _codeController = TextEditingController();
+  var _checkedCurrentDevice = false;
 
   @override
   void dispose() {
@@ -29,6 +30,27 @@ class _DeviceActivationScreenState
   Widget build(BuildContext context) {
     final activationState = ref.watch(deviceActivationProvider);
     final sessionContext = ref.watch(posSessionContextProvider);
+
+    if (!_checkedCurrentDevice && !activationState.isTrusted) {
+      _checkedCurrentDevice = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final isTrusted = await ref
+            .read(deviceActivationProvider.notifier)
+            .refreshCurrentDevice(deviceName: sessionContext.deviceName);
+
+        if (isTrusted && context.mounted) {
+          context.go('/pos/open-till');
+        }
+      });
+    }
+
+    if (activationState.isTrusted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.go('/pos/open-till');
+        }
+      });
+    }
 
     return Scaffold(
       body: Stack(
