@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../providers/tenant_admin_menu_provider.dart';
 import '../screens/tenant_admin_error_screen.dart';
@@ -26,7 +27,7 @@ class TenantAdminLayout extends ConsumerWidget {
         onRetry: () => ref.refresh(tenantAdminMenuProvider),
       ),
       data: (items) {
-        final currentPath = ModalRoute.of(context)?.settings.name ?? '';
+        final currentPath = GoRouterState.of(context).uri.path;
 
         return LayoutBuilder(
           builder: (context, constraints) {

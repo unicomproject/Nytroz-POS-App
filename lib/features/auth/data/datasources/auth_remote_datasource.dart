@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../domain/entities/auth_exception.dart';
 import '../models/set_password_request_dto.dart';
 import '../models/setup_token_validation_dto.dart';
 import '../models/auth_branding_dto.dart';
@@ -57,10 +58,25 @@ class AuthRemoteDatasource {
   }
 
   Future<Map<String, dynamic>> login(LoginRequestDto request) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      '/api/tenant-admin/auth/login',
-      data: request.toJson(),
-    );
-    return response.data ?? const {};
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/auth/tenant-login',
+        data: request.toJson(),
+      );
+      return response.data ?? const {};
+    } on DioException catch (error) {
+      final data = error.response?.data;
+      if (data is Map<String, dynamic>) {
+        throw AuthException(
+          errorCode: data['errorCode']?.toString() ?? 'LOGIN_FAILED',
+          message: data['message']?.toString() ?? 'Login failed.',
+        );
+      }
+
+      throw AuthException(
+        errorCode: 'NETWORK_ERROR',
+        message: error.message ?? 'Unable to connect to the login service.',
+      );
+    }
   }
 }
