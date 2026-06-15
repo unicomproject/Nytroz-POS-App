@@ -53,13 +53,10 @@ class PosHomeDashboardState {
   final Set<String>? grantedPermissionKeys;
 
   PosHomeActionAccess accessFor(PosHomeAction action) {
-    if (!action.isEnabled || !action.routeExists) {
-      return PosHomeActionAccess(
-        isVisible: true,
+    if (action.isFutureFeature) {
+      return const PosHomeActionAccess(
+        isVisible: false,
         isEnabled: false,
-        disabledMessage: action.isFutureFeature
-            ? 'Coming in a future release.'
-            : 'Destination is not available yet.',
       );
     }
 
@@ -69,10 +66,31 @@ class PosHomeDashboardState {
       action.permissionKey,
     );
 
-    if (!hasFeature || !hasPermission) {
+    if (grantedPermissionKeys != null &&
+        action.permissionKey != null &&
+        !hasPermission) {
       return const PosHomeActionAccess(
         isVisible: false,
         isEnabled: false,
+      );
+    }
+
+    if (enabledFeatureKeys != null &&
+        action.featureKey != null &&
+        !hasFeature) {
+      return const PosHomeActionAccess(
+        isVisible: false,
+        isEnabled: false,
+      );
+    }
+
+    if (!action.isEnabled || !action.routeExists) {
+      return PosHomeActionAccess(
+        isVisible: true,
+        isEnabled: false,
+        disabledMessage: action.isFutureFeature
+            ? 'Coming in a future release.'
+            : 'Destination is not available yet.',
       );
     }
 

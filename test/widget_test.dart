@@ -36,12 +36,12 @@ void main() {
     ) async {
       await _pumpPosHome(tester, size: const Size(1200, 900));
 
-      expect(find.text('Manage Online Orders'), findsOneWidget);
+      expect(find.text('Manage Online Orders'), findsNothing);
       expect(find.text('Returns & Refunds'), findsOneWidget);
       expect(find.text('Add Customer'), findsWidgets);
       expect(find.text('Parked Sales'), findsOneWidget);
       expect(find.text('Cash Drawer'), findsWidgets);
-      expect(find.text('Orders'), findsOneWidget);
+      expect(find.text('Orders'), findsNothing);
     });
 
     testWidgets('tablet width shows the sidebar', (tester) async {
@@ -65,10 +65,30 @@ void main() {
       expect(find.byType(SnackBar), findsNothing);
     });
 
-    testWidgets('missing sidebar destination shows a safe SnackBar', (
+    testWidgets('sidebar hides destinations without permission', (
       tester,
     ) async {
       await _pumpPosHome(tester, size: const Size(1024, 768));
+
+      expect(find.text('Home'), findsOneWidget);
+      expect(find.text('New Sale'), findsNothing);
+      expect(find.text('Orders'), findsNothing);
+      expect(find.text('Customers'), findsNothing);
+      expect(find.text('Return & Refund'), findsNothing);
+      expect(find.text('Cash Drawer'), findsNothing);
+    });
+
+    testWidgets('missing sidebar destination shows a safe SnackBar', (
+      tester,
+    ) async {
+      await _pumpPosHome(
+        tester,
+        size: const Size(1024, 768),
+        permissionCodes: [
+          PosPermissionCodes.viewHome,
+          PosPermissionCodes.startSale,
+        ],
+      );
 
       await tester.tap(find.text('New Sale'));
       await tester.pump();
@@ -93,17 +113,18 @@ Future<void> _pumpPosHome(
   WidgetTester tester, {
   required Size size,
   PosHomeDashboardState? dashboardState,
+  List<String> permissionCodes = const [PosPermissionCodes.viewHome],
 }) async {
   final testDio = Dio(
     BaseOptions(
       baseUrl: 'https://test.local',
     ),
   );
-  const testSession = AuthSession(
+  final testSession = AuthSession(
     accessToken: 'test-access-token',
     userId: 'test-user',
     userDisplayName: 'Cashier',
-    permissionCodes: [PosPermissionCodes.viewHome],
+    permissionCodes: permissionCodes,
   );
 
   tester.view.devicePixelRatio = 1;
@@ -116,11 +137,13 @@ Future<void> _pumpPosHome(
       overrides: [
         appDioProvider.overrideWithValue(testDio),
         authSessionStorageProvider.overrideWithValue(
-          const _TestAuthSessionStorage(testSession),
+          _TestAuthSessionStorage(testSession),
         ),
         postLoginRouteProvider.overrideWithValue(PostLoginRoute.posHome),
         if (dashboardState != null)
-          posHomeDashboardProvider.overrideWithValue(dashboardState),
+          posHomeDashboardProvider.overrideWith(
+            (ref) async => dashboardState,
+          ),
       ],
       child: const NytrozPosApp(),
     ),
@@ -129,7 +152,7 @@ Future<void> _pumpPosHome(
 }
 
 class _TestAuthSessionStorage extends AuthSessionStorage {
-  const _TestAuthSessionStorage(this.session)
+  _TestAuthSessionStorage(this.session)
       : super(const FlutterSecureStorage());
 
   final AuthSession session;

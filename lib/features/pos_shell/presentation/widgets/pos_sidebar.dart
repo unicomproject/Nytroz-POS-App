@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../config/pos_shell_nav_destinations.dart';
+import '../providers/pos_shell_navigation_provider.dart';
+import '../../domain/entities/pos_shell_nav_destination.dart';
 import 'pos_shell_nav_item.dart';
 
-class PosSidebar extends StatelessWidget {
+class PosSidebar extends ConsumerWidget {
   const PosSidebar({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final currentPath = GoRouterState.of(context).uri.path;
+    final grantedPermissions = ref.watch(posShellGrantedPermissionsProvider);
+    final visibleDestinations = posShellNavDestinations
+        .where((destination) => destination.isVisible(grantedPermissions))
+        .toList(growable: false);
 
     return Container(
       width: 112,
@@ -22,13 +30,17 @@ class PosSidebar extends StatelessWidget {
             children: [
               const _BrandHeader(),
               const SizedBox(height: TenantAdminSpacing.lg),
-              ..._items.map((item) {
+              ...visibleDestinations.map((destination) {
                 return PosShellNavItem(
-                  icon: item.icon,
-                  label: item.label,
-                  selected: item.routePath == currentPath,
-                  isEnabled: item.isEnabled,
-                  onTap: () => _handleItemTap(context, item),
+                  icon: destination.icon,
+                  label: destination.label,
+                  selected: destination.routePath == currentPath,
+                  isEnabled: destination.isEnabled(grantedPermissions),
+                  onTap: () => _handleDestinationTap(
+                    context,
+                    destination,
+                    grantedPermissions,
+                  ),
                 );
               }),
               const Spacer(),
@@ -40,13 +52,17 @@ class PosSidebar extends StatelessWidget {
     );
   }
 
-  void _handleItemTap(BuildContext context, _PosSidebarItem item) {
-    if (item.isEnabled && item.routePath != null) {
-      context.go(item.routePath!);
+  void _handleDestinationTap(
+    BuildContext context,
+    PosShellNavDestination destination,
+    Set<String> grantedPermissions,
+  ) {
+    if (destination.isEnabled(grantedPermissions)) {
+      context.go(destination.routePath!);
       return;
     }
 
-    final message = item.unavailableMessage;
+    final message = destination.unavailableMessage;
     if (message == null) {
       return;
     }
@@ -56,67 +72,6 @@ class PosSidebar extends StatelessWidget {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
-
-class _PosSidebarItem {
-  const _PosSidebarItem({
-    required this.label,
-    required this.icon,
-    required this.isEnabled,
-    this.routePath,
-    this.unavailableMessage,
-  });
-
-  final String label;
-  final IconData icon;
-  final String? routePath;
-  final bool isEnabled;
-  final String? unavailableMessage;
-}
-
-const _items = [
-  _PosSidebarItem(
-    label: 'Home',
-    icon: Icons.home_rounded,
-    routePath: '/pos/home',
-    isEnabled: true,
-  ),
-  _PosSidebarItem(
-    label: 'New Sale',
-    icon: Icons.add_shopping_cart_rounded,
-    isEnabled: false,
-    unavailableMessage: 'New Sale screen is not available yet.',
-  ),
-  _PosSidebarItem(
-    label: 'Orders',
-    icon: Icons.receipt_long_outlined,
-    isEnabled: false,
-    unavailableMessage: 'Orders screen is not available yet.',
-  ),
-  _PosSidebarItem(
-    label: 'Customers',
-    icon: Icons.people_outline_rounded,
-    isEnabled: false,
-    unavailableMessage: 'Customers screen is not available yet.',
-  ),
-  _PosSidebarItem(
-    label: 'Return & Refund',
-    icon: Icons.assignment_return_outlined,
-    isEnabled: false,
-    unavailableMessage: 'Return & Refund screen is not available yet.',
-  ),
-  _PosSidebarItem(
-    label: 'Cash Drawer',
-    icon: Icons.point_of_sale_outlined,
-    isEnabled: false,
-    unavailableMessage: 'Cash Drawer screen is not available yet.',
-  ),
-  _PosSidebarItem(
-    label: 'More',
-    icon: Icons.more_horiz_rounded,
-    isEnabled: false,
-    unavailableMessage: 'More options are not available yet.',
-  ),
-];
 
 class _BrandHeader extends StatelessWidget {
   const _BrandHeader();

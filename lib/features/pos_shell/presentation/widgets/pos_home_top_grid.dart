@@ -13,6 +13,8 @@ class PosHomeTopGrid extends StatelessWidget {
     required this.startSaleTitle,
     required this.startSaleDescription,
     required this.startSaleButtonLabel,
+    required this.showStartSale,
+    required this.showOnlineOrders,
     required this.isStartSaleEnabled,
     this.startSaleDisabledMessage,
     this.onStartSale,
@@ -24,6 +26,8 @@ class PosHomeTopGrid extends StatelessWidget {
   final String startSaleTitle;
   final String startSaleDescription;
   final String startSaleButtonLabel;
+  final bool showStartSale;
+  final bool showOnlineOrders;
   final bool isStartSaleEnabled;
   final String? startSaleDisabledMessage;
   final VoidCallback? onStartSale;
@@ -31,43 +35,64 @@ class PosHomeTopGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!showStartSale && !showOnlineOrders) {
+      return const SizedBox.shrink();
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isStacked = constraints.maxWidth < TenantAdminBreakpoints.tablet;
-        final hero = PosStartSaleHeroCard(
-          title: startSaleTitle,
-          description: startSaleDescription,
-          buttonLabel: startSaleButtonLabel,
-          isEnabled: isStartSaleEnabled && startSaleAction.routeExists,
-          disabledMessage: startSaleDisabledMessage,
-          onStartSale: onStartSale,
-        );
-        final onlineOrders = PosOnlineOrdersSummaryCard(
-          action: onlineOrdersAction,
-          onViewOrders: onViewOrders,
-        );
+        final hero = showStartSale
+            ? PosStartSaleHeroCard(
+                title: startSaleTitle,
+                description: startSaleDescription,
+                buttonLabel: startSaleButtonLabel,
+                isEnabled: isStartSaleEnabled && startSaleAction.routeExists,
+                disabledMessage: startSaleDisabledMessage ??
+                    (startSaleAction.routeExists
+                        ? null
+                        : 'Destination is not available yet.'),
+                onStartSale: onStartSale,
+              )
+            : null;
+        final onlineOrders = showOnlineOrders
+            ? PosOnlineOrdersSummaryCard(
+                action: onlineOrdersAction,
+                onViewOrders: onViewOrders,
+              )
+            : null;
 
         if (isStacked) {
           return Column(
             children: [
-              hero,
-              const SizedBox(height: TenantAdminSpacing.lg),
-              SizedBox(height: 330, child: onlineOrders),
+              if (hero != null) hero,
+              if (hero != null && onlineOrders != null)
+                const SizedBox(height: TenantAdminSpacing.lg),
+              if (onlineOrders != null)
+                SizedBox(height: 330, child: onlineOrders),
             ],
           );
         }
 
-        return SizedBox(
-          height: 330,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(flex: 7, child: hero),
-              const SizedBox(width: TenantAdminSpacing.lg),
-              Expanded(flex: 4, child: onlineOrders),
-            ],
-          ),
-        );
+        if (hero != null && onlineOrders != null) {
+          return SizedBox(
+            height: 330,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 7, child: hero),
+                const SizedBox(width: TenantAdminSpacing.lg),
+                Expanded(flex: 4, child: onlineOrders),
+              ],
+            ),
+          );
+        }
+
+        if (hero != null) {
+          return SizedBox(height: 330, child: hero);
+        }
+
+        return SizedBox(height: 330, child: onlineOrders);
       },
     );
   }

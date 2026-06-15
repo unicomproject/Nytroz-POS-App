@@ -14,25 +14,37 @@ class PosHomeBottomGrid extends StatelessWidget {
     required this.customerAction,
     required this.parkedSalesAction,
     required this.cashDrawerAction,
+    required this.showReturns,
+    required this.showCustomer,
+    required this.showParkedSales,
+    required this.showCashDrawer,
   });
 
   final PosHomeAction returnsAction;
   final PosHomeAction customerAction;
   final PosHomeAction parkedSalesAction;
   final PosHomeAction cashDrawerAction;
+  final bool showReturns;
+  final bool showCustomer;
+  final bool showParkedSales;
+  final bool showCashDrawer;
 
   @override
   Widget build(BuildContext context) {
     final cards = <Widget>[
-      PosReturnsSummaryCard(action: returnsAction),
-      PosCustomerSummaryCard(action: customerAction),
-      PosParkedSalesSummaryCard(action: parkedSalesAction),
-      PosCashDrawerSummaryCard(action: cashDrawerAction),
+      if (showReturns) PosReturnsSummaryCard(action: returnsAction),
+      if (showCustomer) PosCustomerSummaryCard(action: customerAction),
+      if (showParkedSales) PosParkedSalesSummaryCard(action: parkedSalesAction),
+      if (showCashDrawer) PosCashDrawerSummaryCard(action: cashDrawerAction),
     ];
+
+    if (cards.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columnCount = _columnCountFor(constraints.maxWidth);
+        final columnCount = _columnCountFor(constraints.maxWidth, cards.length);
 
         return GridView.builder(
           shrinkWrap: true,
@@ -51,14 +63,18 @@ class PosHomeBottomGrid extends StatelessWidget {
   }
 }
 
-int _columnCountFor(double width) {
+int _columnCountFor(double width, int itemCount) {
+  if (itemCount == 1) {
+    return 1;
+  }
+
   if (width < 520) {
     return 1;
   }
 
   if (width < 820) {
-    return 2;
+    return itemCount >= 2 ? 2 : 1;
   }
 
-  return 4;
+  return itemCount >= 4 ? 4 : itemCount;
 }

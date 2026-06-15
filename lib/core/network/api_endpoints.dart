@@ -6,4 +6,5 @@ class ApiEndpoints {
   static const openTill = '/api/v1/tills/open';
   
   static const currentTillSession = '/api/v1/tills/current-session';
+  static const posHome = '/api/v1/pos/home';
 }
