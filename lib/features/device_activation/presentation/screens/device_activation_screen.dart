@@ -38,7 +38,7 @@ class _DeviceActivationScreenState
             .read(deviceActivationProvider.notifier)
             .refreshCurrentDevice(deviceName: sessionContext.deviceName);
 
-        if (isTrusted && mounted) {
+        if (isTrusted && context.mounted) {
           context.go('/pos/open-till');
         }
       });

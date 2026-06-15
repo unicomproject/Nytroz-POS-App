@@ -44,7 +44,7 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
             .read(tillProvider.notifier)
             .refreshCurrentSession(deviceContext: device);
 
-        if (hasOpenSession && mounted) {
+        if (hasOpenSession && context.mounted) {
           context.go('/pos/home');
         }
       });
