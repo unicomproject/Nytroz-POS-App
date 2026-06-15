@@ -1,14 +1,16 @@
 import 'package:go_router/go_router.dart';
 
+import '../../features/pos_shell/pos_shell_router.dart';
 import '../../features/tenant_admin/tenant_admin_router.dart';
 import '../../features/auth/domain/entities/auth_session.dart';
 import '../../features/auth/auth_router.dart';
 
 GoRouter createAppRouter(AuthSession? session) {
   return GoRouter(
-    initialLocation: '/tenant-admin/login',
+    initialLocation: '/pos/home',
     routes: [
       ...authRoutes(),
+      ...posShellRoutes(),
       ...tenantAdminRoutes(),
     ],
     redirect: (context, state) {
