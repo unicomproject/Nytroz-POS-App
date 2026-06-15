@@ -11,4 +11,9 @@ class DeviceActivationRepositoryImpl implements DeviceActivationRepository {
   Future<PosDeviceContext> activateDevice(DeviceActivationForm form) {
     return _datasource.activateDevice(form);
   }
+
+  @override
+  Future<PosDeviceContext?> getCurrentDevice(DeviceActivationForm form) {
+    return _datasource.getCurrentDevice(form);
+  }
 }

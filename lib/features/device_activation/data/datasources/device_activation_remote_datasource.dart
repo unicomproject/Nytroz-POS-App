@@ -8,6 +8,26 @@ class DeviceActivationRemoteDatasource {
 
   final Dio _dio;
 
+  Future<PosDeviceContext?> getCurrentDevice(DeviceActivationForm form) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        ApiEndpoints.currentDevice,
+        queryParameters: {
+          'deviceFingerprint': form.deviceFingerprint,
+        },
+      );
+
+      final data = _unwrapApiData(response.data ?? const {});
+      return _deviceContextFromJson(data, form);
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 404) {
+        return null;
+      }
+
+      throw DeviceActivationException(_messageFromDio(error));
+    }
+  }
+
   Future<PosDeviceContext> activateDevice(DeviceActivationForm form) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(

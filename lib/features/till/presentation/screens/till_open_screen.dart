@@ -24,6 +24,7 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
   final _openingNoteController = TextEditingController(
     text: 'Opening shift for morning session.',
   );
+  var _checkedCurrentSession = false;
 
   @override
   void dispose() {
@@ -38,6 +39,27 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
     final tillState = ref.watch(tillProvider);
     final sessionContext = ref.watch(posSessionContextProvider);
     final device = deviceState.deviceContext;
+
+    if (!_checkedCurrentSession && device != null && device.isTrusted) {
+      _checkedCurrentSession = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final hasOpenSession = await ref
+            .read(tillProvider.notifier)
+            .refreshCurrentSession(deviceContext: device);
+
+        if (hasOpenSession && context.mounted) {
+          context.go('/pos/home');
+        }
+      });
+    }
+
+    if (tillState.hasOpenSession) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.go('/pos/home');
+        }
+      });
+    }
 
     if (device == null || !device.isTrusted) {
       return Scaffold(

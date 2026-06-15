@@ -43,6 +43,12 @@ GoRouter createAppRouter(
         return authenticatedInitialRoute;
       }
 
+      if ((path == '/device-activation' || path == '/pos/device-activation') &&
+          session != null &&
+          authenticatedInitialRoute != '/pos/device-activation') {
+        return authenticatedInitialRoute;
+      }
+
       return null;
     },
   );
