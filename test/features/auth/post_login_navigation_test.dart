@@ -171,7 +171,7 @@ class _TestAuthSessionStorage extends AuthSessionStorage {
 
 class _TestDeviceContextStorage extends DeviceContextStorage {
   _TestDeviceContextStorage(this._deviceContext)
-      : super(FlutterSecureStorage());
+      : super(const FlutterSecureStorage());
 
   final PosDeviceContext? _deviceContext;
 
@@ -191,7 +191,7 @@ class _TestDeviceContextStorage extends DeviceContextStorage {
 }
 
 class _TestTillSessionStorage extends TillSessionStorage {
-  _TestTillSessionStorage(this._session) : super(FlutterSecureStorage());
+  _TestTillSessionStorage(this._session) : super(const FlutterSecureStorage());
 
   final TillSession? _session;
 
