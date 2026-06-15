@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/dio_provider.dart';
-import '../../../tenant_admin/presentation/providers/tenant_admin_context_provider.dart';
-import '../../../tenant_admin/presentation/providers/tenant_admin_menu_provider.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/auth_branding.dart';
+import '../../domain/entities/auth_exception.dart';
 import '../providers/auth_branding_provider.dart';
 import '../providers/login_provider.dart';
+import '../providers/post_login_navigation_provider.dart';
 import '../providers/session_provider.dart';
 import '../widgets/auth_error_banner.dart';
 
@@ -21,6 +21,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _tenantCode = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
   var _submitting = false;
@@ -28,6 +29,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   void dispose() {
+    _tenantCode.dispose();
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -123,6 +125,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: TenantAdminSpacing.lg),
             ],
             TextFormField(
+              controller: _tenantCode,
+              textCapitalization: TextCapitalization.characters,
+              decoration: const InputDecoration(
+                labelText: 'Tenant Code',
+                hintText: 'Enter tenant code',
+                prefixIcon: Icon(Icons.storefront_outlined),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Tenant code is required';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: TenantAdminSpacing.lg),
+            TextFormField(
               controller: _email,
               keyboardType: TextInputType.emailAddress,
               decoration: const InputDecoration(
@@ -132,7 +150,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Email is required';
+                  return 'Username or email is required';
                 }
                 return null;
               },
@@ -213,25 +231,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       final session = await ref.read(loginProvider).call(
-            email: _email.text.trim(),
+            tenantCode: _tenantCode.text.trim(),
+            login: _email.text.trim(),
             password: _password.text,
           );
       if (!session.isAuthenticated) {
         throw StateError('Invalid credentials');
       }
-      ref.read(authSessionProvider.notifier).setSession(session);
+      await ref.read(authSessionProvider.notifier).setSession(session);
       ref.read(appDioProvider).options.headers['Authorization'] =
           'Bearer ${session.accessToken}';
-      ref.refresh(tenantAdminContextProvider).maybeWhen(orElse: () {});
-      ref.refresh(tenantAdminMenuProvider).maybeWhen(orElse: () {});
+      final route =
+          await ref.read(postLoginNavigationResolverProvider).resolve();
 
       if (!mounted) {
         return;
       }
 
-      context.go('/tenant-admin/dashboard');
+      context.go(route.path);
+    } on AuthException catch (error) {
+      setState(() => _error = '${error.message} (${error.errorCode})');
     } catch (_) {
-      setState(() => _error = 'Login failed. Please check your credentials.');
+      setState(() => _error =
+          'Login failed. Please check your credentials. (LOGIN_FAILED)');
     } finally {
       if (mounted) {
         setState(() => _submitting = false);

@@ -28,7 +28,6 @@ class PosCustomerSummaryCard extends StatelessWidget {
           color: TenantAdminColors.success,
         ),
       ],
-      // TODO: Customer management is future-feature UI without a route.
       onTap: action.routeExists ? onAddCustomer : null,
     );
   }

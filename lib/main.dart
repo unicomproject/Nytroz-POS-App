@@ -9,13 +9,13 @@ import 'flavors/development/tenant_admin_dev_api_interceptor.dart';
 void main() {
   const useDevApiFallback = bool.fromEnvironment(
     'USE_DEV_API_FALLBACK',
-    defaultValue: true,
+    defaultValue: false,
   );
 
   final dio = buildAppDio(
     baseUrl: const String.fromEnvironment(
       'API_BASE_URL',
-      defaultValue: 'http://localhost:5000',
+      defaultValue: 'http://10.0.2.2:5050',
     ),
     interceptors: [
       if (useDevApiFallback) TenantAdminDevApiInterceptor(),

@@ -57,11 +57,16 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<AuthSession> login({
-    required String email,
+    required String tenantCode,
+    required String login,
     required String password,
   }) async {
     final json = await _remoteDatasource.login(
-      LoginRequestDto(email: email, password: password),
+      LoginRequestDto(
+        tenantCode: tenantCode,
+        login: login,
+        password: password,
+      ),
     );
     return authSessionFromJson(json);
   }

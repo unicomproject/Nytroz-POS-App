@@ -16,7 +16,6 @@ final posHomeDashboardProvider = Provider<PosHomeDashboardState>((ref) {
     startSaleTitle: 'Start a Sale',
     startSaleDescription: 'Scan products and create a new in-store sale.',
     startSaleButtonLabel: 'Start New Sale',
-    // TODO: Wire confirmed POS entitlement, device trust, till session, and
     // permission providers. Null preserves visibility without granting access.
     isPosEnabled: null,
     isTrustedDevice: null,
@@ -24,7 +23,6 @@ final posHomeDashboardProvider = Provider<PosHomeDashboardState>((ref) {
     enabledFeatureKeys: null,
     grantedPermissionKeys: null,
     actions: [
-      // TODO: Map to the confirmed start-sale route when it exists.
       PosHomeAction(
         key: 'start-new-sale',
         label: 'Start New Sale',
@@ -36,7 +34,6 @@ final posHomeDashboardProvider = Provider<PosHomeDashboardState>((ref) {
         routeExists: false,
         onTapActionKey: 'start-new-sale',
       ),
-      // TODO: Online orders are future-feature UI; no destination route exists.
       PosHomeAction(
         key: 'manage-online-orders',
         label: 'Manage Online Orders',
@@ -50,7 +47,6 @@ final posHomeDashboardProvider = Provider<PosHomeDashboardState>((ref) {
         metricValue: '8',
         metricLabel: 'New orders',
       ),
-      // TODO: Map to the confirmed returns/refunds route when it exists.
       PosHomeAction(
         key: 'returns-refunds',
         label: 'Returns & Refunds',
@@ -64,7 +60,6 @@ final posHomeDashboardProvider = Provider<PosHomeDashboardState>((ref) {
         metricValue: '2',
         metricLabel: 'Pending today',
       ),
-      // TODO: Customer creation is future-feature UI; no route exists.
       PosHomeAction(
         key: 'add-customer',
         label: 'Add Customer',
@@ -78,7 +73,6 @@ final posHomeDashboardProvider = Provider<PosHomeDashboardState>((ref) {
         metricValue: '124',
         metricLabel: 'Customer profiles',
       ),
-      // TODO: Map to the confirmed parked-sales route when it exists.
       PosHomeAction(
         key: 'parked-sales',
         label: 'Parked Sales',
@@ -92,7 +86,6 @@ final posHomeDashboardProvider = Provider<PosHomeDashboardState>((ref) {
         metricValue: '3',
         metricLabel: 'Waiting to resume',
       ),
-      // TODO: Map to the confirmed cash-drawer route when it exists.
       PosHomeAction(
         key: 'cash-drawer',
         label: 'Cash Drawer',
@@ -110,7 +103,4 @@ final posHomeDashboardProvider = Provider<PosHomeDashboardState>((ref) {
   );
 });
 
-// TODO: Add featureKey and permissionKey values when POS permission codes are
 // confirmed by the authorization contract. Tenant-admin codes are not reused.
-// TODO: Replace mock operator/till context with confirmed POS session providers.
-// TODO: Map dashboard buttons when confirmed POS destination routes are added.

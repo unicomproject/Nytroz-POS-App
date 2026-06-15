@@ -23,7 +23,7 @@ class PaymentSuccessScreen extends StatelessWidget {
           const SizedBox(height: TenantAdminSpacing.xl),
           TenantAdminPrimaryButton(
             label: 'Go to login',
-            onPressed: () => context.go('/tenant-admin/login'),
+            onPressed: () => context.go('/tenant-login'),
           ),
         ],
       ),

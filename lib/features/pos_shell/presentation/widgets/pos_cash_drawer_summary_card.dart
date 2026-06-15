@@ -28,7 +28,6 @@ class PosCashDrawerSummaryCard extends StatelessWidget {
           label: 'Current Balance',
         ),
       ],
-      // TODO: Enable when a confirmed cash-drawer route exists.
       onTap: action.routeExists ? onViewCashDrawer : null,
     );
   }

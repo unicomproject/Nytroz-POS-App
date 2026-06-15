@@ -28,7 +28,6 @@ class PosParkedSalesSummaryCard extends StatelessWidget {
           color: TenantAdminColors.warning,
         ),
       ],
-      // TODO: Enable when a confirmed parked-sales route exists.
       onTap: action.routeExists ? onViewParkedSales : null,
     );
   }

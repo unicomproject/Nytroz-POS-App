@@ -83,7 +83,6 @@ class PosOnlineOrdersSummaryCard extends StatelessWidget {
             width: double.infinity,
             height: 48,
             child: OutlinedButton.icon(
-              // TODO: Enable when a confirmed online-orders route exists.
               onPressed: action.routeExists ? onViewOrders : null,
               icon: const Icon(Icons.arrow_forward_rounded),
               label: Text(action.buttonLabel),

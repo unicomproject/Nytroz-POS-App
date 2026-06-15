@@ -152,7 +152,6 @@ class _HeroCopy extends StatelessWidget {
         SizedBox(
           height: 52,
           child: ElevatedButton.icon(
-            // TODO: Enable when a confirmed start-sale route is registered.
             onPressed: isEnabled ? onStartSale : null,
             icon: const Icon(Icons.add_shopping_cart_rounded),
             label: Text(buttonLabel),

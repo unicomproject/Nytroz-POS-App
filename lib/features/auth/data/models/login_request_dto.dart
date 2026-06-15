@@ -1,16 +1,19 @@
 class LoginRequestDto {
   const LoginRequestDto({
-    required this.email,
+    required this.tenantCode,
+    required this.login,
     required this.password,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'email': email,
+      'tenantCode': tenantCode,
+      'login': login,
       'password': password,
     };
   }
 
-  final String email;
+  final String tenantCode;
+  final String login;
   final String password;
 }

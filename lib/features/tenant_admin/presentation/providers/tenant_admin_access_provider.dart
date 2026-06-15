@@ -4,10 +4,8 @@ import '../../domain/services/tenant_admin_access_checker.dart';
 import 'tenant_admin_context_provider.dart';
 
 final tenantAdminAccessCheckerProvider =
-    Provider<AsyncValue<TenantAdminAccessChecker>>((ref) {
-  final context = ref.watch(tenantAdminContextProvider);
+    FutureProvider<TenantAdminAccessChecker>((ref) async {
+  final context = await ref.watch(tenantAdminContextProvider.future);
 
-  return context.whenData((tenantContext) {
-    return TenantAdminAccessChecker(tenantContext);
-  });
+  return TenantAdminAccessChecker(context);
 });

@@ -50,7 +50,7 @@ List<RouteBase> authRoutes() {
       ),
     ),
     GoRoute(
-      path: '/tenant-admin/login',
+      path: '/tenant-login',
       builder: (context, state) => const LoginScreen(),
     ),
   ];

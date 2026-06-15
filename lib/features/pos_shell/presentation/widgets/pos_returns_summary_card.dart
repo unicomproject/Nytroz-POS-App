@@ -29,7 +29,6 @@ class PosReturnsSummaryCard extends StatelessWidget {
           color: TenantAdminColors.danger,
         ),
       ],
-      // TODO: Enable when a confirmed returns route exists.
       onTap: action.routeExists ? onViewReturns : null,
     );
   }

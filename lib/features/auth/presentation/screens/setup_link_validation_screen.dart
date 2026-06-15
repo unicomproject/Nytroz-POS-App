@@ -50,7 +50,7 @@ class SetupLinkValidationScreen extends ConsumerWidget {
                   (validation.expired
                       ? 'This setup link has expired.'
                       : 'This setup link is invalid.'),
-              onRetry: () => context.go('/tenant-admin/login'),
+              onRetry: () => context.go('/tenant-login'),
             );
           }
 

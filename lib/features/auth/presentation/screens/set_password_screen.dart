@@ -131,7 +131,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
             const SizedBox(height: TenantAdminSpacing.sm),
             TextButton(
               onPressed:
-                  _submitting ? null : () => context.go('/tenant-admin/login'),
+                  _submitting ? null : () => context.go('/tenant-login'),
               child: const Text('Cancel'),
             ),
             const Divider(height: 32),
