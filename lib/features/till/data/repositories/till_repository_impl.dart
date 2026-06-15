@@ -11,4 +11,9 @@ class TillRepositoryImpl implements TillRepository {
   Future<TillSession> openTill(OpenTillForm form) {
     return _datasource.openTill(form);
   }
+
+  @override
+  Future<TillSession?> getCurrentSession(OpenTillForm form) {
+    return _datasource.getCurrentSession(form);
+  }
 }

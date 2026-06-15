@@ -13,11 +13,13 @@ import '../../domain/repositories/till_repository.dart';
 class TillState {
   const TillState({
     this.session,
+    this.isRefreshing = false,
     this.isSubmitting = false,
     this.errorMessage,
   });
 
   final TillSession? session;
+  final bool isRefreshing;
   final bool isSubmitting;
   final String? errorMessage;
 
@@ -25,12 +27,14 @@ class TillState {
 
   TillState copyWith({
     TillSession? session,
+    bool? isRefreshing,
     bool? isSubmitting,
     String? errorMessage,
     bool clearError = false,
   }) {
     return TillState(
       session: session ?? this.session,
+      isRefreshing: isRefreshing ?? this.isRefreshing,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
     );
@@ -44,6 +48,44 @@ class TillController extends StateNotifier<TillState> {
 
   final OpenTill _openTill;
   final TillSessionStorage _storage;
+
+  Future<bool> refreshCurrentSession({
+    required PosDeviceContext deviceContext,
+  }) async {
+    if (state.isRefreshing || state.hasOpenSession) {
+      return state.hasOpenSession;
+    }
+
+    state = state.copyWith(isRefreshing: true, clearError: true);
+
+    try {
+      final session = await _openTill.currentSession(
+        OpenTillForm(
+          deviceContext: deviceContext,
+          openingFloat: 0,
+          openingNote: '',
+        ),
+      );
+
+      if (session == null) {
+        state = state.copyWith(isRefreshing: false);
+        return false;
+      }
+
+      await _storage.save(session);
+      state = TillState(session: session);
+      return true;
+    } on TillException catch (error) {
+      state = state.copyWith(
+        isRefreshing: false,
+        errorMessage: error.message,
+      );
+      return false;
+    } catch (_) {
+      state = state.copyWith(isRefreshing: false);
+      return false;
+    }
+  }
 
   Future<bool> openTill({
     required PosDeviceContext deviceContext,

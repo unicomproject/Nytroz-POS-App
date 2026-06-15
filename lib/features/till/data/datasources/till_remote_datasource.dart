@@ -8,6 +8,26 @@ class TillRemoteDatasource {
 
   final Dio _dio;
 
+  Future<TillSession?> getCurrentSession(OpenTillForm form) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        ApiEndpoints.currentTillSession,
+        queryParameters: {
+          'deviceId': form.deviceContext.deviceId,
+        },
+      );
+
+      final data = _unwrapApiData(response.data ?? const {});
+      return _sessionFromJson(data, form);
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 404) {
+        return null;
+      }
+
+      throw TillException(_messageFromDio(error));
+    }
+  }
+
   Future<TillSession> openTill(OpenTillForm form) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
