@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../domain/entities/auth_branding.dart';
 import '../../domain/entities/auth_exception.dart';
-import '../providers/auth_branding_provider.dart';
 import '../providers/login_provider.dart';
-import '../providers/post_login_navigation_provider.dart';
 import '../providers/session_provider.dart';
 import '../widgets/auth_error_banner.dart';
+
+const _logoAsset = 'assets/images/logo.png';
+const _terminalAsset = 'assets/images/log-screen-terminal.png';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -25,6 +24,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   var _submitting = false;
+  var _obscurePassword = true;
   String? _error;
 
   @override
@@ -39,182 +39,197 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= TenantAdminBreakpoints.tablet;
-    final branding = ref.watch(authBrandingProvider).maybeWhen(
-          data: (value) => value,
-          orElse: () => const AuthBranding(),
-        );
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FB),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(
-              width < TenantAdminBreakpoints.mobile
-                  ? TenantAdminSpacing.lg
-                  : TenantAdminSpacing.xxl,
+    if (isWide) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Expanded(
+              flex: 45,
+              child: _LoginBrandPanel(compact: false),
             ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1020),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: const Color(0xFFE5EAF2)),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x1A0F172A),
-                      blurRadius: 32,
-                      offset: Offset(0, 18),
-                    ),
-                  ],
+            const VerticalDivider(
+              width: 1,
+              thickness: 1,
+              color: Color(0xFFE5EAF2),
+            ),
+            Expanded(
+              flex: 55,
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 48,
+                    vertical: 32,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: _buildLoginForm(isWide: true),
+                  ),
                 ),
-                child: isWide
-                    ? IntrinsicHeight(
-                        child: Row(
-                          children: [
-                            Expanded(
-                                child: _LoginBrandPanel(branding: branding)),
-                            Container(width: 1, color: const Color(0xFFE5EAF2)),
-                            Expanded(child: _buildLoginForm()),
-                          ],
-                        ),
-                      )
-                    : Column(
-                        children: [
-                          _LoginBrandPanel(
-                            compact: true,
-                            branding: branding,
-                          ),
-                          const Divider(height: 1),
-                          _buildLoginForm(),
-                        ],
-                      ),
               ),
             ),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TenantAdminSpacing.lg,
+            vertical: TenantAdminSpacing.xl,
+          ),
+          child: Column(
+            children: [
+              const _LoginBrandPanel(compact: true),
+              const SizedBox(height: TenantAdminSpacing.xl),
+              _buildLoginForm(isWide: false),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLoginForm() {
-    return Padding(
-      padding: const EdgeInsets.all(44),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Welcome Back!',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: TenantAdminColors.navy,
-                    fontWeight: FontWeight.w900,
-                  ),
+  Widget _buildLoginForm({required bool isWide}) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Welcome Back!',
+            style: TextStyle(
+              color: TenantAdminColors.navy,
+              fontWeight: FontWeight.w900,
+              fontSize: isWide ? 32 : 28,
             ),
-            const SizedBox(height: TenantAdminSpacing.xs),
-            const Text(
-              'Sign in to continue to Nytroz POS',
-              style: TextStyle(color: TenantAdminColors.bodyText),
+          ),
+          const SizedBox(height: TenantAdminSpacing.sm),
+          Text(
+            'Sign in to continue to Nytroz POS',
+            style: TextStyle(
+              color: TenantAdminColors.mutedText,
+              fontSize: isWide ? 18 : 16,
             ),
-            const SizedBox(height: TenantAdminSpacing.xl),
-            if (_error != null) ...[
-              AuthErrorBanner(message: _error!),
-              const SizedBox(height: TenantAdminSpacing.lg),
-            ],
-            TextFormField(
-              controller: _tenantCode,
-              textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(
-                labelText: 'Tenant Code',
-                hintText: 'Enter tenant code',
-                prefixIcon: Icon(Icons.storefront_outlined),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Tenant code is required';
-                }
-                return null;
-              },
-            ),
+          ),
+          SizedBox(height: isWide ? 36 : TenantAdminSpacing.xl),
+          if (_error != null) ...[
+            AuthErrorBanner(message: _error!),
             const SizedBox(height: TenantAdminSpacing.lg),
-            TextFormField(
-              controller: _email,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Username / Email',
-                hintText: 'Enter username or email',
-                prefixIcon: Icon(Icons.person_outline),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Username or email is required';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: TenantAdminSpacing.lg),
-            TextFormField(
-              controller: _password,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Password / PIN',
-                hintText: 'Enter password or PIN',
-                prefixIcon: Icon(Icons.lock_outline),
-                suffixIcon: Icon(Icons.visibility_off_outlined),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Password is required';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: TenantAdminSpacing.sm),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: null,
-                child: Text(
-                  'Forgot Password?',
-                  style: TextStyle(
-                    color: TenantAdminColors.navy.withValues(alpha: 0.72),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: TenantAdminSpacing.md),
-            SizedBox(
-              height: 54,
-              child: ElevatedButton(
-                onPressed: _submitting ? null : _login,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: TenantAdminColors.navy,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                  ),
-                ),
-                child: _submitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text(
-                        'Sign In',
-                        style: TextStyle(fontWeight: FontWeight.w800),
-                      ),
-              ),
-            ),
           ],
-        ),
+          _LoginLabeledField(
+            label: 'Tenant Code',
+            hintText: 'Enter tenant code',
+            controller: _tenantCode,
+            prefixIcon: Icons.storefront_outlined,
+            textCapitalization: TextCapitalization.characters,
+            large: isWide,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Tenant code is required';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: TenantAdminSpacing.lg),
+          _LoginLabeledField(
+            label: 'Email',
+            hintText: 'Enter email',
+            controller: _email,
+            prefixIcon: Icons.person_outline,
+            keyboardType: TextInputType.emailAddress,
+            large: isWide,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Email is required';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: TenantAdminSpacing.lg),
+          _LoginLabeledField(
+            label: 'Password',
+            hintText: 'Enter password',
+            controller: _password,
+            prefixIcon: Icons.lock_outline,
+            obscureText: _obscurePassword,
+            large: isWide,
+            suffixIcon: IconButton(
+              onPressed: () {
+                setState(() => _obscurePassword = !_obscurePassword);
+              },
+              icon: Icon(
+                _obscurePassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: TenantAdminColors.mutedText,
+                size: isWide ? 26 : 24,
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Password is required';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: TenantAdminSpacing.sm),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: null,
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'Forgot Password?',
+                style: TextStyle(
+                  color: TenantAdminColors.navy.withValues(alpha: 0.72),
+                  fontWeight: FontWeight.w700,
+                  fontSize: isWide ? 16 : 15,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: isWide ? 28 : TenantAdminSpacing.lg),
+          SizedBox(
+            height: isWide ? 62 : 56,
+            child: ElevatedButton(
+              onPressed: _submitting ? null : _login,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: TenantAdminColors.navy,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                ),
+              ),
+              child: _submitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      'Sign In',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: isWide ? 18 : 17,
+                      ),
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -241,14 +256,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref.read(authSessionProvider.notifier).setSession(session);
       ref.read(appDioProvider).options.headers['Authorization'] =
           'Bearer ${session.accessToken}';
-      final route =
-          await ref.read(postLoginNavigationResolverProvider).resolve();
-
-      if (!mounted) {
-        return;
-      }
-
-      context.go(route.path);
     } on AuthException catch (error) {
       setState(() => _error = '${error.message} (${error.errorCode})');
     } catch (_) {
@@ -263,18 +270,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 }
 
 class _LoginBrandPanel extends StatelessWidget {
-  const _LoginBrandPanel({
-    required this.branding,
-    this.compact = false,
-  });
+  const _LoginBrandPanel({required this.compact});
 
   final bool compact;
-  final AuthBranding branding;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(compact ? TenantAdminSpacing.xl : 44),
+    final logoSize = compact ? 72.0 : 96.0;
+    final terminalWidth = compact ? 300.0 : 440.0;
+    final terminalHeight = compact ? 215.0 : 320.0;
+    final titleSize = compact ? 34.0 : 40.0;
+    final taglineSize = compact ? 18.0 : 20.0;
+
+    return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -285,193 +293,152 @@ class _LoginBrandPanel extends StatelessWidget {
           ],
         ),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _UploadedImageOrFallback(
-            imageUrl: branding.logoUrl,
-            width: compact ? 58 : 74,
-            height: compact ? 58 : 74,
-            borderRadius: 18,
-            fallback: Container(
-              decoration: BoxDecoration(
-                color: TenantAdminColors.navy,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x26071A33),
-                    blurRadius: 18,
-                    offset: Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.shopping_bag_outlined,
-                color: Colors.white,
-                size: 36,
-              ),
-            ),
+      child: Center(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? TenantAdminSpacing.lg : 48,
+            vertical: compact ? TenantAdminSpacing.xl : 32,
           ),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          Text(
-            'Nytroz POS',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: TenantAdminColors.navy,
-                      fontWeight: FontWeight.w900,
-                    ) ??
-                const TextStyle(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                _logoAsset,
+                width: logoSize,
+                height: logoSize,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: TenantAdminSpacing.lg),
+              Text(
+                'Nytroz POS',
+                style: TextStyle(
                   color: TenantAdminColors.navy,
-                  fontSize: 32,
+                  fontSize: titleSize,
                   fontWeight: FontWeight.w900,
                 ),
+              ),
+              const SizedBox(height: TenantAdminSpacing.sm),
+              Text(
+                'Smart Cashier System',
+                style: TextStyle(
+                  color: TenantAdminColors.bodyText,
+                  fontSize: taglineSize,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: compact ? TenantAdminSpacing.xl : 48),
+              Image.asset(
+                _terminalAsset,
+                width: terminalWidth,
+                height: terminalHeight,
+                fit: BoxFit.contain,
+              ),
+            ],
           ),
-          const SizedBox(height: TenantAdminSpacing.xs),
-          const Text(
-            'Smart Cashier System',
-            style: TextStyle(
-              color: TenantAdminColors.bodyText,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          if (!compact) ...[
-            const SizedBox(height: 42),
-            _UploadedImageOrFallback(
-              imageUrl: branding.loginIllustrationUrl,
-              width: 300,
-              height: 220,
-              borderRadius: 28,
-              fit: BoxFit.contain,
-              fallback: const _PosIllustration(),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
 }
 
-class _UploadedImageOrFallback extends StatelessWidget {
-  const _UploadedImageOrFallback({
-    required this.imageUrl,
-    required this.width,
-    required this.height,
-    required this.fallback,
-    this.borderRadius = 0,
-    this.fit = BoxFit.cover,
+class _LoginLabeledField extends StatelessWidget {
+  const _LoginLabeledField({
+    required this.label,
+    required this.hintText,
+    required this.controller,
+    required this.prefixIcon,
+    this.validator,
+    this.keyboardType,
+    this.textCapitalization = TextCapitalization.none,
+    this.obscureText = false,
+    this.suffixIcon,
+    this.large = false,
   });
 
-  final String? imageUrl;
-  final double width;
-  final double height;
-  final double borderRadius;
-  final BoxFit fit;
-  final Widget fallback;
+  final String label;
+  final String hintText;
+  final TextEditingController controller;
+  final IconData prefixIcon;
+  final String? Function(String?)? validator;
+  final TextInputType? keyboardType;
+  final TextCapitalization textCapitalization;
+  final bool obscureText;
+  final Widget? suffixIcon;
+  final bool large;
 
   @override
   Widget build(BuildContext context) {
-    final url = imageUrl?.trim();
-    if (url == null || url.isEmpty) {
-      return SizedBox(width: width, height: height, child: fallback);
-    }
+    final labelSize = large ? 15.0 : 14.0;
+    final textSize = large ? 18.0 : 16.0;
+    final hintSize = large ? 17.0 : 15.0;
+    final iconSize = large ? 26.0 : 24.0;
+    final verticalPadding = large ? 20.0 : 17.0;
+    final borderRadius = large ? 14.0 : 12.0;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: Image.network(
-        url,
-        width: width,
-        height: height,
-        fit: fit,
-        errorBuilder: (context, error, stackTrace) {
-          return SizedBox(width: width, height: height, child: fallback);
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) {
-            return child;
-          }
-
-          return SizedBox(
-            width: width,
-            height: height,
-            child: const Center(child: CircularProgressIndicator()),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _PosIllustration extends StatelessWidget {
-  const _PosIllustration();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 220,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            width: 260,
-            height: 190,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEAF2FF),
-              borderRadius: BorderRadius.circular(120),
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: TenantAdminColors.navy,
+            fontSize: labelSize,
+            fontWeight: FontWeight.w700,
           ),
-          Positioned(
-            bottom: 36,
-            child: Container(
-              width: 190,
-              height: 74,
-              decoration: BoxDecoration(
-                color: const Color(0xFF111827),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Center(
-                child: Icon(Icons.point_of_sale,
-                    color: Color(0xFF60A5FA), size: 36),
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          textCapitalization: textCapitalization,
+          validator: validator,
+          style: TextStyle(
+            color: TenantAdminColors.bodyText,
+            fontWeight: FontWeight.w500,
+            fontSize: textSize,
+          ),
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: TextStyle(
+              color: TenantAdminColors.mutedText.withValues(alpha: 0.75),
+              fontWeight: FontWeight.w400,
+              fontSize: hintSize,
+            ),
+            prefixIcon: Icon(
+              prefixIcon,
+              color: TenantAdminColors.mutedText,
+              size: iconSize,
+            ),
+            suffixIcon: suffixIcon,
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: verticalPadding,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(borderRadius),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(borderRadius),
+              borderSide: const BorderSide(
+                color: TenantAdminColors.navy,
+                width: 1.5,
               ),
             ),
-          ),
-          Positioned(
-            bottom: 16,
-            left: 96,
-            child: Container(
-              width: 170,
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1F2937),
-                borderRadius: BorderRadius.circular(8),
-              ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(borderRadius),
+              borderSide: const BorderSide(color: TenantAdminColors.danger),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(borderRadius),
+              borderSide: const BorderSide(color: TenantAdminColors.danger),
             ),
           ),
-          Positioned(
-            bottom: 22,
-            right: 54,
-            child: Container(
-              width: 42,
-              height: 118,
-              decoration: BoxDecoration(
-                color: const Color(0xFF111827),
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 130,
-            right: 48,
-            child: Container(
-              width: 66,
-              height: 38,
-              decoration: BoxDecoration(
-                color: const Color(0xFF374151),
-                borderRadius: BorderRadius.circular(22),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

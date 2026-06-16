@@ -70,9 +70,8 @@ class TillSession {
       openedDeviceId: json['openedDeviceId'] as String? ?? '',
       openingFloat: (json['openingFloat'] as num?)?.toDouble() ?? 0,
       status: json['status'] as String? ?? '',
-      openedAt:
-          DateTime.tryParse(json['openedAt']?.toString() ?? '') ??
-              DateTime.now(),
+      openedAt: DateTime.tryParse(json['openedAt']?.toString() ?? '') ??
+          DateTime.now(),
       openingNote: json['openingNote'] as String?,
     );
   }

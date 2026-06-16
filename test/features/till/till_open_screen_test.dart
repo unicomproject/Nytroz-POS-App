@@ -1,0 +1,192 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:nytroz_pos/core/network/dio_provider.dart';
+import 'package:nytroz_pos/features/device_activation/application/usecases/activate_device.dart';
+import 'package:nytroz_pos/features/device_activation/data/datasources/device_context_storage.dart';
+import 'package:nytroz_pos/features/device_activation/domain/entities/pos_device_context.dart';
+import 'package:nytroz_pos/features/device_activation/domain/repositories/device_activation_repository.dart';
+import 'package:nytroz_pos/features/device_activation/presentation/providers/device_activation_provider.dart';
+import 'package:nytroz_pos/features/till/application/usecases/open_till.dart';
+import 'package:nytroz_pos/features/till/data/datasources/till_session_storage.dart';
+import 'package:nytroz_pos/features/till/domain/entities/open_till.dart';
+import 'package:nytroz_pos/features/till/domain/repositories/till_repository.dart';
+import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
+import 'package:nytroz_pos/features/till/presentation/screens/till_open_screen.dart';
+
+void main() {
+  group('TillOpenScreen', () {
+    testWidgets('blocks till open when device is not trusted', (tester) async {
+      await _pumpTillOpenScreen(tester);
+
+      expect(find.text('Device activation required'), findsOneWidget);
+      expect(
+        find.text(
+          'This POS device must be trusted before a till can be opened.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Activate device'), findsOneWidget);
+      expect(find.text('Open Till'), findsNothing);
+    });
+
+    testWidgets('shows open till form when device is trusted', (tester) async {
+      await _pumpTillOpenScreen(
+        tester,
+        deviceContext: _trustedDevice,
+      );
+
+      expect(find.text('Open Till'), findsWidgets);
+      expect(find.text('Front Till'), findsWidgets);
+      expect(find.text('Main Outlet'), findsWidgets);
+      expect(find.text('Device activation required'), findsNothing);
+    });
+  });
+}
+
+Future<void> _pumpTillOpenScreen(
+  WidgetTester tester, {
+  PosDeviceContext? deviceContext,
+}) async {
+  tester.view.devicePixelRatio = 1;
+  tester.view.physicalSize = const Size(1200, 900);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  addTearDown(tester.view.resetPhysicalSize);
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        appDioProvider.overrideWithValue(
+          Dio(BaseOptions(baseUrl: 'https://test.local')),
+        ),
+        activateDeviceProvider.overrideWithValue(
+          ActivateDevice(_FakeDeviceActivationRepository(deviceContext)),
+        ),
+        deviceContextStorageProvider.overrideWithValue(
+          _TestDeviceContextStorage(deviceContext),
+        ),
+        deviceActivationProvider.overrideWith(
+          (ref) => _ConfiguredDeviceActivationController(
+            ref.watch(activateDeviceProvider),
+            ref.watch(deviceContextStorageProvider),
+            deviceContext,
+          ),
+        ),
+        openTillProvider.overrideWithValue(
+          OpenTill(_FakeTillRepository()),
+        ),
+        tillSessionStorageProvider.overrideWithValue(
+          _TestTillSessionStorage(),
+        ),
+        tillProvider.overrideWith(
+          (ref) => TillController(
+            ref.watch(openTillProvider),
+            ref.watch(tillSessionStorageProvider),
+          ),
+        ),
+      ],
+      child: const MaterialApp(
+        home: TillOpenScreen(),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+class _ConfiguredDeviceActivationController extends DeviceActivationController {
+  _ConfiguredDeviceActivationController(
+    super.activateDevice,
+    super.storage,
+    PosDeviceContext? deviceContext,
+  ) : super() {
+    if (deviceContext != null) {
+      state = DeviceActivationState(deviceContext: deviceContext);
+    }
+  }
+
+  @override
+  Future<bool> refreshCurrentDevice({required String deviceName}) async {
+    return state.isTrusted;
+  }
+}
+
+class _FakeDeviceActivationRepository implements DeviceActivationRepository {
+  _FakeDeviceActivationRepository(this.deviceContext);
+
+  final PosDeviceContext? deviceContext;
+
+  @override
+  Future<PosDeviceContext> activateDevice(DeviceActivationForm form) async {
+    return deviceContext!;
+  }
+
+  @override
+  Future<PosDeviceContext?> getCurrentDevice(DeviceActivationForm form) async {
+    return deviceContext;
+  }
+}
+
+class _FakeTillRepository implements TillRepository {
+  @override
+  Future<TillSession> openTill(OpenTillForm form) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<TillSession?> getCurrentSession(OpenTillForm form) async => null;
+}
+
+class _TestDeviceContextStorage extends DeviceContextStorage {
+  _TestDeviceContextStorage(this._deviceContext)
+      : super(const FlutterSecureStorage());
+
+  final PosDeviceContext? _deviceContext;
+
+  @override
+  Future<PosDeviceContext?> read() async => _deviceContext;
+
+  @override
+  Future<String> readOrCreateDeviceFingerprint() async {
+    return _deviceContext?.deviceFingerprint ?? 'test-device-fingerprint';
+  }
+
+  @override
+  Future<void> save(PosDeviceContext context) async {}
+
+  @override
+  Future<void> clear() async {}
+}
+
+class _TestTillSessionStorage extends TillSessionStorage {
+  _TestTillSessionStorage() : super(const FlutterSecureStorage());
+
+  @override
+  Future<TillSession?> read() async => null;
+
+  @override
+  Future<void> save(TillSession session) async {}
+
+  @override
+  Future<void> clear() async {}
+}
+
+final _pairedAt = DateTime.utc(2026, 6, 16, 9);
+
+final _trustedDevice = PosDeviceContext(
+  deviceId: 'device-1',
+  deviceCode: 'DEV-001',
+  deviceName: 'Front POS',
+  deviceType: 'fixed_pos_tablet',
+  platform: 'web',
+  deviceFingerprint: 'test-device-fingerprint',
+  isTrusted: true,
+  tenantId: 'tenant-1',
+  outletId: 'outlet-1',
+  outletName: 'Main Outlet',
+  tillId: 'till-1',
+  tillCode: 'TILL-001',
+  tillName: 'Front Till',
+  pairedAt: _pairedAt,
+);

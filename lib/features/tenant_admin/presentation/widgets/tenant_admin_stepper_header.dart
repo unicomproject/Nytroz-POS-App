@@ -67,7 +67,9 @@ class _StepperPill extends StatelessWidget {
         color: active
             ? TenantAdminColors.primary.withValues(alpha: 0.10)
             : TenantAdminColors.surface,
-        border: Border.all(color: active ? TenantAdminColors.primary : TenantAdminColors.border),
+        border: Border.all(
+            color:
+                active ? TenantAdminColors.primary : TenantAdminColors.border),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(

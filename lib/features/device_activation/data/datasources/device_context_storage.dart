@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
-import 'dart:math';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../domain/entities/pos_device_context.dart';
+import '../device_fingerprint.dart';
 
 class DeviceContextStorage {
   const DeviceContextStorage(this._storage);
@@ -14,52 +14,60 @@ class DeviceContextStorage {
 
   final FlutterSecureStorage _storage;
 
-  Future<String> readOrCreateDeviceFingerprint() async {
+  Future<String?> readStoredDeviceFingerprint() async {
     final stored = await _storage.read(key: _deviceFingerprintKey);
     if (stored != null && stored.trim().isNotEmpty) {
+      return stored.trim();
+    }
+
+    final contextValue = await _storage.read(key: _deviceContextKey);
+    if (contextValue == null || contextValue.trim().isEmpty) {
+      return null;
+    }
+
+    try {
+      final decoded = jsonDecode(contextValue);
+      if (decoded is Map<String, dynamic>) {
+        final fingerprint =
+            PosDeviceContext.fromJson(decoded).deviceFingerprint.trim();
+        if (fingerprint.isNotEmpty) {
+          return fingerprint;
+        }
+      }
+    } catch (_) {
+      return null;
+    }
+
+    return null;
+  }
+
+  Future<List<String>> readDeviceFingerprintCandidates() async {
+    final stored = await readStoredDeviceFingerprint();
+    final stable = await createStableDeviceFingerprint();
+    final legacy = legacyDeviceFingerprint();
+
+    return uniqueFingerprints([
+      if (stored != null) stored,
+      stable,
+      if (legacy.isNotEmpty) legacy,
+    ]);
+  }
+
+  Future<String> readOrCreateDeviceFingerprint() async {
+    final stored = await readStoredDeviceFingerprint();
+    if (stored != null) {
       developer.log(
-        'Device fingerprint retrieved. source=fingerprint_key',
+        'Device fingerprint retrieved. source=storage value=$stored',
         name: 'pos.session',
       );
       return stored;
     }
 
-    final contextValue = await _storage.read(key: _deviceContextKey);
-    if (contextValue != null && contextValue.trim().isNotEmpty) {
-      try {
-        final decoded = jsonDecode(contextValue);
-        if (decoded is Map<String, dynamic>) {
-          final context = PosDeviceContext.fromJson(decoded);
-          if (context.deviceFingerprint.trim().isNotEmpty) {
-            await _storage.write(
-              key: _deviceFingerprintKey,
-              value: context.deviceFingerprint,
-            );
-            developer.log(
-              'Device fingerprint restored from device context.',
-              name: 'pos.session',
-            );
-            return context.deviceFingerprint;
-          }
-        }
-      } catch (_) {
-        developer.log(
-          'Stored device context could not restore fingerprint.',
-          name: 'pos.session',
-        );
-      }
-    }
-
-    final random = Random.secure();
-    final entropy = List.generate(
-      16,
-      (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
-    ).join();
-    final fingerprint = 'pos-device-$entropy';
+    final fingerprint = await createStableDeviceFingerprint();
 
     await _storage.write(key: _deviceFingerprintKey, value: fingerprint);
     developer.log(
-      'Device fingerprint created.',
+      'Device fingerprint created. source=stable value=$fingerprint',
       name: 'pos.session',
     );
     return fingerprint;

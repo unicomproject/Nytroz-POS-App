@@ -129,13 +129,20 @@ class TillController extends StateNotifier<TillState> {
     state = const TillState();
   }
 
-  Future<void> _restoreTillSession() async {
-    final session = await _storage.read();
-    if (session == null) {
+  /// Loads persisted till session into state if not already present.
+  Future<void> ensureHydrated() async {
+    if (state.session != null) {
       return;
     }
 
-    state = TillState(session: session);
+    final session = await _storage.read();
+    if (session != null) {
+      state = TillState(session: session);
+    }
+  }
+
+  Future<void> _restoreTillSession() async {
+    await ensureHydrated();
   }
 }
 

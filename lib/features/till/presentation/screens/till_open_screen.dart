@@ -6,6 +6,8 @@ import '../../../device_activation/presentation/providers/device_activation_prov
 import '../../../../shared/pos_session/pos_session_context.dart';
 import '../../../../shared/pos_session/pos_session_provider.dart';
 import '../providers/till_provider.dart';
+import '../../../../shared/pos_session/pos_session_bootstrap_provider.dart';
+import '../../../auth/presentation/providers/post_login_navigation_provider.dart';
 import '../widgets/open_till_form.dart';
 
 class TillOpenScreen extends ConsumerStatefulWidget {
@@ -21,7 +23,6 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
   final _openingNoteController = TextEditingController(
     text: 'Opening shift for morning session.',
   );
-  var _checkedCurrentSession = false;
 
   @override
   void dispose() {
@@ -36,27 +37,6 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
     final tillState = ref.watch(tillProvider);
     final sessionContext = ref.watch(posSessionContextProvider);
     final device = deviceState.deviceContext;
-
-    if (!_checkedCurrentSession && device != null && device.isTrusted) {
-      _checkedCurrentSession = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final hasOpenSession = await ref
-            .read(tillProvider.notifier)
-            .refreshCurrentSession(deviceContext: device);
-
-        if (hasOpenSession && context.mounted) {
-          context.go('/pos/home');
-        }
-      });
-    }
-
-    if (tillState.hasOpenSession) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          context.go('/pos/home');
-        }
-      });
-    }
 
     if (device == null || !device.isTrusted) {
       return Scaffold(
@@ -100,7 +80,6 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
                       deviceName: sessionContext.deviceCode,
                       onBack: () => context.go('/pos/device-activation'),
                       onSubmit: _submitOpenTill,
-                      onPresetSelected: _setPresetAmount,
                     ),
                   ],
                 ),
@@ -136,7 +115,6 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
                         deviceName: sessionContext.deviceCode,
                         onBack: () => context.go('/pos/device-activation'),
                         onSubmit: _submitOpenTill,
-                        onPresetSelected: _setPresetAmount,
                       ),
                     ),
                   ),
@@ -147,11 +125,6 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
         ),
       ),
     );
-  }
-
-  void _setPresetAmount(double amount) {
-    _openingFloatController.text = amount.toStringAsFixed(2);
-    setState(() {});
   }
 
   Future<void> _submitOpenTill() async {
@@ -173,7 +146,14 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
         );
 
     if (opened && mounted) {
-      context.go('/pos/home');
+      await ref
+          .read(posSessionBootstrapProvider.notifier)
+          .bootstrap(force: true);
+      if (!mounted) {
+        return;
+      }
+      final route = ref.read(postLoginRouteProvider);
+      context.go(route.path);
     }
   }
 }

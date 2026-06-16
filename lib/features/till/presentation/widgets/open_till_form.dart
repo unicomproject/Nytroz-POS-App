@@ -13,7 +13,6 @@ class OpenTillForm extends StatelessWidget {
     required this.deviceName,
     required this.onBack,
     required this.onSubmit,
-    required this.onPresetSelected,
     this.errorMessage,
   });
 
@@ -26,7 +25,6 @@ class OpenTillForm extends StatelessWidget {
   final String deviceName;
   final VoidCallback onBack;
   final VoidCallback onSubmit;
-  final ValueChanged<double> onPresetSelected;
   final String? errorMessage;
 
   bool get _hasValidAmount {
@@ -185,52 +183,6 @@ class OpenTillForm extends StatelessWidget {
                   ],
                   const SizedBox(height: 22),
                   const Text(
-                    'Quick Amount Presets',
-                    style: TextStyle(
-                      color: Color(0xFF050A30),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 10,
-                    children: [
-                      _PresetButton(
-                        label: 'LKR 50',
-                        selected: openingFloatController.text == '50.00',
-                        onPressed: () => onPresetSelected(50),
-                      ),
-                      _PresetButton(
-                        label: 'LKR 100',
-                        selected: openingFloatController.text == '100.00',
-                        onPressed: () => onPresetSelected(100),
-                      ),
-                      _PresetButton(
-                        label: 'LKR 150',
-                        selected: openingFloatController.text == '150.00',
-                        onPressed: () => onPresetSelected(150),
-                      ),
-                      _PresetButton(
-                        label: 'LKR 200',
-                        selected: openingFloatController.text == '200.00',
-                        onPressed: () => onPresetSelected(200),
-                      ),
-                      _PresetButton(
-                        label: 'LKR 250',
-                        selected: openingFloatController.text == '250.00',
-                        onPressed: () => onPresetSelected(250),
-                      ),
-                      _PresetButton(
-                        label: 'Custom',
-                        selected: false,
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 22),
-                  const Text(
                     'Till Note (Optional)',
                     style: TextStyle(
                       color: Color(0xFF050A30),
@@ -345,44 +297,6 @@ class _SectionCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE4E9F3)),
       ),
       child: child,
-    );
-  }
-}
-
-class _PresetButton extends StatelessWidget {
-  const _PresetButton({
-    required this.label,
-    required this.selected,
-    required this.onPressed,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 94,
-      height: 34,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(
-            color: selected ? const Color(0xFF034BFF) : const Color(0xFFDCE4F2),
-            width: selected ? 1.5 : 1,
-          ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? const Color(0xFF034BFF) : const Color(0xFF050A30),
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ),
     );
   }
 }

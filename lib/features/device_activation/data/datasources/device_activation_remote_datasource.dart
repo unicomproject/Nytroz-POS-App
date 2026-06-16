@@ -73,7 +73,7 @@ class DeviceActivationRemoteDatasource {
       deviceType: _string(device['deviceType'], fallback: form.deviceType),
       platform: _string(device['platform'], fallback: form.platform),
       deviceFingerprint: form.deviceFingerprint,
-      isTrusted: device['isTrusted'] == true,
+      isTrusted: _bool(device['isTrusted']),
       tenantId: _string(json['tenantId']),
       outletId: _string(device['outletId'], fallback: _string(outlet['id'])),
       outletName: _string(outlet['name']),
@@ -99,6 +99,15 @@ class DeviceActivationRemoteDatasource {
     }
 
     return text;
+  }
+
+  bool _bool(Object? value) {
+    if (value is bool) {
+      return value;
+    }
+
+    final text = value?.toString().trim().toLowerCase();
+    return text == 'true' || text == '1';
   }
 
   String _messageFromDio(DioException error) {
