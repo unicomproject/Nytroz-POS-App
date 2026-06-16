@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../shared/pos_session/pos_session_provider.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../providers/device_activation_provider.dart';
+import '../../../../shared/pos_session/pos_session_bootstrap_provider.dart';
+import '../../../auth/presentation/providers/post_login_navigation_provider.dart';
 import '../widgets/device_activation_form.dart';
 
 const _logoAsset = 'assets/images/logo.png';
@@ -22,7 +24,6 @@ class _DeviceActivationScreenState
     extends ConsumerState<DeviceActivationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _codeController = TextEditingController();
-  var _checkedCurrentDevice = false;
 
   @override
   void dispose() {
@@ -33,30 +34,8 @@ class _DeviceActivationScreenState
   @override
   Widget build(BuildContext context) {
     final activationState = ref.watch(deviceActivationProvider);
-    final sessionContext = ref.watch(posSessionContextProvider);
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= TenantAdminBreakpoints.tablet;
-
-    if (!_checkedCurrentDevice && !activationState.isTrusted) {
-      _checkedCurrentDevice = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final isTrusted = await ref
-            .read(deviceActivationProvider.notifier)
-            .refreshCurrentDevice(deviceName: sessionContext.deviceName);
-
-        if (isTrusted && context.mounted) {
-          context.go('/pos/open-till');
-        }
-      });
-    }
-
-    if (activationState.isTrusted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          context.go('/pos/open-till');
-        }
-      });
-    }
 
     if (isWide) {
       return Scaffold(
@@ -140,7 +119,14 @@ class _DeviceActivationScreenState
             );
 
     if (activated && mounted) {
-      context.go('/pos/open-till');
+      await ref
+          .read(posSessionBootstrapProvider.notifier)
+          .bootstrap(force: true);
+      if (!mounted) {
+        return;
+      }
+      final route = ref.read(postLoginRouteProvider);
+      context.go(route.path);
     }
   }
 }

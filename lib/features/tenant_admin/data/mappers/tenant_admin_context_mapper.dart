@@ -10,10 +10,10 @@ extension TenantAdminContextMapper on TenantAdminContextDto {
       userDisplayName: userDisplayName,
       roleNames: roleNames,
       outletScope: outletScope.map((outlet) => outlet.toEntity()).toList(),
-      featureEntitlements: featureEntitlements
-          .map((feature) => feature.toEntity())
-          .toList(),
-      permissions: permissions.map((permission) => permission.toEntity()).toList(),
+      featureEntitlements:
+          featureEntitlements.map((feature) => feature.toEntity()).toList(),
+      permissions:
+          permissions.map((permission) => permission.toEntity()).toList(),
       runtimeFlags: runtimeFlags.map((flag) => flag.toEntity()).toList(),
       subscriptionStatus: subscriptionStatus,
     );

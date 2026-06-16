@@ -9,6 +9,7 @@ dependencies:
   flutter:
     sdk: flutter
   dio: ^5.7.0
+  device_info_plus: ^11.3.0
   flutter_riverpod: ^2.5.1
   flutter_secure_storage: ^9.2.4
   go_router: ^14.2.7
@@ -21,5 +22,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/images/pos_start_sale_background.png
     - assets/images/logo.png
     - assets/images/log-screen-terminal.png

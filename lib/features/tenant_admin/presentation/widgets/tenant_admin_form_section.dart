@@ -35,10 +35,12 @@ class TenantAdminFormSection extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: TenantAdminTextStyles.sectionTitle(context)),
+                    Text(title,
+                        style: TenantAdminTextStyles.sectionTitle(context)),
                     if (subtitle != null) ...[
                       const SizedBox(height: TenantAdminSpacing.xs),
-                      Text(subtitle!, style: TenantAdminTextStyles.muted(context)),
+                      Text(subtitle!,
+                          style: TenantAdminTextStyles.muted(context)),
                     ],
                   ],
                 ),

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/auth_exception.dart';
 import '../providers/login_provider.dart';
-import '../providers/post_login_navigation_provider.dart';
 import '../providers/session_provider.dart';
 import '../widgets/auth_error_banner.dart';
 
@@ -258,14 +256,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref.read(authSessionProvider.notifier).setSession(session);
       ref.read(appDioProvider).options.headers['Authorization'] =
           'Bearer ${session.accessToken}';
-      final route =
-          await ref.read(postLoginNavigationResolverProvider).resolve();
-
-      if (!mounted) {
-        return;
-      }
-
-      context.go(route.path);
     } on AuthException catch (error) {
       setState(() => _error = '${error.message} (${error.errorCode})');
     } catch (_) {
