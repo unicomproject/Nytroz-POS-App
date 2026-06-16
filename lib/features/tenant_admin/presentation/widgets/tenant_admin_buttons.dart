@@ -108,7 +108,8 @@ class TenantAdminIconButton extends StatelessWidget {
           child: Icon(
             icon,
             size: 20,
-            color: danger ? TenantAdminColors.danger : TenantAdminColors.bodyText,
+            color:
+                danger ? TenantAdminColors.danger : TenantAdminColors.bodyText,
           ),
         ),
       ),

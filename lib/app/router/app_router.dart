@@ -96,7 +96,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (bootstrap.isReady && session != null) {
-        if ((path == '/device-activation' || path == '/pos/device-activation') &&
+        if ((path == '/device-activation' ||
+                path == '/pos/device-activation') &&
             authenticatedInitialRoute != PostLoginRoute.deviceActivation.path) {
           return authenticatedInitialRoute;
         }

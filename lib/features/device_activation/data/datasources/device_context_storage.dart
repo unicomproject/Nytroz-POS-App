@@ -28,7 +28,8 @@ class DeviceContextStorage {
     try {
       final decoded = jsonDecode(contextValue);
       if (decoded is Map<String, dynamic>) {
-        final fingerprint = PosDeviceContext.fromJson(decoded).deviceFingerprint.trim();
+        final fingerprint =
+            PosDeviceContext.fromJson(decoded).deviceFingerprint.trim();
         if (fingerprint.isNotEmpty) {
           return fingerprint;
         }

@@ -8,7 +8,8 @@ import '../../application/state/pos_home_dashboard_state.dart';
 import '../../data/datasources/pos_home_remote_datasource.dart';
 import '../../domain/entities/pos_home_action.dart';
 
-final posHomeRemoteDatasourceProvider = Provider<PosHomeRemoteDatasource>((ref) {
+final posHomeRemoteDatasourceProvider =
+    Provider<PosHomeRemoteDatasource>((ref) {
   return PosHomeRemoteDatasource(ref.watch(appDioProvider));
 });
 
@@ -74,8 +75,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         iconKey: 'new-sale',
         buttonLabel: 'Start New Sale',
         isEnabled: cards.startSale.enabled,
-        routeExists: false,
-        onTapActionKey: 'start-new-sale',
+        targetRoute: '/pos/new-sale',
         featureKey: PosFeatureCodes.sales,
         permissionKey: PosPermissionCodes.startSale,
       ),
@@ -97,8 +97,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         iconKey: 'return',
         buttonLabel: 'Start Return',
         isEnabled: cards.returnsRefunds.enabled,
-        routeExists: false,
-        onTapActionKey: 'returns-refunds',
+        targetRoute: '/pos/returns-refunds',
         featureKey: PosFeatureCodes.returns,
         permissionKey: PosPermissionCodes.processRefund,
         metricValue: '${cards.returnsRefunds.count ?? 0}',
@@ -111,8 +110,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         iconKey: 'add-customer',
         buttonLabel: 'Add Customer',
         isEnabled: cards.customers.enabled,
-        routeExists: false,
-        onTapActionKey: 'add-customer',
+        targetRoute: '/pos/customers',
         featureKey: PosFeatureCodes.customers,
         permissionKey: PosPermissionCodes.viewCustomers,
         metricValue: '${cards.customers.count ?? 0}',
@@ -125,8 +123,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         iconKey: 'parked-sales',
         buttonLabel: 'View Parked Sales',
         isEnabled: cards.parkedSales.enabled,
-        routeExists: false,
-        onTapActionKey: 'parked-sales',
+        targetRoute: '/pos/parked-sales',
         featureKey: PosFeatureCodes.sales,
         permissionKey: PosPermissionCodes.recallSale,
         metricValue: '${cards.parkedSales.count ?? 0}',
@@ -139,8 +136,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         iconKey: 'cash-drawer',
         buttonLabel: 'View Cash Drawer',
         isEnabled: cards.cashDrawer.enabled,
-        routeExists: false,
-        onTapActionKey: 'cash-drawer',
+        targetRoute: '/pos/cash-drawer',
         featureKey: PosFeatureCodes.till,
         permissionKey: PosPermissionCodes.viewTill,
         metricValue: _formatCurrency(cards.cashDrawer.balance),

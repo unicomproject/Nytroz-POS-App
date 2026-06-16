@@ -106,7 +106,8 @@ List<String> _permissionCodesFromJson(Map<String, dynamic> payload) {
     return rawPermissions
         .map((item) {
           if (item is Map) {
-            return item['permissionCode']?.toString() ?? item['code']?.toString();
+            return item['permissionCode']?.toString() ??
+                item['code']?.toString();
           }
 
           return item.toString();

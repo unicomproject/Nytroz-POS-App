@@ -84,7 +84,7 @@ void main() {
       expect(find.text('Cash Drawer'), findsNothing);
     });
 
-    testWidgets('missing sidebar destination shows a safe SnackBar', (
+    testWidgets('New Sale sidebar destination opens placeholder screen', (
       tester,
     ) async {
       await _pumpPosHome(
@@ -97,13 +97,10 @@ void main() {
       );
 
       await tester.tap(find.text('New Sale'));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      expect(
-        find.text('New Sale screen is not available yet.'),
-        findsOneWidget,
-      );
-      expect(find.byType(PosHomeScreen), findsOneWidget);
+      expect(find.text('Coming soon'), findsOneWidget);
+      expect(find.byType(PosHomeScreen), findsNothing);
     });
 
     testWidgets('phone width shows the mobile top bar', (tester) async {
@@ -170,8 +167,7 @@ Future<void> _pumpPosHome(
 }
 
 class _TestAuthSessionStorage extends AuthSessionStorage {
-  _TestAuthSessionStorage(this.session)
-      : super(const FlutterSecureStorage());
+  _TestAuthSessionStorage(this.session) : super(const FlutterSecureStorage());
 
   final AuthSession session;
 
@@ -213,8 +209,7 @@ PosHomeDashboardState _referenceDashboardState(List<String> permissionCodes) {
         iconKey: 'new-sale',
         buttonLabel: 'Start New Sale',
         isEnabled: permissions.contains(PosPermissionCodes.startSale),
-        routeExists: false,
-        onTapActionKey: 'start-new-sale',
+        targetRoute: '/pos/new-sale',
         featureKey: PosFeatureCodes.sales,
         permissionKey: PosPermissionCodes.startSale,
       ),
@@ -236,8 +231,7 @@ PosHomeDashboardState _referenceDashboardState(List<String> permissionCodes) {
         iconKey: 'return',
         buttonLabel: 'Start Return',
         isEnabled: permissions.contains(PosPermissionCodes.processRefund),
-        routeExists: false,
-        onTapActionKey: 'returns-refunds',
+        targetRoute: '/pos/returns-refunds',
         featureKey: PosFeatureCodes.returns,
         permissionKey: PosPermissionCodes.processRefund,
         metricValue: '0',
@@ -250,8 +244,7 @@ PosHomeDashboardState _referenceDashboardState(List<String> permissionCodes) {
         iconKey: 'add-customer',
         buttonLabel: 'Add Customer',
         isEnabled: permissions.contains(PosPermissionCodes.viewCustomers),
-        routeExists: false,
-        onTapActionKey: 'add-customer',
+        targetRoute: '/pos/customers',
         featureKey: PosFeatureCodes.customers,
         permissionKey: PosPermissionCodes.viewCustomers,
         metricValue: '0',
@@ -264,8 +257,7 @@ PosHomeDashboardState _referenceDashboardState(List<String> permissionCodes) {
         iconKey: 'parked-sales',
         buttonLabel: 'View Parked Sales',
         isEnabled: permissions.contains(PosPermissionCodes.recallSale),
-        routeExists: false,
-        onTapActionKey: 'parked-sales',
+        targetRoute: '/pos/parked-sales',
         featureKey: PosFeatureCodes.sales,
         permissionKey: PosPermissionCodes.recallSale,
         metricValue: '0',
@@ -278,8 +270,7 @@ PosHomeDashboardState _referenceDashboardState(List<String> permissionCodes) {
         iconKey: 'cash-drawer',
         buttonLabel: 'View Cash Drawer',
         isEnabled: permissions.contains(PosPermissionCodes.viewTill),
-        routeExists: false,
-        onTapActionKey: 'cash-drawer',
+        targetRoute: '/pos/cash-drawer',
         featureKey: PosFeatureCodes.till,
         permissionKey: PosPermissionCodes.viewTill,
         metricValue: 'LKR 1000.00',

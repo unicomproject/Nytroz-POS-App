@@ -26,53 +26,107 @@ class PosHomeActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final canInvoke = action.routeExists && action.isEnabled && onTap != null;
 
-    return PosDashboardCardContainer(
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: TenantAdminColors.secondary,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: TenantAdminColors.info, size: 25),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isTight =
+            constraints.hasBoundedHeight && constraints.maxHeight < 250;
+        final iconSize = isTight ? 34.0 : 48.0;
+        final buttonHeight = isTight ? 36.0 : 46.0;
+        final titleStyle = isTight
+            ? Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: TenantAdminColors.bodyText,
+                  fontWeight: FontWeight.w800,
+                )
+            : TenantAdminTextStyles.sectionTitle(context);
+        final descriptionStyle = isTight
+            ? Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: TenantAdminColors.mutedText,
+                )
+            : TenantAdminTextStyles.muted(context);
+
+        return PosDashboardCardContainer(
+          padding: EdgeInsets.all(
+            isTight ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
           ),
-          const SizedBox(height: TenantAdminSpacing.md),
-          Text(
-            action.label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TenantAdminTextStyles.sectionTitle(context),
-          ),
-          const SizedBox(height: TenantAdminSpacing.xs),
-          Text(
-            description,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TenantAdminTextStyles.muted(context),
-          ),
-          const SizedBox(height: TenantAdminSpacing.md),
-          ...metrics,
-          const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: OutlinedButton(
-              onPressed: canInvoke ? onTap : null,
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: TenantAdminColors.border),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: iconSize,
+                height: iconSize,
+                decoration: const BoxDecoration(
+                  color: TenantAdminColors.secondary,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: TenantAdminColors.info,
+                  size: isTight ? 20 : 25,
                 ),
               ),
-              child: Text(buttonLabel ?? action.buttonLabel),
-            ),
+              SizedBox(
+                  height:
+                      isTight ? TenantAdminSpacing.xs : TenantAdminSpacing.md),
+              Text(
+                action.label,
+                maxLines: isTight ? 1 : 2,
+                style: titleStyle,
+              ),
+              const SizedBox(height: TenantAdminSpacing.xs),
+              Text(
+                description,
+                maxLines: isTight ? 1 : 2,
+                style: descriptionStyle,
+              ),
+              SizedBox(
+                  height:
+                      isTight ? TenantAdminSpacing.xs : TenantAdminSpacing.md),
+              Flexible(
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.topLeft,
+                    child: SizedBox(
+                      width: constraints.maxWidth -
+                          (isTight
+                              ? TenantAdminSpacing.sm * 2
+                              : TenantAdminSpacing.md * 2),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: metrics,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                height: buttonHeight,
+                child: OutlinedButton(
+                  onPressed: canInvoke ? onTap : null,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: TenantAdminColors.border),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isTight
+                          ? TenantAdminSpacing.sm
+                          : TenantAdminSpacing.md,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                    ),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(buttonLabel ?? action.buttonLabel),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -92,10 +146,9 @@ class PosActionMetricLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: TenantAdminSpacing.sm),
+      padding: const EdgeInsets.only(bottom: TenantAdminSpacing.xs),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.baseline,
-        textBaseline: TextBaseline.alphabetic,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Flexible(
             flex: 3,
@@ -105,7 +158,7 @@ class PosActionMetricLine extends StatelessWidget {
               child: Text(
                 value,
                 maxLines: 1,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: color,
                       fontWeight: FontWeight.w800,
                     ),
@@ -114,12 +167,12 @@ class PosActionMetricLine extends StatelessWidget {
           ),
           const SizedBox(width: TenantAdminSpacing.xs),
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Text(
               label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              maxLines: 2,
+              softWrap: true,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: TenantAdminColors.mutedText,
                     fontWeight: FontWeight.w600,
                   ),

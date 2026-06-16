@@ -16,7 +16,8 @@ class TenantAdminPlaceholderScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return TenantAdminPageScaffold(
       title: title,
-      subtitle: subtitle ?? 'This Tenant Admin screen is ready for implementation.',
+      subtitle:
+          subtitle ?? 'This Tenant Admin screen is ready for implementation.',
       child: Center(
         child: Text(
           title,

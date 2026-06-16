@@ -30,7 +30,8 @@ void main() {
       container.dispose();
     });
 
-    test('routes to open till when device is trusted but session is closed', () {
+    test('routes to open till when device is trusted but session is closed',
+        () {
       final container = _createContainer(
         deviceContext: _trustedDevice,
       );

@@ -146,7 +146,9 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
         );
 
     if (opened && mounted) {
-      await ref.read(posSessionBootstrapProvider.notifier).bootstrap(force: true);
+      await ref
+          .read(posSessionBootstrapProvider.notifier)
+          .bootstrap(force: true);
       if (!mounted) {
         return;
       }

@@ -42,6 +42,8 @@ class PosHomeTopGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isStacked = constraints.maxWidth < TenantAdminBreakpoints.tablet;
+        final height =
+            constraints.hasBoundedHeight ? constraints.maxHeight : 330.0;
         final hero = showStartSale
             ? PosStartSaleHeroCard(
                 title: startSaleTitle,
@@ -63,20 +65,32 @@ class PosHomeTopGrid extends StatelessWidget {
             : null;
 
         if (isStacked) {
+          if (constraints.hasBoundedHeight) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (hero != null) Expanded(child: hero),
+                if (hero != null && onlineOrders != null)
+                  const SizedBox(width: TenantAdminSpacing.lg),
+                if (onlineOrders != null) Expanded(child: onlineOrders),
+              ],
+            );
+          }
+
           return Column(
             children: [
               if (hero != null) hero,
               if (hero != null && onlineOrders != null)
                 const SizedBox(height: TenantAdminSpacing.lg),
               if (onlineOrders != null)
-                SizedBox(height: 330, child: onlineOrders),
+                SizedBox(height: height, child: onlineOrders),
             ],
           );
         }
 
         if (hero != null && onlineOrders != null) {
           return SizedBox(
-            height: 330,
+            height: height,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -89,10 +103,10 @@ class PosHomeTopGrid extends StatelessWidget {
         }
 
         if (hero != null) {
-          return SizedBox(height: 330, child: hero);
+          return SizedBox(height: height, child: hero);
         }
 
-        return SizedBox(height: 330, child: onlineOrders);
+        return SizedBox(height: height, child: onlineOrders);
       },
     );
   }

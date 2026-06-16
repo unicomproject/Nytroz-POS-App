@@ -11,11 +11,10 @@ final getTenantAdminMenuProvider = Provider<GetTenantAdminMenu>((ref) {
 
 final tenantAdminMenuProvider =
     FutureProvider<List<TenantAdminMenuItem>>((ref) async {
-  final accessChecker = await ref.watch(tenantAdminAccessCheckerProvider.future);
+  final accessChecker =
+      await ref.watch(tenantAdminAccessCheckerProvider.future);
   final menu = await ref.watch(getTenantAdminMenuProvider).call();
 
-  return menu
-      .where(accessChecker.canAccessMenuItem)
-      .toList(growable: false)
+  return menu.where(accessChecker.canAccessMenuItem).toList(growable: false)
     ..sort((first, second) => first.order.compareTo(second.order));
 });

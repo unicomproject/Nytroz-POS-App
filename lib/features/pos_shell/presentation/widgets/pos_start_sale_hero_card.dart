@@ -26,9 +26,15 @@ class PosStartSaleHeroCard extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < TenantAdminBreakpoints.mobile;
+        final height = constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : isCompact
+                ? 300.0
+                : 330.0;
+        final tightHeight = height < 240;
 
         return SizedBox(
-          height: isCompact ? 300 : 330,
+          height: height,
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
@@ -64,7 +70,7 @@ class PosStartSaleHeroCard extends StatelessWidget {
                   ),
                   Padding(
                     padding: EdgeInsets.all(
-                      isCompact
+                      isCompact || tightHeight
                           ? TenantAdminSpacing.lg
                           : TenantAdminSpacing.xxl,
                     ),
@@ -72,7 +78,8 @@ class PosStartSaleHeroCard extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
-                          maxWidth: isCompact ? 270 : 390,
+                          maxWidth:
+                              isCompact ? 270 : constraints.maxWidth * 0.52,
                         ),
                         child: _HeroCopy(
                           isEnabled: isEnabled,
@@ -81,7 +88,7 @@ class PosStartSaleHeroCard extends StatelessWidget {
                           description: description,
                           buttonLabel: buttonLabel,
                           onStartSale: onStartSale,
-                          compact: isCompact,
+                          compact: isCompact || tightHeight,
                         ),
                       ),
                     ),
@@ -118,7 +125,7 @@ class _HeroCopy extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final headingStyle = (compact
-            ? Theme.of(context).textTheme.headlineSmall
+            ? Theme.of(context).textTheme.titleLarge
             : Theme.of(context).textTheme.headlineMedium)
         ?.copyWith(
       color: Colors.white,
@@ -133,13 +140,16 @@ class _HeroCopy extends StatelessWidget {
         const SizedBox(height: TenantAdminSpacing.sm),
         Text(
           description,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.white.withValues(alpha: 0.84),
-              ),
+          maxLines: compact ? 3 : 2,
+          style: (compact
+                  ? Theme.of(context).textTheme.bodyMedium
+                  : Theme.of(context).textTheme.bodyLarge)
+              ?.copyWith(
+            color: Colors.white.withValues(alpha: 0.84),
+          ),
         ),
         SizedBox(
-          height: compact ? TenantAdminSpacing.lg : TenantAdminSpacing.xl,
-        ),
+            height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.xl),
         if (!compact && !isEnabled && disabledMessage != null) ...[
           Text(
             disabledMessage!,
@@ -150,11 +160,14 @@ class _HeroCopy extends StatelessWidget {
           const SizedBox(height: TenantAdminSpacing.sm),
         ],
         SizedBox(
-          height: 52,
+          height: compact ? 44 : 52,
           child: ElevatedButton.icon(
             onPressed: isEnabled ? onStartSale : null,
             icon: const Icon(Icons.add_shopping_cart_rounded),
-            label: Text(buttonLabel),
+            label: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(buttonLabel),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: TenantAdminColors.surface,
               foregroundColor: TenantAdminColors.primary,
@@ -163,7 +176,7 @@ class _HeroCopy extends StatelessWidget {
               disabledForegroundColor:
                   TenantAdminColors.primary.withValues(alpha: 0.62),
               padding: const EdgeInsets.symmetric(
-                horizontal: TenantAdminSpacing.xl,
+                horizontal: TenantAdminSpacing.lg,
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(TenantAdminRadius.md),

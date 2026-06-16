@@ -55,8 +55,10 @@ void main() {
       );
 
       await tester.enterText(find.byType(TextFormField).at(0), 'TENANT001');
-      await tester.enterText(find.byType(TextFormField).at(1), 'cashier@test.local');
-      await tester.enterText(find.byType(TextFormField).at(2), 'wrong-password');
+      await tester.enterText(
+          find.byType(TextFormField).at(1), 'cashier@test.local');
+      await tester.enterText(
+          find.byType(TextFormField).at(2), 'wrong-password');
       await tester.ensureVisible(find.text('Sign In'));
       await tester.tap(find.text('Sign In'));
       await tester.pumpAndSettle();

@@ -50,8 +50,10 @@ class TenantAdminBottomNav extends StatelessWidget {
           order: 999,
         ),
     ];
-    final selectedIndex = navItems.indexWhere((item) => item.route == currentPath);
-    final currentPathIsInMore = moreItems.any((item) => item.route == currentPath);
+    final selectedIndex =
+        navItems.indexWhere((item) => item.route == currentPath);
+    final currentPathIsInMore =
+        moreItems.any((item) => item.route == currentPath);
 
     return BottomNavigationBar(
       currentIndex: selectedIndex < 0

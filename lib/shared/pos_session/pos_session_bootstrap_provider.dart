@@ -20,7 +20,8 @@ class PosSessionBootstrapState {
   final bool isReady;
 }
 
-class PosSessionBootstrapNotifier extends StateNotifier<PosSessionBootstrapState> {
+class PosSessionBootstrapNotifier
+    extends StateNotifier<PosSessionBootstrapState> {
   PosSessionBootstrapNotifier(this._ref, {bool autoStart = true})
       : super(const PosSessionBootstrapState()) {
     if (autoStart) {
@@ -99,8 +100,7 @@ class PosSessionBootstrapNotifier extends StateNotifier<PosSessionBootstrapState
   }
 }
 
-final posSessionBootstrapProvider =
-    StateNotifierProvider<PosSessionBootstrapNotifier, PosSessionBootstrapState>(
-        (ref) {
+final posSessionBootstrapProvider = StateNotifierProvider<
+    PosSessionBootstrapNotifier, PosSessionBootstrapState>((ref) {
   return PosSessionBootstrapNotifier(ref);
 });

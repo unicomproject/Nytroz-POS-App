@@ -65,9 +65,8 @@ class PosDeviceContext {
       tillId: json['tillId'] as String? ?? '',
       tillCode: json['tillCode'] as String? ?? '',
       tillName: json['tillName'] as String? ?? '',
-      pairedAt:
-          DateTime.tryParse(json['pairedAt']?.toString() ?? '') ??
-              DateTime.now(),
+      pairedAt: DateTime.tryParse(json['pairedAt']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 }

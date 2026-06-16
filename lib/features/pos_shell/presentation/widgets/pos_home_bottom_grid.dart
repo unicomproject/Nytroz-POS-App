@@ -18,6 +18,10 @@ class PosHomeBottomGrid extends StatelessWidget {
     required this.showCustomer,
     required this.showParkedSales,
     required this.showCashDrawer,
+    this.onViewReturns,
+    this.onAddCustomer,
+    this.onViewParkedSales,
+    this.onViewCashDrawer,
   });
 
   final PosHomeAction returnsAction;
@@ -28,14 +32,34 @@ class PosHomeBottomGrid extends StatelessWidget {
   final bool showCustomer;
   final bool showParkedSales;
   final bool showCashDrawer;
+  final VoidCallback? onViewReturns;
+  final VoidCallback? onAddCustomer;
+  final VoidCallback? onViewParkedSales;
+  final VoidCallback? onViewCashDrawer;
 
   @override
   Widget build(BuildContext context) {
     final cards = <Widget>[
-      if (showReturns) PosReturnsSummaryCard(action: returnsAction),
-      if (showCustomer) PosCustomerSummaryCard(action: customerAction),
-      if (showParkedSales) PosParkedSalesSummaryCard(action: parkedSalesAction),
-      if (showCashDrawer) PosCashDrawerSummaryCard(action: cashDrawerAction),
+      if (showReturns)
+        PosReturnsSummaryCard(
+          action: returnsAction,
+          onViewReturns: onViewReturns,
+        ),
+      if (showCustomer)
+        PosCustomerSummaryCard(
+          action: customerAction,
+          onAddCustomer: onAddCustomer,
+        ),
+      if (showParkedSales)
+        PosParkedSalesSummaryCard(
+          action: parkedSalesAction,
+          onViewParkedSales: onViewParkedSales,
+        ),
+      if (showCashDrawer)
+        PosCashDrawerSummaryCard(
+          action: cashDrawerAction,
+          onViewCashDrawer: onViewCashDrawer,
+        ),
     ];
 
     if (cards.isEmpty) {
@@ -45,16 +69,24 @@ class PosHomeBottomGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final columnCount = _columnCountFor(constraints.maxWidth, cards.length);
+        final hasBoundedHeight = constraints.hasBoundedHeight;
+        final rowCount = (cards.length / columnCount).ceil();
+        final availableSpacing =
+            TenantAdminSpacing.lg * (rowCount - 1).clamp(0, rowCount);
+        final itemExtent = hasBoundedHeight
+            ? ((constraints.maxHeight - availableSpacing) / rowCount)
+                .clamp(210.0, 320.0)
+            : 300.0;
 
         return GridView.builder(
-          shrinkWrap: true,
+          shrinkWrap: !hasBoundedHeight,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: cards.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columnCount,
             crossAxisSpacing: TenantAdminSpacing.lg,
             mainAxisSpacing: TenantAdminSpacing.lg,
-            mainAxisExtent: 320,
+            mainAxisExtent: itemExtent,
           ),
           itemBuilder: (context, index) => cards[index],
         );

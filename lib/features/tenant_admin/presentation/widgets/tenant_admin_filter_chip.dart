@@ -28,10 +28,12 @@ class TenantAdminFilterChip extends StatelessWidget {
           vertical: TenantAdminSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: selected ? TenantAdminColors.primary : TenantAdminColors.surface,
+          color:
+              selected ? TenantAdminColors.primary : TenantAdminColors.surface,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? TenantAdminColors.primary : TenantAdminColors.border,
+            color:
+                selected ? TenantAdminColors.primary : TenantAdminColors.border,
           ),
         ),
         child: Row(
@@ -61,7 +63,8 @@ class TenantAdminFilterChip extends StatelessWidget {
                   child: Text(
                     '$count',
                     style: TextStyle(
-                      color: selected ? Colors.white : TenantAdminColors.mutedText,
+                      color:
+                          selected ? Colors.white : TenantAdminColors.mutedText,
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                     ),

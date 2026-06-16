@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../auth/presentation/providers/session_provider.dart';
 import '../config/pos_shell_nav_destinations.dart';
 import '../providers/pos_shell_navigation_provider.dart';
 import '../../domain/entities/pos_shell_nav_destination.dart';
@@ -44,7 +45,7 @@ class PosSidebar extends ConsumerWidget {
                 );
               }),
               const Spacer(),
-              const _UserPlaceholder(),
+              const _UserMenu(),
             ],
           ),
         ),
@@ -118,40 +119,92 @@ class _LogoPlaceholder extends StatelessWidget {
   }
 }
 
-class _UserPlaceholder extends StatelessWidget {
-  const _UserPlaceholder();
+enum _UserMenuAction { profile, logout }
+
+class _UserMenu extends ConsumerWidget {
+  const _UserMenu();
 
   @override
-  Widget build(BuildContext context) {
-    return const Tooltip(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Tooltip(
       message: 'User profile',
       child: SizedBox(
         height: 58,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: TenantAdminColors.navySoft,
-              child: Icon(Icons.person_outline, color: Colors.white),
-            ),
-            Positioned(
-              right: 16,
-              bottom: 7,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: TenantAdminColors.success,
-                  shape: BoxShape.circle,
-                  border: Border.fromBorderSide(
-                    BorderSide(color: TenantAdminColors.navy, width: 2),
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => _showUserMenu(context, ref),
+            child: const Stack(
+              alignment: Alignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: TenantAdminColors.navySoft,
+                  child: Icon(Icons.person_outline, color: Colors.white),
+                ),
+                Positioned(
+                  right: 16,
+                  bottom: 7,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: TenantAdminColors.success,
+                      shape: BoxShape.circle,
+                      border: Border.fromBorderSide(
+                        BorderSide(color: TenantAdminColors.navy, width: 2),
+                      ),
+                    ),
+                    child: SizedBox(width: 12, height: 12),
                   ),
                 ),
-                child: SizedBox(width: 12, height: 12),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
+  }
+
+  Future<void> _showUserMenu(BuildContext context, WidgetRef ref) async {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) {
+      return;
+    }
+
+    final offset = box.localToGlobal(Offset.zero);
+    final selected = await showMenu<_UserMenuAction>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        offset.dx + box.size.width,
+        offset.dy,
+        offset.dx,
+        offset.dy + box.size.height,
+      ),
+      items: const [
+        PopupMenuItem(
+          value: _UserMenuAction.profile,
+          child: Text('Profile'),
+        ),
+        PopupMenuItem(
+          value: _UserMenuAction.logout,
+          child: Text('Logout'),
+        ),
+      ],
+    );
+
+    if (!context.mounted || selected == null) {
+      return;
+    }
+
+    switch (selected) {
+      case _UserMenuAction.profile:
+        context.go('/pos/profile');
+      case _UserMenuAction.logout:
+        await ref.read(authSessionProvider.notifier).clear();
+        if (context.mounted) {
+          context.go('/tenant-login');
+        }
+    }
   }
 }

@@ -11,15 +11,17 @@ List<RouteBase> deviceActivationRoutes(Ref ref) {
   return [
     GoRoute(
       path: '/device-activation',
-      builder: (context, state) => _canActivateDevice(ref.read(authSessionProvider))
-          ? const DeviceActivationScreen()
-          : const TenantAdminForbiddenScreen(),
+      builder: (context, state) =>
+          _canActivateDevice(ref.read(authSessionProvider))
+              ? const DeviceActivationScreen()
+              : const TenantAdminForbiddenScreen(),
     ),
     GoRoute(
       path: '/pos/device-activation',
-      builder: (context, state) => _canActivateDevice(ref.read(authSessionProvider))
-          ? const DeviceActivationScreen()
-          : const TenantAdminForbiddenScreen(),
+      builder: (context, state) =>
+          _canActivateDevice(ref.read(authSessionProvider))
+              ? const DeviceActivationScreen()
+              : const TenantAdminForbiddenScreen(),
     ),
   ];
 }
