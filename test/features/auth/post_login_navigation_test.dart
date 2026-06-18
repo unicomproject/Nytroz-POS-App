@@ -53,12 +53,31 @@ void main() {
       expect(route, PostLoginRoute.posHome);
       container.dispose();
     });
+
+    test('bootstrap exposes device API failures instead of becoming ready',
+        () async {
+      final container = _createContainer(
+        deviceRepository: _ThrowingDeviceActivationRepository(),
+      );
+      addTearDown(container.dispose);
+
+      await container
+          .read(posSessionBootstrapProvider.notifier)
+          .bootstrap(force: true);
+      final state = container.read(posSessionBootstrapProvider);
+
+      expect(state.isReady, isFalse);
+      expect(state.hasError, isTrue);
+      expect(state.failedStep, 'refresh-current-device');
+      expect(state.errorMessage, contains('Device API timed out'));
+    });
   });
 }
 
 ProviderContainer _createContainer({
   PosDeviceContext? deviceContext,
   TillSession? tillSession,
+  DeviceActivationRepository? deviceRepository,
 }) {
   return ProviderContainer(
     overrides: [
@@ -73,7 +92,9 @@ ProviderContainer _createContainer({
         _TestTillSessionStorage(null),
       ),
       activateDeviceProvider.overrideWithValue(
-        ActivateDevice(_FakeDeviceActivationRepository(deviceContext)),
+        ActivateDevice(
+          deviceRepository ?? _FakeDeviceActivationRepository(deviceContext),
+        ),
       ),
       openTillProvider.overrideWithValue(
         OpenTill(_FakeTillRepository(tillSession)),
@@ -141,6 +162,21 @@ class _FakeDeviceActivationRepository implements DeviceActivationRepository {
   }
 }
 
+class _ThrowingDeviceActivationRepository
+    implements DeviceActivationRepository {
+  @override
+  Future<PosDeviceContext> activateDevice(DeviceActivationForm form) async {
+    throw StateError('Device API timed out');
+  }
+
+  @override
+  Future<PosDeviceContext?> getCurrentDevice(
+    DeviceActivationForm form,
+  ) async {
+    throw StateError('Device API timed out');
+  }
+}
+
 class _FakeTillRepository implements TillRepository {
   _FakeTillRepository(this.session);
 
@@ -182,6 +218,11 @@ class _TestDeviceContextStorage extends DeviceContextStorage {
   @override
   Future<String> readOrCreateDeviceFingerprint() async {
     return _deviceContext?.deviceFingerprint ?? 'test-device-fingerprint';
+  }
+
+  @override
+  Future<List<String>> readDeviceFingerprintCandidates() async {
+    return [_deviceContext?.deviceFingerprint ?? 'test-device-fingerprint'];
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:developer' as developer;
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -245,17 +246,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
+      final stopwatch = Stopwatch()..start();
+      developer.log(
+        'Login request started. endpoint=/api/v1/auth/tenant-login',
+        name: 'auth.login',
+      );
       final session = await ref.read(loginProvider).call(
             tenantCode: _tenantCode.text.trim(),
             login: _email.text.trim(),
             password: _password.text,
           );
+      stopwatch.stop();
+      developer.log(
+        'Login request succeeded. endpoint=/api/v1/auth/tenant-login durationMs=${stopwatch.elapsedMilliseconds}',
+        name: 'auth.login',
+      );
       if (!session.isAuthenticated) {
         throw StateError('Invalid credentials');
       }
-      await ref.read(authSessionProvider.notifier).setSession(session);
       ref.read(appDioProvider).options.headers['Authorization'] =
           'Bearer ${session.accessToken}';
+      developer.log(
+        'Authorization header attached before auth session state update.',
+        name: 'auth.network',
+      );
+      await ref.read(authSessionProvider.notifier).setSession(session);
     } on AuthException catch (error) {
       setState(() => _error = '${error.message} (${error.errorCode})');
     } catch (_) {

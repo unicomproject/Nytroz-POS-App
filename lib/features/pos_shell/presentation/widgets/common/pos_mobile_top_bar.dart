@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../../../core/access/pos_access_codes.dart';
+import '../../../../auth/presentation/providers/session_provider.dart';
+import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
-class PosMobileTopBar extends StatelessWidget implements PreferredSizeWidget {
+class PosMobileTopBar extends ConsumerWidget implements PreferredSizeWidget {
   const PosMobileTopBar({super.key});
 
   @override
   Size get preferredSize => const Size.fromHeight(64);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(authSessionProvider);
+    final canViewNotifications =
+        session?.hasPermission(PosPermissionCodes.viewNotifications) == true;
+
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: TenantAdminColors.navy,
@@ -22,22 +29,22 @@ class PosMobileTopBar extends StatelessWidget implements PreferredSizeWidget {
           Icon(Icons.local_activity_outlined, size: 24),
           SizedBox(width: TenantAdminSpacing.sm),
           Text(
-            'SCS-TIX',
+            'NytrozPOS',
             style: TextStyle(
               fontSize: 19,
               fontWeight: FontWeight.w800,
-              letterSpacing: 0.5,
             ),
           ),
         ],
       ),
       actions: [
-        IconButton(
-          onPressed: () {},
-          tooltip: 'Notifications',
-          icon: const _NotificationIcon(),
-          constraints: const BoxConstraints(minWidth: 56, minHeight: 56),
-        ),
+        if (canViewNotifications)
+          IconButton(
+            onPressed: () {},
+            tooltip: 'Notifications',
+            icon: const _NotificationIcon(),
+            constraints: const BoxConstraints(minWidth: 56, minHeight: 56),
+          ),
         IconButton(
           onPressed: () {},
           tooltip: 'Menu',

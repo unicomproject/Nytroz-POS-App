@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/pos_home_action.dart';
-import 'pos_home_action_card.dart';
+import 'home/pos_home_action_card.dart';
 
 class PosReturnsSummaryCard extends StatelessWidget {
   const PosReturnsSummaryCard({

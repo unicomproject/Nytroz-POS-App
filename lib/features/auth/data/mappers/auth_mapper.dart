@@ -58,14 +58,16 @@ extension SetupTokenValidationDtoMapper on SetupTokenValidationDto {
 }
 
 AuthSession authSessionFromJson(Map<String, dynamic> json) {
-  final payload = json['data'] is Map<String, dynamic>
-      ? json['data'] as Map<String, dynamic>
-      : json;
-  final user = payload['user'] is Map<String, dynamic>
-      ? payload['user'] as Map<String, dynamic>
-      : const <String, dynamic>{};
-  final accessToken =
-      payload['accessToken'] as String? ?? payload['token'] as String? ?? '';
+  final rawPayload = json['data'] ?? json['Data'];
+  final payload = rawPayload is Map<String, dynamic> ? rawPayload : json;
+  final rawUser = payload['user'] ?? payload['User'];
+  final user =
+      rawUser is Map<String, dynamic> ? rawUser : const <String, dynamic>{};
+  final accessToken = payload['accessToken'] as String? ??
+      payload['AccessToken'] as String? ??
+      payload['token'] as String? ??
+      payload['Token'] as String? ??
+      '';
 
   if (accessToken.isEmpty) {
     throw const AuthException(
@@ -76,46 +78,79 @@ AuthSession authSessionFromJson(Map<String, dynamic> json) {
 
   return AuthSession(
     accessToken: accessToken,
-    refreshToken: payload['refreshToken'] as String?,
-    userId: user['id'] as String? ?? payload['userId'] as String? ?? '',
+    refreshToken: payload['refreshToken'] as String? ??
+        payload['RefreshToken'] as String?,
+    userId: user['id'] as String? ??
+        user['Id'] as String? ??
+        payload['userId'] as String? ??
+        payload['UserId'] as String? ??
+        '',
     userDisplayName: user['fullName'] as String? ??
+        user['FullName'] as String? ??
         user['username'] as String? ??
+        user['Username'] as String? ??
         user['email'] as String? ??
+        user['Email'] as String? ??
         payload['userDisplayName'] as String? ??
+        payload['UserDisplayName'] as String? ??
         '',
     permissionCodes: _permissionCodesFromJson(payload),
     expiresAt: DateTime.tryParse(
       payload['accessTokenExpiresAt']?.toString() ??
+          payload['AccessTokenExpiresAt']?.toString() ??
           payload['expiresAt']?.toString() ??
+          payload['ExpiresAt']?.toString() ??
           '',
     ),
   );
 }
 
 List<String> _permissionCodesFromJson(Map<String, dynamic> payload) {
-  final rawPermissionCodes = payload['permissionCodes'];
+  final rawPermissionCodes = payload['permissionCodes'] ??
+      payload['PermissionCodes'] ??
+      _mapValue(payload['user'], 'permissionCodes') ??
+      _mapValue(payload['user'], 'PermissionCodes');
   if (rawPermissionCodes is Iterable) {
     return rawPermissionCodes
         .map((item) => item.toString())
-        .where((item) => item.trim().isNotEmpty)
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
         .toList(growable: false);
   }
 
-  final rawPermissions = payload['permissions'];
+  final rawPermissions = payload['permissions'] ??
+      payload['Permissions'] ??
+      _mapValue(payload['user'], 'permissions') ??
+      _mapValue(payload['user'], 'Permissions');
   if (rawPermissions is Iterable) {
     return rawPermissions
         .map((item) {
           if (item is Map) {
             return item['permissionCode']?.toString() ??
-                item['code']?.toString();
+                item['PermissionCode']?.toString() ??
+                item['code']?.toString() ??
+                item['Code']?.toString();
           }
 
           return item.toString();
         })
         .whereType<String>()
-        .where((item) => item.trim().isNotEmpty)
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
         .toList(growable: false);
   }
 
   return const [];
+}
+
+Object? _mapValue(Object? value, String key) {
+  if (value is Map<String, dynamic>) {
+    return value[key];
+  }
+
+  if (value is Map) {
+    return value[key];
+  }
+
+  return null;
 }

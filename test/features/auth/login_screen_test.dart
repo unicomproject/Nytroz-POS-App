@@ -68,12 +68,44 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('attaches auth header before publishing login session', (
+      tester,
+    ) async {
+      final dio = Dio(BaseOptions(baseUrl: 'https://test.local'));
+      String? headerWhenSessionChanged;
+
+      await _pumpLoginScreen(
+        tester,
+        dio: dio,
+        sessionListener: (ref) {
+          ref.listen<AuthSession?>(authSessionProvider, (_, next) {
+            if (next != null) {
+              headerWhenSessionChanged =
+                  dio.options.headers['Authorization']?.toString();
+            }
+          });
+        },
+      );
+
+      await tester.enterText(find.byType(TextFormField).at(0), 'TENANT001');
+      await tester.enterText(
+          find.byType(TextFormField).at(1), 'cashier@test.local');
+      await tester.enterText(find.byType(TextFormField).at(2), 'password');
+      await tester.ensureVisible(find.text('Sign In'));
+      await tester.tap(find.text('Sign In'));
+      await tester.pumpAndSettle();
+
+      expect(headerWhenSessionChanged, 'Bearer access-token');
+    });
   });
 }
 
 Future<void> _pumpLoginScreen(
   WidgetTester tester, {
   Login? login,
+  Dio? dio,
+  void Function(WidgetRef ref)? sessionListener,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = const Size(1200, 900);
@@ -84,7 +116,7 @@ Future<void> _pumpLoginScreen(
     ProviderScope(
       overrides: [
         appDioProvider.overrideWithValue(
-          Dio(BaseOptions(baseUrl: 'https://test.local')),
+          dio ?? Dio(BaseOptions(baseUrl: 'https://test.local')),
         ),
         authSessionStorageProvider.overrideWithValue(
           _TestAuthSessionStorage(),
@@ -93,8 +125,13 @@ Future<void> _pumpLoginScreen(
           login ?? Login(_SuccessfulAuthRepository()),
         ),
       ],
-      child: const MaterialApp(
-        home: LoginScreen(),
+      child: MaterialApp(
+        home: Consumer(
+          builder: (context, ref, child) {
+            sessionListener?.call(ref);
+            return const LoginScreen();
+          },
+        ),
       ),
     ),
   );

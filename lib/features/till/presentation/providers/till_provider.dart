@@ -81,8 +81,11 @@ class TillController extends StateNotifier<TillState> {
         errorMessage: error.message,
       );
       return false;
-    } catch (_) {
-      state = state.copyWith(isRefreshing: false);
+    } catch (error) {
+      state = state.copyWith(
+        isRefreshing: false,
+        errorMessage: 'Current till session failed unexpectedly: $error',
+      );
       return false;
     }
   }

@@ -17,14 +17,14 @@ const posShellNavDestinations = <PosShellNavDestination>[
     label: 'New Sale',
     icon: Icons.add_shopping_cart_rounded,
     routePath: '/pos/new-sale',
-    permissionKey: PosPermissionCodes.startSale,
+    permissionKey: PosPermissionCodes.viewNewSale,
     routeExists: true,
   ),
   PosShellNavDestination(
     key: 'orders',
     label: 'Orders',
     icon: Icons.receipt_long_outlined,
-    permissionKey: PosPermissionCodes.manageOnlineOrders,
+    permissionKey: PosPermissionCodes.viewOrders,
     unavailableMessage: 'Orders screen is not available yet.',
   ),
   PosShellNavDestination(
@@ -33,8 +33,8 @@ const posShellNavDestinations = <PosShellNavDestination>[
     icon: Icons.people_outline_rounded,
     routePath: '/pos/customers',
     anyOfPermissionKeys: [
-      PosPermissionCodes.viewCustomers,
-      PosPermissionCodes.createCustomer,
+      PosPermissionCodes.viewNewSaleCustomers,
+      PosPermissionCodes.createNewSaleCustomer,
     ],
     routeExists: true,
   ),
@@ -43,7 +43,10 @@ const posShellNavDestinations = <PosShellNavDestination>[
     label: 'Return & Refund',
     icon: Icons.assignment_return_outlined,
     routePath: '/pos/returns-refunds',
-    permissionKey: PosPermissionCodes.processRefund,
+    anyOfPermissionKeys: [
+      PosPermissionCodes.viewReturns,
+      PosPermissionCodes.viewRefunds,
+    ],
     routeExists: true,
   ),
   PosShellNavDestination(
@@ -51,10 +54,7 @@ const posShellNavDestinations = <PosShellNavDestination>[
     label: 'Cash Drawer',
     icon: Icons.point_of_sale_outlined,
     routePath: '/pos/cash-drawer',
-    anyOfPermissionKeys: [
-      PosPermissionCodes.viewTill,
-      PosPermissionCodes.cashMovement,
-    ],
+    permissionKey: PosPermissionCodes.viewCashDrawer,
     routeExists: true,
   ),
 ];

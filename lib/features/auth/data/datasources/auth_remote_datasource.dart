@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:dio/dio.dart';
 
 import '../../domain/entities/auth_exception.dart';
@@ -58,13 +60,26 @@ class AuthRemoteDatasource {
   }
 
   Future<Map<String, dynamic>> login(LoginRequestDto request) async {
+    const endpoint = '/api/v1/auth/tenant-login';
+    final stopwatch = Stopwatch()..start();
+
     try {
       final response = await _dio.post<Map<String, dynamic>>(
-        '/api/v1/auth/tenant-login',
+        endpoint,
         data: request.toJson(),
+      );
+      stopwatch.stop();
+      developer.log(
+        'API success. step=tenant-login endpoint=$endpoint status=${response.statusCode} durationMs=${stopwatch.elapsedMilliseconds}',
+        name: 'auth.login',
       );
       return response.data ?? const {};
     } on DioException catch (error) {
+      stopwatch.stop();
+      developer.log(
+        'API failure. step=tenant-login endpoint=$endpoint status=${error.response?.statusCode ?? 'none'} durationMs=${stopwatch.elapsedMilliseconds} message=${error.message}',
+        name: 'auth.login',
+      );
       final data = error.response?.data;
       if (data is Map<String, dynamic>) {
         throw AuthException(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
 class PosMetricTile extends StatelessWidget {
   const PosMetricTile({

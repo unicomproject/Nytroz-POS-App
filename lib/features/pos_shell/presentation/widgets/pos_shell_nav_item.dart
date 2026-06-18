@@ -27,26 +27,26 @@ class PosShellNavItem extends StatelessWidget {
             : Colors.white38;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Material(
         color: selected ? TenantAdminColors.info : Colors.transparent,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         child: Tooltip(
           message: isEnabled ? label : '$label is not available yet',
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 64),
+              constraints: const BoxConstraints(minHeight: 58),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: TenantAdminSpacing.xs,
-                  vertical: TenantAdminSpacing.sm,
+                  vertical: 6,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(icon, color: foregroundColor, size: 24),
+                    Icon(icon, color: foregroundColor, size: 23),
                     const SizedBox(height: TenantAdminSpacing.xs),
                     Text(
                       label,
@@ -55,7 +55,7 @@ class PosShellNavItem extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: foregroundColor,
-                            fontSize: 10,
+                            fontSize: 9.5,
                             fontWeight:
                                 selected ? FontWeight.w700 : FontWeight.w600,
                           ),
