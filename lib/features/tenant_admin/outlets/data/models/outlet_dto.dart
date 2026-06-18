@@ -13,7 +13,7 @@ class OutletDto {
 
   factory OutletDto.fromJson(Map<String, dynamic> json) {
     return OutletDto(
-      id: json['id'] as String? ?? '',
+      id: json['id']?.toString() ?? '',
       name: json['name'] as String? ?? json['outletName'] as String? ?? '',
       code: json['code'] as String? ?? json['outletCode'] as String? ?? '',
       location: json['location'] as String? ?? json['address'] as String? ?? '',
@@ -22,9 +22,7 @@ class OutletDto {
       onlineTillCount:
           _intValue(json['onlineTillCount'] ?? json['onlineTills']),
       staffCount: _intValue(json['staffCount'] ?? json['staff']),
-      todaysSales: json['todaysSales']?.toString() ??
-          json['todaySales']?.toString() ??
-          '',
+      todaysSales: _formatSales(json['todaysSales'] ?? json['todaySales']),
     );
   }
 
@@ -43,38 +41,54 @@ class OutletListResultDto {
   const OutletListResultDto({
     required this.summary,
     required this.items,
+    this.page = 1,
+    this.pageSize = 10,
+    this.totalCount = 0,
   });
 
   factory OutletListResultDto.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'] ?? json['outlets'];
+    final items = _mapList(rawItems, OutletDto.fromJson);
+    final page = _intValue(json['page'], fallback: 1);
+    final pageSize = _intValue(json['pageSize'], fallback: 10);
+    final totalCount = _intValue(json['totalCount'], fallback: items.length);
 
     return OutletListResultDto(
-      summary: OutletListSummaryDto.fromJson(
-        Map<String, dynamic>.from(json['summary'] as Map? ?? const {}),
-      ),
-      items: _mapList(rawItems, OutletDto.fromJson),
+      summary: json['summary'] is Map
+          ? OutletListSummaryDto.fromJson(
+              Map<String, dynamic>.from(json['summary'] as Map),
+            )
+          : OutletListSummaryDto.fromPagedList(
+              items: items,
+              totalCount: totalCount,
+            ),
+      items: items,
+      page: page,
+      pageSize: pageSize,
+      totalCount: totalCount,
     );
   }
 
   factory OutletListResultDto.fromArray(List<dynamic> items) {
     final outlets = _mapList(items, OutletDto.fromJson);
-    final active = outlets
-        .where((outlet) => outlet.status.toLowerCase() == 'active')
-        .length;
 
     return OutletListResultDto(
-      summary: OutletListSummaryDto(
-        totalOutlets: outlets.length,
-        activeOutlets: active,
-        inactiveOutlets: outlets.length - active,
-        totalLocations: outlets.length,
+      summary: OutletListSummaryDto.fromPagedList(
+        items: outlets,
+        totalCount: outlets.length,
       ),
       items: outlets,
+      page: 1,
+      pageSize: outlets.length,
+      totalCount: outlets.length,
     );
   }
 
   final OutletListSummaryDto summary;
   final List<OutletDto> items;
+  final int page;
+  final int pageSize;
+  final int totalCount;
 }
 
 class OutletListSummaryDto {
@@ -94,6 +108,22 @@ class OutletListSummaryDto {
     );
   }
 
+  factory OutletListSummaryDto.fromPagedList({
+    required List<OutletDto> items,
+    required int totalCount,
+  }) {
+    final active = items
+        .where((outlet) => outlet.status.toLowerCase() == 'active')
+        .length;
+
+    return OutletListSummaryDto(
+      totalOutlets: totalCount,
+      activeOutlets: active,
+      inactiveOutlets: items.length - active,
+      totalLocations: totalCount,
+    );
+  }
+
   final int totalOutlets;
   final int activeOutlets;
   final int inactiveOutlets;
@@ -107,27 +137,49 @@ class OutletDetailsDto {
     required this.code,
     required this.address,
     required this.status,
+    this.phone,
+    this.email,
     this.managerName,
     this.managerPhone,
     this.openingHours,
     this.todaysStatus,
-    required this.metrics,
-    required this.assignedTills,
-    required this.staff,
-    required this.needsAttention,
+    this.tillCount,
+    this.onlineTillCount,
+    this.staffCount,
+    this.todaySalesAmount,
+    this.todaySalesCurrency,
+    this.weekSalesAmount,
+    this.weekSalesCurrency,
+    this.metrics = const [],
+    this.assignedTills = const [],
+    this.staff = const [],
+    this.needsAttention = const [],
   });
 
   factory OutletDetailsDto.fromJson(Map<String, dynamic> json) {
+    final todaySales = json['todaySales'] ?? json['todaysSales'];
+    final weekSales = json['weekSales'];
+
     return OutletDetailsDto(
-      id: json['id'] as String? ?? '',
+      id: json['id']?.toString() ?? '',
       name: json['name'] as String? ?? json['outletName'] as String? ?? '',
       code: json['code'] as String? ?? json['outletCode'] as String? ?? '',
-      address: json['address'] as String? ?? '',
+      address: json['address'] as String? ?? _formatAddress(json),
       status: json['status'] as String? ?? '',
+      phone: json['phone'] as String?,
+      email: json['email'] as String?,
       managerName: json['managerName'] as String?,
-      managerPhone: json['managerPhone'] as String?,
+      managerPhone:
+          json['managerPhone'] as String? ?? json['phone'] as String?,
       openingHours: json['openingHours']?.toString(),
       todaysStatus: json['todaysStatus'] as String?,
+      tillCount: _nullableInt(json['tillCount']),
+      onlineTillCount: _nullableInt(json['onlineTillCount']),
+      staffCount: _nullableInt(json['staffCount']),
+      todaySalesAmount: _salesAmount(todaySales),
+      todaySalesCurrency: _salesCurrency(todaySales),
+      weekSalesAmount: _salesAmount(weekSales),
+      weekSalesCurrency: _salesCurrency(weekSales),
       metrics: _mapList(json['metrics'], OutletDetailMetricDto.fromJson),
       assignedTills:
           _mapList(json['assignedTills'], OutletRelatedItemDto.fromJson),
@@ -142,10 +194,19 @@ class OutletDetailsDto {
   final String code;
   final String address;
   final String status;
+  final String? phone;
+  final String? email;
   final String? managerName;
   final String? managerPhone;
   final String? openingHours;
   final String? todaysStatus;
+  final int? tillCount;
+  final int? onlineTillCount;
+  final int? staffCount;
+  final double? todaySalesAmount;
+  final String? todaySalesCurrency;
+  final double? weekSalesAmount;
+  final String? weekSalesCurrency;
   final List<OutletDetailMetricDto> metrics;
   final List<OutletRelatedItemDto> assignedTills;
   final List<OutletRelatedItemDto> staff;
@@ -203,6 +264,7 @@ class OutletAttentionItemDto {
     required this.title,
     required this.message,
     this.status,
+    this.route,
   });
 
   factory OutletAttentionItemDto.fromJson(Map<String, dynamic> json) {
@@ -210,12 +272,14 @@ class OutletAttentionItemDto {
       title: json['title'] as String? ?? '',
       message: json['message'] as String? ?? '',
       status: json['status'] as String?,
+      route: json['route'] as String?,
     );
   }
 
   final String title;
   final String message;
   final String? status;
+  final String? route;
 }
 
 class OutletManagerOptionDto {
@@ -250,10 +314,78 @@ List<T> _mapList<T>(
       .toList(growable: false);
 }
 
-int _intValue(Object? value) {
+int _intValue(Object? value, {int fallback = 0}) {
   if (value is int) {
     return value;
   }
 
-  return int.tryParse(value?.toString() ?? '') ?? 0;
+  return int.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
+String _formatSales(Object? value) {
+  if (value is Map) {
+    final amount = value['amount'];
+    final currency = value['currency']?.toString() ?? '';
+    if (amount == null) {
+      return '';
+    }
+
+    final formattedAmount = amount is num
+        ? amount.toStringAsFixed(amount is int ? 0 : 2)
+        : amount.toString();
+
+    return currency.isEmpty ? formattedAmount : '$currency $formattedAmount';
+  }
+
+  return value?.toString() ?? '';
+}
+
+int? _nullableInt(Object? value) {
+  if (value == null) {
+    return null;
+  }
+
+  if (value is int) {
+    return value;
+  }
+
+  return int.tryParse(value.toString());
+}
+
+double? _salesAmount(Object? value) {
+  if (value is num) {
+    return value.toDouble();
+  }
+
+  if (value is Map) {
+    final amount = value['amount'];
+    if (amount is num) {
+      return amount.toDouble();
+    }
+  }
+
+  return double.tryParse(value?.toString() ?? '');
+}
+
+String? _salesCurrency(Object? value) {
+  if (value is Map) {
+    return value['currency']?.toString();
+  }
+
+  return null;
+}
+
+String _formatAddress(Map<String, dynamic> json) {
+  final parts = [
+    json['addressLine1'],
+    json['addressLine2'],
+    json['city'],
+    json['postalCode'],
+    json['country'],
+  ]
+      .whereType<String>()
+      .map((part) => part.trim())
+      .where((part) => part.isNotEmpty);
+
+  return parts.join(', ');
 }

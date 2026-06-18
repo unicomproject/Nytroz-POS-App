@@ -13,6 +13,8 @@ class TenantAdminDataTable extends StatelessWidget {
     this.emptyTitle = 'No records found',
     this.emptyMessage = 'There is nothing to show yet.',
     this.onRetry,
+    this.showCheckboxColumn = false,
+    this.footer,
   });
 
   final List<DataColumn> columns;
@@ -22,6 +24,8 @@ class TenantAdminDataTable extends StatelessWidget {
   final String emptyTitle;
   final String emptyMessage;
   final VoidCallback? onRetry;
+  final bool showCheckboxColumn;
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -50,20 +54,43 @@ class TenantAdminDataTable extends StatelessWidget {
         ),
       );
     } else {
-      child = SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingTextStyle: const TextStyle(
-            color: TenantAdminColors.mutedText,
-            fontWeight: FontWeight.w800,
+      child = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Theme(
+            data: Theme.of(context).copyWith(
+              dataTableTheme: const DataTableThemeData(
+                headingRowHeight: 48,
+                dataRowMinHeight: 60,
+                dataRowMaxHeight: 72,
+                dividerThickness: 1,
+                horizontalMargin: TenantAdminSpacing.xl,
+                columnSpacing: TenantAdminSpacing.xl,
+              ),
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingTextStyle: const TextStyle(
+                  color: TenantAdminColors.mutedText,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                ),
+                dataTextStyle: const TextStyle(
+                  color: TenantAdminColors.bodyText,
+                  fontWeight: FontWeight.w500,
+                ),
+                showCheckboxColumn: showCheckboxColumn,
+                columns: columns,
+                rows: rows,
+              ),
+            ),
           ),
-          dataTextStyle: const TextStyle(
-            color: TenantAdminColors.bodyText,
-            fontWeight: FontWeight.w500,
-          ),
-          columns: columns,
-          rows: rows,
-        ),
+          if (footer != null) ...[
+            const Divider(height: 1, color: TenantAdminColors.border),
+            footer!,
+          ],
+        ],
       );
     }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/tenant_admin/presentation/providers/tenant_admin_session_sync_provider.dart';
 import '../features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../features/auth/presentation/providers/session_provider.dart';
 import '../shared/pos_session/pos_session_bootstrap_provider.dart';
@@ -12,6 +13,7 @@ class NytrozPosApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(authHeaderSyncProvider);
+    ref.watch(tenantAdminSessionSyncProvider);
     ref.watch(posSessionBootstrapProvider);
     final router = ref.watch(appRouterProvider);
 

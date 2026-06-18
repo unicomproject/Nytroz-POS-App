@@ -73,17 +73,29 @@ class PosSessionBootstrapNotifier
     developer.log('POS session bootstrap started.', name: 'pos.session');
 
     try {
+      final session = _ref.read(authSessionProvider);
+      if (session == null ||
+          !session.isAuthenticated ||
+          !session.requiresPosDeviceBootstrap) {
+        developer.log(
+          'POS session bootstrap skipped: no POS device/till permissions.',
+          name: 'pos.session',
+        );
+        return;
+      }
+
       await _ref.read(deviceActivationProvider.notifier).ensureHydrated();
       var device = _ref.read(deviceActivationProvider).deviceContext;
 
-      if (device == null || !device.isTrusted) {
+      if (session.canActivatePosDevice &&
+          (device == null || !device.isTrusted)) {
         await _ref.read(deviceActivationProvider.notifier).refreshCurrentDevice(
               deviceName: device?.deviceName ?? 'Web POS',
             );
         device = _ref.read(deviceActivationProvider).deviceContext;
       }
 
-      if (device != null && device.isTrusted) {
+      if (session.canOpenPosTill && device != null && device.isTrusted) {
         await _ref.read(tillProvider.notifier).ensureHydrated();
         var tillSession = _ref.read(tillProvider).session;
 

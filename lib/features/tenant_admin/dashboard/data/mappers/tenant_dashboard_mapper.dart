@@ -10,6 +10,7 @@ extension TenantDashboardMapper on TenantDashboardDto {
       quickActions: quickActions.map((action) => action.toEntity()).toList(),
       recentActivity:
           recentActivity.map((activity) => activity.toEntity()).toList(),
+      notificationCount: notificationCount,
     );
   }
 }
@@ -52,6 +53,7 @@ extension TenantDashboardAttentionItemMapper
     on TenantDashboardAttentionItemDto {
   TenantDashboardAttentionItem toEntity() {
     return TenantDashboardAttentionItem(
+      key: key,
       title: title,
       message: message,
       status: status,
@@ -77,6 +79,7 @@ extension TenantDashboardQuickActionMapper on TenantDashboardQuickActionDto {
 extension TenantDashboardActivityMapper on TenantDashboardActivityDto {
   TenantDashboardActivity toEntity() {
     return TenantDashboardActivity(
+      key: key,
       title: title,
       subtitle: subtitle,
       timeLabel: timeLabel,

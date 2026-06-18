@@ -4,16 +4,17 @@ import 'package:go_router/go_router.dart';
 import '../../domain/entities/tenant_dashboard.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_alert_item.dart';
-import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../../presentation/widgets/tenant_admin_status_badge.dart';
 
 class NeedsAttentionCard extends StatelessWidget {
   const NeedsAttentionCard({
     super.key,
     required this.items,
+    this.showViewAll = false,
   });
 
   final List<TenantDashboardAttentionItem> items;
+  final bool showViewAll;
 
   @override
   Widget build(BuildContext context) {
@@ -27,30 +28,37 @@ class NeedsAttentionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Needs attention',
-              style: TenantAdminTextStyles.sectionTitle(context)),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          if (items.isEmpty)
-            const TenantAdminEmptyState(
-              title: 'All clear',
-              message: 'There are no urgent items right now.',
-            )
-          else
-            for (var index = 0; index < items.length; index++) ...[
-              TenantAdminAlertItem(
-                title: items[index].title,
-                message: items[index].message,
-                status: _statusType(items[index].status),
-                action: items[index].route == null
-                    ? null
-                    : TextButton(
-                        onPressed: () => context.go(items[index].route!),
-                        child: const Text('View'),
-                      ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Needs attention',
+                  style: TenantAdminTextStyles.sectionTitle(context),
+                ),
               ),
-              if (index != items.length - 1)
-                const SizedBox(height: TenantAdminSpacing.md),
+              if (showViewAll)
+                TextButton(
+                  onPressed: () {},
+                  child: const Text('View all'),
+                ),
             ],
+          ),
+          const SizedBox(height: TenantAdminSpacing.lg),
+          for (var index = 0; index < items.length; index++) ...[
+            TenantAdminAlertItem(
+              title: items[index].title,
+              message: items[index].message,
+              status: _statusType(items[index].status),
+              action: items[index].route == null
+                  ? null
+                  : TextButton(
+                      onPressed: () => context.go(items[index].route!),
+                      child: const Text('View'),
+                    ),
+            ),
+            if (index != items.length - 1)
+              const SizedBox(height: TenantAdminSpacing.md),
+          ],
         ],
       ),
     );

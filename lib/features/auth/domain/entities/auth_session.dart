@@ -1,3 +1,7 @@
+import '../../../../core/access/pos_access_codes.dart';
+import '../../../../core/access/tenant_admin_access_codes.dart';
+import '../utils/jwt_expiry.dart';
+
 class AuthSession {
   const AuthSession({
     required this.accessToken,
@@ -15,11 +19,34 @@ class AuthSession {
   final List<String> permissionCodes;
   final DateTime? expiresAt;
 
-  bool get isAuthenticated => accessToken.isNotEmpty;
+  DateTime? get effectiveExpiresAt => expiresAt ?? readJwtExpiry(accessToken);
+
+  bool get isExpired {
+    final expiry = effectiveExpiresAt;
+    if (expiry == null) {
+      return false;
+    }
+
+    return DateTime.now().toUtc().isAfter(expiry.toUtc());
+  }
+
+  bool get isAuthenticated => accessToken.isNotEmpty && !isExpired;
 
   bool hasPermission(String permissionCode) {
     return permissionCodes.contains(permissionCode);
   }
+
+  bool get canActivatePosDevice => hasPermission('tenant.till.manage');
+
+  bool get canOpenPosTill => hasPermission(PosPermissionCodes.openTill);
+
+  bool get canAccessTenantAdminDashboard {
+    return hasPermission(TenantAdminPermissionCodes.tenantContextView) ||
+        hasPermission(TenantAdminPermissionCodes.dashboardView);
+  }
+
+  bool get requiresPosDeviceBootstrap =>
+      canActivatePosDevice || canOpenPosTill;
 
   Map<String, dynamic> toJson() {
     return {

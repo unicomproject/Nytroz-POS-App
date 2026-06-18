@@ -26,7 +26,9 @@ Object? _responseFor(RequestOptions options) {
   final method = options.method.toUpperCase();
   final path = options.path;
 
-  if (method == 'GET' && path == '/api/tenant-admin/context') {
+  if (method == 'GET' &&
+      (path == '/api/tenant-admin/context' ||
+          path == '/api/v1/tenant-admin/context')) {
     return _context;
   }
 
@@ -34,8 +36,11 @@ Object? _responseFor(RequestOptions options) {
     return _menu;
   }
 
-  if (method == 'GET' && path == '/api/tenant-admin/dashboard') {
-    return _dashboard;
+  if (method == 'GET' &&
+      (path == '/api/tenant-admin/dashboard' ||
+          path == '/api/v1/tenant-admin/dashboard' ||
+          path == '/api/v1/tenant-admin/dashboard/summary')) {
+    return _dashboardSummary;
   }
 
   if (method == 'GET' && path == '/api/tenant-admin/onboarding/auth-branding') {
@@ -137,7 +142,9 @@ Object? _responseFor(RequestOptions options) {
     };
   }
 
-  if (method == 'GET' && path == '/api/tenant-admin/outlets') {
+  if (method == 'GET' &&
+      (path == '/api/tenant-admin/outlets' ||
+          path == '/api/v1/tenant-admin/outlets')) {
     return _outlets;
   }
 
@@ -145,20 +152,27 @@ Object? _responseFor(RequestOptions options) {
     return _managers;
   }
 
-  if (method == 'GET' && path.startsWith('/api/tenant-admin/outlets/')) {
+  if (method == 'GET' &&
+      (path.startsWith('/api/v1/tenant-admin/outlets/') ||
+          path.startsWith('/api/tenant-admin/outlets/'))) {
     return _outletDetails(path.split('/').last);
   }
 
-  if (method == 'POST' && path == '/api/tenant-admin/outlets') {
+  if (method == 'POST' &&
+      (path == '/api/tenant-admin/outlets' ||
+          path == '/api/v1/tenant-admin/outlets')) {
     return _createdOutlet(options.data);
   }
 
-  if (method == 'PUT' && path.startsWith('/api/tenant-admin/outlets/')) {
+  if (method == 'PUT' &&
+      (path.startsWith('/api/v1/tenant-admin/outlets/') ||
+          path.startsWith('/api/tenant-admin/outlets/'))) {
     return _createdOutlet(options.data, id: path.split('/').last);
   }
 
   if (method == 'PATCH' &&
-      path.startsWith('/api/tenant-admin/outlets/') &&
+      (path.startsWith('/api/v1/tenant-admin/outlets/') ||
+          path.startsWith('/api/tenant-admin/outlets/')) &&
       path.endsWith('/status')) {
     return const {'success': true};
   }
@@ -183,6 +197,7 @@ const _features = [
   {'featureCode': 'catalog.product', 'featureName': 'Products'},
   {'featureCode': 'inventory.stock', 'featureName': 'Stock'},
   {'featureCode': 'reports', 'featureName': 'Reports'},
+  {'featureCode': 'sales', 'featureName': 'Sales'},
   {'featureCode': 'subscription.billing', 'featureName': 'Billing'},
   {'featureCode': 'tenant.settings', 'featureName': 'Settings'},
   {'featureCode': 'tenant.activity', 'featureName': 'Activity'},
@@ -213,6 +228,28 @@ final _context = {
   'permissions': [
     for (final code in [
       'dashboard.view',
+      'dashboard.summary.view',
+      'dashboard.alerts.view',
+      'dashboard.filter.date',
+      'dashboard.filter.outlet',
+      'sales.summary.view',
+      'sales.orders.view',
+      'analytics.sales_trend.view',
+      'reports.sales.view',
+      'outlets.view',
+      'outlets.create',
+      'outlets.activity.view',
+      'tills.status.view',
+      'users.invites.view',
+      'users.activity.view',
+      'inventory.stock_alerts.view',
+      'inventory.activity.view',
+      'billing.view',
+      'subscription.view',
+      'notifications.view',
+      'profile.view',
+      'tenant.context.view',
+      'activity.view',
       'outlets.view',
       'outlets.create',
       'outlets.update',
@@ -352,131 +389,41 @@ const _menu = [
   },
 ];
 
-const _dashboard = {
-  'metrics': [
-    {
-      'key': 'sales',
-      'title': "Today's Sales",
-      'value': '£3,245.50',
-      'subtitle': 'vs yesterday',
-      'iconKey': 'sales',
-      'trend': '+12.5%',
-      'status': 'success',
+const _dashboardSummary = {
+  'success': true,
+  'message': 'Tenant admin dashboard summary loaded successfully.',
+  'data': {
+    'todaySales': {
+      'amount': 3245.50,
+      'currency': 'LKR',
+      'growthPercent': 12.5,
     },
-    {
-      'key': 'orders',
-      'title': 'Orders',
-      'value': '128',
-      'subtitle': 'vs yesterday',
-      'iconKey': 'orders',
-      'trend': '+8.7%',
-      'status': 'success',
+    'orders': {
+      'count': 128,
+      'growthPercent': 8.7,
     },
-    {
-      'key': 'outlets',
-      'title': 'Active Outlets',
-      'value': '5',
-      'subtitle': 'All outlets are online',
-      'iconKey': 'store',
-      'status': 'success',
+    'activeOutlets': {
+      'count': 5,
+      'onlineCount': 5,
     },
-    {
-      'key': 'stock',
-      'title': 'Stock Alerts',
-      'value': '14',
-      'subtitle': 'items need attention',
-      'iconKey': 'warning',
-      'status': 'warning',
+    'stockAlerts': {
+      'count': 14,
     },
-  ],
-  'salesThisWeek': {
-    'title': 'Sales this week',
-    'total': '£18,245.75',
-    'subtitle': '+15.3% vs last week',
-    'points': [
-      {'label': 'Mon', 'value': 1200},
-      {'label': 'Tue', 'value': 2000},
-      {'label': 'Wed', 'value': 1750},
-      {'label': 'Thu', 'value': 3500},
-      {'label': 'Fri', 'value': 2400},
-      {'label': 'Sat', 'value': 1500},
-      {'label': 'Sun', 'value': 2900},
-    ],
+    'tills': {
+      'onlineCount': 10,
+      'offlineCount': 2,
+    },
+    'needsAttention': {
+      'offlineTills': 2,
+      'lowStockItems': 14,
+      'pendingStaffInvites': 3,
+      'paymentDue': {
+        'amount': 120.00,
+        'currency': 'LKR',
+        'dueDate': '2026-06-15',
+      },
+    },
   },
-  'needsAttention': [
-    {
-      'title': '2 tills are offline',
-      'message': 'Bring them back online',
-      'status': 'danger',
-      'route': '/tenant-admin/tills',
-    },
-    {
-      'title': '14 low stock items',
-      'message': 'Restock to avoid running out',
-      'status': 'warning',
-      'route': '/tenant-admin/stock',
-    },
-    {
-      'title': '3 pending staff invites',
-      'message': 'Review and send invites',
-      'status': 'pending',
-      'route': '/tenant-admin/staff',
-    },
-  ],
-  'quickActions': [
-    {
-      'key': 'add-outlet',
-      'title': 'Add outlet',
-      'route': '/tenant-admin/outlets/add',
-      'featureCode': 'tenant_admin.outlets',
-      'permissionCode': 'outlets.create',
-      'iconKey': 'store',
-    },
-    {
-      'key': 'add-till',
-      'title': 'Add till',
-      'route': '/tenant-admin/tills/add',
-      'featureCode': 'tenant.tills',
-      'permissionCode': 'tenant.till.manage',
-      'iconKey': 'till',
-    },
-    {
-      'key': 'add-staff',
-      'title': 'Add staff',
-      'route': '/tenant-admin/staff/add',
-      'featureCode': 'tenant.users',
-      'permissionCode': 'tenant.user.manage',
-      'iconKey': 'users',
-    },
-    {
-      'key': 'add-product',
-      'title': 'Add product',
-      'route': '/tenant-admin/products/add',
-      'featureCode': 'catalog.product',
-      'permissionCode': 'catalog.product.create',
-      'iconKey': 'products',
-    },
-  ],
-  'recentActivity': [
-    {
-      'title': 'New outlet added',
-      'subtitle': 'High Street Store',
-      'timeLabel': 'Today, 09:30 AM',
-      'iconKey': 'store',
-    },
-    {
-      'title': 'Stock adjusted',
-      'subtitle': 'Basmati Rice 5kg',
-      'timeLabel': 'Today, 08:15 AM',
-      'iconKey': 'inventory',
-    },
-    {
-      'title': 'Staff invite sent',
-      'subtitle': 'Emma Patel',
-      'timeLabel': 'Yesterday, 06:45 PM',
-      'iconKey': 'users',
-    },
-  ],
 };
 
 Map<String, Object?> _paymentSummary(String paymentToken) {
@@ -571,110 +518,116 @@ Map<String, Object?> _outletDetails(String id) {
     (outlet) => outlet['id'] == id,
     orElse: () => items.first,
   );
+  final tillCount = item['tillCount'] ?? 0;
+  final onlineTillCount = item['onlineTillCount'] ?? 0;
+  final staffCount = item['staffCount'] ?? 0;
 
   return {
-    'id': item['id'],
-    'name': item['name'],
-    'code': item['code'],
-    'address': item['location'],
-    'status': item['status'],
-    'managerName': 'Aisha Khan',
-    'managerPhone': '+44 7700 900123',
-    'openingHours': '08:00 – 20:00',
-    'todaysStatus': 'Operating as normal today',
-    'metrics': [
-      {
-        'title': 'Tills',
-        'value': '${item['tillCount']}',
-        'subtitle': '${item['onlineTillCount']} online',
-        'iconKey': 'till',
+    'success': true,
+    'message': 'Outlet loaded successfully.',
+    'data': {
+      'id': item['id'],
+      'name': item['name'],
+      'code': item['code'],
+      'addressLine1': item['location'],
+      'city': 'London',
+      'country': 'UK',
+      'phone': '+44 7700 900123',
+      'email': 'outlet@coffeecorner.test',
+      'status': item['status'],
+      'managerName': 'Aisha Khan',
+      'managerPhone': '+44 7700 900123',
+      'openingHours': '08:00 – 20:00, Mon – Sun',
+      'todaysStatus': 'Operating as normal today',
+      'tillCount': tillCount,
+      'onlineTillCount': onlineTillCount,
+      'staffCount': staffCount,
+      'todaySales': {
+        'amount': 1245.50,
+        'currency': 'GBP',
       },
-      {
-        'title': 'Staff',
-        'value': '${item['staffCount']}',
-        'subtitle': 'Assigned staff',
-        'iconKey': 'users',
+      'weekSales': {
+        'amount': 8920.30,
+        'currency': 'GBP',
       },
-      {
-        'title': "Today's sales",
-        'value': '${item['todaysSales']}',
-        'subtitle': '+12.5% vs yesterday',
-        'iconKey': 'sales',
-      },
-      {
-        'title': 'This week',
-        'value': '£8,920.30',
-        'subtitle': '+8.3% vs last week',
-        'iconKey': 'reports',
-      },
-    ],
-    'assignedTills': [
-      {
-        'id': 'till-1',
-        'title': 'Front Counter Till',
-        'subtitle': 'TILL-001',
-        'status': 'online'
-      },
-      {
-        'id': 'till-2',
-        'title': 'Kiosk Till',
-        'subtitle': 'TILL-002',
-        'status': 'online'
-      },
-      {
-        'id': 'till-3',
-        'title': 'Back Office Till',
-        'subtitle': 'TILL-003',
-        'status': 'offline'
-      },
-    ],
-    'staff': [
-      {
-        'id': 'staff-1',
-        'title': 'Aisha Khan',
-        'subtitle': 'Manager',
-        'status': 'active'
-      },
-      {
-        'id': 'staff-2',
-        'title': 'Ravi Sharma',
-        'subtitle': 'Cashier',
-        'status': 'active'
-      },
-      {
-        'id': 'staff-3',
-        'title': 'Emma Patel',
-        'subtitle': 'Supervisor',
-        'status': 'active'
-      },
-    ],
-    'needsAttention': [
-      {
-        'title': '1 till offline',
-        'message': 'Back Office Till is offline',
-        'status': 'danger'
-      },
-      {
-        'title': '2 low stock items',
-        'message': 'View and restock soon',
-        'status': 'warning'
-      },
-    ],
+      'assignedTills': [
+        {
+          'id': 'till-1',
+          'title': 'Front Counter Till',
+          'subtitle': 'TILL-001',
+          'status': 'Online',
+        },
+        {
+          'id': 'till-2',
+          'title': 'Kiosk Till',
+          'subtitle': 'TILL-002',
+          'status': 'Online',
+        },
+        {
+          'id': 'till-3',
+          'title': 'Back Office Till',
+          'subtitle': 'TILL-003',
+          'status': 'Offline',
+        },
+      ],
+      'staff': [
+        {
+          'id': 'staff-1',
+          'title': 'Aisha Khan',
+          'subtitle': '+44 7700 900123',
+          'status': 'Manager',
+        },
+        {
+          'id': 'staff-2',
+          'title': 'Ravi Sharma',
+          'subtitle': '+44 7700 900456',
+          'status': 'Cashier',
+        },
+        {
+          'id': 'staff-3',
+          'title': 'Emma Patel',
+          'subtitle': '+44 7700 900789',
+          'status': 'Supervisor',
+        },
+      ],
+      'needsAttention': [
+        {
+          'title': '1 till offline',
+          'message': 'Back Office Till is offline',
+          'status': 'warning',
+        },
+        {
+          'title': '2 low stock items',
+          'message': 'View and restock soon',
+          'status': 'warning',
+        },
+      ],
+    },
   };
 }
 
 Map<String, Object?> _createdOutlet(Object? data, {String id = 'outlet-new'}) {
   final body = data is Map ? Map<String, dynamic>.from(data) : const {};
+  final name = body['name']?.toString() ?? body['outletName']?.toString() ?? 'New Outlet';
+  final code = body['code']?.toString() ?? body['outletCode']?.toString() ?? 'OUT-NEW';
 
   return {
-    'id': id,
-    'name': body['outletName']?.toString() ?? 'New Outlet',
-    'code': body['outletCode']?.toString() ?? 'OUT-NEW',
-    'location': body['addressLine1']?.toString() ?? '',
-    'status': 'active',
-    'tillCount': 0,
-    'onlineTillCount': 0,
-    'staffCount': 0,
-    'todaysSales': '£0.00',
+    'success': true,
+    'message': 'Outlet created successfully.',
+    'data': {
+      'id': id,
+      'name': name,
+      'code': code,
+      'addressLine1': body['addressLine1']?.toString() ?? '',
+      'city': body['city']?.toString() ?? '',
+      'country': body['country']?.toString() ?? '',
+      'phone': body['phone']?.toString() ?? '',
+      'email': body['email']?.toString() ?? '',
+      'status': body['status']?.toString() ?? 'Active',
+      'tillCount': 0,
+      'onlineTillCount': 0,
+      'staffCount': 0,
+      'todaySales': const {'amount': 0, 'currency': 'GBP'},
+    },
   };
 }

@@ -1,3 +1,5 @@
+import '../mappers/tenant_admin_backend_feature_mapper.dart';
+
 class TenantAdminContextDto {
   const TenantAdminContextDto({
     required this.tenantId,
@@ -11,6 +13,71 @@ class TenantAdminContextDto {
     required this.runtimeFlags,
     this.subscriptionStatus,
   });
+
+  factory TenantAdminContextDto.fromApiJson(Map<String, dynamic> json) {
+    final payload = json['data'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(json['data'] as Map)
+        : json;
+
+    if (payload.containsKey('tenant') && payload.containsKey('user')) {
+      return TenantAdminContextDto.fromBackendJson(payload);
+    }
+
+    return TenantAdminContextDto.fromJson(payload);
+  }
+
+  factory TenantAdminContextDto.fromBackendJson(Map<String, dynamic> json) {
+    final tenant = _map(json['tenant']);
+    final user = _map(json['user']);
+    final roles = _mapList(json['roles'], (item) => item);
+    final outlets = _mapList(json['outlets'], (item) => item);
+    final features = _stringList(json['features']);
+    final permissions = _stringList(json['permissions']);
+    final runtimeFlags = _stringList(json['runtimeFlags']);
+    final subscription = _map(json['subscription']);
+
+    return TenantAdminContextDto(
+      tenantId: tenant['id']?.toString() ?? '',
+      tenantName: tenant['name']?.toString() ?? '',
+      userId: user['id']?.toString() ?? '',
+      userDisplayName: user['fullName']?.toString() ?? '',
+      roleNames: roles
+          .map((role) => role['name']?.toString() ?? '')
+          .where((name) => name.isNotEmpty)
+          .toList(growable: false),
+      outletScope: [
+        for (var index = 0; index < outlets.length; index++)
+          TenantAdminOutletScopeDto(
+            outletId: outlets[index]['id']?.toString() ?? '',
+            outletName: outlets[index]['name']?.toString() ?? '',
+            isDefault: index == 0,
+          ),
+      ],
+      featureEntitlements: [
+        for (final feature in features)
+          TenantAdminFeatureEntitlementDto(
+            featureCode: TenantAdminBackendFeatureMapper.toAppFeatureCode(feature),
+            featureName: feature,
+            enabled: true,
+          ),
+      ],
+      permissions: [
+        for (final permission in permissions)
+          TenantAdminPermissionDto(
+            permissionCode: permission,
+            permissionName: permission,
+          ),
+      ],
+      runtimeFlags: [
+        for (final flag in runtimeFlags)
+          TenantAdminRuntimeFlagDto(
+            featureCode: flag,
+            enabled: true,
+          ),
+      ],
+      subscriptionStatus: subscription['status']?.toString(),
+    );
+  }
 
   factory TenantAdminContextDto.fromJson(Map<String, dynamic> json) {
     return TenantAdminContextDto(
@@ -148,4 +215,16 @@ List<T> _mapList<T>(
       .whereType<Map>()
       .map((item) => mapper(Map<String, dynamic>.from(item)))
       .toList(growable: false);
+}
+
+Map<String, dynamic> _map(Object? value) {
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+
+  if (value is Map) {
+    return Map<String, dynamic>.from(value);
+  }
+
+  return const {};
 }

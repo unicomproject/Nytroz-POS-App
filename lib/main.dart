@@ -15,7 +15,7 @@ void main() {
   final dio = buildAppDio(
     baseUrl: const String.fromEnvironment(
       'API_BASE_URL',
-      defaultValue: 'http://10.0.2.2:5050',
+      defaultValue: 'http://10.0.2.2:5052',
     ),
     interceptors: [
       if (useDevApiFallback) TenantAdminDevApiInterceptor(),
