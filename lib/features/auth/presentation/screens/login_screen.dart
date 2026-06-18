@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:developer' as developer;
 
-import '../../../../core/network/dio_provider.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/auth_exception.dart';
 import '../providers/login_provider.dart';
@@ -264,12 +263,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!session.isAuthenticated) {
         throw StateError('Invalid credentials');
       }
-      ref.read(appDioProvider).options.headers['Authorization'] =
-          'Bearer ${session.accessToken}';
-      developer.log(
-        'Authorization header attached before auth session state update.',
-        name: 'auth.network',
-      );
       await ref.read(authSessionProvider.notifier).setSession(session);
     } on AuthException catch (error) {
       setState(() => _error = '${error.message} (${error.errorCode})');

@@ -87,20 +87,36 @@ class PosSessionBootstrapNotifier
     );
 
     try {
-      await _runStep(
-        'hydrate-device-context',
-        () => _ref.read(deviceActivationProvider.notifier).ensureHydrated(),
-      );
-      var device = _ref.read(deviceActivationProvider).deviceContext;
+final session = _ref.read(authSessionProvider);
 
-      if (device == null || !device.isTrusted) {
-        final refreshed = await _runStep(
-          'refresh-current-device',
-          () =>
-              _ref.read(deviceActivationProvider.notifier).refreshCurrentDevice(
-                    deviceName: device?.deviceName ?? 'Web POS',
-                  ),
-        );
+if (session == null ||
+    !session.isAuthenticated ||
+    !session.requiresPosDeviceBootstrap) {
+  developer.log(
+    'POS session bootstrap skipped: no POS device/till permissions.',
+    name: 'pos.session',
+  );
+  return;
+}
+
+await _runStep(
+  'hydrate-device-context',
+  () => _ref.read(deviceActivationProvider.notifier).ensureHydrated(),
+);
+
+var device = _ref.read(deviceActivationProvider).deviceContext;
+
+if (session.canActivatePosDevice &&
+    (device == null || !device.isTrusted)) {
+  final refreshed = await _runStep(
+    'refresh-current-device',
+    () => _ref.read(deviceActivationProvider.notifier).refreshCurrentDevice(
+          deviceName: device?.deviceName ?? 'Web POS',
+        ),
+  );
+
+  // keep your existing code below this line
+}
         device = _ref.read(deviceActivationProvider).deviceContext;
         final deviceError = _ref.read(deviceActivationProvider).errorMessage;
         if (!refreshed && deviceError != null) {
@@ -111,12 +127,16 @@ class PosSessionBootstrapNotifier
         }
       }
 
-      final trustedDevice = device;
-      if (trustedDevice != null && trustedDevice.isTrusted) {
-        await _runStep(
-          'hydrate-till-session',
-          () => _ref.read(tillProvider.notifier).ensureHydrated(),
-        );
+final trustedDevice = device;
+
+if (session.canOpenPosTill &&
+    trustedDevice != null &&
+    trustedDevice.isTrusted) {
+  await _runStep(
+    'hydrate-till-session',
+    () => _ref.read(tillProvider.notifier).ensureHydrated(),
+  );
+}
         var tillSession = _ref.read(tillProvider).session;
 
         if (tillSession == null || tillSession.status != 'open') {

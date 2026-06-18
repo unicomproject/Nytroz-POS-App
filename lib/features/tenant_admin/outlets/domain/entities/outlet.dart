@@ -40,10 +40,40 @@ class OutletListResult {
   const OutletListResult({
     required this.summary,
     required this.items,
+    this.page = 1,
+    this.pageSize = 10,
+    this.totalCount = 0,
   });
 
   final OutletListSummary summary;
   final List<Outlet> items;
+  final int page;
+  final int pageSize;
+  final int totalCount;
+
+  int get totalPages {
+    if (pageSize <= 0 || totalCount <= 0) {
+      return totalCount > 0 ? 1 : 0;
+    }
+
+    return (totalCount / pageSize).ceil();
+  }
+
+  int get rangeStart {
+    if (totalCount == 0) {
+      return 0;
+    }
+
+    return ((page - 1) * pageSize) + 1;
+  }
+
+  int get rangeEnd {
+    if (totalCount == 0) {
+      return 0;
+    }
+
+    return (page * pageSize).clamp(0, totalCount);
+  }
 }
 
 class OutletManagerOption {

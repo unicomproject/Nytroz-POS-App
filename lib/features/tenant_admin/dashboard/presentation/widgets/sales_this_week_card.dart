@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/tenant_dashboard.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
@@ -8,9 +9,13 @@ class SalesThisWeekCard extends StatelessWidget {
   const SalesThisWeekCard({
     super.key,
     required this.salesSummary,
+    this.showTrend = true,
+    this.showReportsLink = false,
   });
 
   final TenantDashboardSalesSummary? salesSummary;
+  final bool showTrend;
+  final bool showReportsLink;
 
   @override
   Widget build(BuildContext context) {
@@ -24,15 +29,30 @@ class SalesThisWeekCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            salesSummary?.title ?? 'Sales this week',
-            style: TenantAdminTextStyles.sectionTitle(context),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  salesSummary?.title ?? 'Sales this week',
+                  style: TenantAdminTextStyles.sectionTitle(context),
+                ),
+              ),
+              if (showReportsLink)
+                TextButton(
+                  onPressed: () => context.go('/tenant-admin/reports/sales'),
+                  child: const Text('View report'),
+                ),
+            ],
           ),
-          const SizedBox(height: TenantAdminSpacing.xs),
-          Text(
-            salesSummary?.subtitle ?? 'Weekly sales performance',
-            style: TenantAdminTextStyles.muted(context),
-          ),
+          if (showTrend &&
+              salesSummary?.subtitle != null &&
+              salesSummary!.subtitle!.trim().isNotEmpty) ...[
+            const SizedBox(height: TenantAdminSpacing.xs),
+            Text(
+              salesSummary!.subtitle!,
+              style: TenantAdminTextStyles.muted(context),
+            ),
+          ],
           const SizedBox(height: TenantAdminSpacing.lg),
           if (salesSummary == null || salesSummary!.points.isEmpty)
             const TenantAdminEmptyState(

@@ -1,69 +1,60 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/outlet.dart';
+import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_metric_card.dart';
-import '../../../presentation/widgets/tenant_admin_status_badge.dart';
+import '../config/outlet_summary_card_configs.dart';
 
 class OutletMetricCards extends StatelessWidget {
   const OutletMetricCards({
     super.key,
     required this.summary,
     required this.compact,
+    required this.cards,
   });
 
   final OutletListSummary summary;
   final bool compact;
+  final List<OutletSummaryCardConfig> cards;
 
   @override
   Widget build(BuildContext context) {
-    final cards = [
-      TenantAdminMetricCard(
-        title: 'Total Outlets',
-        value: '${summary.totalOutlets}',
-        subtitle:
-            '${summary.activeOutlets} Active • ${summary.inactiveOutlets} Inactive',
-        icon: Icons.store,
-      ),
-      TenantAdminMetricCard(
-        title: 'Active Outlets',
-        value: '${summary.activeOutlets}',
-        subtitle:
-            '${_percent(summary.activeOutlets, summary.totalOutlets)}% of total',
-        icon: Icons.check_circle,
-        status: TenantAdminStatusType.active,
-      ),
-      TenantAdminMetricCard(
-        title: 'Inactive Outlets',
-        value: '${summary.inactiveOutlets}',
-        subtitle:
-            '${_percent(summary.inactiveOutlets, summary.totalOutlets)}% of total',
-        icon: Icons.pause_circle_filled,
-        status: TenantAdminStatusType.inactive,
-      ),
-      TenantAdminMetricCard(
-        title: 'Total Locations',
-        value: '${summary.totalLocations}',
-        subtitle: 'Across all outlets',
-        icon: Icons.location_on,
-      ),
-    ];
+    if (cards.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
-    return GridView.count(
-      crossAxisCount: compact ? 2 : 4,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: compact ? 1.05 : 1.55,
+    final crossAxisCount = compact
+        ? cards.length == 1
+            ? 1
+            : 2
+        : cards.length <= 2
+            ? cards.length
+            : cards.length == 3
+                ? 3
+                : 4;
+    final cardHeight = compact ? 156.0 : 168.0;
+
+    return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      children: cards,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: TenantAdminSpacing.lg,
+        mainAxisSpacing: TenantAdminSpacing.lg,
+        mainAxisExtent: cardHeight,
+      ),
+      itemCount: cards.length,
+      itemBuilder: (context, index) {
+        final card = cards[index];
+        return TenantAdminMetricCard(
+          title: card.title,
+          value: card.valueBuilder(summary),
+          subtitle: card.subtitleBuilder(summary),
+          icon: card.icon,
+          status: card.status,
+          dense: true,
+        );
+      },
     );
   }
-}
-
-int _percent(int value, int total) {
-  if (total <= 0) {
-    return 0;
-  }
-
-  return ((value / total) * 100).round();
 }

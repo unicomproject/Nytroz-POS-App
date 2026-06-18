@@ -14,60 +14,252 @@ class OutletDetailsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.sizeOf(context).width >= TenantAdminBreakpoints.tablet;
+
     return Container(
       padding: const EdgeInsets.all(TenantAdminSpacing.xl),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
         border: Border.all(color: TenantAdminColors.border),
+        boxShadow: TenantAdminShadows.card,
       ),
-      child: Wrap(
-        spacing: 32,
-        runSpacing: 16,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
+      child: isWide ? _buildWide(context) : _buildCompact(context),
+    );
+  }
+
+  Widget _buildWide(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _StoreAvatar(),
+        const SizedBox(width: TenantAdminSpacing.xl),
+        Expanded(
+          flex: 3,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const CircleAvatar(child: Icon(Icons.store)),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        outlet.name,
-                        style: TenantAdminTextStyles.sectionTitle(context),
-                      ),
-                      const SizedBox(width: 12),
-                      TenantAdminStatusBadge(
-                        label: outlet.status,
-                        status: _statusType(outlet.status),
-                      ),
-                    ],
+              _TitleRow(outlet: outlet),
+              const SizedBox(height: TenantAdminSpacing.sm),
+              Text(
+                _addressLine(outlet),
+                style: TenantAdminTextStyles.muted(context),
+              ),
+              if (outlet.code.isNotEmpty) ...[
+                const SizedBox(height: TenantAdminSpacing.xs),
+                Text(
+                  'Code: ${outlet.code}',
+                  style: TenantAdminTextStyles.muted(context).copyWith(
+                    fontSize: 12,
                   ),
-                  Text(outlet.address,
-                      style: TenantAdminTextStyles.muted(context)),
-                ],
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(width: TenantAdminSpacing.lg),
+        Expanded(
+          flex: 4,
+          child: Wrap(
+            spacing: TenantAdminSpacing.xl,
+            runSpacing: TenantAdminSpacing.lg,
+            children: [
+              _HeaderInfoBlock(
+                icon: Icons.person_outline,
+                label: 'Manager',
+                value: outlet.managerDisplay,
+                hint: outlet.managerContact,
+              ),
+              _HeaderInfoBlock(
+                icon: Icons.access_time,
+                label: 'Opening hours',
+                value: outlet.openingHours ?? 'Not set',
+              ),
+              _HeaderInfoBlock(
+                icon: Icons.check_circle_outline,
+                label: "Today's status",
+                value: outlet.todaysStatus ?? 'Operating as normal today',
+                iconColor: TenantAdminColors.success,
               ),
             ],
           ),
-          _HeaderInfo(
-            icon: Icons.person,
-            title: 'Manager',
-            value: outlet.managerName ?? 'Not assigned',
-            subtitle: outlet.managerPhone,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompact(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _StoreAvatar(),
+            const SizedBox(width: TenantAdminSpacing.lg),
+            Expanded(child: _TitleRow(outlet: outlet)),
+          ],
+        ),
+        const SizedBox(height: TenantAdminSpacing.sm),
+        Text(
+          _addressLine(outlet),
+          style: TenantAdminTextStyles.muted(context),
+        ),
+        if (outlet.code.isNotEmpty) ...[
+          const SizedBox(height: TenantAdminSpacing.xs),
+          Text(
+            'Code: ${outlet.code}',
+            style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 12),
           ),
-          _HeaderInfo(
-            icon: Icons.access_time,
-            title: 'Opening hours',
-            value: outlet.openingHours ?? 'Not set',
+        ],
+        const SizedBox(height: TenantAdminSpacing.lg),
+        Wrap(
+          spacing: TenantAdminSpacing.xl,
+          runSpacing: TenantAdminSpacing.lg,
+          children: [
+            _HeaderInfoBlock(
+              icon: Icons.person_outline,
+              label: 'Manager',
+              value: outlet.managerDisplay,
+              hint: outlet.managerContact,
+            ),
+            _HeaderInfoBlock(
+              icon: Icons.access_time,
+              label: 'Opening hours',
+              value: outlet.openingHours ?? 'Not set',
+            ),
+            _HeaderInfoBlock(
+              icon: Icons.check_circle_outline,
+              label: "Today's status",
+              value: outlet.todaysStatus ?? 'Operating as normal today',
+              iconColor: TenantAdminColors.success,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _addressLine(OutletDetails outlet) {
+    if (outlet.address.trim().isNotEmpty) {
+      return outlet.address;
+    }
+
+    if (outlet.phone != null && outlet.phone!.trim().isNotEmpty) {
+      return outlet.phone!;
+    }
+
+    return 'Address not available';
+  }
+}
+
+class _StoreAvatar extends StatelessWidget {
+  const _StoreAvatar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: TenantAdminColors.secondary,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+      ),
+      child: const Icon(
+        Icons.storefront,
+        color: TenantAdminColors.primary,
+        size: 28,
+      ),
+    );
+  }
+}
+
+class _TitleRow extends StatelessWidget {
+  const _TitleRow({required this.outlet});
+
+  final OutletDetails outlet;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: TenantAdminSpacing.md,
+      runSpacing: TenantAdminSpacing.sm,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          outlet.name,
+          style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
           ),
-          _HeaderInfo(
-            icon: Icons.check_circle,
-            title: "Today's status",
-            value: outlet.todaysStatus ?? 'Unknown',
+        ),
+        TenantAdminStatusBadge(
+          label: _displayStatus(outlet.status),
+          status: _statusType(outlet.status),
+        ),
+      ],
+    );
+  }
+}
+
+class _HeaderInfoBlock extends StatelessWidget {
+  const _HeaderInfoBlock({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.hint,
+    this.iconColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final String? hint;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 168,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: iconColor ?? TenantAdminColors.primary, size: 20),
+          const SizedBox(width: TenantAdminSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TenantAdminTextStyles.muted(context).copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+                if (hint != null && hint!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    hint!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TenantAdminTextStyles.muted(context).copyWith(
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ),
@@ -75,45 +267,23 @@ class OutletDetailsHeader extends StatelessWidget {
   }
 }
 
-class _HeaderInfo extends StatelessWidget {
-  const _HeaderInfo({
-    required this.icon,
-    required this.title,
-    required this.value,
-    this.subtitle,
-  });
-
-  final IconData icon;
-  final String title;
-  final String value;
-  final String? subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: TenantAdminColors.primary),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: TenantAdminTextStyles.muted(context)),
-            Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
-            if (subtitle != null) Text(subtitle!),
-          ],
-        ),
-      ],
-    );
+String _displayStatus(String status) {
+  final normalized = status.trim();
+  if (normalized.isEmpty) {
+    return 'Active';
   }
+
+  return normalized;
 }
 
 TenantAdminStatusType _statusType(String status) {
-  switch (status.toLowerCase()) {
+  switch (status.trim().toLowerCase()) {
     case 'active':
       return TenantAdminStatusType.active;
     case 'inactive':
       return TenantAdminStatusType.inactive;
+    case '':
+      return TenantAdminStatusType.active;
     default:
       return TenantAdminStatusType.pending;
   }

@@ -7,7 +7,6 @@ import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.d
 import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/post_login_navigation_provider.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
-import 'package:nytroz_pos/shared/pos_session/pos_session_bootstrap_provider.dart';
 import 'package:nytroz_pos/features/device_activation/application/usecases/activate_device.dart';
 import 'package:nytroz_pos/features/device_activation/data/datasources/device_context_storage.dart';
 import 'package:nytroz_pos/features/device_activation/domain/entities/pos_device_context.dart';
@@ -18,11 +17,12 @@ import 'package:nytroz_pos/features/till/data/datasources/till_session_storage.d
 import 'package:nytroz_pos/features/till/domain/entities/open_till.dart';
 import 'package:nytroz_pos/features/till/domain/repositories/till_repository.dart';
 import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
+import 'package:nytroz_pos/shared/pos_session/pos_session_bootstrap_provider.dart';
 
 void main() {
   group('Post-login navigation', () {
     test('routes to device activation when device is not trusted', () {
-      final container = _createContainer();
+      final container = _createContainer(session: _posOperatorSession);
 
       final route = container.read(postLoginRouteProvider);
 
@@ -33,6 +33,7 @@ void main() {
     test('routes to open till when device is trusted but session is closed',
         () {
       final container = _createContainer(
+        session: _posOperatorSession,
         deviceContext: _trustedDevice,
       );
 
@@ -44,6 +45,7 @@ void main() {
 
     test('routes to POS home when till session is open', () {
       final container = _createContainer(
+        session: _posOperatorSession,
         deviceContext: _trustedDevice,
         tillSession: _openTillSession,
       );
@@ -54,27 +56,39 @@ void main() {
       container.dispose();
     });
 
-    test('bootstrap exposes device API failures instead of becoming ready',
-        () async {
-      final container = _createContainer(
-        deviceRepository: _ThrowingDeviceActivationRepository(),
-      );
-      addTearDown(container.dispose);
+test('bootstrap exposes device API failures instead of becoming ready',
+    () async {
+  final container = _createContainer(
+    deviceRepository: _ThrowingDeviceActivationRepository(),
+  );
+  addTearDown(container.dispose);
 
-      await container
-          .read(posSessionBootstrapProvider.notifier)
-          .bootstrap(force: true);
-      final state = container.read(posSessionBootstrapProvider);
+  await container
+      .read(posSessionBootstrapProvider.notifier)
+      .bootstrap(force: true);
 
-      expect(state.isReady, isFalse);
-      expect(state.hasError, isTrue);
-      expect(state.failedStep, 'refresh-current-device');
-      expect(state.errorMessage, contains('Device API timed out'));
+  final state = container.read(posSessionBootstrapProvider);
+
+  expect(state.isReady, isFalse);
+  expect(state.hasError, isTrue);
+  expect(state.failedStep, 'refresh-current-device');
+  expect(state.errorMessage, contains('Device API timed out'));
+});
+
+test('routes tenant admin to dashboard without device activation', () {
+  final container = _createContainer(session: _tenantAdminSession);
+  addTearDown(container.dispose);
+
+  final route = container.read(postLoginRouteProvider);
+
+  expect(route, PostLoginRoute.tenantAdminDashboard);
+});
     });
   });
 }
 
 ProviderContainer _createContainer({
+  required AuthSession session,
   PosDeviceContext? deviceContext,
   TillSession? tillSession,
   DeviceActivationRepository? deviceRepository,
@@ -85,6 +99,9 @@ ProviderContainer _createContainer({
         Dio(BaseOptions(baseUrl: 'https://test.local')),
       ),
       authSessionStorageProvider.overrideWithValue(_TestAuthSessionStorage()),
+      authSessionProvider.overrideWith(
+        (ref) => _PresetAuthSessionNotifier(session),
+      ),
       deviceContextStorageProvider.overrideWithValue(
         _TestDeviceContextStorage(null),
       ),
@@ -120,6 +137,13 @@ ProviderContainer _createContainer({
       }),
     ],
   );
+}
+
+class _PresetAuthSessionNotifier extends AuthSessionNotifier {
+  _PresetAuthSessionNotifier(AuthSession session)
+      : super(_TestAuthSessionStorage()) {
+    state = session;
+  }
 }
 
 class _PresetDeviceActivationController extends DeviceActivationController {
@@ -248,6 +272,28 @@ class _TestTillSessionStorage extends TillSessionStorage {
 }
 
 final _pairedAt = DateTime.utc(2026, 6, 16, 9);
+
+const _posOperatorSession = AuthSession(
+  accessToken: 'token',
+  userId: 'cashier-1',
+  userDisplayName: 'Cashier',
+  permissionCodes: [
+    'tenant.till.manage',
+    'pos.till.open',
+    'pos.home.view',
+  ],
+);
+
+const _tenantAdminSession = AuthSession(
+  accessToken: 'token',
+  userId: 'tenant-admin-1',
+  userDisplayName: 'Tenant Admin',
+  permissionCodes: [
+    'tenant.context.view',
+    'dashboard.view',
+    'tills.view',
+  ],
+);
 
 final _trustedDevice = PosDeviceContext(
   deviceId: 'device-1',

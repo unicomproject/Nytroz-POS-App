@@ -7,13 +7,11 @@ import '../../../../shared/pos_session/pos_session_bootstrap_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../till/presentation/providers/till_provider.dart';
 
-const activateDevicePermissionCode = 'tenant.till.manage';
-const openTillPermissionCode = 'pos.till.open';
-
 enum PostLoginRoute {
   deviceActivation('/pos/device-activation'),
   openTill('/pos/open-till'),
-  posHome('/pos/home');
+  posHome('/pos/home'),
+  tenantAdminDashboard('/tenant-admin/dashboard');
 
   const PostLoginRoute(this.path);
 
@@ -31,24 +29,49 @@ final postLoginRouteProvider = Provider<PostLoginRoute>((ref) {
   final authSession = ref.watch(authSessionProvider);
   final device = deviceState.deviceContext;
 
-  if (device == null || !device.isTrusted) {
+  if (authSession?.canActivatePosDevice == true &&
+      (device == null || !device.isTrusted)) {
     developer.log(
-      'Post-login navigation: device is not activated. route=${PostLoginRoute.deviceActivation.path}, hasPermission=${authSession?.hasPermission(activateDevicePermissionCode) == true}',
+      'Post-login navigation: device activation required. route=${PostLoginRoute.deviceActivation.path}',
       name: 'auth.navigation',
     );
     return PostLoginRoute.deviceActivation;
   }
 
-  if (!tillState.hasOpenSession) {
+  if (authSession?.canOpenPosTill == true) {
+    if (device == null || !device.isTrusted) {
+      developer.log(
+        'Post-login navigation: POS till permission without trusted device. route=${PostLoginRoute.openTill.path}',
+        name: 'auth.navigation',
+      );
+      return PostLoginRoute.openTill;
+    }
+
+    if (!tillState.hasOpenSession) {
+      developer.log(
+        'Post-login navigation: till is closed. route=${PostLoginRoute.openTill.path}',
+        name: 'auth.navigation',
+      );
+      return PostLoginRoute.openTill;
+    }
+
     developer.log(
-      'Post-login navigation: device activated but till is closed. route=${PostLoginRoute.openTill.path}, deviceId=${device.deviceId}, tillId=${device.tillId}, hasPermission=${authSession?.hasPermission(openTillPermissionCode) == true}',
+      'Post-login navigation: till is open. route=${PostLoginRoute.posHome.path}',
       name: 'auth.navigation',
     );
-    return PostLoginRoute.openTill;
+    return PostLoginRoute.posHome;
+  }
+
+  if (authSession?.canAccessTenantAdminDashboard == true) {
+    developer.log(
+      'Post-login navigation: tenant admin dashboard. route=${PostLoginRoute.tenantAdminDashboard.path}',
+      name: 'auth.navigation',
+    );
+    return PostLoginRoute.tenantAdminDashboard;
   }
 
   developer.log(
-    'Post-login navigation: till is open. route=${PostLoginRoute.posHome.path}, sessionId=${tillState.session?.sessionId}',
+    'Post-login navigation: default POS home. route=${PostLoginRoute.posHome.path}',
     name: 'auth.navigation',
   );
   return PostLoginRoute.posHome;

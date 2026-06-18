@@ -7,6 +7,8 @@ import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/outlet_details.dart';
 import '../providers/outlet_providers.dart';
+import '../providers/outlet_visibility_provider.dart';
+import '../utils/outlet_api_errors.dart';
 import '../widgets/outlet_form.dart';
 
 class EditOutletScreen extends ConsumerStatefulWidget {
@@ -84,7 +86,21 @@ class _EditOutletScreenState extends ConsumerState<EditOutletScreen> {
       }
       context.go('/tenant-admin/outlets/${outlet.id}');
     } on DioException catch (error) {
-      setState(() => _fieldErrors = _validationErrors(error));
+      final fieldErrors = outletValidationErrors(error);
+      setState(() => _fieldErrors = fieldErrors);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              outletSubmitErrorMessage(
+                error,
+                fieldErrors,
+                fallback: 'Failed to update outlet',
+              ),
+            ),
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _submitting = false);
@@ -106,20 +122,4 @@ OutletFormData _initialForm(OutletDetails outlet) {
     postalCode: '',
     openingHours: const [],
   );
-}
-
-Map<String, String> _validationErrors(DioException error) {
-  final data = error.response?.data;
-  final errors = data is Map ? data['errors'] : null;
-
-  if (errors is! Map) {
-    return const {};
-  }
-
-  return errors.map((key, value) {
-    final message = value is List && value.isNotEmpty
-        ? value.first.toString()
-        : value.toString();
-    return MapEntry(key.toString(), message);
-  });
 }
