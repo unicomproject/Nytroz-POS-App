@@ -45,6 +45,13 @@ class AuthSessionStorage {
 
     final session = AuthSession.fromJson(decoded);
     if (!session.isAuthenticated) {
+      if (session.accessToken.isNotEmpty) {
+        await clear();
+        developer.log(
+          'Stored auth session expired and was cleared.',
+          name: 'auth.storage',
+        );
+      }
       return null;
     }
 

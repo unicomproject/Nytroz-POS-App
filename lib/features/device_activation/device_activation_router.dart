@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../auth/domain/entities/auth_session.dart';
-import '../auth/presentation/providers/post_login_navigation_provider.dart';
 import '../auth/presentation/providers/session_provider.dart';
 import '../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import 'presentation/screens/device_activation_screen.dart';
@@ -27,5 +26,5 @@ List<RouteBase> deviceActivationRoutes(Ref ref) {
 }
 
 bool _canActivateDevice(AuthSession? session) {
-  return session?.hasPermission(activateDevicePermissionCode) == true;
+  return session?.canActivatePosDevice == true;
 }

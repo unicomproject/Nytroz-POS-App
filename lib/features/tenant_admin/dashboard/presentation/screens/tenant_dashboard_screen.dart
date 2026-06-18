@@ -1,67 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../presentation/providers/tenant_admin_access_provider.dart';
+import '../../../../auth/presentation/providers/session_provider.dart';
+import '../../../domain/services/tenant_admin_access_checker.dart';
+import '../../../presentation/providers/tenant_admin_context_provider.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
-import '../../domain/entities/tenant_dashboard.dart';
 import '../providers/tenant_dashboard_provider.dart';
 import '../widgets/dashboard_metric_grid.dart';
 import '../widgets/dashboard_quick_actions_card.dart';
 import '../widgets/needs_attention_card.dart';
 import '../widgets/recent_activity_card.dart';
 import '../widgets/sales_this_week_card.dart';
+import '../widgets/tenant_admin_dashboard_header_actions.dart';
 
 class TenantDashboardScreen extends ConsumerWidget {
   const TenantDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dashboardState = ref.watch(tenantDashboardProvider);
-    final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+    final visibilityState = ref.watch(tenantDashboardVisibilityProvider);
+    final contextState = ref.watch(tenantAdminContextProvider);
 
-    return dashboardState.when(
+    return visibilityState.when(
       loading: () {
         return const TenantAdminPageScaffold(
           title: 'Dashboard',
-          subtitle: 'Tenant operations overview',
+          subtitle: 'See how your business is doing today.',
           child: TenantAdminLoadingSkeleton(rowCount: 8),
         );
       },
       error: (error, stackTrace) {
         return TenantAdminPageScaffold(
           title: 'Dashboard',
-          subtitle: 'Tenant operations overview',
+          subtitle: 'See how your business is doing today.',
           child: TenantAdminErrorState(
             title: 'Unable to load dashboard',
             message:
                 'Please try again. If the issue continues, contact support.',
-            onRetry: () => ref.refresh(tenantDashboardProvider),
+            onRetry: () {
+              ref.invalidate(tenantDashboardProvider);
+              ref.invalidate(tenantAdminContextProvider);
+            },
           ),
         );
       },
-      data: (dashboard) {
-        if (dashboard.isEmpty) {
-          return const TenantAdminPageScaffold(
-            title: 'Dashboard',
-            subtitle: 'Tenant operations overview',
-            child: TenantAdminEmptyState(
-              title: 'Dashboard is empty',
-              message: 'Dashboard data will appear here when available.',
-            ),
-          );
+      data: (visibility) {
+        if (!visibility.showTitle) {
+          return const TenantAdminForbiddenScreenFallback();
         }
 
-        final quickActions = accessState.maybeWhen(
-          data: (accessChecker) {
-            return dashboard.quickActions.where((action) {
-              return accessChecker.canShowAction(
-                action.featureCode,
-                action.permissionCode,
-              );
-            }).toList(growable: false);
-          },
-          orElse: () => <TenantDashboardQuickAction>[],
+        final headerActions = contextState.maybeWhen(
+          data: (tenantContext) => TenantAdminDashboardHeaderActions(
+            visibility: visibility,
+            context: tenantContext,
+            onLogout: () => _logout(ref, context),
+          ),
+          orElse: () => TenantAdminDashboardHeaderActions(
+            visibility: visibility,
+            showLogoutOnly: true,
+            onLogout: () => _logout(ref, context),
+          ),
         );
 
         return LayoutBuilder(
@@ -69,18 +69,14 @@ class TenantDashboardScreen extends ConsumerWidget {
             final isMobile = constraints.maxWidth < 700;
 
             return TenantAdminPageScaffold(
-              title: 'Dashboard',
-              subtitle:
-                  'Monitor today’s sales, operations, stock alerts, and recent activity.',
+              title: visibility.showTitle ? 'Dashboard' : '',
+              subtitle: visibility.showSubtitle
+                  ? 'See how your business is doing today.'
+                  : null,
+              actions: [headerActions],
               child: isMobile
-                  ? _MobileDashboard(
-                      dashboard: dashboard,
-                      quickActions: quickActions,
-                    )
-                  : _TabletDashboard(
-                      dashboard: dashboard,
-                      quickActions: quickActions,
-                    ),
+                  ? _MobileDashboard(visibility: visibility)
+                  : _TabletDashboard(visibility: visibility),
             );
           },
         );
@@ -89,81 +85,215 @@ class TenantDashboardScreen extends ConsumerWidget {
   }
 }
 
-class _TabletDashboard extends StatelessWidget {
-  const _TabletDashboard({
-    required this.dashboard,
-    required this.quickActions,
-  });
+Future<void> _logout(WidgetRef ref, BuildContext context) async {
+  await ref.read(authSessionProvider.notifier).clear();
+  if (context.mounted) {
+    context.go('/tenant-login');
+  }
+}
 
-  final TenantDashboard dashboard;
-  final List<TenantDashboardQuickAction> quickActions;
+class TenantAdminForbiddenScreenFallback extends ConsumerWidget {
+  const TenantAdminForbiddenScreenFallback({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return const TenantAdminPageScaffold(
+      title: 'No access to Dashboard',
+      child: TenantAdminEmptyState(
+        title: 'No access',
+        message: 'You do not have permission to view the dashboard.',
+      ),
+    );
+  }
+}
+
+class _TabletDashboard extends StatelessWidget {
+  const _TabletDashboard({required this.visibility});
+
+  final TenantDashboardVisibility visibility;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
+    final sections = <Widget>[];
+
+    if (visibility.showKpiSection) {
+      sections.add(
         DashboardMetricGrid(
-          metrics: dashboard.metrics,
+          metrics: visibility.visibleMetrics,
           compact: false,
         ),
-        const SizedBox(height: 24),
+      );
+    }
+
+    final middleRowChildren = <Widget>[];
+
+    if (visibility.showSalesChart) {
+      middleRowChildren.add(
+        Expanded(
+          flex: 2,
+          child: SalesThisWeekCard(
+            salesSummary: visibility.salesSummary,
+            showTrend: visibility.showSalesTrend,
+            showReportsLink: visibility.showReportsLink,
+          ),
+        ),
+      );
+    }
+
+    if (visibility.showNeedsAttentionSection) {
+      if (middleRowChildren.isNotEmpty) {
+        middleRowChildren.add(const SizedBox(width: 24));
+      }
+
+      middleRowChildren.add(
+        Expanded(
+          child: NeedsAttentionCard(
+            items: visibility.visibleAttentionItems,
+            showViewAll: visibility.showNeedsAttentionViewAll,
+          ),
+        ),
+      );
+    }
+
+    if (middleRowChildren.isNotEmpty) {
+      if (sections.isNotEmpty) {
+        sections.add(const SizedBox(height: 24));
+      }
+
+      sections.add(
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 2,
-              child: SalesThisWeekCard(salesSummary: dashboard.salesThisWeek),
-            ),
-            const SizedBox(width: 24),
-            Expanded(
-              child: NeedsAttentionCard(items: dashboard.needsAttention),
-            ),
-          ],
+          children: middleRowChildren,
         ),
-        const SizedBox(height: 24),
+      );
+    }
+
+    final bottomRowChildren = <Widget>[];
+
+    if (visibility.showQuickActionsSection) {
+      bottomRowChildren.add(
+        Expanded(
+          child: DashboardQuickActionsCard(
+            actions: visibility.visibleQuickActions,
+          ),
+        ),
+      );
+    }
+
+    if (visibility.showRecentActivitySection) {
+      if (bottomRowChildren.isNotEmpty) {
+        bottomRowChildren.add(const SizedBox(width: 24));
+      }
+
+      bottomRowChildren.add(
+        Expanded(
+          child: RecentActivityCard(
+            items: visibility.visibleActivities,
+            showViewAll: visibility.showAllActivityLink,
+          ),
+        ),
+      );
+    }
+
+    if (bottomRowChildren.isNotEmpty) {
+      if (sections.isNotEmpty) {
+        sections.add(const SizedBox(height: 24));
+      }
+
+      sections.add(
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: DashboardQuickActionsCard(actions: quickActions),
-            ),
-            const SizedBox(width: 24),
-            Expanded(
-              child: RecentActivityCard(items: dashboard.recentActivity),
-            ),
-          ],
+          children: bottomRowChildren,
         ),
-      ],
+      );
+    }
+
+    if (sections.isEmpty) {
+      return const TenantAdminEmptyState(
+        title: 'Dashboard',
+        message: 'No dashboard widgets available for your access.',
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: sections,
     );
   }
 }
 
 class _MobileDashboard extends StatelessWidget {
-  const _MobileDashboard({
-    required this.dashboard,
-    required this.quickActions,
-  });
+  const _MobileDashboard({required this.visibility});
 
-  final TenantDashboard dashboard;
-  final List<TenantDashboardQuickAction> quickActions;
+  final TenantDashboardVisibility visibility;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
+    final sections = <Widget>[];
+
+    void addSection(Widget section) {
+      if (sections.isNotEmpty) {
+        sections.add(const SizedBox(height: 16));
+      }
+
+      sections.add(section);
+    }
+
+    if (visibility.showKpiSection) {
+      addSection(
         DashboardMetricGrid(
-          metrics: dashboard.metrics,
+          metrics: visibility.visibleMetrics,
           compact: true,
         ),
-        const SizedBox(height: 16),
-        NeedsAttentionCard(items: dashboard.needsAttention),
-        const SizedBox(height: 16),
-        SalesThisWeekCard(salesSummary: dashboard.salesThisWeek),
-        const SizedBox(height: 16),
-        DashboardQuickActionsCard(actions: quickActions),
-        const SizedBox(height: 16),
-        RecentActivityCard(items: dashboard.recentActivity),
-      ],
+      );
+    }
+
+    if (visibility.showNeedsAttentionSection) {
+      addSection(
+        NeedsAttentionCard(
+          items: visibility.visibleAttentionItems,
+          showViewAll: visibility.showNeedsAttentionViewAll,
+        ),
+      );
+    }
+
+    if (visibility.showSalesChart) {
+      addSection(
+        SalesThisWeekCard(
+          salesSummary: visibility.salesSummary,
+          showTrend: visibility.showSalesTrend,
+          showReportsLink: visibility.showReportsLink,
+        ),
+      );
+    }
+
+    if (visibility.showQuickActionsSection) {
+      addSection(
+        DashboardQuickActionsCard(
+          actions: visibility.visibleQuickActions,
+        ),
+      );
+    }
+
+    if (visibility.showRecentActivitySection) {
+      addSection(
+        RecentActivityCard(
+          items: visibility.visibleActivities,
+          showViewAll: visibility.showAllActivityLink,
+        ),
+      );
+    }
+
+    if (sections.isEmpty) {
+      return const TenantAdminEmptyState(
+        title: 'Dashboard',
+        message: 'No dashboard widgets available for your access.',
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: sections,
     );
   }
 }

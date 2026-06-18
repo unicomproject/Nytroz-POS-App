@@ -13,7 +13,7 @@ class OutletDto {
 
   factory OutletDto.fromJson(Map<String, dynamic> json) {
     return OutletDto(
-      id: json['id'] as String? ?? '',
+      id: json['id']?.toString() ?? '',
       name: json['name'] as String? ?? json['outletName'] as String? ?? '',
       code: json['code'] as String? ?? json['outletCode'] as String? ?? '',
       location: json['location'] as String? ?? json['address'] as String? ?? '',
@@ -49,9 +49,16 @@ class OutletListResultDto {
     final rawItems = json['items'] ?? json['outlets'];
 
     return OutletListResultDto(
-      summary: OutletListSummaryDto.fromJson(
-        Map<String, dynamic>.from(json['summary'] as Map? ?? const {}),
-      ),
+      summary: json['summary'] is Map
+          ? OutletListSummaryDto.fromJson(
+              Map<String, dynamic>.from(json['summary'] as Map),
+            )
+          : const OutletListSummaryDto(
+              totalOutlets: 0,
+              activeOutlets: 0,
+              inactiveOutlets: 0,
+              totalLocations: 0,
+            ),
       items: _mapList(rawItems, OutletDto.fromJson),
     );
   }
@@ -119,13 +126,14 @@ class OutletDetailsDto {
 
   factory OutletDetailsDto.fromJson(Map<String, dynamic> json) {
     return OutletDetailsDto(
-      id: json['id'] as String? ?? '',
+      id: json['id']?.toString() ?? '',
       name: json['name'] as String? ?? json['outletName'] as String? ?? '',
       code: json['code'] as String? ?? json['outletCode'] as String? ?? '',
-      address: json['address'] as String? ?? '',
+      address: json['address'] as String? ?? _formatAddress(json),
       status: json['status'] as String? ?? '',
       managerName: json['managerName'] as String?,
-      managerPhone: json['managerPhone'] as String?,
+      managerPhone:
+          json['managerPhone'] as String? ?? json['phone'] as String?,
       openingHours: json['openingHours']?.toString(),
       todaysStatus: json['todaysStatus'] as String?,
       metrics: _mapList(json['metrics'], OutletDetailMetricDto.fromJson),
@@ -256,4 +264,19 @@ int _intValue(Object? value) {
   }
 
   return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+String _formatAddress(Map<String, dynamic> json) {
+  final parts = [
+    json['addressLine1'],
+    json['addressLine2'],
+    json['city'],
+    json['postalCode'],
+    json['country'],
+  ]
+      .whereType<String>()
+      .map((part) => part.trim())
+      .where((part) => part.isNotEmpty);
+
+  return parts.join(', ');
 }

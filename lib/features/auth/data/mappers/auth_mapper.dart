@@ -77,7 +77,7 @@ AuthSession authSessionFromJson(Map<String, dynamic> json) {
   return AuthSession(
     accessToken: accessToken,
     refreshToken: payload['refreshToken'] as String?,
-    userId: user['id'] as String? ?? payload['userId'] as String? ?? '',
+    userId: user['id']?.toString() ?? payload['userId']?.toString() ?? '',
     userDisplayName: user['fullName'] as String? ??
         user['username'] as String? ??
         user['email'] as String? ??

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../domain/entities/tenant_dashboard.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_quick_action_card.dart';
-import '../../../presentation/widgets/tenant_admin_states.dart';
 
 class DashboardQuickActionsCard extends StatelessWidget {
   const DashboardQuickActionsCard({
@@ -29,22 +28,16 @@ class DashboardQuickActionsCard extends StatelessWidget {
           Text('Quick actions',
               style: TenantAdminTextStyles.sectionTitle(context)),
           const SizedBox(height: TenantAdminSpacing.lg),
-          if (actions.isEmpty)
-            const TenantAdminEmptyState(
-              title: 'No quick actions',
-              message: 'Allowed quick actions will appear here.',
-            )
-          else
-            for (var index = 0; index < actions.length; index++) ...[
-              TenantAdminQuickActionCard(
-                title: actions[index].title,
-                subtitle: actions[index].subtitle,
-                icon: _iconFor(actions[index].iconKey ?? actions[index].key),
-                onTap: () => context.go(actions[index].route),
-              ),
-              if (index != actions.length - 1)
-                const SizedBox(height: TenantAdminSpacing.md),
-            ],
+          for (var index = 0; index < actions.length; index++) ...[
+            TenantAdminQuickActionCard(
+              title: actions[index].title,
+              subtitle: actions[index].subtitle,
+              icon: _iconFor(actions[index].iconKey ?? actions[index].key),
+              onTap: () => context.go(actions[index].route),
+            ),
+            if (index != actions.length - 1)
+              const SizedBox(height: TenantAdminSpacing.md),
+          ],
         ],
       ),
     );

@@ -37,11 +37,6 @@ final updateOutletProvider = Provider<UpdateOutlet>((ref) {
 
 final outletSearchProvider = StateProvider<String>((ref) => '');
 
-final outletListProvider = FutureProvider<OutletListResult>((ref) {
-  final search = ref.watch(outletSearchProvider);
-  return ref.watch(getOutletsProvider).call(search: search);
-});
-
 final outletDetailsProvider =
     FutureProvider.family<OutletDetails, String>((ref, id) {
   return ref.watch(getOutletDetailsProvider).call(id);

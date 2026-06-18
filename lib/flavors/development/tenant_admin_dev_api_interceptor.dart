@@ -26,7 +26,9 @@ Object? _responseFor(RequestOptions options) {
   final method = options.method.toUpperCase();
   final path = options.path;
 
-  if (method == 'GET' && path == '/api/tenant-admin/context') {
+  if (method == 'GET' &&
+      (path == '/api/tenant-admin/context' ||
+          path == '/api/v1/tenant-admin/context')) {
     return _context;
   }
 
@@ -34,8 +36,11 @@ Object? _responseFor(RequestOptions options) {
     return _menu;
   }
 
-  if (method == 'GET' && path == '/api/tenant-admin/dashboard') {
-    return _dashboard;
+  if (method == 'GET' &&
+      (path == '/api/tenant-admin/dashboard' ||
+          path == '/api/v1/tenant-admin/dashboard' ||
+          path == '/api/v1/tenant-admin/dashboard/summary')) {
+    return _dashboardSummary;
   }
 
   if (method == 'GET' && path == '/api/tenant-admin/onboarding/auth-branding') {
@@ -137,7 +142,9 @@ Object? _responseFor(RequestOptions options) {
     };
   }
 
-  if (method == 'GET' && path == '/api/tenant-admin/outlets') {
+  if (method == 'GET' &&
+      (path == '/api/tenant-admin/outlets' ||
+          path == '/api/v1/tenant-admin/outlets')) {
     return _outlets;
   }
 
@@ -145,20 +152,27 @@ Object? _responseFor(RequestOptions options) {
     return _managers;
   }
 
-  if (method == 'GET' && path.startsWith('/api/tenant-admin/outlets/')) {
+  if (method == 'GET' &&
+      (path.startsWith('/api/v1/tenant-admin/outlets/') ||
+          path.startsWith('/api/tenant-admin/outlets/'))) {
     return _outletDetails(path.split('/').last);
   }
 
-  if (method == 'POST' && path == '/api/tenant-admin/outlets') {
+  if (method == 'POST' &&
+      (path == '/api/tenant-admin/outlets' ||
+          path == '/api/v1/tenant-admin/outlets')) {
     return _createdOutlet(options.data);
   }
 
-  if (method == 'PUT' && path.startsWith('/api/tenant-admin/outlets/')) {
+  if (method == 'PUT' &&
+      (path.startsWith('/api/v1/tenant-admin/outlets/') ||
+          path.startsWith('/api/tenant-admin/outlets/'))) {
     return _createdOutlet(options.data, id: path.split('/').last);
   }
 
   if (method == 'PATCH' &&
-      path.startsWith('/api/tenant-admin/outlets/') &&
+      (path.startsWith('/api/v1/tenant-admin/outlets/') ||
+          path.startsWith('/api/tenant-admin/outlets/')) &&
       path.endsWith('/status')) {
     return const {'success': true};
   }
@@ -183,6 +197,7 @@ const _features = [
   {'featureCode': 'catalog.product', 'featureName': 'Products'},
   {'featureCode': 'inventory.stock', 'featureName': 'Stock'},
   {'featureCode': 'reports', 'featureName': 'Reports'},
+  {'featureCode': 'sales', 'featureName': 'Sales'},
   {'featureCode': 'subscription.billing', 'featureName': 'Billing'},
   {'featureCode': 'tenant.settings', 'featureName': 'Settings'},
   {'featureCode': 'tenant.activity', 'featureName': 'Activity'},
@@ -213,6 +228,28 @@ final _context = {
   'permissions': [
     for (final code in [
       'dashboard.view',
+      'dashboard.summary.view',
+      'dashboard.alerts.view',
+      'dashboard.filter.date',
+      'dashboard.filter.outlet',
+      'sales.summary.view',
+      'sales.orders.view',
+      'analytics.sales_trend.view',
+      'reports.sales.view',
+      'outlets.view',
+      'outlets.create',
+      'outlets.activity.view',
+      'tills.status.view',
+      'users.invites.view',
+      'users.activity.view',
+      'inventory.stock_alerts.view',
+      'inventory.activity.view',
+      'billing.view',
+      'subscription.view',
+      'notifications.view',
+      'profile.view',
+      'tenant.context.view',
+      'activity.view',
       'outlets.view',
       'outlets.create',
       'outlets.update',
@@ -352,7 +389,45 @@ const _menu = [
   },
 ];
 
+const _dashboardSummary = {
+  'success': true,
+  'message': 'Tenant admin dashboard summary loaded successfully.',
+  'data': {
+    'todaySales': {
+      'amount': 3245.50,
+      'currency': 'LKR',
+      'growthPercent': 12.5,
+    },
+    'orders': {
+      'count': 128,
+      'growthPercent': 8.7,
+    },
+    'activeOutlets': {
+      'count': 5,
+      'onlineCount': 5,
+    },
+    'stockAlerts': {
+      'count': 14,
+    },
+    'tills': {
+      'onlineCount': 10,
+      'offlineCount': 2,
+    },
+    'needsAttention': {
+      'offlineTills': 2,
+      'lowStockItems': 14,
+      'pendingStaffInvites': 3,
+      'paymentDue': {
+        'amount': 120.00,
+        'currency': 'LKR',
+        'dueDate': '2026-06-15',
+      },
+    },
+  },
+};
+
 const _dashboard = {
+  'notificationCount': 3,
   'metrics': [
     {
       'key': 'sales',
@@ -405,22 +480,32 @@ const _dashboard = {
   },
   'needsAttention': [
     {
+      'key': 'offline_tills',
       'title': '2 tills are offline',
       'message': 'Bring them back online',
       'status': 'danger',
       'route': '/tenant-admin/tills',
     },
     {
+      'key': 'low_stock',
       'title': '14 low stock items',
       'message': 'Restock to avoid running out',
       'status': 'warning',
       'route': '/tenant-admin/stock',
     },
     {
+      'key': 'pending_invites',
       'title': '3 pending staff invites',
       'message': 'Review and send invites',
       'status': 'pending',
       'route': '/tenant-admin/staff',
+    },
+    {
+      'key': 'payment_due',
+      'title': 'Payment due',
+      'message': '£120.00 due on 15 Jun 2025',
+      'status': 'warning',
+      'route': '/tenant-admin/billing',
     },
   ],
   'quickActions': [
@@ -456,21 +541,32 @@ const _dashboard = {
       'permissionCode': 'catalog.product.create',
       'iconKey': 'products',
     },
+    {
+      'key': 'view-reports',
+      'title': 'View reports',
+      'route': '/tenant-admin/reports',
+      'featureCode': 'reports',
+      'permissionCode': 'reports.view',
+      'iconKey': 'reports',
+    },
   ],
   'recentActivity': [
     {
+      'key': 'outlet',
       'title': 'New outlet added',
       'subtitle': 'High Street Store',
       'timeLabel': 'Today, 09:30 AM',
       'iconKey': 'store',
     },
     {
+      'key': 'stock',
       'title': 'Stock adjusted',
       'subtitle': 'Basmati Rice 5kg',
       'timeLabel': 'Today, 08:15 AM',
       'iconKey': 'inventory',
     },
     {
+      'key': 'staff',
       'title': 'Staff invite sent',
       'subtitle': 'Emma Patel',
       'timeLabel': 'Yesterday, 06:45 PM',

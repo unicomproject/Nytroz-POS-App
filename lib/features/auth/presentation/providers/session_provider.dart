@@ -54,8 +54,8 @@ final authSessionProvider =
 final authHeaderSyncProvider = Provider<void>((ref) {
   final dio = ref.watch(appDioProvider);
 
-  ref.listen<AuthSession?>(authSessionProvider, (previous, next) {
-    if (next == null || !next.isAuthenticated) {
+  void applyHeader(AuthSession? session) {
+    if (session == null || !session.isAuthenticated) {
       dio.options.headers.remove('Authorization');
       developer.log(
         'Authorization header removed.',
@@ -64,10 +64,16 @@ final authHeaderSyncProvider = Provider<void>((ref) {
       return;
     }
 
-    dio.options.headers['Authorization'] = 'Bearer ${next.accessToken}';
+    dio.options.headers['Authorization'] = 'Bearer ${session.accessToken}';
     developer.log(
       'Authorization Bearer token attached to Dio defaults.',
       name: 'auth.network',
     );
+  }
+
+  applyHeader(ref.read(authSessionProvider));
+
+  ref.listen<AuthSession?>(authSessionProvider, (previous, next) {
+    applyHeader(next);
   });
 });

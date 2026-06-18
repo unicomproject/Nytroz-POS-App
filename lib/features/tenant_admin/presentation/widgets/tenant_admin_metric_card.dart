@@ -21,74 +21,123 @@ class TenantAdminMetricCard extends StatelessWidget {
   final String? trend;
   final TenantAdminStatusType? status;
 
+  static const _compactHeightThreshold = 140.0;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-      decoration: BoxDecoration(
-        color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-        border: Border.all(color: TenantAdminColors.border),
-        boxShadow: TenantAdminShadows.card,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxHeight.isFinite &&
+            constraints.maxHeight < _compactHeightThreshold;
+        final padding = isCompact
+            ? TenantAdminSpacing.md
+            : TenantAdminSpacing.lg;
+        final iconBoxSize = isCompact ? 36.0 : 44.0;
+        final iconSize = isCompact ? 20.0 : 24.0;
+        final headerGap = isCompact
+            ? TenantAdminSpacing.sm
+            : TenantAdminSpacing.lg;
+        final footerGap = isCompact
+            ? TenantAdminSpacing.xs
+            : TenantAdminSpacing.sm;
+        final valueStyle = (isCompact
+                ? Theme.of(context).textTheme.titleLarge
+                : Theme.of(context).textTheme.headlineSmall)
+            ?.copyWith(
+          fontWeight: FontWeight.w800,
+          color: TenantAdminColors.bodyText,
+        );
+
+        return Container(
+          padding: EdgeInsets.all(padding),
+          decoration: BoxDecoration(
+            color: TenantAdminColors.surface,
+            borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+            border: Border.all(color: TenantAdminColors.border),
+            boxShadow: TenantAdminShadows.card,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: TenantAdminColors.secondary,
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                ),
-                child: Icon(icon, color: TenantAdminColors.primary),
+              Row(
+                children: [
+                  Container(
+                    width: iconBoxSize,
+                    height: iconBoxSize,
+                    decoration: BoxDecoration(
+                      color: TenantAdminColors.secondary,
+                      borderRadius:
+                          BorderRadius.circular(TenantAdminRadius.md),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: iconSize,
+                      color: TenantAdminColors.primary,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (status != null)
+                    Flexible(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: TenantAdminStatusBadge(
+                          label: status!.label,
+                          status: status!,
+                        ),
+                      ),
+                    ),
+                ],
               ),
-              const Spacer(),
-              if (status != null)
-                TenantAdminStatusBadge(label: status!.label, status: status!),
+              SizedBox(height: headerGap),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TenantAdminTextStyles.muted(context),
+              ),
+              const SizedBox(height: TenantAdminSpacing.xs),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: valueStyle,
+              ),
+              if (subtitle != null || trend != null) ...[
+                SizedBox(height: footerGap),
+                Row(
+                  children: [
+                    if (trend != null)
+                      Flexible(
+                        child: Text(
+                          trend!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: TenantAdminColors.success,
+                            fontWeight: FontWeight.w700,
+                            fontSize: isCompact ? 12 : null,
+                          ),
+                        ),
+                      ),
+                    if (trend != null && subtitle != null)
+                      const SizedBox(width: TenantAdminSpacing.sm),
+                    if (subtitle != null)
+                      Expanded(
+                        child: Text(
+                          subtitle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TenantAdminTextStyles.muted(context),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          Text(
-            title,
-            style: TenantAdminTextStyles.muted(context),
-          ),
-          const SizedBox(height: TenantAdminSpacing.xs),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: TenantAdminColors.bodyText,
-                ),
-          ),
-          if (subtitle != null || trend != null) ...[
-            const SizedBox(height: TenantAdminSpacing.sm),
-            Row(
-              children: [
-                if (trend != null)
-                  Text(
-                    trend!,
-                    style: const TextStyle(
-                      color: TenantAdminColors.success,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                if (trend != null && subtitle != null)
-                  const SizedBox(width: TenantAdminSpacing.sm),
-                if (subtitle != null)
-                  Expanded(
-                    child: Text(
-                      subtitle!,
-                      style: TenantAdminTextStyles.muted(context),
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 }

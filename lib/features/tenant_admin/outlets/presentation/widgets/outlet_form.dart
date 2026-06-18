@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/outlet.dart';
 import '../../domain/entities/outlet_details.dart';
+import '../utils/outlet_api_errors.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_form_section.dart';
@@ -61,6 +62,20 @@ class _OutletFormState extends State<OutletForm> {
     _postalCode = TextEditingController(text: initial?.postalCode ?? '');
     _managerId = initial?.managerId;
     _openingHours = _initialOpeningHours(initial?.openingHours);
+  }
+
+  @override
+  void didUpdateWidget(covariant OutletForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.backendErrors.isEmpty ||
+        _mapsEqual(widget.backendErrors, oldWidget.backendErrors)) {
+      return;
+    }
+
+    final errorStep = outletErrorStep(widget.backendErrors);
+    if (errorStep != null && errorStep != _step) {
+      setState(() => _step = errorStep);
+    }
   }
 
   @override
@@ -152,6 +167,7 @@ class _OutletFormState extends State<OutletForm> {
               _emailAddress,
               isRequired: true,
               keyboardType: TextInputType.emailAddress,
+              validator: _emailValidator,
             ),
             DropdownButtonFormField<String>(
               initialValue:
@@ -220,6 +236,7 @@ class _OutletFormState extends State<OutletForm> {
     TextEditingController controller, {
     bool isRequired = false,
     TextInputType? keyboardType,
+    String? Function(String? value)? validator,
   }) {
     return TextFormField(
       controller: controller,
@@ -228,15 +245,28 @@ class _OutletFormState extends State<OutletForm> {
         labelText: label,
         errorText: widget.backendErrors[key],
       ),
-      validator: isRequired
-          ? (value) {
-              if (value == null || value.trim().isEmpty) {
-                return '$label is required';
-              }
-              return null;
-            }
-          : null,
+      validator: (value) {
+        if (isRequired && (value == null || value.trim().isEmpty)) {
+          return '$label is required';
+        }
+
+        return validator?.call(value);
+      },
     );
+  }
+
+  String? _emailValidator(String? value) {
+    final email = value?.trim() ?? '';
+    if (email.isEmpty) {
+      return null;
+    }
+
+    final emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    if (!emailPattern.hasMatch(email)) {
+      return 'Enter a valid email address';
+    }
+
+    return null;
   }
 
   Widget _openingHourRow(_OpeningHourDraft hour) {
@@ -284,16 +314,95 @@ class _OutletFormState extends State<OutletForm> {
   }
 
   Future<void> _continue() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
     if (_step < 3) {
+      if (!_formKey.currentState!.validate()) {
+        return;
+      }
+
       setState(() => _step += 1);
       return;
     }
 
+    final validationError = _submitValidationError();
+    if (validationError != null) {
+      final fieldKey = validationError.$1;
+      final message = validationError.$2;
+      final errorStep = outletErrorStep({fieldKey: message});
+      if (errorStep != null) {
+        setState(() => _step = errorStep);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _formKey.currentState?.validate();
+        });
+      }
+      return;
+    }
+
     await widget.onSubmit(_formData());
+  }
+
+  (String, String)? _submitValidationError() {
+    final checks = <(String, String, String? Function(String? value)?)>[
+      ('outletName', 'Outlet name', _requiredValidator('Outlet name')),
+      ('outletCode', 'Outlet code', _requiredValidator('Outlet code')),
+      ('outletType', 'Outlet type', _requiredValidator('Outlet type')),
+      ('mainPhoneNumber', 'Main phone number', _requiredValidator('Main phone number')),
+      ('emailAddress', 'Email address', _emailValidator),
+      ('addressLine1', 'Address line 1', _requiredValidator('Address line 1')),
+      ('city', 'City', _requiredValidator('City')),
+      ('country', 'Country', _requiredValidator('Country')),
+      ('postalCode', 'Postal code', _requiredValidator('Postal code')),
+    ];
+
+    for (final check in checks) {
+      final value = switch (check.$1) {
+        'outletName' => _outletName.text,
+        'outletCode' => _outletCode.text,
+        'outletType' => _outletType.text,
+        'mainPhoneNumber' => _mainPhoneNumber.text,
+        'emailAddress' => _emailAddress.text,
+        'addressLine1' => _addressLine1.text,
+        'city' => _city.text,
+        'country' => _country.text,
+        'postalCode' => _postalCode.text,
+        _ => '',
+      };
+
+      final message = check.$3?.call(value);
+      if (message != null) {
+        return (check.$1, message);
+      }
+    }
+
+    return null;
+  }
+
+  String? Function(String? value) _requiredValidator(String label) {
+    return (value) {
+      if (value == null || value.trim().isEmpty) {
+        return '$label is required';
+      }
+
+      return null;
+    };
+  }
+
+  bool _mapsEqual(Map<String, String> a, Map<String, String> b) {
+    if (a.length != b.length) {
+      return false;
+    }
+
+    for (final entry in a.entries) {
+      if (b[entry.key] != entry.value) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   OutletFormData _formData() {
