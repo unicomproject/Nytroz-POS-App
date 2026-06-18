@@ -58,11 +58,11 @@ void main() {
 
     test('routes tenant admin to dashboard without device activation', () {
       final container = _createContainer(session: _tenantAdminSession);
+      addTearDown(container.dispose);
 
       final route = container.read(postLoginRouteProvider);
 
       expect(route, PostLoginRoute.tenantAdminDashboard);
-      container.dispose();
     });
 
     test('bootstrap exposes device API failures instead of becoming ready',
