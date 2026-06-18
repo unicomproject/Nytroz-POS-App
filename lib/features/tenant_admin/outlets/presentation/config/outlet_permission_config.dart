@@ -21,6 +21,10 @@ bool outletWidgetAllowed(
   bool Function(String permissionCode) can,
   bool Function(Iterable<String> permissionCodes) canAny,
 ) {
+  if (config.permission == null && config.permissionsAny.isEmpty) {
+    return true;
+  }
+
   if (config.permission != null && can(config.permission!)) {
     return true;
   }

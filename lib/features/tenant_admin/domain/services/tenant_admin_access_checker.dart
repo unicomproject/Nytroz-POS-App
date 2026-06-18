@@ -576,11 +576,12 @@ class TenantDashboardVisibility {
         hasVisibleItems: attentionItems.isNotEmpty,
       ),
       showAllActivityLink: access.canViewAllActivityLink(),
-      showSalesChart: access.canViewSalesChart(),
+      showSalesChart:
+          access.canViewSalesChart() && dashboard?.salesThisWeek != null,
       showNeedsAttentionSection:
           access.canViewNeedsAttentionSection() && attentionItems.isNotEmpty,
       showQuickActionsSection: quickActions.isNotEmpty,
-      showRecentActivitySection: showRecentActivity,
+      showRecentActivitySection: showRecentActivity && activities.isNotEmpty,
       showKpiSection: metrics.isNotEmpty,
       visibleMetrics: metrics,
       visibleAttentionItems: attentionItems,

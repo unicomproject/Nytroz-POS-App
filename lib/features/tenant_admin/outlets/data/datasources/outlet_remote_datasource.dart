@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../domain/entities/outlet_list_query.dart';
 import '../models/create_outlet_request_dto.dart';
 import '../models/outlet_dto.dart';
 
@@ -13,17 +14,14 @@ class OutletRemoteDatasource {
     '/api/tenant-admin/outlets',
   ];
 
-  Future<OutletListResultDto> getOutlets({String? search}) async {
+  Future<OutletListResultDto> getOutlets(OutletListQuery query) async {
     DioException? lastError;
 
     for (final path in _outletPaths) {
       try {
         final response = await _dio.get<dynamic>(
           path,
-          queryParameters: {
-            if (search != null && search.trim().isNotEmpty)
-              'search': search.trim(),
-          },
+          queryParameters: _listQueryParameters(query),
         );
 
         return _parseListResponse(response.data, response.requestOptions);
@@ -42,6 +40,36 @@ class OutletRemoteDatasource {
     }
 
     return OutletListResultDto.fromArray(const []);
+  }
+
+  Future<OutletListSummaryDto?> getOutletSummary() async {
+    DioException? lastError;
+
+    for (final path in _outletPaths) {
+      try {
+        final response = await _dio.get<dynamic>('$path/summary');
+        final payload = _unwrapApiPayload(
+          response.data,
+          response.requestOptions,
+        );
+
+        return OutletListSummaryDto.fromJson(payload);
+      } on DioException catch (error) {
+        lastError = error;
+        if (error.response?.statusCode == 404 ||
+            error.response?.statusCode == 403) {
+          return null;
+        }
+
+        rethrow;
+      }
+    }
+
+    if (lastError != null) {
+      throw lastError;
+    }
+
+    return null;
   }
 
   Future<OutletDetailsDto> getOutletDetails(String id) async {
@@ -63,6 +91,28 @@ class OutletRemoteDatasource {
     return _requestOutletDetails(
       (path) => _dio.put<dynamic>('$path/$id', data: request.toJson()),
     );
+  }
+
+  Future<void> deleteOutlet(String id) async {
+    DioException? lastError;
+
+    for (final path in _outletPaths) {
+      try {
+        await _dio.delete<void>('$path/$id');
+        return;
+      } on DioException catch (error) {
+        lastError = error;
+        if (error.response?.statusCode == 404) {
+          continue;
+        }
+
+        rethrow;
+      }
+    }
+
+    if (lastError != null) {
+      throw lastError;
+    }
   }
 
   Future<void> updateOutletStatus(String id, String status) async {
@@ -136,6 +186,19 @@ class OutletRemoteDatasource {
           type: DioExceptionType.badResponse,
           message: 'Outlet API is unavailable.',
         );
+  }
+
+  Map<String, dynamic> _listQueryParameters(OutletListQuery query) {
+    return {
+      'page': query.page,
+      'pageSize': query.pageSize,
+      'sortBy': query.sortBy,
+      'sortDirection': query.sortDirection,
+      if (query.search != null && query.search!.trim().isNotEmpty)
+        'search': query.search!.trim(),
+      if (query.status != null && query.status!.trim().isNotEmpty)
+        'status': query.status!.trim(),
+    };
   }
 
   OutletListResultDto _parseListResponse(

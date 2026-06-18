@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/core/access/tenant_admin_access_codes.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_context.dart';
+import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_menu_item.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_access_checker.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/domain/entities/outlet.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/providers/outlet_visibility_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/screens/outlet_list_screen.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/layout/tenant_admin_bottom_nav.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_access_provider.dart';
-import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_menu_item.dart';
 
 void main() {
   group('Outlet list screen', () {
@@ -30,8 +30,10 @@ void main() {
         tester,
         permissions: [TenantAdminPermissionCodes.outletView],
         features: [TenantAdminFeatureCodes.outletManagement],
+        width: 1200,
       );
 
+      expect(find.text('Outlet List'), findsOneWidget);
       expect(find.text('High Street Store'), findsOneWidget);
       expect(find.text('Add outlet'), findsNothing);
     });
@@ -67,7 +69,7 @@ void main() {
       expect(find.text('Total Outlets'), findsOneWidget);
     });
 
-    testWidgets('hides Today\'s Sales column without sales permission',
+    testWidgets('hides City column without location permission',
         (tester) async {
       await _pumpOutletList(
         tester,
@@ -76,7 +78,7 @@ void main() {
         width: 1200,
       );
 
-      expect(find.text("Today's Sales"), findsNothing);
+      expect(find.text('City'), findsNothing);
     });
 
     testWidgets('does not crash when user has only outlet.view', (tester) async {
@@ -146,26 +148,29 @@ Future<void> _pumpOutletList(
         ),
         outletListProvider.overrideWith(
           (ref) async => OutletListResult(
-              summary: const OutletListSummary(
-                totalOutlets: 1,
-                activeOutlets: 1,
-                inactiveOutlets: 0,
-                totalLocations: 1,
-              ),
-              items: const [
-                Outlet(
-                  id: 'outlet-1',
-                  name: 'High Street Store',
-                  code: 'OUT-001',
-                  location: '12 High Street, London',
-                  status: 'Active',
-                  tillCount: 2,
-                  onlineTillCount: 2,
-                  staffCount: 4,
-                  todaysSales: '£1,245.50',
-                ),
-              ],
+            summary: const OutletListSummary(
+              totalOutlets: 1,
+              activeOutlets: 1,
+              inactiveOutlets: 0,
+              totalLocations: 1,
             ),
+            items: const [
+              Outlet(
+                id: 'outlet-1',
+                name: 'High Street Store',
+                code: 'OUT-001',
+                location: '12 High Street, London',
+                status: 'Active',
+                tillCount: 2,
+                onlineTillCount: 2,
+                staffCount: 4,
+                todaysSales: '£1,245.50',
+              ),
+            ],
+            page: 1,
+            pageSize: 10,
+            totalCount: 1,
+          ),
         ),
       ],
       child: MaterialApp(

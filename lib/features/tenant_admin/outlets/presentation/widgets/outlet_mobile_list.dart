@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../domain/entities/outlet.dart';
+import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_mobile_list_card.dart';
 import '../../../presentation/widgets/tenant_admin_status_badge.dart';
 import '../config/outlet_row_action_configs.dart';
-
+import '../providers/outlet_providers.dart';
+import '../providers/outlet_visibility_provider.dart';
+import '../utils/outlet_list_filters.dart';
 class OutletMobileList extends StatelessWidget {
   const OutletMobileList({
     super.key,
@@ -26,14 +30,15 @@ class OutletMobileList extends StatelessWidget {
             outlet: outlets[index],
             visibility: visibility,
           ),
-          if (index != outlets.length - 1) const SizedBox(height: 12),
+          if (index != outlets.length - 1)
+            const SizedBox(height: TenantAdminSpacing.md),
         ],
       ],
     );
   }
 }
 
-class _OutletMobileCard extends StatelessWidget {
+class _OutletMobileCard extends ConsumerWidget {
   const _OutletMobileCard({
     required this.outlet,
     required this.visibility,
@@ -43,22 +48,21 @@ class _OutletMobileCard extends StatelessWidget {
   final OutletListVisibility visibility;
 
   @override
-  Widget build(BuildContext context) {
-    final subtitleParts = <String>[];
+  Widget build(BuildContext context, WidgetRef ref) {    final subtitleParts = <String>[outlet.code];
 
-    if (visibility.showMobileLocation) {
+    if (visibility.showMobileLocation && outlet.location.isNotEmpty) {
       subtitleParts.add(outlet.location);
     }
 
     if (visibility.showMobileTillSummary) {
-      subtitleParts.add('${outlet.onlineTillCount} Online');
+      subtitleParts.add('${outlet.tillCount} tills');
     }
 
     if (visibility.showMobileStaffSummary) {
-      subtitleParts.add('${outlet.staffCount} Staff');
+      subtitleParts.add('${outlet.staffCount} staff');
     }
 
-    final subtitle = subtitleParts.isEmpty ? null : subtitleParts.join('\n');
+    final statusLabel = displayOutletStatus(outlet.status);
 
     Widget? trailing;
     if (visibility.showMobileStatusBadge || visibility.showMobileSales) {
@@ -67,20 +71,35 @@ class _OutletMobileCard extends StatelessWidget {
         children: [
           if (visibility.showMobileStatusBadge)
             TenantAdminStatusBadge(
-              label: outlet.status,
-              status: _statusType(outlet.status),
+              label: statusLabel,
+              status: _statusType(statusLabel),
             ),
           if (visibility.showMobileStatusBadge && visibility.showMobileSales)
-            const SizedBox(height: 8),
-          if (visibility.showMobileSales) Text(outlet.todaysSales),
+            const SizedBox(height: TenantAdminSpacing.sm),
+          if (visibility.showMobileSales)
+            Text(
+              outlet.todaysSales.isEmpty ? '—' : outlet.todaysSales,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
         ],
       );
     }
 
     return TenantAdminMobileListCard(
       title: outlet.name,
-      subtitle: subtitle,
-      leading: const CircleAvatar(child: Icon(Icons.store)),
+      subtitle: subtitleParts.join(' • '),
+      leading: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: TenantAdminColors.secondary,
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        ),
+        child: const Icon(
+          Icons.storefront,
+          color: TenantAdminColors.primary,
+        ),
+      ),
       trailing: trailing,
       footer: visibility.showMobileActionsMenu
           ? Align(
@@ -103,8 +122,7 @@ class _OutletMobileCard extends StatelessWidget {
                   ];
                 },
                 onSelected: (actionId) =>
-                    _handleAction(context, actionId, outlet),
-              ),
+                    _handleAction(context, ref, actionId, outlet),              ),
             )
           : null,
       onTap: () => context.go('/tenant-admin/outlets/${outlet.id}'),
@@ -113,10 +131,10 @@ class _OutletMobileCard extends StatelessWidget {
 
   void _handleAction(
     BuildContext context,
+    WidgetRef ref,
     OutletRowActionId actionId,
     Outlet outlet,
-  ) {
-    switch (actionId) {
+  ) {    switch (actionId) {
       case OutletRowActionId.viewDetails:
         context.go('/tenant-admin/outlets/${outlet.id}');
       case OutletRowActionId.edit:
@@ -126,9 +144,45 @@ class _OutletMobileCard extends StatelessWidget {
       case OutletRowActionId.manageStaff:
         context.go('/tenant-admin/staff');
       case OutletRowActionId.toggleStatus:
-      case OutletRowActionId.delete:
         break;
+      case OutletRowActionId.delete:
+        _confirmDelete(context, ref, outlet);
     }
+  }
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    Outlet outlet,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete outlet'),
+          content: Text(
+            'Are you sure you want to delete "${outlet.name}"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
+
+    await ref.read(deleteOutletProvider).call(outlet.id);
+    ref.invalidate(outletListProvider);
   }
 }
 

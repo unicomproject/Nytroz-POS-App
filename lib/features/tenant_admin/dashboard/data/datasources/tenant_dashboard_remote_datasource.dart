@@ -37,17 +37,13 @@ class TenantDashboardRemoteDatasource {
 
         final summary = TenantDashboardSummaryDto.fromJson(data);
         final dashboard = summary.toDashboardDto();
-        final catalog = tenantAdminDashboardCatalogFallback;
 
         return TenantDashboardDto(
           metrics: dashboard.metrics,
-          salesThisWeek: catalog.salesThisWeek,
-          needsAttention: dashboard.needsAttention.isNotEmpty
-              ? dashboard.needsAttention
-              : catalog.needsAttention,
-          quickActions: catalog.quickActions,
-          recentActivity: catalog.recentActivity,
-          notificationCount: catalog.notificationCount,
+          salesThisWeek: null,
+          needsAttention: dashboard.needsAttention,
+          recentActivity: const [],
+          quickActions: tenantAdminDashboardCatalogFallback.quickActions,
         );
       } on DioException catch (error) {
         lastError = error;

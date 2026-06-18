@@ -3,6 +3,8 @@ import 'outlet_permission_config.dart';
 
 enum OutletTableColumnId {
   name,
+  code,
+  city,
   location,
   status,
   tills,
@@ -18,10 +20,12 @@ class OutletTableColumnConfig extends OutletWidgetPermissionConfig {
     required this.label,
     super.permission,
     super.permissionsAny = const [],
+    this.sortKey,
   });
 
   final OutletTableColumnId columnId;
   final String label;
+  final String? sortKey;
 }
 
 const outletTableColumnConfigs = <OutletTableColumnConfig>[
@@ -30,11 +34,19 @@ const outletTableColumnConfigs = <OutletTableColumnConfig>[
     columnId: OutletTableColumnId.name,
     label: 'Outlet Name',
     permission: TenantAdminPermissionCodes.outletView,
+    sortKey: 'name',
   ),
   OutletTableColumnConfig(
-    id: 'location',
-    columnId: OutletTableColumnId.location,
-    label: 'Location',
+    id: 'code',
+    columnId: OutletTableColumnId.code,
+    label: 'Outlet Code',
+    permission: TenantAdminPermissionCodes.outletView,
+    sortKey: 'code',
+  ),
+  OutletTableColumnConfig(
+    id: 'city',
+    columnId: OutletTableColumnId.city,
+    label: 'City',
     permission: TenantAdminPermissionCodes.outletLocationView,
   ),
   OutletTableColumnConfig(
@@ -42,30 +54,7 @@ const outletTableColumnConfigs = <OutletTableColumnConfig>[
     columnId: OutletTableColumnId.status,
     label: 'Status',
     permission: TenantAdminPermissionCodes.outletStatusView,
-  ),
-  OutletTableColumnConfig(
-    id: 'tills',
-    columnId: OutletTableColumnId.tills,
-    label: 'Tills',
-    permissionsAny: [
-      TenantAdminPermissionCodes.tillView,
-      TenantAdminPermissionCodes.outletTillSummaryView,
-    ],
-  ),
-  OutletTableColumnConfig(
-    id: 'staff',
-    columnId: OutletTableColumnId.staff,
-    label: 'Staff',
-    permissionsAny: [
-      TenantAdminPermissionCodes.userView,
-      TenantAdminPermissionCodes.outletStaffSummaryView,
-    ],
-  ),
-  OutletTableColumnConfig(
-    id: 'sales',
-    columnId: OutletTableColumnId.sales,
-    label: "Today's Sales",
-    permission: TenantAdminPermissionCodes.outletSalesSummaryView,
+    sortKey: 'status',
   ),
 ];
 

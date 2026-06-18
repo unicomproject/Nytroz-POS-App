@@ -667,110 +667,116 @@ Map<String, Object?> _outletDetails(String id) {
     (outlet) => outlet['id'] == id,
     orElse: () => items.first,
   );
+  final tillCount = item['tillCount'] ?? 0;
+  final onlineTillCount = item['onlineTillCount'] ?? 0;
+  final staffCount = item['staffCount'] ?? 0;
 
   return {
-    'id': item['id'],
-    'name': item['name'],
-    'code': item['code'],
-    'address': item['location'],
-    'status': item['status'],
-    'managerName': 'Aisha Khan',
-    'managerPhone': '+44 7700 900123',
-    'openingHours': '08:00 – 20:00',
-    'todaysStatus': 'Operating as normal today',
-    'metrics': [
-      {
-        'title': 'Tills',
-        'value': '${item['tillCount']}',
-        'subtitle': '${item['onlineTillCount']} online',
-        'iconKey': 'till',
+    'success': true,
+    'message': 'Outlet loaded successfully.',
+    'data': {
+      'id': item['id'],
+      'name': item['name'],
+      'code': item['code'],
+      'addressLine1': item['location'],
+      'city': 'London',
+      'country': 'UK',
+      'phone': '+44 7700 900123',
+      'email': 'outlet@coffeecorner.test',
+      'status': item['status'],
+      'managerName': 'Aisha Khan',
+      'managerPhone': '+44 7700 900123',
+      'openingHours': '08:00 – 20:00, Mon – Sun',
+      'todaysStatus': 'Operating as normal today',
+      'tillCount': tillCount,
+      'onlineTillCount': onlineTillCount,
+      'staffCount': staffCount,
+      'todaySales': {
+        'amount': 1245.50,
+        'currency': 'GBP',
       },
-      {
-        'title': 'Staff',
-        'value': '${item['staffCount']}',
-        'subtitle': 'Assigned staff',
-        'iconKey': 'users',
+      'weekSales': {
+        'amount': 8920.30,
+        'currency': 'GBP',
       },
-      {
-        'title': "Today's sales",
-        'value': '${item['todaysSales']}',
-        'subtitle': '+12.5% vs yesterday',
-        'iconKey': 'sales',
-      },
-      {
-        'title': 'This week',
-        'value': '£8,920.30',
-        'subtitle': '+8.3% vs last week',
-        'iconKey': 'reports',
-      },
-    ],
-    'assignedTills': [
-      {
-        'id': 'till-1',
-        'title': 'Front Counter Till',
-        'subtitle': 'TILL-001',
-        'status': 'online'
-      },
-      {
-        'id': 'till-2',
-        'title': 'Kiosk Till',
-        'subtitle': 'TILL-002',
-        'status': 'online'
-      },
-      {
-        'id': 'till-3',
-        'title': 'Back Office Till',
-        'subtitle': 'TILL-003',
-        'status': 'offline'
-      },
-    ],
-    'staff': [
-      {
-        'id': 'staff-1',
-        'title': 'Aisha Khan',
-        'subtitle': 'Manager',
-        'status': 'active'
-      },
-      {
-        'id': 'staff-2',
-        'title': 'Ravi Sharma',
-        'subtitle': 'Cashier',
-        'status': 'active'
-      },
-      {
-        'id': 'staff-3',
-        'title': 'Emma Patel',
-        'subtitle': 'Supervisor',
-        'status': 'active'
-      },
-    ],
-    'needsAttention': [
-      {
-        'title': '1 till offline',
-        'message': 'Back Office Till is offline',
-        'status': 'danger'
-      },
-      {
-        'title': '2 low stock items',
-        'message': 'View and restock soon',
-        'status': 'warning'
-      },
-    ],
+      'assignedTills': [
+        {
+          'id': 'till-1',
+          'title': 'Front Counter Till',
+          'subtitle': 'TILL-001',
+          'status': 'Online',
+        },
+        {
+          'id': 'till-2',
+          'title': 'Kiosk Till',
+          'subtitle': 'TILL-002',
+          'status': 'Online',
+        },
+        {
+          'id': 'till-3',
+          'title': 'Back Office Till',
+          'subtitle': 'TILL-003',
+          'status': 'Offline',
+        },
+      ],
+      'staff': [
+        {
+          'id': 'staff-1',
+          'title': 'Aisha Khan',
+          'subtitle': '+44 7700 900123',
+          'status': 'Manager',
+        },
+        {
+          'id': 'staff-2',
+          'title': 'Ravi Sharma',
+          'subtitle': '+44 7700 900456',
+          'status': 'Cashier',
+        },
+        {
+          'id': 'staff-3',
+          'title': 'Emma Patel',
+          'subtitle': '+44 7700 900789',
+          'status': 'Supervisor',
+        },
+      ],
+      'needsAttention': [
+        {
+          'title': '1 till offline',
+          'message': 'Back Office Till is offline',
+          'status': 'warning',
+        },
+        {
+          'title': '2 low stock items',
+          'message': 'View and restock soon',
+          'status': 'warning',
+        },
+      ],
+    },
   };
 }
 
 Map<String, Object?> _createdOutlet(Object? data, {String id = 'outlet-new'}) {
   final body = data is Map ? Map<String, dynamic>.from(data) : const {};
+  final name = body['name']?.toString() ?? body['outletName']?.toString() ?? 'New Outlet';
+  final code = body['code']?.toString() ?? body['outletCode']?.toString() ?? 'OUT-NEW';
 
   return {
-    'id': id,
-    'name': body['outletName']?.toString() ?? 'New Outlet',
-    'code': body['outletCode']?.toString() ?? 'OUT-NEW',
-    'location': body['addressLine1']?.toString() ?? '',
-    'status': 'active',
-    'tillCount': 0,
-    'onlineTillCount': 0,
-    'staffCount': 0,
-    'todaysSales': '£0.00',
+    'success': true,
+    'message': 'Outlet created successfully.',
+    'data': {
+      'id': id,
+      'name': name,
+      'code': code,
+      'addressLine1': body['addressLine1']?.toString() ?? '',
+      'city': body['city']?.toString() ?? '',
+      'country': body['country']?.toString() ?? '',
+      'phone': body['phone']?.toString() ?? '',
+      'email': body['email']?.toString() ?? '',
+      'status': body['status']?.toString() ?? 'Active',
+      'tillCount': 0,
+      'onlineTillCount': 0,
+      'staffCount': 0,
+      'todaySales': const {'amount': 0, 'currency': 'GBP'},
+    },
   };
 }

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../auth/presentation/providers/session_provider.dart';
 import '../../domain/entities/tenant_admin_context.dart';
 import '../../domain/entities/tenant_admin_menu_item.dart';
 import '../../domain/services/tenant_admin_access_checker.dart';
 import '../theme/tenant_admin_theme.dart';
 
-class TenantAdminSidebar extends StatelessWidget {
+class TenantAdminSidebar extends ConsumerWidget {
   const TenantAdminSidebar({
     super.key,
     required this.items,
@@ -21,7 +23,7 @@ class TenantAdminSidebar extends StatelessWidget {
   final TenantAdminAccessChecker? accessChecker;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       width: 280,
       color: TenantAdminColors.navy,
@@ -77,18 +79,37 @@ class TenantAdminSidebar extends StatelessWidget {
                 },
               ),
             ),
-            if (_showFooter)
-              _SidebarFooter(
-                tenantContext: tenantContext!,
-                accessChecker: accessChecker!,
-              ),
+            _SidebarFooter(
+              tenantContext: tenantContext,
+              accessChecker: accessChecker,
+              onSignOut: () => _signOut(ref, context),
+            ),
           ],
         ),
       ),
     );
   }
 
-  bool get _showFooter {
+  Future<void> _signOut(WidgetRef ref, BuildContext context) async {
+    await ref.read(authSessionProvider.notifier).clear();
+    if (context.mounted) {
+      context.go('/tenant-login');
+    }
+  }
+}
+
+class _SidebarFooter extends StatelessWidget {
+  const _SidebarFooter({
+    required this.onSignOut,
+    this.tenantContext,
+    this.accessChecker,
+  });
+
+  final TenantAdminContext? tenantContext;
+  final TenantAdminAccessChecker? accessChecker;
+  final VoidCallback onSignOut;
+
+  bool get _showTenantInfo {
     if (tenantContext == null || accessChecker == null) {
       return false;
     }
@@ -96,16 +117,6 @@ class TenantAdminSidebar extends StatelessWidget {
     return accessChecker!.canViewTenantContext() ||
         accessChecker!.canViewSubscription();
   }
-}
-
-class _SidebarFooter extends StatelessWidget {
-  const _SidebarFooter({
-    required this.tenantContext,
-    required this.accessChecker,
-  });
-
-  final TenantAdminContext tenantContext;
-  final TenantAdminAccessChecker accessChecker;
 
   @override
   Widget build(BuildContext buildContext) {
@@ -115,23 +126,45 @@ class _SidebarFooter extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Divider(color: Colors.white24),
-          if (accessChecker.canViewTenantContext())
-            Text(
-              tenantContext.tenantName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+          if (_showTenantInfo) ...[
+            if (accessChecker!.canViewTenantContext())
+              Text(
+                tenantContext!.tenantName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-          if (accessChecker.canViewSubscription() &&
-              tenantContext.subscriptionStatus != null &&
-              tenantContext.subscriptionStatus!.trim().isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Plan: ${tenantContext.subscriptionStatus}',
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
-            ),
+            if (accessChecker!.canViewSubscription() &&
+                tenantContext!.subscriptionStatus != null &&
+                tenantContext!.subscriptionStatus!.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Plan: ${tenantContext!.subscriptionStatus}',
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
+            const SizedBox(height: 12),
           ],
+          Material(
+            color: Colors.transparent,
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.logout, color: Colors.white70),
+              title: const Text(
+                'Sign out',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              subtitle: const Text(
+                'Go to login page',
+                style: TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+              onTap: onSignOut,
+            ),
+          ),
         ],
       ),
     );

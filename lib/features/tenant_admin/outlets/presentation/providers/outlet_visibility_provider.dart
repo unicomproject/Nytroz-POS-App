@@ -26,7 +26,6 @@ final outletListProvider = FutureProvider<OutletListResult?>((ref) async {
     return null;
   }
 
-  final search = ref.watch(outletSearchProvider);
-  // TODO: request summary fields separately when backend supports field-level filtering.
-  return ref.watch(getOutletsProvider).call(search: search);
+  final query = ref.watch(outletListQueryProvider);
+  return ref.watch(getOutletsProvider).call(query: query);
 });

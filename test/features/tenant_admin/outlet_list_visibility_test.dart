@@ -69,11 +69,11 @@ void main() {
       );
     });
 
-    test('shows sales column only with outlet.sales_summary.view', () {
+    test('shows city column only with outlet.location.view', () {
       final access = _checker(
         permissions: [
           TenantAdminPermissionCodes.outletView,
-          TenantAdminPermissionCodes.outletSalesSummaryView,
+          TenantAdminPermissionCodes.outletLocationView,
         ],
         features: [TenantAdminFeatureCodes.outletManagement],
       );
@@ -82,13 +82,13 @@ void main() {
 
       expect(
         visibility.visibleColumns.any(
-          (column) => column.columnId == OutletTableColumnId.sales,
+          (column) => column.columnId == OutletTableColumnId.city,
         ),
         isTrue,
       );
     });
 
-    test('hides sales column without outlet.sales_summary.view', () {
+    test('hides city column without outlet.location.view', () {
       final access = _checker(
         permissions: [TenantAdminPermissionCodes.outletView],
         features: [TenantAdminFeatureCodes.outletManagement],
@@ -98,7 +98,7 @@ void main() {
 
       expect(
         visibility.visibleColumns.any(
-          (column) => column.columnId == OutletTableColumnId.sales,
+          (column) => column.columnId == OutletTableColumnId.city,
         ),
         isFalse,
       );
