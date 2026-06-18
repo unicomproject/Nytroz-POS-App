@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/dio_error_message.dart';
 import '../../domain/entities/pos_device_context.dart';
 
 class DeviceActivationRemoteDatasource {
@@ -137,21 +138,11 @@ class DeviceActivationRemoteDatasource {
   }
 
   String _messageFromDio(DioException error) {
-    final data = error.response?.data;
-    if (data is Map) {
-      final message = data['message'];
-      if (message is String && message.trim().isNotEmpty) {
-        return message;
-      }
-    }
-
-    final status = error.response?.statusCode;
-    final endpoint = error.requestOptions.path;
-    if (status != null) {
-      return 'Device activation failed at $endpoint (HTTP $status).';
-    }
-
-    return 'Device activation failed at $endpoint. ${error.message ?? 'Try again.'}';
+    return messageFromDioException(
+      error,
+      contextPrefix: 'Device activation failed at ${error.requestOptions.path}',
+      fallback: 'Try again.',
+    );
   }
 
   bool _hasAuthHeader() {

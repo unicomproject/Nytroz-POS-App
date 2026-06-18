@@ -39,7 +39,8 @@ class PosProductVariantSheet extends ConsumerStatefulWidget {
       _PosProductVariantSheetState();
 }
 
-class _PosProductVariantSheetState extends ConsumerState<PosProductVariantSheet> {
+class _PosProductVariantSheetState
+    extends ConsumerState<PosProductVariantSheet> {
   final Map<String, String> _selectedAttributes = {};
   late int _quantity;
   String? _availabilityMessage;
@@ -57,7 +58,8 @@ class _PosProductVariantSheetState extends ConsumerState<PosProductVariantSheet>
 
   @override
   Widget build(BuildContext context) {
-    final detailAsync = ref.watch(posProductDetailProvider(widget.summary.productId));
+    final detailAsync =
+        ref.watch(posProductDetailProvider(widget.summary.productId));
 
     return SafeArea(
       child: Padding(
@@ -65,7 +67,8 @@ class _PosProductVariantSheetState extends ConsumerState<PosProductVariantSheet>
           left: TenantAdminSpacing.lg,
           right: TenantAdminSpacing.lg,
           top: TenantAdminSpacing.sm,
-          bottom: TenantAdminSpacing.lg + MediaQuery.viewInsetsOf(context).bottom,
+          bottom:
+              TenantAdminSpacing.lg + MediaQuery.viewInsetsOf(context).bottom,
         ),
         child: detailAsync.when(
           loading: () => const SizedBox(
@@ -182,9 +185,8 @@ class _PosProductVariantSheetState extends ConsumerState<PosProductVariantSheet>
               ),
               const Spacer(),
               IconButton.filledTonal(
-                onPressed: _quantity > 1
-                    ? () => setState(() => _quantity -= 1)
-                    : null,
+                onPressed:
+                    _quantity > 1 ? () => setState(() => _quantity -= 1) : null,
                 icon: const Icon(Icons.remove_rounded),
               ),
               Padding(
@@ -218,9 +220,7 @@ class _PosProductVariantSheetState extends ConsumerState<PosProductVariantSheet>
           ],
           const SizedBox(height: TenantAdminSpacing.lg),
           FilledButton(
-            onPressed: canSubmit
-                ? () => _submit(detail, matchedVariant)
-                : null,
+            onPressed: canSubmit ? () => _submit(detail, matchedVariant) : null,
             child: Text(
               widget.existingCartItem == null ? 'Add to Cart' : 'Update Cart',
             ),

@@ -5,6 +5,7 @@ class TenantDashboardDto {
     required this.needsAttention,
     required this.quickActions,
     required this.recentActivity,
+    this.notificationCount,
   });
 
   factory TenantDashboardDto.fromJson(Map<String, dynamic> json) {
@@ -27,6 +28,7 @@ class TenantDashboardDto {
         json['recentActivity'],
         TenantDashboardActivityDto.fromJson,
       ),
+      notificationCount: _intValue(json['notificationCount']),
     );
   }
 
@@ -35,6 +37,7 @@ class TenantDashboardDto {
   final List<TenantDashboardAttentionItemDto> needsAttention;
   final List<TenantDashboardQuickActionDto> quickActions;
   final List<TenantDashboardActivityDto> recentActivity;
+  final int? notificationCount;
 }
 
 class TenantDashboardMetricDto {
@@ -111,6 +114,7 @@ class TenantDashboardChartPointDto {
 
 class TenantDashboardAttentionItemDto {
   const TenantDashboardAttentionItemDto({
+    required this.key,
     required this.title,
     required this.message,
     this.status,
@@ -119,6 +123,7 @@ class TenantDashboardAttentionItemDto {
 
   factory TenantDashboardAttentionItemDto.fromJson(Map<String, dynamic> json) {
     return TenantDashboardAttentionItemDto(
+      key: json['key'] as String? ?? '',
       title: json['title'] as String? ?? '',
       message: json['message'] as String? ?? '',
       status: json['status'] as String?,
@@ -126,6 +131,7 @@ class TenantDashboardAttentionItemDto {
     );
   }
 
+  final String key;
   final String title;
   final String message;
   final String? status;
@@ -166,6 +172,7 @@ class TenantDashboardQuickActionDto {
 
 class TenantDashboardActivityDto {
   const TenantDashboardActivityDto({
+    required this.key,
     required this.title,
     required this.timeLabel,
     this.subtitle,
@@ -174,6 +181,7 @@ class TenantDashboardActivityDto {
 
   factory TenantDashboardActivityDto.fromJson(Map<String, dynamic> json) {
     return TenantDashboardActivityDto(
+      key: json['key'] as String? ?? '',
       title: json['title'] as String? ?? '',
       subtitle: json['subtitle'] as String?,
       timeLabel: json['timeLabel'] as String? ?? '',
@@ -181,6 +189,7 @@ class TenantDashboardActivityDto {
     );
   }
 
+  final String key;
   final String title;
   final String? subtitle;
   final String timeLabel;
@@ -207,4 +216,12 @@ double _doubleValue(Object? value) {
   }
 
   return double.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+int? _intValue(Object? value) {
+  if (value is num) {
+    return value.toInt();
+  }
+
+  return int.tryParse(value?.toString() ?? '');
 }

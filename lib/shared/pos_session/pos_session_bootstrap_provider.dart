@@ -87,13 +87,31 @@ class PosSessionBootstrapNotifier
     );
 
     try {
+      final session = _ref.read(authSessionProvider);
+      if (session == null ||
+          !session.isAuthenticated ||
+          !session.requiresPosDeviceBootstrap) {
+        developer.log(
+          'POS session bootstrap skipped: no POS device/till permissions.',
+          name: 'pos.session',
+        );
+        state = const PosSessionBootstrapState(isReady: true);
+        stopwatch.stop();
+        developer.log(
+          'POS session bootstrap finished. success=true durationMs=${stopwatch.elapsedMilliseconds}',
+          name: 'pos.session',
+        );
+        return;
+      }
+
       await _runStep(
         'hydrate-device-context',
         () => _ref.read(deviceActivationProvider.notifier).ensureHydrated(),
       );
       var device = _ref.read(deviceActivationProvider).deviceContext;
 
-      if (device == null || !device.isTrusted) {
+      if (session.canActivatePosDevice &&
+          (device == null || !device.isTrusted)) {
         final refreshed = await _runStep(
           'refresh-current-device',
           () =>
@@ -111,8 +129,7 @@ class PosSessionBootstrapNotifier
         }
       }
 
-      final trustedDevice = device;
-      if (trustedDevice != null && trustedDevice.isTrusted) {
+      if (session.canOpenPosTill && device != null && device.isTrusted) {
         await _runStep(
           'hydrate-till-session',
           () => _ref.read(tillProvider.notifier).ensureHydrated(),
@@ -123,7 +140,7 @@ class PosSessionBootstrapNotifier
           final refreshed = await _runStep(
             'refresh-current-till-session',
             () => _ref.read(tillProvider.notifier).refreshCurrentSession(
-                  deviceContext: trustedDevice,
+                  deviceContext: device!,
                 ),
           );
           final tillError = _ref.read(tillProvider).errorMessage;

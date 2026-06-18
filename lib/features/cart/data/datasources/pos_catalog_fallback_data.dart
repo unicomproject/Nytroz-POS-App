@@ -102,9 +102,11 @@ PosCatalogProductDetail posCatalogFallbackDetail(String productId) {
       ),
       variantGroups: [
         PosCatalogVariantGroup(name: 'Size', options: ['S', 'M', 'L', 'XL']),
-        PosCatalogVariantGroup(name: 'Colour', options: ['Blue', 'Black', 'Navy', 'Red']),
+        PosCatalogVariantGroup(
+            name: 'Colour', options: ['Blue', 'Black', 'Navy', 'Red']),
         PosCatalogVariantGroup(name: 'Style', options: ['Men', 'Women']),
-        PosCatalogVariantGroup(name: 'Material', options: ['Cotton', 'Polyester']),
+        PosCatalogVariantGroup(
+            name: 'Material', options: ['Cotton', 'Polyester']),
       ],
       variants: [
         PosCatalogVariant(

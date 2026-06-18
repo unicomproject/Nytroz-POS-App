@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/dio_error_message.dart';
 
 class PosHomeRemoteDatasource {
   const PosHomeRemoteDatasource(this._dio);
@@ -56,21 +57,12 @@ class PosHomeRemoteDatasource {
   }
 
   String _messageFromDio(DioException error) {
-    final data = error.response?.data;
-    if (data is Map) {
-      final message = data['message'];
-      if (message is String && message.trim().isNotEmpty) {
-        return message;
-      }
-    }
-
-    final status = error.response?.statusCode;
-    final endpoint = error.requestOptions.path;
-    if (status != null) {
-      return 'POS home dashboard failed at $endpoint (HTTP $status).';
-    }
-
-    return 'POS home dashboard failed at $endpoint. ${error.message ?? 'Try again.'}';
+    return messageFromDioException(
+      error,
+      contextPrefix:
+          'POS home dashboard failed at ${error.requestOptions.path}',
+      fallback: 'Try again.',
+    );
   }
 
   bool _hasAuthHeader() {

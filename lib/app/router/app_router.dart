@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/pos_shell/pos_shell_router.dart';
 import '../../features/device_activation/device_activation_router.dart';
 import '../../features/till/till_router.dart';
+import '../../features/tenant_admin/presentation/providers/tenant_admin_menu_provider.dart';
 import '../../features/tenant_admin/tenant_admin_router.dart';
 import '../../features/auth/presentation/providers/post_login_navigation_provider.dart';
 import '../../features/auth/presentation/providers/session_provider.dart';
@@ -29,6 +30,7 @@ final routerRefreshProvider = Provider<RouterRefreshNotifier>((ref) {
       notifier.refresh();
     }
   });
+  ref.listen(tenantAdminMenuProvider, (_, __) => notifier.refresh());
   ref.listen(tillProvider, (previous, next) {
     if (ref.read(posSessionBootstrapProvider).isReady) {
       notifier.refresh();
@@ -52,10 +54,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ...deviceActivationRoutes(ref),
       ...tillRoutes(ref),
       ...posShellRoutes(ref),
-      ...tenantAdminRoutes(),
+      ...tenantAdminRoutes(ref),
     ],
     redirect: (context, state) {
       final session = ref.read(authSessionProvider);
+      final isAuthenticated = session?.isAuthenticated ?? false;
       final bootstrap = ref.read(posSessionBootstrapProvider);
       final authenticatedInitialRoute = ref.read(postLoginRouteProvider).path;
       final path = state.uri.path;
@@ -69,15 +72,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           path == '/till-open' ||
           path.startsWith('/pos/');
 
-      if (isTenantAdminRoute && !isAuthRoute && session == null) {
+      if (isTenantAdminRoute && !isAuthRoute && !isAuthenticated) {
         return '/tenant-login';
       }
 
-      if (isProtectedPosRoute && session == null) {
+      if (isProtectedPosRoute && !isAuthenticated) {
         return '/tenant-login';
       }
 
-      if (session != null && !bootstrap.isReady) {
+      if (isAuthenticated && !bootstrap.isReady) {
         if (path != posSessionBootRoute) {
           return posSessionBootRoute;
         }
@@ -89,7 +92,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return authenticatedInitialRoute;
       }
 
-      if (path == '/tenant-login' && session != null) {
+      if (path == '/tenant-login' && isAuthenticated) {
         return bootstrap.isReady
             ? authenticatedInitialRoute
             : posSessionBootRoute;
@@ -112,6 +115,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path == '/till-open' ||
                 path == '/pos/open-till') &&
             authenticatedInitialRoute == PostLoginRoute.posHome.path) {
+          return authenticatedInitialRoute;
+        }
+
+        if (path.startsWith('/tenant-admin') &&
+            authenticatedInitialRoute !=
+                PostLoginRoute.tenantAdminDashboard.path &&
+            !path.startsWith('/tenant-admin/payment') &&
+            !path.startsWith('/tenant-admin/setup') &&
+            authenticatedInitialRoute.startsWith('/pos/')) {
           return authenticatedInitialRoute;
         }
       }

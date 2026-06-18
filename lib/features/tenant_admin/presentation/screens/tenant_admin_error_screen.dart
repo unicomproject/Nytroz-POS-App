@@ -4,10 +4,12 @@ class TenantAdminErrorScreen extends StatelessWidget {
   const TenantAdminErrorScreen({
     super.key,
     this.message = 'Unable to load Tenant Admin. Please try again.',
+    this.actionLabel = 'Retry',
     this.onRetry,
   });
 
   final String message;
+  final String actionLabel;
   final VoidCallback? onRetry;
 
   @override
@@ -32,7 +34,7 @@ class TenantAdminErrorScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: onRetry,
-                    child: const Text('Retry'),
+                    child: Text(actionLabel),
                   ),
                 ],
               ],

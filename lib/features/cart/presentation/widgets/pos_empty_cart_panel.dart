@@ -191,100 +191,101 @@ class _CartItemRow extends ConsumerWidget {
     return InkWell(
       onTap: onTap,
       child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.product.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: TenantAdminColors.bodyText,
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                  if (item.product.variantSummary.isNotEmpty) ...[
-                    const SizedBox(height: TenantAdminSpacing.xs),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      item.product.variantSummary,
+                      item.product.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: TenantAdminColors.bodyText,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    if (item.product.variantSummary.isNotEmpty) ...[
+                      const SizedBox(height: TenantAdminSpacing.xs),
+                      Text(
+                        item.product.variantSummary,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: TenantAdminColors.mutedText,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ],
+                    const SizedBox(height: TenantAdminSpacing.xs),
+                    Text(
+                      formatLkr(item.product.price),
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: TenantAdminColors.mutedText,
                             fontWeight: FontWeight.w700,
                           ),
                     ),
                   ],
-                  const SizedBox(height: TenantAdminSpacing.xs),
-                  Text(
-                    formatLkr(item.product.price),
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: TenantAdminColors.mutedText,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(width: TenantAdminSpacing.md),
-            Text(
-              formatLkr(item.lineTotal),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: TenantAdminColors.bodyText,
-                    fontWeight: FontWeight.w900,
-                  ),
-            ),
-          ],
-        ),
-        const SizedBox(height: TenantAdminSpacing.sm),
-        Row(
-          children: [
-            IconButton.filledTonal(
-              visualDensity: VisualDensity.compact,
-              onPressed: canUpdateItems
-                  ? () => notifier.decreaseQuantity(item.product.cartLineKey)
-                  : null,
-              icon: const Icon(Icons.remove_rounded),
-              tooltip: 'Decrease quantity',
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: TenantAdminSpacing.sm,
-              ),
-              child: Text(
-                'Qty ${item.quantity}',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              const SizedBox(width: TenantAdminSpacing.md),
+              Text(
+                formatLkr(item.lineTotal),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: TenantAdminColors.bodyText,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w900,
                     ),
               ),
-            ),
-            IconButton.filledTonal(
-              visualDensity: VisualDensity.compact,
-              onPressed: canUpdateItems
-                  ? () => notifier.increaseQuantity(item.product.cartLineKey)
-                  : null,
-              icon: const Icon(Icons.add_rounded),
-              tooltip: 'Increase quantity',
-            ),
-            const Spacer(),
-            if (canRemoveItems)
-              IconButton(
+            ],
+          ),
+          const SizedBox(height: TenantAdminSpacing.sm),
+          Row(
+            children: [
+              IconButton.filledTonal(
                 visualDensity: VisualDensity.compact,
-                onPressed: () => notifier.removeItem(item.product.cartLineKey),
-                icon: const Icon(Icons.delete_outline_rounded),
-                color: TenantAdminColors.danger,
-                tooltip: 'Remove item',
+                onPressed: canUpdateItems
+                    ? () => notifier.decreaseQuantity(item.product.cartLineKey)
+                    : null,
+                icon: const Icon(Icons.remove_rounded),
+                tooltip: 'Decrease quantity',
               ),
-          ],
-        ),
-      ],
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: TenantAdminSpacing.sm,
+                ),
+                child: Text(
+                  'Qty ${item.quantity}',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: TenantAdminColors.bodyText,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+              IconButton.filledTonal(
+                visualDensity: VisualDensity.compact,
+                onPressed: canUpdateItems
+                    ? () => notifier.increaseQuantity(item.product.cartLineKey)
+                    : null,
+                icon: const Icon(Icons.add_rounded),
+                tooltip: 'Increase quantity',
+              ),
+              const Spacer(),
+              if (canRemoveItems)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () =>
+                      notifier.removeItem(item.product.cartLineKey),
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  color: TenantAdminColors.danger,
+                  tooltip: 'Remove item',
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -301,7 +302,8 @@ class _CartSummaryFooter extends ConsumerWidget {
     final canCheckout =
         session?.hasPermission(PosPermissionCodes.checkoutSale) == true;
     final paymentMethods = _allowedPaymentMethods(session);
-    final canProceed = cart.hasItems && canCheckout && paymentMethods.isNotEmpty;
+    final canProceed =
+        cart.hasItems && canCheckout && paymentMethods.isNotEmpty;
 
     return DecoratedBox(
       decoration: const BoxDecoration(

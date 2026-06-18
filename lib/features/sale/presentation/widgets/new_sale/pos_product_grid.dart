@@ -57,8 +57,7 @@ class PosProductGrid extends ConsumerWidget {
 
             return GridView.builder(
               clipBehavior: Clip.hardEdge,
-              padding:
-                  const EdgeInsets.only(bottom: TenantAdminSpacing.sm),
+              padding: const EdgeInsets.only(bottom: TenantAdminSpacing.sm),
               itemCount: products.length,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: crossAxisCount,
@@ -177,11 +176,10 @@ class _ProductTile extends StatelessWidget {
                             : product.stockLabel,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style:
-                            Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: TenantAdminColors.mutedText,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: TenantAdminColors.mutedText,
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
                     ),
                   ],

@@ -80,10 +80,10 @@ AuthSession authSessionFromJson(Map<String, dynamic> json) {
     accessToken: accessToken,
     refreshToken: payload['refreshToken'] as String? ??
         payload['RefreshToken'] as String?,
-    userId: user['id'] as String? ??
-        user['Id'] as String? ??
-        payload['userId'] as String? ??
-        payload['UserId'] as String? ??
+    userId: user['id']?.toString() ??
+        user['Id']?.toString() ??
+        payload['userId']?.toString() ??
+        payload['UserId']?.toString() ??
         '',
     userDisplayName: user['fullName'] as String? ??
         user['FullName'] as String? ??

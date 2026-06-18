@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../domain/entities/outlet_list_query.dart';
 import '../models/create_outlet_request_dto.dart';
 import '../models/outlet_dto.dart';
 
@@ -8,61 +9,135 @@ class OutletRemoteDatasource {
 
   final Dio _dio;
 
-  Future<OutletListResultDto> getOutlets({String? search}) async {
-    final response = await _dio.get<dynamic>(
-      '/api/tenant-admin/outlets',
-      queryParameters: {
-        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-      },
-    );
+  static const _outletPaths = [
+    '/api/v1/tenant-admin/outlets',
+    '/api/tenant-admin/outlets',
+  ];
 
-    final data = response.data;
+  Future<OutletListResultDto> getOutlets(OutletListQuery query) async {
+    DioException? lastError;
 
-    if (data is List) {
-      return OutletListResultDto.fromArray(data);
+    for (final path in _outletPaths) {
+      try {
+        final response = await _dio.get<dynamic>(
+          path,
+          queryParameters: _listQueryParameters(query),
+        );
+
+        return _parseListResponse(response.data, response.requestOptions);
+      } on DioException catch (error) {
+        lastError = error;
+        if (error.response?.statusCode == 404) {
+          continue;
+        }
+
+        rethrow;
+      }
     }
 
-    if (data is Map) {
-      return OutletListResultDto.fromJson(Map<String, dynamic>.from(data));
+    if (lastError != null) {
+      throw lastError;
     }
 
     return OutletListResultDto.fromArray(const []);
   }
 
-  Future<OutletDetailsDto> getOutletDetails(String id) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      '/api/tenant-admin/outlets/$id',
-    );
+  Future<OutletListSummaryDto?> getOutletSummary() async {
+    DioException? lastError;
 
-    return OutletDetailsDto.fromJson(response.data ?? const {});
+    for (final path in _outletPaths) {
+      try {
+        final response = await _dio.get<dynamic>('$path/summary');
+        final payload = _unwrapApiPayload(
+          response.data,
+          response.requestOptions,
+        );
+
+        return OutletListSummaryDto.fromJson(payload);
+      } on DioException catch (error) {
+        lastError = error;
+        if (error.response?.statusCode == 404 ||
+            error.response?.statusCode == 403) {
+          return null;
+        }
+
+        rethrow;
+      }
+    }
+
+    if (lastError != null) {
+      throw lastError;
+    }
+
+    return null;
+  }
+
+  Future<OutletDetailsDto> getOutletDetails(String id) async {
+    return _requestOutletDetails(
+      (path) => _dio.get<dynamic>('$path/$id'),
+    );
   }
 
   Future<OutletDetailsDto> createOutlet(CreateOutletRequestDto request) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      '/api/tenant-admin/outlets',
-      data: request.toJson(),
+    return _requestOutletDetails(
+      (path) => _dio.post<dynamic>(path, data: request.toJson()),
     );
-
-    return OutletDetailsDto.fromJson(response.data ?? const {});
   }
 
   Future<OutletDetailsDto> updateOutlet(
     String id,
     CreateOutletRequestDto request,
   ) async {
-    final response = await _dio.put<Map<String, dynamic>>(
-      '/api/tenant-admin/outlets/$id',
-      data: request.toJson(),
+    return _requestOutletDetails(
+      (path) => _dio.put<dynamic>('$path/$id', data: request.toJson()),
     );
+  }
 
-    return OutletDetailsDto.fromJson(response.data ?? const {});
+  Future<void> deleteOutlet(String id) async {
+    DioException? lastError;
+
+    for (final path in _outletPaths) {
+      try {
+        await _dio.delete<void>('$path/$id');
+        return;
+      } on DioException catch (error) {
+        lastError = error;
+        if (error.response?.statusCode == 404) {
+          continue;
+        }
+
+        rethrow;
+      }
+    }
+
+    if (lastError != null) {
+      throw lastError;
+    }
   }
 
   Future<void> updateOutletStatus(String id, String status) async {
-    await _dio.patch<void>(
-      '/api/tenant-admin/outlets/$id/status',
-      data: {'status': status},
-    );
+    DioException? lastError;
+
+    for (final path in _outletPaths) {
+      try {
+        await _dio.patch<void>(
+          '$path/$id/status',
+          data: {'status': status},
+        );
+        return;
+      } on DioException catch (error) {
+        lastError = error;
+        if (error.response?.statusCode == 404) {
+          continue;
+        }
+
+        rethrow;
+      }
+    }
+
+    if (lastError != null) {
+      throw lastError;
+    }
   }
 
   Future<List<OutletManagerOptionDto>> getManagerOptions() async {
@@ -82,5 +157,104 @@ class OutletRemoteDatasource {
               Map<String, dynamic>.from(item),
             ))
         .toList(growable: false);
+  }
+
+  Future<OutletDetailsDto> _requestOutletDetails(
+    Future<Response<dynamic>> Function(String path) request,
+  ) async {
+    DioException? lastError;
+
+    for (final path in _outletPaths) {
+      try {
+        final response = await request(path);
+        return OutletDetailsDto.fromJson(
+          _unwrapApiPayload(response.data, response.requestOptions),
+        );
+      } on DioException catch (error) {
+        lastError = error;
+        if (error.response?.statusCode == 404) {
+          continue;
+        }
+
+        rethrow;
+      }
+    }
+
+    throw lastError ??
+        DioException(
+          requestOptions: RequestOptions(path: _outletPaths.first),
+          type: DioExceptionType.badResponse,
+          message: 'Outlet API is unavailable.',
+        );
+  }
+
+  Map<String, dynamic> _listQueryParameters(OutletListQuery query) {
+    return {
+      'page': query.page,
+      'pageSize': query.pageSize,
+      'sortBy': query.sortBy,
+      'sortDirection': query.sortDirection,
+      if (query.search != null && query.search!.trim().isNotEmpty)
+        'search': query.search!.trim(),
+      if (query.status != null && query.status!.trim().isNotEmpty)
+        'status': query.status!.trim(),
+    };
+  }
+
+  OutletListResultDto _parseListResponse(
+    dynamic data,
+    RequestOptions requestOptions,
+  ) {
+    if (data is Map && data['success'] == false) {
+      throw DioException(
+        requestOptions: requestOptions,
+        type: DioExceptionType.badResponse,
+        message: data['message']?.toString(),
+      );
+    }
+
+    if (data is List) {
+      return OutletListResultDto.fromArray(data);
+    }
+
+    if (data is Map) {
+      final root = Map<String, dynamic>.from(data);
+      final payload = root['data'] is Map
+          ? Map<String, dynamic>.from(root['data'] as Map)
+          : root;
+
+      return OutletListResultDto.fromJson(payload);
+    }
+
+    return OutletListResultDto.fromArray(const []);
+  }
+
+  Map<String, dynamic> _unwrapApiPayload(
+    dynamic data,
+    RequestOptions requestOptions,
+  ) {
+    if (data is! Map) {
+      return const {};
+    }
+
+    final root = Map<String, dynamic>.from(data);
+    if (root['success'] == false) {
+      throw DioException(
+        requestOptions: requestOptions,
+        response: Response(
+          requestOptions: requestOptions,
+          data: root,
+          statusCode: 400,
+        ),
+        type: DioExceptionType.badResponse,
+        message: root['message']?.toString(),
+      );
+    }
+
+    if (root['data'] is Map) {
+      return Map<String, dynamic>.from(root['data'] as Map);
+    }
+
+    return root;
   }
 }

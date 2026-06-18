@@ -1,46 +1,192 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../domain/entities/outlet.dart';
+import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_mobile_list_card.dart';
 import '../../../presentation/widgets/tenant_admin_status_badge.dart';
+import '../config/outlet_row_action_configs.dart';
+import '../providers/outlet_providers.dart';
+import '../providers/outlet_visibility_provider.dart';
+import '../utils/outlet_list_filters.dart';
 
 class OutletMobileList extends StatelessWidget {
   const OutletMobileList({
     super.key,
     required this.outlets,
+    required this.visibility,
   });
 
   final List<Outlet> outlets;
+  final OutletListVisibility visibility;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         for (var index = 0; index < outlets.length; index++) ...[
-          TenantAdminMobileListCard(
-            title: outlets[index].name,
-            subtitle:
-                '${outlets[index].location}\n${outlets[index].onlineTillCount} Online • ${outlets[index].staffCount} Staff',
-            leading: const CircleAvatar(child: Icon(Icons.store)),
-            trailing: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                TenantAdminStatusBadge(
-                  label: outlets[index].status,
-                  status: _statusType(outlets[index].status),
-                ),
-                const SizedBox(height: 8),
-                Text(outlets[index].todaysSales),
-              ],
-            ),
-            onTap: () =>
-                context.go('/tenant-admin/outlets/${outlets[index].id}'),
+          _OutletMobileCard(
+            outlet: outlets[index],
+            visibility: visibility,
           ),
-          if (index != outlets.length - 1) const SizedBox(height: 12),
+          if (index != outlets.length - 1)
+            const SizedBox(height: TenantAdminSpacing.md),
         ],
       ],
     );
+  }
+}
+
+class _OutletMobileCard extends ConsumerWidget {
+  const _OutletMobileCard({
+    required this.outlet,
+    required this.visibility,
+  });
+
+  final Outlet outlet;
+  final OutletListVisibility visibility;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final subtitleParts = <String>[outlet.code];
+
+    if (visibility.showMobileLocation && outlet.location.isNotEmpty) {
+      subtitleParts.add(outlet.location);
+    }
+
+    if (visibility.showMobileTillSummary) {
+      subtitleParts.add('${outlet.tillCount} tills');
+    }
+
+    if (visibility.showMobileStaffSummary) {
+      subtitleParts.add('${outlet.staffCount} staff');
+    }
+
+    final statusLabel = displayOutletStatus(outlet.status);
+
+    Widget? trailing;
+    if (visibility.showMobileStatusBadge || visibility.showMobileSales) {
+      trailing = Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (visibility.showMobileStatusBadge)
+            TenantAdminStatusBadge(
+              label: statusLabel,
+              status: _statusType(statusLabel),
+            ),
+          if (visibility.showMobileStatusBadge && visibility.showMobileSales)
+            const SizedBox(height: TenantAdminSpacing.sm),
+          if (visibility.showMobileSales)
+            Text(
+              outlet.todaysSales.isEmpty ? '—' : outlet.todaysSales,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+        ],
+      );
+    }
+
+    return TenantAdminMobileListCard(
+      title: outlet.name,
+      subtitle: subtitleParts.join(' • '),
+      leading: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: TenantAdminColors.secondary,
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        ),
+        child: const Icon(
+          Icons.storefront,
+          color: TenantAdminColors.primary,
+        ),
+      ),
+      trailing: trailing,
+      footer: visibility.showMobileActionsMenu
+          ? Align(
+              alignment: Alignment.centerRight,
+              child: PopupMenuButton<OutletRowActionId>(
+                icon: const Icon(Icons.more_vert),
+                tooltip: 'Actions',
+                itemBuilder: (context) {
+                  return [
+                    for (final action in visibility.visibleRowActions)
+                      PopupMenuItem<OutletRowActionId>(
+                        value: action.actionId,
+                        child: ListTile(
+                          leading: Icon(action.icon),
+                          title: Text(action.label),
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                        ),
+                      ),
+                  ];
+                },
+                onSelected: (actionId) =>
+                    _handleAction(context, ref, actionId, outlet),
+              ),
+            )
+          : null,
+      onTap: () => context.go('/tenant-admin/outlets/${outlet.id}'),
+    );
+  }
+
+  void _handleAction(
+    BuildContext context,
+    WidgetRef ref,
+    OutletRowActionId actionId,
+    Outlet outlet,
+  ) {
+    switch (actionId) {
+      case OutletRowActionId.viewDetails:
+        context.go('/tenant-admin/outlets/${outlet.id}');
+      case OutletRowActionId.edit:
+        context.go('/tenant-admin/outlets/${outlet.id}/edit');
+      case OutletRowActionId.manageTills:
+        context.go('/tenant-admin/tills');
+      case OutletRowActionId.manageStaff:
+        context.go('/tenant-admin/staff');
+      case OutletRowActionId.toggleStatus:
+        break;
+      case OutletRowActionId.delete:
+        _confirmDelete(context, ref, outlet);
+    }
+  }
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    Outlet outlet,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete outlet'),
+          content: Text(
+            'Are you sure you want to delete "${outlet.name}"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
+
+    await ref.read(deleteOutletProvider).call(outlet.id);
+    ref.invalidate(outletListProvider);
   }
 }
 

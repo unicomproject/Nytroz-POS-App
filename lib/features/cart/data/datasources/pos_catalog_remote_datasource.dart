@@ -19,7 +19,8 @@ class PosCatalogRemoteDatasource {
       ApiEndpoints.posProducts,
       queryParameters: {
         'deviceId': deviceId,
-        if (categoryId != null && categoryId.isNotEmpty) 'categoryId': categoryId,
+        if (categoryId != null && categoryId.isNotEmpty)
+          'categoryId': categoryId,
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
       },
     );

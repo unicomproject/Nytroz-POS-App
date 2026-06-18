@@ -69,7 +69,7 @@ void main() {
       );
     });
 
-    testWidgets('attaches auth header before publishing login session', (
+    testWidgets('attaches auth header via authHeaderSyncProvider after login', (
       tester,
     ) async {
       final dio = Dio(BaseOptions(baseUrl: 'https://test.local'));
@@ -128,6 +128,7 @@ Future<void> _pumpLoginScreen(
       child: MaterialApp(
         home: Consumer(
           builder: (context, ref, child) {
+            ref.watch(authHeaderSyncProvider);
             sessionListener?.call(ref);
             return const LoginScreen();
           },

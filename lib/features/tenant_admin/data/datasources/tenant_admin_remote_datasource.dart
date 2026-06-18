@@ -10,28 +10,42 @@ class TenantAdminRemoteDatasource {
 
   Future<TenantAdminContextDto> getContext() async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/api/tenant-admin/context',
+      '/api/v1/tenant-admin/context',
     );
+    final data = response.data ?? const {};
 
-    return TenantAdminContextDto.fromJson(response.data ?? const {});
+    if (data['success'] == false) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        type: DioExceptionType.badResponse,
+        message: data['message']?.toString(),
+      );
+    }
+
+    return TenantAdminContextDto.fromApiJson(data);
   }
 
   Future<List<TenantAdminMenuItemDto>> getMenu() async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      '/api/tenant-admin/menu',
-    );
-    final data = response.data ?? const {};
-    final items = data['items'];
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/api/tenant-admin/menu',
+      );
+      final data = response.data ?? const {};
+      final items = data['items'] ?? data;
 
-    if (items is! List) {
+      if (items is! List) {
+        return const [];
+      }
+
+      return items
+          .whereType<Map>()
+          .map((item) => TenantAdminMenuItemDto.fromJson(
+                Map<String, dynamic>.from(item),
+              ))
+          .toList(growable: false);
+    } on DioException {
       return const [];
     }
-
-    return items
-        .whereType<Map>()
-        .map((item) => TenantAdminMenuItemDto.fromJson(
-              Map<String, dynamic>.from(item),
-            ))
-        .toList(growable: false);
   }
 }

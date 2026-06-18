@@ -16,15 +16,26 @@ class DashboardMetricGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (metrics.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final maxColumns = compact ? 2 : 4;
+    final crossAxisCount =
+        metrics.length < maxColumns ? metrics.length : maxColumns;
+    final childAspectRatio = compact
+        ? (crossAxisCount == 1 ? 1.45 : 1.05)
+        : (crossAxisCount <= 2 ? 1.75 : 1.6);
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: metrics.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: compact ? 2 : 4,
+        crossAxisCount: crossAxisCount,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: compact ? 1.05 : 1.45,
+        childAspectRatio: childAspectRatio,
       ),
       itemBuilder: (context, index) {
         final metric = metrics[index];

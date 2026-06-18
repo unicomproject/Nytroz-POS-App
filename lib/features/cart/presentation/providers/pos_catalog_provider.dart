@@ -39,9 +39,10 @@ final posNewSaleCatalogProvider =
   _ensureAuthorizationHeader(ref.read(appDioProvider), session);
 
   try {
-    final products = await ref.watch(posCatalogRemoteDatasourceProvider).getProducts(
-          deviceId: deviceContext.deviceId,
-        );
+    final products =
+        await ref.watch(posCatalogRemoteDatasourceProvider).getProducts(
+              deviceId: deviceContext.deviceId,
+            );
 
     if (products.isEmpty) {
       return const PosNewSaleCatalogState(

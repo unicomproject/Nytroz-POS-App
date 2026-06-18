@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:dio/dio.dart';
 
+import '../../../../core/network/dio_error_message.dart';
 import '../../domain/entities/auth_exception.dart';
 import '../models/set_password_request_dto.dart';
 import '../models/setup_token_validation_dto.dart';
@@ -90,7 +91,11 @@ class AuthRemoteDatasource {
 
       throw AuthException(
         errorCode: 'NETWORK_ERROR',
-        message: error.message ?? 'Unable to connect to the login service.',
+        message: messageFromDioException(
+          error,
+          contextPrefix: 'Login failed',
+          fallback: 'Unable to connect to the login service.',
+        ),
       );
     }
   }

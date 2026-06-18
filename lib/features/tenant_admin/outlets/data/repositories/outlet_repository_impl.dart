@@ -1,5 +1,6 @@
 import '../../domain/entities/outlet.dart';
 import '../../domain/entities/outlet_details.dart';
+import '../../domain/entities/outlet_list_query.dart';
 import '../../domain/repositories/outlet_repository.dart';
 import '../datasources/outlet_remote_datasource.dart';
 import '../mappers/outlet_mapper.dart';
@@ -11,9 +12,26 @@ class OutletRepositoryImpl implements OutletRepository {
   final OutletRemoteDatasource _remoteDatasource;
 
   @override
-  Future<OutletListResult> getOutlets({String? search}) async {
-    final dto = await _remoteDatasource.getOutlets(search: search);
-    return dto.toEntity();
+  Future<OutletListResult> getOutlets({required OutletListQuery query}) async {
+    final dto = await _remoteDatasource.getOutlets(query);
+    var result = dto.toEntity();
+
+    final summaryDto = await _remoteDatasource.getOutletSummary();
+    if (summaryDto != null &&
+        (summaryDto.totalOutlets > 0 ||
+            summaryDto.activeOutlets > 0 ||
+            summaryDto.inactiveOutlets > 0)) {
+      result = OutletListResult(
+        summary: summaryDto.toEntity(),
+        items: result.items,
+        page: result.page,
+        pageSize: result.pageSize,
+        totalCount:
+            result.totalCount > 0 ? result.totalCount : summaryDto.totalOutlets,
+      );
+    }
+
+    return result;
   }
 
   @override
@@ -42,6 +60,11 @@ class OutletRepositoryImpl implements OutletRepository {
   @override
   Future<void> updateOutletStatus(String id, String status) {
     return _remoteDatasource.updateOutletStatus(id, status);
+  }
+
+  @override
+  Future<void> deleteOutlet(String id) {
+    return _remoteDatasource.deleteOutlet(id);
   }
 
   @override

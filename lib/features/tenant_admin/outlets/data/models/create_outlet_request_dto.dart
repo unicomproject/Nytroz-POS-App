@@ -48,26 +48,17 @@ class CreateOutletRequestDto {
 
   Map<String, dynamic> toJson() {
     return {
-      'outletName': outletName,
-      'outletCode': outletCode,
-      'outletType': outletType,
-      'mainPhoneNumber': mainPhoneNumber,
-      'emailAddress': emailAddress,
-      'managerId': managerId,
+      'name': outletName,
+      'code': outletCode,
       'addressLine1': addressLine1,
-      'addressLine2': addressLine2,
+      if (addressLine2 != null && addressLine2!.trim().isNotEmpty)
+        'addressLine2': addressLine2,
       'city': city,
-      'country': country,
       'postalCode': postalCode,
-      'openingHours': [
-        for (final hour in openingHours)
-          {
-            'day': hour.day,
-            'openTime': hour.openTime,
-            'closeTime': hour.closeTime,
-            'closed': hour.closed,
-          },
-      ],
+      'country': country,
+      'phone': mainPhoneNumber,
+      'email': emailAddress,
+      'status': 'Active',
     };
   }
 }

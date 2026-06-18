@@ -5,6 +5,7 @@ class TenantDashboard {
     required this.needsAttention,
     required this.quickActions,
     required this.recentActivity,
+    this.notificationCount,
   });
 
   final List<TenantDashboardMetric> metrics;
@@ -12,6 +13,7 @@ class TenantDashboard {
   final List<TenantDashboardAttentionItem> needsAttention;
   final List<TenantDashboardQuickAction> quickActions;
   final List<TenantDashboardActivity> recentActivity;
+  final int? notificationCount;
 
   bool get isEmpty {
     return metrics.isEmpty &&
@@ -68,12 +70,14 @@ class TenantDashboardChartPoint {
 
 class TenantDashboardAttentionItem {
   const TenantDashboardAttentionItem({
+    required this.key,
     required this.title,
     required this.message,
     this.status,
     this.route,
   });
 
+  final String key;
   final String title;
   final String message;
   final String? status;
@@ -102,12 +106,14 @@ class TenantDashboardQuickAction {
 
 class TenantDashboardActivity {
   const TenantDashboardActivity({
+    required this.key,
     required this.title,
     required this.timeLabel,
     this.subtitle,
     this.iconKey,
   });
 
+  final String key;
   final String title;
   final String? subtitle;
   final String timeLabel;
