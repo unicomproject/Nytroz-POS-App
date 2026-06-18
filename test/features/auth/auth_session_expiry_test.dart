@@ -5,8 +5,7 @@ import 'package:nytroz_pos/features/auth/domain/utils/jwt_expiry.dart';
 void main() {
   group('readJwtExpiry', () {
     test('reads exp claim from jwt payload', () {
-      final payload = 'eyJleHAiOjE3NTAxNjM4MjF9';
-      final token = 'header.$payload.signature';
+      const token = 'header.eyJleHAiOjE3NTAxNjM4MjF9.signature';
 
       final expiry = readJwtExpiry(token);
 

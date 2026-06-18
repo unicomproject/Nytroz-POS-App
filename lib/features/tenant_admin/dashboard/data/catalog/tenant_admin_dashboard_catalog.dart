@@ -1,5 +1,4 @@
 import '../models/tenant_dashboard_dto.dart';
-import '../mappers/tenant_dashboard_mapper.dart';
 
 /// Placeholder dashboard payload used only when the backend dashboard API is
 /// unavailable (404/501). Remove once `GET /api/v1/tenant-admin/dashboard`

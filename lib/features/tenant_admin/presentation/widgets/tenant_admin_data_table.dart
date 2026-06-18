@@ -59,7 +59,7 @@ class TenantAdminDataTable extends StatelessWidget {
         children: [
           Theme(
             data: Theme.of(context).copyWith(
-              dataTableTheme: DataTableThemeData(
+              dataTableTheme: const DataTableThemeData(
                 headingRowHeight: 48,
                 dataRowMinHeight: 60,
                 dataRowMaxHeight: 72,

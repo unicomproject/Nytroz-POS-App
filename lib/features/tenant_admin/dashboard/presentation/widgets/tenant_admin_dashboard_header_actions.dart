@@ -24,7 +24,7 @@ class TenantAdminDashboardHeaderActions extends StatelessWidget {
 
     if (visibility.showDateFilter) {
       actions.add(
-        _FilterChipButton(
+        const _FilterChipButton(
           label: 'Today',
           icon: Icons.calendar_today,
         ),
@@ -33,7 +33,7 @@ class TenantAdminDashboardHeaderActions extends StatelessWidget {
 
     if (visibility.showOutletFilter) {
       actions.add(
-        _FilterChipButton(
+        const _FilterChipButton(
           label: 'All outlets',
           icon: Icons.store,
         ),

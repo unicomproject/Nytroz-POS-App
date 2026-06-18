@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nytroz_pos/features/tenant_admin/outlets/data/models/create_outlet_request_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/data/models/outlet_dto.dart';
 
 void main() {
@@ -33,7 +34,7 @@ void main() {
 
   group('CreateOutletRequestDto', () {
     test('maps form fields to backend JSON keys', () {
-      final dto = CreateOutletRequestDto(
+      const dto = CreateOutletRequestDto(
         outletName: 'New Outlet',
         outletCode: 'OUT-002',
         outletType: 'store',
@@ -43,7 +44,7 @@ void main() {
         city: 'Colombo',
         country: 'LK',
         postalCode: '00100',
-        openingHours: const [],
+        openingHours: [],
       );
 
       final json = dto.toJson();

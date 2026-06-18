@@ -5,7 +5,6 @@ import 'package:nytroz_pos/core/access/tenant_admin_access_codes.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_context.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_access_checker.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/domain/entities/outlet_details.dart';
-import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/providers/outlet_details_visibility_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/providers/outlet_providers.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/screens/outlet_details_screen.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_access_provider.dart';

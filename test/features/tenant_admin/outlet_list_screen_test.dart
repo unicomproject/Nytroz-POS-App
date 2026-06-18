@@ -147,14 +147,14 @@ Future<void> _pumpOutletList(
           (ref) async => accessChecker,
         ),
         outletListProvider.overrideWith(
-          (ref) async => OutletListResult(
-            summary: const OutletListSummary(
+          (ref) async => const OutletListResult(
+            summary: OutletListSummary(
               totalOutlets: 1,
               activeOutlets: 1,
               inactiveOutlets: 0,
               totalLocations: 1,
             ),
-            items: const [
+            items: [
               Outlet(
                 id: 'outlet-1',
                 name: 'High Street Store',
