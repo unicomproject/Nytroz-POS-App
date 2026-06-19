@@ -64,7 +64,8 @@ const outletSummaryCardConfigs = <OutletSummaryCardConfig>[
   ),
 ];
 
-String _totalOutletsValue(OutletListSummary summary) => '${summary.totalOutlets}';
+String _totalOutletsValue(OutletListSummary summary) =>
+    '${summary.totalOutlets}';
 
 String _totalOutletsSubtitle(OutletListSummary summary) {
   return '${summary.activeOutlets} Active • ${summary.inactiveOutlets} Inactive';

@@ -16,10 +16,11 @@ class TenantDashboardSummaryDto {
         : json;
 
     return TenantDashboardSummaryDto(
-      todaySales: _readMap(payload['todaySales'], DashboardTodaySalesDto.fromJson),
+      todaySales:
+          _readMap(payload['todaySales'], DashboardTodaySalesDto.fromJson),
       orders: _readMap(payload['orders'], DashboardOrdersDto.fromJson),
-      activeOutlets:
-          _readMap(payload['activeOutlets'], DashboardActiveOutletsDto.fromJson),
+      activeOutlets: _readMap(
+          payload['activeOutlets'], DashboardActiveOutletsDto.fromJson),
       stockAlerts:
           _readMap(payload['stockAlerts'], DashboardStockAlertsDto.fromJson),
       tills: _readMap(payload['tills'], DashboardTillsDto.fromJson),
@@ -198,7 +199,8 @@ class DashboardNeedsAttentionSummaryDto {
     this.paymentDue,
   });
 
-  factory DashboardNeedsAttentionSummaryDto.fromJson(Map<String, dynamic> json) {
+  factory DashboardNeedsAttentionSummaryDto.fromJson(
+      Map<String, dynamic> json) {
     return DashboardNeedsAttentionSummaryDto(
       offlineTills: _nullableInt(json['offlineTills']),
       lowStockItems: _nullableInt(json['lowStockItems']),

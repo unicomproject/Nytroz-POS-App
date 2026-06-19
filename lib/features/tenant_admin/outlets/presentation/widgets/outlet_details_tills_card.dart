@@ -83,7 +83,8 @@ class _TillRow extends StatelessWidget {
         const SizedBox(width: TenantAdminSpacing.sm),
         IconButton(
           onPressed: () {},
-          icon: const Icon(Icons.more_horiz, color: TenantAdminColors.mutedText),
+          icon:
+              const Icon(Icons.more_horiz, color: TenantAdminColors.mutedText),
         ),
       ],
     );

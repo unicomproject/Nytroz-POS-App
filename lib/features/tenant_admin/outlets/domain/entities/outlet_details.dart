@@ -188,7 +188,8 @@ class OutletOpeningHour {
 
 String _formatMoney(double amount, String? currency) {
   final symbol = _currencySymbol(currency);
-  final formatted = amount.toStringAsFixed(amount == amount.roundToDouble() ? 0 : 2);
+  final formatted =
+      amount.toStringAsFixed(amount == amount.roundToDouble() ? 0 : 2);
   return '$symbol$formatted';
 }
 

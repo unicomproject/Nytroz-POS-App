@@ -63,8 +63,7 @@ List<OutletTableColumnConfig> visibleOutletTableColumns(
   bool Function(Iterable<String> permissionCodes) canAny, {
   required bool showActionsColumn,
 }) {
-  final columns =
-      filterOutletConfigs(outletTableColumnConfigs, can, canAny);
+  final columns = filterOutletConfigs(outletTableColumnConfigs, can, canAny);
 
   if (showActionsColumn) {
     return [

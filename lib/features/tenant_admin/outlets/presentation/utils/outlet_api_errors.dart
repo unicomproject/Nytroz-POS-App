@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 
+import '../../../../../core/network/dio_error_message.dart';
+
 const outletBackendFieldAliases = {
   'name': 'outletName',
   'code': 'outletCode',
@@ -55,13 +57,14 @@ Map<String, String> outletValidationErrors(DioException error) {
   return const {};
 }
 
-String outletErrorMessage(DioException error, {String fallback = 'Request failed'}) {
+String outletErrorMessage(DioException error,
+    {String fallback = 'Request failed'}) {
   final data = error.response?.data;
   if (data is Map && data['message'] != null) {
     return data['message'].toString();
   }
 
-  return error.message ?? fallback;
+  return messageFromDioException(error, fallback: fallback);
 }
 
 String outletSubmitErrorMessage(

@@ -45,8 +45,7 @@ class AuthSession {
         hasPermission(TenantAdminPermissionCodes.dashboardView);
   }
 
-  bool get requiresPosDeviceBootstrap =>
-      canActivatePosDevice || canOpenPosTill;
+  bool get requiresPosDeviceBootstrap => canActivatePosDevice || canOpenPosTill;
 
   Map<String, dynamic> toJson() {
     return {

@@ -23,9 +23,8 @@ class OutletDetailsQuickActions extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 640;
-        final itemWidth = isWide
-            ? (constraints.maxWidth - 16) / 2
-            : constraints.maxWidth;
+        final itemWidth =
+            isWide ? (constraints.maxWidth - 16) / 2 : constraints.maxWidth;
 
         return Wrap(
           spacing: 16,

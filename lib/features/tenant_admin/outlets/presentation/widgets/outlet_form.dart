@@ -350,7 +350,11 @@ class _OutletFormState extends State<OutletForm> {
       ('outletName', 'Outlet name', _requiredValidator('Outlet name')),
       ('outletCode', 'Outlet code', _requiredValidator('Outlet code')),
       ('outletType', 'Outlet type', _requiredValidator('Outlet type')),
-      ('mainPhoneNumber', 'Main phone number', _requiredValidator('Main phone number')),
+      (
+        'mainPhoneNumber',
+        'Main phone number',
+        _requiredValidator('Main phone number')
+      ),
       ('emailAddress', 'Email address', _emailValidator),
       ('addressLine1', 'Address line 1', _requiredValidator('Address line 1')),
       ('city', 'City', _requiredValidator('City')),

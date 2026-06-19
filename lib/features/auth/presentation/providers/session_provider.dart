@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,11 +16,20 @@ class AuthSessionNotifier extends StateNotifier<AuthSession?> {
   final AuthSessionStorage _storage;
 
   Future<void> setSession(AuthSession session) async {
-    await _storage.save(session);
     state = session;
     developer.log(
       'Auth session set in memory. userId=${session.userId}, accessTokenPresent=${session.accessToken.isNotEmpty}',
       name: 'auth.session',
+    );
+    unawaited(
+      _storage.save(session).catchError((Object error, StackTrace stackTrace) {
+        developer.log(
+          'Auth session storage failed after memory update.',
+          name: 'auth.storage',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }),
     );
   }
 

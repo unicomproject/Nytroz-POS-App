@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../auth/presentation/providers/session_provider.dart';
-import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../application/state/pos_home_dashboard_state.dart';
+import '../../../../../core/access/pos_access_codes.dart';
+import '../../../../auth/presentation/providers/session_provider.dart';
+import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../application/state/pos_home_dashboard_state.dart';
 import 'pos_status_chip.dart';
 
 class PosHomeHeader extends ConsumerWidget {
@@ -21,6 +22,10 @@ class PosHomeHeader extends ConsumerWidget {
     final userDisplayName = sessionName != null && sessionName.isNotEmpty
         ? sessionName
         : dashboard.fallbackUserDisplayName;
+    final canViewNotifications =
+        session?.hasPermission(PosPermissionCodes.viewNotifications) == true;
+    final canViewTillSession =
+        session?.hasPermission(PosPermissionCodes.viewTillSession) == true;
     final now = DateTime.now();
 
     return LayoutBuilder(
@@ -35,7 +40,8 @@ class PosHomeHeader extends ConsumerWidget {
         final contextItems = _HeaderContext(
           now: now,
           dashboard: dashboard,
-          showNotification: true,
+          showNotification: canViewNotifications,
+          showTillStatus: canViewTillSession,
         );
 
         if (isCompact) {
@@ -95,11 +101,13 @@ class _HeaderContext extends StatelessWidget {
     required this.now,
     required this.dashboard,
     required this.showNotification,
+    required this.showTillStatus,
   });
 
   final DateTime now;
   final PosHomeDashboardState dashboard;
   final bool showNotification;
+  final bool showTillStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -113,11 +121,12 @@ class _HeaderContext extends StatelessWidget {
             // Presentation-only until a notification module exists.
             onPressed: () {},
           ),
-        PosStatusChip(
-          tillLabel: dashboard.tillLabel,
-          statusLabel: dashboard.tillStatusLabel,
-          isOpen: dashboard.isTillOpen,
-        ),
+        if (showTillStatus)
+          PosStatusChip(
+            tillLabel: dashboard.tillLabel,
+            statusLabel: dashboard.tillStatusLabel,
+            isOpen: dashboard.isTillOpen,
+          ),
         _DateTimeChip(now: now),
       ],
     );

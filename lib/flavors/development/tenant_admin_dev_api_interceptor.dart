@@ -608,8 +608,11 @@ Map<String, Object?> _outletDetails(String id) {
 
 Map<String, Object?> _createdOutlet(Object? data, {String id = 'outlet-new'}) {
   final body = data is Map ? Map<String, dynamic>.from(data) : const {};
-  final name = body['name']?.toString() ?? body['outletName']?.toString() ?? 'New Outlet';
-  final code = body['code']?.toString() ?? body['outletCode']?.toString() ?? 'OUT-NEW';
+  final name = body['name']?.toString() ??
+      body['outletName']?.toString() ??
+      'New Outlet';
+  final code =
+      body['code']?.toString() ?? body['outletCode']?.toString() ?? 'OUT-NEW';
 
   return {
     'success': true,

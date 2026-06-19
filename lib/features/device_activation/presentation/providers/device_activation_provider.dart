@@ -120,11 +120,15 @@ class DeviceActivationController extends StateNotifier<DeviceActivationState> {
       );
       return false;
     } catch (error) {
+      final message = 'Current device restore failed unexpectedly: $error';
       developer.log(
-        'Current device restore failed unexpectedly: $error',
+        message,
         name: 'pos.session',
       );
-      state = state.copyWith(isRefreshing: false);
+      state = state.copyWith(
+        isRefreshing: false,
+        errorMessage: message,
+      );
       return false;
     }
   }

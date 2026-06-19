@@ -87,7 +87,9 @@ extension OutletDetailsMapper on OutletDetailsDto {
       final offlineCount = tillCount! - onlineTillCount!;
       items.add(
         OutletAttentionItem(
-          title: offlineCount == 1 ? '1 till offline' : '$offlineCount tills offline',
+          title: offlineCount == 1
+              ? '1 till offline'
+              : '$offlineCount tills offline',
           message: 'Check connectivity and restart affected tills.',
           status: 'warning',
         ),

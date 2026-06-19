@@ -81,7 +81,8 @@ void main() {
       expect(find.text('City'), findsNothing);
     });
 
-    testWidgets('does not crash when user has only outlet.view', (tester) async {
+    testWidgets('does not crash when user has only outlet.view',
+        (tester) async {
       await _pumpOutletList(
         tester,
         permissions: [TenantAdminPermissionCodes.outletView],

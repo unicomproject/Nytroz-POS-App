@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../../auth/presentation/providers/session_provider.dart';
-import '../config/pos_shell_nav_destinations.dart';
-import '../providers/pos_shell_navigation_provider.dart';
-import '../../domain/entities/pos_shell_nav_destination.dart';
-import 'pos_shell_nav_item.dart';
+import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../../auth/presentation/providers/session_provider.dart';
+import '../../config/pos_shell_nav_destinations.dart';
+import '../../providers/pos_shell_navigation_provider.dart';
+import '../../../domain/entities/pos_shell_nav_destination.dart';
+import '../pos_shell_nav_item.dart';
 
 class PosSidebar extends ConsumerWidget {
   const PosSidebar({super.key});
@@ -21,30 +21,37 @@ class PosSidebar extends ConsumerWidget {
         .toList(growable: false);
 
     return Container(
-      width: 112,
+      width: 92,
       color: TenantAdminColors.navy,
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 14, 10, 12),
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const _BrandHeader(),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              ...visibleDestinations.map((destination) {
-                return PosShellNavItem(
-                  icon: destination.icon,
-                  label: destination.label,
-                  selected: destination.routePath == currentPath,
-                  isEnabled: destination.isEnabled(grantedPermissions),
-                  onTap: () => _handleDestinationTap(
-                    context,
-                    destination,
-                    grantedPermissions,
-                  ),
-                );
-              }),
-              const Spacer(),
+              const SizedBox(height: TenantAdminSpacing.md),
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    ...visibleDestinations.map((destination) {
+                      return PosShellNavItem(
+                        icon: destination.icon,
+                        label: destination.label,
+                        selected: destination.routePath == currentPath,
+                        isEnabled: destination.isEnabled(grantedPermissions),
+                        onTap: () => _handleDestinationTap(
+                          context,
+                          destination,
+                          grantedPermissions,
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+              const SizedBox(height: TenantAdminSpacing.md),
               const _UserMenu(),
             ],
           ),
@@ -82,15 +89,15 @@ class _BrandHeader extends StatelessWidget {
     return const Column(
       children: [
         _LogoPlaceholder(),
-        SizedBox(height: TenantAdminSpacing.sm),
+        SizedBox(height: TenantAdminSpacing.xs),
         Text(
-          'SCS-TIX',
+          'NytrozPOS',
           maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: Colors.white,
-            fontSize: 14,
+            fontSize: 11,
             fontWeight: FontWeight.w800,
-            letterSpacing: 0.4,
           ),
         ),
       ],
@@ -108,7 +115,7 @@ class _LogoPlaceholder extends StatelessWidget {
       height: 42,
       decoration: BoxDecoration(
         color: TenantAdminColors.info,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
       ),
       child: const Icon(
         Icons.local_activity_outlined,
@@ -129,7 +136,7 @@ class _UserMenu extends ConsumerWidget {
     return Tooltip(
       message: 'User profile',
       child: SizedBox(
-        height: 58,
+        height: 52,
         child: Material(
           color: Colors.transparent,
           shape: const CircleBorder(),
@@ -140,13 +147,13 @@ class _UserMenu extends ConsumerWidget {
               alignment: Alignment.center,
               children: [
                 CircleAvatar(
-                  radius: 24,
+                  radius: 22,
                   backgroundColor: TenantAdminColors.navySoft,
                   child: Icon(Icons.person_outline, color: Colors.white),
                 ),
                 Positioned(
-                  right: 16,
-                  bottom: 7,
+                  right: 15,
+                  bottom: 6,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: TenantAdminColors.success,
@@ -168,18 +175,33 @@ class _UserMenu extends ConsumerWidget {
 
   Future<void> _showUserMenu(BuildContext context, WidgetRef ref) async {
     final box = context.findRenderObject() as RenderBox?;
-    if (box == null) {
+    final overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox?;
+    if (box == null || overlay == null) {
       return;
     }
 
-    final offset = box.localToGlobal(Offset.zero);
+    const menuWidth = 168.0;
+    const menuHeight = 104.0;
+    final offset = box.localToGlobal(Offset.zero, ancestor: overlay);
+    final left = offset.dx + box.size.width + TenantAdminSpacing.sm;
+    final top = (offset.dy + box.size.height - menuHeight).clamp(
+      TenantAdminSpacing.sm,
+      overlay.size.height - menuHeight - TenantAdminSpacing.sm,
+    );
     final selected = await showMenu<_UserMenuAction>(
       context: context,
       position: RelativeRect.fromLTRB(
-        offset.dx + box.size.width,
-        offset.dy,
-        offset.dx,
-        offset.dy + box.size.height,
+        left,
+        top,
+        overlay.size.width - left - menuWidth,
+        overlay.size.height - top - menuHeight,
+      ),
+      elevation: 8,
+      color: TenantAdminColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        side: const BorderSide(color: TenantAdminColors.border),
       ),
       items: const [
         PopupMenuItem(

@@ -240,7 +240,8 @@ class _Toolbar extends ConsumerWidget {
         TenantAdminSecondaryButton(
           label: isMobile ? 'Filter' : 'Filter',
           icon: Icons.filter_list,
-          onPressed: () => _showFilterSheet(context, ref, statusFilter, summary),
+          onPressed: () =>
+              _showFilterSheet(context, ref, statusFilter, summary),
         ),
       ],
       const SizedBox(width: TenantAdminSpacing.sm),
@@ -367,7 +368,8 @@ Future<void> _showFilterSheet(
                   title: Text(filter.label),
                   subtitle: Text(_filterCountLabel(filter, summary)),
                   trailing: currentFilter == filter
-                      ? const Icon(Icons.check, color: TenantAdminColors.primary)
+                      ? const Icon(Icons.check,
+                          color: TenantAdminColors.primary)
                       : null,
                   onTap: () {
                     ref.read(outletStatusFilterProvider.notifier).state =

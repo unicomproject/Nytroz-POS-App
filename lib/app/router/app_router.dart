@@ -98,7 +98,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             : posSessionBootRoute;
       }
 
-      if (bootstrap.isReady && isAuthenticated) {
+      if (bootstrap.isReady && session != null) {
+        if (path.startsWith('/pos/') &&
+            authenticatedInitialRoute != PostLoginRoute.posHome.path &&
+            path != authenticatedInitialRoute) {
+          return authenticatedInitialRoute;
+        }
+
         if ((path == '/device-activation' ||
                 path == '/pos/device-activation') &&
             authenticatedInitialRoute != PostLoginRoute.deviceActivation.path) {
@@ -113,7 +119,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         }
 
         if (path.startsWith('/tenant-admin') &&
-            authenticatedInitialRoute != PostLoginRoute.tenantAdminDashboard.path &&
+            authenticatedInitialRoute !=
+                PostLoginRoute.tenantAdminDashboard.path &&
             !path.startsWith('/tenant-admin/payment') &&
             !path.startsWith('/tenant-admin/setup') &&
             authenticatedInitialRoute.startsWith('/pos/')) {

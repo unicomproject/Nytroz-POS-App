@@ -46,7 +46,8 @@ final tenantDashboardVisibilityProvider =
     loading: () => const AsyncLoading(),
     error: AsyncError.new,
     data: (accessChecker) {
-      if (!accessChecker.can(TenantAdminPermissionCodes.tenantAdminDashboardView)) {
+      if (!accessChecker
+          .can(TenantAdminPermissionCodes.tenantAdminDashboardView)) {
         return AsyncData(
           TenantDashboardVisibility.resolve(
             access: accessChecker,

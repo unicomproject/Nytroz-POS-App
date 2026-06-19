@@ -9,7 +9,8 @@ void main() {
 
       final expiry = readJwtExpiry(token);
 
-      expect(expiry, DateTime.fromMillisecondsSinceEpoch(1750163821 * 1000, isUtc: true));
+      expect(expiry,
+          DateTime.fromMillisecondsSinceEpoch(1750163821 * 1000, isUtc: true));
     });
   });
 

@@ -1,9 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 
 import '../../../../core/access/pos_access_codes.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../auth/domain/entities/auth_session.dart';
+import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../till/presentation/providers/till_provider.dart';
+import '../../../../shared/pos_session/pos_session_bootstrap_provider.dart';
 import '../../application/state/pos_home_dashboard_state.dart';
 import '../../data/datasources/pos_home_remote_datasource.dart';
 import '../../domain/entities/pos_home_action.dart';
@@ -15,8 +19,18 @@ final posHomeRemoteDatasourceProvider =
 
 final posHomeDashboardProvider =
     FutureProvider<PosHomeDashboardState>((ref) async {
-  final deviceContext = ref.watch(deviceActivationProvider).deviceContext;
-  final tillSession = ref.watch(tillProvider).session;
+  final session = ref.watch(authSessionProvider);
+  if (session == null || !session.isAuthenticated) {
+    throw const PosHomeException(
+      'POS home dashboard requires an authenticated session.',
+    );
+  }
+
+  _ensureAuthorizationHeader(ref.read(appDioProvider), session);
+  await ref.read(posSessionBootstrapProvider.notifier).bootstrap();
+
+  final deviceContext = ref.read(deviceActivationProvider).deviceContext;
+  final tillSession = ref.read(tillProvider).session;
 
   if (deviceContext == null || tillSession == null) {
     throw const PosHomeException('POS context is not ready.');
@@ -26,22 +40,141 @@ final posHomeDashboardProvider =
         outletId: deviceContext.outletId,
         tillId: deviceContext.tillId,
       );
+  final sessionPermissions = session.permissionCodes.toSet();
 
   return _mapPayloadToDashboardState(
     payload: payload,
     isTrustedDevice: deviceContext.isTrusted,
     hasOpenTillSession: tillSession.status == 'open',
+    sessionPermissions: sessionPermissions,
   );
 });
+
+void _ensureAuthorizationHeader(Dio dio, AuthSession session) {
+  final currentValue = dio.options.headers['Authorization'];
+  if (currentValue is String && currentValue.trim().isNotEmpty) {
+    return;
+  }
+
+  dio.options.headers['Authorization'] = 'Bearer ${session.accessToken}';
+}
+
+PosHomeDashboardState buildPosHomeShellState({
+  required String userDisplayName,
+  required String tillLabel,
+  required bool isTrustedDevice,
+  required bool hasOpenTillSession,
+  required Set<String> permissionCodes,
+}) {
+  final now = DateTime.now();
+
+  return PosHomeDashboardState(
+    fallbackUserDisplayName:
+        userDisplayName.trim().isEmpty ? 'Cashier' : userDisplayName.trim(),
+    tillLabel: tillLabel.trim().isEmpty ? 'Till pending' : tillLabel.trim(),
+    tillStatusLabel: hasOpenTillSession ? 'Open' : 'Closed',
+    isTillOpen: hasOpenTillSession,
+    statusMessage: hasOpenTillSession
+        ? 'Ready for sales'
+        : 'Open a till session to start selling.',
+    notificationCount: 0,
+    dateDisplay: _formatDate(now),
+    timeDisplay: _formatTime(now),
+    startSaleTitle: 'Start a Sale',
+    startSaleDescription:
+        'Create a new transaction for any product, ticket, service or experience.',
+    startSaleButtonLabel: 'Start New Sale',
+    isPosEnabled: true,
+    isTrustedDevice: isTrustedDevice,
+    hasOpenTillSession: hasOpenTillSession,
+    enabledFeatureKeys: const {
+      PosFeatureCodes.sales,
+      PosFeatureCodes.customers,
+      PosFeatureCodes.returns,
+      PosFeatureCodes.exchanges,
+      PosFeatureCodes.till,
+    },
+    grantedPermissionKeys: permissionCodes,
+    actions: [
+      const PosHomeAction(
+        key: 'start-new-sale',
+        label: 'Start New Sale',
+        description: 'Begin a new in-store sale.',
+        iconKey: 'new-sale',
+        buttonLabel: 'Start New Sale',
+        isEnabled: true,
+        targetRoute: '/pos/new-sale',
+        featureKey: PosFeatureCodes.sales,
+        permissionKey: PosPermissionCodes.viewNewSale,
+      ),
+      const PosHomeAction(
+        key: 'returns-refunds',
+        label: 'Returns & Refunds',
+        description: 'Review eligible items for return or refund.',
+        iconKey: 'return',
+        buttonLabel: 'Start Return',
+        isEnabled: true,
+        targetRoute: '/pos/returns-refunds',
+        featureKey: PosFeatureCodes.returns,
+        permissionKey: PosPermissionCodes.viewReturns,
+        metricValue: '--',
+        metricLabel: 'Pending today',
+      ),
+      const PosHomeAction(
+        key: 'add-customer',
+        label: 'Add Customer',
+        description: 'Create a customer profile for future visits.',
+        iconKey: 'add-customer',
+        buttonLabel: 'Add Customer',
+        isEnabled: true,
+        targetRoute: '/pos/customers',
+        featureKey: PosFeatureCodes.customers,
+        permissionKey: PosPermissionCodes.viewNewSaleCustomers,
+        metricValue: '--',
+        metricLabel: 'Customer profiles',
+      ),
+      const PosHomeAction(
+        key: 'parked-sales',
+        label: 'Parked Sales',
+        description: 'View sales that were parked for later.',
+        iconKey: 'parked-sales',
+        buttonLabel: 'View Parked Sales',
+        isEnabled: true,
+        targetRoute: '/pos/parked-sales',
+        featureKey: PosFeatureCodes.sales,
+        permissionKey: PosPermissionCodes.createParkedSale,
+        metricValue: '--',
+        metricLabel: 'Waiting to resume',
+      ),
+      const PosHomeAction(
+        key: 'cash-drawer',
+        label: 'Cash Drawer',
+        description: 'View the current till cash summary.',
+        iconKey: 'cash-drawer',
+        buttonLabel: 'View Cash Drawer',
+        isEnabled: true,
+        targetRoute: '/pos/cash-drawer',
+        featureKey: PosFeatureCodes.till,
+        permissionKey: PosPermissionCodes.viewCashDrawer,
+        metricValue: '--',
+        metricLabel: 'Drawer balance',
+      ),
+    ],
+  );
+}
 
 PosHomeDashboardState _mapPayloadToDashboardState({
   required PosHomeDashboardPayload payload,
   required bool isTrustedDevice,
   required bool hasOpenTillSession,
+  required Set<String> sessionPermissions,
 }) {
   final now = DateTime.now();
-  final permissions = payload.permissions.toSet();
+  final permissions = sessionPermissions.isNotEmpty
+      ? sessionPermissions
+      : payload.permissions.toSet();
   final cards = payload.cards;
+  final onlineOrdersCard = cards.onlineOrders;
 
   return PosHomeDashboardState(
     fallbackUserDisplayName: payload.userDisplayName,
@@ -59,12 +192,13 @@ PosHomeDashboardState _mapPayloadToDashboardState({
     isPosEnabled: true,
     isTrustedDevice: isTrustedDevice,
     hasOpenTillSession: hasOpenTillSession,
-    enabledFeatureKeys: const {
+    enabledFeatureKeys: {
       PosFeatureCodes.sales,
       PosFeatureCodes.customers,
       PosFeatureCodes.returns,
       PosFeatureCodes.exchanges,
       PosFeatureCodes.till,
+      if (onlineOrdersCard != null) PosFeatureCodes.onlineOrders,
     },
     grantedPermissionKeys: permissions,
     actions: [
@@ -77,19 +211,22 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         isEnabled: cards.startSale.enabled,
         targetRoute: '/pos/new-sale',
         featureKey: PosFeatureCodes.sales,
-        permissionKey: PosPermissionCodes.startSale,
+        permissionKey: PosPermissionCodes.viewNewSale,
       ),
-      PosHomeAction(
-        key: 'manage-online-orders',
-        label: 'Manage Online Orders',
-        description: 'Review incoming online orders from one place.',
-        iconKey: 'online-orders',
-        buttonLabel: 'View Orders',
-        isEnabled: cards.onlineOrders.enabled,
-        routeExists: false,
-        onTapActionKey: 'manage-online-orders',
-        permissionKey: PosPermissionCodes.manageOnlineOrders,
-      ),
+      if (onlineOrdersCard != null &&
+          permissions.contains(PosPermissionCodes.manageOnlineOrders))
+        PosHomeAction(
+          key: 'manage-online-orders',
+          label: 'Manage Online Orders',
+          description: 'Review incoming online orders from one place.',
+          iconKey: 'online-orders',
+          buttonLabel: 'View Orders',
+          isEnabled: onlineOrdersCard.enabled,
+          routeExists: false,
+          onTapActionKey: 'manage-online-orders',
+          featureKey: PosFeatureCodes.onlineOrders,
+          permissionKey: PosPermissionCodes.manageOnlineOrders,
+        ),
       PosHomeAction(
         key: 'returns-refunds',
         label: 'Returns & Refunds',
@@ -99,7 +236,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         isEnabled: cards.returnsRefunds.enabled,
         targetRoute: '/pos/returns-refunds',
         featureKey: PosFeatureCodes.returns,
-        permissionKey: PosPermissionCodes.processRefund,
+        permissionKey: PosPermissionCodes.viewReturns,
         metricValue: '${cards.returnsRefunds.count ?? 0}',
         metricLabel: 'Pending today',
       ),
@@ -112,7 +249,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         isEnabled: cards.customers.enabled,
         targetRoute: '/pos/customers',
         featureKey: PosFeatureCodes.customers,
-        permissionKey: PosPermissionCodes.viewCustomers,
+        permissionKey: PosPermissionCodes.viewNewSaleCustomers,
         metricValue: '${cards.customers.count ?? 0}',
         metricLabel: 'Customer profiles',
       ),
@@ -125,7 +262,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         isEnabled: cards.parkedSales.enabled,
         targetRoute: '/pos/parked-sales',
         featureKey: PosFeatureCodes.sales,
-        permissionKey: PosPermissionCodes.recallSale,
+        permissionKey: PosPermissionCodes.createParkedSale,
         metricValue: '${cards.parkedSales.count ?? 0}',
         metricLabel: 'Waiting to resume',
       ),
@@ -138,7 +275,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         isEnabled: cards.cashDrawer.enabled,
         targetRoute: '/pos/cash-drawer',
         featureKey: PosFeatureCodes.till,
-        permissionKey: PosPermissionCodes.viewTill,
+        permissionKey: PosPermissionCodes.viewCashDrawer,
         metricValue: _formatCurrency(cards.cashDrawer.balance),
         metricLabel: 'Drawer balance',
       ),

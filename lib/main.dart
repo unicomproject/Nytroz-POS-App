@@ -1,7 +1,10 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
+import 'core/network/api_config.dart';
 import 'core/network/dio_client.dart';
 import 'core/network/dio_provider.dart';
 import 'flavors/development/tenant_admin_dev_api_interceptor.dart';
@@ -12,11 +15,14 @@ void main() {
     defaultValue: false,
   );
 
+  final apiBaseUrl = resolveApiBaseUrl();
+  developer.log(
+    'API base URL resolved. baseUrl=$apiBaseUrl',
+    name: 'api.config',
+  );
+
   final dio = buildAppDio(
-    baseUrl: const String.fromEnvironment(
-      'API_BASE_URL',
-      defaultValue: 'http://10.0.2.2:5052',
-    ),
+    baseUrl: apiBaseUrl,
     interceptors: [
       if (useDevApiFallback) TenantAdminDevApiInterceptor(),
     ],

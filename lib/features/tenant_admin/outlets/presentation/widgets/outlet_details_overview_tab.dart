@@ -38,8 +38,7 @@ class OutletDetailsOverviewTab extends StatelessWidget {
             OutletDetailsTillsCard(tills: outlet.assignedTills),
           if (visibility.showAssignedTills && visibility.showStaff)
             const SizedBox(height: TenantAdminSpacing.lg),
-          if (visibility.showStaff)
-            OutletDetailsStaffCard(staff: outlet.staff),
+          if (visibility.showStaff) OutletDetailsStaffCard(staff: outlet.staff),
           if (visibility.showNeedsAttention &&
               (visibility.showAssignedTills || visibility.showStaff))
             const SizedBox(height: TenantAdminSpacing.lg),

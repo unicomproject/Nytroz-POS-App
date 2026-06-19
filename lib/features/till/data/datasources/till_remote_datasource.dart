@@ -1,6 +1,9 @@
+import 'dart:developer' as developer;
+
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/dio_error_message.dart';
 import '../../domain/entities/open_till.dart';
 
 class TillRemoteDatasource {
@@ -9,6 +12,8 @@ class TillRemoteDatasource {
   final Dio _dio;
 
   Future<TillSession?> getCurrentSession(OpenTillForm form) async {
+    final stopwatch = Stopwatch()..start();
+
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         ApiEndpoints.currentTillSession,
@@ -16,10 +21,20 @@ class TillRemoteDatasource {
           'deviceId': form.deviceContext.deviceId,
         },
       );
+      stopwatch.stop();
+      developer.log(
+        'API success. step=current-till-session endpoint=${ApiEndpoints.currentTillSession} status=${response.statusCode} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()}',
+        name: 'pos.session',
+      );
 
       final data = _unwrapApiData(response.data ?? const {});
       return _sessionFromJson(data, form);
     } on DioException catch (error) {
+      stopwatch.stop();
+      developer.log(
+        'API failure. step=current-till-session endpoint=${ApiEndpoints.currentTillSession} status=${error.response?.statusCode ?? 'none'} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()} message=${_messageFromDio(error)}',
+        name: 'pos.session',
+      );
       if (error.response?.statusCode == 404) {
         return null;
       }
@@ -29,6 +44,8 @@ class TillRemoteDatasource {
   }
 
   Future<TillSession> openTill(OpenTillForm form) async {
+    final stopwatch = Stopwatch()..start();
+
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.openTill,
@@ -40,10 +57,20 @@ class TillRemoteDatasource {
               form.openingNote.trim().isEmpty ? null : form.openingNote.trim(),
         },
       );
+      stopwatch.stop();
+      developer.log(
+        'API success. step=open-till endpoint=${ApiEndpoints.openTill} status=${response.statusCode} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()}',
+        name: 'pos.session',
+      );
 
       final data = _unwrapApiData(response.data ?? const {});
       return _sessionFromJson(data, form);
     } on DioException catch (error) {
+      stopwatch.stop();
+      developer.log(
+        'API failure. step=open-till endpoint=${ApiEndpoints.openTill} status=${error.response?.statusCode ?? 'none'} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()} message=${_messageFromDio(error)}',
+        name: 'pos.session',
+      );
       throw TillException(_messageFromDio(error));
     }
   }
@@ -110,14 +137,15 @@ class TillRemoteDatasource {
   }
 
   String _messageFromDio(DioException error) {
-    final data = error.response?.data;
-    if (data is Map) {
-      final message = data['message'];
-      if (message is String && message.trim().isNotEmpty) {
-        return message;
-      }
-    }
+    return messageFromDioException(
+      error,
+      contextPrefix: 'Till request failed at ${error.requestOptions.path}',
+      fallback: 'Try again.',
+    );
+  }
 
-    return 'Till could not be opened. Try again.';
+  bool _hasAuthHeader() {
+    final value = _dio.options.headers['Authorization'];
+    return value is String && value.trim().isNotEmpty;
   }
 }
