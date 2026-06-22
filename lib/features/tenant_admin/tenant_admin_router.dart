@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/access/tenant_admin_access_codes.dart';
 import 'domain/entities/tenant_admin_menu_item.dart';
 import 'domain/services/tenant_admin_access_checker.dart';
+import 'role_permissions/presentation/screens/role_permissions_screen.dart';
 import 'presentation/layout/tenant_admin_layout.dart';
 import 'dashboard/presentation/screens/tenant_dashboard_screen.dart';
 import 'outlets/presentation/screens/add_outlet_screen.dart';
@@ -65,7 +66,11 @@ List<RouteBase> tenantAdminRoutes(Ref ref) {
         ),
         GoRoute(
           path: '/tenant-admin/roles-access',
-          redirect: (context, state) => '/tenant-admin/roles',
+          redirect: (context, state) => '/tenant-admin/roles-permissions',
+        ),
+        GoRoute(
+          path: '/tenant-admin/roles',
+          redirect: (context, state) => '/tenant-admin/roles-permissions',
         ),
         ...tenantAdminRouteDefinitions.map(
           (definition) => _tenantAdminModuleRoute(ref, definition),
@@ -145,6 +150,18 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return EditOutletScreen(outletId: state.pathParameters['id'] ?? '');
   }
 
+  if (definition.path == '/tenant-admin/roles-permissions') {
+    return RolePermissionsScreen(
+      initialRoleId: state.uri.queryParameters['roleId'],
+    );
+  }
+
+  if (definition.path == '/tenant-admin/roles-permissions/:roleId') {
+    return RolePermissionsScreen(
+      initialRoleId: state.pathParameters['roleId'],
+    );
+  }
+
   return TenantAdminPlaceholderScreen(
     title: definition.title,
     subtitle: definition.subtitle,
@@ -195,16 +212,26 @@ bool _canAccessRoute(
   TenantAdminRouteDefinition definition,
 ) {
   if (definition.menuKey == 'roles-access') {
-    return accessChecker.canShowActionWithAllPermissions(
+    return accessChecker.canShowActionWithAnyPermission(
+          TenantAdminFeatureCodes.rolePermission,
+          [
+            TenantAdminPermissionCodes.rolesPermissionsView,
+            TenantAdminPermissionCodes.rolesView,
+            TenantAdminPermissionCodes.permissionsView,
+            TenantAdminPermissionCodes.tenantRoleManage,
+          ],
+        );
+  }
+
+  if (definition.path.startsWith('/tenant-admin/roles-permissions')) {
+    return accessChecker.can(TenantAdminPermissionCodes.rolesPermissionsView) ||
+        accessChecker.canShowActionWithAnyPermission(
           TenantAdminFeatureCodes.rolePermission,
           [
             TenantAdminPermissionCodes.rolesView,
             TenantAdminPermissionCodes.permissionsView,
+            TenantAdminPermissionCodes.tenantRoleManage,
           ],
-        ) ||
-        accessChecker.canShowAction(
-          TenantAdminFeatureCodes.rolePermission,
-          TenantAdminPermissionCodes.tenantRoleManage,
         );
   }
 

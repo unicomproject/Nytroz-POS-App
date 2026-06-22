@@ -192,6 +192,9 @@ TenantAdminAccessChecker _checker({
       userId: 'user-test',
       userDisplayName: 'Sarah Ahmed',
       roleNames: ['Owner'],
+      roles: const [
+        TenantAdminRole(id: 'role-1', name: 'Owner'),
+      ],
       outletScope: const [
         TenantAdminOutletScope(
           outletId: 'outlet-1',

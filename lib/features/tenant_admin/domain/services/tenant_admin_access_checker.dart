@@ -105,6 +105,8 @@ class TenantAdminAccessChecker {
         ]);
       case TenantAdminFeatureCodes.rolePermission:
         return canAny([
+          TenantAdminPermissionCodes.rolesPermissionsView,
+          TenantAdminPermissionCodes.rolesPermissionsUpdate,
           TenantAdminPermissionCodes.roleView,
           TenantAdminPermissionCodes.permissionView,
           TenantAdminPermissionCodes.tenantRoleManage,
