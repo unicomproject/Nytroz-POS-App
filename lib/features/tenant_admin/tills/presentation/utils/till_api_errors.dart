@@ -1,0 +1,94 @@
+import 'package:dio/dio.dart';
+
+const tillBackendFieldAliases = {
+  'name': 'name',
+  'code': 'code',
+  'outletId': 'outletId',
+  'status': 'status',
+};
+
+Map<String, String> tillValidationErrors(DioException error) {
+  final data = error.response?.data;
+  if (data is! Map) {
+    return const {};
+  }
+
+  final mapped = <String, String>{};
+
+  final errors = data['errors'];
+  if (errors is List) {
+    for (final item in errors) {
+      if (item is! Map) {
+        continue;
+      }
+
+      final field = item['field']?.toString() ?? '';
+      final message = item['message']?.toString() ?? '';
+      if (field.isEmpty || message.isEmpty) {
+        continue;
+      }
+
+      final key = tillBackendFieldAliases[field] ?? field;
+      mapped[key] = message;
+    }
+
+    if (mapped.isNotEmpty) {
+      return mapped;
+    }
+  }
+
+  if (errors is Map) {
+    return errors.map((key, value) {
+      final field = key.toString();
+      final message = value is List && value.isNotEmpty
+          ? value.first.toString()
+          : value.toString();
+      return MapEntry(tillBackendFieldAliases[field] ?? field, message);
+    });
+  }
+
+  return const {};
+}
+
+String tillErrorMessage(DioException error, {String fallback = 'Request failed'}) {
+  final data = error.response?.data;
+  if (data is Map && data['message'] != null) {
+    return data['message'].toString();
+  }
+
+  return error.message ?? fallback;
+}
+
+String tillSubmitErrorMessage(
+  DioException error,
+  Map<String, String> fieldErrors, {
+  String fallback = 'Failed to save till',
+}) {
+  if (fieldErrors.isNotEmpty) {
+    return fieldErrors.values.first;
+  }
+
+  final statusCode = error.response?.statusCode;
+  if (statusCode == 401) {
+    return tillErrorMessage(
+      error,
+      fallback: 'Your session has expired. Please sign in again.',
+    );
+  }
+
+  if (statusCode == 403) {
+    return tillErrorMessage(
+      error,
+      fallback: 'You do not have permission to create tills.',
+    );
+  }
+
+  if (statusCode == 409) {
+    return tillErrorMessage(
+      error,
+      fallback: 'A till with this code already exists in the selected outlet.',
+    );
+  }
+
+  return tillErrorMessage(error, fallback: fallback);
+}

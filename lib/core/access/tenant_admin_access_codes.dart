@@ -51,6 +51,9 @@ class TenantAdminPermissionCodes {
   static const outletDelete = 'outlet.delete';
   static const tillView = 'till.view';
   static const tillCreate = 'till.create';
+  static const tillUpdate = 'till.update';
+  static const tillDelete = 'till.delete';
+  static const tillActivationCodeGenerate = 'till.activation_code.generate';
   static const tillStatusView = 'till.status.view';
   static const userView = 'user.view';
   static const userCreate = 'user.create';

@@ -164,6 +164,14 @@ Object? _responseFor(RequestOptions options) {
     return _createdOutlet(options.data);
   }
 
+  if (method == 'GET' && path == '/api/v1/tenant-admin/tills') {
+    return _tills;
+  }
+
+  if (method == 'POST' && path == '/api/v1/tenant-admin/tills') {
+    return _createdTill(options.data);
+  }
+
   if (method == 'PUT' &&
       (path.startsWith('/api/v1/tenant-admin/outlets/') ||
           path.startsWith('/api/tenant-admin/outlets/'))) {
@@ -254,6 +262,8 @@ final _context = {
       'outlets.create',
       'outlets.update',
       'tenant.till.manage',
+      'till.view',
+      'till.create',
       'tenant.user.manage',
       'tenant.role.manage',
       'catalog.product.view',
@@ -628,6 +638,64 @@ Map<String, Object?> _createdOutlet(Object? data, {String id = 'outlet-new'}) {
       'onlineTillCount': 0,
       'staffCount': 0,
       'todaySales': const {'amount': 0, 'currency': 'GBP'},
+    },
+  };
+}
+
+const _tills = {
+  'success': true,
+  'message': 'Tills loaded successfully.',
+  'data': {
+    'summary': {
+      'totalTills': 2,
+      'onlineCount': 1,
+      'offlineCount': 1,
+      'needsAttentionCount': 0,
+    },
+    'items': [
+      {
+        'id': 'till-1',
+        'outletId': 'outlet-1',
+        'outletName': 'High Street Store',
+        'name': 'Front Counter Till',
+        'code': 'TILL-001',
+        'status': 'active',
+        'operationalStatus': 'online',
+        'todaySalesAmount': 1245.60,
+        'currency': 'GBP',
+        'lastSyncAt': '2026-06-22T10:00:00Z',
+      },
+      {
+        'id': 'till-2',
+        'outletId': 'outlet-2',
+        'outletName': 'Central Store',
+        'name': 'Kiosk Till',
+        'code': 'TILL-002',
+        'status': 'active',
+        'operationalStatus': 'offline',
+        'todaySalesAmount': 420.10,
+        'currency': 'GBP',
+        'lastSyncAt': '2026-06-22T09:30:00Z',
+      },
+    ],
+    'page': 1,
+    'pageSize': 10,
+    'totalCount': 2,
+  },
+};
+
+Map<String, Object?> _createdTill(Object? data, {String id = 'till-new'}) {
+  final body = data is Map ? Map<String, dynamic>.from(data) : const {};
+
+  return {
+    'success': true,
+    'message': 'Till created successfully.',
+    'data': {
+      'id': id,
+      'outletId': body['outletId']?.toString() ?? 'outlet-1',
+      'name': body['name']?.toString() ?? 'New Till',
+      'code': body['code']?.toString() ?? 'TILL-NEW',
+      'status': body['status']?.toString() ?? 'active',
     },
   };
 }

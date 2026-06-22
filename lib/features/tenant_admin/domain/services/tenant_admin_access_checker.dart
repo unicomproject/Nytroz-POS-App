@@ -7,6 +7,7 @@ import '../../dashboard/presentation/config/dashboard_quick_action_configs.dart'
 import '../../outlets/presentation/config/outlet_row_action_configs.dart';
 import '../../outlets/presentation/config/outlet_summary_card_configs.dart';
 import '../../outlets/presentation/config/outlet_table_column_configs.dart';
+import '../../tills/presentation/config/till_row_action_configs.dart';
 import '../entities/tenant_admin_context.dart';
 import '../entities/tenant_admin_menu_item.dart';
 import '../../dashboard/domain/entities/tenant_dashboard.dart';
@@ -265,6 +266,8 @@ class TenantAdminAccessChecker {
               TenantAdminPermissionCodes.subscriptionView,
               TenantAdminPermissionCodes.tenantBillingView,
             ]);
+      case 'tills':
+        return canAccessTillModule();
       default:
         return canShowAction(menuItem.featureCode, menuItem.permissionCode);
     }
@@ -431,6 +434,56 @@ class TenantAdminAccessChecker {
       TenantAdminFeatureCodes.outletManagement,
       TenantAdminPermissionCodes.outletCreate,
     );
+  }
+
+  bool hasTillManagementEntitlement() {
+    final hasEntitlement = _context.featureEntitlements.any(
+      (feature) =>
+          feature.featureCode == TenantAdminFeatureCodes.tillManagement &&
+          feature.enabled,
+    );
+
+    if (!hasEntitlement) {
+      return false;
+    }
+
+    return hasRuntimeFlag(TenantAdminFeatureCodes.tillManagement);
+  }
+
+  bool canAccessTillModule() {
+    return hasTillManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tillView);
+  }
+
+  bool canAccessTillListPage() => canAccessTillModule();
+
+  bool canFetchTillList() => canAccessTillListPage();
+
+  bool canCreateTill() {
+    return hasTillManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tillCreate);
+  }
+
+  bool canUpdateTill() {
+    return hasTillManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tillUpdate);
+  }
+
+  bool canDeleteTill() {
+    return hasTillManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tillDelete);
+  }
+
+  bool canGenerateTillActivationCode() {
+    return hasTillManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tillActivationCodeGenerate);
+  }
+
+  bool canViewTillSales() {
+    return canAny([
+      TenantAdminPermissionCodes.salesSummaryView,
+      TenantAdminPermissionCodes.outletSalesSummaryView,
+    ]);
   }
 
   bool canViewOutletDetail() {
@@ -674,6 +727,75 @@ class OutletListVisibility {
       visibleSummaryCards: summaryCards,
       visibleColumns: columns,
       visibleRowActions: rowActions,
+    );
+  }
+}
+
+class TillListVisibility {
+  const TillListVisibility({
+    required this.showPage,
+    required this.showTitle,
+    required this.showSubtitle,
+    required this.showSearch,
+    required this.showFilters,
+    required this.showAddTill,
+    required this.showSummarySection,
+    required this.showList,
+    required this.showPagination,
+    required this.showTodaySales,
+    required this.showMoreMenu,
+    required this.showActionsColumn,
+    required this.visibleSummaryCards,
+    required this.visibleRowActions,
+    required this.visibleMoreMenuActions,
+  });
+
+  final bool showPage;
+  final bool showTitle;
+  final bool showSubtitle;
+  final bool showSearch;
+  final bool showFilters;
+  final bool showAddTill;
+  final bool showSummarySection;
+  final bool showList;
+  final bool showPagination;
+  final bool showTodaySales;
+  final bool showMoreMenu;
+  final bool showActionsColumn;
+  final List<TillSummaryCardConfig> visibleSummaryCards;
+  final List<TillRowActionConfig> visibleRowActions;
+  final List<TillRowActionConfig> visibleMoreMenuActions;
+
+  static TillListVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage = access.canAccessTillListPage();
+    final rowActions = showPage
+        ? visibleTillRowActions(access.can, access.canAny)
+        : const <TillRowActionConfig>[];
+    final moreMenuActions = showPage
+        ? visibleTillMoreMenuActions(access.can, access.canAny)
+        : const <TillRowActionConfig>[];
+    final summaryCards = showPage
+        ? visibleTillSummaryCards(access.can, access.canAny)
+        : const <TillSummaryCardConfig>[];
+
+    return TillListVisibility(
+      showPage: showPage,
+      showTitle: showPage,
+      showSubtitle: showPage,
+      showSearch: showPage,
+      showFilters: showPage,
+      showAddTill: access.canCreateTill(),
+      showSummarySection: summaryCards.isNotEmpty,
+      showList: showPage,
+      showPagination: showPage,
+      showTodaySales: showPage && access.canViewTillSales(),
+      showMoreMenu: moreMenuActions.isNotEmpty,
+      showActionsColumn: rowActions.isNotEmpty || moreMenuActions.isNotEmpty,
+      visibleSummaryCards: summaryCards,
+      visibleRowActions: rowActions,
+      visibleMoreMenuActions: moreMenuActions,
     );
   }
 }
