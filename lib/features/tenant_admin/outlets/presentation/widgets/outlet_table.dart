@@ -87,9 +87,8 @@ class OutletTable extends ConsumerWidget {
     }
 
     final currentPage = page!;
-    final totalPages = pageSize! <= 0
-        ? 1
-        : (totalCount! / pageSize!).ceil().clamp(1, 9999);
+    final totalPages =
+        pageSize! <= 0 ? 1 : (totalCount! / pageSize!).ceil().clamp(1, 9999);
     final rangeStart = ((currentPage - 1) * pageSize!) + 1;
     final rangeEnd = (currentPage * pageSize!).clamp(0, totalCount!);
 
@@ -111,9 +110,8 @@ class OutletTable extends ConsumerWidget {
           ),
           IconButton(
             tooltip: 'Previous page',
-            onPressed: currentPage > 1
-                ? () => onPageChanged!(currentPage - 1)
-                : null,
+            onPressed:
+                currentPage > 1 ? () => onPageChanged!(currentPage - 1) : null,
             icon: const Icon(Icons.chevron_left),
           ),
           Container(
@@ -164,8 +162,7 @@ class OutletTable extends ConsumerWidget {
                   height: 32,
                   decoration: BoxDecoration(
                     color: TenantAdminColors.secondary,
-                    borderRadius:
-                        BorderRadius.circular(TenantAdminRadius.sm),
+                    borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
                   ),
                   child: const Icon(
                     Icons.storefront_outlined,

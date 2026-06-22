@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../domain/entities/pos_home_action.dart';
+import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../domain/entities/pos_home_action.dart';
 import 'pos_dashboard_card_container.dart';
 
 class PosHomeActionCard extends StatelessWidget {
@@ -33,13 +33,13 @@ class PosHomeActionCard extends StatelessWidget {
         final iconSize = isTight ? 34.0 : 48.0;
         final buttonHeight = isTight ? 36.0 : 46.0;
         final titleStyle = isTight
-            ? Theme.of(context).textTheme.labelLarge?.copyWith(
+            ? Theme.of(context).textTheme.titleSmall?.copyWith(
                   color: TenantAdminColors.bodyText,
                   fontWeight: FontWeight.w800,
                 )
             : TenantAdminTextStyles.sectionTitle(context);
         final descriptionStyle = isTight
-            ? Theme.of(context).textTheme.labelSmall?.copyWith(
+            ? Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: TenantAdminColors.mutedText,
                 )
             : TenantAdminTextStyles.muted(context);
@@ -158,7 +158,7 @@ class PosActionMetricLine extends StatelessWidget {
               child: Text(
                 value,
                 maxLines: 1,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: color,
                       fontWeight: FontWeight.w800,
                     ),
@@ -172,7 +172,7 @@ class PosActionMetricLine extends StatelessWidget {
               label,
               maxLines: 2,
               softWrap: true,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: TenantAdminColors.mutedText,
                     fontWeight: FontWeight.w600,
                   ),

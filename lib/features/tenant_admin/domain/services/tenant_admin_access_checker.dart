@@ -299,13 +299,16 @@ class TenantAdminAccessChecker {
     ]);
   }
 
-  bool canViewNotifications() => can(TenantAdminPermissionCodes.notificationView);
+  bool canViewNotifications() =>
+      can(TenantAdminPermissionCodes.notificationView);
 
-  bool canReadNotifications() => can(TenantAdminPermissionCodes.notificationRead);
+  bool canReadNotifications() =>
+      can(TenantAdminPermissionCodes.notificationRead);
 
   bool canViewProfile() => can(TenantAdminPermissionCodes.profileView);
 
-  bool canViewTenantContext() => can(TenantAdminPermissionCodes.tenantContextView);
+  bool canViewTenantContext() =>
+      can(TenantAdminPermissionCodes.tenantContextView);
 
   bool canViewSubscription() {
     return canAccessFeature(TenantAdminFeatureCodes.billingSubscription) &&
@@ -316,7 +319,8 @@ class TenantAdminAccessChecker {
         ]);
   }
 
-  bool canViewDateFilter() => can(TenantAdminPermissionCodes.dashboardFilterDate);
+  bool canViewDateFilter() =>
+      can(TenantAdminPermissionCodes.dashboardFilterDate);
 
   bool canViewOutletFilter() {
     return can(TenantAdminPermissionCodes.dashboardFilterOutlet) &&
@@ -324,7 +328,8 @@ class TenantAdminAccessChecker {
         accessibleOutletCount > 1;
   }
 
-  bool canViewSalesTrend() => can(TenantAdminPermissionCodes.dashboardSalesChartView);
+  bool canViewSalesTrend() =>
+      can(TenantAdminPermissionCodes.dashboardSalesChartView);
 
   bool canViewReportsLink() {
     return canAny([
@@ -345,7 +350,8 @@ class TenantAdminAccessChecker {
     return hasVisibleItems && canViewNeedsAttentionSection();
   }
 
-  bool canViewAllActivityLink() => can(TenantAdminPermissionCodes.activityLogView);
+  bool canViewAllActivityLink() =>
+      can(TenantAdminPermissionCodes.activityLogView);
 
   bool canViewRecentActivitySection() {
     return can(TenantAdminPermissionCodes.activityLogView);
@@ -589,9 +595,7 @@ class TenantDashboardVisibility {
   }) {
     final metrics = dashboard == null
         ? const <TenantDashboardMetric>[]
-        : dashboard.metrics
-            .where(access.canViewMetric)
-            .toList(growable: false);
+        : dashboard.metrics.where(access.canViewMetric).toList(growable: false);
 
     final attentionItems = dashboard == null
         ? const <TenantDashboardAttentionItem>[]
@@ -614,8 +618,10 @@ class TenantDashboardVisibility {
     final showRecentActivity = access.canViewRecentActivitySection();
 
     return TenantDashboardVisibility(
-      showTitle: access.can(TenantAdminPermissionCodes.tenantAdminDashboardView),
-      showSubtitle: access.can(TenantAdminPermissionCodes.tenantAdminDashboardView),
+      showTitle:
+          access.can(TenantAdminPermissionCodes.tenantAdminDashboardView),
+      showSubtitle:
+          access.can(TenantAdminPermissionCodes.tenantAdminDashboardView),
       showNotifications: access.canViewNotifications(),
       showNotificationReadAction: access.canReadNotifications(),
       showProfile: access.canViewProfile(),
@@ -642,7 +648,8 @@ class TenantDashboardVisibility {
       visibleActivities: activities,
       notificationCount:
           access.canViewNotifications() ? dashboard?.notificationCount : null,
-      salesSummary: access.canViewSalesChart() ? dashboard?.salesThisWeek : null,
+      salesSummary:
+          access.canViewSalesChart() ? dashboard?.salesThisWeek : null,
     );
   }
 }

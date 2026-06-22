@@ -56,7 +56,8 @@ class TenantAdminContextDto {
       featureEntitlements: [
         for (final feature in features)
           TenantAdminFeatureEntitlementDto(
-            featureCode: TenantAdminBackendFeatureMapper.toAppFeatureCode(feature),
+            featureCode:
+                TenantAdminBackendFeatureMapper.toAppFeatureCode(feature),
             featureName: feature,
             enabled: true,
           ),

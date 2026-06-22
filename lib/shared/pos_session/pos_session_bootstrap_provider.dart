@@ -14,10 +14,16 @@ class PosSessionBootstrapState {
   const PosSessionBootstrapState({
     this.isLoading = false,
     this.isReady = false,
+    this.errorMessage,
+    this.failedStep,
   });
 
   final bool isLoading;
   final bool isReady;
+  final String? errorMessage;
+  final String? failedStep;
+
+  bool get hasError => errorMessage != null;
 }
 
 class PosSessionBootstrapNotifier
@@ -33,18 +39,22 @@ class PosSessionBootstrapNotifier
   Future<void>? _bootstrapFuture;
 
   void _listenAuth() {
-    _ref.listen<AuthSession?>(authSessionProvider, (previous, next) {
-      if (next == null || !next.isAuthenticated) {
-        state = const PosSessionBootstrapState();
-        return;
-      }
+    _ref.listen<AuthSession?>(
+      authSessionProvider,
+      (previous, next) {
+        if (next == null || !next.isAuthenticated) {
+          state = const PosSessionBootstrapState();
+          return;
+        }
 
-      if (previous?.accessToken == next.accessToken && state.isReady) {
-        return;
-      }
+        if (previous?.accessToken == next.accessToken && state.isReady) {
+          return;
+        }
 
-      unawaited(bootstrap());
-    });
+        unawaited(bootstrap());
+      },
+      fireImmediately: true,
+    );
   }
 
   Future<void> bootstrap({bool force = false}) async {
@@ -70,7 +80,11 @@ class PosSessionBootstrapNotifier
     }
 
     state = const PosSessionBootstrapState(isLoading: true);
-    developer.log('POS session bootstrap started.', name: 'pos.session');
+    final stopwatch = Stopwatch()..start();
+    developer.log(
+      'POS session bootstrap started.',
+      name: 'pos.session',
+    );
 
     try {
       final session = _ref.read(authSessionProvider);
@@ -81,35 +95,126 @@ class PosSessionBootstrapNotifier
           'POS session bootstrap skipped: no POS device/till permissions.',
           name: 'pos.session',
         );
+        state = const PosSessionBootstrapState(isReady: true);
+        stopwatch.stop();
+        developer.log(
+          'POS session bootstrap finished. success=true durationMs=${stopwatch.elapsedMilliseconds}',
+          name: 'pos.session',
+        );
         return;
       }
 
-      await _ref.read(deviceActivationProvider.notifier).ensureHydrated();
+      await _runStep(
+        'hydrate-device-context',
+        () => _ref.read(deviceActivationProvider.notifier).ensureHydrated(),
+      );
       var device = _ref.read(deviceActivationProvider).deviceContext;
 
       if (session.canActivatePosDevice &&
           (device == null || !device.isTrusted)) {
-        await _ref.read(deviceActivationProvider.notifier).refreshCurrentDevice(
-              deviceName: device?.deviceName ?? 'Web POS',
-            );
+        final refreshed = await _runStep(
+          'refresh-current-device',
+          () =>
+              _ref.read(deviceActivationProvider.notifier).refreshCurrentDevice(
+                    deviceName: device?.deviceName ?? 'Web POS',
+                  ),
+        );
         device = _ref.read(deviceActivationProvider).deviceContext;
+        final deviceError = _ref.read(deviceActivationProvider).errorMessage;
+        if (!refreshed && deviceError != null) {
+          throw PosSessionBootstrapException(
+            'refresh-current-device',
+            deviceError,
+          );
+        }
       }
 
       if (session.canOpenPosTill && device != null && device.isTrusted) {
-        await _ref.read(tillProvider.notifier).ensureHydrated();
+        await _runStep(
+          'hydrate-till-session',
+          () => _ref.read(tillProvider.notifier).ensureHydrated(),
+        );
         var tillSession = _ref.read(tillProvider).session;
 
         if (tillSession == null || tillSession.status != 'open') {
-          await _ref.read(tillProvider.notifier).refreshCurrentSession(
-                deviceContext: device,
-              );
+          final refreshed = await _runStep(
+            'refresh-current-till-session',
+            () => _ref.read(tillProvider.notifier).refreshCurrentSession(
+                  deviceContext: device!,
+                ),
+          );
+          final tillError = _ref.read(tillProvider).errorMessage;
+          if (!refreshed && tillError != null) {
+            throw PosSessionBootstrapException(
+              'refresh-current-till-session',
+              tillError,
+            );
+          }
         }
       }
-    } finally {
       state = const PosSessionBootstrapState(isReady: true);
-      developer.log('POS session bootstrap finished.', name: 'pos.session');
+      stopwatch.stop();
+      developer.log(
+        'POS session bootstrap finished. success=true durationMs=${stopwatch.elapsedMilliseconds}',
+        name: 'pos.session',
+      );
+    } on PosSessionBootstrapException catch (error) {
+      stopwatch.stop();
+      state = PosSessionBootstrapState(
+        errorMessage: error.message,
+        failedStep: error.step,
+      );
+      developer.log(
+        'POS session bootstrap finished. success=false step=${error.step} durationMs=${stopwatch.elapsedMilliseconds} message=${error.message}',
+        name: 'pos.session',
+      );
+    } catch (error) {
+      stopwatch.stop();
+      state = PosSessionBootstrapState(
+        errorMessage: 'POS session could not be prepared. $error',
+        failedStep: 'bootstrap',
+      );
+      developer.log(
+        'POS session bootstrap finished. success=false step=bootstrap durationMs=${stopwatch.elapsedMilliseconds} message=$error',
+        name: 'pos.session',
+      );
     }
   }
+
+  Future<T> _runStep<T>(String step, Future<T> Function() action) async {
+    final stopwatch = Stopwatch()..start();
+    developer.log(
+      'POS bootstrap step started. step=$step',
+      name: 'pos.session',
+    );
+
+    try {
+      final result = await action();
+      stopwatch.stop();
+      developer.log(
+        'POS bootstrap step succeeded. step=$step durationMs=${stopwatch.elapsedMilliseconds}',
+        name: 'pos.session',
+      );
+      return result;
+    } catch (error) {
+      stopwatch.stop();
+      developer.log(
+        'POS bootstrap step failed. step=$step durationMs=${stopwatch.elapsedMilliseconds} message=$error',
+        name: 'pos.session',
+      );
+      rethrow;
+    }
+  }
+}
+
+class PosSessionBootstrapException implements Exception {
+  const PosSessionBootstrapException(this.step, this.message);
+
+  final String step;
+  final String message;
+
+  @override
+  String toString() => '$step: $message';
 }
 
 final posSessionBootstrapProvider = StateNotifierProvider<

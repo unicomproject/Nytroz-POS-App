@@ -112,9 +112,8 @@ class OutletListSummaryDto {
     required List<OutletDto> items,
     required int totalCount,
   }) {
-    final active = items
-        .where((outlet) => outlet.status.toLowerCase() == 'active')
-        .length;
+    final active =
+        items.where((outlet) => outlet.status.toLowerCase() == 'active').length;
 
     return OutletListSummaryDto(
       totalOutlets: totalCount,
@@ -169,8 +168,7 @@ class OutletDetailsDto {
       phone: json['phone'] as String?,
       email: json['email'] as String?,
       managerName: json['managerName'] as String?,
-      managerPhone:
-          json['managerPhone'] as String? ?? json['phone'] as String?,
+      managerPhone: json['managerPhone'] as String? ?? json['phone'] as String?,
       openingHours: json['openingHours']?.toString(),
       todaysStatus: json['todaysStatus'] as String?,
       tillCount: _nullableInt(json['tillCount']),

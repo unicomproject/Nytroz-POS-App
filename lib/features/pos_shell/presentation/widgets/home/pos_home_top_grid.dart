@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../domain/entities/pos_home_action.dart';
+import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../domain/entities/pos_home_action.dart';
 import 'pos_online_orders_summary_card.dart';
 import 'pos_start_sale_hero_card.dart';
 
@@ -22,7 +22,7 @@ class PosHomeTopGrid extends StatelessWidget {
   });
 
   final PosHomeAction startSaleAction;
-  final PosHomeAction onlineOrdersAction;
+  final PosHomeAction? onlineOrdersAction;
   final String startSaleTitle;
   final String startSaleDescription;
   final String startSaleButtonLabel;
@@ -57,9 +57,9 @@ class PosHomeTopGrid extends StatelessWidget {
                 onStartSale: onStartSale,
               )
             : null;
-        final onlineOrders = showOnlineOrders
+        final onlineOrders = showOnlineOrders && onlineOrdersAction != null
             ? PosOnlineOrdersSummaryCard(
-                action: onlineOrdersAction,
+                action: onlineOrdersAction!,
                 onViewOrders: onViewOrders,
               )
             : null;

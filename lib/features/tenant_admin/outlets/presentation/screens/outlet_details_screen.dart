@@ -70,9 +70,8 @@ class _OutletDetailsScreenState extends ConsumerState<OutletDetailsScreen> {
         ),
         data: (visibility) {
           final tabs = visibility.visibleTabs;
-          final selectedTab = tabs.isEmpty
-              ? 0
-              : _selectedTab.clamp(0, tabs.length - 1);
+          final selectedTab =
+              tabs.isEmpty ? 0 : _selectedTab.clamp(0, tabs.length - 1);
 
           return TenantAdminPageScaffold(
             title: 'Outlet details',

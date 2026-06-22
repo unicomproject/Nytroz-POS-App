@@ -26,9 +26,8 @@ class OutletRepositoryImpl implements OutletRepository {
         items: result.items,
         page: result.page,
         pageSize: result.pageSize,
-        totalCount: result.totalCount > 0
-            ? result.totalCount
-            : summaryDto.totalOutlets,
+        totalCount:
+            result.totalCount > 0 ? result.totalCount : summaryDto.totalOutlets,
       );
     }
 

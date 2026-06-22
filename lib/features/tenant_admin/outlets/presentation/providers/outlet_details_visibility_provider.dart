@@ -38,7 +38,8 @@ class OutletDetailsVisibility {
     final quickActions =
         visibleOutletDetailsQuickActions(access.can, access.canAny);
 
-    final canViewSales = access.can(TenantAdminPermissionCodes.outletSalesSummaryView);
+    final canViewSales =
+        access.can(TenantAdminPermissionCodes.outletSalesSummaryView);
     final canViewTills = access.canAny([
       TenantAdminPermissionCodes.tillView,
       TenantAdminPermissionCodes.outletTillSummaryView,

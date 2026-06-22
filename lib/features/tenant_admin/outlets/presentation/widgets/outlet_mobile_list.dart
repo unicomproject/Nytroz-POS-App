@@ -11,6 +11,7 @@ import '../config/outlet_row_action_configs.dart';
 import '../providers/outlet_providers.dart';
 import '../providers/outlet_visibility_provider.dart';
 import '../utils/outlet_list_filters.dart';
+
 class OutletMobileList extends StatelessWidget {
   const OutletMobileList({
     super.key,
@@ -48,7 +49,8 @@ class _OutletMobileCard extends ConsumerWidget {
   final OutletListVisibility visibility;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {    final subtitleParts = <String>[outlet.code];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final subtitleParts = <String>[outlet.code];
 
     if (visibility.showMobileLocation && outlet.location.isNotEmpty) {
       subtitleParts.add(outlet.location);
@@ -122,7 +124,8 @@ class _OutletMobileCard extends ConsumerWidget {
                   ];
                 },
                 onSelected: (actionId) =>
-                    _handleAction(context, ref, actionId, outlet),              ),
+                    _handleAction(context, ref, actionId, outlet),
+              ),
             )
           : null,
       onTap: () => context.go('/tenant-admin/outlets/${outlet.id}'),
@@ -134,7 +137,8 @@ class _OutletMobileCard extends ConsumerWidget {
     WidgetRef ref,
     OutletRowActionId actionId,
     Outlet outlet,
-  ) {    switch (actionId) {
+  ) {
+    switch (actionId) {
       case OutletRowActionId.viewDetails:
         context.go('/tenant-admin/outlets/${outlet.id}');
       case OutletRowActionId.edit:

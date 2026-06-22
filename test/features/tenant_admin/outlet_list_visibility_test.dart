@@ -127,7 +127,8 @@ void main() {
         isTrue,
       );
       expect(
-        visibility.visibleRowActions.any((action) => action.id == 'view_details'),
+        visibility.visibleRowActions
+            .any((action) => action.id == 'view_details'),
         isFalse,
       );
     });

@@ -1,6 +1,9 @@
+import 'dart:developer' as developer;
+
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/dio_error_message.dart';
 import '../../domain/entities/pos_device_context.dart';
 
 class DeviceActivationRemoteDatasource {
@@ -9,6 +12,8 @@ class DeviceActivationRemoteDatasource {
   final Dio _dio;
 
   Future<PosDeviceContext?> getCurrentDevice(DeviceActivationForm form) async {
+    final stopwatch = Stopwatch()..start();
+
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         ApiEndpoints.currentDevice,
@@ -16,10 +21,20 @@ class DeviceActivationRemoteDatasource {
           'deviceFingerprint': form.deviceFingerprint,
         },
       );
+      stopwatch.stop();
+      developer.log(
+        'API success. step=current-device endpoint=${ApiEndpoints.currentDevice} status=${response.statusCode} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()}',
+        name: 'pos.session',
+      );
 
       final data = _unwrapApiData(response.data ?? const {});
       return _deviceContextFromJson(data, form);
     } on DioException catch (error) {
+      stopwatch.stop();
+      developer.log(
+        'API failure. step=current-device endpoint=${ApiEndpoints.currentDevice} status=${error.response?.statusCode ?? 'none'} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()} message=${_messageFromDio(error)}',
+        name: 'pos.session',
+      );
       if (error.response?.statusCode == 404) {
         return null;
       }
@@ -29,6 +44,8 @@ class DeviceActivationRemoteDatasource {
   }
 
   Future<PosDeviceContext> activateDevice(DeviceActivationForm form) async {
+    final stopwatch = Stopwatch()..start();
+
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.activateDevice,
@@ -41,10 +58,20 @@ class DeviceActivationRemoteDatasource {
           'appVersion': form.appVersion,
         },
       );
+      stopwatch.stop();
+      developer.log(
+        'API success. step=activate-device endpoint=${ApiEndpoints.activateDevice} status=${response.statusCode} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()}',
+        name: 'pos.session',
+      );
 
       final data = _unwrapApiData(response.data ?? const {});
       return _deviceContextFromJson(data, form);
     } on DioException catch (error) {
+      stopwatch.stop();
+      developer.log(
+        'API failure. step=activate-device endpoint=${ApiEndpoints.activateDevice} status=${error.response?.statusCode ?? 'none'} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()} message=${_messageFromDio(error)}',
+        name: 'pos.session',
+      );
       throw DeviceActivationException(_messageFromDio(error));
     }
   }
@@ -111,14 +138,15 @@ class DeviceActivationRemoteDatasource {
   }
 
   String _messageFromDio(DioException error) {
-    final data = error.response?.data;
-    if (data is Map) {
-      final message = data['message'];
-      if (message is String && message.trim().isNotEmpty) {
-        return message;
-      }
-    }
+    return messageFromDioException(
+      error,
+      contextPrefix: 'Device activation failed at ${error.requestOptions.path}',
+      fallback: 'Try again.',
+    );
+  }
 
-    return 'Device activation failed. Try again.';
+  bool _hasAuthHeader() {
+    final value = _dio.options.headers['Authorization'];
+    return value is String && value.trim().isNotEmpty;
   }
 }

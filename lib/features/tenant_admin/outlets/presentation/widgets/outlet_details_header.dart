@@ -14,7 +14,8 @@ class OutletDetailsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.sizeOf(context).width >= TenantAdminBreakpoints.tablet;
+    final isWide =
+        MediaQuery.sizeOf(context).width >= TenantAdminBreakpoints.tablet;
 
     return Container(
       padding: const EdgeInsets.all(TenantAdminSpacing.xl),

@@ -21,9 +21,8 @@ class DashboardMetricGrid extends StatelessWidget {
     }
 
     final maxColumns = compact ? 2 : 4;
-    final crossAxisCount = metrics.length < maxColumns
-        ? metrics.length
-        : maxColumns;
+    final crossAxisCount =
+        metrics.length < maxColumns ? metrics.length : maxColumns;
     final childAspectRatio = compact
         ? (crossAxisCount == 1 ? 1.45 : 1.05)
         : (crossAxisCount <= 2 ? 1.75 : 1.6);

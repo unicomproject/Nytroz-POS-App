@@ -58,11 +58,31 @@ void main() {
 
     test('routes tenant admin to dashboard without device activation', () {
       final container = _createContainer(session: _tenantAdminSession);
+      addTearDown(container.dispose);
 
       final route = container.read(postLoginRouteProvider);
 
       expect(route, PostLoginRoute.tenantAdminDashboard);
-      container.dispose();
+    });
+
+    test('bootstrap exposes device API failures instead of becoming ready',
+        () async {
+      final container = _createContainer(
+        session: _posOperatorSession,
+        deviceRepository: _ThrowingDeviceActivationRepository(),
+        markBootstrapReady: false,
+      );
+      addTearDown(container.dispose);
+
+      await container
+          .read(posSessionBootstrapProvider.notifier)
+          .bootstrap(force: true);
+      final state = container.read(posSessionBootstrapProvider);
+
+      expect(state.isReady, isFalse);
+      expect(state.hasError, isTrue);
+      expect(state.failedStep, 'refresh-current-device');
+      expect(state.errorMessage, contains('Device API timed out'));
     });
   });
 }
@@ -71,6 +91,8 @@ ProviderContainer _createContainer({
   required AuthSession session,
   PosDeviceContext? deviceContext,
   TillSession? tillSession,
+  DeviceActivationRepository? deviceRepository,
+  bool markBootstrapReady = true,
 }) {
   return ProviderContainer(
     overrides: [
@@ -88,7 +110,9 @@ ProviderContainer _createContainer({
         _TestTillSessionStorage(null),
       ),
       activateDeviceProvider.overrideWithValue(
-        ActivateDevice(_FakeDeviceActivationRepository(deviceContext)),
+        ActivateDevice(
+          deviceRepository ?? _FakeDeviceActivationRepository(deviceContext),
+        ),
       ),
       openTillProvider.overrideWithValue(
         OpenTill(_FakeTillRepository(tillSession)),
@@ -109,7 +133,9 @@ ProviderContainer _createContainer({
       ),
       posSessionBootstrapProvider.overrideWith((ref) {
         final notifier = PosSessionBootstrapNotifier(ref, autoStart: false);
-        notifier.state = const PosSessionBootstrapState(isReady: true);
+        if (markBootstrapReady) {
+          notifier.state = const PosSessionBootstrapState(isReady: true);
+        }
         return notifier;
       }),
     ],
@@ -163,6 +189,21 @@ class _FakeDeviceActivationRepository implements DeviceActivationRepository {
   }
 }
 
+class _ThrowingDeviceActivationRepository
+    implements DeviceActivationRepository {
+  @override
+  Future<PosDeviceContext> activateDevice(DeviceActivationForm form) async {
+    throw StateError('Device API timed out');
+  }
+
+  @override
+  Future<PosDeviceContext?> getCurrentDevice(
+    DeviceActivationForm form,
+  ) async {
+    throw StateError('Device API timed out');
+  }
+}
+
 class _FakeTillRepository implements TillRepository {
   _FakeTillRepository(this.session);
 
@@ -204,6 +245,11 @@ class _TestDeviceContextStorage extends DeviceContextStorage {
   @override
   Future<String> readOrCreateDeviceFingerprint() async {
     return _deviceContext?.deviceFingerprint ?? 'test-device-fingerprint';
+  }
+
+  @override
+  Future<List<String>> readDeviceFingerprintCandidates() async {
+    return [_deviceContext?.deviceFingerprint ?? 'test-device-fingerprint'];
   }
 
   @override

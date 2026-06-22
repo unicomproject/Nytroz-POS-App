@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:developer' as developer;
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/auth_exception.dart';
@@ -244,11 +245,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
+      final stopwatch = Stopwatch()..start();
+      developer.log(
+        'Login request started. endpoint=/api/v1/auth/tenant-login',
+        name: 'auth.login',
+      );
       final session = await ref.read(loginProvider).call(
             tenantCode: _tenantCode.text.trim(),
             login: _email.text.trim(),
             password: _password.text,
           );
+      stopwatch.stop();
+      developer.log(
+        'Login request succeeded. endpoint=/api/v1/auth/tenant-login durationMs=${stopwatch.elapsedMilliseconds}',
+        name: 'auth.login',
+      );
       if (!session.isAuthenticated) {
         throw StateError('Invalid credentials');
       }

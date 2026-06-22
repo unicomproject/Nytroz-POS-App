@@ -1,6 +1,9 @@
+import 'dart:developer' as developer;
+
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/dio_error_message.dart';
 
 class PosHomeRemoteDatasource {
   const PosHomeRemoteDatasource(this._dio);
@@ -11,6 +14,8 @@ class PosHomeRemoteDatasource {
     required String outletId,
     required String tillId,
   }) async {
+    final stopwatch = Stopwatch()..start();
+
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         ApiEndpoints.posHome,
@@ -19,11 +24,25 @@ class PosHomeRemoteDatasource {
           'tillId': tillId,
         },
       );
+      stopwatch.stop();
+      developer.log(
+        'API success. step=pos-home endpoint=${ApiEndpoints.posHome} status=${response.statusCode} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()}',
+        name: 'pos.home',
+      );
 
       return PosHomeDashboardPayload.fromJson(
         _unwrapApiData(response.data ?? const {}),
       );
     } on DioException catch (error) {
+      stopwatch.stop();
+      developer.log(
+        'POS home API failed. endpoint=${ApiEndpoints.posHome}, '
+        'status=${error.response?.statusCode ?? 'none'}, '
+        'durationMs=${stopwatch.elapsedMilliseconds}, '
+        'authAttached=${_hasAuthHeader()}, '
+        'reason=${_messageFromDio(error)}',
+        name: 'pos.home',
+      );
       throw PosHomeException(_messageFromDio(error));
     }
   }
@@ -38,15 +57,17 @@ class PosHomeRemoteDatasource {
   }
 
   String _messageFromDio(DioException error) {
-    final data = error.response?.data;
-    if (data is Map) {
-      final message = data['message'];
-      if (message is String && message.trim().isNotEmpty) {
-        return message;
-      }
-    }
+    return messageFromDioException(
+      error,
+      contextPrefix:
+          'POS home dashboard failed at ${error.requestOptions.path}',
+      fallback: 'Try again.',
+    );
+  }
 
-    return 'POS home dashboard could not be loaded. Try again.';
+  bool _hasAuthHeader() {
+    final value = _dio.options.headers['Authorization'];
+    return value is String && value.trim().isNotEmpty;
   }
 }
 
@@ -137,7 +158,7 @@ class PosHomeDashboardPayload {
 class PosHomeCardsPayload {
   const PosHomeCardsPayload({
     required this.startSale,
-    required this.onlineOrders,
+    this.onlineOrders,
     required this.returnsRefunds,
     required this.customers,
     required this.parkedSales,
@@ -145,7 +166,7 @@ class PosHomeCardsPayload {
   });
 
   final PosHomeCardPayload startSale;
-  final PosHomeCardPayload onlineOrders;
+  final PosHomeCardPayload? onlineOrders;
   final PosHomeCardPayload returnsRefunds;
   final PosHomeCardPayload customers;
   final PosHomeCardPayload parkedSales;
@@ -154,12 +175,20 @@ class PosHomeCardsPayload {
   factory PosHomeCardsPayload.fromJson(Map<String, dynamic> json) {
     return PosHomeCardsPayload(
       startSale: PosHomeCardPayload.fromJson(_map(json['startSale'])),
-      onlineOrders: PosHomeCardPayload.fromJson(_map(json['onlineOrders'])),
+      onlineOrders: _optionalCard(json['onlineOrders']),
       returnsRefunds: PosHomeCardPayload.fromJson(_map(json['returnsRefunds'])),
       customers: PosHomeCardPayload.fromJson(_map(json['customers'])),
       parkedSales: PosHomeCardPayload.fromJson(_map(json['parkedSales'])),
       cashDrawer: PosHomeCardPayload.fromJson(_map(json['cashDrawer'])),
     );
+  }
+
+  static PosHomeCardPayload? _optionalCard(Object? value) {
+    if (value is Map) {
+      return PosHomeCardPayload.fromJson(Map<String, dynamic>.from(value));
+    }
+
+    return null;
   }
 
   static Map<String, dynamic> _map(Object? value) {

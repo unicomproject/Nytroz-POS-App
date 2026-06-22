@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../domain/entities/pos_home_action.dart';
+import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../domain/entities/pos_home_action.dart';
 import 'pos_cash_drawer_summary_card.dart';
 import 'pos_customer_summary_card.dart';
 import 'pos_parked_sales_summary_card.dart';
-import 'pos_returns_summary_card.dart';
+import '../pos_returns_summary_card.dart';
 
 class PosHomeBottomGrid extends StatelessWidget {
   const PosHomeBottomGrid({

@@ -39,7 +39,8 @@ class OutletDetailsPerformanceCard extends StatelessWidget {
       child: outlet.performancePoints.isEmpty
           ? const TenantAdminEmptyState(
               title: 'No sales data',
-              message: 'Performance chart will appear when sales data is available.',
+              message:
+                  'Performance chart will appear when sales data is available.',
             )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,

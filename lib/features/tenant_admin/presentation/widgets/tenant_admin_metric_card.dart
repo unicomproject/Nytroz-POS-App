@@ -32,9 +32,8 @@ class TenantAdminMetricCard extends StatelessWidget {
         final isCompact = dense ||
             (constraints.maxHeight.isFinite &&
                 constraints.maxHeight < _compactHeightThreshold);
-        final padding = isCompact
-            ? TenantAdminSpacing.md
-            : TenantAdminSpacing.lg;
+        final padding =
+            isCompact ? TenantAdminSpacing.md : TenantAdminSpacing.lg;
         final iconBoxSize = isCompact ? 36.0 : 44.0;
         final iconSize = isCompact ? 20.0 : 24.0;
         final headerGap =
@@ -66,8 +65,7 @@ class TenantAdminMetricCard extends StatelessWidget {
                     height: iconBoxSize,
                     decoration: BoxDecoration(
                       color: TenantAdminColors.secondary,
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.md),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                     ),
                     child: Icon(
                       icon,
