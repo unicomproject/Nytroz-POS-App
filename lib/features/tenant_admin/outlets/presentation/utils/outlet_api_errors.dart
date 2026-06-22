@@ -79,6 +79,14 @@ String outletSubmitErrorMessage(
   return outletErrorMessage(error, fallback: fallback);
 }
 
+String outletLoadErrorMessage(Object error) {
+  if (error is DioException && error.response?.statusCode == 401) {
+    return 'Your session has expired. Please sign in again.';
+  }
+
+  return 'Please try again.';
+}
+
 const outletFieldSteps = {
   'outletName': 0,
   'outletCode': 0,
