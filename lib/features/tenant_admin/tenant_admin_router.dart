@@ -12,6 +12,8 @@ import 'outlets/presentation/screens/add_outlet_screen.dart';
 import 'outlets/presentation/screens/edit_outlet_screen.dart';
 import 'outlets/presentation/screens/outlet_details_screen.dart';
 import 'outlets/presentation/screens/outlet_list_screen.dart';
+import 'tills/presentation/screens/add_till_screen.dart';
+import 'tills/presentation/screens/till_list_screen.dart';
 import '../auth/presentation/providers/session_provider.dart';
 import 'presentation/providers/tenant_admin_access_provider.dart';
 import 'presentation/providers/tenant_admin_context_provider.dart';
@@ -160,6 +162,12 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return RolePermissionsScreen(
       initialRoleId: state.pathParameters['roleId'],
     );
+  if (definition.path == '/tenant-admin/tills') {
+    return const TillListScreen();
+  }
+
+  if (definition.path == '/tenant-admin/tills/add') {
+    return const AddTillScreen();
   }
 
   return TenantAdminPlaceholderScreen(
@@ -245,6 +253,14 @@ bool _canAccessRoute(
 
   if (definition.path == '/tenant-admin/outlets/add') {
     return accessChecker.canCreateOutlet();
+  }
+
+  if (definition.path == '/tenant-admin/tills') {
+    return accessChecker.canAccessTillListPage();
+  }
+
+  if (definition.path == '/tenant-admin/tills/add') {
+    return accessChecker.canCreateTill();
   }
 
   final menuItem = _findMenuItem(items, definition.menuKey);
