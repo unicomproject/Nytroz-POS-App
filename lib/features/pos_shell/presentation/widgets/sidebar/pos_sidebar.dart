@@ -39,7 +39,10 @@ class PosSidebar extends ConsumerWidget {
                       return PosShellNavItem(
                         icon: destination.icon,
                         label: destination.label,
-                        selected: destination.routePath == currentPath,
+                        selected: _isDestinationSelected(
+                          destination,
+                          currentPath,
+                        ),
                         isEnabled: destination.isEnabled(grantedPermissions),
                         onTap: () => _handleDestinationTap(
                           context,
@@ -79,6 +82,27 @@ class PosSidebar extends ConsumerWidget {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
   }
+}
+
+bool _isDestinationSelected(
+  PosShellNavDestination destination,
+  String currentPath,
+) {
+  final routePath = destination.routePath;
+  if (routePath == null) {
+    return false;
+  }
+
+  if (currentPath == routePath) {
+    return true;
+  }
+
+  if (destination.key == 'new-sale' &&
+      currentPath.startsWith('/pos/new-sale')) {
+    return true;
+  }
+
+  return false;
 }
 
 class _BrandHeader extends StatelessWidget {

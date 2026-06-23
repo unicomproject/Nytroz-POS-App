@@ -19,6 +19,8 @@ class ApiEndpoints {
   static const posHome = '/api/v1/pos/home';
   static const posProducts = '/api/v1/pos/products';
   static const posCatalogCategories = '/api/v1/pos/catalog/categories';
+  static const posCheckoutSummary = '/api/v1/pos/checkout/summary';
+  static const posCheckoutStartPayment = '/api/v1/pos/checkout/start-payment';
 
   static String posProductDetail(String productId) =>
       '/api/v1/pos/products/$productId';
