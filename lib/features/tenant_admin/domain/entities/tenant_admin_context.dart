@@ -5,6 +5,7 @@ class TenantAdminContext {
     required this.userId,
     required this.userDisplayName,
     required this.roleNames,
+    required this.roles,
     required this.outletScope,
     required this.featureEntitlements,
     required this.permissions,
@@ -17,11 +18,22 @@ class TenantAdminContext {
   final String userId;
   final String userDisplayName;
   final List<String> roleNames;
+  final List<TenantAdminRole> roles;
   final List<TenantAdminOutletScope> outletScope;
   final List<TenantAdminFeatureEntitlement> featureEntitlements;
   final List<TenantAdminPermission> permissions;
   final List<TenantAdminRuntimeFlag> runtimeFlags;
   final String? subscriptionStatus;
+}
+
+class TenantAdminRole {
+  const TenantAdminRole({
+    required this.id,
+    required this.name,
+  });
+
+  final String id;
+  final String name;
 }
 
 class TenantAdminOutletScope {

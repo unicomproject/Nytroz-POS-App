@@ -220,6 +220,14 @@ class TenantAdminPermissionAliases {
       'permission.view',
       'permissions.view',
     ],
+    'roles.permissions.view': [
+      'roles.permissions.view',
+      'permission.view',
+      'permissions.view',
+    ],
+    'roles.permissions.update': [
+      'roles.permissions.update',
+    ],
     'product.view': [
       'product.view',
       'products.view',
