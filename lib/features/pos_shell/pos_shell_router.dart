@@ -2,9 +2,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/access/pos_access_codes.dart';
+import '../../core/access/pos_permission_access.dart';
 import '../auth/domain/entities/auth_session.dart';
 import '../auth/presentation/providers/session_provider.dart';
+import '../sale/presentation/screens/pos_cash_payment_success_screen.dart';
+import '../sale/presentation/screens/pos_cash_payment_screen.dart';
+import '../sale/presentation/screens/pos_email_receipt_screen.dart';
+import '../sale/presentation/screens/pos_print_receipt_screen.dart';
 import '../sale/presentation/screens/pos_new_sale_screen.dart';
+import '../sale/presentation/screens/pos_payment_method_screen.dart';
+import '../sale/presentation/screens/pos_payment_placeholder_screen.dart';
 import '../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import 'presentation/screens/pos_home_screen.dart';
 import 'presentation/screens/pos_placeholder_screen.dart';
@@ -36,6 +43,79 @@ List<RouteBase> posShellRoutes(Ref ref) {
               _canStartNewSale(ref.read(authSessionProvider))
                   ? const PosNewSaleScreen()
                   : const TenantAdminForbiddenScreen(),
+          routes: [
+            GoRoute(
+              path: 'payment',
+              builder: (context, state) =>
+                  _canProceedToPayment(ref.read(authSessionProvider))
+                      ? const PosPaymentMethodScreen()
+                      : const TenantAdminForbiddenScreen(),
+              routes: [
+                GoRoute(
+                  path: 'cash',
+                  builder: (context, state) =>
+                      _canProceedToPayment(ref.read(authSessionProvider))
+                          ? const PosCashPaymentScreen()
+                          : const TenantAdminForbiddenScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'success',
+                      builder: (context, state) =>
+                          _canProceedToPayment(ref.read(authSessionProvider))
+                              ? const PosCashPaymentSuccessScreen()
+                              : const TenantAdminForbiddenScreen(),
+                      routes: [
+                        GoRoute(
+                          path: 'print-receipt',
+                          builder: (context, state) =>
+                              _canProceedToPayment(ref.read(authSessionProvider))
+                                  ? const PosPrintReceiptScreen()
+                                  : const TenantAdminForbiddenScreen(),
+                        ),
+                        GoRoute(
+                          path: 'email-receipt',
+                          builder: (context, state) =>
+                              _canProceedToPayment(ref.read(authSessionProvider))
+                                  ? const PosEmailReceiptScreen()
+                                  : const TenantAdminForbiddenScreen(),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                GoRoute(
+                  path: 'card',
+                  builder: (context, state) =>
+                      _canProceedToPayment(ref.read(authSessionProvider))
+                          ? const PosPaymentPlaceholderScreen(
+                              title: 'Card Payment',
+                              subtitle: 'Accept card payment from customer',
+                            )
+                          : const TenantAdminForbiddenScreen(),
+                ),
+                GoRoute(
+                  path: 'qr',
+                  builder: (context, state) =>
+                      _canProceedToPayment(ref.read(authSessionProvider))
+                          ? const PosPaymentPlaceholderScreen(
+                              title: 'QR / Mobile Payment',
+                              subtitle: 'Accept QR or mobile payment from customer',
+                            )
+                          : const TenantAdminForbiddenScreen(),
+                ),
+                GoRoute(
+                  path: 'split',
+                  builder: (context, state) =>
+                      _canProceedToPayment(ref.read(authSessionProvider))
+                          ? const PosPaymentPlaceholderScreen(
+                              title: 'Split Payment',
+                              subtitle: 'Accept split payment from customer',
+                            )
+                          : const TenantAdminForbiddenScreen(),
+                ),
+              ],
+            ),
+          ],
         ),
         GoRoute(
           path: '/pos/customers',
@@ -78,13 +158,30 @@ List<RouteBase> posShellRoutes(Ref ref) {
 }
 
 bool shouldShowPosTopBar(String path) {
-  return !(path == '/pos/home' || path.startsWith('/pos/home/'));
+  if (path == '/pos/home' || path.startsWith('/pos/home/')) {
+    return false;
+  }
+
+  if (path == '/pos/new-sale/payment' ||
+      path.startsWith('/pos/new-sale/payment/')) {
+    return false;
+  }
+
+  return true;
 }
 
 _PosShellHeader _headerForPath(String path) {
   final title = switch (path) {
     '/pos/home' => 'Home',
     '/pos/new-sale' => 'New Sale',
+    '/pos/new-sale/payment' => 'Payment Method',
+    '/pos/new-sale/payment/cash' => 'Cash Payment',
+    '/pos/new-sale/payment/cash/success' => 'Cash Payment',
+    '/pos/new-sale/payment/cash/success/print-receipt' => 'Print Receipt',
+    '/pos/new-sale/payment/cash/success/email-receipt' => 'Email Receipt',
+    '/pos/new-sale/payment/card' => 'Card Payment',
+    '/pos/new-sale/payment/qr' => 'QR / Mobile Payment',
+    '/pos/new-sale/payment/split' => 'Split Payment',
     '/pos/orders' => 'Orders',
     '/pos/customers' => 'Customers',
     '/pos/returns-refunds' => 'Return & Refund',
@@ -113,26 +210,34 @@ bool _canViewPosHome(AuthSession? session) {
   return session?.hasPermission(PosPermissionCodes.viewHome) == true;
 }
 
+/// New Sale uses [PosPermissionAccess.canAccessNewSaleSession] only.
+/// Parent POS home routes still require [PosPermissionCodes.viewHome].
 bool _canStartNewSale(AuthSession? session) {
-  return _canViewPosHome(session) &&
-      session?.hasPermission(PosPermissionCodes.viewNewSale) == true;
+  return PosPermissionAccess.canAccessNewSaleSession(session);
+}
+
+bool _canProceedToPayment(AuthSession? session) {
+  return _canStartNewSale(session) &&
+      PosPermissionAccess.canCheckoutSession(session);
 }
 
 bool _canViewCustomers(AuthSession? session) {
   return _canViewPosHome(session) &&
-      (session?.hasPermission(PosPermissionCodes.viewNewSaleCustomers) ==
-              true ||
-          session?.hasPermission(PosPermissionCodes.createNewSaleCustomer) ==
-              true);
+      PosPermissionAccess.canViewCustomers(
+        session?.permissionCodes.toSet() ?? const {},
+      );
 }
 
 bool _canViewReturnsRefunds(AuthSession? session) {
   return _canViewPosHome(session) &&
-      (session?.hasPermission(PosPermissionCodes.viewReturns) == true ||
-          session?.hasPermission(PosPermissionCodes.viewRefunds) == true);
+      PosPermissionAccess.canViewReturnsOrRefunds(
+        session?.permissionCodes.toSet() ?? const {},
+      );
 }
 
 bool _canViewCashDrawer(AuthSession? session) {
   return _canViewPosHome(session) &&
-      session?.hasPermission(PosPermissionCodes.viewCashDrawer) == true;
+      PosPermissionAccess.canViewCashDrawer(
+        session?.permissionCodes.toSet() ?? const {},
+      );
 }
