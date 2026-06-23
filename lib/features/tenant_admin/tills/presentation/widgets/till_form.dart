@@ -87,7 +87,7 @@ class _TillFormState extends State<TillForm> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _outletId,
+            initialValue: _outletId,
             decoration: InputDecoration(
               labelText: 'Outlet',
               errorText: widget.backendErrors['outletId'],
@@ -108,7 +108,7 @@ class _TillFormState extends State<TillForm> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _status,
+            initialValue: _status,
             decoration: InputDecoration(
               labelText: 'Status',
               errorText: widget.backendErrors['status'],
