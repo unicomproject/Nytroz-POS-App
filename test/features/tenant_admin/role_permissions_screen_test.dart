@@ -43,7 +43,7 @@ void main() {
               ),
             ),
           ],
-          child: MaterialApp(
+          child: const MaterialApp(
             home: Scaffold(
               body: RolePermissionsScreen(initialRoleId: 'role-1'),
             ),
@@ -88,7 +88,7 @@ void main() {
               (ref) async => throw Exception('Catalog failed'),
             ),
           ],
-          child: MaterialApp(
+          child: const MaterialApp(
             home: Scaffold(
               body: RolePermissionsScreen(initialRoleId: 'role-1'),
             ),
@@ -104,24 +104,24 @@ void main() {
 }
 
 TenantAdminContext _context() {
-  return TenantAdminContext(
+  return const TenantAdminContext(
     tenantId: 'tenant-1',
     tenantName: 'Coffee Corner Ltd',
     userId: 'user-1',
     userDisplayName: 'Tenant Admin',
     roleNames: ['Tenant Admin'],
-    roles: const [
+    roles: [
       TenantAdminRole(id: 'role-1', name: 'Tenant Admin'),
     ],
-    outletScope: const [],
-    featureEntitlements: const [
+    outletScope: [],
+    featureEntitlements: [
       TenantAdminFeatureEntitlement(
         featureCode: TenantAdminFeatureCodes.rolePermission,
         featureName: 'tenant.roles',
         enabled: true,
       ),
     ],
-    permissions: const [
+    permissions: [
       TenantAdminPermission(
         permissionCode: TenantAdminPermissionCodes.rolesPermissionsView,
         permissionName: 'View Role Permissions',
@@ -131,7 +131,7 @@ TenantAdminContext _context() {
         permissionName: 'Update Role Permissions',
       ),
     ],
-    runtimeFlags: const [
+    runtimeFlags: [
       TenantAdminRuntimeFlag(
         featureCode: TenantAdminFeatureCodes.rolePermission,
         enabled: true,
