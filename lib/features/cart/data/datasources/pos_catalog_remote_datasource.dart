@@ -88,6 +88,7 @@ class PosCatalogRemoteDatasource {
   PosCatalogProductSummary _mapSummary(Map<String, dynamic> json) {
     return PosCatalogProductSummary(
       productId: json['id']?.toString() ?? '',
+      variantId: json['variantId']?.toString(),
       name: json['name']?.toString() ?? 'Product',
       description: json['description']?.toString(),
       categoryName: json['categoryName']?.toString() ?? 'General',

@@ -6,6 +6,7 @@ import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../../shared/pos_session/pos_session_provider.dart';
 import '../providers/pos_cash_payment_success_provider.dart';
 import '../providers/pos_email_receipt_form_provider.dart';
 import '../widgets/email_receipt/customer_email_form_card.dart';
@@ -23,8 +24,9 @@ class PosEmailReceiptScreen extends ConsumerWidget {
     final session = ref.watch(authSessionProvider);
     final successData = ref.watch(posCashPaymentSuccessProvider);
     final formState = ref.watch(posEmailReceiptFormProvider);
+    final sessionContext = ref.watch(posSessionContextProvider);
 
-    if (!PosPermissionAccess.canAccessPaymentMethodScreenSession(session)) {
+    if (!PosPermissionAccess.canViewReceiptSession(session)) {
       return const TenantAdminForbiddenScreen();
     }
 
@@ -34,8 +36,14 @@ class PosEmailReceiptScreen extends ConsumerWidget {
       );
     }
 
+    final cashierName = session?.userDisplayName.trim().isNotEmpty == true
+        ? session!.userDisplayName
+        : sessionContext.userName;
+
     return LayoutBuilder(
       builder: (context, constraints) {
+        final granted = session?.permissionCodes.toSet() ?? const <String>{};
+        final canViewSales = PosPermissionAccess.canViewSales(granted);
         final padding = TenantAdminInsets.pageForWidth(constraints.maxWidth);
         final useWideLayout =
             constraints.maxWidth >= TenantAdminBreakpoints.tablet;
@@ -60,10 +68,14 @@ class PosEmailReceiptScreen extends ConsumerWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  EmailReceiptSaleSummaryCard(
-                                    successData: successData,
-                                  ),
-                                  const SizedBox(height: TenantAdminSpacing.lg),
+                                  if (canViewSales) ...[
+                                    EmailReceiptSaleSummaryCard(
+                                      successData: successData,
+                                    ),
+                                    const SizedBox(
+                                      height: TenantAdminSpacing.lg,
+                                    ),
+                                  ],
                                   const EmailReceiptInfoBox(),
                                 ],
                               ),
@@ -80,6 +92,8 @@ class PosEmailReceiptScreen extends ConsumerWidget {
                                   const SizedBox(height: TenantAdminSpacing.lg),
                                   ReceiptPreviewSummaryCard(
                                     successData: successData,
+                                    cashierName: cashierName,
+                                    sessionContext: sessionContext,
                                   ),
                                 ],
                               ),
@@ -91,16 +105,20 @@ class PosEmailReceiptScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            EmailReceiptSaleSummaryCard(
-                              successData: successData,
-                            ),
-                            const SizedBox(height: TenantAdminSpacing.lg),
+                            if (canViewSales) ...[
+                              EmailReceiptSaleSummaryCard(
+                                successData: successData,
+                              ),
+                              const SizedBox(height: TenantAdminSpacing.lg),
+                            ],
                             const EmailReceiptInfoBox(),
                             const SizedBox(height: TenantAdminSpacing.lg),
                             const CustomerEmailFormCard(),
                             const SizedBox(height: TenantAdminSpacing.lg),
                             ReceiptPreviewSummaryCard(
                               successData: successData,
+                              cashierName: cashierName,
+                              sessionContext: sessionContext,
                             ),
                           ],
                         ),

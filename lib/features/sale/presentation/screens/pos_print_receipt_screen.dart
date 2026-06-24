@@ -8,6 +8,7 @@ import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../../shared/pos_session/pos_session_provider.dart';
 import '../providers/pos_cash_payment_success_provider.dart';
+import '../providers/pos_checkout_summary_provider.dart';
 import '../widgets/print_receipt/print_receipt_bottom_actions.dart';
 import '../widgets/print_receipt/print_receipt_header.dart';
 import '../widgets/print_receipt/printer_options_card.dart';
@@ -22,7 +23,7 @@ class PosPrintReceiptScreen extends ConsumerWidget {
     final successData = ref.watch(posCashPaymentSuccessProvider);
     final sessionContext = ref.watch(posSessionContextProvider);
 
-    if (!PosPermissionAccess.canAccessPaymentMethodScreenSession(session)) {
+    if (!PosPermissionAccess.canPrintReceiptsSession(session)) {
       return const TenantAdminForbiddenScreen();
     }
 
@@ -62,6 +63,7 @@ class PosPrintReceiptScreen extends ConsumerWidget {
                               child: ReceiptPreviewCard(
                                 successData: successData,
                                 cashierName: cashierName,
+                                sessionContext: sessionContext,
                               ),
                             ),
                           ),
@@ -81,6 +83,7 @@ class PosPrintReceiptScreen extends ConsumerWidget {
                             ReceiptPreviewCard(
                               successData: successData,
                               cashierName: cashierName,
+                              sessionContext: sessionContext,
                             ),
                             const SizedBox(height: TenantAdminSpacing.lg),
                             const PrinterOptionsCard(),
@@ -91,7 +94,11 @@ class PosPrintReceiptScreen extends ConsumerWidget {
               const SizedBox(height: TenantAdminSpacing.lg),
               PrintReceiptBottomActions(
                 onBack: () => context.pop(),
-                onPrintReceipt: () => _showPrintMessage(context),
+                onPrintReceipt: () => _recordPrintAndShowMessage(
+                  context,
+                  ref,
+                  successData.saleId,
+                ),
               ),
             ],
           ),
@@ -100,7 +107,35 @@ class PosPrintReceiptScreen extends ConsumerWidget {
     );
   }
 
-  void _showPrintMessage(BuildContext context) {
+  Future<void> _recordPrintAndShowMessage(
+    BuildContext context,
+    WidgetRef ref,
+    String saleId,
+  ) async {
+    if (saleId.isNotEmpty) {
+      try {
+        await ref
+            .read(posCheckoutRemoteDatasourceProvider)
+            .recordReceiptPrint(saleId: saleId);
+      } catch (_) {
+        if (!context.mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text('Receipt print audit could not be recorded.'),
+            ),
+          );
+        return;
+      }
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(

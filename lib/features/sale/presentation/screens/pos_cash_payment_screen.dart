@@ -5,6 +5,7 @@ import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/pos_checkout_api_exception.dart';
@@ -27,6 +28,8 @@ class PosCashPaymentScreen extends ConsumerStatefulWidget {
 }
 
 class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
+  bool _isSubmitting = false;
+
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider);
@@ -34,7 +37,7 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
     final summaryAsync = ref.watch(posCheckoutSummaryProvider);
     final cashState = ref.watch(posCashPaymentProvider);
 
-    if (!PosPermissionAccess.canAccessPaymentMethodScreenSession(session)) {
+    if (!PosPermissionAccess.canAccessCashPaymentScreenSession(session)) {
       return const TenantAdminForbiddenScreen();
     }
 
@@ -54,8 +57,8 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
       data: (summary) {
         if (summary.usedFallback) {
           return _CheckoutErrorFallback(
-            message: summary.fallbackMessage ??
-                checkoutFallbackUnavailableMessage,
+            message:
+                summary.fallbackMessage ?? checkoutFallbackUnavailableMessage,
             onBack: () => context.pop(),
             onRetry: () => ref.invalidate(posCheckoutSummaryProvider),
           );
@@ -64,12 +67,12 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
         final total = summary.totalPayable;
         final cashReceived = cashState.cashReceived;
         final canConfirm = canConfirmCashPayment(cashReceived, total);
-        final onKeyTap =
-            ref.read(posCashPaymentProvider.notifier).appendKey;
+        final onKeyTap = ref.read(posCashPaymentProvider.notifier).appendKey;
 
         return LayoutBuilder(
           builder: (context, constraints) {
-            final padding = TenantAdminInsets.pageForWidth(constraints.maxWidth);
+            final padding =
+                TenantAdminInsets.pageForWidth(constraints.maxWidth);
             final useWideLayout =
                 constraints.maxWidth >= TenantAdminBreakpoints.tablet;
 
@@ -96,14 +99,16 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
                                       tax: summary.tax,
                                       total: total,
                                     ),
-                                    const SizedBox(height: TenantAdminSpacing.lg),
+                                    const SizedBox(
+                                        height: TenantAdminSpacing.lg),
                                     Expanded(
                                       child: CashReceivedSection(
                                         total: total,
                                         cashReceived: cashReceived,
                                         inputBuffer: cashState.inputBuffer,
                                         onClear: () => ref
-                                            .read(posCashPaymentProvider.notifier)
+                                            .read(
+                                                posCashPaymentProvider.notifier)
                                             .clearAmount(),
                                       ),
                                     ),
@@ -157,7 +162,7 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
                   const SizedBox(height: TenantAdminSpacing.lg),
                   CashPaymentBottomActions(
                     canConfirm: canConfirm,
-                    isLoading: false,
+                    isLoading: _isSubmitting,
                     onBack: () => context.pop(),
                     onConfirm: () => _confirmCashPayment(context, summary),
                   ),
@@ -199,11 +204,38 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
       return;
     }
 
-    ref.read(posCashPaymentSuccessProvider.notifier).recordCashPayment(
-          summary: summary,
-          cart: cart,
-          cashReceived: cashReceived,
-        );
+    final deviceContext = ref.read(deviceActivationProvider).deviceContext;
+    if (deviceContext == null) {
+      _showSnackBar(context, 'Checkout requires an activated device.');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final payload =
+          await ref.read(posCheckoutRemoteDatasourceProvider).startPayment(
+                deviceId: deviceContext.deviceId,
+                paymentMethod:
+                    checkoutApiPaymentMethodCode(PosPaymentMethodType.cash),
+                lines: checkoutLinesFromCart(cart),
+                cashReceived: cashReceived,
+              );
+
+      ref
+          .read(posCashPaymentSuccessProvider.notifier)
+          .recordCheckoutPayment(payload);
+    } on PosCheckoutApiException catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      _showSnackBar(context, error.message);
+      return;
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
 
     if (!context.mounted) {
       return;

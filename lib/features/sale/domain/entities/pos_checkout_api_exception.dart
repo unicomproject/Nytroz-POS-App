@@ -16,17 +16,8 @@ class PosCheckoutApiException implements Exception {
 }
 
 bool isCheckoutNetworkFallback(DioException error) {
-  final status = error.response?.statusCode;
-  if (status == 401 ||
-      status == 403 ||
-      status == 400 ||
-      status == 404 ||
-      status == 409) {
+  if (error.response?.statusCode != null) {
     return false;
-  }
-
-  if (status != null && status >= 500) {
-    return true;
   }
 
   switch (error.type) {
@@ -69,6 +60,16 @@ String _messageFromDio(DioException error) {
     if (message is String && message.trim().isNotEmpty) {
       return message.trim();
     }
+
+    final validationMessage = _validationMessageFromErrors(data['errors']);
+    if (validationMessage != null) {
+      return validationMessage;
+    }
+
+    final title = data['title'];
+    if (title is String && title.trim().isNotEmpty) {
+      return title.trim();
+    }
   }
 
   final status = error.response?.statusCode;
@@ -81,11 +82,15 @@ String _messageFromDio(DioException error) {
   }
 
   if (status == 409) {
-    return 'Checkout could not continue because of a conflict.';
+    return 'Checkout could not continue because stock or prices changed. Refresh the cart and try again.';
   }
 
   if (status == 400 || status == 404) {
     return 'Checkout request could not be validated.';
+  }
+
+  if (status != null && status >= 500) {
+    return 'Server error while processing checkout. Try again.';
   }
 
   if (isCheckoutNetworkFallback(error)) {
@@ -93,4 +98,34 @@ String _messageFromDio(DioException error) {
   }
 
   return error.message ?? 'Checkout request failed.';
+}
+
+String? _validationMessageFromErrors(Object? errors) {
+  if (errors is Map) {
+    for (final value in errors.values) {
+      final message = _firstMessage(value);
+      if (message != null) {
+        return message;
+      }
+    }
+  }
+
+  return _firstMessage(errors);
+}
+
+String? _firstMessage(Object? value) {
+  if (value is String && value.trim().isNotEmpty) {
+    return value.trim();
+  }
+
+  if (value is Iterable) {
+    for (final item in value) {
+      final message = _firstMessage(item);
+      if (message != null) {
+        return message;
+      }
+    }
+  }
+
+  return null;
 }

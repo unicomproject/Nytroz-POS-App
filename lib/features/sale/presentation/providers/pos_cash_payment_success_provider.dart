@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import '../../domain/entities/pos_checkout_summary.dart';
 import '../providers/pos_checkout_summary_provider.dart';
 import 'pos_cash_payment_provider.dart';
 
@@ -23,6 +24,8 @@ class PosCashPaymentSuccessLineItem {
 class PosCashPaymentSuccessData {
   const PosCashPaymentSuccessData({
     required this.receiptNumber,
+    required this.barcodeValue,
+    required this.saleId,
     required this.completedAt,
     required this.itemCount,
     required this.subtotal,
@@ -35,6 +38,8 @@ class PosCashPaymentSuccessData {
   });
 
   final String receiptNumber;
+  final String barcodeValue;
+  final String saleId;
   final DateTime completedAt;
   final int itemCount;
   final int subtotal;
@@ -46,7 +51,8 @@ class PosCashPaymentSuccessData {
   final List<PosCashPaymentSuccessLineItem> items;
 }
 
-class PosCashPaymentSuccessNotifier extends StateNotifier<PosCashPaymentSuccessData?> {
+class PosCashPaymentSuccessNotifier
+    extends StateNotifier<PosCashPaymentSuccessData?> {
   PosCashPaymentSuccessNotifier() : super(null);
 
   void recordCashPayment({
@@ -71,6 +77,8 @@ class PosCashPaymentSuccessNotifier extends StateNotifier<PosCashPaymentSuccessD
 
     state = PosCashPaymentSuccessData(
       receiptNumber: _generateTempReceiptNumber(completedAt),
+      barcodeValue: _generateTempReceiptNumber(completedAt),
+      saleId: '',
       completedAt: completedAt,
       itemCount: summary.itemCount,
       subtotal: summary.subtotal,
@@ -83,24 +91,54 @@ class PosCashPaymentSuccessNotifier extends StateNotifier<PosCashPaymentSuccessD
     );
   }
 
+  void recordCheckoutPayment(PosCheckoutStartPaymentPayload payload) {
+    state = PosCashPaymentSuccessData(
+      receiptNumber: payload.receiptNumber,
+      barcodeValue: payload.barcodeValue.isNotEmpty
+          ? payload.barcodeValue
+          : payload.receiptNumber,
+      saleId: payload.saleId,
+      completedAt: payload.completedAt ?? DateTime.now(),
+      itemCount: payload.items.fold<int>(
+        0,
+        (sum, item) => sum + item.quantity,
+      ),
+      subtotal: payload.subtotal,
+      discount: payload.discount,
+      tax: payload.tax,
+      total: payload.grandTotal,
+      cashReceived: payload.cashReceived,
+      changeDue: payload.changeDue,
+      items: payload.items
+          .map(
+            (item) => PosCashPaymentSuccessLineItem(
+              name: item.name,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              lineTotal: item.lineTotal,
+              variantSummary: item.variantSummary,
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
   void clear() {
     state = null;
   }
 
   String _generateTempReceiptNumber(DateTime completedAt) {
-    final datePart =
-        '${completedAt.year.toString().substring(2)}'
+    final datePart = '${completedAt.year.toString().substring(2)}'
         '${completedAt.month.toString().padLeft(2, '0')}'
         '${completedAt.day.toString().padLeft(2, '0')}';
-    final sequence = (completedAt.millisecondsSinceEpoch % 10000)
-        .toString()
-        .padLeft(4, '0');
+    final sequence =
+        (completedAt.millisecondsSinceEpoch % 10000).toString().padLeft(4, '0');
     return 'RCPT-$datePart-$sequence';
   }
 }
 
-final posCashPaymentSuccessProvider =
-    StateNotifierProvider<PosCashPaymentSuccessNotifier, PosCashPaymentSuccessData?>(
+final posCashPaymentSuccessProvider = StateNotifierProvider<
+    PosCashPaymentSuccessNotifier, PosCashPaymentSuccessData?>(
   (ref) => PosCashPaymentSuccessNotifier(),
 );
 

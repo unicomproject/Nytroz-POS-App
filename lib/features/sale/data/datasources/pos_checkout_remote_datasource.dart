@@ -52,6 +52,7 @@ class PosCheckoutRemoteDatasource {
     required String deviceId,
     required String paymentMethod,
     required List<PosCheckoutLineRequest> lines,
+    int? cashReceived,
     String saleType = 'NewSale',
     String? customerId,
   }) async {
@@ -66,6 +67,7 @@ class PosCheckoutRemoteDatasource {
             customerId: customerId,
           ),
           'paymentMethod': paymentMethod,
+          if (cashReceived != null) 'cashReceived': cashReceived,
         },
       );
 
@@ -75,6 +77,25 @@ class PosCheckoutRemoteDatasource {
     } on DioException catch (error) {
       developer.log(
         'Checkout start-payment API failed. endpoint=${ApiEndpoints.posCheckoutStartPayment}, '
+        'status=${error.response?.statusCode ?? 'none'}',
+        name: 'pos.checkout',
+      );
+      throw checkoutApiExceptionFromDio(error);
+    }
+  }
+
+  Future<void> recordReceiptPrint({required String saleId}) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        ApiEndpoints.posReceiptPrint(saleId),
+        data: const {
+          'status': 'success',
+          'copies': 1,
+        },
+      );
+    } on DioException catch (error) {
+      developer.log(
+        'Receipt print audit API failed. endpoint=${ApiEndpoints.posReceiptPrint(saleId)}, '
         'status=${error.response?.statusCode ?? 'none'}',
         name: 'pos.checkout',
       );

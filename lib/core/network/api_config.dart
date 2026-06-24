@@ -7,7 +7,6 @@ const int kBackendHttpPort = 5052;
 ///
 /// Override with `--dart-define=API_BASE_URL=http://<host>:<port>` when needed
 /// (e.g. real Android device: `http://<LAPTOP_LAN_IP>:5052`, or custom backend port).
-/// Backend port override: `dotnet run --urls "http://0.0.0.0:5051"` — then match here.
 String resolveApiBaseUrl() {
   const envBaseUrl = String.fromEnvironment('API_BASE_URL');
   if (envBaseUrl.isNotEmpty) {

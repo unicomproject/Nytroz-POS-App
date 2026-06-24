@@ -15,9 +15,13 @@ class PosPermissionCodes {
   const PosPermissionCodes._();
 
   static const startSale = 'pos.sale.start';
+  static const viewDashboard = 'pos.dashboard.view';
   static const viewNewSale = 'pos.new_sale.view';
+  static const createSale = 'sales.create';
+  static const viewSales = 'sales.view';
   static const viewProducts = 'products.view';
   static const searchProducts = 'products.search';
+  static const manageCart = 'sales.cart.manage';
   static const addCartItem = 'sales.cart.add_item';
   static const updateCartItem = 'sales.cart.update_item';
   static const removeCartItem = 'sales.cart.remove_item';
@@ -31,10 +35,14 @@ class PosPermissionCodes {
   static const acceptCardPayment = 'payments.card.accept';
   static const acceptQrPayment = 'payments.qr.accept';
   static const acceptSplitPayment = 'payments.split.accept';
+  static const viewReceipts = 'receipts.view';
+  static const printReceipts = 'receipts.print';
   static const viewOrders = 'orders.view';
   static const viewReturns = 'returns.view';
   static const viewRefunds = 'refunds.view';
+  static const createRefund = 'refunds.create';
   static const viewCashDrawer = 'cash_drawer.view';
+  static const manageCashDrawer = 'cash_drawer.manage';
   static const createCashDrawerMovement = 'cash_drawer.movement.create';
   static const viewTillSession = 'till.session.view';
   static const viewNotifications = 'notifications.view';

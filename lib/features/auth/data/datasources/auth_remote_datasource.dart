@@ -70,15 +70,19 @@ class AuthRemoteDatasource {
         data: request.toJson(),
       );
       stopwatch.stop();
+      final responseData = response.data ?? const {};
+      final payload = _mapFromValue(responseData['data']);
+      final user = _mapFromValue(payload['user']);
+      final permissionCodes = payload['permissionCodes'];
       developer.log(
-        'API success. step=tenant-login endpoint=$endpoint status=${response.statusCode} durationMs=${stopwatch.elapsedMilliseconds}',
+        'API success. step=tenant-login baseUrl=${_dio.options.baseUrl} endpoint=$endpoint status=${response.statusCode} durationMs=${stopwatch.elapsedMilliseconds} success=${responseData['success']} message=${responseData['message']} tenantCode=${_stringValue(user, 'tenantCode')} email=${_stringValue(user, 'email')} permissionCount=${_iterableLength(permissionCodes)}',
         name: 'auth.login',
       );
-      return response.data ?? const {};
+      return responseData;
     } on DioException catch (error) {
       stopwatch.stop();
       developer.log(
-        'API failure. step=tenant-login endpoint=$endpoint status=${error.response?.statusCode ?? 'none'} durationMs=${stopwatch.elapsedMilliseconds} message=${error.message}',
+        'API failure. step=tenant-login baseUrl=${_dio.options.baseUrl} endpoint=$endpoint status=${error.response?.statusCode ?? 'none'} durationMs=${stopwatch.elapsedMilliseconds} errorType=${error.type.name} message=${error.message}',
         name: 'auth.login',
       );
       final data = error.response?.data;
@@ -98,5 +102,21 @@ class AuthRemoteDatasource {
         ),
       );
     }
+  }
+
+  Map<String, dynamic> _mapFromValue(Object? value) {
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+
+    return const {};
+  }
+
+  String _stringValue(Map<String, dynamic> value, String key) {
+    return value[key]?.toString() ?? '';
+  }
+
+  int _iterableLength(Object? value) {
+    return value is Iterable ? value.length : 0;
   }
 }
