@@ -83,9 +83,8 @@ class PosCheckoutSummaryViewData {
   }) {
     final apiMethods = paymentMethodsFromApiCodes(payload.paymentMethods);
     final sessionMethods = allowedPosPaymentMethods(grantedPermissions);
-    final methods = apiMethods
-        .where(sessionMethods.contains)
-        .toList(growable: false);
+    final methods =
+        apiMethods.where(sessionMethods.contains).toList(growable: false);
 
     return PosCheckoutSummaryViewData(
       itemCount: payload.billingSummary.itemCount,
@@ -117,9 +116,7 @@ final posCheckoutSummaryProvider =
     );
   }
 
-  if (session == null ||
-      !session.isAuthenticated ||
-      deviceContext == null) {
+  if (session == null || !session.isAuthenticated || deviceContext == null) {
     throw PosCheckoutApiException(
       message: 'Checkout requires an active session and activated device.',
     );
@@ -163,7 +160,7 @@ List<PosCheckoutLineRequest> checkoutLinesFromCart(PosNewSaleCartState cart) {
   return cart.itemList
       .map(
         (item) => PosCheckoutLineRequest(
-          variantId: item.product.variantId ?? item.product.productId,
+          variantId: item.product.variantId ?? '',
           quantity: item.quantity,
         ),
       )
@@ -192,6 +189,7 @@ void _ensureAuthorizationHeader(Dio dio, AuthSession session) {
 List<PosPaymentMethodType> paymentMethodsFromApiCodes(List<String> codes) {
   final normalized = codes.map((code) => code.toLowerCase()).toSet();
   return PosPaymentMethodType.values
-      .where((method) => normalized.contains(checkoutApiPaymentMethodCode(method)))
+      .where(
+          (method) => normalized.contains(checkoutApiPaymentMethodCode(method)))
       .toList(growable: false);
 }

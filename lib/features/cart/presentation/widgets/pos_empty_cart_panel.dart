@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
@@ -57,8 +56,8 @@ class _CartHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authSessionProvider);
-    final canClearCart =
-        session?.hasPermission(PosPermissionCodes.clearCart) == true;
+    final granted = session?.permissionCodes.toSet() ?? const <String>{};
+    final canClearCart = PosPermissionAccess.canClearCart(granted);
     final cartHasItems = ref.watch(posNewSaleCartProvider).hasItems;
 
     return Row(
@@ -181,6 +180,7 @@ class _CartItemList extends ConsumerWidget {
       ref: ref,
       summary: PosCatalogProductSummary(
         productId: item.product.productId,
+        variantId: item.product.variantId,
         name: item.product.name,
         categoryName: item.product.category,
         basePrice: item.product.price,
@@ -204,10 +204,9 @@ class _CartItemRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(posNewSaleCartProvider.notifier);
     final session = ref.watch(authSessionProvider);
-    final canUpdateItems =
-        session?.hasPermission(PosPermissionCodes.updateCartItem) == true;
-    final canRemoveItems =
-        session?.hasPermission(PosPermissionCodes.removeCartItem) == true;
+    final granted = session?.permissionCodes.toSet() ?? const <String>{};
+    final canUpdateItems = PosPermissionAccess.canUpdateCartItem(granted);
+    final canRemoveItems = PosPermissionAccess.canRemoveCartItem(granted);
 
     return InkWell(
       onTap: onTap,

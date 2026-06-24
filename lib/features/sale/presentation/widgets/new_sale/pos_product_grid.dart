@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
+import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
@@ -15,10 +16,10 @@ class PosProductGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authSessionProvider);
+    final granted = session?.permissionCodes.toSet() ?? const <String>{};
     final canViewProducts =
         session?.hasPermission(PosPermissionCodes.viewProducts) == true;
-    final canAddItems =
-        session?.hasPermission(PosPermissionCodes.addCartItem) == true;
+    final canAddItems = PosPermissionAccess.canAddCartItem(granted);
 
     if (!canViewProducts) {
       return const _ProductsAccessBlocked();

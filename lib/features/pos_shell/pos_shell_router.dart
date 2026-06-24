@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/access/pos_access_codes.dart';
 import '../../core/access/pos_permission_access.dart';
 import '../auth/domain/entities/auth_session.dart';
 import '../auth/presentation/providers/session_provider.dart';
@@ -54,28 +53,28 @@ List<RouteBase> posShellRoutes(Ref ref) {
                 GoRoute(
                   path: 'cash',
                   builder: (context, state) =>
-                      _canProceedToPayment(ref.read(authSessionProvider))
+                      _canAcceptCashPayment(ref.read(authSessionProvider))
                           ? const PosCashPaymentScreen()
                           : const TenantAdminForbiddenScreen(),
                   routes: [
                     GoRoute(
                       path: 'success',
                       builder: (context, state) =>
-                          _canProceedToPayment(ref.read(authSessionProvider))
+                          _canViewPaymentSuccess(ref.read(authSessionProvider))
                               ? const PosCashPaymentSuccessScreen()
                               : const TenantAdminForbiddenScreen(),
                       routes: [
                         GoRoute(
                           path: 'print-receipt',
                           builder: (context, state) =>
-                              _canProceedToPayment(ref.read(authSessionProvider))
+                              _canPrintReceipt(ref.read(authSessionProvider))
                                   ? const PosPrintReceiptScreen()
                                   : const TenantAdminForbiddenScreen(),
                         ),
                         GoRoute(
                           path: 'email-receipt',
                           builder: (context, state) =>
-                              _canProceedToPayment(ref.read(authSessionProvider))
+                              _canViewReceipt(ref.read(authSessionProvider))
                                   ? const PosEmailReceiptScreen()
                                   : const TenantAdminForbiddenScreen(),
                         ),
@@ -99,7 +98,8 @@ List<RouteBase> posShellRoutes(Ref ref) {
                       _canProceedToPayment(ref.read(authSessionProvider))
                           ? const PosPaymentPlaceholderScreen(
                               title: 'QR / Mobile Payment',
-                              subtitle: 'Accept QR or mobile payment from customer',
+                              subtitle:
+                                  'Accept QR or mobile payment from customer',
                             )
                           : const TenantAdminForbiddenScreen(),
                 ),
@@ -134,7 +134,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
         GoRoute(
           path: '/pos/parked-sales',
           builder: (context, state) =>
-              _canViewPosHome(ref.read(authSessionProvider))
+              _canViewParkedSales(ref.read(authSessionProvider))
                   ? const PosPlaceholderScreen(title: 'Parked Sales')
                   : const TenantAdminForbiddenScreen(),
         ),
@@ -207,11 +207,11 @@ class _PosShellHeader {
 }
 
 bool _canViewPosHome(AuthSession? session) {
-  return session?.hasPermission(PosPermissionCodes.viewHome) == true;
+  return PosPermissionAccess.canViewHomeSession(session);
 }
 
 /// New Sale uses [PosPermissionAccess.canAccessNewSaleSession] only.
-/// Parent POS home routes still require [PosPermissionCodes.viewHome].
+/// Parent POS home routes still require POS home/dashboard access.
 bool _canStartNewSale(AuthSession? session) {
   return PosPermissionAccess.canAccessNewSaleSession(session);
 }
@@ -219,6 +219,23 @@ bool _canStartNewSale(AuthSession? session) {
 bool _canProceedToPayment(AuthSession? session) {
   return _canStartNewSale(session) &&
       PosPermissionAccess.canCheckoutSession(session);
+}
+
+bool _canAcceptCashPayment(AuthSession? session) {
+  return _canStartNewSale(session) &&
+      PosPermissionAccess.canAccessCashPaymentScreenSession(session);
+}
+
+bool _canViewPaymentSuccess(AuthSession? session) {
+  return PosPermissionAccess.canViewPaymentSuccessSession(session);
+}
+
+bool _canViewReceipt(AuthSession? session) {
+  return PosPermissionAccess.canViewReceiptSession(session);
+}
+
+bool _canPrintReceipt(AuthSession? session) {
+  return PosPermissionAccess.canPrintReceiptsSession(session);
 }
 
 bool _canViewCustomers(AuthSession? session) {
@@ -238,6 +255,13 @@ bool _canViewReturnsRefunds(AuthSession? session) {
 bool _canViewCashDrawer(AuthSession? session) {
   return _canViewPosHome(session) &&
       PosPermissionAccess.canViewCashDrawer(
+        session?.permissionCodes.toSet() ?? const {},
+      );
+}
+
+bool _canViewParkedSales(AuthSession? session) {
+  return _canViewPosHome(session) &&
+      PosPermissionAccess.canParkOrViewParkedSales(
         session?.permissionCodes.toSet() ?? const {},
       );
 }

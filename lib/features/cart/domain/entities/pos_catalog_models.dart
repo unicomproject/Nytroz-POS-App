@@ -7,11 +7,13 @@ class PosCatalogProductSummary {
     required this.categoryName,
     required this.basePrice,
     required this.hasVariants,
+    this.variantId,
     this.description,
     this.stockLabel = 'In Stock',
   });
 
   final String productId;
+  final String? variantId;
   final String name;
   final String? description;
   final String categoryName;
@@ -98,7 +100,7 @@ PosNewSaleProduct toCartProduct({
 }) {
   final unitPrice = variant?.price ?? summary.basePrice;
   final attributes = variant?.attributes ?? const <String, String>{};
-  final variantId = variant?.variantId;
+  final variantId = variant?.variantId ?? summary.variantId;
   final cartKey = variantId ?? summary.productId;
 
   return PosNewSaleProduct(

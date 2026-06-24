@@ -10,7 +10,7 @@ const posShellNavDestinations = <PosShellNavDestination>[
     label: 'Home',
     icon: Icons.home_rounded,
     routePath: '/pos/home',
-    permissionKey: PosPermissionCodes.viewHome,
+    anyOfPermissionKeys: PosPermissionAccess.homeAccessCodes,
     routeExists: true,
   ),
   PosShellNavDestination(

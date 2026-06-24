@@ -1,4 +1,3 @@
-
 class PosCheckoutSummaryPayload {
   const PosCheckoutSummaryPayload({
     required this.billingSummary,
@@ -19,7 +18,8 @@ class PosCheckoutSummaryPayload {
     return PosCheckoutSummaryPayload(
       billingSummary: PosCheckoutBillingSummaryPayload.fromJson(billing),
       saleDetails: PosCheckoutSaleDetailsPayload.fromJson(saleDetails),
-      paymentMethods: _stringList(json['paymentMethods'] ?? json['PaymentMethods']),
+      paymentMethods:
+          _stringList(json['paymentMethods'] ?? json['PaymentMethods']),
       validationMessages:
           _stringList(json['validationMessages'] ?? json['ValidationMessages']),
     );
@@ -69,7 +69,8 @@ class PosCheckoutBillingSummaryPayload {
       discount: _toMoney(json['discount'] ?? json['Discount']),
       tax: _toMoney(json['tax'] ?? json['Tax']),
       totalPayable: _toMoney(json['totalPayable'] ?? json['TotalPayable']),
-      currency: json['currency']?.toString() ?? json['Currency']?.toString() ?? '',
+      currency:
+          json['currency']?.toString() ?? json['Currency']?.toString() ?? '',
     );
   }
 }
@@ -89,14 +90,17 @@ class PosCheckoutSaleDetailsPayload {
 
   factory PosCheckoutSaleDetailsPayload.fromJson(Map<String, dynamic> json) {
     return PosCheckoutSaleDetailsPayload(
-      saleType: json['saleType']?.toString() ?? json['SaleType']?.toString() ?? 'New Sale',
+      saleType: json['saleType']?.toString() ??
+          json['SaleType']?.toString() ??
+          'New Sale',
       itemsInCart: _toInt(json['itemsInCart'] ?? json['ItemsInCart']),
       saleDate: DateTime.tryParse(
             json['saleDate']?.toString() ?? json['SaleDate']?.toString() ?? '',
           ) ??
           DateTime.now(),
-      cashierName:
-          json['cashierName']?.toString() ?? json['CashierName']?.toString() ?? 'Cashier',
+      cashierName: json['cashierName']?.toString() ??
+          json['CashierName']?.toString() ??
+          'Cashier',
     );
   }
 }
@@ -128,6 +132,15 @@ class PosCheckoutStartPaymentPayload {
     required this.currency,
     required this.saleStatus,
     required this.nextAction,
+    required this.receiptNumber,
+    required this.barcodeValue,
+    required this.completedAt,
+    required this.subtotal,
+    required this.discount,
+    required this.tax,
+    required this.cashReceived,
+    required this.changeDue,
+    required this.items,
     this.paymentId,
   });
 
@@ -139,6 +152,15 @@ class PosCheckoutStartPaymentPayload {
   final String currency;
   final String saleStatus;
   final String nextAction;
+  final String receiptNumber;
+  final String barcodeValue;
+  final DateTime? completedAt;
+  final int subtotal;
+  final int discount;
+  final int tax;
+  final int cashReceived;
+  final int changeDue;
+  final List<PosCheckoutCompletedLinePayload> items;
   final String? paymentId;
 
   factory PosCheckoutStartPaymentPayload.fromJson(Map<String, dynamic> json) {
@@ -148,18 +170,67 @@ class PosCheckoutStartPaymentPayload {
           json['saleId']?.toString() ??
           '',
       saleId: json['saleId']?.toString() ?? json['SaleId']?.toString() ?? '',
-      saleNumber:
-          json['saleNumber']?.toString() ?? json['SaleNumber']?.toString() ?? '',
+      saleNumber: json['saleNumber']?.toString() ??
+          json['SaleNumber']?.toString() ??
+          '',
       paymentMethod: json['paymentMethod']?.toString() ??
           json['PaymentMethod']?.toString() ??
           '',
       grandTotal: _toMoney(json['grandTotal'] ?? json['GrandTotal']),
-      currency: json['currency']?.toString() ?? json['Currency']?.toString() ?? '',
-      saleStatus:
-          json['saleStatus']?.toString() ?? json['SaleStatus']?.toString() ?? '',
-      nextAction:
-          json['nextAction']?.toString() ?? json['NextAction']?.toString() ?? '',
+      currency:
+          json['currency']?.toString() ?? json['Currency']?.toString() ?? '',
+      saleStatus: json['saleStatus']?.toString() ??
+          json['SaleStatus']?.toString() ??
+          '',
+      nextAction: json['nextAction']?.toString() ??
+          json['NextAction']?.toString() ??
+          '',
+      receiptNumber: json['receiptNumber']?.toString() ??
+          json['ReceiptNumber']?.toString() ??
+          '',
+      barcodeValue: json['barcodeValue']?.toString() ??
+          json['BarcodeValue']?.toString() ??
+          json['receiptNumber']?.toString() ??
+          json['ReceiptNumber']?.toString() ??
+          '',
+      completedAt: DateTime.tryParse(
+        json['completedAt']?.toString() ??
+            json['CompletedAt']?.toString() ??
+            '',
+      ),
+      subtotal: _toMoney(json['subtotal'] ?? json['Subtotal']),
+      discount: _toMoney(json['discountTotal'] ?? json['DiscountTotal']),
+      tax: _toMoney(json['taxTotal'] ?? json['TaxTotal']),
+      cashReceived: _toMoney(json['cashReceived'] ?? json['CashReceived']),
+      changeDue: _toMoney(json['changeDue'] ?? json['ChangeDue']),
+      items: _completedLines(json['items'] ?? json['Items']),
       paymentId: json['paymentId']?.toString() ?? json['PaymentId']?.toString(),
+    );
+  }
+}
+
+class PosCheckoutCompletedLinePayload {
+  const PosCheckoutCompletedLinePayload({
+    required this.name,
+    required this.quantity,
+    required this.unitPrice,
+    required this.lineTotal,
+    this.variantSummary,
+  });
+
+  final String name;
+  final int quantity;
+  final int unitPrice;
+  final int lineTotal;
+  final String? variantSummary;
+
+  factory PosCheckoutCompletedLinePayload.fromJson(Map<String, dynamic> json) {
+    return PosCheckoutCompletedLinePayload(
+      name: json['name']?.toString() ?? json['Name']?.toString() ?? '',
+      quantity: _toInt(json['qty'] ?? json['Qty']),
+      unitPrice: _toMoney(json['unitPrice'] ?? json['UnitPrice']),
+      lineTotal: _toMoney(json['lineTotal'] ?? json['LineTotal']),
+      variantSummary: json['sku']?.toString() ?? json['Sku']?.toString(),
     );
   }
 }
@@ -190,4 +261,17 @@ int _toMoney(Object? value) {
   }
 
   return 0;
+}
+
+List<PosCheckoutCompletedLinePayload> _completedLines(Object? value) {
+  if (value is Iterable) {
+    return value
+        .whereType<Map>()
+        .map((item) => PosCheckoutCompletedLinePayload.fromJson(
+              Map<String, dynamic>.from(item),
+            ))
+        .toList(growable: false);
+  }
+
+  return const [];
 }

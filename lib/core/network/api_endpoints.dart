@@ -12,6 +12,11 @@ class ApiEndpoints {
   static const posCheckoutSummary = '/api/v1/pos/checkout/summary';
   static const posCheckoutStartPayment = '/api/v1/pos/checkout/start-payment';
 
+  static String posReceipt(String saleId) => '/api/v1/pos/receipts/$saleId';
+
+  static String posReceiptPrint(String saleId) =>
+      '/api/v1/pos/receipts/$saleId/print';
+
   static String posProductDetail(String productId) =>
       '/api/v1/pos/products/$productId';
 

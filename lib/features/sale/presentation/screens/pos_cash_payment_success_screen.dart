@@ -24,7 +24,7 @@ class PosCashPaymentSuccessScreen extends ConsumerWidget {
     final session = ref.watch(authSessionProvider);
     final successData = ref.watch(posCashPaymentSuccessProvider);
 
-    if (!PosPermissionAccess.canAccessPaymentMethodScreenSession(session)) {
+    if (!PosPermissionAccess.canViewPaymentSuccessSession(session)) {
       return const TenantAdminForbiddenScreen();
     }
 
@@ -36,6 +36,12 @@ class PosCashPaymentSuccessScreen extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final granted = session?.permissionCodes.toSet() ?? const <String>{};
+        final canViewSales = PosPermissionAccess.canViewSales(granted);
+        final canViewPaymentDetails =
+            canViewSales || PosPermissionAccess.canAcceptCashPayment(granted);
+        final canPrintReceipt = PosPermissionAccess.canPrintReceipts(granted);
+        final canStartNewSale = PosPermissionAccess.canAccessNewSale(granted);
         final padding = TenantAdminInsets.pageForWidth(constraints.maxWidth);
         final useWideLayout =
             constraints.maxWidth >= TenantAdminBreakpoints.tablet;
@@ -51,7 +57,8 @@ class PosCashPaymentSuccessScreen extends ConsumerWidget {
               const SizedBox(height: TenantAdminSpacing.lg),
               PaymentSuccessBanner(
                 receiptNumber: successData.receiptNumber,
-                completedAtLabel: formatReceiptDateTime(successData.completedAt),
+                completedAtLabel:
+                    formatReceiptDateTime(successData.completedAt),
               ),
               const SizedBox(height: TenantAdminSpacing.lg),
               Expanded(
@@ -59,78 +66,99 @@ class PosCashPaymentSuccessScreen extends ConsumerWidget {
                     ? Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Expanded(
-                            flex: 2,
-                            child: Column(
-                              children: [
-                                CashSaleSummaryCard(
-                                  itemCount: successData.itemCount,
-                                  subtotal: successData.subtotal,
-                                  discount: successData.discount,
-                                  tax: successData.tax,
-                                  total: successData.total,
-                                ),
-                                const SizedBox(height: TenantAdminSpacing.lg),
-                                Expanded(
-                                  child: SingleChildScrollView(
-                                    child: PaymentDetailsCard(
-                                      cashReceived: successData.cashReceived,
-                                      changeDue: successData.changeDue,
+                          if (canViewSales || canViewPaymentDetails)
+                            Expanded(
+                              flex: 2,
+                              child: Column(
+                                children: [
+                                  if (canViewSales) ...[
+                                    CashSaleSummaryCard(
+                                      itemCount: successData.itemCount,
+                                      subtotal: successData.subtotal,
+                                      discount: successData.discount,
+                                      tax: successData.tax,
+                                      total: successData.total,
                                     ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: TenantAdminSpacing.lg),
-                          Expanded(
-                            flex: 3,
-                            child: SingleChildScrollView(
-                              child: ItemsPurchasedCard(
-                                items: successData.items,
-                                itemCount: successData.itemCount,
-                                total: successData.total,
+                                    const SizedBox(
+                                      height: TenantAdminSpacing.lg,
+                                    ),
+                                  ],
+                                  if (canViewPaymentDetails)
+                                    Expanded(
+                                      child: SingleChildScrollView(
+                                        child: PaymentDetailsCard(
+                                          cashReceived:
+                                              successData.cashReceived,
+                                          changeDue: successData.changeDue,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
-                          ),
+                          if ((canViewSales || canViewPaymentDetails) &&
+                              canViewSales)
+                            const SizedBox(width: TenantAdminSpacing.lg),
+                          if (canViewSales)
+                            Expanded(
+                              flex: 3,
+                              child: SingleChildScrollView(
+                                child: ItemsPurchasedCard(
+                                  items: successData.items,
+                                  itemCount: successData.itemCount,
+                                  total: successData.total,
+                                ),
+                              ),
+                            )
+                          else
+                            const Expanded(
+                              child: _ReceiptDetailsRestricted(),
+                            ),
                         ],
                       )
                     : SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            CashSaleSummaryCard(
-                              itemCount: successData.itemCount,
-                              subtotal: successData.subtotal,
-                              discount: successData.discount,
-                              tax: successData.tax,
-                              total: successData.total,
-                            ),
-                            const SizedBox(height: TenantAdminSpacing.lg),
-                            PaymentDetailsCard(
-                              cashReceived: successData.cashReceived,
-                              changeDue: successData.changeDue,
-                            ),
-                            const SizedBox(height: TenantAdminSpacing.lg),
-                            ItemsPurchasedCard(
-                              items: successData.items,
-                              itemCount: successData.itemCount,
-                              total: successData.total,
-                            ),
+                            if (canViewSales) ...[
+                              CashSaleSummaryCard(
+                                itemCount: successData.itemCount,
+                                subtotal: successData.subtotal,
+                                discount: successData.discount,
+                                tax: successData.tax,
+                                total: successData.total,
+                              ),
+                              const SizedBox(height: TenantAdminSpacing.lg),
+                            ],
+                            if (canViewPaymentDetails) ...[
+                              PaymentDetailsCard(
+                                cashReceived: successData.cashReceived,
+                                changeDue: successData.changeDue,
+                              ),
+                              const SizedBox(height: TenantAdminSpacing.lg),
+                            ],
+                            if (canViewSales)
+                              ItemsPurchasedCard(
+                                items: successData.items,
+                                itemCount: successData.itemCount,
+                                total: successData.total,
+                              )
+                            else
+                              const _ReceiptDetailsRestricted(),
                           ],
                         ),
                       ),
               ),
               const SizedBox(height: TenantAdminSpacing.lg),
               ReceiptActionBar(
-                onPrintReceipt: () => context.push(
-                  '/pos/new-sale/payment/cash/success/print-receipt',
-                ),
-                onEmailReceipt: () => context.push(
-                  '/pos/new-sale/payment/cash/success/email-receipt',
-                ),
-                onNewSale: () => _startNewSale(context, ref),
-                onViewSales: () => _viewSales(context),
+                onPrintReceipt: canPrintReceipt
+                    ? () => context.push(
+                          '/pos/new-sale/payment/cash/success/print-receipt',
+                        )
+                    : null,
+                onNewSale:
+                    canStartNewSale ? () => _startNewSale(context, ref) : null,
+                onViewSales: canViewSales ? () => _viewSales(context) : null,
               ),
             ],
           ),
@@ -154,6 +182,40 @@ class PosCashPaymentSuccessScreen extends ConsumerWidget {
 
   void _viewSales(BuildContext context) {
     _showActionMessage(context, 'Orders screen is not available yet.');
+  }
+}
+
+class _ReceiptDetailsRestricted extends StatelessWidget {
+  const _ReceiptDetailsRestricted();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.lock_outline_rounded,
+              size: 40,
+              color: TenantAdminColors.mutedText,
+            ),
+            const SizedBox(height: TenantAdminSpacing.sm),
+            Text(
+              'Sale details restricted',
+              style: TenantAdminTextStyles.sectionTitle(context),
+            ),
+            const SizedBox(height: TenantAdminSpacing.xs),
+            Text(
+              'You can view the receipt status, but sale line details require sales view permission.',
+              textAlign: TextAlign.center,
+              style: TenantAdminTextStyles.muted(context),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

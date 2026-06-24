@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
 
 /// HTTP port from `SCS.Api/Properties/launchSettings.json` (`applicationUrl`).
-const int kBackendHttpPort = 5050;
+const int kBackendHttpPort = 5052;
 
 /// Resolves the API base URL for the current platform.
 ///
 /// Override with `--dart-define=API_BASE_URL=http://<host>:<port>` when needed
-/// (e.g. real Android device: `http://<LAPTOP_LAN_IP>:5050`, or custom backend port).
-/// Backend port override: `dotnet run --urls "http://0.0.0.0:5051"` — then match here.
+/// (e.g. real Android device: `http://<LAPTOP_LAN_IP>:5052`, or custom backend port).
+/// Backend port override: `dotnet run --urls "http://0.0.0.0:5053"` - then match here.
 String resolveApiBaseUrl() {
   const envBaseUrl = String.fromEnvironment('API_BASE_URL');
   if (envBaseUrl.isNotEmpty) {
