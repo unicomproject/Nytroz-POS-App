@@ -34,7 +34,7 @@ const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
   ),
   TenantAdminMenuItem(
     key: 'staff',
-    label: 'Staff',
+    label: 'Users',
     route: '/tenant-admin/staff',
     iconKey: 'users',
     featureCode: TenantAdminFeatureCodes.staffManagement,

@@ -20,33 +20,47 @@ class DashboardMetricGrid extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final maxColumns = compact ? 2 : 4;
-    final crossAxisCount =
-        metrics.length < maxColumns ? metrics.length : maxColumns;
-    final childAspectRatio = compact
-        ? (crossAxisCount == 1 ? 1.45 : 1.05)
-        : (crossAxisCount <= 2 ? 1.75 : 1.6);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxColumns = compact
+            ? 2
+            : constraints.maxWidth >= 1080
+                ? 4
+                : constraints.maxWidth >= 520
+                    ? 2
+                    : 1;
+        final crossAxisCount =
+            metrics.length < maxColumns ? metrics.length : maxColumns;
+        final childAspectRatio = crossAxisCount == 1
+            ? 2.9
+            : compact
+                ? 1.45
+                : crossAxisCount == 4
+                    ? 1.65
+                    : 2.45;
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: metrics.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: childAspectRatio,
-      ),
-      itemBuilder: (context, index) {
-        final metric = metrics[index];
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: metrics.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
+            childAspectRatio: childAspectRatio,
+          ),
+          itemBuilder: (context, index) {
+            final metric = metrics[index];
 
-        return TenantAdminMetricCard(
-          title: metric.title,
-          value: metric.value,
-          subtitle: metric.subtitle,
-          icon: _metricIcon(metric.iconKey ?? metric.key),
-          trend: metric.trend,
-          status: _statusType(metric.status),
+            return TenantAdminMetricCard(
+              title: metric.title,
+              value: metric.value,
+              subtitle: metric.subtitle,
+              icon: _metricIcon(metric.iconKey ?? metric.key),
+              trend: metric.trend,
+              status: _statusType(metric.status),
+            );
+          },
         );
       },
     );

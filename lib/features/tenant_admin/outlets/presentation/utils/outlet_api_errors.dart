@@ -5,11 +5,14 @@ import '../../../../../core/network/dio_error_message.dart';
 const outletBackendFieldAliases = {
   'name': 'outletName',
   'code': 'outletCode',
+  'outletType': 'outletType',
   'phone': 'mainPhoneNumber',
   'email': 'emailAddress',
+  'status': 'status',
   'addressLine1': 'addressLine1',
   'addressLine2': 'addressLine2',
   'city': 'city',
+  'state': 'state',
   'country': 'country',
   'postalCode': 'postalCode',
 };
@@ -91,18 +94,20 @@ const outletFieldSteps = {
   'outletName': 0,
   'outletCode': 0,
   'outletType': 0,
-  'mainPhoneNumber': 0,
-  'emailAddress': 0,
+  'status': 0,
+  'mainPhoneNumber': 1,
+  'emailAddress': 1,
   'managerId': 0,
   'addressLine1': 1,
   'addressLine2': 1,
   'city': 1,
+  'state': 1,
   'country': 1,
   'postalCode': 1,
 };
 
 int? outletErrorStep(Map<String, String> fieldErrors) {
-  var step = 3;
+  var step = 2;
 
   for (final field in fieldErrors.keys) {
     final fieldStep = outletFieldSteps[field];
@@ -111,5 +116,5 @@ int? outletErrorStep(Map<String, String> fieldErrors) {
     }
   }
 
-  return step == 3 ? null : step;
+  return step == 2 ? null : step;
 }

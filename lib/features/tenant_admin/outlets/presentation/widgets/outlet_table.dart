@@ -94,8 +94,8 @@ class OutletTable extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: TenantAdminSpacing.xl,
-        vertical: TenantAdminSpacing.lg,
+        horizontal: TenantAdminSpacing.lg,
+        vertical: TenantAdminSpacing.md,
       ),
       child: Row(
         children: [
@@ -105,6 +105,7 @@ class OutletTable extends ConsumerWidget {
               style: const TextStyle(
                 color: TenantAdminColors.mutedText,
                 fontWeight: FontWeight.w500,
+                fontSize: 12,
               ),
             ),
           ),
@@ -115,8 +116,8 @@ class OutletTable extends ConsumerWidget {
             icon: const Icon(Icons.chevron_left),
           ),
           Container(
-            width: 36,
-            height: 36,
+            width: 34,
+            height: 34,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: TenantAdminColors.primary,
@@ -158,15 +159,15 @@ class OutletTable extends ConsumerWidget {
             child: Row(
               children: [
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 28,
+                  height: 28,
                   decoration: BoxDecoration(
                     color: TenantAdminColors.secondary,
                     borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
                   ),
                   child: const Icon(
                     Icons.storefront_outlined,
-                    size: 18,
+                    size: 16,
                     color: TenantAdminColors.primary,
                   ),
                 ),
@@ -185,12 +186,15 @@ class OutletTable extends ConsumerWidget {
           ),
         );
       case OutletTableColumnId.code:
-        return DataCell(Text(outlet.code));
+        return DataCell(_PlainCell(outlet.code));
+      case OutletTableColumnId.type:
+        return DataCell(_PlainCell(_outletType(outlet)));
       case OutletTableColumnId.city:
+        return DataCell(_PlainCell(_cityLabel(outlet)));
       case OutletTableColumnId.location:
-        return DataCell(
-          Text(outlet.location.isEmpty ? '—' : outlet.location),
-        );
+        return DataCell(_PlainCell(_emptyDash(outlet.location)));
+      case OutletTableColumnId.contactNumber:
+        return DataCell(_PlainCell(_emptyDash(outlet.contactNumber)));
       case OutletTableColumnId.status:
         final statusLabel = displayOutletStatus(outlet.status);
         return DataCell(
@@ -200,13 +204,11 @@ class OutletTable extends ConsumerWidget {
           ),
         );
       case OutletTableColumnId.tills:
-        return DataCell(Text('${outlet.tillCount}'));
+        return DataCell(_PlainCell('${outlet.tillCount}'));
       case OutletTableColumnId.staff:
-        return DataCell(Text('${outlet.staffCount}'));
+        return DataCell(_PlainCell('${outlet.staffCount}'));
       case OutletTableColumnId.sales:
-        return DataCell(
-          Text(outlet.todaysSales.isEmpty ? '—' : outlet.todaysSales),
-        );
+        return DataCell(_PlainCell(_emptyDash(outlet.todaysSales)));
       case OutletTableColumnId.actions:
         return DataCell(
           Align(
@@ -365,17 +367,67 @@ class _ActionIconButton extends StatelessWidget {
       tooltip: tooltip,
       onPressed: onPressed,
       style: IconButton.styleFrom(
-        backgroundColor: destructive
-            ? TenantAdminColors.danger.withValues(alpha: 0.08)
-            : TenantAdminColors.secondary,
+        backgroundColor: TenantAdminColors.surface,
         foregroundColor:
             destructive ? TenantAdminColors.danger : TenantAdminColors.primary,
-        minimumSize: const Size(36, 36),
+        side: BorderSide(
+          color: destructive
+              ? TenantAdminColors.danger.withValues(alpha: 0.25)
+              : TenantAdminColors.border,
+        ),
+        minimumSize: const Size(34, 34),
         padding: EdgeInsets.zero,
       ),
-      icon: Icon(icon, size: 18),
+      icon: Icon(icon, size: 17),
     );
   }
+}
+
+class _PlainCell extends StatelessWidget {
+  const _PlainCell(this.value);
+
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      value,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        color: TenantAdminColors.bodyText,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+}
+
+String _emptyDash(String? value) {
+  final trimmed = value?.trim() ?? '';
+  return trimmed.isEmpty ? '—' : trimmed;
+}
+
+String _outletType(Outlet outlet) {
+  final value = outlet.outletType?.trim();
+  return value == null || value.isEmpty ? 'Company Owned' : value;
+}
+
+String _cityLabel(Outlet outlet) {
+  final explicitCity = outlet.city?.trim();
+  if (explicitCity != null && explicitCity.isNotEmpty) {
+    return explicitCity;
+  }
+
+  final parts = outlet.location
+      .split(',')
+      .map((part) => part.trim())
+      .where((part) => part.isNotEmpty)
+      .toList(growable: false);
+
+  if (parts.length >= 2) {
+    return parts[parts.length - 2];
+  }
+
+  return parts.isEmpty ? '—' : parts.last;
 }
 
 TenantAdminStatusType _statusType(String status) {

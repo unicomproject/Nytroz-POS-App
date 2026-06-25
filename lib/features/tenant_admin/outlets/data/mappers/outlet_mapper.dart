@@ -14,6 +14,9 @@ extension OutletMapper on OutletDto {
       onlineTillCount: onlineTillCount,
       staffCount: staffCount,
       todaysSales: todaysSales,
+      outletType: outletType,
+      contactNumber: contactNumber,
+      city: city,
     );
   }
 }

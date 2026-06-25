@@ -8,6 +8,7 @@ extension TenantAdminContextMapper on TenantAdminContextDto {
       tenantName: tenantName,
       userId: userId,
       userDisplayName: userDisplayName,
+      roles: roles.map((role) => role.toEntity()).toList(),
       roleNames: roleNames,
       outletScope: outletScope.map((outlet) => outlet.toEntity()).toList(),
       featureEntitlements:
@@ -16,6 +17,15 @@ extension TenantAdminContextMapper on TenantAdminContextDto {
           permissions.map((permission) => permission.toEntity()).toList(),
       runtimeFlags: runtimeFlags.map((flag) => flag.toEntity()).toList(),
       subscriptionStatus: subscriptionStatus,
+    );
+  }
+}
+
+extension TenantAdminRoleScopeMapper on TenantAdminRoleScopeDto {
+  TenantAdminRoleScope toEntity() {
+    return TenantAdminRoleScope(
+      roleId: roleId,
+      roleName: roleName,
     );
   }
 }

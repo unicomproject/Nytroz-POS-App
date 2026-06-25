@@ -6,6 +6,7 @@ class TenantAdminContextDto {
     required this.tenantName,
     required this.userId,
     required this.userDisplayName,
+    required this.roles,
     required this.roleNames,
     required this.outletScope,
     required this.featureEntitlements,
@@ -41,6 +42,13 @@ class TenantAdminContextDto {
       tenantName: tenant['name']?.toString() ?? '',
       userId: user['id']?.toString() ?? '',
       userDisplayName: user['fullName']?.toString() ?? '',
+      roles: [
+        for (final role in roles)
+          TenantAdminRoleScopeDto(
+            roleId: role['id']?.toString() ?? '',
+            roleName: role['name']?.toString() ?? '',
+          ),
+      ],
       roleNames: roles
           .map((role) => role['name']?.toString() ?? '')
           .where((name) => name.isNotEmpty)
@@ -86,6 +94,10 @@ class TenantAdminContextDto {
       tenantName: json['tenantName'] as String? ?? '',
       userId: json['userId'] as String? ?? '',
       userDisplayName: json['userDisplayName'] as String? ?? '',
+      roles: _mapList(
+        json['roles'],
+        TenantAdminRoleScopeDto.fromJson,
+      ),
       roleNames: _stringList(json['roleNames']),
       outletScope: _mapList(
         json['outletScope'],
@@ -111,12 +123,30 @@ class TenantAdminContextDto {
   final String tenantName;
   final String userId;
   final String userDisplayName;
+  final List<TenantAdminRoleScopeDto> roles;
   final List<String> roleNames;
   final List<TenantAdminOutletScopeDto> outletScope;
   final List<TenantAdminFeatureEntitlementDto> featureEntitlements;
   final List<TenantAdminPermissionDto> permissions;
   final List<TenantAdminRuntimeFlagDto> runtimeFlags;
   final String? subscriptionStatus;
+}
+
+class TenantAdminRoleScopeDto {
+  const TenantAdminRoleScopeDto({
+    required this.roleId,
+    required this.roleName,
+  });
+
+  factory TenantAdminRoleScopeDto.fromJson(Map<String, dynamic> json) {
+    return TenantAdminRoleScopeDto(
+      roleId: (json['roleId'] ?? json['id'])?.toString() ?? '',
+      roleName: (json['roleName'] ?? json['name'])?.toString() ?? '',
+    );
+  }
+
+  final String roleId;
+  final String roleName;
 }
 
 class TenantAdminOutletScopeDto {

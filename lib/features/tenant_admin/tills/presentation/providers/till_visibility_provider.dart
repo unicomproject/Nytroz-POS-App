@@ -18,7 +18,9 @@ final tillListVisibilityProvider =
   );
 });
 
-final tillListProvider = FutureProvider<TillListResult?>((ref) async {
+final tillListProvider = FutureProvider.autoDispose<TillListResult?>((
+  ref,
+) async {
   final accessChecker =
       await ref.watch(tenantAdminAccessCheckerProvider.future);
 
