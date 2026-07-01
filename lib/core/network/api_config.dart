@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-/// HTTP port from `SCS.Api/Properties/launchSettings.json` (`applicationUrl`).
-const int kBackendHttpPort = 5052;
+/// HTTP port from `E_POS.Api/Properties/launchSettings.json` (`applicationUrl`).
+const int kBackendHttpPort = 5187;
 
 /// Resolves the API base URL for the current platform.
 ///
