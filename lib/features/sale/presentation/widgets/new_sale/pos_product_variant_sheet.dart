@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:nytroz_pos/core/access/pos_permission_access.dart';
+import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
@@ -12,14 +14,17 @@ Future<void> showPosProductVariantSheet({
   required WidgetRef ref,
   required PosCatalogProductSummary summary,
   PosNewSaleCartItem? existingCartItem,
+  String initialSearchQuery = '',
 }) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
+    useSafeArea: true,
     builder: (context) => PosProductVariantSheet(
       summary: summary,
       existingCartItem: existingCartItem,
+      initialSearchQuery: initialSearchQuery,
     ),
   );
 }
@@ -29,10 +34,12 @@ class PosProductVariantSheet extends ConsumerStatefulWidget {
     super.key,
     required this.summary,
     this.existingCartItem,
+    this.initialSearchQuery = '',
   });
 
   final PosCatalogProductSummary summary;
   final PosNewSaleCartItem? existingCartItem;
+  final String initialSearchQuery;
 
   @override
   ConsumerState<PosProductVariantSheet> createState() =>
@@ -44,6 +51,7 @@ class _PosProductVariantSheetState
   final Map<String, String> _selectedAttributes = {};
   late int _quantity;
   String? _availabilityMessage;
+  bool _appliedInitialSearchQuery = false;
 
   @override
   void initState() {
@@ -60,26 +68,38 @@ class _PosProductVariantSheetState
   Widget build(BuildContext context) {
     final detailAsync =
         ref.watch(posProductDetailProvider(widget.summary.productId));
+    final screenSize = MediaQuery.sizeOf(context);
+    final isMobile = screenSize.width < TenantAdminBreakpoints.tablet;
+    final maxSheetWidth = isMobile ? double.infinity : 640.0;
+    final heightFactor = isMobile ? 0.94 : 0.82;
 
     return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: TenantAdminSpacing.lg,
-          right: TenantAdminSpacing.lg,
-          top: TenantAdminSpacing.sm,
-          bottom:
-              TenantAdminSpacing.lg + MediaQuery.viewInsetsOf(context).bottom,
-        ),
-        child: detailAsync.when(
-          loading: () => const SizedBox(
-            height: 220,
-            child: Center(child: CircularProgressIndicator()),
+      child: FractionallySizedBox(
+        heightFactor: heightFactor,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxSheetWidth),
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: isMobile ? TenantAdminSpacing.md : TenantAdminSpacing.lg,
+                right: isMobile ? TenantAdminSpacing.md : TenantAdminSpacing.lg,
+                top: TenantAdminSpacing.sm,
+                bottom: TenantAdminSpacing.lg +
+                    MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: detailAsync.when(
+                loading: () => const SizedBox(
+                  height: 220,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (_, __) => _buildUnavailableMessage(
+                  context,
+                  'Unable to load product variants.',
+                ),
+                data: (detail) => _buildContent(context, detail),
+              ),
+            ),
           ),
-          error: (_, __) => _buildUnavailableMessage(
-            context,
-            'Unable to load product variants.',
-          ),
-          data: (detail) => _buildContent(context, detail),
         ),
       ),
     );
@@ -100,6 +120,7 @@ class _PosProductVariantSheetState
   }
 
   Widget _buildContent(BuildContext context, PosCatalogProductDetail detail) {
+    _applyInitialSearchQuery(detail);
     final matchedVariant = detail.matchVariant(_selectedAttributes);
     final allSelected = detail.variantGroups.every(
       (group) => (_selectedAttributes[group.name] ?? '').isNotEmpty,
@@ -219,15 +240,34 @@ class _PosProductVariantSheetState
             ),
           ],
           const SizedBox(height: TenantAdminSpacing.lg),
-          FilledButton(
-            onPressed: canSubmit ? () => _submit(detail, matchedVariant) : null,
-            child: Text(
-              widget.existingCartItem == null ? 'Add to Cart' : 'Update Cart',
+          SizedBox(
+            height: 56,
+            child: FilledButton(
+              onPressed:
+                  canSubmit ? () => _submit(detail, matchedVariant) : null,
+              child: Text(
+                widget.existingCartItem == null ? 'Add to Cart' : 'Update Cart',
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  void _applyInitialSearchQuery(PosCatalogProductDetail detail) {
+    if (_appliedInitialSearchQuery ||
+        widget.existingCartItem != null ||
+        _selectedAttributes.isNotEmpty) {
+      return;
+    }
+
+    _appliedInitialSearchQuery = true;
+    final matchedAttributes = detail
+        .matchingVariantAttributesForSearchQuery(widget.initialSearchQuery);
+    if (matchedAttributes.isNotEmpty) {
+      _selectedAttributes.addAll(matchedAttributes);
+    }
   }
 
   bool _isOptionSelectable(
@@ -268,6 +308,24 @@ class _PosProductVariantSheetState
   }
 
   void _submit(PosCatalogProductDetail detail, PosCatalogVariant variant) {
+    final session = ref.read(authSessionProvider);
+    final isUpdate = widget.existingCartItem != null;
+    if (isUpdate && !PosPermissionAccess.canUpdateCartItemSession(session)) {
+      PosPermissionAccess.showAccessDeniedSnackBar(
+        context,
+        'You do not have permission to update cart items.',
+      );
+      return;
+    }
+
+    if (!isUpdate && !PosPermissionAccess.canAddCartItemSession(session)) {
+      PosPermissionAccess.showAccessDeniedSnackBar(
+        context,
+        'You do not have permission to add items to the cart.',
+      );
+      return;
+    }
+
     final cartProduct = toCartProduct(
       summary: detail.summary,
       variant: variant,

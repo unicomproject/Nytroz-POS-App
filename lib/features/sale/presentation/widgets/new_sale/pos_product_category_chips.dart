@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/pos_permission_access.dart';
+import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -9,6 +11,11 @@ class PosProductCategoryChips extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(authSessionProvider);
+    if (!PosPermissionAccess.canViewProductsSession(session)) {
+      return const SizedBox.shrink();
+    }
+
     final selectedCategory = ref.watch(posNewSaleSelectedCategoryProvider);
 
     return SizedBox(

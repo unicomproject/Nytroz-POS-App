@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:nytroz_pos/core/access/pos_access_codes.dart';
-import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/sale/domain/entities/pos_payment_method_type.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_product_variant_sheet.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import 'pos_product_image.dart';
+import 'pos_selected_customer_card.dart';
 
 class PosEmptyCartPanel extends ConsumerWidget {
   const PosEmptyCartPanel({super.key});
@@ -16,6 +19,8 @@ class PosEmptyCartPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cart = ref.watch(posNewSaleCartProvider);
 
+    // Cart/totals visibility is inherited from New Sale screen access because no
+    // dedicated cart view permission exists.
     return ClipRRect(
       borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
       child: DecoratedBox(
@@ -25,12 +30,17 @@ class PosEmptyCartPanel extends ConsumerWidget {
           boxShadow: TenantAdminShadows.card,
         ),
         child: Padding(
-          padding: const EdgeInsets.all(TenantAdminSpacing.md),
+          padding: EdgeInsets.all(
+            MediaQuery.sizeOf(context).width < TenantAdminBreakpoints.tablet
+                ? TenantAdminSpacing.sm
+                : TenantAdminSpacing.md,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const _CartHeader(),
               const Divider(height: TenantAdminSpacing.xl),
+              const PosSelectedCustomerCard(),
               Expanded(
                 child: ClipRect(
                   child: cart.hasItems
@@ -53,8 +63,8 @@ class _CartHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authSessionProvider);
-    final canClearCart =
-        session?.hasPermission(PosPermissionCodes.clearCart) == true;
+    final granted = session?.permissionCodes.toSet() ?? const <String>{};
+    final canClearCart = PosPermissionAccess.canClearCart(granted);
     final cartHasItems = ref.watch(posNewSaleCartProvider).hasItems;
 
     return Row(
@@ -144,10 +154,27 @@ class _CartItemList extends ConsumerWidget {
       itemBuilder: (context, index) {
         return _CartItemRow(
           item: items[index],
-          onTap: () => _openEditSheet(context, ref, items[index]),
+          onTap: () => _handleCartItemTap(context, ref, items[index]),
         );
       },
     );
+  }
+
+  void _handleCartItemTap(
+    BuildContext context,
+    WidgetRef ref,
+    PosNewSaleCartItem item,
+  ) {
+    final session = ref.read(authSessionProvider);
+    if (!PosPermissionAccess.canUpdateCartItemSession(session)) {
+      PosPermissionAccess.showAccessDeniedSnackBar(
+        context,
+        'You do not have permission to update cart items.',
+      );
+      return;
+    }
+
+    _openEditSheet(context, ref, item);
   }
 
   Future<void> _openEditSheet(
@@ -160,10 +187,12 @@ class _CartItemList extends ConsumerWidget {
       ref: ref,
       summary: PosCatalogProductSummary(
         productId: item.product.productId,
+        variantId: item.product.variantId,
         name: item.product.name,
         categoryName: item.product.category,
         basePrice: item.product.price,
         hasVariants: item.product.hasVariants,
+        imageUrl: item.product.imageUrl,
       ),
       existingCartItem: item,
     );
@@ -183,10 +212,9 @@ class _CartItemRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(posNewSaleCartProvider.notifier);
     final session = ref.watch(authSessionProvider);
-    final canUpdateItems =
-        session?.hasPermission(PosPermissionCodes.updateCartItem) == true;
-    final canRemoveItems =
-        session?.hasPermission(PosPermissionCodes.removeCartItem) == true;
+    final granted = session?.permissionCodes.toSet() ?? const <String>{};
+    final canUpdateItems = PosPermissionAccess.canUpdateCartItem(granted);
+    final canRemoveItems = PosPermissionAccess.canRemoveCartItem(granted);
 
     return InkWell(
       onTap: onTap,
@@ -196,6 +224,13 @@ class _CartItemRow extends ConsumerWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              PosProductImage(
+                imageUrl: item.product.imageUrl,
+                category: item.product.category,
+                width: 52,
+                height: 52,
+              ),
+              const SizedBox(width: TenantAdminSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,47 +278,64 @@ class _CartItemRow extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: TenantAdminSpacing.sm),
-          Row(
-            children: [
-              IconButton.filledTonal(
-                visualDensity: VisualDensity.compact,
-                onPressed: canUpdateItems
-                    ? () => notifier.decreaseQuantity(item.product.cartLineKey)
-                    : null,
-                icon: const Icon(Icons.remove_rounded),
-                tooltip: 'Decrease quantity',
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: TenantAdminSpacing.sm,
-                ),
-                child: Text(
-                  'Qty ${item.quantity}',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: TenantAdminColors.bodyText,
-                        fontWeight: FontWeight.w800,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 300;
+
+              return Row(
+                children: [
+                  SizedBox.square(
+                    dimension: 44,
+                    child: IconButton.filledTonal(
+                      visualDensity: VisualDensity.compact,
+                      onPressed: canUpdateItems
+                          ? () => notifier
+                              .decreaseQuantity(item.product.cartLineKey)
+                          : null,
+                      icon: const Icon(Icons.remove_rounded),
+                      tooltip: 'Decrease quantity',
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: TenantAdminSpacing.sm,
+                    ),
+                    child: Text(
+                      compact ? '${item.quantity}' : 'Qty ${item.quantity}',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: TenantAdminColors.bodyText,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ),
+                  SizedBox.square(
+                    dimension: 44,
+                    child: IconButton.filledTonal(
+                      visualDensity: VisualDensity.compact,
+                      onPressed: canUpdateItems
+                          ? () => notifier
+                              .increaseQuantity(item.product.cartLineKey)
+                          : null,
+                      icon: const Icon(Icons.add_rounded),
+                      tooltip: 'Increase quantity',
+                    ),
+                  ),
+                  const Spacer(),
+                  if (canRemoveItems)
+                    SizedBox.square(
+                      dimension: 44,
+                      child: IconButton(
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () =>
+                            notifier.removeItem(item.product.cartLineKey),
+                        icon: const Icon(Icons.delete_outline_rounded),
+                        color: TenantAdminColors.danger,
+                        tooltip: 'Remove item',
                       ),
-                ),
-              ),
-              IconButton.filledTonal(
-                visualDensity: VisualDensity.compact,
-                onPressed: canUpdateItems
-                    ? () => notifier.increaseQuantity(item.product.cartLineKey)
-                    : null,
-                icon: const Icon(Icons.add_rounded),
-                tooltip: 'Increase quantity',
-              ),
-              const Spacer(),
-              if (canRemoveItems)
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () =>
-                      notifier.removeItem(item.product.cartLineKey),
-                  icon: const Icon(Icons.delete_outline_rounded),
-                  color: TenantAdminColors.danger,
-                  tooltip: 'Remove item',
-                ),
-            ],
+                    ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -299,11 +351,11 @@ class _CartSummaryFooter extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authSessionProvider);
-    final canCheckout =
-        session?.hasPermission(PosPermissionCodes.checkoutSale) == true;
-    final paymentMethods = _allowedPaymentMethods(session);
-    final canProceed =
-        cart.hasItems && canCheckout && paymentMethods.isNotEmpty;
+    final canCheckout = PosPermissionAccess.canCheckoutSession(session);
+    final hasPaymentMethod =
+        allowedPosPaymentMethods(session?.permissionCodes.toSet() ?? const {})
+            .isNotEmpty;
+    final canProceed = cart.hasItems && canCheckout && hasPaymentMethod;
 
     return DecoratedBox(
       decoration: const BoxDecoration(
@@ -336,105 +388,15 @@ class _CartSummaryFooter extends ConsumerWidget {
               emphasized: true,
             ),
             const SizedBox(height: TenantAdminSpacing.sm),
-            FilledButton.icon(
-              onPressed: canProceed
-                  ? () => _showPaymentMethods(context, paymentMethods)
-                  : null,
-              icon: const Icon(Icons.payments_outlined),
-              label: const Text('Proceed to Payment'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  List<_PaymentMethod> _allowedPaymentMethods(AuthSession? session) {
-    if (session == null) {
-      return const [];
-    }
-
-    return [
-      if (session.hasPermission(PosPermissionCodes.acceptCashPayment))
-        const _PaymentMethod(
-          icon: Icons.payments_outlined,
-          label: 'Cash',
-        ),
-      if (session.hasPermission(PosPermissionCodes.acceptCardPayment))
-        const _PaymentMethod(
-          icon: Icons.credit_card_rounded,
-          label: 'Card',
-        ),
-      if (session.hasPermission(PosPermissionCodes.acceptQrPayment))
-        const _PaymentMethod(
-          icon: Icons.qr_code_2_rounded,
-          label: 'QR',
-        ),
-      if (session.hasPermission(PosPermissionCodes.acceptSplitPayment))
-        const _PaymentMethod(
-          icon: Icons.call_split_rounded,
-          label: 'Split',
-        ),
-    ];
-  }
-
-  Future<void> _showPaymentMethods(
-    BuildContext context,
-    List<_PaymentMethod> methods,
-  ) {
-    return showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => _PaymentMethodSheet(methods: methods),
-    );
-  }
-}
-
-class _PaymentMethod {
-  const _PaymentMethod({
-    required this.icon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String label;
-}
-
-class _PaymentMethodSheet extends StatelessWidget {
-  const _PaymentMethodSheet({required this.methods});
-
-  final List<_PaymentMethod> methods;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          TenantAdminSpacing.lg,
-          TenantAdminSpacing.sm,
-          TenantAdminSpacing.lg,
-          TenantAdminSpacing.lg,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Select payment method',
-              style: TenantAdminTextStyles.sectionTitle(context),
-            ),
-            const SizedBox(height: TenantAdminSpacing.md),
-            Wrap(
-              spacing: TenantAdminSpacing.sm,
-              runSpacing: TenantAdminSpacing.sm,
-              children: [
-                for (final method in methods)
-                  OutlinedButton.icon(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: Icon(method.icon),
-                    label: Text(method.label),
-                  ),
-              ],
+            SizedBox(
+              height: 56,
+              child: FilledButton.icon(
+                onPressed: canProceed
+                    ? () => context.push('/pos/new-sale/payment')
+                    : null,
+                icon: const Icon(Icons.payments_outlined),
+                label: const Text('Proceed to Payment'),
+              ),
             ),
           ],
         ),
@@ -469,7 +431,14 @@ class _CartTotalLine extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: Text(label, style: style)),
-        Text(value, style: style),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+            style: style,
+          ),
+        ),
       ],
     );
   }

@@ -40,6 +40,11 @@ class PosHomeBottomGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cards = <Widget>[
+      if (showParkedSales)
+        PosParkedSalesSummaryCard(
+          action: parkedSalesAction,
+          onViewParkedSales: onViewParkedSales,
+        ),
       if (showReturns)
         PosReturnsSummaryCard(
           action: returnsAction,
@@ -49,11 +54,6 @@ class PosHomeBottomGrid extends StatelessWidget {
         PosCustomerSummaryCard(
           action: customerAction,
           onAddCustomer: onAddCustomer,
-        ),
-      if (showParkedSales)
-        PosParkedSalesSummaryCard(
-          action: parkedSalesAction,
-          onViewParkedSales: onViewParkedSales,
         ),
       if (showCashDrawer)
         PosCashDrawerSummaryCard(
@@ -75,8 +75,8 @@ class PosHomeBottomGrid extends StatelessWidget {
             TenantAdminSpacing.lg * (rowCount - 1).clamp(0, rowCount);
         final itemExtent = hasBoundedHeight
             ? ((constraints.maxHeight - availableSpacing) / rowCount)
-                .clamp(210.0, 320.0)
-            : 300.0;
+                .clamp(170.0, 220.0)
+            : 200.0;
 
         return GridView.builder(
           shrinkWrap: !hasBoundedHeight,

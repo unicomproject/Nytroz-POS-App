@@ -16,9 +16,17 @@ class ApiEndpoints {
       '/api/v1/tenant-admin/staff/managers';
 
   static const currentTillSession = '/api/v1/tills/current-session';
+  static const customers = '/api/v1/customers';
   static const posHome = '/api/v1/pos/home';
   static const posProducts = '/api/v1/pos/products';
   static const posCatalogCategories = '/api/v1/pos/catalog/categories';
+  static const posCheckoutSummary = '/api/v1/pos/checkout/summary';
+  static const posCheckoutStartPayment = '/api/v1/pos/checkout/start-payment';
+
+  static String posReceipt(String saleId) => '/api/v1/pos/receipts/$saleId';
+
+  static String posReceiptPrint(String saleId) =>
+      '/api/v1/pos/receipts/$saleId/print';
 
   static String posProductDetail(String productId) =>
       '/api/v1/pos/products/$productId';

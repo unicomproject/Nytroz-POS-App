@@ -281,7 +281,6 @@ class TenantAdminAccessChecker {
   bool canFetchDashboardSummary() => canLoadDashboardData();
 
   /// Returns true when any dashboard widget permission requires API payload data.
-  /// TODO: split dashboard API by section when backend supports field-level filtering.
   bool canLoadDashboardData() {
     return canAny([
       TenantAdminPermissionCodes.dashboardSalesSummaryView,
@@ -427,7 +426,6 @@ class TenantAdminAccessChecker {
         can(TenantAdminPermissionCodes.outletSummaryView);
   }
 
-  /// TODO: replace [outletView] fallback with [outletFilterView] only once seeded.
   bool canViewOutletListFilter() {
     return can(TenantAdminPermissionCodes.outletFilterView) ||
         can(TenantAdminPermissionCodes.outletView);

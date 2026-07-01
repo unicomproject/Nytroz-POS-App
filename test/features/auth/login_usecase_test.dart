@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/auth/application/usecases/login.dart';
+import 'package:nytroz_pos/features/auth/data/models/login_request_dto.dart';
 import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
 import 'package:nytroz_pos/features/auth/domain/entities/auth_branding.dart';
 import 'package:nytroz_pos/features/auth/domain/entities/setup_token_validation.dart';
@@ -20,14 +21,12 @@ void main() {
       final login = Login(repository);
 
       final result = await login.call(
-        tenantCode: 'TENANT001',
-        login: 'cashier@test.local',
+        email: 'cashier@test.local',
         password: 'password123',
       );
 
       expect(result, expectedSession);
-      expect(repository.lastTenantCode, 'TENANT001');
-      expect(repository.lastLogin, 'cashier@test.local');
+      expect(repository.lastEmail, 'cashier@test.local');
       expect(repository.lastPassword, 'password123');
     });
 
@@ -40,12 +39,24 @@ void main() {
       final login = Login(_FakeAuthRepository(session: session));
 
       final result = await login.call(
-        tenantCode: 'TENANT001',
-        login: 'cashier@test.local',
+        email: 'cashier@test.local',
         password: 'wrong-password',
       );
 
       expect(result.isAuthenticated, isFalse);
+    });
+
+    test('login request body contains email and password only', () {
+      const request = LoginRequestDto(
+        email: 'cashier001@gmail.com',
+        password: '123456',
+      );
+
+      expect(request.toJson(), {
+        'email': 'cashier001@gmail.com',
+        'password': '123456',
+      });
+      expect(request.toJson().containsKey('tenantCode'), isFalse);
     });
   });
 }
@@ -54,18 +65,15 @@ class _FakeAuthRepository implements AuthRepository {
   _FakeAuthRepository({required this.session});
 
   final AuthSession session;
-  String? lastTenantCode;
-  String? lastLogin;
+  String? lastEmail;
   String? lastPassword;
 
   @override
   Future<AuthSession> login({
-    required String tenantCode,
-    required String login,
+    required String email,
     required String password,
   }) async {
-    lastTenantCode = tenantCode;
-    lastLogin = login;
+    lastEmail = email;
     lastPassword = password;
     return session;
   }

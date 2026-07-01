@@ -1,3 +1,4 @@
+import '../../../../core/access/pos_permission_access.dart';
 import '../../domain/entities/pos_home_action.dart';
 
 class PosHomeDashboardState {
@@ -61,10 +62,12 @@ class PosHomeDashboardState {
     }
 
     final hasFeature = _allowsKey(enabledFeatureKeys, action.featureKey);
-    final hasPermission = _allowsKey(
-      grantedPermissionKeys,
-      action.permissionKey,
-    );
+    final hasPermission = action.permissionKey == null ||
+        grantedPermissionKeys == null ||
+        PosPermissionAccess.grantsCanonicalPermission(
+          grantedPermissionKeys!,
+          action.permissionKey!,
+        );
 
     if (grantedPermissionKeys != null &&
         action.permissionKey != null &&

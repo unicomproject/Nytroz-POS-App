@@ -13,6 +13,7 @@ class PosMobileTopBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // and till session chip (till.session.view) when mobile shell top bar supports them.
     final session = ref.watch(authSessionProvider);
     final canViewNotifications =
         session?.hasPermission(PosPermissionCodes.viewNotifications) == true;

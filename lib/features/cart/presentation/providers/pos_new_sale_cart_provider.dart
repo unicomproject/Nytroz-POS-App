@@ -196,6 +196,7 @@ class PosNewSaleProduct {
     this.hasVariants = false,
     this.selectedAttributes = const {},
     this.maxQuantity,
+    this.imageUrl,
   });
 
   final String id;
@@ -209,6 +210,7 @@ class PosNewSaleProduct {
   final bool hasVariants;
   final Map<String, String> selectedAttributes;
   final int? maxQuantity;
+  final String? imageUrl;
 
   String get cartLineKey => variantId ?? id;
 

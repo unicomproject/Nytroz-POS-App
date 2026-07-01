@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/access/pos_access_codes.dart';
+import '../../../../core/access/pos_permission_access.dart';
 import '../../domain/entities/pos_shell_nav_destination.dart';
 
 const posShellNavDestinations = <PosShellNavDestination>[
@@ -9,7 +10,7 @@ const posShellNavDestinations = <PosShellNavDestination>[
     label: 'Home',
     icon: Icons.home_rounded,
     routePath: '/pos/home',
-    permissionKey: PosPermissionCodes.viewHome,
+    anyOfPermissionKeys: PosPermissionAccess.homeAccessCodes,
     routeExists: true,
   ),
   PosShellNavDestination(
@@ -17,7 +18,7 @@ const posShellNavDestinations = <PosShellNavDestination>[
     label: 'New Sale',
     icon: Icons.add_shopping_cart_rounded,
     routePath: '/pos/new-sale',
-    permissionKey: PosPermissionCodes.viewNewSale,
+    anyOfPermissionKeys: PosPermissionAccess.newSaleAccessCodes,
     routeExists: true,
   ),
   PosShellNavDestination(
@@ -32,10 +33,7 @@ const posShellNavDestinations = <PosShellNavDestination>[
     label: 'Customers',
     icon: Icons.people_outline_rounded,
     routePath: '/pos/customers',
-    anyOfPermissionKeys: [
-      PosPermissionCodes.viewNewSaleCustomers,
-      PosPermissionCodes.createNewSaleCustomer,
-    ],
+    anyOfPermissionKeys: PosPermissionAccess.customerViewOrCreateAccessCodes,
     routeExists: true,
   ),
   PosShellNavDestination(
@@ -43,10 +41,7 @@ const posShellNavDestinations = <PosShellNavDestination>[
     label: 'Return & Refund',
     icon: Icons.assignment_return_outlined,
     routePath: '/pos/returns-refunds',
-    anyOfPermissionKeys: [
-      PosPermissionCodes.viewReturns,
-      PosPermissionCodes.viewRefunds,
-    ],
+    anyOfPermissionKeys: PosPermissionAccess.returnsViewAccessCodes,
     routeExists: true,
   ),
   PosShellNavDestination(
@@ -54,7 +49,7 @@ const posShellNavDestinations = <PosShellNavDestination>[
     label: 'Cash Drawer',
     icon: Icons.point_of_sale_outlined,
     routePath: '/pos/cash-drawer',
-    permissionKey: PosPermissionCodes.viewCashDrawer,
+    anyOfPermissionKeys: PosPermissionAccess.cashDrawerViewAccessCodes,
     routeExists: true,
   ),
 ];

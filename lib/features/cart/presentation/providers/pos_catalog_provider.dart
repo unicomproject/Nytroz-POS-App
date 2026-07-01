@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 
+import '../../../../core/access/pos_permission_access.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
@@ -36,6 +37,13 @@ final posNewSaleCatalogProvider =
     );
   }
 
+  if (!PosPermissionAccess.canViewProductsSession(session)) {
+    return const PosNewSaleCatalogState(
+      products: [],
+      usedFallback: false,
+    );
+  }
+
   _ensureAuthorizationHeader(ref.read(appDioProvider), session);
 
   try {
@@ -67,6 +75,10 @@ final posProductDetailProvider = FutureProvider.autoDispose
 
   if (session == null || !session.isAuthenticated || deviceContext == null) {
     return posCatalogFallbackDetail(productId);
+  }
+
+  if (!PosPermissionAccess.canViewProductsSession(session)) {
+    throw StateError('Product detail requires products.view permission.');
   }
 
   _ensureAuthorizationHeader(ref.read(appDioProvider), session);

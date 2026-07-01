@@ -7,22 +7,65 @@ class PosCatalogProductSummary {
     required this.categoryName,
     required this.basePrice,
     required this.hasVariants,
+    this.variantId,
     this.description,
     this.stockLabel = 'In Stock',
+    this.variantSearchTerms = const [],
+    this.directSearchTerms = const [],
+    this.imageUrl,
   });
 
   final String productId;
+  final String? variantId;
   final String name;
   final String? description;
   final String categoryName;
   final int basePrice;
   final bool hasVariants;
   final String stockLabel;
+  final List<String> variantSearchTerms;
+  final List<String> directSearchTerms;
+  final String? imageUrl;
 
   bool matches(String query) {
-    return productId.toLowerCase().contains(query) ||
-        name.toLowerCase().contains(query) ||
-        categoryName.toLowerCase().contains(query);
+    final normalizedQuery = normalizeSearchQuery(query);
+    if (normalizedQuery.isEmpty) {
+      return true;
+    }
+
+    if (_containsExactTerm(directSearchTerms, normalizedQuery)) {
+      return true;
+    }
+
+    final terms = searchTerms(normalizedQuery);
+    if (terms.isEmpty) {
+      return true;
+    }
+
+    final productName = name.toLowerCase();
+    if (productName.contains(normalizedQuery)) {
+      return true;
+    }
+
+    final productNameTerms =
+        terms.where((term) => productName.contains(term)).toSet();
+    if (productNameTerms.isEmpty) {
+      return false;
+    }
+
+    final remainingTerms =
+        terms.where((term) => !productNameTerms.contains(term)).toList();
+    if (remainingTerms.isEmpty) {
+      return true;
+    }
+
+    final normalizedVariantTerms =
+        variantSearchTerms.map((term) => term.toLowerCase()).toList();
+    return remainingTerms.every(
+      (term) => normalizedVariantTerms.any(
+        (variantTerm) => variantTerm.contains(term),
+      ),
+    );
   }
 }
 
@@ -89,6 +132,51 @@ class PosCatalogProductDetail {
 
     return null;
   }
+
+  Map<String, String> matchingVariantAttributesForSearchQuery(String query) {
+    final normalizedQuery = normalizeSearchQuery(query);
+    if (normalizedQuery.isEmpty) {
+      return const {};
+    }
+
+    final terms = searchTerms(normalizedQuery);
+    final productName = summary.name.toLowerCase();
+    if (productName.contains(normalizedQuery)) {
+      return const {};
+    }
+
+    final productNameTerms = terms
+        .where((term) => productName.contains(term))
+        .toList(growable: false);
+    if (productNameTerms.isEmpty) {
+      return const {};
+    }
+
+    final remainingTerms = terms
+        .where((term) => !productNameTerms.contains(term))
+        .toList(growable: false);
+
+    if (remainingTerms.isEmpty) {
+      return const {};
+    }
+
+    for (final variant in variants) {
+      final variantTerms = [
+        variant.sku,
+        ...variant.attributes.values,
+      ].map((term) => term.toLowerCase()).toList();
+
+      final matches = remainingTerms.every(
+        (term) => variantTerms.any((variantTerm) => variantTerm.contains(term)),
+      );
+
+      if (matches) {
+        return variant.attributes;
+      }
+    }
+
+    return const {};
+  }
 }
 
 PosNewSaleProduct toCartProduct({
@@ -98,7 +186,7 @@ PosNewSaleProduct toCartProduct({
 }) {
   final unitPrice = variant?.price ?? summary.basePrice;
   final attributes = variant?.attributes ?? const <String, String>{};
-  final variantId = variant?.variantId;
+  final variantId = variant?.variantId ?? summary.variantId;
   final cartKey = variantId ?? summary.productId;
 
   return PosNewSaleProduct(
@@ -108,6 +196,7 @@ PosNewSaleProduct toCartProduct({
     name: summary.name,
     category: summary.categoryName,
     price: unitPrice,
+    imageUrl: summary.imageUrl,
     stockLabel: _stockLabelForVariant(variant, summary.stockLabel),
     hasVariants: summary.hasVariants,
     sku: variant?.sku,
@@ -134,6 +223,27 @@ String formatVariantSummary(Map<String, String> attributes) {
   }
 
   return attributes.values.join(' / ');
+}
+
+String normalizeSearchQuery(String query) {
+  return query.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+}
+
+List<String> searchTerms(String query) {
+  final normalized = normalizeSearchQuery(query);
+  if (normalized.isEmpty) {
+    return const [];
+  }
+
+  return normalized
+      .split(' ')
+      .where((term) => term.isNotEmpty)
+      .toSet()
+      .toList(growable: false);
+}
+
+bool _containsExactTerm(List<String> terms, String query) {
+  return terms.any((term) => normalizeSearchQuery(term) == query);
 }
 
 int parsePriceToInt(dynamic value) {

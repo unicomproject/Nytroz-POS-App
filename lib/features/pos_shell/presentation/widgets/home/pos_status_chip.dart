@@ -20,7 +20,10 @@ class PosStatusChip extends StatelessWidget {
         isOpen ? TenantAdminColors.success : TenantAdminColors.warning;
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 48),
+      constraints: const BoxConstraints(
+        minHeight: 48,
+        maxWidth: 240,
+      ),
       padding: const EdgeInsets.symmetric(
         horizontal: TenantAdminSpacing.lg,
         vertical: TenantAdminSpacing.sm,
@@ -38,7 +41,6 @@ class PosStatusChip extends StatelessWidget {
         ],
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             width: 9,
@@ -49,12 +51,16 @@ class PosStatusChip extends StatelessWidget {
             ),
           ),
           const SizedBox(width: TenantAdminSpacing.sm),
-          Text(
-            '$tillLabel / $statusLabel',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: TenantAdminColors.bodyText,
-                  fontWeight: FontWeight.w700,
-                ),
+          Flexible(
+            child: Text(
+              '$tillLabel / $statusLabel',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: TenantAdminColors.bodyText,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
           ),
         ],
       ),
