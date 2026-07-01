@@ -34,7 +34,7 @@ class PosHomeHeader extends ConsumerWidget {
         final greeting = _Greeting(
           userDisplayName: userDisplayName,
           statusMessage: dashboard.isTillOpen
-              ? dashboard.statusMessage
+              ? "You're all set to serve your customers today."
               : '${dashboard.tillLabel} is not open.',
         );
         final contextItems = _HeaderContext(

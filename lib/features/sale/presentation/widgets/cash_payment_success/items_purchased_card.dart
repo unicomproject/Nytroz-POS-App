@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import '../../../../cart/presentation/widgets/pos_product_image.dart';
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../providers/pos_cash_payment_success_provider.dart';
 import '../payment/payment_panel_card.dart';
@@ -97,19 +98,11 @@ class _ItemRow extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
+              PosProductImage(
+                imageUrl: item.imageUrl,
+                category: item.category,
                 width: 44,
                 height: 44,
-                decoration: BoxDecoration(
-                  color: TenantAdminColors.background,
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-                  border: Border.all(color: TenantAdminColors.border),
-                ),
-                child: const Icon(
-                  Icons.inventory_2_outlined,
-                  color: TenantAdminColors.mutedText,
-                  size: 22,
-                ),
               ),
               const SizedBox(width: TenantAdminSpacing.sm),
               Expanded(

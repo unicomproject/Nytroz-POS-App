@@ -26,18 +26,21 @@ class ReceiptActionBar extends StatelessWidget {
               label: 'Print Receipt',
               icon: Icons.print_outlined,
               onPressed: onPrintReceipt!,
+              expand: useCompact,
             ),
           if (onNewSale != null)
             _OutlinedAction(
               label: 'New Sale',
               icon: Icons.add_shopping_cart_outlined,
               onPressed: onNewSale!,
+              expand: useCompact,
             ),
           if (onViewSales != null)
             _PrimaryAction(
               label: 'View Sales',
               icon: Icons.receipt_long_outlined,
               onPressed: onViewSales!,
+              expand: useCompact,
             ),
         ];
 
@@ -71,11 +74,13 @@ class _OutlinedAction extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.onPressed,
+    required this.expand,
   });
 
   final String label;
   final IconData icon;
   final VoidCallback onPressed;
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +88,7 @@ class _OutlinedAction extends StatelessWidget {
       label: label,
       icon: icon,
       onPressed: onPressed,
+      expand: expand,
     );
   }
 }
@@ -92,11 +98,13 @@ class _PrimaryAction extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.onPressed,
+    required this.expand,
   });
 
   final String label;
   final IconData icon;
   final VoidCallback onPressed;
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +112,7 @@ class _PrimaryAction extends StatelessWidget {
       label: label,
       icon: icon,
       onPressed: onPressed,
+      expand: expand,
     );
   }
 }

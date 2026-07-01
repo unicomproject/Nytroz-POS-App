@@ -5,6 +5,7 @@ import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import '../../../customer/presentation/providers/customer_search_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../providers/pos_cash_payment_success_provider.dart';
@@ -177,6 +178,7 @@ class PosCashPaymentSuccessScreen extends ConsumerWidget {
     ref.read(posNewSaleCartProvider.notifier).clear();
     ref.read(posCashPaymentSuccessProvider.notifier).clear();
     ref.read(posEmailReceiptFormProvider.notifier).clear();
+    ref.read(selectedCustomerProvider.notifier).state = null;
     context.go('/pos/new-sale');
   }
 

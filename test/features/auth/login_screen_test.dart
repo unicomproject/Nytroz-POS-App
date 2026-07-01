@@ -24,7 +24,7 @@ void main() {
 
       expect(find.text('Welcome Back!'), findsOneWidget);
       expect(find.text('Sign in to continue to Nytroz POS'), findsOneWidget);
-      expect(find.text('Tenant Code'), findsOneWidget);
+      expect(find.text('Tenant Code'), findsNothing);
       expect(find.text('Email'), findsOneWidget);
       expect(find.text('Password'), findsOneWidget);
       expect(find.text('Sign In'), findsOneWidget);
@@ -38,7 +38,6 @@ void main() {
       await tester.tap(find.text('Sign In'));
       await tester.pump();
 
-      expect(find.text('Tenant code is required'), findsOneWidget);
       expect(find.text('Email is required'), findsOneWidget);
       expect(find.text('Password is required'), findsOneWidget);
     });
@@ -54,11 +53,10 @@ void main() {
         ),
       );
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'TENANT001');
       await tester.enterText(
-          find.byType(TextFormField).at(1), 'cashier@test.local');
+          find.byType(TextFormField).at(0), 'cashier@test.local');
       await tester.enterText(
-          find.byType(TextFormField).at(2), 'wrong-password');
+          find.byType(TextFormField).at(1), 'wrong-password');
       await tester.ensureVisible(find.text('Sign In'));
       await tester.tap(find.text('Sign In'));
       await tester.pumpAndSettle();
@@ -88,10 +86,9 @@ void main() {
         },
       );
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'TENANT001');
       await tester.enterText(
-          find.byType(TextFormField).at(1), 'cashier@test.local');
-      await tester.enterText(find.byType(TextFormField).at(2), 'password');
+          find.byType(TextFormField).at(0), 'cashier@test.local');
+      await tester.enterText(find.byType(TextFormField).at(1), 'password');
       await tester.ensureVisible(find.text('Sign In'));
       await tester.tap(find.text('Sign In'));
       await tester.pumpAndSettle();
@@ -142,8 +139,7 @@ Future<void> _pumpLoginScreen(
 class _SuccessfulAuthRepository implements AuthRepository {
   @override
   Future<AuthSession> login({
-    required String tenantCode,
-    required String login,
+    required String email,
     required String password,
   }) async {
     return const AuthSession(
@@ -188,8 +184,7 @@ class _FailingLogin extends Login {
 
   @override
   Future<AuthSession> call({
-    required String tenantCode,
-    required String login,
+    required String email,
     required String password,
   }) async {
     throw error;

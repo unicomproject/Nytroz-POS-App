@@ -6,6 +6,7 @@ import 'package:nytroz_pos/features/auth/presentation/providers/session_provider
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/cart/presentation/widgets/pos_product_image.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'pos_product_variant_sheet.dart';
@@ -31,51 +32,46 @@ class PosProductGrid extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, __) => const _CatalogLoadError(),
       data: (catalog) {
-        final query =
-            ref.watch(posNewSaleSearchQueryProvider).trim().toLowerCase();
+        final query = ref.watch(posNewSaleSearchQueryProvider).trim();
         final selectedCategory = ref.watch(posNewSaleSelectedCategoryProvider);
         final products = catalog.products.where((product) {
           final matchesCategory = posNewSaleProductMatchesCategory(
             product.categoryName,
             selectedCategory,
           );
-          final matchesSearch = query.isEmpty || product.matches(query);
+          final matchesSearch = product.matches(query);
 
           return matchesCategory && matchesSearch;
         }).toList();
-
         return LayoutBuilder(
           builder: (context, constraints) {
-            final crossAxisCount = constraints.maxWidth < 500
-                ? 2
-                : constraints.maxWidth < 700
-                    ? 3
-                    : 4;
-
             if (products.isEmpty) {
               return const _NoProductsFound();
             }
 
-            return GridView.builder(
+            final crossAxisCount =
+                _crossAxisCountForWidth(constraints.maxWidth);
+            final tileWidth = (constraints.maxWidth -
+                    (TenantAdminSpacing.sm * (crossAxisCount - 1))) /
+                crossAxisCount;
+            final mainAxisExtent = (tileWidth + 64).clamp(168.0, 218.0);
+
+            return GridView.count(
               clipBehavior: Clip.hardEdge,
               padding: const EdgeInsets.only(bottom: TenantAdminSpacing.sm),
-              itemCount: products.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                crossAxisSpacing: TenantAdminSpacing.sm,
-                mainAxisSpacing: TenantAdminSpacing.sm,
-                mainAxisExtent: 152,
-              ),
-              itemBuilder: (context, index) {
-                final product = products[index];
-
-                return _ProductTile(
-                  product: product,
-                  onTap: canAddItems
-                      ? () => _handleProductTap(context, ref, product)
-                      : null,
-                );
-              },
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: TenantAdminSpacing.sm,
+              mainAxisSpacing: TenantAdminSpacing.sm,
+              childAspectRatio: tileWidth / mainAxisExtent,
+              children: [
+                for (final product in products)
+                  _ProductTile(
+                    product: product,
+                    onTap: canAddItems
+                        ? () => _handleProductTap(context, ref, product, query)
+                        : null,
+                  ),
+              ],
             );
           },
         );
@@ -83,16 +79,35 @@ class PosProductGrid extends ConsumerWidget {
     );
   }
 
+  int _crossAxisCountForWidth(double width) {
+    if (width < 340) {
+      return 1;
+    }
+    if (width < 520) {
+      return 2;
+    }
+    if (width < 760) {
+      return 3;
+    }
+    if (width < 1120) {
+      return 4;
+    }
+
+    return 5;
+  }
+
   Future<void> _handleProductTap(
     BuildContext context,
     WidgetRef ref,
     PosCatalogProductSummary product,
+    String query,
   ) async {
     if (product.hasVariants) {
       await showPosProductVariantSheet(
         context: context,
         ref: ref,
         summary: product,
+        initialSearchQuery: query,
       );
       return;
     }
@@ -118,8 +133,6 @@ class _ProductTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visual = _ProductVisual.forCategory(product.categoryName);
-
     return Material(
       color: TenantAdminColors.surface,
       borderRadius: BorderRadius.circular(TenantAdminRadius.md),
@@ -137,7 +150,11 @@ class _ProductTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _ProductImageFallback(visual: visual),
+                PosProductImage(
+                  imageUrl: product.imageUrl,
+                  category: product.categoryName,
+                  expand: true,
+                ),
                 const SizedBox(height: TenantAdminSpacing.sm),
                 Text(
                   product.name,
@@ -154,8 +171,8 @@ class _ProductTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: TenantAdminColors.success,
-                        fontWeight: FontWeight.w800,
+                        color: TenantAdminColors.bodyText,
+                        fontWeight: FontWeight.w900,
                       ),
                 ),
                 const SizedBox(height: TenantAdminSpacing.xs),
@@ -280,7 +297,7 @@ class _NoProductsFound extends StatelessWidget {
           ),
           const SizedBox(height: TenantAdminSpacing.xs),
           Text(
-            'Try a product name, category or SKU.',
+            'Try a product name or exact SKU/barcode.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: TenantAdminColors.mutedText,
                 ),
@@ -288,101 +305,5 @@ class _NoProductsFound extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _ProductImageFallback extends StatelessWidget {
-  const _ProductImageFallback({required this.visual});
-
-  final _ProductVisual visual;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: visual.backgroundColor,
-          borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-        ),
-        child: Center(
-          child: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.82),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              visual.icon,
-              color: visual.iconColor,
-              size: 22,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProductVisual {
-  const _ProductVisual({
-    required this.icon,
-    required this.backgroundColor,
-    required this.iconColor,
-  });
-
-  final IconData icon;
-  final Color backgroundColor;
-  final Color iconColor;
-
-  static _ProductVisual forCategory(String category) {
-    return switch (category.toLowerCase()) {
-      'tickets' || 'ticket' => const _ProductVisual(
-          icon: Icons.confirmation_number_outlined,
-          backgroundColor: Color(0xFFEFF6FF),
-          iconColor: TenantAdminColors.info,
-        ),
-      'services' || 'service' => const _ProductVisual(
-          icon: Icons.room_service_outlined,
-          backgroundColor: Color(0xFFF0FDF4),
-          iconColor: TenantAdminColors.success,
-        ),
-      'retail' => const _ProductVisual(
-          icon: Icons.shopping_bag_outlined,
-          backgroundColor: Color(0xFFFFF7ED),
-          iconColor: TenantAdminColors.warning,
-        ),
-      'food' => const _ProductVisual(
-          icon: Icons.restaurant_outlined,
-          backgroundColor: Color(0xFFFEF2F2),
-          iconColor: TenantAdminColors.danger,
-        ),
-      'drinks' || 'drink' => const _ProductVisual(
-          icon: Icons.local_cafe_outlined,
-          backgroundColor: Color(0xFFFFF7ED),
-          iconColor: TenantAdminColors.warning,
-        ),
-      'memberships' || 'membership' => const _ProductVisual(
-          icon: Icons.workspace_premium_outlined,
-          backgroundColor: Color(0xFFF5F3FF),
-          iconColor: TenantAdminColors.pending,
-        ),
-      'apparel' => const _ProductVisual(
-          icon: Icons.checkroom_outlined,
-          backgroundColor: Color(0xFFEFF6FF),
-          iconColor: TenantAdminColors.info,
-        ),
-      'accessories' => const _ProductVisual(
-          icon: Icons.watch_outlined,
-          backgroundColor: Color(0xFFF0FDF4),
-          iconColor: TenantAdminColors.success,
-        ),
-      _ => const _ProductVisual(
-          icon: Icons.inventory_2_outlined,
-          backgroundColor: TenantAdminColors.background,
-          iconColor: TenantAdminColors.mutedText,
-        ),
-    };
   }
 }

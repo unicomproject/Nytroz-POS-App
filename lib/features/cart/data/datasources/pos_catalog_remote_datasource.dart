@@ -95,6 +95,9 @@ class PosCatalogRemoteDatasource {
       basePrice: parsePriceToInt(json['basePrice']),
       hasVariants: json['hasVariants'] == true,
       stockLabel: 'From ${formatLkr(parsePriceToInt(json['basePrice']))}',
+      variantSearchTerms: _stringList(json['variantSearchTerms']),
+      directSearchTerms: _stringList(json['directSearchTerms']),
+      imageUrl: _imageUrl(json),
     );
   }
 
@@ -106,6 +109,9 @@ class PosCatalogRemoteDatasource {
       categoryName: json['categoryName']?.toString() ?? 'General',
       basePrice: parsePriceToInt(json['basePrice']),
       hasVariants: json['hasVariants'] == true,
+      variantSearchTerms: _stringList(json['variantSearchTerms']),
+      directSearchTerms: _stringList(json['directSearchTerms']),
+      imageUrl: _imageUrl(json),
     );
 
     final variantGroups = (json['variantGroups'] as List? ?? const [])
@@ -150,6 +156,29 @@ class PosCatalogRemoteDatasource {
       stockStatus: stockStatusFromApi(json['stockStatus']?.toString()),
       attributes: attributes,
     );
+  }
+
+  List<String> _stringList(Object? value) {
+    if (value is Iterable) {
+      return value
+          .map((item) => item.toString().trim())
+          .where((item) => item.isNotEmpty)
+          .toList(growable: false);
+    }
+
+    return const [];
+  }
+
+  String? _imageUrl(Map<String, dynamic> json) {
+    final value = json['imageUrl'] ??
+        json['imageStorageKey'] ??
+        json['ImageStorageKey'];
+    final url = value?.toString().trim();
+    if (url == null || url.isEmpty) {
+      return null;
+    }
+
+    return url;
   }
 }
 

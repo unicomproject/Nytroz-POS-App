@@ -5,6 +5,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import '../../../customer/presentation/providers/customer_search_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../data/datasources/pos_checkout_remote_datasource.dart';
 import '../../domain/entities/pos_checkout_api_exception.dart';
@@ -108,6 +109,7 @@ final posCheckoutSummaryProvider =
   final cart = ref.watch(posNewSaleCartProvider);
   final session = ref.watch(authSessionProvider);
   final deviceContext = ref.watch(deviceActivationProvider).deviceContext;
+  final selectedCustomer = ref.watch(selectedCustomerProvider);
   final grantedPermissions = session?.permissionCodes.toSet() ?? const {};
 
   if (!cart.hasItems) {
@@ -136,6 +138,7 @@ final posCheckoutSummaryProvider =
         await ref.watch(posCheckoutRemoteDatasourceProvider).getCheckoutSummary(
               deviceId: deviceContext.deviceId,
               lines: lines,
+              customerId: selectedCustomer?.id,
             );
 
     return PosCheckoutSummaryViewData.fromPayload(

@@ -45,7 +45,8 @@ class PosPaymentMethodScreen extends ConsumerWidget {
 
         return LayoutBuilder(
           builder: (context, constraints) {
-            final padding = TenantAdminInsets.pageForWidth(constraints.maxWidth);
+            final padding =
+                TenantAdminInsets.pageForWidth(constraints.maxWidth);
             final useSideBySide =
                 constraints.maxWidth >= TenantAdminBreakpoints.tablet;
 
@@ -94,17 +95,14 @@ class PosPaymentMethodScreen extends ConsumerWidget {
                               children: [
                                 _LeftPanel(summary: summary),
                                 const SizedBox(height: TenantAdminSpacing.lg),
-                                SizedBox(
-                                  height: 360,
-                                  child: _PaymentMethodPanel(
-                                    allowedMethods: allowedMethods,
-                                    canNavigate: !summary.usedFallback,
-                                    onMethodTap: (method) => _onPaymentMethodTap(
-                                      context,
-                                      grantedPermissions,
-                                      summary,
-                                      method,
-                                    ),
+                                _PaymentMethodPanel(
+                                  allowedMethods: allowedMethods,
+                                  canNavigate: !summary.usedFallback,
+                                  onMethodTap: (method) => _onPaymentMethodTap(
+                                    context,
+                                    grantedPermissions,
+                                    summary,
+                                    method,
                                   ),
                                 ),
                               ],
@@ -367,31 +365,55 @@ class _PaymentMethodPanel extends StatelessWidget {
             ),
             const SizedBox(height: TenantAdminSpacing.lg),
             if (allowedMethods.isEmpty)
-              const Expanded(child: _NoPaymentMethodsMessage())
+              const _NoPaymentMethodsMessage()
             else
-              Expanded(
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: TenantAdminSpacing.md,
-                    mainAxisSpacing: TenantAdminSpacing.md,
-                    childAspectRatio: 1.45,
-                  ),
-                  itemCount: allowedMethods.length,
-                  itemBuilder: (context, index) {
-                    final method = allowedMethods[index];
-                    return PaymentMethodCard(
-                      method: method,
-                      onTap: canNavigate ? () => onMethodTap(method) : () {},
-                    );
-                  },
-                ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final crossAxisCount =
+                      _paymentColumnsForWidth(constraints.maxWidth);
+                  final rowCount =
+                      (allowedMethods.length / crossAxisCount).ceil();
+                  final gridHeight = (rowCount * 132.0) +
+                      ((rowCount - 1) * TenantAdminSpacing.md);
+
+                  return SizedBox(
+                    height: gridHeight.clamp(132.0, 420.0),
+                    child: GridView.builder(
+                      physics: const ClampingScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: TenantAdminSpacing.md,
+                        mainAxisSpacing: TenantAdminSpacing.md,
+                        mainAxisExtent: 132,
+                      ),
+                      itemCount: allowedMethods.length,
+                      itemBuilder: (context, index) {
+                        final method = allowedMethods[index];
+                        return PaymentMethodCard(
+                          method: method,
+                          onTap:
+                              canNavigate ? () => onMethodTap(method) : () {},
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
           ],
         ),
       ),
     );
+  }
+
+  int _paymentColumnsForWidth(double width) {
+    if (width < 380) {
+      return 1;
+    }
+    if (width < 760) {
+      return 2;
+    }
+
+    return 3;
   }
 }
 

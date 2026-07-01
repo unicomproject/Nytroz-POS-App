@@ -50,29 +50,37 @@ class PosBottomOutlinedButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.expand = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
     final style = posBottomOutlinedButtonStyle();
 
     if (icon != null) {
-      return OutlinedButton.icon(
-        onPressed: onPressed,
-        style: style,
-        icon: Icon(icon, size: PosBottomActionSizes.iconSize),
-        label: Text(label),
+      return SizedBox(
+        width: expand ? double.infinity : null,
+        child: OutlinedButton.icon(
+          onPressed: onPressed,
+          style: style,
+          icon: Icon(icon, size: PosBottomActionSizes.iconSize),
+          label: Text(label, overflow: TextOverflow.ellipsis),
+        ),
       );
     }
 
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: style,
-      child: Text(label),
+    return SizedBox(
+      width: expand ? double.infinity : null,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: style,
+        child: Text(label, overflow: TextOverflow.ellipsis),
+      ),
     );
   }
 }
@@ -86,6 +94,7 @@ class PosBottomFilledButton extends StatelessWidget {
     this.isLoading = false,
     this.backgroundColor = TenantAdminColors.info,
     this.disabledBackgroundColor,
+    this.expand = false,
   });
 
   final String label;
@@ -94,6 +103,7 @@ class PosBottomFilledButton extends StatelessWidget {
   final bool isLoading;
   final Color backgroundColor;
   final Color? disabledBackgroundColor;
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
@@ -103,33 +113,42 @@ class PosBottomFilledButton extends StatelessWidget {
     );
 
     if (isLoading) {
-      return FilledButton(
-        onPressed: null,
-        style: style,
-        child: const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: Colors.white,
+      return SizedBox(
+        width: expand ? double.infinity : null,
+        child: FilledButton(
+          onPressed: null,
+          style: style,
+          child: const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.white,
+            ),
           ),
         ),
       );
     }
 
     if (icon != null) {
-      return FilledButton.icon(
-        onPressed: onPressed,
-        style: style,
-        icon: Icon(icon, size: PosBottomActionSizes.iconSize),
-        label: Text(label),
+      return SizedBox(
+        width: expand ? double.infinity : null,
+        child: FilledButton.icon(
+          onPressed: onPressed,
+          style: style,
+          icon: Icon(icon, size: PosBottomActionSizes.iconSize),
+          label: Text(label, overflow: TextOverflow.ellipsis),
+        ),
       );
     }
 
-    return FilledButton(
-      onPressed: onPressed,
-      style: style,
-      child: Text(label),
+    return SizedBox(
+      width: expand ? double.infinity : null,
+      child: FilledButton(
+        onPressed: onPressed,
+        style: style,
+        child: Text(label, overflow: TextOverflow.ellipsis),
+      ),
     );
   }
 }

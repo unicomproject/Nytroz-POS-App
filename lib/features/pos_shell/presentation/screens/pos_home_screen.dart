@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../customer/presentation/widgets/add_customer_dialog.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
@@ -192,19 +193,24 @@ class _DashboardSections extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isFixedLayout = constraints.hasBoundedHeight;
+        final useScrollableLayout = !isFixedLayout ||
+            constraints.maxWidth < TenantAdminBreakpoints.tablet ||
+            constraints.maxHeight < 720;
 
         final topGrid = PosHomeTopGrid(
           startSaleAction: startSaleAction,
           onlineOrdersAction: onlineOrdersAction,
           startSaleTitle: 'Start a Sale',
           startSaleDescription:
-              'Create a new transaction for any product, ticket, service or experience.',
-          startSaleButtonLabel: dashboard.startSaleButtonLabel,
+              'Tap anywhere on this card to start a new sale and serve your customer.',
           showStartSale: showStartSale,
           showOnlineOrders: showOnlineOrders,
           isStartSaleEnabled: isStartSaleEnabled,
           startSaleDisabledMessage: startSaleDisabledMessage,
           onStartSale: () => context.go('/pos/new-sale'),
+          onViewOrders: onlineOrdersAction?.routeExists == true
+              ? () => context.go('/pos/orders')
+              : null,
         );
         final bottomGrid = PosHomeBottomGrid(
           returnsAction: returnsAction,
@@ -216,28 +222,30 @@ class _DashboardSections extends StatelessWidget {
           showParkedSales: showParkedSales,
           showCashDrawer: showCashDrawer,
           onViewReturns: () => context.go('/pos/returns-refunds'),
-          onAddCustomer: () => context.go('/pos/customers'),
+          onAddCustomer: () => showAddCustomerDialog(context),
           onViewParkedSales: () => context.go('/pos/parked-sales'),
           onViewCashDrawer: () => context.go('/pos/cash-drawer'),
         );
 
-        if (!isFixedLayout) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              PosHomeHeader(dashboard: dashboard),
-              if (dashboardStatus != null) ...[
-                const SizedBox(height: TenantAdminSpacing.md),
-                dashboardStatus!,
-              ],
-              const SizedBox(height: TenantAdminSpacing.xl),
-              topGrid,
-              if (hasBottomCards) ...[
+        if (useScrollableLayout) {
+          return SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                PosHomeHeader(dashboard: dashboard),
+                if (dashboardStatus != null) ...[
+                  const SizedBox(height: TenantAdminSpacing.md),
+                  dashboardStatus!,
+                ],
                 const SizedBox(height: TenantAdminSpacing.xl),
-                bottomGrid,
+                topGrid,
+                if (hasBottomCards) ...[
+                  const SizedBox(height: TenantAdminSpacing.xl),
+                  bottomGrid,
+                ],
               ],
-            ],
+            ),
           );
         }
 

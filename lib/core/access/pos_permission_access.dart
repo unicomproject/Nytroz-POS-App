@@ -283,6 +283,12 @@ class PosPermissionAccess {
         return canParkOrViewParkedSales(granted);
       case PosPermissionCodes.viewSales:
         return canViewSales(granted);
+      case PosPermissionCodes.viewOrders:
+      case PosPermissionCodes.manageOnlineOrders:
+        // POS Orders card visibility: allow with either POS Orders view or the
+        // legacy online-orders manage permission. Not an e-commerce entitlement.
+        return granted.contains(PosPermissionCodes.viewOrders) ||
+            granted.contains(PosPermissionCodes.manageOnlineOrders);
       case PosPermissionCodes.viewReceipts:
         return canViewReceipts(granted);
       case PosPermissionCodes.printReceipts:

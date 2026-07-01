@@ -19,24 +19,40 @@ class CashPaymentBottomActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: PosBottomOutlinedButton(
-            label: 'Back',
-            onPressed: isLoading ? null : onBack,
-          ),
-        ),
-        const SizedBox(width: TenantAdminSpacing.md),
-        Expanded(
-          flex: 2,
-          child: PosBottomFilledButton(
-            label: 'Confirm Cash Payment',
-            onPressed: canConfirm && !isLoading ? onConfirm : null,
-            isLoading: isLoading,
-          ),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 520;
+        final backButton = PosBottomOutlinedButton(
+          label: 'Back',
+          onPressed: isLoading ? null : onBack,
+          expand: compact,
+        );
+        final confirmButton = PosBottomFilledButton(
+          label: 'Confirm Cash Payment',
+          onPressed: canConfirm && !isLoading ? onConfirm : null,
+          isLoading: isLoading,
+          expand: compact,
+        );
+
+        if (compact) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              confirmButton,
+              const SizedBox(height: TenantAdminSpacing.sm),
+              backButton,
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: backButton),
+            const SizedBox(width: TenantAdminSpacing.md),
+            Expanded(flex: 2, child: confirmButton),
+          ],
+        );
+      },
     );
   }
 }

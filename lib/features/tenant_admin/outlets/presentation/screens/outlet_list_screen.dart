@@ -6,6 +6,7 @@ import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../providers/outlet_providers.dart';
 import '../providers/outlet_visibility_provider.dart';
+import '../utils/outlet_api_errors.dart';
 import '../widgets/outlet_list_panel.dart';
 import '../widgets/outlet_metric_cards.dart';
 
@@ -29,7 +30,7 @@ class OutletListScreen extends ConsumerWidget {
         subtitle: 'Manage the places where your business sells.',
         child: TenantAdminErrorState(
           title: 'Unable to load outlets',
-          message: 'Please try again.',
+          message: outletLoadErrorMessage(error),
           onRetry: () => ref.invalidate(outletListVisibilityProvider),
         ),
       ),
@@ -57,7 +58,7 @@ class OutletListScreen extends ConsumerWidget {
             subtitle: 'Manage the places where your business sells.',
             child: TenantAdminErrorState(
               title: 'Unable to load outlets',
-              message: 'Please try again.',
+              message: outletLoadErrorMessage(error),
               onRetry: () => ref.refresh(outletListProvider),
             ),
           ),

@@ -5,6 +5,7 @@ import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import '../../../customer/presentation/providers/customer_search_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -148,7 +149,8 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
                                 ),
                                 const SizedBox(height: TenantAdminSpacing.lg),
                                 SizedBox(
-                                  height: 520,
+                                  height:
+                                      constraints.maxWidth < 420 ? 480 : 520,
                                   child: CashPaymentRightPanel(
                                     total: total,
                                     cashReceived: cashReceived,
@@ -220,6 +222,7 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
                     checkoutApiPaymentMethodCode(PosPaymentMethodType.cash),
                 lines: checkoutLinesFromCart(cart),
                 cashReceived: cashReceived,
+                customerId: ref.read(selectedCustomerProvider)?.id,
               );
 
       ref

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
@@ -189,16 +188,12 @@ class _TopBarSearchFieldState extends ConsumerState<_TopBarSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    // a mobile search field is added (requires products.search).
-    final isNewSaleRoute =
-        GoRouterState.of(context).uri.path == '/pos/new-sale';
     final session = ref.watch(authSessionProvider);
     final canSearchProducts =
         session?.hasPermission(PosPermissionCodes.searchProducts) == true;
-    final isSearchEnabled = isNewSaleRoute && canSearchProducts;
-    final searchQuery = isNewSaleRoute && canSearchProducts
-        ? ref.watch(posNewSaleSearchQueryProvider)
-        : '';
+    final isSearchEnabled = canSearchProducts;
+    final searchQuery =
+        canSearchProducts ? ref.watch(posNewSaleSearchQueryProvider) : '';
     _syncControllerText(searchQuery);
 
     return ConstrainedBox(

@@ -12,7 +12,6 @@ class PosHomeTopGrid extends StatelessWidget {
     required this.onlineOrdersAction,
     required this.startSaleTitle,
     required this.startSaleDescription,
-    required this.startSaleButtonLabel,
     required this.showStartSale,
     required this.showOnlineOrders,
     required this.isStartSaleEnabled,
@@ -25,7 +24,6 @@ class PosHomeTopGrid extends StatelessWidget {
   final PosHomeAction? onlineOrdersAction;
   final String startSaleTitle;
   final String startSaleDescription;
-  final String startSaleButtonLabel;
   final bool showStartSale;
   final bool showOnlineOrders;
   final bool isStartSaleEnabled;
@@ -48,7 +46,6 @@ class PosHomeTopGrid extends StatelessWidget {
             ? PosStartSaleHeroCard(
                 title: startSaleTitle,
                 description: startSaleDescription,
-                buttonLabel: startSaleButtonLabel,
                 isEnabled: isStartSaleEnabled && startSaleAction.routeExists,
                 disabledMessage: startSaleDisabledMessage ??
                     (startSaleAction.routeExists
@@ -65,19 +62,8 @@ class PosHomeTopGrid extends StatelessWidget {
             : null;
 
         if (isStacked) {
-          if (constraints.hasBoundedHeight) {
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (hero != null) Expanded(child: hero),
-                if (hero != null && onlineOrders != null)
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                if (onlineOrders != null) Expanded(child: onlineOrders),
-              ],
-            );
-          }
-
           return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (hero != null) hero,
               if (hero != null && onlineOrders != null)

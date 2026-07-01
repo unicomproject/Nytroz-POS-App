@@ -11,7 +11,6 @@ import '../providers/pos_cash_payment_success_provider.dart';
 import '../providers/pos_checkout_summary_provider.dart';
 import '../widgets/print_receipt/print_receipt_bottom_actions.dart';
 import '../widgets/print_receipt/print_receipt_header.dart';
-import '../widgets/print_receipt/printer_options_card.dart';
 import '../widgets/print_receipt/receipt_preview_card.dart';
 
 class PosPrintReceiptScreen extends ConsumerWidget {
@@ -53,43 +52,21 @@ class PosPrintReceiptScreen extends ConsumerWidget {
               ),
               const SizedBox(height: TenantAdminSpacing.lg),
               Expanded(
-                child: useWideLayout
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: SingleChildScrollView(
-                              child: ReceiptPreviewCard(
-                                successData: successData,
-                                cashierName: cashierName,
-                                sessionContext: sessionContext,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: TenantAdminSpacing.lg),
-                          const Expanded(
-                            flex: 2,
-                            child: SingleChildScrollView(
-                              child: PrinterOptionsCard(),
-                            ),
-                          ),
-                        ],
-                      )
-                    : SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            ReceiptPreviewCard(
-                              successData: successData,
-                              cashierName: cashierName,
-                              sessionContext: sessionContext,
-                            ),
-                            const SizedBox(height: TenantAdminSpacing.lg),
-                            const PrinterOptionsCard(),
-                          ],
-                        ),
+                child: SingleChildScrollView(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: useWideLayout ? 640 : double.infinity,
                       ),
+                      child: ReceiptPreviewCard(
+                        successData: successData,
+                        cashierName: cashierName,
+                        sessionContext: sessionContext,
+                      ),
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: TenantAdminSpacing.lg),
               PrintReceiptBottomActions(

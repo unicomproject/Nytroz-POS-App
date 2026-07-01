@@ -109,6 +109,16 @@ PosHomeDashboardState buildPosHomeShellState({
         permissionKey: PosPermissionCodes.viewNewSale,
       ),
       const PosHomeAction(
+        key: 'manage-online-orders',
+        label: 'Manage Online Orders',
+        description: 'Review incoming online orders from one place.',
+        iconKey: 'online-orders',
+        buttonLabel: 'View Orders',
+        isEnabled: true,
+        targetRoute: '/pos/orders',
+        permissionKey: PosPermissionCodes.viewOrders,
+      ),
+      const PosHomeAction(
         key: 'returns-refunds',
         label: 'Returns & Refunds',
         description: 'Review eligible items for return or refund.',
@@ -215,20 +225,20 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         featureKey: PosFeatureCodes.sales,
         permissionKey: PosPermissionCodes.viewNewSale,
       ),
-      if (onlineOrdersCard != null &&
-          permissions.contains(PosPermissionCodes.manageOnlineOrders))
-        PosHomeAction(
-          key: 'manage-online-orders',
-          label: 'Manage Online Orders',
-          description: 'Review incoming online orders from one place.',
-          iconKey: 'online-orders',
-          buttonLabel: 'View Orders',
-          isEnabled: onlineOrdersCard.enabled,
-          routeExists: false,
-          onTapActionKey: 'manage-online-orders',
-          featureKey: PosFeatureCodes.onlineOrders,
-          permissionKey: PosPermissionCodes.manageOnlineOrders,
-        ),
+      // Release 1: this card opens the POS Orders screen. It uses POS Orders
+      // visibility (orders.view OR pos.online_orders.manage) and no e-commerce
+      // feature entitlement, so it appears even when the backend payload omits
+      // an online-orders block.
+      const PosHomeAction(
+        key: 'manage-online-orders',
+        label: 'Manage Online Orders',
+        description: 'Review incoming online orders from one place.',
+        iconKey: 'online-orders',
+        buttonLabel: 'View Orders',
+        isEnabled: true,
+        targetRoute: '/pos/orders',
+        permissionKey: PosPermissionCodes.viewOrders,
+      ),
       PosHomeAction(
         key: 'returns-refunds',
         label: 'Returns & Refunds',

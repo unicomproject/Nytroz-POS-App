@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/access/pos_access_codes.dart';
 import '../../core/access/pos_permission_access.dart';
 import '../auth/domain/entities/auth_session.dart';
 import '../auth/presentation/providers/session_provider.dart';
@@ -116,6 +117,13 @@ List<RouteBase> posShellRoutes(Ref ref) {
               ],
             ),
           ],
+        ),
+        GoRoute(
+          path: '/pos/orders',
+          builder: (context, state) =>
+              _canViewOrders(ref.read(authSessionProvider))
+                  ? const PosPlaceholderScreen(title: 'Orders')
+                  : const TenantAdminForbiddenScreen(),
         ),
         GoRoute(
           path: '/pos/customers',
@@ -236,6 +244,13 @@ bool _canViewReceipt(AuthSession? session) {
 
 bool _canPrintReceipt(AuthSession? session) {
   return PosPermissionAccess.canPrintReceiptsSession(session);
+}
+
+bool _canViewOrders(AuthSession? session) {
+  final granted = session?.permissionCodes.toSet() ?? const {};
+  return _canViewPosHome(session) &&
+      (granted.contains(PosPermissionCodes.viewOrders) ||
+          granted.contains(PosPermissionCodes.manageOnlineOrders));
 }
 
 bool _canViewCustomers(AuthSession? session) {

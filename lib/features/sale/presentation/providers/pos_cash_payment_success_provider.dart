@@ -12,6 +12,8 @@ class PosCashPaymentSuccessLineItem {
     required this.unitPrice,
     required this.lineTotal,
     this.variantSummary,
+    this.imageUrl,
+    this.category = 'Retail',
   });
 
   final String name;
@@ -19,6 +21,8 @@ class PosCashPaymentSuccessLineItem {
   final int unitPrice;
   final int lineTotal;
   final String? variantSummary;
+  final String? imageUrl;
+  final String category;
 }
 
 class PosCashPaymentSuccessData {
@@ -71,6 +75,8 @@ class PosCashPaymentSuccessNotifier
             variantSummary: item.product.variantSummary.trim().isEmpty
                 ? null
                 : item.product.variantSummary,
+            imageUrl: item.product.imageUrl,
+            category: item.product.category,
           ),
         )
         .toList(growable: false);
