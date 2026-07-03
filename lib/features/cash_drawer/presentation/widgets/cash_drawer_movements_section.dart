@@ -25,7 +25,7 @@ class CashDrawerMovementsSection extends StatelessWidget {
           ),
           const SizedBox(height: TenantAdminSpacing.lg),
           if (movements.isEmpty)
-            _EmptyMovementsState()
+            const _EmptyMovementsState()
           else
             LayoutBuilder(
               builder: (context, constraints) {
@@ -53,6 +53,8 @@ class CashDrawerMovementsSection extends StatelessWidget {
 }
 
 class _EmptyMovementsState extends StatelessWidget {
+  const _EmptyMovementsState();
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -110,13 +112,13 @@ class _MovementsTable extends StatelessWidget {
           },
           defaultVerticalAlignment: TableCellVerticalAlignment.middle,
           children: [
-            TableRow(
-              decoration: const BoxDecoration(
+            const TableRow(
+              decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(color: TenantAdminColors.border),
                 ),
               ),
-              children: const [
+              children: [
                 _TableHeaderCell('Type'),
                 _TableHeaderCell('Amount'),
                 _TableHeaderCell('Date & Time'),
