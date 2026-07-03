@@ -68,23 +68,28 @@ String _totalTillsSubtitle(TillListSummary summary) => 'Across all outlets';
 String _onlineValue(TillListSummary summary) => '${summary.onlineCount}';
 
 String _onlineSubtitle(TillListSummary summary) {
-  final percent = summary.onlinePercent?.round() ?? 0;
-  return '$percent% of total';
+  return '${_percent(summary.onlineCount, summary.totalTills)}% of total';
 }
 
 String _offlineValue(TillListSummary summary) => '${summary.offlineCount}';
 
 String _offlineSubtitle(TillListSummary summary) {
-  final percent = summary.offlinePercent?.round() ?? 0;
-  return '$percent% of total';
+  return '${_percent(summary.offlineCount, summary.totalTills)}% of total';
 }
 
 String _needsAttentionValue(TillListSummary summary) =>
     '${summary.needsAttentionCount}';
 
 String _needsAttentionSubtitle(TillListSummary summary) {
-  final percent = summary.needsAttentionPercent?.round() ?? 0;
-  return '$percent% of total';
+  return '${_percent(summary.needsAttentionCount, summary.totalTills)}% of total';
+}
+
+int _percent(int value, int total) {
+  if (total <= 0) {
+    return 0;
+  }
+
+  return ((value / total) * 100).round();
 }
 
 List<TillSummaryCardConfig> visibleTillSummaryCards(

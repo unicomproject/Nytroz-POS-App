@@ -6,7 +6,6 @@ import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_co
 import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_access_checker.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_access_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/application/usecases/create_till.dart';
-import 'package:nytroz_pos/features/tenant_admin/tills/application/usecases/get_tills.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/domain/repositories/till_repository.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/presentation/providers/till_providers.dart';
