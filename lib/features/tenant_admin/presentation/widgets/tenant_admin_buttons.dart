@@ -100,16 +100,15 @@ class TenantAdminIconButton extends StatelessWidget {
           height: 40,
           decoration: BoxDecoration(
             color: danger
-                ? TenantAdminColors.danger.withValues(alpha: 0.08)
-                : TenantAdminColors.surface,
+                ? TenantAdminColors.danger.withValues(alpha: 0.05)
+                : TenantAdminColors.primary.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            border: Border.all(color: TenantAdminColors.border),
           ),
           child: Icon(
             icon,
             size: 20,
             color:
-                danger ? TenantAdminColors.danger : TenantAdminColors.bodyText,
+                danger ? TenantAdminColors.danger : TenantAdminColors.primary,
           ),
         ),
       ),

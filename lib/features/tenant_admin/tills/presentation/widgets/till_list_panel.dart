@@ -36,16 +36,28 @@ class TillListPanel extends ConsumerWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: TenantAdminColors.border),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08071A33),
+            blurRadius: 24,
+            offset: Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Color(0x04071A33),
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: TenantAdminSpacing.lg,
-              vertical: TenantAdminSpacing.md,
+              horizontal: 20,
+              vertical: 16,
             ),
             child: isMobile
                 ? Column(
@@ -252,52 +264,59 @@ class _PanelToolbar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final children = <Widget>[
-      if (visibility.showSearch)
-        Expanded(
-          child: TenantAdminSearchField(
-            hint: 'Search tills...',
+    final searchField = visibility.showSearch
+        ? TenantAdminSearchField(
+            hint: 'Search tills by name, code or outlet',
             value: ref.watch(tillSearchProvider),
             onChanged: (value) {
               ref.read(tillSearchProvider.notifier).state = value;
               ref.read(tillPageProvider.notifier).state = 1;
             },
-          ),
-        ),
-      if (visibility.showFilters) ...[
-        if (visibility.showSearch) const SizedBox(width: TenantAdminSpacing.sm),
+          )
+        : null;
+
+    final actionButtons = <Widget>[
+      if (visibility.showFilters)
         TenantAdminSecondaryButton(
           label: 'Filter',
           icon: Icons.filter_alt_outlined,
           onPressed: () => _showFilterSheet(context, ref, statusFilter),
         ),
-      ],
-      if (visibility.showAddTill) ...[
-        const SizedBox(width: TenantAdminSpacing.sm),
+      if (visibility.showAddTill)
         TenantAdminPrimaryButton(
           label: isMobile ? 'Add' : 'Add New Till',
           icon: Icons.add,
           onPressed: () => context.go('/tenant-admin/tills/add'),
         ),
-      ],
     ];
 
     if (isMobile) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (visibility.showSearch) children.first,
-          const SizedBox(height: TenantAdminSpacing.sm),
-          Wrap(
-            spacing: TenantAdminSpacing.sm,
-            runSpacing: TenantAdminSpacing.sm,
-            children: children.skip(visibility.showSearch ? 1 : 0).toList(),
-          ),
+          if (searchField != null) searchField,
+          if (searchField != null && actionButtons.isNotEmpty)
+            const SizedBox(height: TenantAdminSpacing.sm),
+          if (actionButtons.isNotEmpty)
+            Wrap(
+              spacing: TenantAdminSpacing.sm,
+              runSpacing: TenantAdminSpacing.sm,
+              children: actionButtons,
+            ),
         ],
       );
     }
 
-    return Row(children: children);
+    return Row(
+      children: [
+        if (searchField != null) Expanded(child: searchField),
+        for (var index = 0; index < actionButtons.length; index++) ...[
+          if (searchField != null || index > 0)
+            const SizedBox(width: TenantAdminSpacing.sm),
+          actionButtons[index],
+        ],
+      ],
+    );
   }
 }
 
@@ -323,8 +342,8 @@ class _PaginationFooter extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: TenantAdminSpacing.lg,
-        vertical: TenantAdminSpacing.md,
+        horizontal: 20,
+        vertical: TenantAdminSpacing.sm,
       ),
       child: Row(
         children: [

@@ -207,6 +207,9 @@ TenantAdminAccessChecker _checker({
       tenantName: 'Coffee Corner Ltd',
       userId: 'user-test',
       userDisplayName: 'Sarah Ahmed',
+      roles: const [
+        TenantAdminRoleScope(roleId: 'role-owner', roleName: 'Owner'),
+      ],
       roleNames: const ['Owner'],
       roles: const [
         TenantAdminRoleScope(roleId: 'role-1', roleName: 'Owner'),

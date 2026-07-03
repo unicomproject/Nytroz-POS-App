@@ -38,10 +38,11 @@ class TenantAdminMetricCard extends StatelessWidget {
         final headerGap = isCompact ? 6.0 : 12.0;
         final valueStyle = (isCompact
                 ? Theme.of(context).textTheme.titleMedium
-                : Theme.of(context).textTheme.headlineSmall)
+                : Theme.of(context).textTheme.headlineMedium)
             ?.copyWith(
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w900,
           color: TenantAdminColors.bodyText,
+          letterSpacing: -1.0,
         );
         final accentColor = _accentColor(status);
 
@@ -60,15 +61,26 @@ class TenantAdminMetricCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    width: iconBoxSize,
-                    height: iconBoxSize,
+                    width: iconBoxSize + 6,
+                    height: iconBoxSize + 6,
                     decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(11),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          accentColor.withValues(alpha: 0.2),
+                          accentColor.withValues(alpha: 0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: accentColor.withValues(alpha: 0.1),
+                        width: 1,
+                      ),
                     ),
                     child: Icon(
                       icon,
-                      size: iconSize,
+                      size: iconSize + 2,
                       color: accentColor,
                     ),
                   ),

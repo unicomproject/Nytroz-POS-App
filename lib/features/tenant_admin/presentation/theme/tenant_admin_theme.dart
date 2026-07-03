@@ -46,9 +46,9 @@ class TenantAdminShadows {
 
   static const card = [
     BoxShadow(
-      color: Color(0x0F0F172A),
-      blurRadius: 24,
-      offset: Offset(0, 10),
+      color: Color(0x0A0F172A), // 4% opacity
+      blurRadius: 32,
+      offset: Offset(0, 12),
     ),
   ];
 }
@@ -81,25 +81,29 @@ class TenantAdminTextStyles {
 
   static TextStyle pageTitle(BuildContext context) {
     return Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
               color: TenantAdminColors.bodyText,
+              letterSpacing: -0.5,
             ) ??
         const TextStyle(
           fontSize: 26,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w800,
           color: TenantAdminColors.bodyText,
+          letterSpacing: -0.5,
         );
   }
 
   static TextStyle sectionTitle(BuildContext context) {
     return Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: TenantAdminColors.bodyText,
+              letterSpacing: -0.3,
             ) ??
         const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w700,
           color: TenantAdminColors.bodyText,
+          letterSpacing: -0.3,
         );
   }
 

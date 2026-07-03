@@ -68,22 +68,29 @@ class TenantAdminDataTable extends StatelessWidget {
                 columnSpacing: TenantAdminSpacing.xl,
               ),
             ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                headingTextStyle: const TextStyle(
-                  color: TenantAdminColors.mutedText,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                ),
-                dataTextStyle: const TextStyle(
-                  color: TenantAdminColors.bodyText,
-                  fontWeight: FontWeight.w500,
-                ),
-                showCheckboxColumn: showCheckboxColumn,
-                columns: columns,
-                rows: rows,
-              ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                    child: DataTable(
+                      headingTextStyle: const TextStyle(
+                        color: TenantAdminColors.mutedText,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                      dataTextStyle: const TextStyle(
+                        color: TenantAdminColors.bodyText,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      showCheckboxColumn: showCheckboxColumn,
+                      columns: columns,
+                      rows: rows,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           if (footer != null) ...[

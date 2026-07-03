@@ -194,13 +194,16 @@ class _PanelTitle extends StatelessWidget {
             vertical: TenantAdminSpacing.xs,
           ),
           decoration: BoxDecoration(
-            color: TenantAdminColors.secondary,
+            color: TenantAdminColors.primary.withValues(alpha: 0.05),
+            border: Border.all(
+              color: TenantAdminColors.primary.withValues(alpha: 0.15),
+            ),
             borderRadius: BorderRadius.circular(TenantAdminRadius.xl),
           ),
           child: Text(
             countLabel,
             style: const TextStyle(
-              color: TenantAdminColors.mutedText,
+              color: TenantAdminColors.primary,
               fontWeight: FontWeight.w700,
               fontSize: 12,
             ),

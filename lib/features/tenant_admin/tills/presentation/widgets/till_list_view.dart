@@ -3,8 +3,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/widgets/tenant_admin_status_badge.dart';
 import '../../domain/entities/till.dart';
 import '../config/till_row_action_configs.dart';
+import 'till_action_menu.dart';
 import 'till_mobile_list.dart';
 
 class TillListView extends StatelessWidget {
@@ -19,6 +21,15 @@ class TillListView extends StatelessWidget {
   final TillListVisibility visibility;
   final bool isMobile;
 
+  static const _headerHeight = 52.0;
+  static const _rowHeight = 62.0;
+  static const _tableHeaderColor = Color(0xFFF8FAFC);
+  static const _tableHoverColor = Color(0xFFF1F5F9);
+  static const _horizontalPadding = 20.0;
+  static const _minTableWidth = 960.0;
+
+  static const _columnFlex = <int>[20, 14, 18, 11, 18, 12];
+
   @override
   Widget build(BuildContext context) {
     if (isMobile) {
@@ -31,6 +42,7 @@ class TillListView extends StatelessWidget {
       );
     }
 
+    final showActions = visibility.showActionsColumn;
     final canView = visibility.visibleRowActions.any(
       (action) => action.actionId == TillRowActionId.viewDetails,
     );
@@ -41,103 +53,333 @@ class TillListView extends StatelessWidget {
       (action) => action.actionId == TillRowActionId.delete,
     );
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        headingRowHeight: 48,
-        dataRowMinHeight: 54,
-        dataRowMaxHeight: 58,
-        columnSpacing: TenantAdminSpacing.xl,
-        horizontalMargin: TenantAdminSpacing.lg,
-        headingTextStyle: const TextStyle(
-          color: TenantAdminColors.bodyText,
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
-        ),
-        dataTextStyle: const TextStyle(
-          color: TenantAdminColors.bodyText,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-        columns: const [
-          DataColumn(label: _SortableLabel('Till Name')),
-          DataColumn(label: _SortableLabel('Till Code')),
-          DataColumn(label: _SortableLabel('Outlet')),
-          DataColumn(label: _SortableLabel('Status')),
-          DataColumn(label: _SortableLabel('Last Active')),
-          DataColumn(
-              label: Align(
-                  alignment: Alignment.centerRight, child: Text('Actions'))),
-        ],
-        rows: [
-          for (final till in result.items)
-            DataRow(
-              cells: [
-                DataCell(_TillNameCell(till: till, canView: canView)),
-                DataCell(_PlainCell(till.code)),
-                DataCell(_PlainCell(_emptyDash(till.outletName))),
-                DataCell(_StatusPill(label: _statusLabel(till))),
-                DataCell(_PlainCell(_lastActiveLabel(till.lastSyncAt))),
-                DataCell(
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (canEdit)
-                          _ActionIconButton(
-                            icon: Icons.edit_outlined,
-                            tooltip: 'Edit till',
-                            onPressed: () => context.go(
-                              '/tenant-admin/tills/${till.id}/edit',
-                            ),
-                          ),
-                        if (canEdit && canDelete)
-                          const SizedBox(width: TenantAdminSpacing.sm),
-                        if (canDelete)
-                          _ActionIconButton(
-                            icon: Icons.delete_outline,
-                            tooltip: 'Delete till',
-                            destructive: true,
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'Delete till API is not available yet.'),
-                                ),
-                              );
-                            },
-                          ),
-                      ],
-                    ),
-                  ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tableWidth = constraints.maxWidth < _minTableWidth
+            ? _minTableWidth
+            : constraints.maxWidth;
+
+        final table = SizedBox(
+          width: tableWidth,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _TillTableHeader(showActions: showActions),
+              for (final till in result.items) ...[
+                const Divider(height: 1, thickness: 0.5, color: TenantAdminColors.border),
+                _TillTableRow(
+                  till: till,
+                  showActions: showActions,
+                  canView: canView,
+                  canEdit: canEdit,
+                  canDelete: canDelete,
+                  showMoreMenu: visibility.showMoreMenu,
+                  moreMenuActions: visibility.visibleMoreMenuActions,
                 ),
               ],
-            ),
-        ],
+            ],
+          ),
+        );
+
+        if (constraints.maxWidth < _minTableWidth) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: table,
+          );
+        }
+
+        return table;
+      },
+    );
+  }
+}
+
+class _TillTableHeader extends StatelessWidget {
+  const _TillTableHeader({required this.showActions});
+
+  final bool showActions;
+
+  static const _labels = [
+    'Till Name',
+    'Till Code',
+    'Outlet',
+    'Status',
+    'Last Active',
+    'Actions',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final labels = showActions ? _labels : _labels.sublist(0, _labels.length - 1);
+    final flexValues = showActions
+        ? TillListView._columnFlex
+        : TillListView._columnFlex.sublist(0, TillListView._columnFlex.length - 1);
+
+    return _TillTableRowLayout(
+      height: TillListView._headerHeight,
+      flexValues: flexValues,
+      backgroundColor: TillListView._tableHeaderColor,
+      children: [
+        for (var index = 0; index < labels.length; index++)
+          _HeaderLabel(
+            labels[index],
+            alignRight: index == labels.length - 1 && showActions,
+          ),
+      ],
+    );
+  }
+}
+
+class _TillTableRow extends StatefulWidget {
+  const _TillTableRow({
+    required this.till,
+    required this.showActions,
+    required this.canView,
+    required this.canEdit,
+    required this.canDelete,
+    required this.showMoreMenu,
+    required this.moreMenuActions,
+  });
+
+  final Till till;
+  final bool showActions;
+  final bool canView;
+  final bool canEdit;
+  final bool canDelete;
+  final bool showMoreMenu;
+  final List<TillRowActionConfig> moreMenuActions;
+
+  @override
+  State<_TillTableRow> createState() => _TillTableRowState();
+}
+
+class _TillTableRowState extends State<_TillTableRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final flexValues = widget.showActions
+        ? TillListView._columnFlex
+        : TillListView._columnFlex.sublist(0, TillListView._columnFlex.length - 1);
+
+    final cells = <Widget>[
+      _TillNameCell(till: widget.till, canView: widget.canView),
+      _PlainCell(widget.till.code),
+      _PlainCell(_emptyDash(widget.till.outletName)),
+      _TillStatusBadge(till: widget.till),
+      _PlainCell(
+        _lastActiveLabel(widget.till.lastSyncAt),
+        noWrap: true,
+      ),
+    ];
+
+    if (widget.showActions) {
+      cells.add(
+        _RowActions(
+          till: widget.till,
+          canView: widget.canView,
+          canEdit: widget.canEdit,
+          canDelete: widget.canDelete,
+          showMoreMenu: widget.showMoreMenu,
+          moreMenuActions: widget.moreMenuActions,
+        ),
+      );
+    }
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: ColoredBox(
+        color: _hovered ? TillListView._tableHoverColor : Colors.transparent,
+        child: _TillTableRowLayout(
+          height: TillListView._rowHeight,
+          flexValues: flexValues,
+          children: cells,
+        ),
       ),
     );
   }
 }
 
-class _SortableLabel extends StatelessWidget {
-  const _SortableLabel(this.label);
+class _TillTableRowLayout extends StatelessWidget {
+  const _TillTableRowLayout({
+    required this.height,
+    required this.flexValues,
+    required this.children,
+    this.backgroundColor,
+  });
 
-  final String label;
+  final double height;
+  final List<int> flexValues;
+  final List<Widget> children;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: height,
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: backgroundColor),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TillListView._horizontalPadding,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              for (var index = 0; index < children.length; index++)
+                Expanded(
+                  flex: flexValues[index],
+                  child: index == children.length - 1 &&
+                          flexValues.length == TillListView._columnFlex.length
+                      ? Align(
+                          alignment: Alignment.centerRight,
+                          child: children[index],
+                        )
+                      : children[index],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RowActions extends StatelessWidget {
+  const _RowActions({
+    required this.till,
+    required this.canView,
+    required this.canEdit,
+    required this.canDelete,
+    required this.showMoreMenu,
+    required this.moreMenuActions,
+  });
+
+  final Till till;
+  final bool canView;
+  final bool canEdit;
+  final bool canDelete;
+  final bool showMoreMenu;
+  final List<TillRowActionConfig> moreMenuActions;
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = <Widget>[];
+
+    if (canEdit) {
+      actions.add(
+        _ActionIconButton(
+          icon: Icons.edit_outlined,
+          tooltip: 'Edit',
+          onPressed: () => context.go('/tenant-admin/tills/${till.id}/edit'),
+        ),
+      );
+    } else if (canView) {
+      actions.add(
+        _ActionIconButton(
+          icon: Icons.visibility_outlined,
+          tooltip: 'View details',
+          onPressed: () => context.go('/tenant-admin/tills/${till.id}'),
+        ),
+      );
+    }
+
+    if (canDelete) {
+      if (actions.isNotEmpty) {
+        actions.add(const SizedBox(width: TenantAdminSpacing.xs));
+      }
+      actions.add(
+        _ActionIconButton(
+          icon: Icons.delete_outline,
+          tooltip: 'Delete',
+          destructive: true,
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Delete till API is not available yet.'),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    if (showMoreMenu) {
+      if (actions.isNotEmpty) {
+        actions.add(const SizedBox(width: TenantAdminSpacing.xs));
+      }
+      actions.add(
+        TillActionMenu(
+          till: till,
+          actions: moreMenuActions,
+        ),
+      );
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(label),
-        const SizedBox(width: 4),
-        const Icon(
-          Icons.unfold_more,
-          size: 14,
-          color: TenantAdminColors.mutedText,
-        ),
-      ],
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: actions,
+    );
+  }
+}
+
+class _HeaderLabel extends StatelessWidget {
+  const _HeaderLabel(this.label, {this.alignRight = false});
+
+  final String label;
+  final bool alignRight;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        color: TenantAdminColors.mutedText,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.2,
+      ),
+    );
+
+    if (alignRight) {
+      return Align(alignment: Alignment.centerRight, child: content);
+    }
+
+    return content;
+  }
+}
+
+class _TillStatusBadge extends StatelessWidget {
+  const _TillStatusBadge({required this.till});
+
+  final Till till;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = _statusLabel(till);
+    final normalized = till.operationalStatus.toLowerCase();
+
+    TenantAdminStatusType status;
+    if (normalized == 'online') {
+      status = TenantAdminStatusType.online;
+    } else if (normalized == 'offline') {
+      status = TenantAdminStatusType.offline;
+    } else if (label.toLowerCase() == 'active') {
+      status = TenantAdminStatusType.active;
+    } else if (label.toLowerCase() == 'inactive') {
+      status = TenantAdminStatusType.inactive;
+    } else {
+      status = TenantAdminStatusType.warning;
+    }
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TenantAdminStatusBadge(label: label, status: status),
     );
   }
 }
@@ -156,8 +398,8 @@ class _TillNameCell extends StatelessWidget {
     final content = Row(
       children: [
         Container(
-          width: 28,
-          height: 28,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             color: TenantAdminColors.secondary,
             borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
@@ -165,18 +407,19 @@ class _TillNameCell extends StatelessWidget {
           child: const Icon(
             Icons.point_of_sale_outlined,
             color: TenantAdminColors.primary,
-            size: 16,
+            size: 18,
           ),
         ),
-        const SizedBox(width: TenantAdminSpacing.sm),
-        Flexible(
+        const SizedBox(width: TenantAdminSpacing.md),
+        Expanded(
           child: Text(
             till.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: TenantAdminColors.bodyText,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
             ),
           ),
         ),
@@ -195,9 +438,10 @@ class _TillNameCell extends StatelessWidget {
 }
 
 class _PlainCell extends StatelessWidget {
-  const _PlainCell(this.value);
+  const _PlainCell(this.value, {this.noWrap = false});
 
   final String value;
+  final bool noWrap;
 
   @override
   Widget build(BuildContext context) {
@@ -205,48 +449,11 @@ class _PlainCell extends StatelessWidget {
       value,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-    );
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final active =
-        label.toLowerCase() == 'active' || label.toLowerCase() == 'online';
-    final color = active ? TenantAdminColors.success : TenantAdminColors.danger;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: TenantAdminSpacing.md,
-        vertical: TenantAdminSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: TenantAdminSpacing.xs),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
-            ),
-          ),
-        ],
+      softWrap: !noWrap,
+      style: const TextStyle(
+        color: TenantAdminColors.bodyText,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
       ),
     );
   }
@@ -270,19 +477,17 @@ class _ActionIconButton extends StatelessWidget {
     return IconButton(
       tooltip: tooltip,
       onPressed: onPressed,
+      visualDensity: VisualDensity.compact,
       style: IconButton.styleFrom(
-        backgroundColor: TenantAdminColors.surface,
-        foregroundColor:
-            destructive ? TenantAdminColors.danger : TenantAdminColors.primary,
-        side: BorderSide(
-          color: destructive
-              ? TenantAdminColors.danger.withValues(alpha: 0.25)
-              : TenantAdminColors.border,
-        ),
         minimumSize: const Size(32, 32),
         padding: EdgeInsets.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
-      icon: Icon(icon, size: 16),
+      icon: Icon(
+        icon,
+        size: 18,
+        color: destructive ? TenantAdminColors.danger : TenantAdminColors.mutedText,
+      ),
     );
   }
 }

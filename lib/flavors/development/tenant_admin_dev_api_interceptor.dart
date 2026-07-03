@@ -172,6 +172,14 @@ Object? _responseFor(RequestOptions options) {
     return _createdTill(options.data);
   }
 
+  if (method == 'GET' && path == '/api/v1/tenant-admin/products') {
+    return _products;
+  }
+
+  if (method == 'POST' && path == '/api/v1/tenant-admin/products') {
+    return _createdProduct(options.data);
+  }
+
   if (method == 'PUT' &&
       (path.startsWith('/api/v1/tenant-admin/outlets/') ||
           path.startsWith('/api/tenant-admin/outlets/'))) {
@@ -699,6 +707,66 @@ Map<String, Object?> _createdTill(Object? data, {String id = 'till-new'}) {
       'name': body['name']?.toString() ?? 'New Till',
       'code': body['code']?.toString() ?? 'TILL-NEW',
       'status': body['status']?.toString() ?? 'active',
+    },
+  };
+}
+
+const _products = {
+  'success': true,
+  'message': 'Products loaded successfully.',
+  'data': {
+    'summary': {
+      'totalProducts': 2,
+      'activeProducts': 1,
+      'inactiveProducts': 0,
+      'productCategories': 2,
+    },
+    'items': [
+      {
+        'id': 'product-1',
+        'variantId': 'variant-1',
+        'name': 'Coca Cola 500ml',
+        'categoryName': 'Beverages',
+        'sku': 'PRD-0001',
+        'barcode': '100001',
+        'sellingPrice': 120,
+        'status': 'active',
+        'outletCount': 1,
+        'createdAt': '2026-06-22T10:00:00Z',
+      },
+      {
+        'id': 'product-2',
+        'variantId': 'variant-2',
+        'name': 'Nestle Water 1L',
+        'categoryName': 'Beverages',
+        'sku': 'PRD-0002',
+        'barcode': '100002',
+        'sellingPrice': 90,
+        'status': 'draft',
+        'outletCount': 0,
+        'createdAt': '2026-06-22T09:30:00Z',
+      },
+    ],
+    'page': 1,
+    'pageSize': 10,
+    'totalCount': 2,
+  },
+};
+
+Map<String, Object?> _createdProduct(Object? data, {String id = 'product-new'}) {
+  final body = data is Map ? Map<String, dynamic>.from(data) : const {};
+
+  return {
+    'success': true,
+    'message': 'Product created successfully.',
+    'data': {
+      'id': id,
+      'variantId': 'variant-new',
+      'name': body['name']?.toString() ?? 'New Product',
+      'sku': body['sku']?.toString() ?? 'PRD-NEW',
+      'barcode': body['barcode']?.toString(),
+      'sellingPrice': body['sellingPrice'],
+      'status': 'draft',
     },
   };
 }

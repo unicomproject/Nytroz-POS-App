@@ -88,13 +88,24 @@ class _OutletSummaryCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.12),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  accent.withValues(alpha: 0.2),
+                  accent.withValues(alpha: 0.05),
+                ],
+              ),
               borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              border: Border.all(
+                color: accent.withValues(alpha: 0.1),
+                width: 1,
+              ),
             ),
-            child: Icon(icon, color: accent, size: 22),
+            child: Icon(icon, color: accent, size: 24),
           ),
           const SizedBox(width: TenantAdminSpacing.md),
           Expanded(
@@ -116,10 +127,18 @@ class _OutletSummaryCard extends StatelessWidget {
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         color: TenantAdminColors.bodyText,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w900,
                         height: 1,
+                        letterSpacing: -1.0,
+                      ) ??
+                      const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        color: TenantAdminColors.bodyText,
+                        height: 1,
+                        letterSpacing: -1.0,
                       ),
                 ),
                 const SizedBox(height: TenantAdminSpacing.xs),

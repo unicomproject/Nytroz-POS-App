@@ -16,6 +16,11 @@ import 'outlets/presentation/screens/outlet_details_screen.dart';
 import 'outlets/presentation/screens/outlet_list_screen.dart';
 import 'tills/presentation/screens/add_till_screen.dart';
 import 'tills/presentation/screens/till_list_screen.dart';
+import 'inventory/presentation/screens/add_stock_screen.dart';
+import 'inventory/presentation/screens/current_stock_screen.dart';
+import 'products/presentation/config/product_api_capabilities.dart';
+import 'products/presentation/screens/add_product_screen.dart';
+import 'products/presentation/screens/product_list_screen.dart';
 import '../auth/presentation/providers/session_provider.dart';
 import 'presentation/providers/tenant_admin_access_provider.dart';
 import 'presentation/providers/tenant_admin_context_provider.dart';
@@ -130,6 +135,11 @@ String? _tenantAdminAccessRedirect(
     return '/tenant-admin/no-access';
   }
 
+  if (definition.path == '/tenant-admin/stock/in' ||
+      definition.path == '/tenant-admin/stock/current') {
+    return '/tenant-admin/no-access';
+  }
+
   return firstRoute;
 }
 
@@ -184,6 +194,22 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
 
   if (definition.path == '/tenant-admin/tills/add') {
     return const AddTillScreen();
+  }
+
+  if (definition.path == '/tenant-admin/products') {
+    return const ProductListScreen();
+  }
+
+  if (definition.path == '/tenant-admin/products/add') {
+    return const AddProductScreen();
+  }
+
+  if (definition.path == '/tenant-admin/stock/in') {
+    return const AddStockScreen();
+  }
+
+  if (definition.path == '/tenant-admin/stock/current') {
+    return const CurrentStockScreen();
   }
 
   return TenantAdminPlaceholderScreen(
@@ -275,6 +301,27 @@ bool _canAccessRoute(
     return accessChecker.canCreateTill();
   }
 
+  if (definition.path == '/tenant-admin/products/add') {
+    return accessChecker.canCreateProduct() &&
+        ProductApiCapabilities.createProduct;
+  }
+
+  if (definition.path == '/tenant-admin/products/:id/edit') {
+    return accessChecker.canUpdateProduct() &&
+        ProductApiCapabilities.updateProduct;
+  }
+
+  if (definition.path == '/tenant-admin/products/:id') {
+    return accessChecker.canAccessProductModule() &&
+        ProductApiCapabilities.getProductById;
+  }
+
+  if (definition.path == '/tenant-admin/products' ||
+      definition.path == '/tenant-admin/products/import') {
+    return accessChecker.canAccessProductModule() &&
+        ProductApiCapabilities.listProducts;
+  }
+
   if (definition.path == '/tenant-admin/tills/:id/edit') {
     return accessChecker.canUpdateTill();
   }
@@ -282,6 +329,14 @@ bool _canAccessRoute(
   if (definition.path == '/tenant-admin/tills' ||
       definition.path == '/tenant-admin/tills/:id') {
     return accessChecker.canAccessTillModule();
+  }
+
+  if (definition.path == '/tenant-admin/stock/in') {
+    return accessChecker.canAccessAddStockPage();
+  }
+
+  if (definition.path == '/tenant-admin/stock/current') {
+    return accessChecker.canAccessCurrentStockPage();
   }
 
   final menuItem = _findMenuItem(items, definition.menuKey);

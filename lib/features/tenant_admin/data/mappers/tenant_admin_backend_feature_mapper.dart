@@ -19,6 +19,10 @@ class TenantAdminBackendFeatureMapper {
         return TenantAdminFeatureCodes.productManagement;
       case 'inventory_management':
         return TenantAdminFeatureCodes.inventoryManagement;
+      case 'online_store':
+        return TenantAdminFeatureCodes.onlineStore;
+      case 'click_collect':
+        return TenantAdminFeatureCodes.clickCollect;
       case 'reports_analytics':
         return TenantAdminFeatureCodes.reportsAnalytics;
       case 'billing_subscription':

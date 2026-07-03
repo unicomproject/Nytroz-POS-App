@@ -6,7 +6,6 @@ import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_co
 import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_access_checker.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_access_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/application/usecases/create_till.dart';
-import 'package:nytroz_pos/features/tenant_admin/tills/application/usecases/get_tills.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/domain/repositories/till_repository.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/presentation/providers/till_providers.dart';
@@ -22,7 +21,9 @@ void main() {
         overrides: [
           tenantAdminAccessCheckerProvider.overrideWith(
             (ref) async => _checker(
-              permissions: [TenantAdminPermissionCodes.tenantAdminDashboardView],
+              permissions: [
+                TenantAdminPermissionCodes.tenantAdminDashboardView
+              ],
               features: [TenantAdminFeatureCodes.dashboard],
             ),
           ),
@@ -212,6 +213,9 @@ TenantAdminAccessChecker _checker({
       tenantName: 'Coffee Corner Ltd',
       userId: 'user-test',
       userDisplayName: 'Sarah Ahmed',
+      roles: const [
+        TenantAdminRoleScope(roleId: 'role-owner', roleName: 'Owner'),
+      ],
       roleNames: const ['Owner'],
       roles: const [
         TenantAdminRoleScope(roleId: 'role-1', roleName: 'Owner'),

@@ -10,6 +10,7 @@ import '../../../presentation/widgets/tenant_admin_status_badge.dart';
 import '../config/outlet_row_action_configs.dart';
 import '../providers/outlet_providers.dart';
 import '../providers/outlet_visibility_provider.dart';
+import '../utils/outlet_api_errors.dart';
 import '../utils/outlet_list_filters.dart';
 
 class OutletMobileList extends StatelessWidget {
@@ -185,8 +186,29 @@ class _OutletMobileCard extends ConsumerWidget {
       return;
     }
 
-    await ref.read(deleteOutletProvider).call(outlet.id);
-    ref.invalidate(outletListProvider);
+    try {
+      await ref.read(deleteOutletProvider).call(outlet.id);
+      ref.invalidate(outletListProvider);
+
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${outlet.name} deleted')),
+      );
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(outletDeleteErrorMessage(error)),
+          backgroundColor: TenantAdminColors.danger,
+        ),
+      );
+    }
   }
 }
 

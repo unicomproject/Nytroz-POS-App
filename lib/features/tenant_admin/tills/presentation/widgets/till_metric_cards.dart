@@ -49,7 +49,7 @@ class TillMetricCards extends StatelessWidget {
           subtitle: card.subtitleBuilder(summary),
           icon: card.icon,
           status: card.status,
-          dense: true,
+          dense: compact,
         );
       },
     );

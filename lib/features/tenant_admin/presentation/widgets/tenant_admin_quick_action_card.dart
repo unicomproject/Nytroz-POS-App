@@ -25,26 +25,46 @@ class TenantAdminQuickActionCard extends StatelessWidget {
       child: InkWell(
         onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(14),
+        hoverColor: TenantAdminColors.primary.withValues(alpha: 0.04),
+        splashColor: TenantAdminColors.primary.withValues(alpha: 0.08),
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 160),
           opacity: enabled ? 1 : 0.5,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: TenantAdminColors.surface,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: TenantAdminColors.border),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x06000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               children: [
                 Container(
-                  width: 36,
-                  height: 36,
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
-                    color: TenantAdminColors.secondary,
-                    borderRadius: BorderRadius.circular(11),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        TenantAdminColors.primary.withValues(alpha: 0.15),
+                        TenantAdminColors.primary.withValues(alpha: 0.05),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: TenantAdminColors.primary.withValues(alpha: 0.1),
+                      width: 1,
+                    ),
                   ),
-                  child: Icon(icon, color: TenantAdminColors.primary, size: 19),
+                  child: Icon(icon, color: TenantAdminColors.primary, size: 20),
                 ),
                 const SizedBox(width: TenantAdminSpacing.md),
                 Expanded(

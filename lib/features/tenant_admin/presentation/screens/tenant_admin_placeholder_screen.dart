@@ -953,18 +953,24 @@ class _StaffTableCard extends StatelessWidget {
               ),
             ),
           if (users.isNotEmpty)
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 1120),
-                child: DataTable(
-                  showCheckboxColumn: true,
-                  headingRowHeight: 56,
-                  dataRowMinHeight: 58,
-                  dataRowMaxHeight: 64,
-                  headingRowColor: WidgetStateProperty.all(
-                    TenantAdminColors.background,
-                  ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minWidth: constraints.maxWidth > 1120
+                          ? constraints.maxWidth
+                          : 1120,
+                    ),
+                    child: DataTable(
+                      showCheckboxColumn: true,
+                      headingRowHeight: 56,
+                      dataRowMinHeight: 58,
+                      dataRowMaxHeight: 64,
+                      headingRowColor: WidgetStateProperty.all(
+                        TenantAdminColors.background,
+                      ),
                   columnSpacing: 30,
                   horizontalMargin: TenantAdminSpacing.lg,
                   headingTextStyle: const TextStyle(
@@ -1041,7 +1047,9 @@ class _StaffTableCard extends StatelessWidget {
                   ],
                 ),
               ),
-            ),
+            );
+          },
+        ),
           const Divider(height: 1, color: TenantAdminColors.border),
           Padding(
             padding: const EdgeInsets.all(TenantAdminSpacing.lg),

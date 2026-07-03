@@ -232,43 +232,98 @@ class TenantAdminPermissionAliases {
       'product.view',
       'products.view',
       'catalog.product.view',
+      'catalog.products.view',
     ],
     'products.view': [
       'product.view',
       'products.view',
       'catalog.product.view',
+      'catalog.products.view',
     ],
     'catalog.product.view': [
       'product.view',
       'products.view',
       'catalog.product.view',
+      'catalog.products.view',
+    ],
+    'catalog.products.view': [
+      'product.view',
+      'products.view',
+      'catalog.product.view',
+      'catalog.products.view',
     ],
     'product.create': [
       'product.create',
       'products.create',
       'catalog.product.create',
+      'catalog.products.create',
     ],
     'products.create': [
       'product.create',
       'products.create',
       'catalog.product.create',
+      'catalog.products.create',
     ],
     'catalog.product.create': [
       'product.create',
       'products.create',
       'catalog.product.create',
+      'catalog.products.create',
+    ],
+    'catalog.products.create': [
+      'product.create',
+      'products.create',
+      'catalog.product.create',
+      'catalog.products.create',
     ],
     'catalog.product.update': [
-      'product.create',
-      'product.view',
       'catalog.product.update',
+      'catalog.products.update',
+      'product.update',
+      'products.update',
+    ],
+    'catalog.products.update': [
+      'catalog.product.update',
+      'catalog.products.update',
+      'product.update',
+      'products.update',
+    ],
+    'catalog.products.delete': [
+      'catalog.products.delete',
+      'product.delete',
+      'products.delete',
+    ],
+    'catalog.variants.manage': [
+      'catalog.variants.manage',
+    ],
+    'catalog.barcodes.manage': [
+      'catalog.barcodes.manage',
     ],
     'inventory.view': [
       'inventory.view',
+      'inventory.stock.view',
+    ],
+    'inventory.stock.view': [
+      'inventory.view',
+      'inventory.stock.view',
+    ],
+    'inventory.stock.adjust': [
+      'inventory.stock.adjust',
+      'inventory.adjust',
+    ],
+    'inventory.adjust': [
+      'inventory.stock.adjust',
+      'inventory.adjust',
     ],
     'inventory.alert.view': [
       'inventory.alert.view',
       'inventory.stock_alerts.view',
+      'inventory.alerts.view',
+    ],
+    'inventory.alerts.view': [
+      'inventory.alert.view',
+      'inventory.stock_alerts.view',
+      'inventory.alerts.view',
     ],
     'report.view': [
       'report.view',
@@ -400,16 +455,12 @@ class TenantAdminPermissionAliases {
       'outlets.update',
       'outlet.update',
     ],
-    'inventory.adjust': [
-      'inventory.view',
-      'inventory.adjust',
-    ],
     'tenant.product.import': [
-      'products.view',
-      'products.create',
-      'product.view',
-      'product.create',
       'tenant.product.import',
+      'products.create',
+      'product.create',
+      'catalog.products.create',
+      'catalog.product.create',
     ],
   };
 

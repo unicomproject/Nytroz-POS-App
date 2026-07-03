@@ -79,11 +79,22 @@ class _AttentionTile extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  color.withValues(alpha: 0.2),
+                  color.withValues(alpha: 0.05),
+                ],
+              ),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: color.withValues(alpha: 0.1),
+                width: 1,
+              ),
             ),
             child: Icon(_iconFor(status), color: color, size: 20),
           ),

@@ -8,6 +8,8 @@ class TenantAdminFeatureCodes {
   static const rolePermission = 'tenant.roles';
   static const productManagement = 'catalog.product';
   static const inventoryManagement = 'inventory.stock';
+  static const onlineStore = 'online_store';
+  static const clickCollect = 'click_collect';
   static const reportsAnalytics = 'reports';
   static const sales = 'sales';
   static const billingSubscription = 'subscription.billing';
@@ -119,6 +121,17 @@ class TenantAdminPermissionCodes {
   static const tenantRoleManage = 'tenant.role.manage';
   static const catalogProductView = 'catalog.product.view';
   static const catalogProductCreate = 'catalog.product.create';
+  static const catalogProductsView = 'catalog.products.view';
+  static const catalogProductsCreate = 'catalog.products.create';
+  static const catalogProductsUpdate = 'catalog.products.update';
+  static const catalogProductsDelete = 'catalog.products.delete';
+  static const catalogVariantsManage = 'catalog.variants.manage';
+  static const catalogBarcodesManage = 'catalog.barcodes.manage';
+  static const inventoryStockView = 'inventory.stock.view';
+  static const inventoryStockAdjust = 'inventory.stock.adjust';
+  static const inventoryAlertsView = 'inventory.alerts.view';
+  static const onlineStoreCatalogPublish = 'online_store.catalog.publish';
+  static const tenantProductImport = 'tenant.product.import';
   static const tenantBillingView = 'tenant.billing.view';
   static const tenantSettingsManage = 'tenant.settings.manage';
   static const tenantActivityView = 'tenant.activity.view';

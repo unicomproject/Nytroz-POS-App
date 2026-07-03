@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/outlet.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../utils/outlet_api_errors.dart';
 import '../../../presentation/widgets/tenant_admin_data_table.dart';
 import '../../../presentation/widgets/tenant_admin_status_badge.dart';
 import '../config/outlet_row_action_configs.dart';
@@ -292,7 +293,7 @@ class OutletTable extends ConsumerWidget {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Unable to delete outlet: $error'),
+          content: Text(outletDeleteErrorMessage(error)),
           backgroundColor: TenantAdminColors.danger,
         ),
       );
@@ -367,14 +368,12 @@ class _ActionIconButton extends StatelessWidget {
       tooltip: tooltip,
       onPressed: onPressed,
       style: IconButton.styleFrom(
-        backgroundColor: TenantAdminColors.surface,
+        backgroundColor: destructive
+            ? TenantAdminColors.danger.withValues(alpha: 0.05)
+            : TenantAdminColors.primary.withValues(alpha: 0.05),
         foregroundColor:
             destructive ? TenantAdminColors.danger : TenantAdminColors.primary,
-        side: BorderSide(
-          color: destructive
-              ? TenantAdminColors.danger.withValues(alpha: 0.25)
-              : TenantAdminColors.border,
-        ),
+        side: BorderSide.none,
         minimumSize: const Size(34, 34),
         padding: EdgeInsets.zero,
       ),

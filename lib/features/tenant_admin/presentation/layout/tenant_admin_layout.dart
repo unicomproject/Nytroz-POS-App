@@ -69,9 +69,7 @@ class TenantAdminLayout extends ConsumerWidget {
             final isWide = constraints.maxWidth >= 900;
 
             if (isWide) {
-              final showTopBar = currentPath != '/tenant-admin/dashboard' &&
-                  !currentPath.startsWith('/tenant-admin/products');
-
+              // Always show the premium top bar on all screens for wide layout to match the screenshot
               return Scaffold(
                 body: Row(
                   children: [
@@ -82,14 +80,12 @@ class TenantAdminLayout extends ConsumerWidget {
                       accessChecker: accessState.asData?.value,
                     ),
                     Expanded(
-                      child: showTopBar
-                          ? Column(
-                              children: [
-                                const TenantAdminTopBar(),
-                                Expanded(child: child),
-                              ],
-                            )
-                          : child,
+                      child: Column(
+                        children: [
+                          const TenantAdminTopBar(),
+                          Expanded(child: child),
+                        ],
+                      ),
                     ),
                   ],
                 ),

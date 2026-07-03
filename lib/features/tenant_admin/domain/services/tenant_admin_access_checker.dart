@@ -8,6 +8,9 @@ import '../../outlets/presentation/config/outlet_row_action_configs.dart';
 import '../../outlets/presentation/config/outlet_summary_card_configs.dart';
 import '../../outlets/presentation/config/outlet_table_column_configs.dart';
 import '../../tills/presentation/config/till_row_action_configs.dart';
+import '../../inventory/presentation/config/inventory_api_capabilities.dart';
+import '../../products/presentation/config/product_api_capabilities.dart';
+import '../../products/presentation/config/product_row_action_configs.dart';
 import '../entities/tenant_admin_context.dart';
 import '../entities/tenant_admin_menu_item.dart';
 import '../../dashboard/domain/entities/tenant_dashboard.dart';
@@ -114,9 +117,23 @@ class TenantAdminAccessChecker {
         return canAny([
           TenantAdminPermissionCodes.productView,
           TenantAdminPermissionCodes.catalogProductView,
+          TenantAdminPermissionCodes.catalogProductsView,
         ]);
       case TenantAdminFeatureCodes.inventoryManagement:
-        return can(TenantAdminPermissionCodes.inventoryView);
+        return canAny([
+          TenantAdminPermissionCodes.inventoryView,
+          TenantAdminPermissionCodes.inventoryStockView,
+        ]);
+      case TenantAdminFeatureCodes.onlineStore:
+        return canAny([
+          TenantAdminPermissionCodes.productView,
+          TenantAdminPermissionCodes.catalogProductsView,
+        ]);
+      case TenantAdminFeatureCodes.clickCollect:
+        return canAny([
+          TenantAdminPermissionCodes.productView,
+          TenantAdminPermissionCodes.catalogProductsView,
+        ]);
       case TenantAdminFeatureCodes.reportsAnalytics:
         return can(TenantAdminPermissionCodes.reportView);
       case TenantAdminFeatureCodes.sales:
@@ -283,7 +300,7 @@ class TenantAdminAccessChecker {
   bool canFetchDashboardSummary() => canLoadDashboardData();
 
   /// Returns true when any dashboard widget permission requires API payload data.
-  /// TODO: split dashboard API by section when backend supports field-level filtering.
+  /// Dashboard API is currently fetched as one summary payload.
   bool canLoadDashboardData() {
     return canAny([
       TenantAdminPermissionCodes.dashboardSalesSummaryView,
@@ -429,7 +446,7 @@ class TenantAdminAccessChecker {
         can(TenantAdminPermissionCodes.outletSummaryView);
   }
 
-  /// TODO: replace [outletView] fallback with [outletFilterView] only once seeded.
+  /// Keep [outletView] as a fallback until [outletFilterView] is seeded everywhere.
   bool canViewOutletListFilter() {
     return can(TenantAdminPermissionCodes.outletFilterView) ||
         can(TenantAdminPermissionCodes.outletView);
@@ -533,6 +550,189 @@ class TenantAdminAccessChecker {
       TenantAdminPermissionCodes.userView,
       TenantAdminPermissionCodes.outletStaffSummaryView,
     ]);
+  }
+
+  bool hasProductManagementEntitlement() {
+    final hasEntitlement = _context.featureEntitlements.any(
+      (feature) =>
+          feature.featureCode == TenantAdminFeatureCodes.productManagement &&
+          feature.enabled,
+    );
+
+    if (!hasEntitlement) {
+      return false;
+    }
+
+    return hasRuntimeFlag(TenantAdminFeatureCodes.productManagement);
+  }
+
+  bool canAccessProductModule() {
+    return hasProductManagementEntitlement() && canViewProducts();
+  }
+
+  bool canViewProducts() {
+    return canAny([
+      TenantAdminPermissionCodes.productView,
+      TenantAdminPermissionCodes.catalogProductView,
+      TenantAdminPermissionCodes.catalogProductsView,
+    ]);
+  }
+
+  bool canAccessProductListPage() => canAccessProductModule();
+
+  bool canFetchProductList() => canAccessProductListPage();
+
+  bool canCreateProduct() {
+    return hasProductManagementEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.productCreate,
+          TenantAdminPermissionCodes.catalogProductCreate,
+          TenantAdminPermissionCodes.catalogProductsCreate,
+        ]);
+  }
+
+  bool canUpdateProduct() {
+    if (!hasProductManagementEntitlement()) {
+      return false;
+    }
+
+    return canAny([
+      TenantAdminPermissionCodes.catalogProductsUpdate,
+      'catalog.product.update',
+      'product.update',
+      'products.update',
+    ]);
+  }
+
+  bool canDeleteProduct() {
+    if (!hasProductManagementEntitlement()) {
+      return false;
+    }
+
+    return can(TenantAdminPermissionCodes.catalogProductsDelete);
+  }
+
+  bool canImportProducts() {
+    return hasProductManagementEntitlement() &&
+        ProductApiCapabilities.importProductsCsv &&
+        can(TenantAdminPermissionCodes.tenantProductImport);
+  }
+
+  bool canManageProductVariants() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogVariantsManage);
+  }
+
+  bool canManageProductBarcodes() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogBarcodesManage);
+  }
+
+  bool canPublishOnlineCatalog() {
+    return hasOnlineStoreEntitlement() &&
+        can(TenantAdminPermissionCodes.onlineStoreCatalogPublish);
+  }
+
+  bool canViewProductReports() {
+    return canAny([
+      TenantAdminPermissionCodes.reportSalesView,
+      TenantAdminPermissionCodes.dashboardSalesSummaryView,
+    ]);
+  }
+
+  bool hasInventoryManagementEntitlement() {
+    final hasEntitlement = _context.featureEntitlements.any(
+      (feature) =>
+          feature.featureCode == TenantAdminFeatureCodes.inventoryManagement &&
+          feature.enabled,
+    );
+
+    if (!hasEntitlement) {
+      return false;
+    }
+
+    return hasRuntimeFlag(TenantAdminFeatureCodes.inventoryManagement);
+  }
+
+  bool canManageProductInventory() {
+    return canAccessAddStockPage();
+  }
+
+  bool canViewProductStock() {
+    return canAccessCurrentStockPage();
+  }
+
+  bool canAccessCurrentStockPage() {
+    return hasInventoryManagementEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.inventoryStockView,
+          TenantAdminPermissionCodes.inventoryView,
+        ]);
+  }
+
+  bool canAccessAddStockPage() {
+    return hasInventoryManagementEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.inventoryStockAdjust,
+          'inventory.adjust',
+          TenantAdminPermissionCodes.inventoryStockView,
+          TenantAdminPermissionCodes.inventoryView,
+        ]);
+  }
+
+  bool canAdjustStock() {
+    return hasInventoryManagementEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.inventoryStockAdjust,
+          'inventory.adjust',
+        ]);
+  }
+
+  bool canSubmitStockIn() {
+    return canAdjustStock() && InventoryApiCapabilities.stockIn;
+  }
+
+  bool canAdjustProductStock() {
+    return canAdjustStock();
+  }
+
+  bool canViewInventoryAlerts() {
+    return hasInventoryManagementEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.inventoryAlertsView,
+          TenantAdminPermissionCodes.inventoryAlertView,
+        ]) &&
+        InventoryApiCapabilities.expiryAlerts;
+  }
+
+  bool canApplyExpiryDiscount() {
+    return canViewInventoryAlerts() &&
+        InventoryApiCapabilities.expiryDiscountRules &&
+        can(TenantAdminPermissionCodes.catalogProductsUpdate);
+  }
+
+  bool canExportCurrentStock() {
+    return canViewProductStock() && InventoryApiCapabilities.stockExport;
+  }
+
+  bool hasOnlineStoreEntitlement() {
+    return _hasFeatureEntitlement(TenantAdminFeatureCodes.onlineStore);
+  }
+
+  bool hasClickCollectEntitlement() {
+    return _hasFeatureEntitlement(TenantAdminFeatureCodes.clickCollect);
+  }
+
+  bool _hasFeatureEntitlement(String featureCode) {
+    final hasEntitlement = _context.featureEntitlements.any(
+      (feature) => feature.featureCode == featureCode && feature.enabled,
+    );
+
+    if (!hasEntitlement) {
+      return false;
+    }
+
+    return hasRuntimeFlag(featureCode);
   }
 }
 
@@ -803,6 +1003,323 @@ class TillListVisibility {
       visibleSummaryCards: summaryCards,
       visibleRowActions: rowActions,
       visibleMoreMenuActions: moreMenuActions,
+    );
+  }
+}
+
+class ProductListVisibility {
+  const ProductListVisibility({
+    required this.showPage,
+    required this.showTitle,
+    required this.showSubtitle,
+    required this.showSearch,
+    required this.showFilters,
+    required this.showAddProduct,
+    required this.showImportCsv,
+    required this.showSummarySection,
+    required this.showTopSelling,
+    required this.showList,
+    required this.showPagination,
+    required this.showActionsColumn,
+    required this.visibleSummaryCards,
+    required this.visibleRowActions,
+    required this.visibleMoreMenuActions,
+  });
+
+  final bool showPage;
+  final bool showTitle;
+  final bool showSubtitle;
+  final bool showSearch;
+  final bool showFilters;
+  final bool showAddProduct;
+  final bool showImportCsv;
+  final bool showSummarySection;
+  final bool showTopSelling;
+  final bool showList;
+  final bool showPagination;
+  final bool showActionsColumn;
+  final List<ProductSummaryCardConfig> visibleSummaryCards;
+  final List<ProductRowActionConfig> visibleRowActions;
+  final List<ProductRowActionConfig> visibleMoreMenuActions;
+
+  static ProductListVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage = access.canAccessProductListPage();
+    final rowActions = showPage && ProductApiCapabilities.updateProduct
+        ? visibleProductRowActions(
+            access.can,
+            access.canAny,
+            canUpdateProduct: access.canUpdateProduct,
+          )
+        : const <ProductRowActionConfig>[];
+    final moreMenuActions = showPage
+        ? visibleProductMoreMenuActions(access.can, access.canAny)
+        : const <ProductRowActionConfig>[];
+    final summaryCards = showPage
+        ? visibleProductSummaryCards(access.can, access.canAny)
+        : const <ProductSummaryCardConfig>[];
+
+    return ProductListVisibility(
+      showPage: showPage,
+      showTitle: showPage,
+      showSubtitle: showPage,
+      showSearch: showPage && access.canViewProducts(),
+      showFilters: showPage && access.canViewProducts(),
+      showAddProduct:
+          access.canCreateProduct() && ProductApiCapabilities.createProduct,
+      showImportCsv: access.canImportProducts(),
+      showSummarySection: summaryCards.isNotEmpty,
+      showTopSelling: ProductApiCapabilities.topSellingReport &&
+          access.canViewProductReports(),
+      showList: showPage,
+      showPagination: showPage,
+      showActionsColumn: rowActions.isNotEmpty || moreMenuActions.isNotEmpty,
+      visibleSummaryCards: summaryCards,
+      visibleRowActions: rowActions,
+      visibleMoreMenuActions: moreMenuActions,
+    );
+  }
+}
+
+class AddProductFormVisibility {
+  const AddProductFormVisibility({
+    required this.showPage,
+    required this.showBasicDetails,
+    required this.showImageSection,
+    required this.showPricingSection,
+    required this.showInventorySection,
+    required this.showVariantSection,
+    required this.showBarcodeSection,
+    required this.showChannelVisibilitySection,
+    required this.showPosChannel,
+    required this.showOnlineStoreChannel,
+    required this.showClickCollectChannel,
+    required this.showExpirySection,
+    required this.showStatusSection,
+    required this.showSaveDraft,
+    required this.showSaveProduct,
+    required this.showBarcodeScanner,
+    required this.showPricingTaxClasses,
+  });
+
+  final bool showPage;
+  final bool showBasicDetails;
+  final bool showImageSection;
+  final bool showPricingSection;
+  final bool showInventorySection;
+  final bool showVariantSection;
+  final bool showBarcodeSection;
+  final bool showChannelVisibilitySection;
+  final bool showPosChannel;
+  final bool showOnlineStoreChannel;
+  final bool showClickCollectChannel;
+  final bool showExpirySection;
+  final bool showStatusSection;
+  final bool showSaveDraft;
+  final bool showSaveProduct;
+  final bool showBarcodeScanner;
+  final bool showPricingTaxClasses;
+
+  static AddProductFormVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage = access.canCreateProduct();
+
+    return AddProductFormVisibility(
+      showPage: showPage && ProductApiCapabilities.createProduct,
+      showBasicDetails: showPage,
+      showImageSection: showPage && ProductApiCapabilities.uploadProductImage,
+      showPricingSection: showPage,
+      showInventorySection:
+          showPage && ProductApiCapabilities.trackStockOnCreate,
+      showVariantSection: showPage &&
+          access.canManageProductVariants() &&
+          ProductApiCapabilities.variantsOnCreate,
+      showBarcodeSection: showPage &&
+          access.canManageProductBarcodes() &&
+          ProductApiCapabilities.barcodesOnCreate,
+      showChannelVisibilitySection: showPage &&
+          ProductApiCapabilities.channelVisibilityOnCreate &&
+          access.hasProductManagementEntitlement(),
+      showPosChannel: showPage && access.hasProductManagementEntitlement(),
+      showOnlineStoreChannel:
+          showPage && access.hasOnlineStoreEntitlement(),
+      showClickCollectChannel:
+          showPage && access.hasClickCollectEntitlement(),
+      showExpirySection: showPage && ProductApiCapabilities.expiryOnCreate,
+      showStatusSection: showPage && ProductApiCapabilities.statusOnCreate,
+      showSaveDraft: ProductApiCapabilities.saveDraft,
+      showSaveProduct: showPage,
+      showBarcodeScanner: showPage &&
+          access.canManageProductBarcodes() &&
+          ProductApiCapabilities.barcodeScanner,
+      showPricingTaxClasses:
+          showPage && ProductApiCapabilities.pricingTaxClasses,
+    );
+  }
+}
+
+class CurrentStockVisibility {
+  const CurrentStockVisibility({
+    required this.showPage,
+    required this.showSummaryCards,
+    required this.showTable,
+    required this.showFilters,
+    required this.showExport,
+    required this.balancesApiAvailable,
+  });
+
+  final bool showPage;
+  final bool showSummaryCards;
+  final bool showTable;
+  final bool showFilters;
+  final bool showExport;
+  final bool balancesApiAvailable;
+
+  static CurrentStockVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage = access.canAccessCurrentStockPage();
+
+    return CurrentStockVisibility(
+      showPage: showPage,
+      showSummaryCards: showPage && InventoryApiCapabilities.listBalances,
+      showTable: showPage && InventoryApiCapabilities.listBalances,
+      showFilters: showPage,
+      showExport: access.canExportCurrentStock(),
+      balancesApiAvailable: InventoryApiCapabilities.listBalances,
+    );
+  }
+}
+
+class AddStockVisibility {
+  const AddStockVisibility({
+    required this.showPage,
+    required this.showForm,
+    required this.canEditFields,
+    required this.showProductSelect,
+    required this.showLocationSelect,
+    required this.showReasonField,
+    required this.showSaveButton,
+    required this.stockInApiAvailable,
+  });
+
+  final bool showPage;
+  final bool showForm;
+  final bool canEditFields;
+  final bool showProductSelect;
+  final bool showLocationSelect;
+  final bool showReasonField;
+  final bool showSaveButton;
+  final bool stockInApiAvailable;
+
+  static AddStockVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage = access.canAccessAddStockPage();
+    final canEditFields = access.canAdjustStock();
+
+    return AddStockVisibility(
+      showPage: showPage,
+      showForm: showPage,
+      canEditFields: canEditFields,
+      showProductSelect:
+          canEditFields &&
+          access.hasProductManagementEntitlement() &&
+          InventoryApiCapabilities.listProductsReference,
+      showLocationSelect:
+          canEditFields && InventoryApiCapabilities.listLocations,
+      showReasonField:
+          canEditFields && InventoryApiCapabilities.stockInReasons,
+      showSaveButton: access.canSubmitStockIn(),
+      stockInApiAvailable: InventoryApiCapabilities.stockIn,
+    );
+  }
+}
+
+class ExpiryAlertsVisibility {
+  const ExpiryAlertsVisibility({
+    required this.showPage,
+    required this.showAlertsList,
+    required this.showDiscountPanel,
+    required this.showApplyDiscount,
+  });
+
+  final bool showPage;
+  final bool showAlertsList;
+  final bool showDiscountPanel;
+  final bool showApplyDiscount;
+
+  static ExpiryAlertsVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage = access.canViewInventoryAlerts();
+
+    return ExpiryAlertsVisibility(
+      showPage: showPage,
+      showAlertsList: showPage,
+      showDiscountPanel:
+          showPage && InventoryApiCapabilities.expiryDiscountRules,
+      showApplyDiscount: access.canApplyExpiryDiscount(),
+    );
+  }
+}
+
+class ProductDetailVisibility {
+  const ProductDetailVisibility({
+    required this.showPage,
+    required this.showEditAction,
+    required this.showDeleteAction,
+    required this.showOverviewTab,
+    required this.showVariantsTab,
+    required this.showBarcodesTab,
+    required this.showPricingTab,
+    required this.showInventoryTab,
+    required this.showBatchesTab,
+    required this.showVisibilityTab,
+    required this.showAuditTab,
+  });
+
+  final bool showPage;
+  final bool showEditAction;
+  final bool showDeleteAction;
+  final bool showOverviewTab;
+  final bool showVariantsTab;
+  final bool showBarcodesTab;
+  final bool showPricingTab;
+  final bool showInventoryTab;
+  final bool showBatchesTab;
+  final bool showVisibilityTab;
+  final bool showAuditTab;
+
+  static ProductDetailVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage =
+        access.canViewProducts() && ProductApiCapabilities.productDetail;
+    final canEdit =
+        access.canUpdateProduct() && ProductApiCapabilities.updateProduct;
+    final canDelete =
+        access.canDeleteProduct() && ProductApiCapabilities.deleteProduct;
+
+    return ProductDetailVisibility(
+      showPage: showPage,
+      showEditAction: canEdit,
+      showDeleteAction: canDelete,
+      showOverviewTab: showPage,
+      showVariantsTab: showPage &&
+          (access.canManageProductVariants() || access.canViewProducts()),
+      showBarcodesTab: showPage &&
+          (access.canManageProductBarcodes() || access.canViewProducts()),
+      showPricingTab: showPage && access.canViewProducts(),
+      showInventoryTab: showPage && access.canViewProductStock(),
+      showBatchesTab: showPage && access.canViewProductStock(),
+      showVisibilityTab: showPage && access.hasProductManagementEntitlement(),
+      showAuditTab:
+          showPage && ProductApiCapabilities.productAuditTab && access.can(
+            TenantAdminPermissionCodes.activityLogView,
+          ),
     );
   }
 }

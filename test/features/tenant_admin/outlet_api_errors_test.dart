@@ -50,5 +50,41 @@ void main() {
         0,
       );
     });
+
+    test('returns backend message for delete conflict', () {
+      final error = DioException(
+        requestOptions: RequestOptions(path: '/outlets/1'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/outlets/1'),
+          statusCode: 409,
+          data: const {
+            'message':
+                'Outlet cannot be deleted while it has active tills, open sessions, or sales history.',
+          },
+        ),
+        type: DioExceptionType.badResponse,
+      );
+
+      expect(
+        outletDeleteErrorMessage(error),
+        'Outlet cannot be deleted while it has active tills, open sessions, or sales history.',
+      );
+    });
+
+    test('returns fallback when delete conflict has no backend message', () {
+      final error = DioException(
+        requestOptions: RequestOptions(path: '/outlets/1'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/outlets/1'),
+          statusCode: 409,
+        ),
+        type: DioExceptionType.badResponse,
+      );
+
+      expect(
+        outletDeleteErrorMessage(error),
+        contains('active tills'),
+      );
+    });
   });
 }

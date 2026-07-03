@@ -85,12 +85,6 @@ class TillListScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TillSearchToolbar(
-                        visibility: visibility,
-                        isMobile: isMobile,
-                      ),
-                      if (visibility.showSearch || visibility.showAddTill)
-                        const SizedBox(height: TenantAdminSpacing.lg),
                       if (visibility.showFilters) ...[
                         TillFilterChips(
                           summary: result.summary,

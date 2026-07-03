@@ -7,7 +7,7 @@ import '../../domain/entities/tenant_admin_context.dart';
 import '../../domain/entities/tenant_admin_menu_item.dart';
 import '../../domain/services/tenant_admin_access_checker.dart';
 
-class TenantAdminSidebar extends ConsumerWidget {
+class TenantAdminSidebar extends ConsumerStatefulWidget {
   const TenantAdminSidebar({
     super.key,
     required this.items,
@@ -22,109 +22,254 @@ class TenantAdminSidebar extends ConsumerWidget {
   final TenantAdminAccessChecker? accessChecker;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TenantAdminSidebar> createState() => _TenantAdminSidebarState();
+}
+
+class _TenantAdminSidebarState extends ConsumerState<TenantAdminSidebar> {
+  // Store expanded state of submenus. Initially, expand active submenus based on route.
+  final Map<String, bool> _expandedMenus = {
+    'products': true,
+    'stock': true,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto expand based on current path
+    if (widget.currentPath.contains('/products')) {
+      _expandedMenus['products'] = true;
+    }
+    if (widget.currentPath.contains('/stock')) {
+      _expandedMenus['stock'] = true;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Custom submenus config
+    final Map<String, List<Map<String, String>>> subMenus = {
+      'products': [
+        {'label': 'Product List', 'route': '/tenant-admin/products'},
+        {'label': 'Add Product', 'route': '/tenant-admin/products/add'},
+        {'label': 'Categories', 'route': '/tenant-admin/products/categories'},
+        {'label': 'Brands', 'route': '/tenant-admin/products/brands'},
+      ],
+      'stock': [
+        {'label': 'Stock In', 'route': '/tenant-admin/stock/in'},
+        {'label': 'Current Stock', 'route': '/tenant-admin/stock/current'},
+        {'label': 'Stock Out', 'route': '/tenant-admin/stock/out'},
+        {'label': 'Transfers', 'route': '/tenant-admin/stock/transfers'},
+      ],
+    };
+
     return Container(
-      width: 230,
+      width: 240,
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF06162D),
-            Color(0xFF0B2142),
-            Color(0xFF111A3F),
-          ],
+        color: Color(0xFF0B192C), // Sleek Dark Premium Navy matching the screenshot
+        border: Border(
+          right: BorderSide(
+            color: Color(0xFF1E293B),
+            width: 1,
+          ),
         ),
       ),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Logo Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 22, 18, 18),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
               child: Row(
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF5A4BFF),
-                          Color(0xFF0EA5E9),
-                          Color(0xFF22C55E),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(13),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.14),
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.shopping_cart,
-                      color: Colors.white,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'SCS-TIX',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Tenant Admin',
-                          style: TextStyle(
-                            color: Color(0xFF9FB0CA),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      color: const Color(0xFF2563EB), // Vibrant Blue Logo Background
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF2563EB).withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'N',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Nytroz POS',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 10),
+            // Menu Items List
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(14, 2, 14, 14),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
                 children: [
-                  for (final item in items)
+                  for (final item in widget.items) ...[
+                    if (subMenus.containsKey(item.key)) ...[
+                      // Expandable main item
+                      _buildExpandableGroup(
+                        item: item,
+                        subItems: _visibleSubMenuItems(
+                          subMenus[item.key]!,
+                          widget.accessChecker,
+                        ),
+                      ),
+                    ] else ...[
+                      // Regular item
+                      _SidebarNavItem(
+                        icon: _iconFor(item.iconKey),
+                        label: item.label == 'Stock' ? 'Inventory' : item.label,
+                        selected: widget.currentPath == item.route ||
+                            (widget.currentPath.startsWith('${item.route}/') &&
+                                !widget.currentPath.contains('/products') &&
+                                !widget.currentPath.contains('/stock')),
+                        onTap: () => context.go(item.route),
+                      ),
+                    ],
+                  ],
+                  // Extra placeholder items to match the screenshot if not present
+                  if (!widget.items.any((item) => item.key == 'purchases'))
                     _SidebarNavItem(
-                      icon: _iconFor(item.iconKey),
-                      label: item.label,
-                      selected: currentPath == item.route ||
-                          currentPath.startsWith('${item.route}/'),
-                      onTap: () => context.go(item.route),
+                      icon: Icons.shopping_basket_outlined,
+                      label: 'Purchases',
+                      selected: false,
+                      onTap: () {},
                     ),
-                  const _SidebarNavItem(
-                    icon: Icons.help_outline,
-                    label: 'Help & Support',
-                    selected: false,
-                    enabled: false,
-                  ),
+                  if (!widget.items.any((item) => item.key == 'sales'))
+                    _SidebarNavItem(
+                      icon: Icons.point_of_sale_outlined,
+                      label: 'Sales',
+                      selected: false,
+                      onTap: () {},
+                    ),
+                  if (!widget.items.any((item) => item.key == 'integrations'))
+                    _SidebarNavItem(
+                      icon: Icons.integration_instructions_outlined,
+                      label: 'Integrations',
+                      selected: false,
+                      onTap: () {},
+                    ),
                 ],
               ),
             ),
+            // User Session / Sign Out Footer
             _SidebarFooter(
-              tenantContext: tenantContext,
-              accessChecker: accessChecker,
+              tenantContext: widget.tenantContext,
+              accessChecker: widget.accessChecker,
               onSignOut: () => _signOut(ref, context),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildExpandableGroup({
+    required TenantAdminMenuItem item,
+    required List<Map<String, String>> subItems,
+  }) {
+    final isExpanded = _expandedMenus[item.key] ?? false;
+    final hasActiveChild = subItems.any((sub) => widget.currentPath == sub['route']);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Main Group Header Item
+        _SidebarNavItem(
+          icon: _iconFor(item.iconKey),
+          label: item.label == 'Stock' ? 'Inventory' : item.label,
+          selected: false, // Don't highlight main parent if children exist
+          hasDropdown: true,
+          isDropdownExpanded: isExpanded,
+          onTap: () {
+            setState(() {
+              _expandedMenus[item.key] = !isExpanded;
+            });
+          },
+        ),
+        // Submenu child items
+        if (isExpanded)
+          Padding(
+            padding: const EdgeInsets.only(left: 24, bottom: 4),
+            child: Column(
+              children: subItems.map((sub) {
+                final isChildSelected = widget.currentPath == sub['route'];
+                return _SidebarSubNavItem(
+                  label: sub['label']!,
+                  selected: isChildSelected,
+                  onTap: () {
+                    final route = sub['route']!;
+                    if (_isImplementedSubRoute(route)) {
+                      context.go(route);
+                    } else {
+                      context.go('/tenant-admin/products');
+                    }
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+      ],
+    );
+  }
+
+  List<Map<String, String>> _visibleSubMenuItems(
+    List<Map<String, String>> subItems,
+    TenantAdminAccessChecker? accessChecker,
+  ) {
+    if (accessChecker == null) {
+      return subItems;
+    }
+
+    return subItems
+        .where((sub) => _canShowSubMenuRoute(accessChecker, sub['route']!))
+        .toList(growable: false);
+  }
+
+  bool _canShowSubMenuRoute(
+    TenantAdminAccessChecker accessChecker,
+    String route,
+  ) {
+    switch (route) {
+      case '/tenant-admin/stock/in':
+        return accessChecker.canAccessAddStockPage();
+      case '/tenant-admin/stock/current':
+        return accessChecker.canAccessCurrentStockPage();
+      case '/tenant-admin/products':
+        return accessChecker.canAccessProductModule();
+      case '/tenant-admin/products/add':
+        return accessChecker.canCreateProduct();
+      default:
+        return _isImplementedSubRoute(route);
+    }
+  }
+
+  bool _isImplementedSubRoute(String route) {
+    return route == '/tenant-admin/products' ||
+        route == '/tenant-admin/products/add' ||
+        route == '/tenant-admin/stock/in' ||
+        route == '/tenant-admin/stock/current';
   }
 
   Future<void> _signOut(WidgetRef ref, BuildContext context) async {
@@ -140,68 +285,111 @@ class _SidebarNavItem extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.selected,
-    this.enabled = true,
+    this.hasDropdown = false,
+    this.isDropdownExpanded = false,
     this.onTap,
   });
 
   final IconData icon;
   final String label;
   final bool selected;
-  final bool enabled;
+  final bool hasDropdown;
+  final bool isDropdownExpanded;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final itemColor = selected
-        ? Colors.white
-        : enabled
-            ? const Color(0xFFD8E0EE)
-            : const Color(0xFF7D8BA3);
-
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: enabled ? onTap : null,
+          borderRadius: BorderRadius.circular(10),
+          onTap: onTap,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: selected ? const Color(0xFF3F2BFF) : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: selected
-                  ? [
-                      BoxShadow(
-                        color: const Color(0xFF3F2BFF).withValues(alpha: 0.30),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ]
-                  : null,
+              color: selected
+                  ? const Color(0xFF1E293B) // Slate background when selected
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               children: [
                 Icon(
                   icon,
-                  size: 18,
+                  size: 20,
                   color: selected
                       ? Colors.white
-                      : enabled
-                          ? const Color(0xFFB8C4D8)
-                          : const Color(0xFF708097),
+                      : const Color(0xFF94A3B8), // Cool slate-400
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: itemColor,
+                      color: selected ? Colors.white : const Color(0xFFE2E8F0),
                       fontSize: 13,
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (hasDropdown)
+                  Icon(
+                    isDropdownExpanded
+                        ? Icons.keyboard_arrow_down_rounded
+                        : Icons.keyboard_arrow_right_rounded,
+                    size: 16,
+                    color: const Color(0xFF64748B),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SidebarSubNavItem extends StatelessWidget {
+  const _SidebarSubNavItem({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: selected
+                  ? const Color(0xFF1E293B).withOpacity(0.6)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: selected ? Colors.white : const Color(0xFF94A3B8),
+                      fontSize: 12,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -225,89 +413,66 @@ class _SidebarFooter extends StatelessWidget {
   final TenantAdminAccessChecker? accessChecker;
   final VoidCallback onSignOut;
 
-  bool get _showTenantInfo {
-    if (tenantContext == null || accessChecker == null) {
-      return false;
-    }
-
-    return accessChecker!.canViewTenantContext() ||
-        accessChecker!.canViewSubscription();
-  }
-
   @override
-  Widget build(BuildContext buildContext) {
+  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
+      padding: const EdgeInsets.all(14),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.09),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          color: const Color(0xFF1E293B).withOpacity(0.4),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF1E293B)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            if (_showTenantInfo) ...[
-              if (accessChecker!.canViewTenantContext()) ...[
-                Text(
-                  tenantContext!.tenantName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                  ),
+            if (tenantContext != null) ...[
+              Text(
+                tenantContext!.tenantName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  tenantContext!.userDisplayName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFFB8C4D8),
-                    fontSize: 12,
-                  ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                tenantContext!.userDisplayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 11,
                 ),
-              ],
-              if (accessChecker!.canViewSubscription() &&
-                  tenantContext!.subscriptionStatus != null &&
-                  tenantContext!.subscriptionStatus!.trim().isNotEmpty) ...[
-                const SizedBox(height: 12),
-                _FooterMetaRow(
-                  label: 'Plan status',
-                  value: tenantContext!.subscriptionStatus!,
-                ),
-              ],
+              ),
               const SizedBox(height: 8),
-              const _FooterMetaRow(label: 'Next billing', value: 'Pending'),
-              const _FooterMetaRow(label: 'Version', value: 'Release 1'),
-              const SizedBox(height: 12),
             ],
             InkWell(
               onTap: onSignOut,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(8),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
+                  horizontal: 10,
+                  vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(14),
+                  color: Colors.white.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.logout, color: Colors.white70, size: 20),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Sign out',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    Icon(Icons.logout, color: Colors.white70, size: 16),
+                    SizedBox(width: 8),
+                    Text(
+                      'Sign out',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -321,69 +486,31 @@ class _SidebarFooter extends StatelessWidget {
   }
 }
 
-class _FooterMetaRow extends StatelessWidget {
-  const _FooterMetaRow({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFF8FA2BF),
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 IconData _iconFor(String iconKey) {
   switch (iconKey) {
     case 'dashboard':
-      return Icons.dashboard;
+      return Icons.dashboard_outlined;
     case 'store':
-      return Icons.store;
+      return Icons.storefront_outlined;
     case 'till':
-      return Icons.payment;
+      return Icons.point_of_sale_outlined;
     case 'users':
-      return Icons.people;
+      return Icons.people_outline;
     case 'shield':
-      return Icons.security;
+      return Icons.verified_user_outlined;
     case 'products':
-      return Icons.list;
+      return Icons.inventory_2_outlined;
     case 'inventory':
-      return Icons.storage;
+    case 'stock':
+      return Icons.storage_outlined;
     case 'reports':
-      return Icons.insert_chart;
+      return Icons.bar_chart_outlined;
     case 'billing':
-      return Icons.receipt;
+      return Icons.receipt_long_outlined;
     case 'settings':
-      return Icons.settings;
+      return Icons.settings_outlined;
     case 'activity':
-      return Icons.history;
+      return Icons.history_outlined;
     case 'help':
     case 'support':
       return Icons.help_outline;

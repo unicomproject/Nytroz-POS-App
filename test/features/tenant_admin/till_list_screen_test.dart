@@ -54,7 +54,7 @@ void main() {
         width: 1200,
       );
 
-      expect(find.text('Add till'), findsOneWidget);
+      expect(find.text('Add New Till'), findsOneWidget);
     });
 
     testWidgets('Header_RemainsAligned_WhenAddTillButtonHidden',
@@ -81,8 +81,7 @@ void main() {
       );
 
       expect(find.text('Edit'), findsNothing);
-      expect(find.byTooltip('Edit till'), findsNothing);
-      expect(find.text('Front Counter Till'), findsOneWidget);
+      expect(find.byTooltip('View details'), findsOneWidget);
     });
 
     testWidgets('EditButton_Visible_WhenTillUpdatePermissionExists',
@@ -97,7 +96,7 @@ void main() {
         width: 1200,
       );
 
-      expect(find.byTooltip('Edit till'), findsOneWidget);
+      expect(find.byTooltip('Edit'), findsOneWidget);
     });
 
     testWidgets('RowActions_RemainAligned_WhenEditPermissionMissing',
@@ -109,7 +108,7 @@ void main() {
         width: 1200,
       );
 
-      expect(find.text('Front Counter Till'), findsOneWidget);
+      expect(find.byTooltip('View details'), findsOneWidget);
       expect(find.byType(TillActionMenu), findsNothing);
     });
 
@@ -136,6 +135,22 @@ void main() {
 
       expect(find.text("Today's sales"), findsNothing);
       expect(find.byType(TillSalesDisplay), findsNothing);
+    });
+
+    testWidgets('TodaySales_Visible_WhenSalesPermissionExists', (tester) async {
+      await _pumpTillList(
+        tester,
+        permissions: [
+          TenantAdminPermissionCodes.tillView,
+          'sales.summary.view',
+        ],
+        features: [TenantAdminFeatureCodes.tillManagement],
+        width: 390,
+        height: 1200,
+        includeSales: true,
+      );
+
+      expect(find.text("Today's sales"), findsOneWidget);
     });
 
     testWidgets('SalesColumn_Removed_WhenSalesPermissionMissing',
@@ -295,10 +310,10 @@ TenantAdminAccessChecker _checker({
       tenantName: 'Coffee Corner Ltd',
       userId: 'user-test',
       userDisplayName: 'Sarah Ahmed',
-      roleNames: const ['Owner'],
       roles: const [
         TenantAdminRoleScope(roleId: 'role-1', roleName: 'Owner'),
       ],
+      roleNames: const ['Owner'],
       outletScope: const [
         TenantAdminOutletScope(
           outletId: 'outlet-1',

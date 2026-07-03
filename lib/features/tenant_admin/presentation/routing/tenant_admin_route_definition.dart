@@ -186,6 +186,21 @@ const tenantAdminRouteDefinitions = [
     permissionCode: 'catalog.product.update',
   ),
   TenantAdminRouteDefinition(
+    path: '/tenant-admin/stock/in',
+    menuKey: 'stock',
+    title: 'Add Stock (Stock In)',
+    subtitle: 'Add new stock to your inventory.',
+    featureCode: 'inventory.stock',
+    permissionCode: 'inventory.stock.adjust',
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/stock/current',
+    menuKey: 'stock',
+    title: 'Current Stock',
+    featureCode: 'inventory.stock',
+    permissionCode: 'inventory.stock.view',
+  ),
+  TenantAdminRouteDefinition(
     path: '/tenant-admin/stock',
     menuKey: 'stock',
     title: 'Stock',

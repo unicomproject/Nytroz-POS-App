@@ -64,7 +64,14 @@ String outletErrorMessage(DioException error,
     {String fallback = 'Request failed'}) {
   final data = error.response?.data;
   if (data is Map && data['message'] != null) {
-    return data['message'].toString();
+    final message = data['message'].toString().trim();
+    if (message.isNotEmpty) {
+      return message;
+    }
+  }
+
+  if (error.response?.statusCode != null) {
+    return fallback;
   }
 
   return messageFromDioException(error, fallback: fallback);
@@ -80,6 +87,47 @@ String outletSubmitErrorMessage(
   }
 
   return outletErrorMessage(error, fallback: fallback);
+}
+
+String outletDeleteErrorMessage(Object error) {
+  if (error is! DioException) {
+    return 'Unable to delete outlet. Please try again.';
+  }
+
+  final statusCode = error.response?.statusCode;
+  if (statusCode == 401) {
+    return outletErrorMessage(
+      error,
+      fallback: 'Your session has expired. Please sign in again.',
+    );
+  }
+
+  if (statusCode == 403) {
+    return outletErrorMessage(
+      error,
+      fallback: 'You do not have permission to delete outlets.',
+    );
+  }
+
+  if (statusCode == 404) {
+    return outletErrorMessage(
+      error,
+      fallback: 'Outlet was not found.',
+    );
+  }
+
+  if (statusCode == 409) {
+    return outletErrorMessage(
+      error,
+      fallback:
+          'Outlet cannot be deleted while it has active tills, open sessions, or sales history.',
+    );
+  }
+
+  return outletErrorMessage(
+    error,
+    fallback: 'Unable to delete outlet. Please try again.',
+  );
 }
 
 String outletLoadErrorMessage(Object error) {
