@@ -38,6 +38,7 @@ void main() {
         outletName: 'New Outlet',
         outletCode: 'OUT-002',
         outletType: 'store',
+        status: 'Active',
         mainPhoneNumber: '+94771234567',
         emailAddress: 'outlet@test.com',
         addressLine1: 'Line 1',

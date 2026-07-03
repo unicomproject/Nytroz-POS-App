@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/access/tenant_admin_access_codes.dart';
+import '../../domain/entities/till.dart';
+import '../../../presentation/widgets/tenant_admin_status_badge.dart';
 import 'till_permission_config.dart';
 
 enum TillRowActionId {
@@ -18,13 +20,12 @@ class TillRowActionConfig extends TillWidgetPermissionConfig {
     required this.icon,
     super.permission,
     super.permissionsAny = const [],
-    this.showInMoreMenu = false,
+    super.showInMoreMenu = false,
   });
 
   final TillRowActionId actionId;
   final String label;
   final IconData icon;
-  final bool showInMoreMenu;
 }
 
 const tillRowActionConfigs = <TillRowActionConfig>[
@@ -51,7 +52,7 @@ const tillRowActionConfigs = <TillRowActionConfig>[
     showInMoreMenu: true,
   ),
   TillRowActionConfig(
-    id: 'generate_activation_code',
+    id: 'activation_code',
     actionId: TillRowActionId.generateActivationCode,
     label: 'Generate activation code',
     icon: Icons.qr_code_2_outlined,
@@ -64,23 +65,115 @@ List<TillRowActionConfig> visibleTillRowActions(
   bool Function(String permissionCode) can,
   bool Function(Iterable<String> permissionCodes) canAny,
 ) {
-  return filterTillConfigs(tillRowActionConfigs, can, canAny);
-}
-
-List<TillRowActionConfig> visibleTillInlineActions(
-  bool Function(String permissionCode) can,
-  bool Function(Iterable<String> permissionCodes) canAny,
-) {
-  return visibleTillRowActions(can, canAny)
-      .where((action) => !action.showInMoreMenu)
-      .toList(growable: false);
+  return filterTillConfigs(
+    tillRowActionConfigs.where((config) => !config.showInMoreMenu).toList(),
+    can,
+    canAny,
+  );
 }
 
 List<TillRowActionConfig> visibleTillMoreMenuActions(
   bool Function(String permissionCode) can,
   bool Function(Iterable<String> permissionCodes) canAny,
 ) {
-  return visibleTillRowActions(can, canAny)
-      .where((action) => action.showInMoreMenu)
-      .toList(growable: false);
+  return filterTillConfigs(
+    tillRowActionConfigs.where((config) => config.showInMoreMenu).toList(),
+    can,
+    canAny,
+  );
+}
+
+class TillSummaryCardConfig extends TillWidgetPermissionConfig {
+  const TillSummaryCardConfig({
+    required super.id,
+    super.permission,
+    super.permissionsAny = const [],
+    required this.title,
+    required this.icon,
+    this.status,
+    required this.valueBuilder,
+    required this.subtitleBuilder,
+  });
+
+  final String title;
+  final IconData icon;
+  final TenantAdminStatusType? status;
+  final String Function(TillListSummary summary) valueBuilder;
+  final String Function(TillListSummary summary) subtitleBuilder;
+}
+
+const tillSummaryCardConfigs = <TillSummaryCardConfig>[
+  TillSummaryCardConfig(
+    id: 'total_tills',
+    permission: TenantAdminPermissionCodes.tillView,
+    title: 'Total tills',
+    icon: Icons.point_of_sale_outlined,
+    valueBuilder: _totalTillsValue,
+    subtitleBuilder: _totalTillsSubtitle,
+  ),
+  TillSummaryCardConfig(
+    id: 'online',
+    permission: TenantAdminPermissionCodes.tillView,
+    title: 'Online',
+    icon: Icons.wifi,
+    status: TenantAdminStatusType.online,
+    valueBuilder: _onlineValue,
+    subtitleBuilder: _onlineSubtitle,
+  ),
+  TillSummaryCardConfig(
+    id: 'offline',
+    permission: TenantAdminPermissionCodes.tillView,
+    title: 'Offline',
+    icon: Icons.wifi_off,
+    status: TenantAdminStatusType.offline,
+    valueBuilder: _offlineValue,
+    subtitleBuilder: _offlineSubtitle,
+  ),
+  TillSummaryCardConfig(
+    id: 'needs_attention',
+    permission: TenantAdminPermissionCodes.tillView,
+    title: 'Need attention',
+    icon: Icons.warning_amber_rounded,
+    status: TenantAdminStatusType.warning,
+    valueBuilder: _needsAttentionValue,
+    subtitleBuilder: _needsAttentionSubtitle,
+  ),
+];
+
+String _totalTillsValue(TillListSummary summary) => '${summary.totalTills}';
+
+String _totalTillsSubtitle(TillListSummary summary) => 'Across all outlets';
+
+String _onlineValue(TillListSummary summary) => '${summary.onlineCount}';
+
+String _onlineSubtitle(TillListSummary summary) {
+  return '${_percent(summary.onlineCount, summary.totalTills)}% of total';
+}
+
+String _offlineValue(TillListSummary summary) => '${summary.offlineCount}';
+
+String _offlineSubtitle(TillListSummary summary) {
+  return '${_percent(summary.offlineCount, summary.totalTills)}% of total';
+}
+
+String _needsAttentionValue(TillListSummary summary) =>
+    '${summary.needsAttentionCount}';
+
+String _needsAttentionSubtitle(TillListSummary summary) {
+  return '${_percent(summary.needsAttentionCount, summary.totalTills)}% of total';
+}
+
+int _percent(int value, int total) {
+  if (total <= 0) {
+    return 0;
+  }
+
+  return ((value / total) * 100).round();
+}
+
+List<TillSummaryCardConfig> visibleTillSummaryCards(
+  bool Function(String permissionCode) can,
+  bool Function(Iterable<String> permissionCodes) canAny,
+) {
+  return filterTillConfigs(tillSummaryCardConfigs, can, canAny);
 }

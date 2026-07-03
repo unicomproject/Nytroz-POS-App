@@ -1,13 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/network/dio_provider.dart';
-import '../../../outlets/presentation/providers/outlet_providers.dart';
 import '../../application/usecases/create_till.dart';
 import '../../application/usecases/get_tills.dart';
 import '../../data/datasources/till_remote_datasource.dart';
 import '../../data/repositories/till_repository_impl.dart';
 import '../../domain/entities/till.dart';
-import '../../domain/entities/till_list_query.dart';
 import '../../domain/repositories/till_repository.dart';
 import '../utils/till_list_filters.dart';
 
@@ -16,10 +14,7 @@ final tillRemoteDatasourceProvider = Provider<TillRemoteDatasource>((ref) {
 });
 
 final tillRepositoryProvider = Provider<TillRepository>((ref) {
-  return TillRepositoryImpl(
-    ref.watch(tillRemoteDatasourceProvider),
-    ref.watch(outletRemoteDatasourceProvider),
-  );
+  return TillRepositoryImpl(ref.watch(tillRemoteDatasourceProvider));
 });
 
 final getTillsProvider = Provider<GetTills>((ref) {
@@ -42,11 +37,6 @@ final tillPageSizeProvider = StateProvider<int>((ref) => 10);
 final tillSortByProvider = StateProvider<String>((ref) => 'name');
 
 final tillSortDirectionProvider = StateProvider<String>((ref) => 'asc');
-
-final tillOutletOptionsProvider =
-    FutureProvider<List<TillOutletOption>>((ref) async {
-  return ref.watch(tillRepositoryProvider).getOutletOptions();
-});
 
 final tillListQueryProvider = Provider<TillListQuery>((ref) {
   final search = ref.watch(tillSearchProvider);

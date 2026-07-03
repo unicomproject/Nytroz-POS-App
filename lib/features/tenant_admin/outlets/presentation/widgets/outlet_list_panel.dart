@@ -40,14 +40,17 @@ class OutletListPanel extends ConsumerWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         border: Border.all(color: TenantAdminColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+            padding: const EdgeInsets.symmetric(
+              horizontal: TenantAdminSpacing.lg,
+              vertical: TenantAdminSpacing.md,
+            ),
             child: isMobile
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,9 +69,9 @@ class OutletListPanel extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       _PanelTitle(countLabel: outletCountLabel),
-                      const Spacer(),
+                      const SizedBox(width: TenantAdminSpacing.xl),
                       Expanded(
-                        flex: 3,
+                        flex: 5,
                         child: _Toolbar(
                           visibility: visibility,
                           statusFilter: statusFilter,
@@ -238,8 +241,8 @@ class _Toolbar extends ConsumerWidget {
       if (visibility.showFilter) ...[
         if (visibility.showSearch) const SizedBox(width: TenantAdminSpacing.sm),
         TenantAdminSecondaryButton(
-          label: isMobile ? 'Filter' : 'Filter',
-          icon: Icons.filter_list,
+          label: 'Filters',
+          icon: Icons.filter_alt_outlined,
           onPressed: () =>
               _showFilterSheet(context, ref, statusFilter, summary),
         ),

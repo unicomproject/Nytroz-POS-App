@@ -86,7 +86,7 @@ void main() {
 
       expect(dto.permissions.first.permissionCode, 'roles.permissions.view');
       expect(dto.featureEntitlements.first.featureName, 'tenant.roles');
-      expect(dto.roles.first.id, 'role-1');
+      expect(dto.roles.first.roleId, 'role-1');
     });
   });
 }

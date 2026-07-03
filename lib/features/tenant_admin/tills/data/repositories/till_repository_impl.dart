@@ -1,16 +1,13 @@
-import '../../../outlets/data/datasources/outlet_remote_datasource.dart';
-import '../../../outlets/domain/entities/outlet_list_query.dart';
 import '../../domain/entities/till.dart';
-import '../../domain/entities/till_list_query.dart';
 import '../../domain/repositories/till_repository.dart';
 import '../datasources/till_remote_datasource.dart';
 import '../mappers/till_mapper.dart';
+import '../models/create_till_request_dto.dart';
 
 class TillRepositoryImpl implements TillRepository {
-  const TillRepositoryImpl(this._remoteDatasource, this._outletRemoteDatasource);
+  const TillRepositoryImpl(this._remoteDatasource);
 
   final TillRemoteDatasource _remoteDatasource;
-  final OutletRemoteDatasource _outletRemoteDatasource;
 
   @override
   Future<TillListResult> getTills({required TillListQuery query}) async {
@@ -19,27 +16,16 @@ class TillRepositoryImpl implements TillRepository {
   }
 
   @override
-  Future<Till> createTill(CreateTillInput input) async {
+  Future<CreatedTill> createTill(TillFormData form) async {
     final dto = await _remoteDatasource.createTill(
-      TillMapper.toCreateRequest(input),
-    );
-    return TillMapper.toEntity(dto);
-  }
-
-  @override
-  Future<List<TillOutletOption>> getOutletOptions() async {
-    final result = await _outletRemoteDatasource.getOutlets(
-      const OutletListQuery(page: 1, pageSize: 100),
+      CreateTillRequestDto(
+        name: form.name,
+        code: form.code,
+        outletId: form.outletId,
+        status: form.status,
+      ),
     );
 
-    return result.items
-        .map(
-          (outlet) => TillOutletOption(
-            id: outlet.id,
-            name: outlet.name,
-            code: outlet.code,
-          ),
-        )
-        .toList(growable: false);
+    return TillMapper.toCreatedEntity(dto);
   }
 }

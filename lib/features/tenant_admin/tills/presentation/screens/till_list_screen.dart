@@ -6,6 +6,7 @@ import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../providers/till_providers.dart';
 import '../providers/till_visibility_provider.dart';
+import '../widgets/till_filter_chips.dart';
 import '../widgets/till_list_panel.dart';
 import '../widgets/till_metric_cards.dart';
 
@@ -17,7 +18,6 @@ class TillListScreen extends ConsumerWidget {
     final visibilityState = ref.watch(tillListVisibilityProvider);
     final tillsState = ref.watch(tillListProvider);
     final statusFilter = ref.watch(tillStatusFilterProvider);
-    final page = ref.watch(tillPageProvider);
 
     return visibilityState.when(
       loading: () => const TenantAdminPageScaffold(
@@ -85,6 +85,20 @@ class TillListScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      TillSearchToolbar(
+                        visibility: visibility,
+                        isMobile: isMobile,
+                      ),
+                      if (visibility.showSearch || visibility.showAddTill)
+                        const SizedBox(height: TenantAdminSpacing.lg),
+                      if (visibility.showFilters) ...[
+                        TillFilterChips(
+                          summary: result.summary,
+                          selectedFilter: statusFilter,
+                          enabled: visibility.showFilters,
+                        ),
+                        const SizedBox(height: TenantAdminSpacing.xl),
+                      ],
                       if (visibility.showSummarySection) ...[
                         TillMetricCards(
                           summary: result.summary,
@@ -99,21 +113,6 @@ class TillListScreen extends ConsumerWidget {
                           visibility: visibility,
                           statusFilter: statusFilter,
                           isMobile: isMobile,
-                          page: page,
-                          needsAttentionCount: result.summary.needsAttentionCount,
-                          onSearchChanged: (value) {
-                            ref.read(tillSearchProvider.notifier).state = value;
-                            ref.read(tillPageProvider.notifier).state = 1;
-                          },
-                          onStatusFilterChanged: (filter) {
-                            ref.read(tillStatusFilterProvider.notifier).state =
-                                filter;
-                            ref.read(tillPageProvider.notifier).state = 1;
-                          },
-                          onPageChanged: (nextPage) {
-                            ref.read(tillPageProvider.notifier).state =
-                                nextPage;
-                          },
                         ),
                     ],
                   ),

@@ -66,7 +66,7 @@ class TenantDashboardScreen extends ConsumerWidget {
 
         return LayoutBuilder(
           builder: (context, constraints) {
-            final isMobile = constraints.maxWidth < 700;
+            final isMobile = constraints.maxWidth < 620;
 
             return TenantAdminPageScaffold(
               title: visibility.showTitle ? 'Dashboard' : '',
@@ -115,95 +115,99 @@ class _TabletDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sections = <Widget>[];
+    final width = MediaQuery.sizeOf(context).width;
+    final useStackedMiddle = width < 820;
 
     if (visibility.showKpiSection) {
       sections.add(
         DashboardMetricGrid(
-          metrics: visibility.visibleMetrics,
+          metrics: visibility.visibleMetrics.take(4).toList(growable: false),
           compact: false,
         ),
       );
     }
 
-    final middleRowChildren = <Widget>[];
+    final middleSections = <Widget>[];
 
     if (visibility.showSalesChart) {
-      middleRowChildren.add(
-        Expanded(
-          flex: 2,
-          child: SalesThisWeekCard(
-            salesSummary: visibility.salesSummary,
-            showTrend: visibility.showSalesTrend,
-            showReportsLink: visibility.showReportsLink,
-          ),
+      middleSections.add(
+        SalesThisWeekCard(
+          salesSummary: visibility.salesSummary,
+          showTrend: visibility.showSalesTrend,
+          showReportsLink: visibility.showReportsLink,
         ),
       );
     }
 
     if (visibility.showNeedsAttentionSection) {
-      if (middleRowChildren.isNotEmpty) {
-        middleRowChildren.add(const SizedBox(width: 24));
-      }
-
-      middleRowChildren.add(
-        Expanded(
-          child: NeedsAttentionCard(
-            items: visibility.visibleAttentionItems,
-            showViewAll: visibility.showNeedsAttentionViewAll,
-          ),
+      middleSections.add(
+        NeedsAttentionCard(
+          items: visibility.visibleAttentionItems,
+          showViewAll: visibility.showNeedsAttentionViewAll,
         ),
       );
     }
-
-    if (middleRowChildren.isNotEmpty) {
-      if (sections.isNotEmpty) {
-        sections.add(const SizedBox(height: 24));
-      }
-
-      sections.add(
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: middleRowChildren,
-        ),
-      );
-    }
-
-    final bottomRowChildren = <Widget>[];
 
     if (visibility.showQuickActionsSection) {
-      bottomRowChildren.add(
-        Expanded(
-          child: DashboardQuickActionsCard(
-            actions: visibility.visibleQuickActions,
-          ),
+      middleSections.add(
+        DashboardQuickActionsCard(
+          actions: visibility.visibleQuickActions,
         ),
       );
+    }
+
+    if (middleSections.isNotEmpty) {
+      if (sections.isNotEmpty) {
+        sections.add(const SizedBox(height: 20));
+      }
+
+      if (useStackedMiddle) {
+        for (var index = 0; index < middleSections.length; index++) {
+          sections.add(middleSections[index]);
+          if (index != middleSections.length - 1) {
+            sections.add(const SizedBox(height: 20));
+          }
+        }
+      } else {
+        sections.add(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (visibility.showSalesChart)
+                Expanded(flex: width < 1040 ? 5 : 4, child: middleSections[0]),
+              if (visibility.showSalesChart &&
+                  (visibility.showNeedsAttentionSection ||
+                      visibility.showQuickActionsSection))
+                const SizedBox(width: 16),
+              if (visibility.showNeedsAttentionSection)
+                Expanded(
+                  flex: width < 1040 ? 5 : 4,
+                  child: middleSections[visibility.showSalesChart ? 1 : 0],
+                ),
+              if (visibility.showNeedsAttentionSection &&
+                  visibility.showQuickActionsSection)
+                const SizedBox(width: 16),
+              if (visibility.showQuickActionsSection)
+                Expanded(
+                  flex: width < 1040 ? 4 : 3,
+                  child: middleSections[(visibility.showSalesChart ? 1 : 0) +
+                      (visibility.showNeedsAttentionSection ? 1 : 0)],
+                ),
+            ],
+          ),
+        );
+      }
     }
 
     if (visibility.showRecentActivitySection) {
-      if (bottomRowChildren.isNotEmpty) {
-        bottomRowChildren.add(const SizedBox(width: 24));
-      }
-
-      bottomRowChildren.add(
-        Expanded(
-          child: RecentActivityCard(
-            items: visibility.visibleActivities,
-            showViewAll: visibility.showAllActivityLink,
-          ),
-        ),
-      );
-    }
-
-    if (bottomRowChildren.isNotEmpty) {
       if (sections.isNotEmpty) {
-        sections.add(const SizedBox(height: 24));
+        sections.add(const SizedBox(height: 20));
       }
 
       sections.add(
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: bottomRowChildren,
+        RecentActivityCard(
+          items: visibility.visibleActivities,
+          showViewAll: visibility.showAllActivityLink,
         ),
       );
     }
@@ -242,7 +246,7 @@ class _MobileDashboard extends StatelessWidget {
     if (visibility.showKpiSection) {
       addSection(
         DashboardMetricGrid(
-          metrics: visibility.visibleMetrics,
+          metrics: visibility.visibleMetrics.take(4).toList(growable: false),
           compact: true,
         ),
       );

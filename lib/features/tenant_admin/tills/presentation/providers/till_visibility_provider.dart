@@ -18,7 +18,9 @@ final tillListVisibilityProvider =
   );
 });
 
-final tillListProvider = FutureProvider<TillListResult?>((ref) async {
+final tillListProvider = FutureProvider.autoDispose<TillListResult?>((
+  ref,
+) async {
   final accessChecker =
       await ref.watch(tenantAdminAccessCheckerProvider.future);
 
@@ -28,4 +30,13 @@ final tillListProvider = FutureProvider<TillListResult?>((ref) async {
 
   final query = ref.watch(tillListQueryProvider);
   return ref.watch(getTillsProvider).call(query: query);
+});
+
+final tillCreateAccessProvider = Provider<bool>((ref) {
+  final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+
+  return accessState.maybeWhen(
+    data: (accessChecker) => accessChecker.canCreateTill(),
+    orElse: () => false,
+  );
 });

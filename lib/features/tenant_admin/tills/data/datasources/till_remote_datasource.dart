@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 
-import '../../../../../core/network/api_endpoints.dart';
-import '../../domain/entities/till_list_query.dart';
+import '../../domain/entities/till.dart';
 import '../models/create_till_request_dto.dart';
 import '../models/till_dto.dart';
 
@@ -10,22 +9,24 @@ class TillRemoteDatasource {
 
   final Dio _dio;
 
+  static const _tillPath = '/api/v1/tenant-admin/tills';
+
   Future<TillListResultDto> getTills(TillListQuery query) async {
     final response = await _dio.get<dynamic>(
-      ApiEndpoints.tenantAdminTills,
+      _tillPath,
       queryParameters: _listQueryParameters(query),
     );
 
     return _parseListResponse(response.data, response.requestOptions);
   }
 
-  Future<TillDto> createTill(CreateTillRequestDto request) async {
+  Future<CreatedTillDto> createTill(CreateTillRequestDto request) async {
     final response = await _dio.post<dynamic>(
-      ApiEndpoints.tenantAdminTills,
+      _tillPath,
       data: request.toJson(),
     );
 
-    return TillDto.fromJson(
+    return CreatedTillDto.fromJson(
       _unwrapApiPayload(response.data, response.requestOptions),
     );
   }
@@ -43,7 +44,10 @@ class TillRemoteDatasource {
     };
   }
 
-  TillListResultDto _parseListResponse(dynamic data, RequestOptions requestOptions) {
+  TillListResultDto _parseListResponse(
+    dynamic data,
+    RequestOptions requestOptions,
+  ) {
     if (data is Map && data['success'] == false) {
       throw DioException(
         requestOptions: requestOptions,
@@ -64,7 +68,10 @@ class TillRemoteDatasource {
     return TillListResultDto.fromJson(const {});
   }
 
-  Map<String, dynamic> _unwrapApiPayload(dynamic data, RequestOptions requestOptions) {
+  Map<String, dynamic> _unwrapApiPayload(
+    dynamic data,
+    RequestOptions requestOptions,
+  ) {
     if (data is! Map) {
       return const {};
     }
@@ -73,6 +80,11 @@ class TillRemoteDatasource {
     if (root['success'] == false) {
       throw DioException(
         requestOptions: requestOptions,
+        response: Response(
+          requestOptions: requestOptions,
+          data: root,
+          statusCode: 400,
+        ),
         type: DioExceptionType.badResponse,
         message: root['message']?.toString(),
       );

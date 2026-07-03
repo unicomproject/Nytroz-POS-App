@@ -1,5 +1,4 @@
 import '../../domain/entities/till.dart';
-import '../../domain/entities/till_list_query.dart';
 import '../../domain/repositories/till_repository.dart';
 
 class GetTills {

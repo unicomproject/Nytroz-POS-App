@@ -19,11 +19,12 @@ class RecentActivityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: TenantAdminColors.border),
+        boxShadow: TenantAdminShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,23 +44,57 @@ class RecentActivityCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: TenantAdminSpacing.lg),
+          const SizedBox(height: 14),
           if (items.isEmpty)
             Text(
               'No recent activity yet.',
               style: TenantAdminTextStyles.muted(context),
             )
           else
-            for (var index = 0; index < items.length; index++) ...[
-              TenantAdminActivityItem(
-                title: items[index].title,
-                subtitle: items[index].subtitle,
-                timeLabel: items[index].timeLabel,
-                icon: _iconFor(items[index].iconKey),
-              ),
-              if (index != items.length - 1)
-                const SizedBox(height: TenantAdminSpacing.lg),
-            ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final stackItems = constraints.maxWidth < 760;
+                final visibleItems = items.take(3).toList(growable: false);
+
+                if (stackItems) {
+                  return Column(
+                    children: [
+                      for (var index = 0;
+                          index < visibleItems.length;
+                          index++) ...[
+                        TenantAdminActivityItem(
+                          title: visibleItems[index].title,
+                          subtitle: visibleItems[index].subtitle,
+                          timeLabel: visibleItems[index].timeLabel,
+                          icon: _iconFor(visibleItems[index].iconKey),
+                        ),
+                        if (index != visibleItems.length - 1)
+                          const SizedBox(height: TenantAdminSpacing.lg),
+                      ],
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    for (var index = 0;
+                        index < visibleItems.length;
+                        index++) ...[
+                      Expanded(
+                        child: TenantAdminActivityItem(
+                          title: visibleItems[index].title,
+                          subtitle: visibleItems[index].subtitle,
+                          timeLabel: visibleItems[index].timeLabel,
+                          icon: _iconFor(visibleItems[index].iconKey),
+                        ),
+                      ),
+                      if (index != visibleItems.length - 1)
+                        const SizedBox(width: TenantAdminSpacing.lg),
+                    ],
+                  ],
+                );
+              },
+            ),
         ],
       ),
     );

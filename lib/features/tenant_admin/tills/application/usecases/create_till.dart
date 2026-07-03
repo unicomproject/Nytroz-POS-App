@@ -6,7 +6,7 @@ class CreateTill {
 
   final TillRepository _repository;
 
-  Future<Till> call(CreateTillInput input) {
-    return _repository.createTill(input);
+  Future<CreatedTill> call(TillFormData form) {
+    return _repository.createTill(form);
   }
 }

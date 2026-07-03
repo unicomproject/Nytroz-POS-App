@@ -111,7 +111,7 @@ TenantAdminContext _context() {
     userDisplayName: 'Tenant Admin',
     roleNames: ['Tenant Admin'],
     roles: [
-      TenantAdminRole(id: 'role-1', name: 'Tenant Admin'),
+      TenantAdminRoleScope(roleId: 'role-1', roleName: 'Tenant Admin'),
     ],
     outletScope: [],
     featureEntitlements: [

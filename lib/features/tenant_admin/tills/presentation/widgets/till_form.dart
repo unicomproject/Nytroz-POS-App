@@ -1,142 +1,314 @@
 import 'package:flutter/material.dart';
 
-class TillFormData {
-  const TillFormData({
-    required this.name,
-    required this.code,
-    required this.outletId,
-    required this.status,
-  });
-
-  final String name;
-  final String code;
-  final String outletId;
-  final String status;
-}
+import '../../../outlets/domain/entities/outlet.dart';
+import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/widgets/tenant_admin_buttons.dart';
+import '../../domain/entities/till.dart';
 
 class TillForm extends StatefulWidget {
   const TillForm({
     super.key,
-    required this.outletOptions,
+    required this.outlets,
+    required this.backendErrors,
+    required this.submitting,
     required this.onSubmit,
-    this.backendErrors = const {},
-    this.submitting = false,
   });
 
-  final List<TillFormOutletOption> outletOptions;
-  final Future<void> Function(TillFormData data) onSubmit;
+  final List<Outlet> outlets;
   final Map<String, String> backendErrors;
   final bool submitting;
+  final Future<void> Function(TillFormData form) onSubmit;
 
   @override
   State<TillForm> createState() => _TillFormState();
-}
-
-class TillFormOutletOption {
-  const TillFormOutletOption({
-    required this.id,
-    required this.label,
-  });
-
-  final String id;
-  final String label;
 }
 
 class _TillFormState extends State<TillForm> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
-  String? _outletId;
+  final _deviceNameController = TextEditingController();
+  final _printerNameController = TextEditingController();
+  final _scannerNameController = TextEditingController();
+  final _cashDrawerNameController = TextEditingController();
+  final _cardReaderNameController = TextEditingController();
+  final _noteController = TextEditingController();
+  String? _selectedOutletId;
   String _status = 'active';
 
   @override
   void dispose() {
     _nameController.dispose();
     _codeController.dispose();
+    _deviceNameController.dispose();
+    _printerNameController.dispose();
+    _scannerNameController.dispose();
+    _cashDrawerNameController.dispose();
+    _cardReaderNameController.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    _outletId ??=
-        widget.outletOptions.isNotEmpty ? widget.outletOptions.first.id : null;
-
     return Form(
       key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TextFormField(
-            controller: _nameController,
-            decoration: InputDecoration(
-              labelText: 'Till name',
-              errorText: widget.backendErrors['name'],
+      child: Container(
+        padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+        decoration: BoxDecoration(
+          color: TenantAdminColors.surface,
+          borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+          border: Border.all(color: TenantAdminColors.border),
+          boxShadow: TenantAdminShadows.card,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _sectionHeader(
+              icon: Icons.point_of_sale_outlined,
+              title: 'Till Details',
             ),
-            validator: (value) =>
-                value == null || value.trim().isEmpty ? 'Name is required.' : null,
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _codeController,
-            decoration: InputDecoration(
-              labelText: 'Till code',
-              errorText: widget.backendErrors['code'],
+            const SizedBox(height: TenantAdminSpacing.lg),
+            _twoColumnRow(
+              _field(
+                key: 'name',
+                label: 'Till Name',
+                hint: 'Enter till name',
+                controller: _nameController,
+                icon: Icons.person_outline,
+                requiredMessage: 'Till name is required.',
+              ),
+              _field(
+                key: 'code',
+                label: 'Till Code',
+                hint: 'Enter till code',
+                controller: _codeController,
+                icon: Icons.tag,
+                requiredMessage: 'Till code is required.',
+              ),
             ),
-            validator: (value) =>
-                value == null || value.trim().isEmpty ? 'Code is required.' : null,
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            initialValue: _outletId,
-            decoration: InputDecoration(
-              labelText: 'Outlet',
-              errorText: widget.backendErrors['outletId'],
+            const SizedBox(height: TenantAdminSpacing.lg),
+            _twoColumnRow(_outletDropdown(), _statusDropdown()),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: TenantAdminSpacing.xl),
+              child: Divider(height: 1, color: TenantAdminColors.border),
             ),
-            items: widget.outletOptions
-                .map(
-                  (option) => DropdownMenuItem(
-                    value: option.id,
-                    child: Text(option.label),
-                  ),
-                )
-                .toList(growable: false),
-            onChanged: widget.outletOptions.isEmpty
-                ? null
-                : (value) => setState(() => _outletId = value),
-            validator: (value) =>
-                value == null || value.isEmpty ? 'Outlet is required.' : null,
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            initialValue: _status,
-            decoration: InputDecoration(
-              labelText: 'Status',
-              errorText: widget.backendErrors['status'],
+            _sectionHeader(
+              icon: Icons.devices_outlined,
+              title: 'Hardware Details',
+              subtitle: 'Add hardware information if available for this till.',
             ),
-            items: const [
-              DropdownMenuItem(value: 'active', child: Text('Active')),
-              DropdownMenuItem(value: 'inactive', child: Text('Inactive')),
-              DropdownMenuItem(value: 'maintenance', child: Text('Maintenance')),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => _status = value);
-              }
-            },
-          ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: widget.submitting ? null : _submit,
-            child: widget.submitting
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Create till'),
-          ),
-        ],
+            const SizedBox(height: TenantAdminSpacing.lg),
+            _twoColumnRow(
+              _field(
+                key: 'deviceName',
+                label: 'Device Name',
+                hint: 'Enter device name',
+                controller: _deviceNameController,
+                icon: Icons.tablet_mac_outlined,
+              ),
+              _field(
+                key: 'printerName',
+                label: 'Printer Name',
+                hint: 'Enter printer name',
+                controller: _printerNameController,
+                icon: Icons.print_outlined,
+              ),
+            ),
+            const SizedBox(height: TenantAdminSpacing.lg),
+            _twoColumnRow(
+              _field(
+                key: 'scannerName',
+                label: 'Scanner Name',
+                hint: 'Enter scanner name',
+                controller: _scannerNameController,
+                icon: Icons.qr_code_scanner_outlined,
+              ),
+              _field(
+                key: 'cashDrawerName',
+                label: 'Cash Drawer Name',
+                hint: 'Enter cash drawer name',
+                controller: _cashDrawerNameController,
+                icon: Icons.inventory_2_outlined,
+              ),
+            ),
+            const SizedBox(height: TenantAdminSpacing.lg),
+            _twoColumnRow(
+              _field(
+                key: 'cardReaderName',
+                label: 'Card Reader Name',
+                hint: 'Enter card reader name',
+                controller: _cardReaderNameController,
+                icon: Icons.credit_card_outlined,
+              ),
+              _field(
+                key: 'internalNote',
+                label: 'Internal Note',
+                hint: 'Enter any note...',
+                controller: _noteController,
+                icon: Icons.sticky_note_2_outlined,
+                maxLength: 250,
+              ),
+            ),
+            const SizedBox(height: TenantAdminSpacing.xl),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TenantAdminSecondaryButton(
+                  label: 'Cancel',
+                  icon: Icons.close,
+                  onPressed: widget.submitting
+                      ? null
+                      : () => Navigator.of(context).maybePop(),
+                ),
+                const SizedBox(width: TenantAdminSpacing.md),
+                TenantAdminPrimaryButton(
+                  label: 'Create Till',
+                  icon: Icons.save_outlined,
+                  loading: widget.submitting,
+                  onPressed: widget.submitting ? null : _submit,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _sectionHeader({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: TenantAdminColors.secondary,
+            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+          ),
+          child: Icon(icon, size: 18, color: TenantAdminColors.primary),
+        ),
+        const SizedBox(width: TenantAdminSpacing.sm),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: TenantAdminTextStyles.sectionTitle(context)),
+              if (subtitle != null) ...[
+                const SizedBox(height: TenantAdminSpacing.xs),
+                Text(subtitle, style: TenantAdminTextStyles.muted(context)),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _field({
+    required String key,
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    required IconData icon,
+    String? requiredMessage,
+    int? maxLength,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLength: maxLength,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon, size: 18),
+        errorText: widget.backendErrors[key],
+        counterText: maxLength == null ? null : '',
+      ),
+      validator: requiredMessage == null
+          ? null
+          : (value) {
+              if (value == null || value.trim().isEmpty) {
+                return requiredMessage;
+              }
+              return null;
+            },
+    );
+  }
+
+  Widget _outletDropdown() {
+    return DropdownButtonFormField<String>(
+      initialValue: _selectedOutletId,
+      decoration: InputDecoration(
+        labelText: 'Assign Outlet',
+        hintText: 'Select outlet',
+        prefixIcon: const Icon(Icons.location_on_outlined, size: 18),
+        errorText: widget.backendErrors['outletId'],
+      ),
+      items: [
+        for (final outlet in widget.outlets)
+          DropdownMenuItem<String>(
+            value: outlet.id,
+            child: Text(outlet.name),
+          ),
+      ],
+      onChanged: widget.submitting
+          ? null
+          : (value) => setState(() => _selectedOutletId = value),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Outlet is required.';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _statusDropdown() {
+    return DropdownButtonFormField<String>(
+      initialValue: _status,
+      decoration: InputDecoration(
+        labelText: 'Status',
+        prefixIcon: const Icon(Icons.circle, size: 12),
+        errorText: widget.backendErrors['status'],
+      ),
+      items: const [
+        DropdownMenuItem(value: 'active', child: Text('Active')),
+        DropdownMenuItem(value: 'inactive', child: Text('Inactive')),
+        DropdownMenuItem(value: 'maintenance', child: Text('Maintenance')),
+      ],
+      onChanged: widget.submitting
+          ? null
+          : (value) => setState(() => _status = value ?? 'active'),
+    );
+  }
+
+  Widget _twoColumnRow(Widget first, Widget second) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 720) {
+          return Column(
+            children: [
+              first,
+              const SizedBox(height: TenantAdminSpacing.lg),
+              second,
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: first),
+            const SizedBox(width: TenantAdminSpacing.xl),
+            Expanded(child: second),
+          ],
+        );
+      },
     );
   }
 
@@ -145,13 +317,17 @@ class _TillFormState extends State<TillForm> {
       return;
     }
 
-    await widget.onSubmit(
-      TillFormData(
-        name: _nameController.text.trim(),
-        code: _codeController.text.trim(),
-        outletId: _outletId ?? '',
-        status: _status,
-      ),
-    );
+    try {
+      await widget.onSubmit(
+        TillFormData(
+          name: _nameController.text.trim(),
+          code: _codeController.text.trim(),
+          outletId: _selectedOutletId ?? '',
+          status: _status,
+        ),
+      );
+    } catch (_) {
+      // Errors are handled by the screen callback.
+    }
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/widgets/pos_empty_cart_panel.dart';
@@ -9,8 +10,44 @@ import '../widgets/new_sale/pos_new_sale_action_bar.dart';
 import '../widgets/new_sale/pos_product_category_chips.dart';
 import '../widgets/new_sale/pos_product_grid.dart';
 
-class PosNewSaleScreen extends StatelessWidget {
+class PosNewSaleScreen extends ConsumerStatefulWidget {
   const PosNewSaleScreen({super.key});
+
+  @override
+  ConsumerState<PosNewSaleScreen> createState() => _PosNewSaleScreenState();
+}
+
+class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen> {
+  String? _lastRoutePath;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final routePath = GoRouterState.of(context).uri.path;
+    if (routePath == _lastRoutePath) {
+      return;
+    }
+
+    final enteredNewSale =
+        routePath == '/pos/new-sale' && _lastRoutePath != '/pos/new-sale';
+    _lastRoutePath = routePath;
+
+    if (enteredNewSale) {
+      _resetSearchAfterRouteEntry();
+    }
+  }
+
+  void _resetSearchAfterRouteEntry() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || GoRouterState.of(context).uri.path != '/pos/new-sale') {
+        return;
+      }
+
+      ref.read(posNewSaleSearchQueryProvider.notifier).state = '';
+      ref.read(posNewSaleSelectedCategoryProvider.notifier).state =
+          posNewSaleCategories.first;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

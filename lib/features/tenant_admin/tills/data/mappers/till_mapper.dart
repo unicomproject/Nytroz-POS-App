@@ -1,5 +1,4 @@
 import '../../domain/entities/till.dart';
-import '../models/create_till_request_dto.dart';
 import '../models/till_dto.dart';
 
 class TillMapper {
@@ -21,7 +20,7 @@ class TillMapper {
     );
   }
 
-  static TillListSummary toSummary(TillListSummaryDto dto) {
+  static TillListSummary toSummaryEntity(TillListSummaryDto dto) {
     return TillListSummary(
       totalTills: dto.totalTills,
       onlineCount: dto.onlineCount,
@@ -32,7 +31,7 @@ class TillMapper {
 
   static TillListResult toListResult(TillListResultDto dto) {
     return TillListResult(
-      summary: toSummary(dto.summary),
+      summary: toSummaryEntity(dto.summary),
       items: dto.items.map(toEntity).toList(growable: false),
       page: dto.page,
       pageSize: dto.pageSize,
@@ -40,12 +39,13 @@ class TillMapper {
     );
   }
 
-  static CreateTillRequestDto toCreateRequest(CreateTillInput input) {
-    return CreateTillRequestDto(
-      name: input.name.trim(),
-      code: input.code.trim(),
-      outletId: input.outletId,
-      status: input.status,
+  static CreatedTill toCreatedEntity(CreatedTillDto dto) {
+    return CreatedTill(
+      id: dto.id,
+      outletId: dto.outletId,
+      name: dto.name,
+      code: dto.code,
+      status: dto.status,
     );
   }
 }

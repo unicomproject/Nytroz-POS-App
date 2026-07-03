@@ -8,8 +8,8 @@ extension TenantAdminContextMapper on TenantAdminContextDto {
       tenantName: tenantName,
       userId: userId,
       userDisplayName: userDisplayName,
-      roleNames: roleNames,
       roles: roles.map((role) => role.toEntity()).toList(),
+      roleNames: roleNames,
       outletScope: outletScope.map((outlet) => outlet.toEntity()).toList(),
       featureEntitlements:
           featureEntitlements.map((feature) => feature.toEntity()).toList(),
@@ -21,11 +21,11 @@ extension TenantAdminContextMapper on TenantAdminContextDto {
   }
 }
 
-extension TenantAdminRoleMapper on TenantAdminRoleDto {
-  TenantAdminRole toEntity() {
-    return TenantAdminRole(
-      id: id,
-      name: name,
+extension TenantAdminRoleScopeMapper on TenantAdminRoleScopeDto {
+  TenantAdminRoleScope toEntity() {
+    return TenantAdminRoleScope(
+      roleId: roleId,
+      roleName: roleName,
     );
   }
 }

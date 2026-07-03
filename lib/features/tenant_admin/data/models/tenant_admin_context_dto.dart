@@ -6,8 +6,8 @@ class TenantAdminContextDto {
     required this.tenantName,
     required this.userId,
     required this.userDisplayName,
-    required this.roleNames,
     required this.roles,
+    required this.roleNames,
     required this.outletScope,
     required this.featureEntitlements,
     required this.permissions,
@@ -48,17 +48,17 @@ class TenantAdminContextDto {
       tenantName: tenant['name']?.toString() ?? '',
       userId: user['id']?.toString() ?? '',
       userDisplayName: user['fullName']?.toString() ?? '',
+      roles: [
+        for (final role in roles)
+          TenantAdminRoleScopeDto(
+            roleId: role['id']?.toString() ?? '',
+            roleName: role['name']?.toString() ?? '',
+          ),
+      ],
       roleNames: roles
           .map((role) => role['name']?.toString() ?? '')
           .where((name) => name.isNotEmpty)
           .toList(growable: false),
-      roles: [
-        for (final role in roles)
-          TenantAdminRoleDto(
-            id: role['id']?.toString() ?? '',
-            name: role['name']?.toString() ?? '',
-          ),
-      ],
       outletScope: [
         for (var index = 0; index < outlets.length; index++)
           TenantAdminOutletScopeDto(
@@ -100,8 +100,11 @@ class TenantAdminContextDto {
       tenantName: json['tenantName'] as String? ?? '',
       userId: json['userId'] as String? ?? '',
       userDisplayName: json['userDisplayName'] as String? ?? '',
+      roles: _mapList(
+        json['roles'],
+        TenantAdminRoleScopeDto.fromJson,
+      ),
       roleNames: _stringList(json['roleNames']),
-      roles: _mapList(json['roles'], TenantAdminRoleDto.fromJson),
       outletScope: _mapList(
         json['outletScope'],
         TenantAdminOutletScopeDto.fromJson,
@@ -126,8 +129,8 @@ class TenantAdminContextDto {
   final String tenantName;
   final String userId;
   final String userDisplayName;
+  final List<TenantAdminRoleScopeDto> roles;
   final List<String> roleNames;
-  final List<TenantAdminRoleDto> roles;
   final List<TenantAdminOutletScopeDto> outletScope;
   final List<TenantAdminFeatureEntitlementDto> featureEntitlements;
   final List<TenantAdminPermissionDto> permissions;
@@ -135,21 +138,21 @@ class TenantAdminContextDto {
   final String? subscriptionStatus;
 }
 
-class TenantAdminRoleDto {
-  const TenantAdminRoleDto({
-    required this.id,
-    required this.name,
+class TenantAdminRoleScopeDto {
+  const TenantAdminRoleScopeDto({
+    required this.roleId,
+    required this.roleName,
   });
 
-  factory TenantAdminRoleDto.fromJson(Map<String, dynamic> json) {
-    return TenantAdminRoleDto(
-      id: json['id']?.toString() ?? '',
-      name: json['name'] as String? ?? '',
+  factory TenantAdminRoleScopeDto.fromJson(Map<String, dynamic> json) {
+    return TenantAdminRoleScopeDto(
+      roleId: (json['roleId'] ?? json['id'])?.toString() ?? '',
+      roleName: (json['roleName'] ?? json['name'])?.toString() ?? '',
     );
   }
 
-  final String id;
-  final String name;
+  final String roleId;
+  final String roleName;
 }
 
 class TenantAdminOutletScopeDto {
