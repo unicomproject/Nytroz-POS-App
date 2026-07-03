@@ -99,6 +99,7 @@ class AuthRemoteDatasource {
           error,
           contextPrefix: 'Login failed',
           fallback: 'Unable to connect to the login service.',
+          attemptedBaseUrl: _dio.options.baseUrl,
         ),
       );
     }

@@ -15,6 +15,7 @@ import '../widgets/cash_payment_success/items_purchased_card.dart';
 import '../widgets/cash_payment_success/payment_details_card.dart';
 import '../widgets/cash_payment_success/payment_success_banner.dart';
 import '../widgets/cash_payment_success/receipt_action_bar.dart';
+import '../widgets/print_receipt/print_receipt_dialog.dart';
 
 class PosCashPaymentSuccessScreen extends ConsumerWidget {
   const PosCashPaymentSuccessScreen({super.key});
@@ -152,9 +153,7 @@ class PosCashPaymentSuccessScreen extends ConsumerWidget {
               const SizedBox(height: TenantAdminSpacing.lg),
               ReceiptActionBar(
                 onPrintReceipt: canPrintReceipt
-                    ? () => context.push(
-                          '/pos/new-sale/payment/cash/success/print-receipt',
-                        )
+                    ? () => showPrintReceiptDialog(context, ref)
                     : null,
                 onNewSale:
                     canStartNewSale ? () => _startNewSale(context, ref) : null,

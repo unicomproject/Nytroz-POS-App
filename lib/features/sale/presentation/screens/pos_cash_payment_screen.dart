@@ -220,6 +220,7 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
                     checkoutApiPaymentMethodCode(PosPaymentMethodType.cash),
                 lines: checkoutLinesFromCart(cart),
                 cashReceived: cashReceived,
+                customerId: cart.selectedCustomer?.customerId,
               );
 
       ref

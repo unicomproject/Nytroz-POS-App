@@ -102,6 +102,11 @@ bool _isDestinationSelected(
     return true;
   }
 
+  if (destination.key == 'cash-drawer' &&
+      currentPath.startsWith('/pos/cash-drawer')) {
+    return true;
+  }
+
   return false;
 }
 

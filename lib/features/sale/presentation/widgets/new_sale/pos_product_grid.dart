@@ -46,11 +46,7 @@ class PosProductGrid extends ConsumerWidget {
 
         return LayoutBuilder(
           builder: (context, constraints) {
-            final crossAxisCount = constraints.maxWidth < 500
-                ? 2
-                : constraints.maxWidth < 700
-                    ? 3
-                    : 4;
+            final crossAxisCount = constraints.maxWidth < 600 ? 2 : 3;
 
             if (products.isEmpty) {
               return const _NoProductsFound();
@@ -64,7 +60,7 @@ class PosProductGrid extends ConsumerWidget {
                 crossAxisCount: crossAxisCount,
                 crossAxisSpacing: TenantAdminSpacing.sm,
                 mainAxisSpacing: TenantAdminSpacing.sm,
-                mainAxisExtent: 152,
+                mainAxisExtent: 280,
               ),
               itemBuilder: (context, index) {
                 final product = products[index];
@@ -137,54 +133,47 @@ class _ProductTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _ProductImageFallback(visual: visual),
+                _ProductImage(product: product, visual: visual),
                 const SizedBox(height: TenantAdminSpacing.sm),
                 Text(
                   product.name,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: TenantAdminColors.bodyText,
                         fontWeight: FontWeight.w800,
                       ),
                 ),
-                const SizedBox(height: TenantAdminSpacing.xs),
-                Text(
-                  formatLkr(product.basePrice),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: TenantAdminColors.success,
-                        fontWeight: FontWeight.w800,
+                if (product.hasVariants) ...[
+                  const SizedBox(height: TenantAdminSpacing.xs),
+                  Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: TenantAdminColors.success,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                ),
-                const SizedBox(height: TenantAdminSpacing.xs),
-                Row(
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: TenantAdminColors.success,
-                        shape: BoxShape.circle,
+                      const SizedBox(width: TenantAdminSpacing.xs),
+                      Expanded(
+                        child: Text(
+                          'Select options',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(
+                                color: TenantAdminColors.mutedText,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: TenantAdminSpacing.xs),
-                    Expanded(
-                      child: Text(
-                        product.hasVariants
-                            ? 'Select options'
-                            : product.stockLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: TenantAdminColors.mutedText,
-                              fontWeight: FontWeight.w700,
-                            ),
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -291,9 +280,10 @@ class _NoProductsFound extends StatelessWidget {
   }
 }
 
-class _ProductImageFallback extends StatelessWidget {
-  const _ProductImageFallback({required this.visual});
+class _ProductImage extends StatelessWidget {
+  const _ProductImage({required this.product, required this.visual});
 
+  final PosCatalogProductSummary product;
   final _ProductVisual visual;
 
   @override
@@ -305,19 +295,46 @@ class _ProductImageFallback extends StatelessWidget {
           color: visual.backgroundColor,
           borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
         ),
-        child: Center(
-          child: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.82),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              visual.icon,
-              color: visual.iconColor,
-              size: 22,
-            ),
+        clipBehavior: Clip.hardEdge,
+        child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+            ? Image.network(
+                product.imageUrl!,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (_, __, ___) => _ProductImageFallback(visual: visual),
+              )
+            : _ProductImageFallback(visual: visual),
+      ),
+    );
+  }
+}
+
+class _ProductImageFallback extends StatelessWidget {
+  const _ProductImageFallback({required this.visual});
+
+  final _ProductVisual visual;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: visual.backgroundColor,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+      ),
+      child: Center(
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.82),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            visual.icon,
+            color: visual.iconColor,
+            size: 22,
           ),
         ),
       ),

@@ -8,7 +8,7 @@ import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../../shared/pos_session/pos_session_provider.dart';
 import '../providers/pos_cash_payment_success_provider.dart';
-import '../providers/pos_checkout_summary_provider.dart';
+import '../widgets/print_receipt/print_receipt_actions.dart';
 import '../widgets/print_receipt/print_receipt_bottom_actions.dart';
 import '../widgets/print_receipt/print_receipt_header.dart';
 import '../widgets/print_receipt/printer_options_card.dart';
@@ -94,7 +94,7 @@ class PosPrintReceiptScreen extends ConsumerWidget {
               const SizedBox(height: TenantAdminSpacing.lg),
               PrintReceiptBottomActions(
                 onBack: () => context.pop(),
-                onPrintReceipt: () => _recordPrintAndShowMessage(
+                onPrintReceipt: () => executeReceiptPrint(
                   context,
                   ref,
                   successData.saleId,
@@ -105,42 +105,6 @@ class PosPrintReceiptScreen extends ConsumerWidget {
         );
       },
     );
-  }
-
-  Future<void> _recordPrintAndShowMessage(
-    BuildContext context,
-    WidgetRef ref,
-    String saleId,
-  ) async {
-    if (saleId.isNotEmpty) {
-      try {
-        await ref
-            .read(posCheckoutRemoteDatasourceProvider)
-            .recordReceiptPrint(saleId: saleId);
-      } catch (_) {
-        if (!context.mounted) {
-          return;
-        }
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(
-              content: Text('Receipt print audit could not be recorded.'),
-            ),
-          );
-        return;
-      }
-    }
-
-    if (!context.mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(content: Text('Print receipt is not implemented yet.')),
-      );
   }
 }
 

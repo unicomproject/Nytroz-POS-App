@@ -9,6 +9,7 @@ class PosCatalogProductSummary {
     required this.hasVariants,
     this.variantId,
     this.description,
+    this.imageUrl,
     this.stockLabel = 'In Stock',
   });
 
@@ -16,6 +17,7 @@ class PosCatalogProductSummary {
   final String? variantId;
   final String name;
   final String? description;
+  final String? imageUrl;
   final String categoryName;
   final int basePrice;
   final bool hasVariants;

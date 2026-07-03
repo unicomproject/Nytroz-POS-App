@@ -91,6 +91,7 @@ class PosCatalogRemoteDatasource {
       variantId: json['variantId']?.toString(),
       name: json['name']?.toString() ?? 'Product',
       description: json['description']?.toString(),
+      imageUrl: _resolveImageUrl(json),
       categoryName: json['categoryName']?.toString() ?? 'General',
       basePrice: parsePriceToInt(json['basePrice']),
       hasVariants: json['hasVariants'] == true,
@@ -103,6 +104,7 @@ class PosCatalogRemoteDatasource {
       productId: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Product',
       description: json['description']?.toString(),
+      imageUrl: _resolveImageUrl(json),
       categoryName: json['categoryName']?.toString() ?? 'General',
       basePrice: parsePriceToInt(json['basePrice']),
       hasVariants: json['hasVariants'] == true,
@@ -131,6 +133,11 @@ class PosCatalogRemoteDatasource {
       variantGroups: variantGroups,
       variants: variants,
     );
+  }
+
+  String? _resolveImageUrl(Map<String, dynamic> json) {
+    final imageUrl = json['imageStorageKey']?.toString().trim();
+    return imageUrl?.isNotEmpty == true ? imageUrl : null;
   }
 
   PosCatalogVariant _mapVariant(Map<dynamic, dynamic> json) {

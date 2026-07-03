@@ -158,6 +158,22 @@ class PosPermissionAccess {
     return hasAny(granted, cashDrawerViewAccessCodes);
   }
 
+  static bool canCreateCashDrawerMovement(Set<String> granted) {
+    return granted.contains(PosPermissionCodes.createCashDrawerMovement) ||
+        granted.contains(PosPermissionCodes.cashMovement) ||
+        granted.contains(PosPermissionCodes.manageCashDrawer);
+  }
+
+  static bool canManageCashDrawerActions(Set<String> granted) {
+    return granted.contains(PosPermissionCodes.manageCashDrawer) ||
+        canCreateCashDrawerMovement(granted);
+  }
+
+  static bool canCloseTill(Set<String> granted) {
+    return granted.contains(PosPermissionCodes.closeTill) ||
+        granted.contains(PosPermissionCodes.manageCashDrawer);
+  }
+
   static bool canParkOrViewParkedSales(Set<String> granted) {
     return hasAny(granted, parkedSaleAccessCodes);
   }

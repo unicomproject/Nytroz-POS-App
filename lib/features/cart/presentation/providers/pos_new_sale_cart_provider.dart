@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/entities/pos_cart_discount.dart';
 import '../../domain/entities/pos_catalog_models.dart';
+import '../../../sale/domain/entities/pos_customer.dart';
 
 final posNewSaleCartProvider =
     NotifierProvider<PosNewSaleCartNotifier, PosNewSaleCartState>(
@@ -69,12 +71,17 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
       updatedItems.remove(replaceKey);
     }
 
+    final existingCartItem = updatedItems[cartKey];
     updatedItems[cartKey] = PosNewSaleCartItem(
       product: product,
       quantity: quantity,
+      discount: existingCartItem?.discount,
     );
 
-    state = state.copyWith(items: updatedItems);
+    state = state.copyWith(
+      items: updatedItems,
+      cartDiscountSet: updatedItems.isEmpty,
+    );
   }
 
   void decreaseQuantity(String cartLineKey) {
@@ -92,7 +99,10 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
       );
     }
 
-    state = state.copyWith(items: updatedItems);
+    state = state.copyWith(
+      items: updatedItems,
+      cartDiscountSet: updatedItems.isEmpty,
+    );
   }
 
   void increaseQuantity(String cartLineKey) {
@@ -110,7 +120,10 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
     updatedItems[cartLineKey] = existingItem.copyWith(
       quantity: existingItem.quantity + 1,
     );
-    state = state.copyWith(items: updatedItems);
+    state = state.copyWith(
+      items: updatedItems,
+      cartDiscountSet: updatedItems.isEmpty,
+    );
   }
 
   void removeItem(String cartLineKey) {
@@ -120,43 +133,148 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
 
     final updatedItems = Map<String, PosNewSaleCartItem>.of(state.items)
       ..remove(cartLineKey);
-    state = state.copyWith(items: updatedItems);
+    state = state.copyWith(
+      items: updatedItems,
+      cartDiscountSet: updatedItems.isEmpty,
+    );
   }
 
   void clear() {
-    if (!state.hasItems) {
+    if (!state.hasItems && state.selectedCustomer == null) {
       return;
     }
 
     state = const PosNewSaleCartState();
+  }
+
+  void restore(PosNewSaleCartState cart) {
+    state = cart;
+  }
+
+  void setCustomer(PosCustomer? customer) {
+    state = state.copyWith(
+      selectedCustomer: customer,
+      selectedCustomerSet: true,
+    );
+  }
+
+  void applyCartDiscount(PosCartDiscount discount) {
+    if (!state.hasItems) {
+      return;
+    }
+
+    state = state.copyWith(cartDiscount: discount, cartDiscountSet: true);
+  }
+
+  void applyItemDiscount({
+    required String cartLineKey,
+    required PosCartDiscount discount,
+  }) {
+    final item = state.items[cartLineKey];
+    if (item == null) {
+      return;
+    }
+
+    final updatedItems = Map<String, PosNewSaleCartItem>.of(state.items);
+    updatedItems[cartLineKey] = item.copyWith(
+      discount: discount,
+      discountSet: true,
+    );
+    state = state.copyWith(items: updatedItems);
+  }
+
+  void clearCartDiscount() {
+    state = state.copyWith(cartDiscountSet: true);
+  }
+
+  void clearItemDiscount(String cartLineKey) {
+    final item = state.items[cartLineKey];
+    if (item == null || item.discount == null) {
+      return;
+    }
+
+    final updatedItems = Map<String, PosNewSaleCartItem>.of(state.items);
+    updatedItems[cartLineKey] = item.copyWith(discountSet: true);
+    state = state.copyWith(items: updatedItems);
+  }
+
+  void clearDiscounts() {
+    if (!state.hasDiscount) {
+      return;
+    }
+
+    state = state.copyWith(
+      cartDiscountSet: true,
+      items: {
+        for (final entry in state.items.entries)
+          entry.key: entry.value.copyWith(discountSet: true),
+      },
+    );
   }
 }
 
 class PosNewSaleCartState {
   const PosNewSaleCartState({
     this.items = const {},
+    this.selectedCustomer,
+    this.cartDiscount,
   });
 
   final Map<String, PosNewSaleCartItem> items;
+  final PosCustomer? selectedCustomer;
+  final PosCartDiscount? cartDiscount;
 
   bool get hasItems => items.isNotEmpty;
+
+  bool get hasDiscount => discount > 0;
 
   List<PosNewSaleCartItem> get itemList => List.unmodifiable(items.values);
 
   int get subtotal =>
       items.values.fold(0, (total, item) => total + item.lineTotal);
 
-  int get discount => 0;
+  int get itemDiscountTotal => items.values.fold(
+        0,
+        (total, item) => total + item.discountAmount,
+      );
+
+  int get cartDiscountAmount {
+    final discount = cartDiscount;
+    if (discount == null) {
+      return 0;
+    }
+
+    if (subtotal <= 0) {
+      return 0;
+    }
+
+    return discount.amountFor(subtotal);
+  }
+
+  int get discount {
+    final totalDiscount = itemDiscountTotal + cartDiscountAmount;
+    return totalDiscount.clamp(0, subtotal).toInt();
+  }
 
   int get tax => 0;
 
-  int get total => subtotal - discount + tax;
+  int get total {
+    final nextTotal = subtotal - discount + tax;
+    return nextTotal < 0 ? 0 : nextTotal;
+  }
 
   PosNewSaleCartState copyWith({
     Map<String, PosNewSaleCartItem>? items,
+    PosCustomer? selectedCustomer,
+    bool selectedCustomerSet = false,
+    PosCartDiscount? cartDiscount,
+    bool cartDiscountSet = false,
   }) {
     return PosNewSaleCartState(
       items: items ?? this.items,
+      selectedCustomer:
+          selectedCustomerSet ? selectedCustomer : this.selectedCustomer,
+      cartDiscount: cartDiscountSet ? cartDiscount : this.cartDiscount,
     );
   }
 }
@@ -165,20 +283,32 @@ class PosNewSaleCartItem {
   const PosNewSaleCartItem({
     required this.product,
     this.quantity = 1,
+    this.discount,
   });
 
   final PosNewSaleProduct product;
   final int quantity;
+  final PosCartDiscount? discount;
 
   int get lineTotal => product.price * quantity;
+
+  int get discountAmount => discount?.amountFor(lineTotal) ?? 0;
+
+  int get discountedLineTotal {
+    final nextTotal = lineTotal - discountAmount;
+    return nextTotal < 0 ? 0 : nextTotal;
+  }
 
   PosNewSaleCartItem copyWith({
     PosNewSaleProduct? product,
     int? quantity,
+    PosCartDiscount? discount,
+    bool discountSet = false,
   }) {
     return PosNewSaleCartItem(
       product: product ?? this.product,
       quantity: quantity ?? this.quantity,
+      discount: discountSet ? discount : this.discount,
     );
   }
 }
@@ -226,6 +356,8 @@ class PosNewSaleProduct {
 String formatLkr(int value) {
   return 'LKR ${_formatNumber(value)}.00';
 }
+
+String formatLkrInputPrefix() => 'LKR';
 
 String _formatNumber(int value) {
   final raw = value.toString();

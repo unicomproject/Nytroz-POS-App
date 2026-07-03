@@ -21,6 +21,7 @@ class ApiEndpoints {
   static const posCatalogCategories = '/api/v1/pos/catalog/categories';
   static const posCheckoutSummary = '/api/v1/pos/checkout/summary';
   static const posCheckoutStartPayment = '/api/v1/pos/checkout/start-payment';
+  static const posCustomers = '/api/v1/customers';
 
   static String posReceipt(String saleId) => '/api/v1/pos/receipts/$saleId';
 

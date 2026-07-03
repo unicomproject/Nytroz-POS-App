@@ -60,26 +60,46 @@ class _CartHeader extends ConsumerWidget {
     final canClearCart = PosPermissionAccess.canClearCart(granted);
     final cartHasItems = ref.watch(posNewSaleCartProvider).hasItems;
 
-    return Row(
+    final selectedCustomer = ref.watch(posNewSaleCartProvider).selectedCustomer;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Icon(
-          Icons.shopping_cart_outlined,
-          color: TenantAdminColors.info,
+        Row(
+          children: [
+            const Icon(
+              Icons.shopping_cart_outlined,
+              color: TenantAdminColors.info,
+            ),
+            const SizedBox(width: TenantAdminSpacing.sm),
+            Text(
+              'Cart',
+              style: TenantAdminTextStyles.sectionTitle(context),
+            ),
+            const Spacer(),
+            if (canClearCart && cartHasItems)
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                onPressed: () => ref.read(posNewSaleCartProvider.notifier).clear(),
+                tooltip: 'Clear cart',
+                icon: const Icon(Icons.delete_sweep_outlined),
+                color: TenantAdminColors.danger,
+              ),
+          ],
         ),
-        const SizedBox(width: TenantAdminSpacing.sm),
-        Text(
-          'Cart',
-          style: TenantAdminTextStyles.sectionTitle(context),
-        ),
-        const Spacer(),
-        if (canClearCart && cartHasItems)
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            onPressed: () => ref.read(posNewSaleCartProvider.notifier).clear(),
-            tooltip: 'Clear cart',
-            icon: const Icon(Icons.delete_sweep_outlined),
-            color: TenantAdminColors.danger,
+        if (selectedCustomer != null) ...[
+          const SizedBox(height: TenantAdminSpacing.xs),
+          Wrap(
+            spacing: TenantAdminSpacing.xs,
+            runSpacing: TenantAdminSpacing.xs,
+            children: [
+              Chip(
+                label: Text(selectedCustomer.displayName),
+                avatar: const Icon(Icons.person_outline_rounded, size: 18),
+              ),
+            ],
           ),
+        ],
       ],
     );
   }

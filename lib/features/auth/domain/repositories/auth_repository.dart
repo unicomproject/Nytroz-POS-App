@@ -16,7 +16,6 @@ abstract class AuthRepository {
     required String confirmPassword,
   });
   Future<AuthSession> login({
-    required String tenantCode,
     required String login,
     required String password,
   });

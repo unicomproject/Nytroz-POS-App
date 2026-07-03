@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/access/pos_permission_access.dart';
 import '../auth/domain/entities/auth_session.dart';
 import '../auth/presentation/providers/session_provider.dart';
+import '../cash_drawer/presentation/screens/pos_cash_drawer_screen.dart';
+import '../cash_drawer/presentation/screens/pos_cash_in_screen.dart';
 import '../sale/presentation/screens/pos_cash_payment_success_screen.dart';
 import '../sale/presentation/screens/pos_cash_payment_screen.dart';
 import '../sale/presentation/screens/pos_email_receipt_screen.dart';
@@ -142,8 +144,17 @@ List<RouteBase> posShellRoutes(Ref ref) {
           path: '/pos/cash-drawer',
           builder: (context, state) =>
               _canViewCashDrawer(ref.read(authSessionProvider))
-                  ? const PosPlaceholderScreen(title: 'Cash Drawer')
+                  ? const PosCashDrawerScreen()
                   : const TenantAdminForbiddenScreen(),
+          routes: [
+            GoRoute(
+              path: 'cash-in',
+              builder: (context, state) =>
+                  _canCreateCashDrawerMovement(ref.read(authSessionProvider))
+                      ? const PosCashInScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+          ],
         ),
         GoRoute(
           path: '/pos/profile',
@@ -186,13 +197,22 @@ _PosShellHeader _headerForPath(String path) {
     '/pos/customers' => 'Customers',
     '/pos/returns-refunds' => 'Return & Refund',
     '/pos/cash-drawer' => 'Cash Drawer',
+    '/pos/cash-drawer/cash-in' => 'Cash In',
     '/pos/profile' => 'Profile',
     _ => 'Home',
   };
 
+  final subtitle = switch (path) {
+    '/pos/cash-drawer' =>
+      'Monitor the till cash position and perform drawer actions.',
+    '/pos/cash-drawer/cash-in' =>
+      'Add extra cash or float to the current till drawer.',
+    _ => 'Ready for sales, service, and till operations.',
+  };
+
   return _PosShellHeader(
     title: title,
-    subtitle: 'Ready for sales, service, and till operations.',
+    subtitle: subtitle,
   );
 }
 
@@ -255,6 +275,13 @@ bool _canViewReturnsRefunds(AuthSession? session) {
 bool _canViewCashDrawer(AuthSession? session) {
   return _canViewPosHome(session) &&
       PosPermissionAccess.canViewCashDrawer(
+        session?.permissionCodes.toSet() ?? const {},
+      );
+}
+
+bool _canCreateCashDrawerMovement(AuthSession? session) {
+  return _canViewCashDrawer(session) &&
+      PosPermissionAccess.canCreateCashDrawerMovement(
         session?.permissionCodes.toSet() ?? const {},
       );
 }

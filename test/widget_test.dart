@@ -65,6 +65,23 @@ void main() {
       expect(find.text('Parked Sales'), findsOneWidget);
       expect(find.text('Cash Drawer'), findsWidgets);
       expect(find.text('Orders'), findsNothing);
+      expect(find.text('Returns Today'), findsNothing);
+      expect(find.text('Refunded Today'), findsNothing);
+      expect(find.text('Total Customers'), findsNothing);
+      expect(find.text('this week'), findsNothing);
+      expect(find.text('Parked Sales Today'), findsNothing);
+      expect(find.text('Older than 30 mins'), findsNothing);
+      expect(find.text('Current Balance'), findsNothing);
+      expect(find.widgetWithText(OutlinedButton, 'View Returns'), findsNothing);
+      expect(find.widgetWithText(OutlinedButton, 'Add Customer'), findsNothing);
+      expect(
+        find.widgetWithText(OutlinedButton, 'View Parked Sales'),
+        findsNothing,
+      );
+      expect(
+        find.widgetWithText(OutlinedButton, 'View Cash Drawer'),
+        findsNothing,
+      );
     });
 
     testWidgets('does not recreate Online Orders when backend omits the card', (

@@ -20,13 +20,11 @@ void main() {
       final login = Login(repository);
 
       final result = await login.call(
-        tenantCode: 'TENANT001',
         login: 'cashier@test.local',
         password: 'password123',
       );
 
       expect(result, expectedSession);
-      expect(repository.lastTenantCode, 'TENANT001');
       expect(repository.lastLogin, 'cashier@test.local');
       expect(repository.lastPassword, 'password123');
     });
@@ -40,7 +38,6 @@ void main() {
       final login = Login(_FakeAuthRepository(session: session));
 
       final result = await login.call(
-        tenantCode: 'TENANT001',
         login: 'cashier@test.local',
         password: 'wrong-password',
       );
@@ -54,17 +51,14 @@ class _FakeAuthRepository implements AuthRepository {
   _FakeAuthRepository({required this.session});
 
   final AuthSession session;
-  String? lastTenantCode;
   String? lastLogin;
   String? lastPassword;
 
   @override
   Future<AuthSession> login({
-    required String tenantCode,
     required String login,
     required String password,
   }) async {
-    lastTenantCode = tenantCode;
     lastLogin = login;
     lastPassword = password;
     return session;

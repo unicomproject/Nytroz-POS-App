@@ -79,6 +79,7 @@ class PosCheckoutSummaryViewData {
 
   factory PosCheckoutSummaryViewData.fromPayload({
     required PosCheckoutSummaryPayload payload,
+    required PosNewSaleCartState cart,
     required Set<String> grantedPermissions,
   }) {
     final apiMethods = paymentMethodsFromApiCodes(payload.paymentMethods);
@@ -86,12 +87,20 @@ class PosCheckoutSummaryViewData {
     final methods =
         apiMethods.where(sessionMethods.contains).toList(growable: false);
 
+    final localDiscount = cart.discount;
+    final subtotal = payload.billingSummary.subtotal;
+    final tax = payload.billingSummary.tax;
+    final totalPayable = localDiscount > 0
+        ? (subtotal - localDiscount + tax).clamp(0, subtotal + tax).toInt()
+        : payload.billingSummary.totalPayable;
+
     return PosCheckoutSummaryViewData(
       itemCount: payload.billingSummary.itemCount,
-      subtotal: payload.billingSummary.subtotal,
-      discount: payload.billingSummary.discount,
-      tax: payload.billingSummary.tax,
-      totalPayable: payload.billingSummary.totalPayable,
+      subtotal: subtotal,
+      discount:
+          localDiscount > 0 ? localDiscount : payload.billingSummary.discount,
+      tax: tax,
+      totalPayable: totalPayable,
       saleType: payload.saleDetails.saleType,
       itemsInCart: payload.saleDetails.itemsInCart,
       saleDate: payload.saleDetails.saleDate,
@@ -136,10 +145,12 @@ final posCheckoutSummaryProvider =
         await ref.watch(posCheckoutRemoteDatasourceProvider).getCheckoutSummary(
               deviceId: deviceContext.deviceId,
               lines: lines,
+              customerId: cart.selectedCustomer?.customerId,
             );
 
     return PosCheckoutSummaryViewData.fromPayload(
       payload: payload,
+      cart: cart,
       grantedPermissions: grantedPermissions,
     );
   } on PosCheckoutApiException catch (error) {

@@ -7,12 +7,10 @@ class Login {
   final AuthRepository _repository;
 
   Future<AuthSession> call({
-    required String tenantCode,
     required String login,
     required String password,
   }) {
     return _repository.login(
-      tenantCode: tenantCode,
       login: login,
       password: password,
     );
