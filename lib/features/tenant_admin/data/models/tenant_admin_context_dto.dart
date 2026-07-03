@@ -32,8 +32,14 @@ class TenantAdminContextDto {
     final user = _map(json['user']);
     final roles = _mapList(json['roles'], (item) => item);
     final outlets = _mapList(json['outlets'], (item) => item);
-    final features = _stringList(json['features']);
-    final permissions = _stringList(json['permissions']);
+    final enabledFeatures = _resolveStringList(
+      json['enabledFeatures'],
+      json['features'],
+    );
+    final effectivePermissions = _resolveStringList(
+      json['effectivePermissions'],
+      json['permissions'],
+    );
     final runtimeFlags = _stringList(json['runtimeFlags']);
     final subscription = _map(json['subscription']);
 
@@ -62,7 +68,7 @@ class TenantAdminContextDto {
           ),
       ],
       featureEntitlements: [
-        for (final feature in features)
+        for (final feature in enabledFeatures)
           TenantAdminFeatureEntitlementDto(
             featureCode:
                 TenantAdminBackendFeatureMapper.toAppFeatureCode(feature),
@@ -71,7 +77,7 @@ class TenantAdminContextDto {
           ),
       ],
       permissions: [
-        for (final permission in permissions)
+        for (final permission in effectivePermissions)
           TenantAdminPermissionDto(
             permissionCode: permission,
             permissionName: permission,
@@ -232,6 +238,15 @@ List<String> _stringList(Object? value) {
   }
 
   return value.whereType<String>().toList(growable: false);
+}
+
+List<String> _resolveStringList(Object? primary, Object? fallback) {
+  final primaryValues = _stringList(primary);
+  if (primaryValues.isNotEmpty) {
+    return primaryValues;
+  }
+
+  return _stringList(fallback);
 }
 
 List<T> _mapList<T>(

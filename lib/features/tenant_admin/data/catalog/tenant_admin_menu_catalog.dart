@@ -45,10 +45,10 @@ const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
   TenantAdminMenuItem(
     key: 'roles-access',
     label: 'Roles & Access',
-    route: '/tenant-admin/roles',
+    route: '/tenant-admin/roles-permissions',
     iconKey: 'shield',
     featureCode: TenantAdminFeatureCodes.rolePermission,
-    permissionCode: TenantAdminPermissionCodes.roleView,
+    permissionCode: TenantAdminPermissionCodes.rolesPermissionsView,
     visible: true,
     order: 5,
   ),

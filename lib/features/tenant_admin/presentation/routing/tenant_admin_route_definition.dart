@@ -109,6 +109,20 @@ const tenantAdminRouteDefinitions = [
     permissionCode: 'tenant.user.manage',
   ),
   TenantAdminRouteDefinition(
+    path: '/tenant-admin/roles-permissions',
+    menuKey: 'roles-access',
+    title: 'Roles & Permissions',
+    featureCode: 'tenant.roles',
+    permissionCode: 'roles.permissions.view',
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/roles-permissions/:roleId',
+    menuKey: 'roles-access',
+    title: 'Roles & Permissions',
+    featureCode: 'tenant.roles',
+    permissionCode: 'roles.permissions.view',
+  ),
+  TenantAdminRouteDefinition(
     path: '/tenant-admin/roles',
     menuKey: 'roles-access',
     title: 'Roles & Access',

@@ -61,6 +61,8 @@ class TenantAdminPermissionCodes {
   static const userInviteCreate = 'user.invite.create';
   static const roleView = 'role.view';
   static const permissionView = 'permission.view';
+  static const rolesPermissionsView = 'roles.permissions.view';
+  static const rolesPermissionsUpdate = 'roles.permissions.update';
   static const productView = 'product.view';
   static const productCreate = 'product.create';
   static const inventoryView = 'inventory.view';

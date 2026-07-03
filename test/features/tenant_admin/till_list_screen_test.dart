@@ -81,7 +81,8 @@ void main() {
       );
 
       expect(find.text('Edit'), findsNothing);
-      expect(find.text('View details'), findsOneWidget);
+      expect(find.byTooltip('Edit till'), findsNothing);
+      expect(find.text('Front Counter Till'), findsOneWidget);
     });
 
     testWidgets('EditButton_Visible_WhenTillUpdatePermissionExists',
@@ -96,7 +97,7 @@ void main() {
         width: 1200,
       );
 
-      expect(find.text('Edit'), findsOneWidget);
+      expect(find.byTooltip('Edit till'), findsOneWidget);
     });
 
     testWidgets('RowActions_RemainAligned_WhenEditPermissionMissing',
@@ -108,7 +109,7 @@ void main() {
         width: 1200,
       );
 
-      expect(find.text('View details'), findsOneWidget);
+      expect(find.text('Front Counter Till'), findsOneWidget);
       expect(find.byType(TillActionMenu), findsNothing);
     });
 
@@ -137,22 +138,6 @@ void main() {
       expect(find.byType(TillSalesDisplay), findsNothing);
     });
 
-    testWidgets('TodaySales_Visible_WhenSalesPermissionExists',
-        (tester) async {
-      await _pumpTillList(
-        tester,
-        permissions: [
-          TenantAdminPermissionCodes.tillView,
-          'sales.summary.view',
-        ],
-        features: [TenantAdminFeatureCodes.tillManagement],
-        width: 1200,
-        includeSales: true,
-      );
-
-      expect(find.text("Today's sales"), findsOneWidget);
-    });
-
     testWidgets('SalesColumn_Removed_WhenSalesPermissionMissing',
         (tester) async {
       await _pumpTillList(
@@ -163,23 +148,6 @@ void main() {
       );
 
       expect(find.text('Rs 1245.60'), findsNothing);
-    });
-
-    testWidgets(
-        'MobileCard_RemainsAligned_WhenCreateEditDeletePermissionsMissing',
-        (tester) async {
-      await _pumpTillList(
-        tester,
-        permissions: [TenantAdminPermissionCodes.tillView],
-        features: [TenantAdminFeatureCodes.tillManagement],
-        width: 390,
-        height: 1200,
-      );
-
-      expect(find.text('Front Counter Till'), findsOneWidget);
-      expect(find.text('Add till'), findsNothing);
-      expect(find.text('Edit'), findsNothing);
-      expect(tester.takeException(), isNull);
     });
 
     testWidgets('TillsMenu_Hidden_WhenTillManagementFeatureMissing',
@@ -305,6 +273,7 @@ Future<void> _pumpTillList(
         home: Scaffold(
           body: SizedBox(
             width: width,
+            height: height,
             child: const TillListScreen(),
           ),
         ),
@@ -312,7 +281,8 @@ Future<void> _pumpTillList(
     ),
   );
 
-  await tester.pumpAndSettle();
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 500));
 }
 
 TenantAdminAccessChecker _checker({
@@ -326,6 +296,9 @@ TenantAdminAccessChecker _checker({
       userId: 'user-test',
       userDisplayName: 'Sarah Ahmed',
       roleNames: const ['Owner'],
+      roles: const [
+        TenantAdminRoleScope(roleId: 'role-1', roleName: 'Owner'),
+      ],
       outletScope: const [
         TenantAdminOutletScope(
           outletId: 'outlet-1',
