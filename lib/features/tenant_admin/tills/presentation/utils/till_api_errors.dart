@@ -92,3 +92,34 @@ String tillSubmitErrorMessage(
 
   return tillErrorMessage(error, fallback: fallback);
 }
+
+String formatTillSales(double amount, String currency) {
+  final symbol = currency.toUpperCase() == 'GBP'
+      ? '£'
+      : currency.toUpperCase() == 'LKR'
+          ? 'Rs '
+          : '$currency ';
+
+  return '$symbol${amount.toStringAsFixed(2)}';
+}
+
+String formatTillLastSync(DateTime? value) {
+  if (value == null) {
+    return 'Never';
+  }
+
+  final difference = DateTime.now().toUtc().difference(value.toUtc());
+  if (difference.inMinutes < 1) {
+    return 'Just now';
+  }
+
+  if (difference.inMinutes < 60) {
+    return '${difference.inMinutes} min ago';
+  }
+
+  if (difference.inHours < 24) {
+    return '${difference.inHours} hr ago';
+  }
+
+  return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
+}

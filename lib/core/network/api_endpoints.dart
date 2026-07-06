@@ -4,7 +4,7 @@ class ApiEndpoints {
   static const activateDevice = '/api/v1/devices/activate';
   static const currentDevice = '/api/v1/devices/current';
   static const openTill = '/api/v1/tills/open';
-  static const tenantLogin = '/api/v1/auth/tenant-login';
+  static const tenantLogin = '/api/v1/tenant-auth/login';
 
   static const tenantAdminOutlets = '/api/v1/tenant-admin/outlets';
   static String tenantAdminOutlet(String id) => '/api/v1/tenant-admin/outlets/$id';

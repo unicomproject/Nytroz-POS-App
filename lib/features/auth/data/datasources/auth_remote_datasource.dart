@@ -61,7 +61,7 @@ class AuthRemoteDatasource {
   }
 
   Future<Map<String, dynamic>> login(LoginRequestDto request) async {
-    const endpoint = '/api/v1/auth/tenant-login';
+    const endpoint = '/api/v1/tenant-auth/login';
     final stopwatch = Stopwatch()..start();
 
     try {
@@ -84,7 +84,7 @@ class AuthRemoteDatasource {
       final data = error.response?.data;
       if (data is Map<String, dynamic>) {
         throw AuthException(
-          errorCode: data['errorCode']?.toString() ?? 'LOGIN_FAILED',
+          errorCode: data['code']?.toString() ?? 'LOGIN_FAILED',
           message: data['message']?.toString() ?? 'Login failed.',
         );
       }

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 /// HTTP port from `SCS.Api/Properties/launchSettings.json` (`applicationUrl`).
-const int kBackendHttpPort = 5052;
+const int kBackendHttpPort = 5150;
 
 /// Resolves the API base URL for the current platform.
 ///
@@ -15,12 +15,12 @@ String resolveApiBaseUrl() {
   }
 
   if (kIsWeb) {
-    return 'http://127.0.0.1:$kBackendHttpPort';
+    return 'http://localhost:$kBackendHttpPort';
   }
 
   switch (defaultTargetPlatform) {
     case TargetPlatform.android:
-      return 'http://127.0.0.1:$kBackendHttpPort';
+      return 'http://10.0.2.2:$kBackendHttpPort'; // 10.0.2.2 is usually used for Android Emulator
     default:
       return 'http://localhost:$kBackendHttpPort';
   }
