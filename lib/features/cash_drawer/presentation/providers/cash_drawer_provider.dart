@@ -128,8 +128,32 @@ class CashDrawerController extends StateNotifier<CashDrawerState> {
     );
   }
 
+  Future<bool> recordCashDrop({
+    required double amount,
+    String? reason,
+    String? note,
+  }) async {
+    final expected = state.summary?.currentExpectedCash ?? 0;
+    if (amount > expected) {
+      state = state.copyWith(
+        errorMessage:
+            'Amount cannot exceed available cash in drawer (${formatLkr(expected.round())}).',
+      );
+      return false;
+    }
+
+    return _recordMovement(
+      type: CashMovementType.cashDrop,
+      amount: amount,
+      reason: reason,
+      note: note,
+    );
+  }
+
   Future<bool> submitCloseTill({
     required double countedCash,
+    String? mismatchReason,
+    String? note,
   }) async {
     final summary = state.summary;
     if (summary == null || !summary.isOpen) {
@@ -157,10 +181,16 @@ class CashDrawerController extends StateNotifier<CashDrawerState> {
             ? 'over by ${formatLkr(difference.abs().round())}'
             : 'short by ${formatLkr(difference.abs().round())}';
 
+    final reasonSuffix = mismatchReason?.trim().isNotEmpty == true
+        ? ' Reason: $mismatchReason.'
+        : '';
+    final noteSuffix =
+        note?.trim().isNotEmpty == true ? ' Notes saved locally.' : '';
+
     state = state.copyWith(
       isSubmitting: false,
       closeTillMessage:
-          'Till close is not connected to the backend yet. Count was $differenceLabel.',
+          'Till close is not connected to the backend yet. Count was $differenceLabel.$reasonSuffix$noteSuffix',
     );
     return true;
   }

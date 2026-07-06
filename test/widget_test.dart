@@ -30,6 +30,7 @@ import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_de
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_mobile_top_bar.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/pos_shell_nav_item.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/sidebar/pos_sidebar.dart';
+import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/sale/presentation/screens/pos_new_sale_screen.dart';
@@ -301,7 +302,9 @@ void main() {
 
       expect(find.text('No items added'), findsNothing);
       expect(find.text('Qty 1'), findsOneWidget);
-      expect(find.text('LKR 1,500.00'), findsNWidgets(5));
+      // Product grid no longer renders price on tiles; cart shows unit price,
+      // line total, subtotal, and total.
+      expect(find.text('LKR 1,500.00'), findsNWidgets(4));
       expect(tester.widget<FilledButton>(paymentButton).onPressed, isNotNull);
 
       await tester.tap(find.text('General Admission').first);
@@ -314,7 +317,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Qty 1'), findsOneWidget);
-      expect(find.text('LKR 1,500.00'), findsNWidgets(5));
+      expect(find.text('LKR 1,500.00'), findsNWidgets(4));
 
       await tester.tap(find.byIcon(Icons.delete_outline_rounded));
       await tester.pumpAndSettle();
@@ -349,8 +352,9 @@ void main() {
       await tester.enterText(find.byType(TextField), '');
       await tester.pumpAndSettle();
 
-      expect(find.text('Coffee Voucher'), findsOneWidget);
+      expect(find.text('All Products (12)'), findsOneWidget);
       expect(find.text('General Admission'), findsOneWidget);
+      expect(find.text('Snack Combo'), findsOneWidget);
     });
 
     testWidgets('New Sale category chips filter product grid', (tester) async {
@@ -642,9 +646,17 @@ void main() {
       _goFromCurrentRoute(tester, '/pos/new-sale');
       await tester.pumpAndSettle();
 
-      for (final productName in _newSaleProductNames) {
-        await tester.tap(find.text(productName).first);
-        await tester.pump();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(PosNewSaleScreen)),
+      );
+      for (final product in testPosCatalogState.products) {
+        container.read(posNewSaleCartProvider.notifier).addToCart(
+              toCartProduct(
+                summary: product,
+                variant: null,
+                quantity: 1,
+              ),
+            );
       }
       await tester.pumpAndSettle();
 
@@ -682,21 +694,6 @@ void main() {
     });
   });
 }
-
-const _newSaleProductNames = [
-  'General Admission',
-  'VIP Entry',
-  'Guided Tour',
-  'Event T-Shirt',
-  'Snack Combo',
-  'Annual Pass',
-  'Family Pack',
-  'Photo Print',
-  'Locker Rental',
-  'Coffee Voucher',
-  'Student Entry',
-  'Premium Pass',
-];
 
 void _goFromCurrentRoute(WidgetTester tester, String route) {
   final context = tester.element(find.byType(PosHomeScreen));

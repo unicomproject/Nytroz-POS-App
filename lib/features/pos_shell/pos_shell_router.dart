@@ -5,7 +5,15 @@ import '../../core/access/pos_permission_access.dart';
 import '../auth/domain/entities/auth_session.dart';
 import '../auth/presentation/providers/session_provider.dart';
 import '../cash_drawer/presentation/screens/pos_cash_drawer_screen.dart';
+import '../cash_drawer/presentation/screens/pos_cash_drop_screen.dart';
 import '../cash_drawer/presentation/screens/pos_cash_in_screen.dart';
+import '../cash_drawer/presentation/screens/pos_close_till_screen.dart';
+import '../returns_refunds/presentation/screens/pos_return_create_credit_screen.dart';
+import '../returns_refunds/presentation/screens/pos_return_receipt_screen.dart';
+import '../returns_refunds/presentation/screens/pos_return_settlement_screen.dart';
+import '../returns_refunds/presentation/screens/pos_return_eligibility_screen.dart';
+import '../returns_refunds/presentation/screens/pos_return_reason_screen.dart';
+import '../returns_refunds/presentation/screens/pos_return_search_sale_screen.dart';
 import '../sale/presentation/screens/pos_cash_payment_success_screen.dart';
 import '../sale/presentation/screens/pos_cash_payment_screen.dart';
 import '../sale/presentation/screens/pos_email_receipt_screen.dart';
@@ -130,8 +138,45 @@ List<RouteBase> posShellRoutes(Ref ref) {
           path: '/pos/returns-refunds',
           builder: (context, state) =>
               _canViewReturnsRefunds(ref.read(authSessionProvider))
-                  ? const PosPlaceholderScreen(title: 'Return & Refund')
+                  ? const PosReturnSearchSaleScreen()
                   : const TenantAdminForbiddenScreen(),
+          routes: [
+            GoRoute(
+              path: 'eligibility',
+              builder: (context, state) =>
+                  _canViewReturnsRefunds(ref.read(authSessionProvider))
+                      ? const PosReturnEligibilityScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'return-reason',
+              builder: (context, state) =>
+                  _canViewReturnsRefunds(ref.read(authSessionProvider))
+                      ? const PosReturnReasonScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'create-credit',
+              builder: (context, state) =>
+                  _canViewReturnsRefunds(ref.read(authSessionProvider))
+                      ? const PosReturnCreateCreditScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'settlement',
+              builder: (context, state) =>
+                  _canViewReturnsRefunds(ref.read(authSessionProvider))
+                      ? const PosReturnSettlementScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'receipt',
+              builder: (context, state) =>
+                  _canViewReturnsRefunds(ref.read(authSessionProvider))
+                      ? const PosReturnReceiptScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+          ],
         ),
         GoRoute(
           path: '/pos/parked-sales',
@@ -152,6 +197,20 @@ List<RouteBase> posShellRoutes(Ref ref) {
               builder: (context, state) =>
                   _canCreateCashDrawerMovement(ref.read(authSessionProvider))
                       ? const PosCashInScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'cash-drop',
+              builder: (context, state) =>
+                  _canCreateCashDrawerMovement(ref.read(authSessionProvider))
+                      ? const PosCashDropScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'close-till',
+              builder: (context, state) =>
+                  _canCloseTill(ref.read(authSessionProvider))
+                      ? const PosCloseTillScreen()
                       : const TenantAdminForbiddenScreen(),
             ),
           ],
@@ -196,8 +255,15 @@ _PosShellHeader _headerForPath(String path) {
     '/pos/orders' => 'Orders',
     '/pos/customers' => 'Customers',
     '/pos/returns-refunds' => 'Return & Refund',
+    '/pos/returns-refunds/eligibility' => 'Eligibility & Select Items',
+    '/pos/returns-refunds/return-reason' => 'Return Reason',
+    '/pos/returns-refunds/create-credit' => 'Create Credit',
+    '/pos/returns-refunds/settlement' => 'Settlement',
+    '/pos/returns-refunds/receipt' => 'Receipt',
     '/pos/cash-drawer' => 'Cash Drawer',
     '/pos/cash-drawer/cash-in' => 'Cash In',
+    '/pos/cash-drawer/cash-drop' => 'Cash Drop',
+    '/pos/cash-drawer/close-till' => 'Close Till',
     '/pos/profile' => 'Profile',
     _ => 'Home',
   };
@@ -207,6 +273,22 @@ _PosShellHeader _headerForPath(String path) {
       'Monitor the till cash position and perform drawer actions.',
     '/pos/cash-drawer/cash-in' =>
       'Add extra cash or float to the current till drawer.',
+    '/pos/cash-drawer/cash-drop' =>
+      'Record a safe drop from the drawer and reduce the till cash balance.',
+    '/pos/cash-drawer/close-till' =>
+      'Count the cash in the drawer and close the till.',
+    '/pos/returns-refunds' =>
+      'Find and select the original sale to begin the return or refund.',
+    '/pos/returns-refunds/eligibility' =>
+      'Review return eligibility and select items to return.',
+    '/pos/returns-refunds/return-reason' =>
+      'Capture the reason for each item being returned.',
+    '/pos/returns-refunds/create-credit' =>
+      'Review credit amounts and confirm the return credit.',
+    '/pos/returns-refunds/settlement' =>
+      'Select how the customer credit should be settled.',
+    '/pos/returns-refunds/receipt' =>
+      'Review and print the return receipt.',
     _ => 'Ready for sales, service, and till operations.',
   };
 
@@ -282,6 +364,13 @@ bool _canViewCashDrawer(AuthSession? session) {
 bool _canCreateCashDrawerMovement(AuthSession? session) {
   return _canViewCashDrawer(session) &&
       PosPermissionAccess.canCreateCashDrawerMovement(
+        session?.permissionCodes.toSet() ?? const {},
+      );
+}
+
+bool _canCloseTill(AuthSession? session) {
+  return _canViewCashDrawer(session) &&
+      PosPermissionAccess.canCloseTill(
         session?.permissionCodes.toSet() ?? const {},
       );
 }

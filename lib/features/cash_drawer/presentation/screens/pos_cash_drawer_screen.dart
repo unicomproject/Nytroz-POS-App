@@ -11,7 +11,6 @@ import '../../../till/presentation/providers/till_provider.dart';
 import '../../domain/entities/cash_drawer_summary.dart';
 import '../providers/cash_drawer_provider.dart';
 import '../widgets/cash_drawer_actions_section.dart';
-import '../widgets/cash_drawer_dialogs.dart';
 import '../widgets/cash_drawer_movements_section.dart';
 import '../widgets/cash_drawer_page_header.dart';
 import '../widgets/cash_drawer_till_summary_section.dart';
@@ -86,7 +85,7 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
                             canCloseTill: canCloseTill,
                             actionsEnabled: actionsEnabled,
                             onCashIn: () => _onCashIn(context),
-                            onCashOut: () => _onCashOut(context, summary),
+                            onCashOut: () => _onCashOut(context),
                             onCloseTill: () => _onCloseTill(context, summary),
                           ),
                           const SizedBox(height: TenantAdminSpacing.lg),
@@ -126,10 +125,7 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
     context.push('/pos/cash-drawer/cash-in');
   }
 
-  Future<void> _onCashOut(
-    BuildContext context,
-    CashDrawerSummary summary,
-  ) async {
+  void _onCashOut(BuildContext context) {
     if (!PosPermissionAccess.canCreateCashDrawerMovement(
       ref.read(authSessionProvider)?.permissionCodes.toSet() ?? const {},
     )) {
@@ -140,11 +136,7 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
       return;
     }
 
-    await showCashOutDialog(
-      context: context,
-      ref: ref,
-      maxAmount: summary.currentExpectedCash,
-    );
+    context.push('/pos/cash-drawer/cash-drop');
   }
 
   Future<void> _onCloseTill(
@@ -161,11 +153,18 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
       return;
     }
 
-    await showCloseTillDialog(
-      context: context,
-      ref: ref,
-      expectedCash: summary.currentExpectedCash,
-    );
+    if (!summary.isOpen) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('An open till session is required to close the till.'),
+          ),
+        );
+      return;
+    }
+
+    context.push('/pos/cash-drawer/close-till');
   }
 }
 
