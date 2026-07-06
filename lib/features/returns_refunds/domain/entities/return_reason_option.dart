@@ -1,6 +1,5 @@
 /// Return reason options for Step 3 of the return flow.
 ///
-/// TODO(returns-refunds): Load from backend when reason-codes API is ready.
 class ReturnReasonOption {
   const ReturnReasonOption({
     required this.code,

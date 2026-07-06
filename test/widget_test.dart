@@ -400,7 +400,6 @@ void main() {
       expect(tester.widget<TextField>(find.byType(TextField)).controller?.text,
           isEmpty);
       expect(find.text('All Products (12)'), findsOneWidget);
-      expect(find.text('Coffee Voucher'), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(GridView),

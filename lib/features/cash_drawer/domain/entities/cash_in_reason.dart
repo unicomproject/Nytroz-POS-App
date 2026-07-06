@@ -1,6 +1,5 @@
 /// Cash In reason options for the till drawer form.
 ///
-/// TODO(cash-drawer): Load from backend cash_movement_types when API is ready.
 class CashInReason {
   const CashInReason._();
 

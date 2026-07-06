@@ -4,7 +4,6 @@ import '../../domain/entities/return_credit_preview.dart';
 
 /// Settlement method options for Step 5 of the return flow.
 ///
-/// TODO(returns-refunds): Load availability rules from backend when settlement API is ready.
 class ReturnSettlementMethodOption {
   const ReturnSettlementMethodOption({
     required this.code,

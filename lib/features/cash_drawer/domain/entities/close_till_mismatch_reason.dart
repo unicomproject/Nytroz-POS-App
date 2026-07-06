@@ -1,6 +1,5 @@
 /// Mismatch reason options for the close till form.
 ///
-/// TODO(cash-drawer): Load from backend when till close API is ready.
 class CloseTillMismatchReason {
   const CloseTillMismatchReason._();
 

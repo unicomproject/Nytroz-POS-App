@@ -155,7 +155,6 @@ class CashDropFormCard extends ConsumerWidget {
             ),
             const SizedBox(height: TenantAdminSpacing.sm),
             Text(
-              // TODO(cash-drawer): Validate manager PIN when backend approval flow exists.
               'Manager PIN is collected for future approval workflows only.',
               style: TenantAdminTextStyles.muted(context).copyWith(
                 fontSize: 12,
