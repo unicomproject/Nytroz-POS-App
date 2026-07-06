@@ -75,8 +75,8 @@ class PosHomeBottomGrid extends StatelessWidget {
             TenantAdminSpacing.lg * (rowCount - 1).clamp(0, rowCount);
         final itemExtent = hasBoundedHeight
             ? ((constraints.maxHeight - availableSpacing) / rowCount)
-                .clamp(210.0, 320.0)
-            : 300.0;
+                .clamp(_minimumCardHeight, _maximumCardHeight)
+            : _comfortableCardHeight;
 
         return GridView.builder(
           shrinkWrap: !hasBoundedHeight,
@@ -95,18 +95,23 @@ class PosHomeBottomGrid extends StatelessWidget {
   }
 }
 
+const _minimumCardHeight = 230.0;
+const _comfortableCardHeight = 260.0;
+const _maximumCardHeight = 340.0;
+const _fourColumnMinimumWidth = 1040.0;
+
 int _columnCountFor(double width, int itemCount) {
   if (itemCount == 1) {
     return 1;
   }
 
-  if (width < 520) {
+  if (width < TenantAdminBreakpoints.mobile) {
     return 1;
   }
 
-  if (width < 820) {
-    return itemCount >= 2 ? 2 : 1;
+  if (width < _fourColumnMinimumWidth) {
+    return itemCount < 2 ? itemCount : 2;
   }
 
-  return itemCount >= 4 ? 4 : itemCount;
+  return itemCount < 4 ? itemCount : 4;
 }

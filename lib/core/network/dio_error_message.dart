@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 String messageFromDioException(
   DioException error, {
   String? contextPrefix,
   String fallback = 'Request failed.',
+  String? attemptedBaseUrl,
 }) {
   final data = error.response?.data;
   if (data is Map) {
@@ -20,7 +22,7 @@ String messageFromDioException(
 
   final networkMessage = _networkMessage(error);
   if (networkMessage != null) {
-    return networkMessage;
+    return _withDebugNetworkHint(networkMessage, attemptedBaseUrl);
   }
 
   if (contextPrefix != null) {
@@ -28,6 +30,16 @@ String messageFromDioException(
   }
 
   return error.message ?? fallback;
+}
+
+String _withDebugNetworkHint(String message, String? attemptedBaseUrl) {
+  if (!kDebugMode || attemptedBaseUrl == null || attemptedBaseUrl.isEmpty) {
+    return message;
+  }
+
+  return '$message Attempted API base URL: $attemptedBaseUrl. '
+      'Development hosts: Windows/Desktop/Web use localhost or 127.0.0.1; '
+      'Android emulator uses 10.0.2.2; physical devices use the PC LAN IP.';
 }
 
 String? _networkMessage(DioException error) {

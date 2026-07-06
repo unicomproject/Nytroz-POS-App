@@ -10,16 +10,12 @@ class PosHomeActionCard extends StatelessWidget {
     required this.action,
     required this.icon,
     required this.description,
-    required this.metrics,
-    this.buttonLabel,
     this.onTap,
   });
 
   final PosHomeAction action;
   final IconData icon;
   final String description;
-  final List<Widget> metrics;
-  final String? buttonLabel;
   final VoidCallback? onTap;
 
   @override
@@ -29,157 +25,92 @@ class PosHomeActionCard extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isTight =
-            constraints.hasBoundedHeight && constraints.maxHeight < 250;
-        final iconSize = isTight ? 34.0 : 48.0;
-        final buttonHeight = isTight ? 36.0 : 46.0;
+            (constraints.hasBoundedHeight && constraints.maxHeight < 250) ||
+                (constraints.hasBoundedWidth && constraints.maxWidth < 310);
+        final iconContainerSize = isTight ? 48.0 : 68.0;
+        final iconSize = isTight ? 26.0 : 36.0;
         final titleStyle = isTight
-            ? Theme.of(context).textTheme.titleSmall?.copyWith(
+            ? Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: TenantAdminColors.bodyText,
                   fontWeight: FontWeight.w800,
                 )
             : TenantAdminTextStyles.sectionTitle(context);
         final descriptionStyle = isTight
-            ? Theme.of(context).textTheme.labelMedium?.copyWith(
+            ? Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: TenantAdminColors.mutedText,
+                  height: 1.35,
                 )
-            : TenantAdminTextStyles.muted(context);
+            : TenantAdminTextStyles.muted(context).copyWith(height: 1.4);
 
         return PosDashboardCardContainer(
-          padding: EdgeInsets.all(
-            isTight ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: iconSize,
-                height: iconSize,
-                decoration: const BoxDecoration(
-                  color: TenantAdminColors.secondary,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  color: TenantAdminColors.info,
-                  size: isTight ? 20 : 25,
-                ),
-              ),
-              SizedBox(
-                  height:
-                      isTight ? TenantAdminSpacing.xs : TenantAdminSpacing.md),
-              Text(
-                action.label,
-                maxLines: isTight ? 1 : 2,
-                style: titleStyle,
-              ),
-              const SizedBox(height: TenantAdminSpacing.xs),
-              Text(
-                description,
-                maxLines: isTight ? 1 : 2,
-                style: descriptionStyle,
-              ),
-              SizedBox(
-                  height:
-                      isTight ? TenantAdminSpacing.xs : TenantAdminSpacing.md),
-              Flexible(
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.topLeft,
-                    child: SizedBox(
-                      width: constraints.maxWidth -
-                          (isTight
-                              ? TenantAdminSpacing.sm * 2
-                              : TenantAdminSpacing.md * 2),
+          padding: EdgeInsets.zero,
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: canInvoke ? onTap : null,
+              borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+              mouseCursor: canInvoke
+                  ? SystemMouseCursors.click
+                  : SystemMouseCursors.basic,
+              child: Semantics(
+                button: canInvoke,
+                enabled: canInvoke,
+                child: Padding(
+                  padding: EdgeInsets.all(
+                    isTight ? TenantAdminSpacing.md : TenantAdminSpacing.xl,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 260),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        children: metrics,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: iconContainerSize,
+                            height: iconContainerSize,
+                            decoration: const BoxDecoration(
+                              color: TenantAdminColors.secondary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              icon,
+                              color: TenantAdminColors.info,
+                              size: iconSize,
+                            ),
+                          ),
+                          SizedBox(
+                            height: isTight
+                                ? TenantAdminSpacing.sm
+                                : TenantAdminSpacing.lg,
+                          ),
+                          Text(
+                            action.label,
+                            maxLines: isTight ? 1 : 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: titleStyle,
+                          ),
+                          const SizedBox(height: TenantAdminSpacing.sm),
+                          Text(
+                            description,
+                            maxLines: isTight ? 2 : 3,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: descriptionStyle,
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                height: buttonHeight,
-                child: OutlinedButton(
-                  onPressed: canInvoke ? onTap : null,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: TenantAdminColors.border),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isTight
-                          ? TenantAdminSpacing.sm
-                          : TenantAdminSpacing.md,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                    ),
-                  ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(buttonLabel ?? action.buttonLabel),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         );
       },
-    );
-  }
-}
-
-class PosActionMetricLine extends StatelessWidget {
-  const PosActionMetricLine({
-    super.key,
-    required this.value,
-    required this.label,
-    this.color = TenantAdminColors.bodyText,
-  });
-
-  final String value;
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: TenantAdminSpacing.xs),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Flexible(
-            flex: 3,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                value,
-                maxLines: 1,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-            ),
-          ),
-          const SizedBox(width: TenantAdminSpacing.xs),
-          Expanded(
-            flex: 3,
-            child: Text(
-              label,
-              maxLines: 2,
-              softWrap: true,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: TenantAdminColors.mutedText,
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

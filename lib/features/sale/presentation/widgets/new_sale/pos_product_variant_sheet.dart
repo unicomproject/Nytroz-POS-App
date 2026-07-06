@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:nytroz_pos/core/access/pos_permission_access.dart';
+import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
@@ -268,6 +270,25 @@ class _PosProductVariantSheetState
   }
 
   void _submit(PosCatalogProductDetail detail, PosCatalogVariant variant) {
+    final session = ref.read(authSessionProvider);
+    final isUpdate = widget.existingCartItem != null;
+    if (isUpdate &&
+        !PosPermissionAccess.canUpdateCartItemSession(session)) {
+      PosPermissionAccess.showAccessDeniedSnackBar(
+        context,
+        'You do not have permission to update cart items.',
+      );
+      return;
+    }
+
+    if (!isUpdate && !PosPermissionAccess.canAddCartItemSession(session)) {
+      PosPermissionAccess.showAccessDeniedSnackBar(
+        context,
+        'You do not have permission to add items to the cart.',
+      );
+      return;
+    }
+
     final cartProduct = toCartProduct(
       summary: detail.summary,
       variant: variant,

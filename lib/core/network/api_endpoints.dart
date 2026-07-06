@@ -19,6 +19,25 @@ class ApiEndpoints {
   static const posHome = '/api/v1/pos/home';
   static const posProducts = '/api/v1/pos/products';
   static const posCatalogCategories = '/api/v1/pos/catalog/categories';
+  static const posCheckoutSummary = '/api/v1/pos/checkout/summary';
+  static const posCheckoutStartPayment = '/api/v1/pos/checkout/start-payment';
+  static const posCustomers = '/api/v1/customers';
+
+  static const posReturnSaleSearch = '/api/v1/pos/returns/sales/search';
+
+  static String posReturnSaleEligibility(String saleId) =>
+      '/api/v1/pos/returns/sales/$saleId/eligibility';
+
+  static String posReturnSaleCreditPreview(String saleId) =>
+      '/api/v1/pos/returns/sales/$saleId/credit-preview';
+
+  static String posReturnSaleComplete(String saleId) =>
+      '/api/v1/pos/returns/sales/$saleId/complete';
+
+  static String posReceipt(String saleId) => '/api/v1/pos/receipts/$saleId';
+
+  static String posReceiptPrint(String saleId) =>
+      '/api/v1/pos/receipts/$saleId/print';
 
   static String posProductDetail(String productId) =>
       '/api/v1/pos/products/$productId';

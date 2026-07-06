@@ -20,7 +20,6 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _tenantCode = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
   var _submitting = false;
@@ -29,7 +28,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   void dispose() {
-    _tenantCode.dispose();
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -122,21 +120,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             AuthErrorBanner(message: _error!),
             const SizedBox(height: TenantAdminSpacing.lg),
           ],
-          _LoginLabeledField(
-            label: 'Tenant Code',
-            hintText: 'Enter tenant code',
-            controller: _tenantCode,
-            prefixIcon: Icons.storefront_outlined,
-            textCapitalization: TextCapitalization.characters,
-            large: isWide,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Tenant code is required';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: TenantAdminSpacing.lg),
           _LoginLabeledField(
             label: 'Email',
             hintText: 'Enter email',
@@ -251,7 +234,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         name: 'auth.login',
       );
       final session = await ref.read(loginProvider).call(
-            tenantCode: _tenantCode.text.trim(),
             login: _email.text.trim(),
             password: _password.text,
           );
@@ -357,7 +339,6 @@ class _LoginLabeledField extends StatelessWidget {
     required this.prefixIcon,
     this.validator,
     this.keyboardType,
-    this.textCapitalization = TextCapitalization.none,
     this.obscureText = false,
     this.suffixIcon,
     this.large = false,
@@ -369,7 +350,6 @@ class _LoginLabeledField extends StatelessWidget {
   final IconData prefixIcon;
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
-  final TextCapitalization textCapitalization;
   final bool obscureText;
   final Widget? suffixIcon;
   final bool large;
@@ -399,7 +379,6 @@ class _LoginLabeledField extends StatelessWidget {
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
-          textCapitalization: textCapitalization,
           validator: validator,
           style: TextStyle(
             color: TenantAdminColors.bodyText,

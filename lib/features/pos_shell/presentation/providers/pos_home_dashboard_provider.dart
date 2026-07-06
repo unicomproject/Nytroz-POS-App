@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 
 import '../../../../core/access/pos_access_codes.dart';
+import '../../../../core/access/pos_permission_access.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
@@ -208,7 +209,8 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         description: 'Begin a new in-store sale.',
         iconKey: 'new-sale',
         buttonLabel: 'Start New Sale',
-        isEnabled: cards.startSale.enabled,
+        isEnabled: cards.startSale.enabled ||
+            PosPermissionAccess.canAccessNewSale(permissions),
         targetRoute: '/pos/new-sale',
         featureKey: PosFeatureCodes.sales,
         permissionKey: PosPermissionCodes.viewNewSale,
@@ -233,7 +235,8 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         description: 'Review eligible items for return or refund.',
         iconKey: 'return',
         buttonLabel: 'Start Return',
-        isEnabled: cards.returnsRefunds.enabled,
+        isEnabled: cards.returnsRefunds.enabled ||
+            PosPermissionAccess.canViewReturnsOrRefunds(permissions),
         targetRoute: '/pos/returns-refunds',
         featureKey: PosFeatureCodes.returns,
         permissionKey: PosPermissionCodes.viewReturns,
@@ -246,7 +249,8 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         description: 'Create a customer profile for future visits.',
         iconKey: 'add-customer',
         buttonLabel: 'Add Customer',
-        isEnabled: cards.customers.enabled,
+        isEnabled: cards.customers.enabled ||
+            PosPermissionAccess.canViewCustomers(permissions),
         targetRoute: '/pos/customers',
         featureKey: PosFeatureCodes.customers,
         permissionKey: PosPermissionCodes.viewNewSaleCustomers,
@@ -259,7 +263,8 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         description: 'View sales that were parked for later.',
         iconKey: 'parked-sales',
         buttonLabel: 'View Parked Sales',
-        isEnabled: cards.parkedSales.enabled,
+        isEnabled: cards.parkedSales.enabled ||
+            PosPermissionAccess.canParkOrViewParkedSales(permissions),
         targetRoute: '/pos/parked-sales',
         featureKey: PosFeatureCodes.sales,
         permissionKey: PosPermissionCodes.createParkedSale,
@@ -272,7 +277,8 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         description: 'View the current till cash summary.',
         iconKey: 'cash-drawer',
         buttonLabel: 'View Cash Drawer',
-        isEnabled: cards.cashDrawer.enabled,
+        isEnabled: cards.cashDrawer.enabled ||
+            PosPermissionAccess.canViewCashDrawer(permissions),
         targetRoute: '/pos/cash-drawer',
         featureKey: PosFeatureCodes.till,
         permissionKey: PosPermissionCodes.viewCashDrawer,
