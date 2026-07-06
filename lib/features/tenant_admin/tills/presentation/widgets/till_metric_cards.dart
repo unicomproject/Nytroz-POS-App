@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/till.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_metric_card.dart';
-import '../config/till_summary_card_configs.dart';
+import '../config/till_row_action_configs.dart';
 
 class TillMetricCards extends StatelessWidget {
   const TillMetricCards({
@@ -27,11 +27,9 @@ class TillMetricCards extends StatelessWidget {
         ? cards.length == 1
             ? 1
             : 2
-        : cards.length <= 2
+        : cards.length <= 4
             ? cards.length
-            : cards.length == 3
-                ? 3
-                : 4;
+            : 4;
 
     return GridView.builder(
       shrinkWrap: true,
@@ -40,7 +38,7 @@ class TillMetricCards extends StatelessWidget {
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: TenantAdminSpacing.lg,
         mainAxisSpacing: TenantAdminSpacing.lg,
-        mainAxisExtent: compact ? 156 : 168,
+        mainAxisExtent: compact ? 172 : 168,
       ),
       itemCount: cards.length,
       itemBuilder: (context, index) {

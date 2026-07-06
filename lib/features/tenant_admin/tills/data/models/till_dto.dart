@@ -14,19 +14,18 @@ class TillDto {
   });
 
   factory TillDto.fromJson(Map<String, dynamic> json) {
-    final normalized = _normalizeJsonKeys(json);
     return TillDto(
-      id: normalized['id']?.toString() ?? '',
-      outletId: normalized['outletId']?.toString() ?? '',
-      outletName: normalized['outletName'] as String? ?? '',
-      name: normalized['name'] as String? ?? '',
-      code: normalized['code'] as String? ?? '',
-      status: normalized['status'] as String? ?? '',
-      operationalStatus: normalized['operationalStatus'] as String? ?? '',
-      attentionLabel: normalized['attentionLabel'] as String?,
-      todaySalesAmount: _doubleValue(normalized['todaySalesAmount']),
-      currency: normalized['currency'] as String?,
-      lastSyncAt: _dateValue(normalized['lastSyncAt']),
+      id: json['id']?.toString() ?? '',
+      outletId: json['outletId']?.toString() ?? '',
+      outletName: json['outletName'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      code: json['code'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      operationalStatus: json['operationalStatus'] as String? ?? '',
+      attentionLabel: json['attentionLabel'] as String?,
+      todaySalesAmount: _doubleValue(json['todaySalesAmount']),
+      currency: json['currency'] as String?,
+      lastSyncAt: _dateValue(json['lastSyncAt']),
     );
   }
 
@@ -43,6 +42,56 @@ class TillDto {
   final DateTime? lastSyncAt;
 }
 
+class TillListSummaryDto {
+  const TillListSummaryDto({
+    required this.totalTills,
+    required this.onlineCount,
+    required this.offlineCount,
+    required this.needsAttentionCount,
+  });
+
+  factory TillListSummaryDto.fromJson(Map<String, dynamic> json) {
+    return TillListSummaryDto(
+      totalTills: _intValue(json['totalTills']),
+      onlineCount: _intValue(json['onlineCount']),
+      offlineCount: _intValue(json['offlineCount']),
+      needsAttentionCount: _intValue(json['needsAttentionCount']),
+    );
+  }
+
+  factory TillListSummaryDto.fromPagedList({
+    required List<TillDto> items,
+    required int totalCount,
+  }) {
+    var online = 0;
+    var offline = 0;
+    var needsAttention = 0;
+
+    for (final item in items) {
+      switch (item.operationalStatus) {
+        case 'online':
+          online++;
+        case 'offline':
+          offline++;
+        case 'needs_attention':
+          needsAttention++;
+      }
+    }
+
+    return TillListSummaryDto(
+      totalTills: totalCount,
+      onlineCount: online,
+      offlineCount: offline,
+      needsAttentionCount: needsAttention,
+    );
+  }
+
+  final int totalTills;
+  final int onlineCount;
+  final int offlineCount;
+  final int needsAttentionCount;
+}
+
 class TillListResultDto {
   const TillListResultDto({
     required this.summary,
@@ -53,21 +102,21 @@ class TillListResultDto {
   });
 
   factory TillListResultDto.fromJson(Map<String, dynamic> json) {
-    final normalized = _normalizeJsonKeys(json);
-    final rawItems = normalized['items'] ?? normalized['tills'];
+    final rawItems = json['items'];
     final items = _mapList(rawItems, TillDto.fromJson);
-    final page = _intValue(normalized['page'], fallback: 1);
-    final pageSize = _intValue(normalized['pageSize'], fallback: 10);
-    final totalCount = _intValue(normalized['totalCount'], fallback: items.length);
+    final page = _intValue(json['page'], fallback: 1);
+    final pageSize = _intValue(json['pageSize'], fallback: 10);
+    final totalCount = _intValue(json['totalCount'], fallback: items.length);
 
     return TillListResultDto(
-      summary: normalized['summary'] is Map
+      summary: json['summary'] is Map
           ? TillListSummaryDto.fromJson(
-              _normalizeJsonKeys(
-                Map<String, dynamic>.from(normalized['summary'] as Map),
-              ),
+              Map<String, dynamic>.from(json['summary'] as Map),
             )
-          : TillListSummaryDto.fromItems(items),
+          : TillListSummaryDto.fromPagedList(
+              items: items,
+              totalCount: totalCount,
+            ),
       items: items,
       page: page,
       pageSize: pageSize,
@@ -82,58 +131,30 @@ class TillListResultDto {
   final int totalCount;
 }
 
-class TillListSummaryDto {
-  const TillListSummaryDto({
-    required this.totalTills,
-    required this.onlineCount,
-    required this.offlineCount,
-    required this.needsAttentionCount,
+class CreatedTillDto {
+  const CreatedTillDto({
+    required this.id,
+    required this.outletId,
+    required this.name,
+    required this.code,
+    required this.status,
   });
 
-  factory TillListSummaryDto.fromJson(Map<String, dynamic> json) {
-    final normalized = _normalizeJsonKeys(json);
-    return TillListSummaryDto(
-      totalTills: _intValue(normalized['totalTills']),
-      onlineCount: _intValue(normalized['onlineCount']),
-      offlineCount: _intValue(normalized['offlineCount']),
-      needsAttentionCount: _intValue(normalized['needsAttentionCount']),
+  factory CreatedTillDto.fromJson(Map<String, dynamic> json) {
+    return CreatedTillDto(
+      id: json['id']?.toString() ?? '',
+      outletId: json['outletId']?.toString() ?? '',
+      name: json['name'] as String? ?? '',
+      code: json['code'] as String? ?? '',
+      status: json['status'] as String? ?? '',
     );
   }
 
-  factory TillListSummaryDto.fromItems(List<TillDto> items) {
-    return TillListSummaryDto(
-      totalTills: items.length,
-      onlineCount: items
-          .where((item) => item.operationalStatus.toLowerCase() == 'online')
-          .length,
-      offlineCount: items
-          .where((item) => item.operationalStatus.toLowerCase() == 'offline')
-          .length,
-      needsAttentionCount: items.where((item) {
-        final status = item.operationalStatus.toLowerCase();
-        return status == 'needs_attention' || status == 'offline';
-      }).length,
-    );
-  }
-
-  final int totalTills;
-  final int onlineCount;
-  final int offlineCount;
-  final int needsAttentionCount;
-}
-
-List<T> _mapList<T>(
-  dynamic rawItems,
-  T Function(Map<String, dynamic> json) mapper,
-) {
-  if (rawItems is! List) {
-    return const [];
-  }
-
-  return rawItems
-      .whereType<Map>()
-      .map((item) => mapper(Map<String, dynamic>.from(item)))
-      .toList(growable: false);
+  final String id;
+  final String outletId;
+  final String name;
+  final String code;
+  final String status;
 }
 
 int _intValue(dynamic value, {int fallback = 0}) {
@@ -149,11 +170,15 @@ int _intValue(dynamic value, {int fallback = 0}) {
 }
 
 double? _doubleValue(dynamic value) {
+  if (value == null) {
+    return null;
+  }
+
   if (value is num) {
     return value.toDouble();
   }
 
-  return double.tryParse(value?.toString() ?? '');
+  return double.tryParse(value.toString());
 }
 
 DateTime? _dateValue(dynamic value) {
@@ -164,11 +189,16 @@ DateTime? _dateValue(dynamic value) {
   return DateTime.tryParse(value.toString());
 }
 
-Map<String, dynamic> _normalizeJsonKeys(Map<String, dynamic> json) {
-  return json.map(
-    (key, value) => MapEntry(
-      key.isEmpty ? key : key[0].toLowerCase() + key.substring(1),
-      value,
-    ),
-  );
+List<T> _mapList<T>(
+  dynamic raw,
+  T Function(Map<String, dynamic> json) mapper,
+) {
+  if (raw is! List) {
+    return const [];
+  }
+
+  return raw
+      .whereType<Map>()
+      .map((item) => mapper(Map<String, dynamic>.from(item)))
+      .toList(growable: false);
 }

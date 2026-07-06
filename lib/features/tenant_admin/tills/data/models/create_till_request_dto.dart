@@ -8,10 +8,10 @@ class CreateTillRequestDto {
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
-      'code': code,
+      'name': name.trim(),
+      'code': code.trim(),
       'outletId': outletId,
-      'status': status,
+      'status': status.trim(),
     };
   }
 

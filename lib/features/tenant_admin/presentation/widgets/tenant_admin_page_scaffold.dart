@@ -26,8 +26,11 @@ class TenantAdminPageScaffold extends StatelessWidget {
       color: backgroundColor,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final resolvedPadding =
+          final basePadding =
               padding ?? TenantAdminInsets.pageForWidth(constraints.maxWidth);
+          final resolvedPadding = constraints.maxWidth < 760
+              ? const EdgeInsets.fromLTRB(20, 20, 20, 24)
+              : basePadding;
           final isNarrow = constraints.maxWidth < TenantAdminBreakpoints.mobile;
 
           return SingleChildScrollView(
@@ -47,7 +50,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
                     subtitle: subtitle,
                     actions: actions,
                   ),
-                const SizedBox(height: TenantAdminSpacing.xl),
+                const SizedBox(height: 20),
                 child,
               ],
             ),
@@ -131,14 +134,29 @@ class _HeaderText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(title, style: TenantAdminTextStyles.pageTitle(context)),
-        if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
-          const SizedBox(height: TenantAdminSpacing.xs),
-          Text(subtitle!, style: TenantAdminTextStyles.muted(context)),
-        ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (title == 'Dashboard') ...[
+                const Icon(
+                  Icons.menu,
+                  color: TenantAdminColors.bodyText,
+                  size: 22,
+                ),
+                const SizedBox(height: 18),
+              ],
+              Text(title, style: TenantAdminTextStyles.pageTitle(context)),
+              if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
+                const SizedBox(height: TenantAdminSpacing.xs),
+                Text(subtitle!, style: TenantAdminTextStyles.muted(context)),
+              ],
+            ],
+          ),
+        ),
       ],
     );
   }

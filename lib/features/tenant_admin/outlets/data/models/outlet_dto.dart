@@ -9,6 +9,9 @@ class OutletDto {
     required this.onlineTillCount,
     required this.staffCount,
     required this.todaysSales,
+    this.outletType,
+    this.contactNumber,
+    this.city,
   });
 
   factory OutletDto.fromJson(Map<String, dynamic> json) {
@@ -23,6 +26,10 @@ class OutletDto {
           _intValue(json['onlineTillCount'] ?? json['onlineTills']),
       staffCount: _intValue(json['staffCount'] ?? json['staff']),
       todaysSales: _formatSales(json['todaysSales'] ?? json['todaySales']),
+      outletType: json['outletType'] as String? ?? json['type'] as String?,
+      contactNumber:
+          json['phone'] as String? ?? json['contactNumber'] as String?,
+      city: json['city'] as String?,
     );
   }
 
@@ -35,6 +42,9 @@ class OutletDto {
   final int onlineTillCount;
   final int staffCount;
   final String todaysSales;
+  final String? outletType;
+  final String? contactNumber;
+  final String? city;
 }
 
 class OutletListResultDto {

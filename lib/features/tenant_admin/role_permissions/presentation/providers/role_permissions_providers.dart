@@ -225,8 +225,13 @@ final rolePermissionsAvailableRolesProvider =
   }
 
   return context.roles
-      .where((role) => role.id.isNotEmpty)
-      .map((role) => TenantAdminRoleOption(id: role.id, name: role.name))
+      .where((role) => role.roleId.isNotEmpty)
+      .map(
+        (role) => TenantAdminRoleOption(
+          id: role.roleId,
+          name: role.roleName,
+        ),
+      )
       .toList(growable: false);
 });
 

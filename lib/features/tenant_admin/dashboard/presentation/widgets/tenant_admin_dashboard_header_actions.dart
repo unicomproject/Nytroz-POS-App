@@ -98,10 +98,14 @@ class _FilterChipButton extends StatelessWidget {
       label: Text(label),
       style: OutlinedButton.styleFrom(
         foregroundColor: TenantAdminColors.bodyText,
+        backgroundColor: TenantAdminColors.surface,
         side: const BorderSide(color: TenantAdminColors.border),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        ),
         padding: const EdgeInsets.symmetric(
-          horizontal: TenantAdminSpacing.md,
-          vertical: TenantAdminSpacing.sm,
+          horizontal: 12,
+          vertical: 10,
         ),
       ),
     );
@@ -122,10 +126,19 @@ class _NotificationBell extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        IconButton(
-          onPressed: canRead ? () {} : null,
-          icon: const Icon(Icons.notifications_none),
-          color: TenantAdminColors.bodyText,
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: TenantAdminColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: TenantAdminColors.border),
+          ),
+          child: IconButton(
+            onPressed: canRead ? () {} : null,
+            icon: const Icon(Icons.notifications_none),
+            color: TenantAdminColors.bodyText,
+          ),
         ),
         if (count != null && count! > 0)
           Positioned(
@@ -187,41 +200,54 @@ class _ProfileMenu extends StatelessWidget {
           child: const Text('Logout'),
         ),
       ],
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: TenantAdminColors.primary,
-            child: Text(
-              initials,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 8,
+          vertical: 6,
+        ),
+        decoration: BoxDecoration(
+          color: TenantAdminColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: TenantAdminColors.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 17,
+              backgroundColor: const Color(0xFFEDE9FE),
+              child: Text(
+                initials,
+                style: const TextStyle(
+                  color: TenantAdminColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: TenantAdminSpacing.sm),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                displayName,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: TenantAdminColors.bodyText,
-                ),
-              ),
-              if (roleNames.isNotEmpty)
+            const SizedBox(width: TenantAdminSpacing.sm),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Text(
-                  roleNames.first,
-                  style: TenantAdminTextStyles.muted(context),
+                  displayName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: TenantAdminColors.bodyText,
+                  ),
                 ),
-            ],
-          ),
-          const Icon(Icons.keyboard_arrow_down),
-        ],
+                if (roleNames.isNotEmpty)
+                  Text(
+                    roleNames.first,
+                    style: TenantAdminTextStyles.muted(context).copyWith(
+                      fontSize: 12,
+                    ),
+                  ),
+              ],
+            ),
+            const Icon(Icons.keyboard_arrow_down),
+          ],
+        ),
       ),
     );
   }

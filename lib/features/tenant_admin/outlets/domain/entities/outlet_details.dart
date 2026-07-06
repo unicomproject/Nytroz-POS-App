@@ -147,12 +147,14 @@ class OutletFormData {
     required this.outletName,
     required this.outletCode,
     required this.outletType,
+    required this.status,
     required this.mainPhoneNumber,
     required this.emailAddress,
     this.managerId,
     required this.addressLine1,
     this.addressLine2,
     required this.city,
+    this.state,
     required this.country,
     required this.postalCode,
     required this.openingHours,
@@ -161,12 +163,14 @@ class OutletFormData {
   final String outletName;
   final String outletCode;
   final String outletType;
+  final String status;
   final String mainPhoneNumber;
   final String emailAddress;
   final String? managerId;
   final String addressLine1;
   final String? addressLine2;
   final String city;
+  final String? state;
   final String country;
   final String postalCode;
   final List<OutletOpeningHour> openingHours;

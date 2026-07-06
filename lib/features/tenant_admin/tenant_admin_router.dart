@@ -178,6 +178,14 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return const AddTillScreen();
   }
 
+  if (definition.path == '/tenant-admin/tills') {
+    return const TillListScreen();
+  }
+
+  if (definition.path == '/tenant-admin/tills/add') {
+    return const AddTillScreen();
+  }
+
   return TenantAdminPlaceholderScreen(
     title: definition.title,
     subtitle: definition.subtitle,
@@ -263,12 +271,17 @@ bool _canAccessRoute(
     return accessChecker.canCreateOutlet();
   }
 
-  if (definition.path == '/tenant-admin/tills') {
-    return accessChecker.canAccessTillListPage();
-  }
-
   if (definition.path == '/tenant-admin/tills/add') {
     return accessChecker.canCreateTill();
+  }
+
+  if (definition.path == '/tenant-admin/tills/:id/edit') {
+    return accessChecker.canUpdateTill();
+  }
+
+  if (definition.path == '/tenant-admin/tills' ||
+      definition.path == '/tenant-admin/tills/:id') {
+    return accessChecker.canAccessTillModule();
   }
 
   final menuItem = _findMenuItem(items, definition.menuKey);

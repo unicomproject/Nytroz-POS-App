@@ -1,26 +1,13 @@
 enum TillStatusFilter {
-  all,
-  online,
-  offline,
-  inactive,
-  needsAttention,
-}
+  all('All'),
+  online('Online'),
+  offline('Offline'),
+  inactive('Inactive'),
+  needsAttention('Needs attention');
 
-extension TillStatusFilterX on TillStatusFilter {
-  String get label {
-    switch (this) {
-      case TillStatusFilter.all:
-        return 'All';
-      case TillStatusFilter.online:
-        return 'Online';
-      case TillStatusFilter.offline:
-        return 'Offline';
-      case TillStatusFilter.inactive:
-        return 'Inactive';
-      case TillStatusFilter.needsAttention:
-        return 'Needs attention';
-    }
-  }
+  const TillStatusFilter(this.label);
+
+  final String label;
 
   String? get apiStatus {
     switch (this) {
@@ -35,5 +22,26 @@ extension TillStatusFilterX on TillStatusFilter {
       case TillStatusFilter.needsAttention:
         return 'needs_attention';
     }
+  }
+}
+
+int tillFilterCount(TillStatusFilter filter, {
+  required int totalTills,
+  required int onlineCount,
+  required int offlineCount,
+  required int inactiveCount,
+  required int needsAttentionCount,
+}) {
+  switch (filter) {
+    case TillStatusFilter.all:
+      return totalTills;
+    case TillStatusFilter.online:
+      return onlineCount;
+    case TillStatusFilter.offline:
+      return offlineCount;
+    case TillStatusFilter.inactive:
+      return inactiveCount;
+    case TillStatusFilter.needsAttention:
+      return needsAttentionCount;
   }
 }

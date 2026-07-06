@@ -357,6 +357,60 @@ void main() {
       expect(find.text('Snack Combo'), findsOneWidget);
     });
 
+    testWidgets('New Sale reopens with empty search while preserving cart', (
+      tester,
+    ) async {
+      await _pumpPosHome(
+        tester,
+        size: const Size(1024, 768),
+        permissionCodes: const [
+          PosPermissionCodes.viewHome,
+          PosPermissionCodes.viewNewSale,
+          PosPermissionCodes.viewProducts,
+          PosPermissionCodes.searchProducts,
+          PosPermissionCodes.addCartItem,
+          PosPermissionCodes.updateCartItem,
+          PosPermissionCodes.removeCartItem,
+        ],
+      );
+
+      _goFromCurrentRoute(tester, '/pos/new-sale');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('General Admission'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'coffee');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Coffee Voucher'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(GridView),
+          matching: find.text('General Admission'),
+        ),
+        findsNothing,
+      );
+      expect(find.text('Qty 1'), findsOneWidget);
+
+      _goFromWidget<PosNewSaleScreen>(tester, '/pos/home');
+      await tester.pumpAndSettle();
+      _goFromWidget<PosHomeScreen>(tester, '/pos/new-sale');
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<TextField>(find.byType(TextField)).controller?.text,
+          isEmpty);
+      expect(find.text('All Products (12)'), findsOneWidget);
+      expect(find.text('Coffee Voucher'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(GridView),
+          matching: find.text('General Admission'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Qty 1'), findsOneWidget);
+    });
+
     testWidgets('New Sale category chips filter product grid', (tester) async {
       await _pumpPosHome(
         tester,
@@ -697,6 +751,11 @@ void main() {
 
 void _goFromCurrentRoute(WidgetTester tester, String route) {
   final context = tester.element(find.byType(PosHomeScreen));
+  context.go(route);
+}
+
+void _goFromWidget<T extends Widget>(WidgetTester tester, String route) {
+  final context = tester.element(find.byType(T));
   context.go(route);
 }
 

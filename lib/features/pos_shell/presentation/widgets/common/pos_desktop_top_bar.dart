@@ -189,14 +189,13 @@ class _TopBarSearchFieldState extends ConsumerState<_TopBarSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    // a mobile search field is added (requires products.search).
-    final isNewSaleRoute =
+    final isNewSaleBrowseRoute =
         GoRouterState.of(context).uri.path == '/pos/new-sale';
     final session = ref.watch(authSessionProvider);
     final canSearchProducts =
         session?.hasPermission(PosPermissionCodes.searchProducts) == true;
-    final isSearchEnabled = isNewSaleRoute && canSearchProducts;
-    final searchQuery = isNewSaleRoute && canSearchProducts
+    final isSearchEnabled = isNewSaleBrowseRoute && canSearchProducts;
+    final searchQuery = isSearchEnabled
         ? ref.watch(posNewSaleSearchQueryProvider)
         : '';
     _syncControllerText(searchQuery);

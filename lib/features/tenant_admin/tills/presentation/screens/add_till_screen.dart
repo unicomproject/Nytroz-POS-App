@@ -3,14 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../presentation/providers/tenant_admin_access_provider.dart';
+import '../../../../auth/presentation/providers/session_provider.dart';
+import '../../../domain/entities/tenant_admin_context.dart';
+import '../../../outlets/domain/entities/outlet.dart';
+import '../../../outlets/domain/entities/outlet_list_query.dart';
+import '../../../outlets/presentation/providers/outlet_providers.dart';
+import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/widgets/tenant_admin_buttons.dart';
+import '../../../presentation/providers/tenant_admin_context_provider.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/till.dart';
 import '../providers/till_providers.dart';
 import '../providers/till_visibility_provider.dart';
 import '../utils/till_api_errors.dart';
-import '../widgets/till_form.dart';
+import '../widgets/till_form.dart' show TillForm;
 
 class AddTillScreen extends ConsumerStatefulWidget {
   const AddTillScreen({super.key});
@@ -25,61 +32,55 @@ class _AddTillScreenState extends ConsumerState<AddTillScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+    ref.watch(authHeaderSyncProvider);
+    final canCreate = ref.watch(tillCreateAccessProvider);
     final outletsState = ref.watch(tillOutletOptionsProvider);
 
-    return accessState.when(
-      loading: () => const TenantAdminPageScaffold(
-        title: 'Add till',
-        child: TenantAdminLoadingSkeleton(rowCount: 4),
-      ),
-      error: (error, stackTrace) => TenantAdminPageScaffold(
-        title: 'Add till',
-        child: TenantAdminErrorState(
-          title: 'Unable to load access',
-          message: 'Please try again.',
-          onRetry: () => ref.invalidate(tenantAdminAccessCheckerProvider),
+    if (!canCreate) {
+      return const TenantAdminPageScaffold(
+        title: 'No access',
+        child: TenantAdminEmptyState(
+          title: 'No access',
+          message: 'You do not have permission to create tills.',
         ),
-      ),
-      data: (access) {
-        if (!access.canCreateTill()) {
-          return const TenantAdminPageScaffold(
-            title: 'No access',
-            child: TenantAdminEmptyState(
-              title: 'No access',
-              message: 'You do not have permission to create tills.',
-            ),
-          );
-        }
+      );
+    }
 
-        return TenantAdminPageScaffold(
-          title: 'Add till',
-          subtitle: 'Create a till for an outlet.',
-          child: outletsState.when(
-            loading: () => const TenantAdminLoadingSkeleton(rowCount: 4),
-            error: (error, stackTrace) => TillForm(
-              outletOptions: const [],
-              backendErrors: _fieldErrors,
-              submitting: _submitting,
-              onSubmit: _submit,
-            ),
-            data: (options) => TillForm(
-              outletOptions: options
-                  .map(
-                    (option) => TillFormOutletOption(
-                      id: option.id,
-                      label: '${option.name} (${option.code})',
-                    ),
-                  )
-                  .toList(growable: false),
-              backendErrors: _fieldErrors,
-              submitting: _submitting,
-              onSubmit: _submit,
-            ),
-          ),
-        );
-      },
+    return TenantAdminPageScaffold(
+      title: 'Add till',
+      subtitle: 'Enter the details for the new till.',
+      child: outletsState.when(
+        loading: () => const TenantAdminLoadingSkeleton(rowCount: 4),
+        error: (error, stackTrace) => TenantAdminErrorState(
+          title: 'Unable to load outlets',
+          message: _outletLoadErrorMessage(error),
+          onRetry: () => ref.invalidate(tillOutletOptionsProvider),
+        ),
+        data: (outlets) {
+          if (outlets.isEmpty) {
+            return const TenantAdminEmptyState(
+              title: 'No outlets available',
+              message: 'Create an outlet before adding a till.',
+            );
+          }
+
+          return TillForm(
+            outlets: outlets,
+            backendErrors: _fieldErrors,
+            submitting: _submitting,
+            onSubmit: _submit,
+          );
+        },
+      ),
     );
+  }
+
+  String _outletLoadErrorMessage(Object error) {
+    if (error is DioException && error.response?.statusCode == 401) {
+      return 'Your session has expired. Please sign in again.';
+    }
+
+    return 'Please try again.';
   }
 
   Future<void> _submit(TillFormData form) async {
@@ -89,21 +90,33 @@ class _AddTillScreenState extends ConsumerState<AddTillScreen> {
     });
 
     try {
-      await ref.read(createTillProvider).call(
-            CreateTillInput(
+      final createdTill = await ref.read(createTillProvider).call(
+            TillFormData(
               name: form.name,
               code: form.code,
               outletId: form.outletId,
               status: form.status,
             ),
           );
-
       ref.invalidate(tillListProvider);
       if (!mounted) {
         return;
       }
-      context.go('/tenant-admin/tills');
+      await _showCreatedDialog(createdTill, _outletNameFor(form.outletId));
     } on DioException catch (error) {
+      if (error.response?.statusCode == 401) {
+        await ref.read(authSessionProvider.notifier).clear();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Your session has expired. Please sign in again.'),
+            ),
+          );
+          context.go('/tenant-login');
+        }
+        return;
+      }
+
       final fieldErrors = tillValidationErrors(error);
       setState(() => _fieldErrors = fieldErrors);
       if (mounted) {
@@ -125,4 +138,235 @@ class _AddTillScreenState extends ConsumerState<AddTillScreen> {
       }
     }
   }
+
+  String _outletNameFor(String outletId) {
+    final outlets = ref.read(tillOutletOptionsProvider).valueOrNull;
+    if (outlets == null) {
+      return 'Selected outlet';
+    }
+
+    for (final outlet in outlets) {
+      if (outlet.id == outletId) {
+        return outlet.name;
+      }
+    }
+
+    return 'Selected outlet';
+  }
+
+  Future<void> _showCreatedDialog(
+    CreatedTill till,
+    String outletName,
+  ) {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return _TillCreatedDialog(
+          till: till,
+          outletName: outletName,
+          onClose: () {
+            Navigator.of(context).pop();
+            context.go('/tenant-admin/tills');
+          },
+        );
+      },
+    );
+  }
+}
+
+class _TillCreatedDialog extends StatelessWidget {
+  const _TillCreatedDialog({
+    required this.till,
+    required this.outletName,
+    required this.onClose,
+  });
+
+  final CreatedTill till;
+  final String outletName;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.all(TenantAdminSpacing.xl),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Padding(
+          padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: TenantAdminColors.success.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle,
+                  color: TenantAdminColors.success,
+                  size: 46,
+                ),
+              ),
+              const SizedBox(height: TenantAdminSpacing.lg),
+              Text(
+                'Till Created Successfully!',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: TenantAdminColors.bodyText,
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(height: TenantAdminSpacing.xs),
+              Text(
+                'The till has been saved in the backend.',
+                textAlign: TextAlign.center,
+                style: TenantAdminTextStyles.muted(context),
+              ),
+              const SizedBox(height: TenantAdminSpacing.xl),
+              Container(
+                padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+                decoration: BoxDecoration(
+                  color: TenantAdminColors.secondary.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                  border: Border.all(color: TenantAdminColors.border),
+                ),
+                child: Column(
+                  children: [
+                    _CreatedRow(
+                      icon: Icons.point_of_sale_outlined,
+                      label: 'Till Name',
+                      value: till.name,
+                    ),
+                    _CreatedRow(
+                      icon: Icons.tag,
+                      label: 'Till Code',
+                      value: till.code,
+                    ),
+                    _CreatedRow(
+                      icon: Icons.location_on_outlined,
+                      label: 'Outlet',
+                      value: outletName,
+                    ),
+                    _CreatedRow(
+                      icon: Icons.circle,
+                      label: 'Status',
+                      value: _titleCase(till.status),
+                      valueColor: TenantAdminColors.success,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: TenantAdminSpacing.xl),
+              TenantAdminSecondaryButton(
+                label: 'Close',
+                onPressed: onClose,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CreatedRow extends StatelessWidget {
+  const _CreatedRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: TenantAdminSpacing.sm),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: TenantAdminColors.primary),
+          const SizedBox(width: TenantAdminSpacing.sm),
+          Expanded(
+            child: Text(
+              label,
+              style: TenantAdminTextStyles.muted(context).copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: valueColor ?? TenantAdminColors.bodyText,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _titleCase(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) {
+    return '—';
+  }
+
+  return trimmed[0].toUpperCase() + trimmed.substring(1).toLowerCase();
+}
+
+final tillOutletOptionsProvider = FutureProvider<List<Outlet>>((ref) async {
+  ref.watch(authHeaderSyncProvider);
+
+  final context = await ref.watch(tenantAdminContextProvider.future);
+  final scopedOutlets = _outletsFromContext(context);
+
+  try {
+    final result = await ref.read(getOutletsProvider).call(
+          query: const OutletListQuery(page: 1, pageSize: 100),
+        );
+
+    if (result.items.isNotEmpty) {
+      return result.items;
+    }
+  } on DioException catch (error) {
+    if (error.response?.statusCode == 401) {
+      rethrow;
+    }
+  }
+
+  if (scopedOutlets.isEmpty) {
+    throw StateError('No outlets are available for this tenant.');
+  }
+
+  return scopedOutlets;
+});
+
+List<Outlet> _outletsFromContext(TenantAdminContext context) {
+  return context.outletScope
+      .map(
+        (scope) => Outlet(
+          id: scope.outletId,
+          name: scope.outletName,
+          code: '',
+          location: '',
+          status: 'active',
+          tillCount: 0,
+          onlineTillCount: 0,
+          staffCount: 0,
+          todaysSales: '',
+        ),
+      )
+      .toList(growable: false);
 }

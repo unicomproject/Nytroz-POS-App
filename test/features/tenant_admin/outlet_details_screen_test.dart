@@ -111,7 +111,7 @@ Future<void> _pumpOutletDetails(
       userDisplayName: 'Sarah Ahmed',
       roleNames: ['Owner'],
       roles: const [
-        TenantAdminRole(id: 'role-1', name: 'Owner'),
+        TenantAdminRoleScope(roleId: 'role-1', roleName: 'Owner'),
       ],
       outletScope: const [
         TenantAdminOutletScope(

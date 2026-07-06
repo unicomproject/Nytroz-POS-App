@@ -3,11 +3,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_mobile_list_card.dart';
-import '../../../presentation/widgets/tenant_admin_status_badge.dart';
 import '../../domain/entities/till.dart';
-import '../utils/till_api_errors.dart';
-import 'till_list_panel.dart';
+import '../config/till_row_action_configs.dart';
+import 'till_action_menu.dart';
+import 'till_operational_status_badge.dart';
+import 'till_sales_display.dart';
 
 class TillMobileList extends StatelessWidget {
   const TillMobileList({
@@ -23,21 +25,21 @@ class TillMobileList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        for (var index = 0; index < tills.length; index++) ...[
-          _TillMobileCard(
-            till: tills[index],
+        for (final till in tills) ...[
+          TillMobileListItem(
+            till: till,
             visibility: visibility,
           ),
-          if (index != tills.length - 1)
-            const SizedBox(height: TenantAdminSpacing.md),
+          const SizedBox(height: TenantAdminSpacing.md),
         ],
       ],
     );
   }
 }
 
-class _TillMobileCard extends StatelessWidget {
-  const _TillMobileCard({
+class TillMobileListItem extends StatelessWidget {
+  const TillMobileListItem({
+    super.key,
     required this.till,
     required this.visibility,
   });
@@ -47,37 +49,16 @@ class _TillMobileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subtitleParts = <String>[
-      till.code,
-      till.outletName,
-    ];
-
-    Widget? footer;
-    if (visibility.showTodaySales && till.todaySalesAmount != null) {
-      footer = Row(
-        children: [
-          const Expanded(
-            child: Text(
-              "Today's sales",
-              style: TextStyle(color: TenantAdminColors.mutedText),
-            ),
-          ),
-          Text(
-            formatTillSales(
-              till.todaySalesAmount!,
-              till.currency ?? 'GBP',
-            ),
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-          if (visibility.showViewDetails)
-            const Icon(Icons.chevron_right, color: TenantAdminColors.mutedText),
-        ],
-      );
-    }
+    final showViewDetails = visibility.visibleRowActions.any(
+      (action) => action.actionId == TillRowActionId.viewDetails,
+    );
+    final showEdit = visibility.visibleRowActions.any(
+      (action) => action.actionId == TillRowActionId.edit,
+    );
 
     return TenantAdminMobileListCard(
       title: till.name,
-      subtitle: subtitleParts.join(' • '),
+      subtitle: till.code,
       leading: Container(
         width: 44,
         height: 44,
@@ -90,17 +71,57 @@ class _TillMobileCard extends StatelessWidget {
           color: TenantAdminColors.primary,
         ),
       ),
-      trailing: TenantAdminStatusBadge(
-        label: tillOperationalStatusLabel(
-          till.operationalStatus,
-          attentionLabel: till.attentionLabel,
-        ),
-        status: tillOperationalStatusType(till.operationalStatus),
-      ),
-      footer: footer,
-      onTap: visibility.showViewDetails
-          ? () => context.go('/tenant-admin/tills/${till.id}')
+      trailing: visibility.showMoreMenu
+          ? TillActionMenu(
+              till: till,
+              actions: visibility.visibleMoreMenuActions,
+            )
           : null,
+      footer: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            till.outletName,
+            style: TenantAdminTextStyles.muted(context),
+          ),
+          const SizedBox(height: TenantAdminSpacing.sm),
+          TillOperationalStatusBadge(
+            operationalStatus: till.operationalStatus,
+            attentionLabel: till.attentionLabel,
+          ),
+          if (visibility.showTodaySales) ...[
+            const SizedBox(height: TenantAdminSpacing.sm),
+            TillSalesDisplay(
+              amount: till.todaySalesAmount,
+              currency: till.currency,
+              lastSyncAt: till.lastSyncAt,
+            ),
+          ],
+          if (showViewDetails || showEdit) ...[
+            const SizedBox(height: TenantAdminSpacing.md),
+            Wrap(
+              spacing: TenantAdminSpacing.sm,
+              runSpacing: TenantAdminSpacing.sm,
+              children: [
+                if (showViewDetails)
+                  TenantAdminSecondaryButton(
+                    label: 'View details',
+                    icon: Icons.visibility_outlined,
+                    onPressed: () =>
+                        context.go('/tenant-admin/tills/${till.id}'),
+                  ),
+                if (showEdit)
+                  TenantAdminSecondaryButton(
+                    label: 'Edit',
+                    icon: Icons.edit_outlined,
+                    onPressed: () =>
+                        context.go('/tenant-admin/tills/${till.id}/edit'),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

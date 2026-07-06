@@ -8,7 +8,6 @@ import '../../outlets/presentation/config/outlet_row_action_configs.dart';
 import '../../outlets/presentation/config/outlet_summary_card_configs.dart';
 import '../../outlets/presentation/config/outlet_table_column_configs.dart';
 import '../../tills/presentation/config/till_row_action_configs.dart';
-import '../../tills/presentation/config/till_summary_card_configs.dart';
 import '../entities/tenant_admin_context.dart';
 import '../entities/tenant_admin_menu_item.dart';
 import '../../dashboard/domain/entities/tenant_dashboard.dart';
@@ -96,7 +95,10 @@ class TenantAdminAccessChecker {
       case TenantAdminFeatureCodes.outletManagement:
         return can(TenantAdminPermissionCodes.outletView);
       case TenantAdminFeatureCodes.tillManagement:
-        return false;
+        return canAny([
+          TenantAdminPermissionCodes.tillView,
+          TenantAdminPermissionCodes.tenantTillManage,
+        ]);
       case TenantAdminFeatureCodes.staffManagement:
         return canAny([
           TenantAdminPermissionCodes.userView,
@@ -104,8 +106,6 @@ class TenantAdminAccessChecker {
         ]);
       case TenantAdminFeatureCodes.rolePermission:
         return canAny([
-          TenantAdminPermissionCodes.rolesPermissionsView,
-          TenantAdminPermissionCodes.rolesPermissionsUpdate,
           TenantAdminPermissionCodes.roleView,
           TenantAdminPermissionCodes.permissionView,
           TenantAdminPermissionCodes.tenantRoleManage,
@@ -266,6 +266,8 @@ class TenantAdminAccessChecker {
               TenantAdminPermissionCodes.subscriptionView,
               TenantAdminPermissionCodes.tenantBillingView,
             ]);
+      case 'tills':
+        return canAccessTillModule();
       default:
         return canShowAction(menuItem.featureCode, menuItem.permissionCode);
     }
@@ -438,6 +440,56 @@ class TenantAdminAccessChecker {
     );
   }
 
+  bool hasTillManagementEntitlement() {
+    final hasEntitlement = _context.featureEntitlements.any(
+      (feature) =>
+          feature.featureCode == TenantAdminFeatureCodes.tillManagement &&
+          feature.enabled,
+    );
+
+    if (!hasEntitlement) {
+      return false;
+    }
+
+    return hasRuntimeFlag(TenantAdminFeatureCodes.tillManagement);
+  }
+
+  bool canAccessTillModule() {
+    return hasTillManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tillView);
+  }
+
+  bool canAccessTillListPage() => canAccessTillModule();
+
+  bool canFetchTillList() => canAccessTillListPage();
+
+  bool canCreateTill() {
+    return hasTillManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tillCreate);
+  }
+
+  bool canUpdateTill() {
+    return hasTillManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tillUpdate);
+  }
+
+  bool canDeleteTill() {
+    return hasTillManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tillDelete);
+  }
+
+  bool canGenerateTillActivationCode() {
+    return hasTillManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tillActivationCodeGenerate);
+  }
+
+  bool canViewTillSales() {
+    return canAny([
+      TenantAdminPermissionCodes.salesSummaryView,
+      TenantAdminPermissionCodes.outletSalesSummaryView,
+    ]);
+  }
+
   bool canViewOutletDetail() {
     return canShowActionWithAnyPermission(
       TenantAdminFeatureCodes.outletManagement,
@@ -478,51 +530,6 @@ class TenantAdminAccessChecker {
     return canAny([
       TenantAdminPermissionCodes.userView,
       TenantAdminPermissionCodes.outletStaffSummaryView,
-    ]);
-  }
-
-  bool canAccessTillListPage() {
-    return canShowAction(
-      TenantAdminFeatureCodes.tillManagement,
-      TenantAdminPermissionCodes.tillView,
-    );
-  }
-
-  bool canFetchTillList() => canAccessTillListPage();
-
-  bool canCreateTill() {
-    return canShowAction(
-      TenantAdminFeatureCodes.tillManagement,
-      TenantAdminPermissionCodes.tillCreate,
-    );
-  }
-
-  bool canUpdateTill() {
-    return canShowAction(
-      TenantAdminFeatureCodes.tillManagement,
-      TenantAdminPermissionCodes.tillUpdate,
-    );
-  }
-
-  bool canDeleteTill() {
-    return canShowAction(
-      TenantAdminFeatureCodes.tillManagement,
-      TenantAdminPermissionCodes.tillDelete,
-    );
-  }
-
-  bool canGenerateTillActivationCode() {
-    return canShowAction(
-      TenantAdminFeatureCodes.tillManagement,
-      TenantAdminPermissionCodes.tillActivationCodeGenerate,
-    );
-  }
-
-  bool canViewTillSales() {
-    return canAny([
-      TenantAdminPermissionCodes.salesSummaryView,
-      TenantAdminPermissionCodes.dashboardSalesSummaryView,
-      TenantAdminPermissionCodes.outletSalesSummaryView,
     ]);
   }
 }
@@ -735,52 +742,45 @@ class TillListVisibility {
     required this.showTitle,
     required this.showSubtitle,
     required this.showSearch,
-    required this.showFilter,
+    required this.showFilters,
     required this.showAddTill,
     required this.showSummarySection,
     required this.showList,
     required this.showPagination,
-    required this.showViewDetails,
-    required this.showEdit,
     required this.showTodaySales,
     required this.showMoreMenu,
-    required this.showDeleteAction,
-    required this.showActivationCodeAction,
+    required this.showActionsColumn,
     required this.visibleSummaryCards,
     required this.visibleRowActions,
+    required this.visibleMoreMenuActions,
   });
 
   final bool showPage;
   final bool showTitle;
   final bool showSubtitle;
   final bool showSearch;
-  final bool showFilter;
+  final bool showFilters;
   final bool showAddTill;
   final bool showSummarySection;
   final bool showList;
   final bool showPagination;
-  final bool showViewDetails;
-  final bool showEdit;
   final bool showTodaySales;
   final bool showMoreMenu;
-  final bool showDeleteAction;
-  final bool showActivationCodeAction;
+  final bool showActionsColumn;
   final List<TillSummaryCardConfig> visibleSummaryCards;
   final List<TillRowActionConfig> visibleRowActions;
+  final List<TillRowActionConfig> visibleMoreMenuActions;
 
   static TillListVisibility resolve({
     required TenantAdminAccessChecker access,
   }) {
     final showPage = access.canAccessTillListPage();
-    final rowActions = visibleTillRowActions(access.can, access.canAny);
-    final moreMenuActions = rowActions
-        .where(
-          (action) =>
-              action.actionId == TillRowActionId.delete ||
-              action.actionId == TillRowActionId.generateActivationCode,
-        )
-        .toList(growable: false);
-
+    final rowActions = showPage
+        ? visibleTillRowActions(access.can, access.canAny)
+        : const <TillRowActionConfig>[];
+    final moreMenuActions = showPage
+        ? visibleTillMoreMenuActions(access.can, access.canAny)
+        : const <TillRowActionConfig>[];
     final summaryCards = showPage
         ? visibleTillSummaryCards(access.can, access.canAny)
         : const <TillSummaryCardConfig>[];
@@ -790,19 +790,17 @@ class TillListVisibility {
       showTitle: showPage,
       showSubtitle: showPage,
       showSearch: showPage,
-      showFilter: showPage,
+      showFilters: showPage,
       showAddTill: access.canCreateTill(),
       showSummarySection: summaryCards.isNotEmpty,
       showList: showPage,
       showPagination: showPage,
-      showViewDetails: showPage,
-      showEdit: access.canUpdateTill(),
-      showTodaySales: access.canViewTillSales(),
+      showTodaySales: showPage && access.canViewTillSales(),
       showMoreMenu: moreMenuActions.isNotEmpty,
-      showDeleteAction: access.canDeleteTill(),
-      showActivationCodeAction: access.canGenerateTillActivationCode(),
+      showActionsColumn: rowActions.isNotEmpty || moreMenuActions.isNotEmpty,
       visibleSummaryCards: summaryCards,
       visibleRowActions: rowActions,
+      visibleMoreMenuActions: moreMenuActions,
     );
   }
 }

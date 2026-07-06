@@ -9,6 +9,9 @@ class Outlet {
     required this.onlineTillCount,
     required this.staffCount,
     required this.todaysSales,
+    this.outletType,
+    this.contactNumber,
+    this.city,
   });
 
   final String id;
@@ -20,6 +23,9 @@ class Outlet {
   final int onlineTillCount;
   final int staffCount;
   final String todaysSales;
+  final String? outletType;
+  final String? contactNumber;
+  final String? city;
 }
 
 class OutletListSummary {

@@ -4,8 +4,8 @@ class TenantAdminContext {
     required this.tenantName,
     required this.userId,
     required this.userDisplayName,
-    required this.roleNames,
     required this.roles,
+    required this.roleNames,
     required this.outletScope,
     required this.featureEntitlements,
     required this.permissions,
@@ -17,8 +17,8 @@ class TenantAdminContext {
   final String tenantName;
   final String userId;
   final String userDisplayName;
+  final List<TenantAdminRoleScope> roles;
   final List<String> roleNames;
-  final List<TenantAdminRole> roles;
   final List<TenantAdminOutletScope> outletScope;
   final List<TenantAdminFeatureEntitlement> featureEntitlements;
   final List<TenantAdminPermission> permissions;
@@ -26,14 +26,14 @@ class TenantAdminContext {
   final String? subscriptionStatus;
 }
 
-class TenantAdminRole {
-  const TenantAdminRole({
-    required this.id,
-    required this.name,
+class TenantAdminRoleScope {
+  const TenantAdminRoleScope({
+    required this.roleId,
+    required this.roleName,
   });
 
-  final String id;
-  final String name;
+  final String roleId;
+  final String roleName;
 }
 
 class TenantAdminOutletScope {

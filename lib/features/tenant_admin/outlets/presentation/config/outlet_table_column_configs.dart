@@ -4,8 +4,10 @@ import 'outlet_permission_config.dart';
 enum OutletTableColumnId {
   name,
   code,
+  type,
   city,
   location,
+  contactNumber,
   status,
   tills,
   staff,
@@ -44,9 +46,21 @@ const outletTableColumnConfigs = <OutletTableColumnConfig>[
     sortKey: 'code',
   ),
   OutletTableColumnConfig(
+    id: 'type',
+    columnId: OutletTableColumnId.type,
+    label: 'Type',
+    permission: TenantAdminPermissionCodes.outletView,
+  ),
+  OutletTableColumnConfig(
     id: 'city',
     columnId: OutletTableColumnId.city,
     label: 'City',
+    permission: TenantAdminPermissionCodes.outletLocationView,
+  ),
+  OutletTableColumnConfig(
+    id: 'contact',
+    columnId: OutletTableColumnId.contactNumber,
+    label: 'Contact Number',
     permission: TenantAdminPermissionCodes.outletLocationView,
   ),
   OutletTableColumnConfig(

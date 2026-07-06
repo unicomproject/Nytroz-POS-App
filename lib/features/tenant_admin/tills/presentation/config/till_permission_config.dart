@@ -4,12 +4,14 @@ class TillWidgetPermissionConfig {
     this.permission,
     this.permissionsAny = const [],
     this.legacyIds = const [],
+    this.showInMoreMenu = false,
   });
 
   final String id;
   final String? permission;
   final List<String> permissionsAny;
   final List<String> legacyIds;
+  final bool showInMoreMenu;
 
   bool matchesKey(String key) {
     return id == key || legacyIds.contains(key);

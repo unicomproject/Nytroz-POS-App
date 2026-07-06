@@ -9,7 +9,7 @@ import '../../../presentation/widgets/tenant_admin_status_badge.dart';
 import '../../domain/entities/till.dart';
 import '../config/till_row_action_configs.dart';
 import '../utils/till_api_errors.dart';
-import 'till_list_panel.dart';
+import '../utils/till_table_utils.dart';
 
 class TillTable extends StatelessWidget {
   const TillTable({
