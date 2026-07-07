@@ -42,7 +42,8 @@ class AuthSession {
 
   bool get canAccessTenantAdminDashboard {
     return hasPermission(TenantAdminPermissionCodes.tenantContextView) ||
-        hasPermission(TenantAdminPermissionCodes.dashboardView);
+        hasPermission(TenantAdminPermissionCodes.dashboardView) ||
+        hasPermission(TenantAdminPermissionCodes.tenantDashboardView);
   }
 
   bool get requiresPosDeviceBootstrap => canActivatePosDevice || canOpenPosTill;
@@ -73,7 +74,16 @@ class AuthSession {
 List<String> _stringList(Object? value) {
   if (value is Iterable) {
     return value
-        .map((item) => item.toString())
+        .map((item) {
+          if (item is Map) {
+            return item['permissionCode']?.toString() ??
+                item['PermissionCode']?.toString() ??
+                item['code']?.toString() ??
+                item['Code']?.toString() ??
+                '';
+          }
+          return item.toString();
+        })
         .where((item) => item.trim().isNotEmpty)
         .toList(growable: false);
   }

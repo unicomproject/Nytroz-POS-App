@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import '../../domain/entities/setup_token_validation.dart';
 import '../../domain/entities/auth_branding.dart';
 import '../../domain/entities/auth_exception.dart';
@@ -80,7 +81,9 @@ AuthSession authSessionFromJson(Map<String, dynamic> json) {
     accessToken: accessToken,
     refreshToken: payload['refreshToken'] as String? ??
         payload['RefreshToken'] as String?,
-    userId: user['id']?.toString() ??
+    userId: user['tenantUserId']?.toString() ??
+        user['TenantUserId']?.toString() ??
+        user['id']?.toString() ??
         user['Id']?.toString() ??
         payload['userId']?.toString() ??
         payload['UserId']?.toString() ??
@@ -91,6 +94,7 @@ AuthSession authSessionFromJson(Map<String, dynamic> json) {
         user['Username'] as String? ??
         user['email'] as String? ??
         user['Email'] as String? ??
+        user['tenantUserId']?.toString() ??
         payload['userDisplayName'] as String? ??
         payload['UserDisplayName'] as String? ??
         '',
@@ -122,8 +126,11 @@ List<String> _permissionCodesFromJson(Map<String, dynamic> payload) {
       payload['Permissions'] ??
       _mapValue(payload['user'], 'permissions') ??
       _mapValue(payload['user'], 'Permissions');
+
+  developer.log('Raw permissions from backend: $rawPermissions', name: 'auth.mapper');
+
   if (rawPermissions is Iterable) {
-    return rawPermissions
+    final parsed = rawPermissions
         .map((item) {
           if (item is Map) {
             return item['permissionCode']?.toString() ??
@@ -138,8 +145,12 @@ List<String> _permissionCodesFromJson(Map<String, dynamic> payload) {
         .map((item) => item.trim())
         .where((item) => item.isNotEmpty)
         .toList(growable: false);
+    
+    developer.log('Final parsed permissions: $parsed', name: 'auth.mapper');
+    return parsed;
   }
 
+  developer.log('No permissions found or not iterable.', name: 'auth.mapper');
   return const [];
 }
 

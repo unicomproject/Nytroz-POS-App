@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart';
 
-/// HTTP port from `SCS.Api/Properties/launchSettings.json` (`applicationUrl`).
-const int kBackendHttpPort = 5052;
+/// HTTP port from `launchSettings.json` (`applicationUrl`).
+const int kBackendHttpPort = 5150;
 
 /// Resolves the API base URL for the current platform.
 ///
 /// Development defaults:
-/// - Desktop/Web: `http://localhost:5052` or `http://127.0.0.1:5052`
-/// - Android emulator: `http://10.0.2.2:5052`
-/// - Physical device: `http://<PC-LAN-IP>:5052`
+/// - Desktop/Web: `http://localhost:5150` or `http://127.0.0.1:5150`
+/// - Android emulator: `http://10.0.2.2:5150`
+/// - Physical device: `http://<PC-LAN-IP>:5150`
 ///
 /// Override with `--dart-define=API_BASE_URL=http://<host>:<port>` when needed,
 /// especially for a real Android tablet/phone on the same network as the PC.
@@ -24,8 +24,9 @@ String resolveApiBaseUrl() {
 
   switch (defaultTargetPlatform) {
     case TargetPlatform.android:
-      return 'http://127.0.0.1:$kBackendHttpPort';
+      return 'http://10.0.2.2:$kBackendHttpPort';
     default:
       return 'http://localhost:$kBackendHttpPort';
   }
 }
+

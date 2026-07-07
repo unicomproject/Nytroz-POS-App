@@ -230,7 +230,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       final stopwatch = Stopwatch()..start();
       developer.log(
-        'Login request started. endpoint=/api/v1/auth/tenant-login',
+        'Login request started. endpoint=/api/v1/tenant-auth/login',
         name: 'auth.login',
       );
       final session = await ref.read(loginProvider).call(
@@ -239,7 +239,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           );
       stopwatch.stop();
       developer.log(
-        'Login request succeeded. endpoint=/api/v1/auth/tenant-login durationMs=${stopwatch.elapsedMilliseconds}',
+        'Login request succeeded. endpoint=/api/v1/tenant-auth/login durationMs=${stopwatch.elapsedMilliseconds}',
         name: 'auth.login',
       );
       if (!session.isAuthenticated) {
