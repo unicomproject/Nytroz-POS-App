@@ -9,7 +9,7 @@ import '../../domain/entities/till.dart';
 import '../config/till_row_action_configs.dart';
 import 'till_action_menu.dart';
 import 'till_operational_status_badge.dart';
-import 'till_sales_display.dart';
+import '../utils/till_api_errors.dart';
 
 class TillMobileList extends StatelessWidget {
   const TillMobileList({
@@ -89,14 +89,11 @@ class TillMobileListItem extends StatelessWidget {
             operationalStatus: till.operationalStatus,
             attentionLabel: till.attentionLabel,
           ),
-          if (visibility.showTodaySales) ...[
-            const SizedBox(height: TenantAdminSpacing.sm),
-            TillSalesDisplay(
-              amount: till.todaySalesAmount,
-              currency: till.currency,
-              lastSyncAt: till.lastSyncAt,
-            ),
-          ],
+          const SizedBox(height: TenantAdminSpacing.sm),
+          Text(
+            'Last active: ${formatTillLastSync(till.lastActiveAt)}',
+            style: TenantAdminTextStyles.muted(context),
+          ),
           if (showViewDetails || showEdit) ...[
             const SizedBox(height: TenantAdminSpacing.md),
             Wrap(

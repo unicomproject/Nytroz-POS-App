@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 
 const tillBackendFieldAliases = {
+  'tillName': 'name',
   'name': 'name',
+  'tillCode': 'code',
   'code': 'code',
   'outletId': 'outletId',
   'status': 'status',
@@ -86,7 +88,7 @@ String tillSubmitErrorMessage(
   if (statusCode == 409) {
     return tillErrorMessage(
       error,
-      fallback: 'A till with this code already exists in the selected outlet.',
+      fallback: 'A till with this code already exists for this tenant.',
     );
   }
 

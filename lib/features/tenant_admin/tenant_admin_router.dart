@@ -16,6 +16,8 @@ import 'outlets/presentation/screens/outlet_details_screen.dart';
 import 'outlets/presentation/screens/outlet_list_screen.dart';
 import 'tills/presentation/screens/add_till_screen.dart';
 import 'tills/presentation/screens/till_list_screen.dart';
+import 'users/presentation/screens/add_edit_user_screen.dart';
+import 'users/presentation/screens/user_list_screen.dart';
 import '../auth/presentation/providers/session_provider.dart';
 import 'presentation/providers/tenant_admin_access_provider.dart';
 import 'presentation/providers/tenant_admin_context_provider.dart';
@@ -178,12 +180,21 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return const AddTillScreen();
   }
 
-  if (definition.path == '/tenant-admin/tills') {
-    return const TillListScreen();
+  if (definition.path == '/tenant-admin/staff') {
+    return const UserListScreen();
   }
 
-  if (definition.path == '/tenant-admin/tills/add') {
-    return const AddTillScreen();
+  if (definition.path == '/tenant-admin/staff/add') {
+    return const AddEditUserScreen();
+  }
+
+  if (definition.path == '/tenant-admin/staff/:id/edit') {
+    return AddEditUserScreen(userId: state.pathParameters['id']);
+  }
+
+  if (definition.path == '/tenant-admin/staff/:id') {
+    // User Details is a modal launched from the list, not a routed screen.
+    return const UserListScreen();
   }
 
   return TenantAdminPlaceholderScreen(
@@ -282,6 +293,19 @@ bool _canAccessRoute(
   if (definition.path == '/tenant-admin/tills' ||
       definition.path == '/tenant-admin/tills/:id') {
     return accessChecker.canAccessTillModule();
+  }
+
+  if (definition.path == '/tenant-admin/staff/add') {
+    return accessChecker.canAddUser();
+  }
+
+  if (definition.path == '/tenant-admin/staff/:id/edit') {
+    return accessChecker.canUpdateUser();
+  }
+
+  if (definition.path == '/tenant-admin/staff' ||
+      definition.path == '/tenant-admin/staff/:id') {
+    return accessChecker.canAccessUserModule();
   }
 
   final menuItem = _findMenuItem(items, definition.menuKey);

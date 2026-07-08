@@ -77,7 +77,7 @@ class TillListView extends StatelessWidget {
                 DataCell(_PlainCell(till.code)),
                 DataCell(_PlainCell(_emptyDash(till.outletName))),
                 DataCell(_StatusPill(label: _statusLabel(till))),
-                DataCell(_PlainCell(_lastActiveLabel(till.lastSyncAt))),
+                DataCell(_PlainCell(_lastActiveLabel(till.lastActiveAt))),
                 DataCell(
                   Align(
                     alignment: Alignment.centerRight,

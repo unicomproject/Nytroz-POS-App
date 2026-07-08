@@ -181,6 +181,7 @@ class _TrackingTillRepository implements TillRepository {
         totalTills: 1,
         onlineCount: 1,
         offlineCount: 0,
+        inactiveCount: 0,
         needsAttentionCount: 0,
       ),
       items: [
@@ -198,6 +199,18 @@ class _TrackingTillRepository implements TillRepository {
       pageSize: 10,
       totalCount: 1,
     );
+  }
+
+  @override
+  Future<List<OutletOption>> getOutletOptions() async {
+    return const [
+      OutletOption(
+        id: 'outlet-1',
+        name: 'High Street Store',
+        code: 'OUT-001',
+        status: 'active',
+      ),
+    ];
   }
 }
 

@@ -53,20 +53,101 @@ class CreateOutletRequestDto {
   final List<OutletOpeningHour> openingHours;
 
   Map<String, dynamic> toJson() {
+    final businessHours = _businessHoursJson(openingHours);
+
     return {
       'name': outletName,
-      'code': outletCode,
-      'outletType': outletType,
-      'addressLine1': addressLine1,
-      if (addressLine2 != null && addressLine2!.trim().isNotEmpty)
-        'addressLine2': addressLine2,
-      'city': city,
-      if (state != null && state!.trim().isNotEmpty) 'state': state,
-      'postalCode': postalCode,
-      'country': country,
-      'phone': mainPhoneNumber,
-      'email': emailAddress,
-      'status': status,
+      'status': _mapStatus(status),
+      'outletType': _mapOutletType(outletType),
+      'isOnlineVisible': true,
+      'contactPhone': mainPhoneNumber,
+      'contactEmail': emailAddress,
+      'address': {
+        'addressLine1': addressLine1,
+        if (addressLine2 != null && addressLine2!.trim().isNotEmpty)
+          'addressLine2': addressLine2,
+        'city': city,
+        if (state != null && state!.trim().isNotEmpty)
+          'stateOrProvince': state,
+        if (postalCode.trim().isNotEmpty) 'postalCode': postalCode,
+        'countryCode': _normalizeCountryCode(country),
+      },
+      if (businessHours.isNotEmpty) 'businessHours': businessHours,
+      'collectionEnabled': false,
     };
+  }
+
+  static String _mapStatus(String status) {
+    switch (status.trim().toLowerCase()) {
+      case 'active':
+        return 'ACTIVE';
+      case 'inactive':
+        return 'INACTIVE';
+      default:
+        return status.trim().toUpperCase();
+    }
+  }
+
+  static String _mapOutletType(String outletType) {
+    switch (outletType.trim().toLowerCase()) {
+      case 'retail':
+      case 'store':
+        return 'STORE';
+      case 'warehouse':
+        return 'WAREHOUSE';
+      default:
+        return outletType.trim().toUpperCase();
+    }
+  }
+
+  static String _normalizeCountryCode(String country) {
+    final code = country.trim().toUpperCase();
+    return code.length == 2 ? code : 'LK';
+  }
+
+  static List<Map<String, dynamic>> _businessHoursJson(
+    List<OutletOpeningHour> hours,
+  ) {
+    return [
+      for (final hour in hours)
+        if (!hour.closed &&
+            hour.openTime.trim().isNotEmpty &&
+            hour.closeTime.trim().isNotEmpty)
+          {
+            'dayOfWeek': _dayOfWeek(hour.day),
+            'openTime': _normalizeTime(hour.openTime),
+            'closeTime': _normalizeTime(hour.closeTime),
+          },
+    ];
+  }
+
+  static int _dayOfWeek(String day) {
+    switch (day.trim().toLowerCase()) {
+      case 'sun':
+        return 0;
+      case 'mon':
+        return 1;
+      case 'tue':
+        return 2;
+      case 'wed':
+        return 3;
+      case 'thu':
+        return 4;
+      case 'fri':
+        return 5;
+      case 'sat':
+        return 6;
+      default:
+        return 1;
+    }
+  }
+
+  static String _normalizeTime(String time) {
+    final trimmed = time.trim();
+    if (trimmed.length == 5 && trimmed.contains(':')) {
+      return '$trimmed:00';
+    }
+
+    return trimmed;
   }
 }

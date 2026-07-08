@@ -8,7 +8,7 @@ import '../../domain/entities/till.dart';
 import '../config/till_row_action_configs.dart';
 import 'till_action_menu.dart';
 import 'till_operational_status_badge.dart';
-import 'till_sales_display.dart';
+import '../utils/till_api_errors.dart';
 
 class TillListRow extends StatelessWidget {
   const TillListRow({
@@ -51,17 +51,14 @@ class TillListRow extends StatelessWidget {
               attentionLabel: till.attentionLabel,
             ),
           ),
-          if (visibility.showTodaySales) ...[
-            const SizedBox(width: TenantAdminSpacing.lg),
-            SizedBox(
-              width: 160,
-              child: TillSalesDisplay(
-                amount: till.todaySalesAmount,
-                currency: till.currency,
-                lastSyncAt: till.lastSyncAt,
-              ),
+          const SizedBox(width: TenantAdminSpacing.lg),
+          SizedBox(
+            width: 180,
+            child: Text(
+              formatTillLastSync(till.lastActiveAt),
+              style: TenantAdminTextStyles.muted(context),
             ),
-          ],
+          ),
           const Spacer(),
           if (visibility.showActionsColumn)
             Row(

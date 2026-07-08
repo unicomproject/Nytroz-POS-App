@@ -14,9 +14,7 @@ class TillMapper {
       status: dto.status,
       operationalStatus: dto.operationalStatus,
       attentionLabel: dto.attentionLabel,
-      todaySalesAmount: dto.todaySalesAmount,
-      currency: dto.currency,
-      lastSyncAt: dto.lastSyncAt,
+      lastActiveAt: dto.lastActiveAt,
     );
   }
 
@@ -25,6 +23,7 @@ class TillMapper {
       totalTills: dto.totalTills,
       onlineCount: dto.onlineCount,
       offlineCount: dto.offlineCount,
+      inactiveCount: dto.inactiveCount,
       needsAttentionCount: dto.needsAttentionCount,
     );
   }

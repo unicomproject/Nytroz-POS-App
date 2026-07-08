@@ -72,7 +72,7 @@ class TenantAdminSidebar extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'SCS-TIX',
+                          'Nytroz POS',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 20,

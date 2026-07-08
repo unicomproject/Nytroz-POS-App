@@ -8,9 +8,7 @@ class Till {
     required this.status,
     required this.operationalStatus,
     this.attentionLabel,
-    this.todaySalesAmount,
-    this.currency,
-    this.lastSyncAt,
+    this.lastActiveAt,
   });
 
   final String id;
@@ -21,9 +19,7 @@ class Till {
   final String status;
   final String operationalStatus;
   final String? attentionLabel;
-  final double? todaySalesAmount;
-  final String? currency;
-  final DateTime? lastSyncAt;
+  final DateTime? lastActiveAt;
 }
 
 class TillListSummary {
@@ -31,12 +27,14 @@ class TillListSummary {
     required this.totalTills,
     required this.onlineCount,
     required this.offlineCount,
+    required this.inactiveCount,
     required this.needsAttentionCount,
   });
 
   final int totalTills;
   final int onlineCount;
   final int offlineCount;
+  final int inactiveCount;
   final int needsAttentionCount;
 }
 
@@ -104,12 +102,24 @@ class TillFormData {
     required this.code,
     required this.outletId,
     required this.status,
+    this.deviceName,
+    this.printerName,
+    this.scannerName,
+    this.cashDrawerName,
+    this.cardReaderName,
+    this.internalNote,
   });
 
   final String name;
   final String code;
   final String outletId;
   final String status;
+  final String? deviceName;
+  final String? printerName;
+  final String? scannerName;
+  final String? cashDrawerName;
+  final String? cardReaderName;
+  final String? internalNote;
 }
 
 class CreatedTill {
@@ -123,6 +133,20 @@ class CreatedTill {
 
   final String id;
   final String outletId;
+  final String name;
+  final String code;
+  final String status;
+}
+
+class OutletOption {
+  const OutletOption({
+    required this.id,
+    required this.name,
+    required this.code,
+    required this.status,
+  });
+
+  final String id;
   final String name;
   final String code;
   final String status;

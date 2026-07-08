@@ -1,22 +1,59 @@
 class CreateTillRequestDto {
   const CreateTillRequestDto({
-    required this.name,
-    required this.code,
+    required this.tillName,
+    required this.tillCode,
     required this.outletId,
     required this.status,
+    this.deviceName,
+    this.printerName,
+    this.scannerName,
+    this.cashDrawerName,
+    this.cardReaderName,
+    this.internalNote,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name.trim(),
-      'code': code.trim(),
+      'tillName': tillName.trim(),
+      'tillCode': tillCode.trim(),
       'outletId': outletId,
-      'status': status.trim(),
+      'status': _normalizeStatus(status),
+      if (deviceName != null && deviceName!.trim().isNotEmpty)
+        'deviceName': deviceName!.trim(),
+      if (printerName != null && printerName!.trim().isNotEmpty)
+        'printerName': printerName!.trim(),
+      if (scannerName != null && scannerName!.trim().isNotEmpty)
+        'scannerName': scannerName!.trim(),
+      if (cashDrawerName != null && cashDrawerName!.trim().isNotEmpty)
+        'cashDrawerName': cashDrawerName!.trim(),
+      if (cardReaderName != null && cardReaderName!.trim().isNotEmpty)
+        'cardReaderName': cardReaderName!.trim(),
+      if (internalNote != null && internalNote!.trim().isNotEmpty)
+        'internalNote': internalNote!.trim(),
     };
   }
 
-  final String name;
-  final String code;
+  final String tillName;
+  final String tillCode;
   final String outletId;
   final String status;
+  final String? deviceName;
+  final String? printerName;
+  final String? scannerName;
+  final String? cashDrawerName;
+  final String? cardReaderName;
+  final String? internalNote;
+
+  static String _normalizeStatus(String value) {
+    switch (value.trim().toLowerCase()) {
+      case 'active':
+        return 'Active';
+      case 'inactive':
+        return 'Inactive';
+      case 'maintenance':
+        return 'Maintenance';
+      default:
+        return value.trim();
+    }
+  }
 }

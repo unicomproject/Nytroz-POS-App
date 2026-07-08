@@ -1,4 +1,5 @@
 import '../entities/outlet.dart';
+import '../entities/outlet_detail_entities.dart';
 import '../entities/outlet_details.dart';
 import '../entities/outlet_list_query.dart';
 
@@ -6,6 +7,14 @@ abstract class OutletRepository {
   Future<OutletListResult> getOutlets({required OutletListQuery query});
 
   Future<OutletDetails> getOutletDetails(String id);
+
+  Future<OutletDetail> getOutletDetail(String id);
+
+  Future<OutletRevenueSummary> getOutletRevenueSummary(String id);
+
+  Future<OutletAssignedUsersResult> getOutletAssignedUsers(String id);
+
+  Future<OutletTillsDetailResult> getOutletTillsDetail(String id);
 
   Future<OutletDetails> createOutlet(OutletFormData form);
 

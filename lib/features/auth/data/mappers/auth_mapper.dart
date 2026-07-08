@@ -3,6 +3,7 @@ import '../../domain/entities/setup_token_validation.dart';
 import '../../domain/entities/auth_branding.dart';
 import '../../domain/entities/auth_exception.dart';
 import '../../domain/entities/auth_session.dart';
+import '../../domain/utils/jwt_permissions.dart';
 import '../../domain/entities/tenant_payment_status.dart';
 import '../../domain/entities/tenant_payment_summary.dart';
 import '../models/setup_token_validation_dto.dart';
@@ -98,7 +99,10 @@ AuthSession authSessionFromJson(Map<String, dynamic> json) {
         payload['userDisplayName'] as String? ??
         payload['UserDisplayName'] as String? ??
         '',
-    permissionCodes: _permissionCodesFromJson(payload),
+    permissionCodes: _resolvePermissionCodes(
+      accessToken: accessToken,
+      payload: payload,
+    ),
     expiresAt: DateTime.tryParse(
       payload['accessTokenExpiresAt']?.toString() ??
           payload['AccessTokenExpiresAt']?.toString() ??
@@ -107,6 +111,27 @@ AuthSession authSessionFromJson(Map<String, dynamic> json) {
           '',
     ),
   );
+}
+
+List<String> _resolvePermissionCodes({
+  required String accessToken,
+  required Map<String, dynamic> payload,
+}) {
+  final fromPayload = _permissionCodesFromJson(payload);
+  if (fromPayload.isNotEmpty) {
+    return fromPayload;
+  }
+
+  final fromJwt = readJwtPermissionCodes(accessToken);
+  if (fromJwt.isNotEmpty) {
+    developer.log(
+      'Permissions resolved from JWT claims. count=${fromJwt.length}',
+      name: 'auth.mapper',
+    );
+    return fromJwt;
+  }
+
+  return fromPayload;
 }
 
 List<String> _permissionCodesFromJson(Map<String, dynamic> payload) {

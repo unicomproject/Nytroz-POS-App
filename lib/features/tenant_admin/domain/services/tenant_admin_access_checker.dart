@@ -8,6 +8,7 @@ import '../../outlets/presentation/config/outlet_row_action_configs.dart';
 import '../../outlets/presentation/config/outlet_summary_card_configs.dart';
 import '../../outlets/presentation/config/outlet_table_column_configs.dart';
 import '../../tills/presentation/config/till_row_action_configs.dart';
+import '../../users/presentation/config/user_row_action_configs.dart';
 import '../entities/tenant_admin_context.dart';
 import '../entities/tenant_admin_menu_item.dart';
 import '../../dashboard/domain/entities/tenant_dashboard.dart';
@@ -93,7 +94,11 @@ class TenantAdminAccessChecker {
         return can(TenantAdminPermissionCodes.tenantAdminDashboardView) ||
             can(TenantAdminPermissionCodes.tenantContextView);
       case TenantAdminFeatureCodes.outletManagement:
-        return can(TenantAdminPermissionCodes.outletView);
+        return canAny([
+          TenantAdminPermissionCodes.outletView,
+          TenantAdminPermissionCodes.tenantOutletsView,
+          TenantAdminPermissionCodes.tenantOutletsManage,
+        ]);
       case TenantAdminFeatureCodes.tillManagement:
         return canAny([
           TenantAdminPermissionCodes.tillView,
@@ -268,6 +273,8 @@ class TenantAdminAccessChecker {
             ]);
       case 'tills':
         return canAccessTillModule();
+      case 'staff':
+        return canAccessUserModule();
       default:
         return canShowAction(menuItem.featureCode, menuItem.permissionCode);
     }
@@ -282,8 +289,23 @@ class TenantAdminAccessChecker {
 
   bool canFetchDashboardSummary() => canLoadDashboardData();
 
+  bool get _hasFullDashboardAccess =>
+      can(TenantAdminPermissionCodes.tenantAdminDashboardView);
+
+  bool _canViewDashboardWidget(DashboardWidgetPermissionConfig config) {
+    if (_hasFullDashboardAccess) {
+      return true;
+    }
+
+    return dashboardWidgetAllowed(config, can, canAny);
+  }
+
   /// Returns true when any dashboard widget permission requires API payload data.
   bool canLoadDashboardData() {
+    if (_hasFullDashboardAccess) {
+      return true;
+    }
+
     return canAny([
       TenantAdminPermissionCodes.dashboardSalesSummaryView,
       TenantAdminPermissionCodes.dashboardOrdersSummaryView,
@@ -338,7 +360,8 @@ class TenantAdminAccessChecker {
   }
 
   bool canViewNeedsAttentionSection() {
-    return can(TenantAdminPermissionCodes.dashboardAttentionView);
+    return _hasFullDashboardAccess ||
+        can(TenantAdminPermissionCodes.dashboardAttentionView);
   }
 
   bool canViewNeedsAttentionViewAll({required bool hasVisibleItems}) {
@@ -353,11 +376,13 @@ class TenantAdminAccessChecker {
       can(TenantAdminPermissionCodes.activityLogView);
 
   bool canViewRecentActivitySection() {
-    return can(TenantAdminPermissionCodes.activityLogView);
+    return _hasFullDashboardAccess ||
+        can(TenantAdminPermissionCodes.activityLogView);
   }
 
   bool canViewSalesChart() {
-    return can(TenantAdminPermissionCodes.dashboardSalesChartView);
+    return _hasFullDashboardAccess ||
+        can(TenantAdminPermissionCodes.dashboardSalesChartView);
   }
 
   bool canViewMetric(TenantDashboardMetric metric) {
@@ -366,7 +391,7 @@ class TenantAdminAccessChecker {
       return false;
     }
 
-    return dashboardWidgetAllowed(config, can, canAny);
+    return _canViewDashboardWidget(config);
   }
 
   bool canViewAttentionItem(TenantDashboardAttentionItem item) {
@@ -379,13 +404,17 @@ class TenantAdminAccessChecker {
       return false;
     }
 
-    return dashboardWidgetAllowed(config, can, canAny);
+    return _canViewDashboardWidget(config);
   }
 
   bool canViewQuickAction(TenantDashboardQuickAction action) {
     final config = quickActionConfigForKey(action.key);
     if (config != null) {
-      return dashboardWidgetAllowed(config, can, canAny);
+      if (_hasFullDashboardAccess) {
+        return true;
+      }
+
+      return _canViewDashboardWidget(config);
     }
 
     return canShowAction(action.featureCode, action.permissionCode);
@@ -441,22 +470,15 @@ class TenantAdminAccessChecker {
   }
 
   bool hasTillManagementEntitlement() {
-    final hasEntitlement = _context.featureEntitlements.any(
-      (feature) =>
-          feature.featureCode == TenantAdminFeatureCodes.tillManagement &&
-          feature.enabled,
-    );
-
-    if (!hasEntitlement) {
-      return false;
-    }
-
-    return hasRuntimeFlag(TenantAdminFeatureCodes.tillManagement);
+    return canAccessFeature(TenantAdminFeatureCodes.tillManagement);
   }
 
   bool canAccessTillModule() {
     return hasTillManagementEntitlement() &&
-        can(TenantAdminPermissionCodes.tillView);
+        canAny([
+          TenantAdminPermissionCodes.tillView,
+          TenantAdminPermissionCodes.tenantTillsView,
+        ]);
   }
 
   bool canAccessTillListPage() => canAccessTillModule();
@@ -465,17 +487,37 @@ class TenantAdminAccessChecker {
 
   bool canCreateTill() {
     return hasTillManagementEntitlement() &&
-        can(TenantAdminPermissionCodes.tillCreate);
+        canAny([
+          TenantAdminPermissionCodes.tillCreate,
+          TenantAdminPermissionCodes.tenantTillsCreate,
+        ]);
   }
 
   bool canUpdateTill() {
     return hasTillManagementEntitlement() &&
-        can(TenantAdminPermissionCodes.tillUpdate);
+        canAny([
+          TenantAdminPermissionCodes.tillUpdate,
+          TenantAdminPermissionCodes.tenantTillsUpdate,
+        ]);
   }
 
   bool canDeleteTill() {
     return hasTillManagementEntitlement() &&
-        can(TenantAdminPermissionCodes.tillDelete);
+        canAny([
+          TenantAdminPermissionCodes.tillDelete,
+          TenantAdminPermissionCodes.tenantTillsDelete,
+        ]);
+  }
+
+  bool canViewTillHardware() {
+    return canAny([
+      TenantAdminPermissionCodes.tenantHardwareView,
+      TenantAdminPermissionCodes.tenantHardwareManage,
+    ]);
+  }
+
+  bool canManageTillHardware() {
+    return can(TenantAdminPermissionCodes.tenantHardwareManage);
   }
 
   bool canGenerateTillActivationCode() {
@@ -490,20 +532,91 @@ class TenantAdminAccessChecker {
     ]);
   }
 
+  bool hasUserManagementEntitlement() {
+    return canAccessFeature(TenantAdminFeatureCodes.staffManagement);
+  }
+
+  bool canAccessUserModule() {
+    return hasUserManagementEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.userView,
+          TenantAdminPermissionCodes.tenantUsersView,
+        ]);
+  }
+
+  bool canAccessUserListPage() => canAccessUserModule();
+
+  bool canFetchUserList() => canAccessUserListPage();
+
+  bool canCreateUser() {
+    return hasUserManagementEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.userCreate,
+          TenantAdminPermissionCodes.tenantUsersCreate,
+        ]);
+  }
+
+  bool canInviteUser() {
+    return hasUserManagementEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.userInviteCreate,
+          TenantAdminPermissionCodes.tenantUsersInvite,
+        ]);
+  }
+
+  bool canAddUser() => canCreateUser() || canInviteUser();
+
+  bool canViewUserDetail() {
+    return hasUserManagementEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantUsersDetailsView,
+          TenantAdminPermissionCodes.userView,
+          TenantAdminPermissionCodes.tenantUsersView,
+        ]);
+  }
+
+  bool canUpdateUser() {
+    // Deliberately does not fall back to the coarse `tenant.user.manage`
+    // code: its alias expansion includes granular view permissions (see
+    // tenant_admin_permission_aliases.dart), which would let view-only
+    // users incorrectly pass an update check. Mirrors canUpdateTill()'s
+    // precise-permission pattern.
+    return hasUserManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tenantUsersUpdate);
+  }
+
+  bool canDeleteUser() {
+    // See canUpdateUser() for why `tenant.user.manage` is intentionally
+    // excluded here.
+    return hasUserManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tenantUsersDelete);
+  }
+
+  bool canOverrideUserPermissions() {
+    return can(TenantAdminPermissionCodes.tenantUsersPermissionOverride);
+  }
+
   bool canViewOutletDetail() {
     return canShowActionWithAnyPermission(
       TenantAdminFeatureCodes.outletManagement,
       [
         TenantAdminPermissionCodes.outletDetailView,
         TenantAdminPermissionCodes.outletView,
+        TenantAdminPermissionCodes.tenantOutletsDetailsView,
+        TenantAdminPermissionCodes.tenantOutletsView,
+        TenantAdminPermissionCodes.tenantOutletsManage,
       ],
     );
   }
 
   bool canEditOutlet() {
-    return canShowAction(
+    return canShowActionWithAnyPermission(
       TenantAdminFeatureCodes.outletManagement,
-      TenantAdminPermissionCodes.outletUpdate,
+      [
+        TenantAdminPermissionCodes.outletUpdate,
+        TenantAdminPermissionCodes.tenantOutletsUpdate,
+        TenantAdminPermissionCodes.tenantOutletsManage,
+      ],
     );
   }
 
@@ -801,6 +914,54 @@ class TillListVisibility {
       visibleSummaryCards: summaryCards,
       visibleRowActions: rowActions,
       visibleMoreMenuActions: moreMenuActions,
+    );
+  }
+}
+
+class UserListVisibility {
+  const UserListVisibility({
+    required this.showPage,
+    required this.showTitle,
+    required this.showSubtitle,
+    required this.showSearch,
+    required this.showStatusFilter,
+    required this.showAddUser,
+    required this.showList,
+    required this.showPagination,
+    required this.showActionsColumn,
+    required this.visibleRowActions,
+  });
+
+  final bool showPage;
+  final bool showTitle;
+  final bool showSubtitle;
+  final bool showSearch;
+  final bool showStatusFilter;
+  final bool showAddUser;
+  final bool showList;
+  final bool showPagination;
+  final bool showActionsColumn;
+  final List<UserRowActionConfig> visibleRowActions;
+
+  static UserListVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage = access.canAccessUserListPage();
+    final rowActions = showPage
+        ? visibleUserRowActions(access.can, access.canAny)
+        : const <UserRowActionConfig>[];
+
+    return UserListVisibility(
+      showPage: showPage,
+      showTitle: showPage,
+      showSubtitle: showPage,
+      showSearch: showPage,
+      showStatusFilter: showPage,
+      showAddUser: access.canAddUser(),
+      showList: showPage,
+      showPagination: showPage,
+      showActionsColumn: rowActions.isNotEmpty,
+      visibleRowActions: rowActions,
     );
   }
 }

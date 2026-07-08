@@ -7,6 +7,7 @@ class ApiEndpoints {
   static const tenantLogin = '/api/v1/tenant-auth/login';
 
   static const tenantAdminOutlets = '/api/v1/tenant-admin/outlets';
+  static const tenantAdminOutletOptions = '/api/v1/tenant-admin/outlets/options';
   static String tenantAdminOutlet(String id) => '/api/v1/tenant-admin/outlets/$id';
   static String tenantAdminOutletStatus(String id) =>
       '/api/v1/tenant-admin/outlets/$id/status';

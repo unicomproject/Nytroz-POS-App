@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../outlets/domain/entities/outlet.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../domain/entities/till.dart';
@@ -12,12 +11,16 @@ class TillForm extends StatefulWidget {
     required this.backendErrors,
     required this.submitting,
     required this.onSubmit,
+    this.showHardwareSection = true,
+    this.hardwareReadOnly = false,
   });
 
-  final List<Outlet> outlets;
+  final List<OutletOption> outlets;
   final Map<String, String> backendErrors;
   final bool submitting;
   final Future<void> Function(TillFormData form) onSubmit;
+  final bool showHardwareSection;
+  final bool hardwareReadOnly;
 
   @override
   State<TillForm> createState() => _TillFormState();
@@ -89,67 +92,75 @@ class _TillFormState extends State<TillForm> {
             ),
             const SizedBox(height: TenantAdminSpacing.lg),
             _twoColumnRow(_outletDropdown(), _statusDropdown()),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: TenantAdminSpacing.xl),
-              child: Divider(height: 1, color: TenantAdminColors.border),
-            ),
-            _sectionHeader(
-              icon: Icons.devices_outlined,
-              title: 'Hardware Details',
-              subtitle: 'Add hardware information if available for this till.',
-            ),
-            const SizedBox(height: TenantAdminSpacing.lg),
-            _twoColumnRow(
-              _field(
-                key: 'deviceName',
-                label: 'Device Name',
-                hint: 'Enter device name',
-                controller: _deviceNameController,
-                icon: Icons.tablet_mac_outlined,
+            if (widget.showHardwareSection) ...[
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: TenantAdminSpacing.xl),
+                child: Divider(height: 1, color: TenantAdminColors.border),
               ),
-              _field(
-                key: 'printerName',
-                label: 'Printer Name',
-                hint: 'Enter printer name',
-                controller: _printerNameController,
-                icon: Icons.print_outlined,
+              _sectionHeader(
+                icon: Icons.devices_outlined,
+                title: 'Hardware Details',
+                subtitle: 'Add hardware information if available for this till.',
               ),
-            ),
-            const SizedBox(height: TenantAdminSpacing.lg),
-            _twoColumnRow(
-              _field(
-                key: 'scannerName',
-                label: 'Scanner Name',
-                hint: 'Enter scanner name',
-                controller: _scannerNameController,
-                icon: Icons.qr_code_scanner_outlined,
+              const SizedBox(height: TenantAdminSpacing.lg),
+              _twoColumnRow(
+                _field(
+                  key: 'deviceName',
+                  label: 'Device Name',
+                  hint: 'Enter device name',
+                  controller: _deviceNameController,
+                  icon: Icons.tablet_mac_outlined,
+                  readOnly: widget.hardwareReadOnly,
+                ),
+                _field(
+                  key: 'printerName',
+                  label: 'Printer Name',
+                  hint: 'Enter printer name',
+                  controller: _printerNameController,
+                  icon: Icons.print_outlined,
+                  readOnly: widget.hardwareReadOnly,
+                ),
               ),
-              _field(
-                key: 'cashDrawerName',
-                label: 'Cash Drawer Name',
-                hint: 'Enter cash drawer name',
-                controller: _cashDrawerNameController,
-                icon: Icons.inventory_2_outlined,
+              const SizedBox(height: TenantAdminSpacing.lg),
+              _twoColumnRow(
+                _field(
+                  key: 'scannerName',
+                  label: 'Scanner Name',
+                  hint: 'Enter scanner name',
+                  controller: _scannerNameController,
+                  icon: Icons.qr_code_scanner_outlined,
+                  readOnly: widget.hardwareReadOnly,
+                ),
+                _field(
+                  key: 'cashDrawerName',
+                  label: 'Cash Drawer Name',
+                  hint: 'Enter cash drawer name',
+                  controller: _cashDrawerNameController,
+                  icon: Icons.inventory_2_outlined,
+                  readOnly: widget.hardwareReadOnly,
+                ),
               ),
-            ),
-            const SizedBox(height: TenantAdminSpacing.lg),
-            _twoColumnRow(
-              _field(
-                key: 'cardReaderName',
-                label: 'Card Reader Name',
-                hint: 'Enter card reader name',
-                controller: _cardReaderNameController,
-                icon: Icons.credit_card_outlined,
+              const SizedBox(height: TenantAdminSpacing.lg),
+              _twoColumnRow(
+                _field(
+                  key: 'cardReaderName',
+                  label: 'Card Reader Name',
+                  hint: 'Enter card reader name',
+                  controller: _cardReaderNameController,
+                  icon: Icons.credit_card_outlined,
+                  readOnly: widget.hardwareReadOnly,
+                ),
+                _field(
+                  key: 'internalNote',
+                  label: 'Internal Note',
+                  hint: 'Enter any note...',
+                  controller: _noteController,
+                  icon: Icons.sticky_note_2_outlined,
+                  maxLength: 250,
+                  readOnly: widget.hardwareReadOnly,
+                ),
               ),
-              _field(
-                key: 'internalNote',
-                label: 'Internal Note',
-                hint: 'Enter any note...',
-                controller: _noteController,
-                icon: Icons.sticky_note_2_outlined,
-                maxLength: 250,
-              ),
-            ),
+            ],
             const SizedBox(height: TenantAdminSpacing.xl),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -218,10 +229,12 @@ class _TillFormState extends State<TillForm> {
     required IconData icon,
     String? requiredMessage,
     int? maxLength,
+    bool readOnly = false,
   }) {
     return TextFormField(
       controller: controller,
       maxLength: maxLength,
+      readOnly: readOnly,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -324,6 +337,12 @@ class _TillFormState extends State<TillForm> {
           code: _codeController.text.trim(),
           outletId: _selectedOutletId ?? '',
           status: _status,
+          deviceName: _deviceNameController.text.trim(),
+          printerName: _printerNameController.text.trim(),
+          scannerName: _scannerNameController.text.trim(),
+          cashDrawerName: _cashDrawerNameController.text.trim(),
+          cardReaderName: _cardReaderNameController.text.trim(),
+          internalNote: _noteController.text.trim(),
         ),
       );
     } catch (_) {

@@ -1,4 +1,5 @@
 import '../../domain/entities/outlet.dart';
+import '../../domain/entities/outlet_detail_entities.dart';
 import '../../domain/entities/outlet_details.dart';
 import '../../domain/entities/outlet_list_query.dart';
 import '../../domain/repositories/outlet_repository.dart';
@@ -37,6 +38,30 @@ class OutletRepositoryImpl implements OutletRepository {
   @override
   Future<OutletDetails> getOutletDetails(String id) async {
     final dto = await _remoteDatasource.getOutletDetails(id);
+    return dto.toEntity();
+  }
+
+  @override
+  Future<OutletDetail> getOutletDetail(String id) async {
+    final dto = await _remoteDatasource.getOutletDetail(id);
+    return dto.toEntity();
+  }
+
+  @override
+  Future<OutletRevenueSummary> getOutletRevenueSummary(String id) async {
+    final dto = await _remoteDatasource.getOutletRevenueSummary(id);
+    return dto.toEntity();
+  }
+
+  @override
+  Future<OutletAssignedUsersResult> getOutletAssignedUsers(String id) async {
+    final dto = await _remoteDatasource.getOutletAssignedUsers(id);
+    return dto.toEntity();
+  }
+
+  @override
+  Future<OutletTillsDetailResult> getOutletTillsDetail(String id) async {
+    final dto = await _remoteDatasource.getOutletTillsDetail(id);
     return dto.toEntity();
   }
 

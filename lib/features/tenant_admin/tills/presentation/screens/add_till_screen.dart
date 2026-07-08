@@ -4,13 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../auth/presentation/providers/session_provider.dart';
-import '../../../domain/entities/tenant_admin_context.dart';
-import '../../../outlets/domain/entities/outlet.dart';
-import '../../../outlets/domain/entities/outlet_list_query.dart';
-import '../../../outlets/presentation/providers/outlet_providers.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
-import '../../../presentation/providers/tenant_admin_context_provider.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/till.dart';
@@ -34,6 +29,8 @@ class _AddTillScreenState extends ConsumerState<AddTillScreen> {
   Widget build(BuildContext context) {
     ref.watch(authHeaderSyncProvider);
     final canCreate = ref.watch(tillCreateAccessProvider);
+    final canViewHardware = ref.watch(tillHardwareViewAccessProvider);
+    final canManageHardware = ref.watch(tillHardwareManageAccessProvider);
     final outletsState = ref.watch(tillOutletOptionsProvider);
 
     if (!canCreate) {
@@ -66,6 +63,8 @@ class _AddTillScreenState extends ConsumerState<AddTillScreen> {
 
           return TillForm(
             outlets: outlets,
+            showHardwareSection: canViewHardware,
+            hardwareReadOnly: !canManageHardware,
             backendErrors: _fieldErrors,
             submitting: _submitting,
             onSubmit: _submit,
@@ -90,14 +89,7 @@ class _AddTillScreenState extends ConsumerState<AddTillScreen> {
     });
 
     try {
-      final createdTill = await ref.read(createTillProvider).call(
-            TillFormData(
-              name: form.name,
-              code: form.code,
-              outletId: form.outletId,
-              status: form.status,
-            ),
-          );
+      final createdTill = await ref.read(createTillProvider).call(form);
       ref.invalidate(tillListProvider);
       if (!mounted) {
         return;
@@ -118,7 +110,22 @@ class _AddTillScreenState extends ConsumerState<AddTillScreen> {
       }
 
       final fieldErrors = tillValidationErrors(error);
-      setState(() => _fieldErrors = fieldErrors);
+      final duplicateCode = error.response?.statusCode == 409 &&
+          (error.response?.data is Map) &&
+          (error.response?.data as Map)['code'] == 'till.duplicate_code';
+
+      setState(() {
+        _fieldErrors = duplicateCode
+            ? {
+                ...fieldErrors,
+                'code': tillSubmitErrorMessage(
+                  error,
+                  fieldErrors,
+                  fallback: 'Till code already exists for this tenant.',
+                ),
+              }
+            : fieldErrors;
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -324,49 +331,4 @@ String _titleCase(String value) {
   }
 
   return trimmed[0].toUpperCase() + trimmed.substring(1).toLowerCase();
-}
-
-final tillOutletOptionsProvider = FutureProvider<List<Outlet>>((ref) async {
-  ref.watch(authHeaderSyncProvider);
-
-  final context = await ref.watch(tenantAdminContextProvider.future);
-  final scopedOutlets = _outletsFromContext(context);
-
-  try {
-    final result = await ref.read(getOutletsProvider).call(
-          query: const OutletListQuery(page: 1, pageSize: 100),
-        );
-
-    if (result.items.isNotEmpty) {
-      return result.items;
-    }
-  } on DioException catch (error) {
-    if (error.response?.statusCode == 401) {
-      rethrow;
-    }
-  }
-
-  if (scopedOutlets.isEmpty) {
-    throw StateError('No outlets are available for this tenant.');
-  }
-
-  return scopedOutlets;
-});
-
-List<Outlet> _outletsFromContext(TenantAdminContext context) {
-  return context.outletScope
-      .map(
-        (scope) => Outlet(
-          id: scope.outletId,
-          name: scope.outletName,
-          code: '',
-          location: '',
-          status: 'active',
-          tillCount: 0,
-          onlineTillCount: 0,
-          staffCount: 0,
-          todaysSales: '',
-        ),
-      )
-      .toList(growable: false);
 }

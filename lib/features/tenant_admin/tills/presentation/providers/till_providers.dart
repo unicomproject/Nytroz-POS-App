@@ -25,6 +25,10 @@ final createTillProvider = Provider<CreateTill>((ref) {
   return CreateTill(ref.watch(tillRepositoryProvider));
 });
 
+final tillOutletOptionsProvider = FutureProvider<List<OutletOption>>((ref) {
+  return ref.watch(tillRepositoryProvider).getOutletOptions();
+});
+
 final tillSearchProvider = StateProvider<String>((ref) => '');
 
 final tillStatusFilterProvider =

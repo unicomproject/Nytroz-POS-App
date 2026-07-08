@@ -8,24 +8,23 @@ class TillDto {
     required this.status,
     required this.operationalStatus,
     this.attentionLabel,
-    this.todaySalesAmount,
-    this.currency,
-    this.lastSyncAt,
+    this.lastActiveAt,
   });
 
   factory TillDto.fromJson(Map<String, dynamic> json) {
+    final deviceStatus = (json['deviceStatus'] as String? ?? '').toLowerCase();
+    final needsAttention = json['needsAttention'] == true;
+
     return TillDto(
-      id: json['id']?.toString() ?? '',
+      id: json['tillId']?.toString() ?? json['id']?.toString() ?? '',
       outletId: json['outletId']?.toString() ?? '',
       outletName: json['outletName'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      code: json['code'] as String? ?? '',
+      name: json['tillName'] as String? ?? json['name'] as String? ?? '',
+      code: json['tillCode'] as String? ?? json['code'] as String? ?? '',
       status: json['status'] as String? ?? '',
-      operationalStatus: json['operationalStatus'] as String? ?? '',
-      attentionLabel: json['attentionLabel'] as String?,
-      todaySalesAmount: _doubleValue(json['todaySalesAmount']),
-      currency: json['currency'] as String?,
-      lastSyncAt: _dateValue(json['lastSyncAt']),
+      operationalStatus: _operationalStatus(deviceStatus, needsAttention),
+      attentionLabel: needsAttention ? 'Needs attention' : null,
+      lastActiveAt: _dateValue(json['lastActiveAt'] ?? json['lastSyncAt']),
     );
   }
 
@@ -37,9 +36,22 @@ class TillDto {
   final String status;
   final String operationalStatus;
   final String? attentionLabel;
-  final double? todaySalesAmount;
-  final String? currency;
-  final DateTime? lastSyncAt;
+  final DateTime? lastActiveAt;
+
+  static String _operationalStatus(String deviceStatus, bool needsAttention) {
+    if (needsAttention) {
+      return 'needs_attention';
+    }
+
+    switch (deviceStatus) {
+      case 'online':
+        return 'online';
+      case 'offline':
+        return 'offline';
+      default:
+        return deviceStatus;
+    }
+  }
 }
 
 class TillListSummaryDto {
@@ -47,48 +59,26 @@ class TillListSummaryDto {
     required this.totalTills,
     required this.onlineCount,
     required this.offlineCount,
+    required this.inactiveCount,
     required this.needsAttentionCount,
   });
 
   factory TillListSummaryDto.fromJson(Map<String, dynamic> json) {
     return TillListSummaryDto(
       totalTills: _intValue(json['totalTills']),
-      onlineCount: _intValue(json['onlineCount']),
-      offlineCount: _intValue(json['offlineCount']),
-      needsAttentionCount: _intValue(json['needsAttentionCount']),
-    );
-  }
-
-  factory TillListSummaryDto.fromPagedList({
-    required List<TillDto> items,
-    required int totalCount,
-  }) {
-    var online = 0;
-    var offline = 0;
-    var needsAttention = 0;
-
-    for (final item in items) {
-      switch (item.operationalStatus) {
-        case 'online':
-          online++;
-        case 'offline':
-          offline++;
-        case 'needs_attention':
-          needsAttention++;
-      }
-    }
-
-    return TillListSummaryDto(
-      totalTills: totalCount,
-      onlineCount: online,
-      offlineCount: offline,
-      needsAttentionCount: needsAttention,
+      onlineCount: _intValue(json['onlineTills'] ?? json['onlineCount']),
+      offlineCount: _intValue(json['offlineTills'] ?? json['offlineCount']),
+      inactiveCount: _intValue(json['inactiveTills'] ?? json['inactiveCount']),
+      needsAttentionCount: _intValue(
+        json['needsAttentionTills'] ?? json['needsAttentionCount'],
+      ),
     );
   }
 
   final int totalTills;
   final int onlineCount;
   final int offlineCount;
+  final int inactiveCount;
   final int needsAttentionCount;
 }
 
@@ -101,7 +91,10 @@ class TillListResultDto {
     this.totalCount = 0,
   });
 
-  factory TillListResultDto.fromJson(Map<String, dynamic> json) {
+  factory TillListResultDto.fromJson(
+    Map<String, dynamic> json, {
+    TillListSummaryDto? summary,
+  }) {
     final rawItems = json['items'];
     final items = _mapList(rawItems, TillDto.fromJson);
     final page = _intValue(json['page'], fallback: 1);
@@ -109,14 +102,18 @@ class TillListResultDto {
     final totalCount = _intValue(json['totalCount'], fallback: items.length);
 
     return TillListResultDto(
-      summary: json['summary'] is Map
-          ? TillListSummaryDto.fromJson(
-              Map<String, dynamic>.from(json['summary'] as Map),
-            )
-          : TillListSummaryDto.fromPagedList(
-              items: items,
-              totalCount: totalCount,
-            ),
+      summary: summary ??
+          (json['summary'] is Map
+              ? TillListSummaryDto.fromJson(
+                  Map<String, dynamic>.from(json['summary'] as Map),
+                )
+              : TillListSummaryDto(
+                  totalTills: totalCount,
+                  onlineCount: 0,
+                  offlineCount: 0,
+                  inactiveCount: 0,
+                  needsAttentionCount: 0,
+                )),
       items: items,
       page: page,
       pageSize: pageSize,
@@ -142,16 +139,39 @@ class CreatedTillDto {
 
   factory CreatedTillDto.fromJson(Map<String, dynamic> json) {
     return CreatedTillDto(
-      id: json['id']?.toString() ?? '',
+      id: json['tillId']?.toString() ?? json['id']?.toString() ?? '',
       outletId: json['outletId']?.toString() ?? '',
-      name: json['name'] as String? ?? '',
-      code: json['code'] as String? ?? '',
+      name: json['tillName'] as String? ?? json['name'] as String? ?? '',
+      code: json['tillCode'] as String? ?? json['code'] as String? ?? '',
       status: json['status'] as String? ?? '',
     );
   }
 
   final String id;
   final String outletId;
+  final String name;
+  final String code;
+  final String status;
+}
+
+class OutletOptionDto {
+  const OutletOptionDto({
+    required this.id,
+    required this.name,
+    required this.code,
+    required this.status,
+  });
+
+  factory OutletOptionDto.fromJson(Map<String, dynamic> json) {
+    return OutletOptionDto(
+      id: json['outletId']?.toString() ?? json['id']?.toString() ?? '',
+      name: json['outletName'] as String? ?? json['name'] as String? ?? '',
+      code: json['outletCode'] as String? ?? json['code'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+    );
+  }
+
+  final String id;
   final String name;
   final String code;
   final String status;
@@ -167,18 +187,6 @@ int _intValue(dynamic value, {int fallback = 0}) {
   }
 
   return int.tryParse(value?.toString() ?? '') ?? fallback;
-}
-
-double? _doubleValue(dynamic value) {
-  if (value == null) {
-    return null;
-  }
-
-  if (value is num) {
-    return value.toDouble();
-  }
-
-  return double.tryParse(value.toString());
 }
 
 DateTime? _dateValue(dynamic value) {

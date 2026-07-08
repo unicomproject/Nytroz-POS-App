@@ -29,14 +29,10 @@ class TenantAdminPlaceholderScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (title == 'Staff' || title == 'Users') {
-      return const _StaffListScreen();
-    }
-
-    if (title == 'Add Staff' || title == 'Add New User') {
-      return const _AddStaffScreen();
-    }
-
+    // Staff/Users screens are now served directly by the router via
+    // UserListScreen/AddEditUserScreen (see tenant_admin_router.dart).
+    // The _StaffListScreen/_AddStaffScreen helpers below are unreachable
+    // dead code kept only to avoid a risky large-file refactor.
     if (title == 'Roles & Access') {
       return const _RolesAccessScreen();
     }
