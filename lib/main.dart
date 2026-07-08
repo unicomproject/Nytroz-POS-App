@@ -9,13 +9,15 @@ import 'core/network/dio_client.dart';
 import 'core/network/dio_provider.dart';
 import 'flavors/development/tenant_admin_dev_api_interceptor.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   const useDevApiFallback = bool.fromEnvironment(
     'USE_DEV_API_FALLBACK',
     defaultValue: false,
   );
 
-  final apiBaseUrl = resolveApiBaseUrl();
+  final apiBaseUrl = await resolveApiBaseUrl();
   developer.log(
     'API base URL resolved. baseUrl=$apiBaseUrl',
     name: 'api.config',
