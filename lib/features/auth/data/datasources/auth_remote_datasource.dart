@@ -61,7 +61,7 @@ class AuthRemoteDatasource {
   }
 
   Future<Map<String, dynamic>> login(LoginRequestDto request) async {
-    const endpoint = '/api/v1/auth/tenant-login';
+    const endpoint = '/api/v1/tenant-auth/login';
     final stopwatch = Stopwatch()..start();
 
     try {

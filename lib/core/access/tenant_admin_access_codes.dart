@@ -122,4 +122,5 @@ class TenantAdminPermissionCodes {
   static const tenantBillingView = 'tenant.billing.view';
   static const tenantSettingsManage = 'tenant.settings.manage';
   static const tenantActivityView = 'tenant.activity.view';
+  static const tenantDashboardView = 'tenant.dashboard.view';
 }

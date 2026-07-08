@@ -5,10 +5,17 @@ class TenantAdminPermissionAliases {
     'tenant_admin.dashboard.view': [
       'tenant_admin.dashboard.view',
       'dashboard.view',
+      'tenant.dashboard.view',
     ],
     'dashboard.view': [
       'tenant_admin.dashboard.view',
       'dashboard.view',
+      'tenant.dashboard.view',
+    ],
+    'tenant.dashboard.view': [
+      'tenant_admin.dashboard.view',
+      'dashboard.view',
+      'tenant.dashboard.view',
     ],
     'dashboard.sales_summary.view': [
       'dashboard.sales_summary.view',
