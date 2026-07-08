@@ -28,7 +28,7 @@ void main() {
       runtimeFlags: [],
     );
 
-    final access = TenantAdminAccessChecker(context);
+    const access = TenantAdminAccessChecker(context);
     final dashboard = tenantAdminDashboardCatalogFallback.toEntity();
     final visibility = TenantDashboardVisibility.resolve(
       access: access,

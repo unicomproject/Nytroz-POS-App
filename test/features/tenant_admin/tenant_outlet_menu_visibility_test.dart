@@ -28,7 +28,7 @@ void main() {
       runtimeFlags: [],
     );
 
-    final access = TenantAdminAccessChecker(context);
+    const access = TenantAdminAccessChecker(context);
     final outletsMenu = tenantAdminMenuCatalog.firstWhere(
       (item) => item.key == 'outlets',
     );

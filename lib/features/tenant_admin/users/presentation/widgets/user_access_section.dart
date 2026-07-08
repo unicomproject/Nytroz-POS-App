@@ -161,7 +161,7 @@ class UserToggleRow extends StatelessWidget {
           Switch(
             value: value,
             onChanged: enabled ? onChanged : null,
-            activeColor: TenantAdminColors.primary,
+            activeThumbColor: TenantAdminColors.primary,
           ),
         ],
       ),
