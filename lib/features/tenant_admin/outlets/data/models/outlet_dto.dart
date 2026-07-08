@@ -59,7 +59,7 @@ class OutletListResultDto {
   factory OutletListResultDto.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'] ?? json['outlets'];
     final items = _mapList(rawItems, OutletDto.fromJson);
-    final page = _intValue(json['page'], fallback: 1);
+    final page = _intValue(json['page'] ?? json['pageNumber'], fallback: 1);
     final pageSize = _intValue(json['pageSize'], fallback: 10);
     final totalCount = _intValue(json['totalCount'], fallback: items.length);
 
@@ -173,10 +173,16 @@ class OutletDetailsDto {
       id: json['id']?.toString() ?? '',
       name: json['name'] as String? ?? json['outletName'] as String? ?? '',
       code: json['code'] as String? ?? json['outletCode'] as String? ?? '',
-      address: json['address'] as String? ?? _formatAddress(json),
+      address: json['address'] is String
+          ? json['address'] as String
+          : _formatAddress(
+              json['address'] is Map
+                  ? Map<String, dynamic>.from(json['address'] as Map)
+                  : json,
+            ),
       status: json['status'] as String? ?? '',
-      phone: json['phone'] as String?,
-      email: json['email'] as String?,
+      phone: json['phone'] as String? ?? json['contactPhone'] as String?,
+      email: json['email'] as String? ?? json['contactEmail'] as String?,
       managerName: json['managerName'] as String?,
       managerPhone: json['managerPhone'] as String? ?? json['phone'] as String?,
       openingHours: json['openingHours']?.toString(),
@@ -389,7 +395,7 @@ String _formatAddress(Map<String, dynamic> json) {
     json['addressLine2'],
     json['city'],
     json['postalCode'],
-    json['country'],
+    json['countryCode'] ?? json['country'],
   ]
       .whereType<String>()
       .map((part) => part.trim())

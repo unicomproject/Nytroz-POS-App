@@ -3,37 +3,38 @@ import 'package:nytroz_pos/features/tenant_admin/tills/data/models/till_dto.dart
 
 void main() {
   group('TillListResultDto', () {
-    test('parses wrapped API response with summary and items', () {
+    test('parses tenant-admin API response with summary and items', () {
       final dto = TillListResultDto.fromJson({
-        'summary': {
-          'totalTills': 28,
-          'onlineCount': 18,
-          'offlineCount': 6,
-          'needsAttentionCount': 4,
-        },
         'items': [
           {
-            'id': '11111111-1111-1111-1111-111111111111',
+            'tillId': '11111111-1111-1111-1111-111111111111',
             'outletId': '22222222-2222-2222-2222-222222222222',
             'outletName': 'High Street Store',
-            'name': 'Front Counter Till',
-            'code': 'TILL-001',
-            'status': 'active',
-            'operationalStatus': 'online',
-            'todaySalesAmount': 1245.60,
-            'currency': 'LKR',
-            'lastSyncAt': '2026-06-22T10:00:00Z',
+            'tillName': 'Front Counter Till',
+            'tillCode': 'TILL-001',
+            'status': 'Active',
+            'deviceStatus': 'Online',
+            'lastActiveAt': '2026-06-22T10:00:00Z',
+            'needsAttention': false,
           },
         ],
         'page': 1,
         'pageSize': 10,
         'totalCount': 1,
-      });
+      }, summary: const TillListSummaryDto(
+        totalTills: 28,
+        onlineCount: 18,
+        offlineCount: 6,
+        inactiveCount: 2,
+        needsAttentionCount: 4,
+      ));
 
       expect(dto.summary.totalTills, 28);
+      expect(dto.summary.inactiveCount, 2);
       expect(dto.items.single.name, 'Front Counter Till');
-      expect(dto.items.single.todaySalesAmount, 1245.60);
-      expect(dto.items.single.currency, 'LKR');
+      expect(dto.items.single.code, 'TILL-001');
+      expect(dto.items.single.operationalStatus, 'online');
+      expect(dto.items.single.lastActiveAt, isNotNull);
     });
   });
 }

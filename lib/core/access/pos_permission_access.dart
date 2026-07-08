@@ -13,11 +13,13 @@ class PosPermissionAccess {
     PosPermissionCodes.viewNewSale,
     PosPermissionCodes.createSale,
     PosPermissionCodes.startSale,
+    'pos.sale.create',
   ];
 
   static const homeAccessCodes = [
     PosPermissionCodes.viewHome,
     PosPermissionCodes.viewDashboard,
+    'pos.sale.create',
   ];
 
   static const saleViewAccessCodes = [
@@ -56,6 +58,10 @@ class PosPermissionAccess {
     PosPermissionCodes.manageCashDrawer,
     PosPermissionCodes.viewTill,
     PosPermissionCodes.cashMovement,
+    PosPermissionCodes.openTill,
+    PosPermissionCodes.closeTill,
+    'pos.till.open',
+    'pos.till.close',
   ];
 
   static const parkedSaleAccessCodes = [

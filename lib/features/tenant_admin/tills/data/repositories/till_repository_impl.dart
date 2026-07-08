@@ -19,13 +19,34 @@ class TillRepositoryImpl implements TillRepository {
   Future<CreatedTill> createTill(TillFormData form) async {
     final dto = await _remoteDatasource.createTill(
       CreateTillRequestDto(
-        name: form.name,
-        code: form.code,
+        tillName: form.name,
+        tillCode: form.code,
         outletId: form.outletId,
         status: form.status,
+        deviceName: form.deviceName,
+        printerName: form.printerName,
+        scannerName: form.scannerName,
+        cashDrawerName: form.cashDrawerName,
+        cardReaderName: form.cardReaderName,
+        internalNote: form.internalNote,
       ),
     );
 
     return TillMapper.toCreatedEntity(dto);
+  }
+
+  @override
+  Future<List<OutletOption>> getOutletOptions() async {
+    final options = await _remoteDatasource.getOutletOptions();
+    return options
+        .map(
+          (option) => OutletOption(
+            id: option.id,
+            name: option.name,
+            code: option.code,
+            status: option.status,
+          ),
+        )
+        .toList(growable: false);
   }
 }

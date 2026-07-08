@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/data/models/create_outlet_request_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/data/models/outlet_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/outlets/domain/entities/outlet_details.dart';
 
 void main() {
   group('OutletListResultDto', () {
@@ -33,11 +34,11 @@ void main() {
   });
 
   group('CreateOutletRequestDto', () {
-    test('maps form fields to backend JSON keys', () {
+    test('maps form fields to backend create payload', () {
       const dto = CreateOutletRequestDto(
         outletName: 'New Outlet',
-        outletCode: 'OUT-002',
-        outletType: 'store',
+        outletCode: '',
+        outletType: 'Retail',
         status: 'Active',
         mainPhoneNumber: '+94771234567',
         emailAddress: 'outlet@test.com',
@@ -45,16 +46,37 @@ void main() {
         city: 'Colombo',
         country: 'LK',
         postalCode: '00100',
-        openingHours: [],
+        openingHours: [
+          OutletOpeningHour(
+            day: 'Mon',
+            openTime: '09:00',
+            closeTime: '18:00',
+            closed: false,
+          ),
+        ],
       );
 
       final json = dto.toJson();
 
       expect(json['name'], 'New Outlet');
-      expect(json['code'], 'OUT-002');
-      expect(json['phone'], '+94771234567');
-      expect(json['email'], 'outlet@test.com');
-      expect(json['status'], 'Active');
+      expect(json['status'], 'ACTIVE');
+      expect(json['outletType'], 'STORE');
+      expect(json['contactPhone'], '+94771234567');
+      expect(json['contactEmail'], 'outlet@test.com');
+      expect(json['isOnlineVisible'], isTrue);
+      expect(json['collectionEnabled'], isFalse);
+      expect(json['address'], isA<Map>());
+      expect(json['address']['addressLine1'], 'Line 1');
+      expect(json['address']['city'], 'Colombo');
+      expect(json['address']['countryCode'], 'LK');
+      expect(json['businessHours'], [
+        {
+          'dayOfWeek': 1,
+          'openTime': '09:00:00',
+          'closeTime': '18:00:00',
+        },
+      ]);
+      expect(json.containsKey('code'), isFalse);
     });
   });
 }

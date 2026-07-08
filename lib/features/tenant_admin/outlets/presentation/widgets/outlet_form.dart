@@ -161,7 +161,8 @@ class _OutletFormState extends State<OutletForm> {
               _field('outletName', 'Outlet Name', _outletName,
                   isRequired: true, icon: Icons.storefront_outlined),
               _field('outletCode', 'Outlet Code', _outletCode,
-                  isRequired: true, icon: Icons.tag),
+                  hintText: 'Optional — backend auto-generates OUT-001',
+                  icon: Icons.tag),
             ),
             _twoColumnRow(_outletTypeDropdown(), _statusSelector()),
             DropdownButtonFormField<String>(
@@ -269,12 +270,14 @@ class _OutletFormState extends State<OutletForm> {
     TextInputType? keyboardType,
     String? Function(String? value)? validator,
     IconData? icon,
+    String? hintText,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
+        hintText: hintText,
         prefixIcon: icon == null ? null : Icon(icon, size: 18),
         errorText: widget.backendErrors[key],
       ),
@@ -497,7 +500,6 @@ class _OutletFormState extends State<OutletForm> {
   (String, String)? _submitValidationError() {
     final checks = <(String, String, String? Function(String? value)?)>[
       ('outletName', 'Outlet name', _requiredValidator('Outlet name')),
-      ('outletCode', 'Outlet code', _requiredValidator('Outlet code')),
       ('outletType', 'Outlet type', _requiredValidator('Outlet type')),
       (
         'mainPhoneNumber',

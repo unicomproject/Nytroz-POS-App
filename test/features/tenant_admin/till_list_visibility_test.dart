@@ -5,16 +5,21 @@ import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_ac
 
 void main() {
   group('TillListVisibility', () {
-    test('TillsMenu_Hidden_WhenTillManagementFeatureMissing', () {
+    test(
+        'TillsMenu_Visible_WhenTillViewPermissionExists_WithoutExplicitFeatureEntitlement',
+        () {
+      // No explicit feature-entitlement data should not hard-block access;
+      // it falls back to permission-based checks, consistent with every
+      // other tenant admin module (dashboard, outlets, staff, etc.).
       final access = _checker(
         permissions: [TenantAdminPermissionCodes.tillView],
         features: [TenantAdminFeatureCodes.dashboard],
       );
 
-      expect(access.canAccessTillModule(), isFalse);
+      expect(access.canAccessTillModule(), isTrue);
       expect(
         TillListVisibility.resolve(access: access).showPage,
-        isFalse,
+        isTrue,
       );
     });
 

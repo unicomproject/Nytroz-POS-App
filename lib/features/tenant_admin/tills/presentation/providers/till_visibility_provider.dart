@@ -40,3 +40,21 @@ final tillCreateAccessProvider = Provider<bool>((ref) {
     orElse: () => false,
   );
 });
+
+final tillHardwareViewAccessProvider = Provider<bool>((ref) {
+  final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+
+  return accessState.maybeWhen(
+    data: (accessChecker) => accessChecker.canViewTillHardware(),
+    orElse: () => false,
+  );
+});
+
+final tillHardwareManageAccessProvider = Provider<bool>((ref) {
+  final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+
+  return accessState.maybeWhen(
+    data: (accessChecker) => accessChecker.canManageTillHardware(),
+    orElse: () => false,
+  );
+});

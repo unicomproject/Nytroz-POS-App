@@ -10,14 +10,21 @@ class TillRemoteDatasource {
   final Dio _dio;
 
   static const _tillPath = '/api/v1/tenant-admin/tills';
+  static const _outletOptionsPath = '/api/v1/tenant-admin/outlets/options';
 
   Future<TillListResultDto> getTills(TillListQuery query) async {
-    final response = await _dio.get<dynamic>(
+    final listResponse = await _dio.get<dynamic>(
       _tillPath,
       queryParameters: _listQueryParameters(query),
     );
+    final summaryResponse = await _dio.get<dynamic>('$_tillPath/summary');
 
-    return _parseListResponse(response.data, response.requestOptions);
+    final summary = _parseSummary(summaryResponse.data);
+    return _parseListResponse(
+      listResponse.data,
+      listResponse.requestOptions,
+      summary: summary,
+    );
   }
 
   Future<CreatedTillDto> createTill(CreateTillRequestDto request) async {
@@ -29,6 +36,29 @@ class TillRemoteDatasource {
     return CreatedTillDto.fromJson(
       _unwrapApiPayload(response.data, response.requestOptions),
     );
+  }
+
+  Future<List<OutletOptionDto>> getOutletOptions() async {
+    final response = await _dio.get<dynamic>(_outletOptionsPath);
+    final data = response.data;
+
+    if (data is! Map) {
+      return const [];
+    }
+
+    final root = Map<String, dynamic>.from(data);
+    final rawItems = root['data'];
+
+    if (rawItems is! List) {
+      return const [];
+    }
+
+    return rawItems
+        .whereType<Map>()
+        .map((item) => OutletOptionDto.fromJson(
+              Map<String, dynamic>.from(item),
+            ))
+        .toList(growable: false);
   }
 
   Map<String, dynamic> _listQueryParameters(TillListQuery query) {
@@ -44,10 +74,24 @@ class TillRemoteDatasource {
     };
   }
 
+  TillListSummaryDto? _parseSummary(dynamic data) {
+    if (data is! Map) {
+      return null;
+    }
+
+    final root = Map<String, dynamic>.from(data);
+    final payload = root['data'] is Map
+        ? Map<String, dynamic>.from(root['data'] as Map)
+        : root;
+
+    return TillListSummaryDto.fromJson(payload);
+  }
+
   TillListResultDto _parseListResponse(
     dynamic data,
-    RequestOptions requestOptions,
-  ) {
+    RequestOptions requestOptions, {
+    TillListSummaryDto? summary,
+  }) {
     if (data is Map && data['success'] == false) {
       throw DioException(
         requestOptions: requestOptions,
@@ -62,10 +106,10 @@ class TillRemoteDatasource {
           ? Map<String, dynamic>.from(root['data'] as Map)
           : root;
 
-      return TillListResultDto.fromJson(payload);
+      return TillListResultDto.fromJson(payload, summary: summary);
     }
 
-    return TillListResultDto.fromJson(const {});
+    return TillListResultDto.fromJson(const {}, summary: summary);
   }
 
   Map<String, dynamic> _unwrapApiPayload(

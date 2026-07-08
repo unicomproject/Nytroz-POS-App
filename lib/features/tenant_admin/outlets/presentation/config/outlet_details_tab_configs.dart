@@ -18,39 +18,45 @@ class OutletDetailsTabConfig extends OutletWidgetPermissionConfig {
 
 const outletDetailsTabConfigs = <OutletDetailsTabConfig>[
   OutletDetailsTabConfig(
-    id: 'overview',
-    label: 'Overview',
-    icon: Icons.dashboard_outlined,
+    id: 'revenue',
+    permissionsAny: [
+      TenantAdminPermissionCodes.tenantOutletsRevenueView,
+      TenantAdminPermissionCodes.tenantReportsSalesView,
+      TenantAdminPermissionCodes.outletSalesSummaryView,
+    ],
+    label: 'Revenue',
+    icon: Icons.show_chart_outlined,
+  ),
+  OutletDetailsTabConfig(
+    id: 'assigned-users',
+    permissionsAny: [
+      TenantAdminPermissionCodes.tenantOutletsUsersView,
+      TenantAdminPermissionCodes.tenantUsersView,
+      TenantAdminPermissionCodes.userView,
+    ],
+    label: 'Assigned Users',
+    icon: Icons.people_outline,
   ),
   OutletDetailsTabConfig(
     id: 'tills',
     permissionsAny: [
+      TenantAdminPermissionCodes.tenantOutletsTillsView,
+      TenantAdminPermissionCodes.tenantTillsView,
       TenantAdminPermissionCodes.tillView,
-      TenantAdminPermissionCodes.outletTillSummaryView,
     ],
     label: 'Tills',
     icon: Icons.point_of_sale_outlined,
   ),
   OutletDetailsTabConfig(
-    id: 'staff',
+    id: 'information',
     permissionsAny: [
-      TenantAdminPermissionCodes.userView,
-      TenantAdminPermissionCodes.outletStaffSummaryView,
+      TenantAdminPermissionCodes.tenantOutletsDetailsView,
+      TenantAdminPermissionCodes.tenantOutletsView,
+      TenantAdminPermissionCodes.outletView,
+      TenantAdminPermissionCodes.outletDetailView,
     ],
-    label: 'Staff',
-    icon: Icons.people_outline,
-  ),
-  OutletDetailsTabConfig(
-    id: 'sales',
-    permission: TenantAdminPermissionCodes.outletSalesSummaryView,
-    label: 'Sales',
-    icon: Icons.show_chart_outlined,
-  ),
-  OutletDetailsTabConfig(
-    id: 'settings',
-    permission: TenantAdminPermissionCodes.outletUpdate,
-    label: 'Settings',
-    icon: Icons.settings_outlined,
+    label: 'Outlet Information',
+    icon: Icons.info_outline,
   ),
 ];
 

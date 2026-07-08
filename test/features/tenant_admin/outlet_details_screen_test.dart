@@ -4,14 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/core/access/tenant_admin_access_codes.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_context.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_access_checker.dart';
-import 'package:nytroz_pos/features/tenant_admin/outlets/domain/entities/outlet_details.dart';
-import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/providers/outlet_providers.dart';
+import 'package:nytroz_pos/features/tenant_admin/outlets/domain/entities/outlet_detail_entities.dart';
+import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/providers/outlet_detail_providers.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/screens/outlet_details_screen.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_access_provider.dart';
 
 void main() {
   group('Outlet details screen', () {
-    testWidgets('renders outlet panel sections for full permissions',
+    testWidgets('renders outlet detail tabs for full permissions',
         (tester) async {
       await _pumpOutletDetails(
         tester,
@@ -19,13 +19,14 @@ void main() {
         width: 1200,
       );
 
-      expect(find.text('High Street Store'), findsOneWidget);
-      expect(find.text('Overview'), findsOneWidget);
-      expect(find.text('Tills'), findsWidgets);
-      expect(find.text('Staff'), findsWidgets);
+      expect(find.text('High Street Store'), findsWidgets);
+      expect(find.text('Revenue'), findsOneWidget);
+      expect(find.text('Assigned Users'), findsOneWidget);
+      expect(find.text('Tills'), findsOneWidget);
+      expect(find.text('Outlet Information'), findsOneWidget);
     });
 
-    testWidgets('hides sales tab without sales permission', (tester) async {
+    testWidgets('hides revenue tab without sales permission', (tester) async {
       await _pumpOutletDetails(
         tester,
         permissions: [
@@ -37,8 +38,11 @@ void main() {
         width: 1200,
       );
 
-      expect(find.text('High Street Store'), findsOneWidget);
-      expect(find.text('Sales'), findsNothing);
+      expect(find.text('High Street Store'), findsWidgets);
+      expect(find.text('Revenue'), findsNothing);
+      expect(find.text('Assigned Users'), findsOneWidget);
+      expect(find.text('Tills'), findsOneWidget);
+      expect(find.text('Outlet Information'), findsOneWidget);
     });
   });
 }
@@ -46,55 +50,62 @@ void main() {
 const _fullOutletPermissions = [
   TenantAdminPermissionCodes.outletView,
   TenantAdminPermissionCodes.outletDetailView,
-  TenantAdminPermissionCodes.outletTillSummaryView,
-  TenantAdminPermissionCodes.outletStaffSummaryView,
-  TenantAdminPermissionCodes.outletSalesSummaryView,
-  TenantAdminPermissionCodes.outletUpdate,
+  TenantAdminPermissionCodes.tenantOutletsRevenueView,
+  TenantAdminPermissionCodes.tenantOutletsUsersView,
+  TenantAdminPermissionCodes.tenantOutletsTillsView,
+  TenantAdminPermissionCodes.tenantOutletsUpdate,
   TenantAdminPermissionCodes.tillView,
   TenantAdminPermissionCodes.userView,
 ];
 
-const _sampleOutletDetails = OutletDetails(
-  id: 'outlet-1',
-  name: 'High Street Store',
-  code: 'OUT-001',
-  address: '12 High Street, London',
+const _sampleOutletDetail = OutletDetail(
+  outletId: 'outlet-1',
+  outletName: 'High Street Store',
+  outletCode: 'OUT-001',
+  outletType: 'STORE',
   status: 'Active',
-  phone: '+44 7700 900123',
-  email: 'outlet@coffeecorner.test',
+  addressLine1: '12 High Street',
+  city: 'London',
+  phoneNumber: '+44 7700 900123',
+  emailAddress: 'outlet@coffeecorner.test',
   managerName: 'Aisha Khan',
-  openingHours: '08:00 – 20:00',
-  todaysStatus: 'Operating as normal today',
-  tillCount: 3,
-  onlineTillCount: 2,
-  staffCount: 4,
-  todaySalesAmount: 1245.50,
-  todaySalesCurrency: 'GBP',
-  weekSalesAmount: 8920.30,
-  weekSalesCurrency: 'GBP',
-  assignedTills: [
-    OutletRelatedItem(
-      id: 'till-1',
-      title: 'Front Counter Till',
-      subtitle: 'TILL-001',
-      status: 'Online',
-    ),
-  ],
-  staff: [
-    OutletRelatedItem(
-      id: 'staff-1',
-      title: 'Aisha Khan',
-      subtitle: '+44 7700 900123',
-      status: 'Manager',
-    ),
-  ],
-  needsAttention: [
-    OutletAttentionItem(
-      title: '1 till offline',
-      message: 'Back Office Till is offline',
-      status: 'warning',
-    ),
-  ],
+  operatingHours: '08:00 – 20:00',
+);
+
+const _emptyRevenueSummary = OutletRevenueSummary(
+  totalRevenue: 0,
+  averageOrderValue: 0,
+  totalOrders: 0,
+  refunds: 0,
+  revenueOverTime: [],
+  revenueByPaymentMethod: [],
+  revenueSummary: OutletRevenueBreakdown(
+    grossRevenue: 0,
+    discounts: 0,
+    returns: 0,
+    netRevenue: 0,
+    taxCollected: 0,
+  ),
+);
+
+const _emptyAssignedUsers = OutletAssignedUsersResult(
+  summary: OutletAssignedUsersSummary(
+    totalAssignedUsers: 0,
+    activeUsers: 0,
+    pendingInvites: 0,
+    managers: 0,
+  ),
+  items: [],
+);
+
+const _emptyTills = OutletTillsDetailResult(
+  summary: OutletTillsSummary(
+    totalTills: 0,
+    activeTills: 0,
+    currentlyOpenTills: 0,
+    tillsNeedingAttention: 0,
+  ),
+  items: [],
 );
 
 Future<void> _pumpOutletDetails(
@@ -152,8 +163,17 @@ Future<void> _pumpOutletDetails(
         tenantAdminAccessCheckerProvider.overrideWith(
           (ref) async => accessChecker,
         ),
-        outletDetailsProvider('outlet-1').overrideWith(
-          (ref) async => _sampleOutletDetails,
+        outletDetailProvider('outlet-1').overrideWith(
+          (ref) async => _sampleOutletDetail,
+        ),
+        outletRevenueSummaryProvider('outlet-1').overrideWith(
+          (ref) async => _emptyRevenueSummary,
+        ),
+        outletAssignedUsersProvider('outlet-1').overrideWith(
+          (ref) async => _emptyAssignedUsers,
+        ),
+        outletTillsDetailProvider('outlet-1').overrideWith(
+          (ref) async => _emptyTills,
         ),
       ],
       child: MaterialApp(

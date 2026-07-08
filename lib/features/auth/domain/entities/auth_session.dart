@@ -1,6 +1,7 @@
 import '../../../../core/access/pos_access_codes.dart';
 import '../../../../core/access/tenant_admin_access_codes.dart';
 import '../utils/jwt_expiry.dart';
+import '../utils/jwt_permissions.dart';
 
 class AuthSession {
   const AuthSession({
@@ -41,9 +42,15 @@ class AuthSession {
   bool get canOpenPosTill => hasPermission(PosPermissionCodes.openTill);
 
   bool get canAccessTenantAdminDashboard {
-    return hasPermission(TenantAdminPermissionCodes.tenantContextView) ||
-        hasPermission(TenantAdminPermissionCodes.dashboardView) ||
-        hasPermission(TenantAdminPermissionCodes.tenantDashboardView);
+    const dashboardCodes = [
+      TenantAdminPermissionCodes.tenantContextView,
+      TenantAdminPermissionCodes.dashboardView,
+      TenantAdminPermissionCodes.tenantDashboardView,
+      'dashboard.view',
+      'tenant_admin.dashboard.view',
+    ];
+
+    return dashboardCodes.any(hasPermission);
   }
 
   bool get requiresPosDeviceBootstrap => canActivatePosDevice || canOpenPosTill;
@@ -65,10 +72,28 @@ class AuthSession {
       refreshToken: json['refreshToken'] as String?,
       userId: json['userId'] as String? ?? '',
       userDisplayName: json['userDisplayName'] as String? ?? '',
-      permissionCodes: _stringList(json['permissionCodes']),
+      permissionCodes: _resolveStoredPermissionCodes(
+        accessToken: json['accessToken'] as String? ?? '',
+        storedCodes: _stringList(json['permissionCodes']),
+      ),
       expiresAt: DateTime.tryParse(json['expiresAt']?.toString() ?? ''),
     );
   }
+}
+
+List<String> _resolveStoredPermissionCodes({
+  required String accessToken,
+  required List<String> storedCodes,
+}) {
+  if (storedCodes.isNotEmpty) {
+    return storedCodes;
+  }
+
+  if (accessToken.isEmpty) {
+    return storedCodes;
+  }
+
+  return readJwtPermissionCodes(accessToken);
 }
 
 List<String> _stringList(Object? value) {

@@ -8,12 +8,12 @@ import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_me
 import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_access_checker.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_access_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/presentation/providers/till_providers.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/presentation/providers/till_visibility_provider.dart';
 import 'package:nytroz_pos/core/network/dio_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/presentation/screens/add_till_screen.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/presentation/screens/till_list_screen.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/presentation/widgets/till_action_menu.dart';
-import 'package:nytroz_pos/features/tenant_admin/tills/presentation/widgets/till_sales_display.dart';
 
 void main() {
   group('Till list screen', () {
@@ -126,32 +126,12 @@ void main() {
       expect(find.byIcon(Icons.more_vert), findsNothing);
     });
 
-    testWidgets('TodaySales_Hidden_WhenSalesPermissionMissing', (tester) async {
-      await _pumpTillList(
-        tester,
-        permissions: [TenantAdminPermissionCodes.tillView],
-        features: [TenantAdminFeatureCodes.tillManagement],
-        width: 1200,
-      );
-
-      expect(find.text("Today's sales"), findsNothing);
-      expect(find.byType(TillSalesDisplay), findsNothing);
-    });
-
-    testWidgets('SalesColumn_Removed_WhenSalesPermissionMissing',
+    testWidgets(
+        'TillsMenu_Visible_WhenTillViewPermissionExists_WithoutExplicitFeatureEntitlement',
         (tester) async {
-      await _pumpTillList(
-        tester,
-        permissions: [TenantAdminPermissionCodes.tillView],
-        features: [TenantAdminFeatureCodes.tillManagement],
-        width: 1200,
-      );
-
-      expect(find.text('Rs 1245.60'), findsNothing);
-    });
-
-    testWidgets('TillsMenu_Hidden_WhenTillManagementFeatureMissing',
-        (tester) async {
+      // No explicit feature-entitlement data should not hard-block access;
+      // it falls back to permission-based checks, consistent with every
+      // other tenant admin module (dashboard, outlets, staff, etc.).
       final access = _checker(
         permissions: [TenantAdminPermissionCodes.tillView],
         features: [TenantAdminFeatureCodes.dashboard],
@@ -167,7 +147,7 @@ void main() {
         order: 3,
       );
 
-      expect(access.canAccessMenuItem(menuItem), isFalse);
+      expect(access.canAccessMenuItem(menuItem), isTrue);
     });
 
     testWidgets('TillsMenu_Visible_WhenFeatureAndTillViewExist',
@@ -225,7 +205,6 @@ Future<void> _pumpTillList(
   required List<String> features,
   double width = 800,
   double height = 900,
-  bool includeSales = false,
 }) async {
   final accessChecker = _checker(
     permissions: permissions,
@@ -247,6 +226,7 @@ Future<void> _pumpTillList(
               totalTills: 1,
               onlineCount: 1,
               offlineCount: 0,
+              inactiveCount: 0,
               needsAttentionCount: 0,
             ),
             items: [
@@ -258,9 +238,7 @@ Future<void> _pumpTillList(
                 code: 'TILL-001',
                 status: 'active',
                 operationalStatus: 'online',
-                todaySalesAmount: includeSales ? 1245.60 : null,
-                currency: includeSales ? 'LKR' : null,
-                lastSyncAt: includeSales ? DateTime(2026, 6, 22, 10, 0) : null,
+                lastActiveAt: DateTime(2026, 6, 22, 10, 0),
               ),
             ],
             page: 1,

@@ -36,17 +36,18 @@ class TillTable extends StatelessWidget {
     final showActions = inlineActions.isNotEmpty || moreActions.isNotEmpty;
 
     final columns = <DataColumn>[
-      const DataColumn(label: Text('Till')),
+      const DataColumn(label: Text('Till Name')),
+      const DataColumn(label: Text('Till Code')),
       const DataColumn(label: Text('Outlet')),
       const DataColumn(label: Text('Status')),
-      if (visibility.showTodaySales)
-        const DataColumn(label: Text("Today's sales")),
+      const DataColumn(label: Text('Last Active')),
       if (showActions) const DataColumn(label: Text('Actions')),
     ];
 
     final rows = tills.map((till) {
       final cells = <DataCell>[
         DataCell(_TillIdentity(till: till)),
+        DataCell(Text(till.code)),
         DataCell(Text(till.outletName)),
         DataCell(
           Column(
@@ -75,31 +76,7 @@ class TillTable extends StatelessWidget {
             ],
           ),
         ),
-        if (visibility.showTodaySales)
-          DataCell(
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  till.todaySalesAmount == null
-                      ? '—'
-                      : formatTillSales(
-                          till.todaySalesAmount!,
-                          till.currency ?? 'GBP',
-                        ),
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                Text(
-                  'Last sync ${formatTillLastSync(till.lastSyncAt)}',
-                  style: const TextStyle(
-                    color: TenantAdminColors.mutedText,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        DataCell(Text(formatTillLastSync(till.lastActiveAt))),
         if (showActions)
           DataCell(
             Row(

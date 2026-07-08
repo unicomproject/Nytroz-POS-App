@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../domain/entities/outlet_list_query.dart';
 import '../models/create_outlet_request_dto.dart';
+import '../models/outlet_detail_dtos.dart';
 import '../models/outlet_dto.dart';
 
 class OutletRemoteDatasource {
@@ -9,7 +10,10 @@ class OutletRemoteDatasource {
 
   final Dio _dio;
 
+  static const _tenantAdminOutletBase = '/api/v1/tenant-admin/outlets';
+
   static const _outletPaths = [
+    '/api/v1/outlets',
     '/api/v1/tenant-admin/outlets',
     '/api/tenant-admin/outlets',
   ];
@@ -191,6 +195,7 @@ class OutletRemoteDatasource {
   Map<String, dynamic> _listQueryParameters(OutletListQuery query) {
     return {
       'page': query.page,
+      'pageNumber': query.page,
       'pageSize': query.pageSize,
       'sortBy': query.sortBy,
       'sortDirection': query.sortDirection,
@@ -256,5 +261,34 @@ class OutletRemoteDatasource {
     }
 
     return root;
+  }
+
+  Future<OutletDetailDto> getOutletDetail(String id) async {
+    final response = await _dio.get<dynamic>('$_tenantAdminOutletBase/$id');
+    return OutletDetailDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<OutletRevenueSummaryDto> getOutletRevenueSummary(String id) async {
+    final response =
+        await _dio.get<dynamic>('$_tenantAdminOutletBase/$id/revenue-summary');
+    return OutletRevenueSummaryDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<OutletAssignedUsersDto> getOutletAssignedUsers(String id) async {
+    final response = await _dio.get<dynamic>('$_tenantAdminOutletBase/$id/users');
+    return OutletAssignedUsersDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<OutletTillsDetailDto> getOutletTillsDetail(String id) async {
+    final response = await _dio.get<dynamic>('$_tenantAdminOutletBase/$id/tills');
+    return OutletTillsDetailDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
   }
 }
