@@ -5,11 +5,13 @@ import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 class PosStatusChip extends StatelessWidget {
   const PosStatusChip({
     super.key,
+    this.displayLabel,
     required this.tillLabel,
     required this.statusLabel,
     required this.isOpen,
   });
 
+  final String? displayLabel;
   final String tillLabel;
   final String statusLabel;
   final bool isOpen;
@@ -18,6 +20,9 @@ class PosStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusColor =
         isOpen ? TenantAdminColors.success : TenantAdminColors.warning;
+    final label = displayLabel?.trim().isNotEmpty == true
+        ? displayLabel!.trim()
+        : '$tillLabel / $statusLabel';
 
     return Container(
       constraints: const BoxConstraints(minHeight: 48),
@@ -50,7 +55,7 @@ class PosStatusChip extends StatelessWidget {
           ),
           const SizedBox(width: TenantAdminSpacing.sm),
           Text(
-            '$tillLabel / $statusLabel',
+            label,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: TenantAdminColors.bodyText,
                   fontWeight: FontWeight.w700,

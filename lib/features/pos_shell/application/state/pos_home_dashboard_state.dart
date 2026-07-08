@@ -7,11 +7,15 @@ class PosHomeDashboardState {
     required this.fallbackUserDisplayName,
     required this.tillLabel,
     required this.tillStatusLabel,
+    this.tillDisplayLabel = '',
     required this.isTillOpen,
     required this.statusMessage,
     this.notificationCount = 0,
     this.dateDisplay = '',
     this.timeDisplay = '',
+    this.serverNowUtc,
+    this.serverTimeReceivedAt,
+    this.outletTimezone,
     this.startSaleTitle = 'Start a Sale',
     this.startSaleDescription = '',
     this.startSaleButtonLabel = 'Start New Sale',
@@ -32,6 +36,7 @@ class PosHomeDashboardState {
 
   // Mock/view-only status until open-till session state is implemented.
   final String tillStatusLabel;
+  final String tillDisplayLabel;
   final bool isTillOpen;
 
   // Mock/view-only copy; opening this dashboard does not create a transaction.
@@ -41,6 +46,9 @@ class PosHomeDashboardState {
   final int notificationCount;
   final String dateDisplay;
   final String timeDisplay;
+  final DateTime? serverNowUtc;
+  final DateTime? serverTimeReceivedAt;
+  final String? outletTimezone;
   final String startSaleTitle;
   final String startSaleDescription;
   final String startSaleButtonLabel;

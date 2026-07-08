@@ -11,22 +11,31 @@ class PosHomeRemoteDatasource {
   final Dio _dio;
 
   Future<PosHomeDashboardPayload> getPosHome({
-    required String outletId,
-    required String tillId,
+    String? outletId,
+    String? tillId,
+    String? deviceId,
   }) async {
     final stopwatch = Stopwatch()..start();
+    final queryParameters = <String, dynamic>{};
+
+    if (outletId != null && outletId.trim().isNotEmpty) {
+      queryParameters['outletId'] = outletId.trim();
+    }
+    if (tillId != null && tillId.trim().isNotEmpty) {
+      queryParameters['tillId'] = tillId.trim();
+    }
+    if (deviceId != null && deviceId.trim().isNotEmpty) {
+      queryParameters['deviceId'] = deviceId.trim();
+    }
 
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         ApiEndpoints.posHome,
-        queryParameters: {
-          'outletId': outletId,
-          'tillId': tillId,
-        },
+        queryParameters: queryParameters,
       );
       stopwatch.stop();
       developer.log(
-        'API success. step=pos-home endpoint=${ApiEndpoints.posHome} status=${response.statusCode} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()}',
+        'API success. step=pos-home endpoint=${ApiEndpoints.posHome} status=${response.statusCode} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()} deviceId=${deviceId ?? 'none'} tillId=${tillId ?? 'none'}',
         name: 'pos.home',
       );
 
@@ -73,49 +82,186 @@ class PosHomeRemoteDatasource {
 
 class PosHomeDashboardPayload {
   const PosHomeDashboardPayload({
+    required this.contextResolved,
+    this.reasonCode,
+    this.resolutionMessage,
+    this.requiredAction,
     required this.userDisplayName,
     required this.outletName,
     required this.tillName,
+    required this.tillAreaName,
+    required this.tillNumber,
+    required this.tillStatusLabel,
+    required this.tillDisplayLabel,
     required this.isTillOpen,
     required this.statusMessage,
     required this.notificationCount,
     required this.permissions,
     required this.cards,
+    this.serverNowUtc,
+    this.outletTimezone,
+    this.businessDate,
   });
 
+  final bool contextResolved;
+  final String? reasonCode;
+  final String? resolutionMessage;
+  final String? requiredAction;
   final String userDisplayName;
   final String outletName;
   final String tillName;
+  final String tillAreaName;
+  final int tillNumber;
+  final String tillStatusLabel;
+  final String tillDisplayLabel;
   final bool isTillOpen;
   final String statusMessage;
   final int notificationCount;
   final List<String> permissions;
   final PosHomeCardsPayload cards;
+  final DateTime? serverNowUtc;
+  final String? outletTimezone;
+  final DateTime? businessDate;
 
   factory PosHomeDashboardPayload.fromJson(Map<String, dynamic> json) {
+    final contextResolved = json['contextResolved'] == true;
+    final reasonCode = _nullableString(json['reasonCode']);
+    final resolutionMessage = _nullableString(json['message']);
+    final requiredAction = _nullableString(json['requiredAction']);
+
+    if (!contextResolved) {
+      return PosHomeDashboardPayload(
+        contextResolved: false,
+        reasonCode: reasonCode,
+        resolutionMessage: resolutionMessage,
+        requiredAction: requiredAction,
+        userDisplayName: '',
+        outletName: '',
+        tillName: '',
+        tillAreaName: '',
+        tillNumber: 0,
+        tillStatusLabel: 'Closed',
+        tillDisplayLabel: '',
+        isTillOpen: false,
+        statusMessage: '',
+        notificationCount: 0,
+        permissions: const [],
+        cards: PosHomeCardsPayload.empty(),
+      );
+    }
+
     final user = _map(json['user']);
+    final cashier = _map(json['cashier']);
     final context = _map(json['context']);
+    final till = _map(json['till']);
     final cards = _map(json['cards']);
+    final time = _map(json['time']);
+    final notifications = _map(json['notifications']);
+
+    final areaName = _string(till['areaName'], fallback: '');
+    final number = _int(till['number']);
+    final sessionStatus = _string(till['status'], fallback: 'Closed');
+    final displayLabel = _string(till['displayLabel']);
+    final tillName = _string(
+      till['name'],
+      fallback: _string(context['tillName'], fallback: 'Till'),
+    );
+    final resolvedDisplayLabel = displayLabel.isNotEmpty
+        ? displayLabel
+        : _buildTillDisplayLabel(
+            areaName: areaName,
+            number: number,
+            statusLabel: sessionStatus,
+            tillName: tillName,
+          );
+    final isTillOpen = sessionStatus.toLowerCase() == 'open';
+    final userDisplayName = _string(
+      cashier['displayName'],
+      fallback: _string(user['fullName'], fallback: 'Cashier'),
+    );
 
     return PosHomeDashboardPayload(
-      userDisplayName: _string(user['fullName'], fallback: 'Cashier'),
+      contextResolved: true,
+      userDisplayName: userDisplayName,
       outletName: _string(context['outletName'], fallback: 'Outlet'),
-      tillName: _string(context['tillName'], fallback: 'Till'),
-      isTillOpen: _string(context['tillSessionId']).isNotEmpty,
-      statusMessage: _buildStatusMessage(context),
-      notificationCount: _int(json['unreadNotificationCount']),
+      tillName: tillName,
+      tillAreaName: areaName,
+      tillNumber: number,
+      tillStatusLabel: sessionStatus,
+      tillDisplayLabel: resolvedDisplayLabel,
+      isTillOpen: isTillOpen,
+      statusMessage: _buildStatusMessage(
+        tillDisplayLabel: resolvedDisplayLabel,
+        isTillOpen: isTillOpen,
+      ),
+      notificationCount: _int(
+        notifications['unreadCount'],
+        fallback: _int(json['unreadNotificationCount']),
+      ),
       permissions: _stringList(json['permissions']),
       cards: PosHomeCardsPayload.fromJson(cards),
+      serverNowUtc: _parseDateTime(time['serverNowUtc']),
+      outletTimezone: _nullableString(time['outletTimezone']),
+      businessDate: _parseDateOnly(time['businessDate'] ?? till['businessDate']),
     );
   }
 
-  static String _buildStatusMessage(Map<String, dynamic> context) {
-    final tillName = _string(context['tillName'], fallback: 'Till');
-    if (_string(context['tillSessionId']).isEmpty) {
-      return '$tillName is not open.';
+  String get userFacingErrorMessage {
+    if (resolutionMessage != null && resolutionMessage!.trim().isNotEmpty) {
+      return resolutionMessage!.trim();
     }
 
-    return '$tillName is open and ready to take sales.';
+    return messageForReasonCode(reasonCode);
+  }
+
+  static String messageForReasonCode(String? reasonCode) {
+    switch (reasonCode) {
+      case 'USER_CONTEXT_MISSING':
+        return 'Cashier profile could not be resolved. Please sign in again.';
+      case 'DEVICE_CONTEXT_MISSING':
+        return 'Current POS device could not be resolved. Activate this device first.';
+      case 'DEVICE_NOT_TRUSTED':
+        return 'This POS device is not trusted.';
+      case 'DEVICE_NOT_ASSIGNED_TO_TILL':
+        return 'This POS device is not assigned to a till.';
+      case 'TILL_NOT_FOUND':
+        return 'Assigned till could not be found.';
+      case 'TILL_INACTIVE':
+        return 'Assigned till is not active.';
+      case 'NO_OPEN_TILL_SESSION':
+        return 'No open till session found. Please open a till session first.';
+      case 'OUTLET_TIMEZONE_MISSING':
+        return 'Outlet timezone is not configured.';
+      case 'PERMISSION_DENIED':
+        return 'You do not have permission to view POS Home.';
+      default:
+        return 'POS home dashboard context could not be resolved.';
+    }
+  }
+
+  static String _buildTillDisplayLabel({
+    required String areaName,
+    required int number,
+    required String statusLabel,
+    required String tillName,
+  }) {
+    if (areaName.isNotEmpty && number > 0) {
+      final paddedNumber = number.toString().padLeft(2, '0');
+      return '$areaName Till $paddedNumber / $statusLabel';
+    }
+
+    return '$tillName / $statusLabel';
+  }
+
+  static String _buildStatusMessage({
+    required String tillDisplayLabel,
+    required bool isTillOpen,
+  }) {
+    if (!isTillOpen) {
+      return '$tillDisplayLabel is not open.';
+    }
+
+    return '$tillDisplayLabel is open and ready to take sales.';
   }
 
   static Map<String, dynamic> _map(Object? value) {
@@ -135,12 +281,21 @@ class PosHomeDashboardPayload {
     return text;
   }
 
-  static int _int(Object? value) {
+  static String? _nullableString(Object? value) {
+    final text = value?.toString().trim();
+    if (text == null || text.isEmpty) {
+      return null;
+    }
+
+    return text;
+  }
+
+  static int _int(Object? value, {int fallback = 0}) {
     if (value is num) {
       return value.toInt();
     }
 
-    return int.tryParse(value?.toString() ?? '') ?? 0;
+    return int.tryParse(value?.toString() ?? '') ?? fallback;
   }
 
   static List<String> _stringList(Object? value) {
@@ -152,6 +307,27 @@ class PosHomeDashboardPayload {
     }
 
     return const [];
+  }
+
+  static DateTime? _parseDateTime(Object? value) {
+    if (value == null) {
+      return null;
+    }
+
+    return DateTime.tryParse(value.toString())?.toUtc();
+  }
+
+  static DateTime? _parseDateOnly(Object? value) {
+    if (value == null) {
+      return null;
+    }
+
+    final parsed = DateTime.tryParse(value.toString());
+    if (parsed == null) {
+      return null;
+    }
+
+    return DateTime(parsed.year, parsed.month, parsed.day);
   }
 }
 
@@ -171,6 +347,17 @@ class PosHomeCardsPayload {
   final PosHomeCardPayload customers;
   final PosHomeCardPayload parkedSales;
   final PosHomeCardPayload cashDrawer;
+
+  factory PosHomeCardsPayload.empty() {
+    const disabled = PosHomeCardPayload(enabled: false);
+    return const PosHomeCardsPayload(
+      startSale: disabled,
+      returnsRefunds: disabled,
+      customers: disabled,
+      parkedSales: disabled,
+      cashDrawer: disabled,
+    );
+  }
 
   factory PosHomeCardsPayload.fromJson(Map<String, dynamic> json) {
     return PosHomeCardsPayload(

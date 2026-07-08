@@ -7,8 +7,8 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
-import '../../../till/presentation/providers/till_provider.dart';
 import '../../../../shared/pos_session/pos_session_bootstrap_provider.dart';
+import '../../../till/presentation/providers/till_provider.dart';
 import '../../application/state/pos_home_dashboard_state.dart';
 import '../../data/datasources/pos_home_remote_datasource.dart';
 import '../../domain/entities/pos_home_action.dart';
@@ -31,22 +31,37 @@ final posHomeDashboardProvider =
   await ref.read(posSessionBootstrapProvider.notifier).bootstrap();
 
   final deviceContext = ref.read(deviceActivationProvider).deviceContext;
-  final tillSession = ref.read(tillProvider).session;
-
-  if (deviceContext == null || tillSession == null) {
+  if (deviceContext == null) {
     throw const PosHomeException('POS context is not ready.');
   }
 
+  final tillSession = ref.read(tillProvider).session;
+  final outletId = _resolveContextId(
+    deviceContext.outletId,
+    tillSession?.outletId,
+  );
+  final tillId = _resolveContextId(
+    deviceContext.tillId,
+    tillSession?.tillId,
+  );
+  final deviceId = deviceContext.deviceId.trim();
+
   final payload = await ref.watch(posHomeRemoteDatasourceProvider).getPosHome(
-        outletId: deviceContext.outletId,
-        tillId: deviceContext.tillId,
+        outletId: outletId.isEmpty ? null : outletId,
+        tillId: tillId.isEmpty ? null : tillId,
+        deviceId: deviceId.isEmpty ? null : deviceId,
       );
+
+  if (!payload.contextResolved) {
+    throw PosHomeException(payload.userFacingErrorMessage);
+  }
+
   final sessionPermissions = session.permissionCodes.toSet();
 
   return _mapPayloadToDashboardState(
     payload: payload,
     isTrustedDevice: deviceContext.isTrusted,
-    hasOpenTillSession: tillSession.status == 'open',
+    hasOpenTillSession: payload.isTillOpen,
     sessionPermissions: sessionPermissions,
   );
 });
@@ -60,9 +75,13 @@ void _ensureAuthorizationHeader(Dio dio, AuthSession session) {
   dio.options.headers['Authorization'] = 'Bearer ${session.accessToken}';
 }
 
+String _resolveContextId(String primary, String? fallback) {
+  final resolved = primary.trim().isNotEmpty ? primary.trim() : fallback?.trim() ?? '';
+  return resolved;
+}
+
 PosHomeDashboardState buildPosHomeShellState({
   required String userDisplayName,
-  required String tillLabel,
   required bool isTrustedDevice,
   required bool hasOpenTillSession,
   required Set<String> permissionCodes,
@@ -72,8 +91,9 @@ PosHomeDashboardState buildPosHomeShellState({
   return PosHomeDashboardState(
     fallbackUserDisplayName:
         userDisplayName.trim().isEmpty ? 'Cashier' : userDisplayName.trim(),
-    tillLabel: tillLabel.trim().isEmpty ? 'Till pending' : tillLabel.trim(),
+    tillLabel: 'Till pending',
     tillStatusLabel: hasOpenTillSession ? 'Open' : 'Closed',
+    tillDisplayLabel: '',
     isTillOpen: hasOpenTillSession,
     statusMessage: hasOpenTillSession
         ? 'Ready for sales'
@@ -170,22 +190,32 @@ PosHomeDashboardState _mapPayloadToDashboardState({
   required bool hasOpenTillSession,
   required Set<String> sessionPermissions,
 }) {
-  final now = DateTime.now();
-  final permissions = sessionPermissions.isNotEmpty
-      ? sessionPermissions
-      : payload.permissions.toSet();
+  final receivedAt = DateTime.now().toUtc();
+  final outletNow = _resolveOutletNow(
+    serverNowUtc: payload.serverNowUtc,
+    receivedAt: receivedAt,
+    outletTimezone: payload.outletTimezone,
+  );
+  // Backend-provided permissions are the source of truth for what the POS can render.
+  final permissions = payload.permissions.isNotEmpty
+      ? payload.permissions.toSet()
+      : sessionPermissions;
   final cards = payload.cards;
   final onlineOrdersCard = cards.onlineOrders;
 
   return PosHomeDashboardState(
     fallbackUserDisplayName: payload.userDisplayName,
     tillLabel: payload.tillName,
-    tillStatusLabel: payload.isTillOpen ? 'Open' : 'Closed',
+    tillStatusLabel: payload.tillStatusLabel,
+    tillDisplayLabel: payload.tillDisplayLabel,
     isTillOpen: payload.isTillOpen,
     statusMessage: payload.statusMessage,
     notificationCount: payload.notificationCount,
-    dateDisplay: _formatDate(now),
-    timeDisplay: _formatTime(now),
+    dateDisplay: _formatDate(outletNow),
+    timeDisplay: _formatTime(outletNow),
+    serverNowUtc: payload.serverNowUtc,
+    serverTimeReceivedAt: receivedAt,
+    outletTimezone: payload.outletTimezone,
     startSaleTitle: 'Start a Sale',
     startSaleDescription:
         'Create a new transaction for any product, ticket, service or experience.',
@@ -295,6 +325,30 @@ String _formatCurrency(double? value) {
   }
 
   return 'LKR ${value.toStringAsFixed(2)}';
+}
+
+DateTime _resolveOutletNow({
+  required DateTime? serverNowUtc,
+  required DateTime receivedAt,
+  required String? outletTimezone,
+}) {
+  if (serverNowUtc == null) {
+    return DateTime.now();
+  }
+
+  final elapsed = DateTime.now().toUtc().difference(receivedAt);
+  final anchoredUtc = serverNowUtc.add(elapsed);
+  final offset = _timezoneOffset(outletTimezone);
+  return anchoredUtc.add(offset);
+}
+
+Duration _timezoneOffset(String? outletTimezone) {
+  switch (outletTimezone?.trim()) {
+    case 'Asia/Colombo':
+      return const Duration(hours: 5, minutes: 30);
+    default:
+      return Duration.zero;
+  }
 }
 
 String _formatTime(DateTime value) {

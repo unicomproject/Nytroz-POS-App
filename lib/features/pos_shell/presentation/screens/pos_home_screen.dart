@@ -47,7 +47,6 @@ class PosHomeScreen extends ConsumerWidget {
 
     return buildPosHomeShellState(
       userDisplayName: session?.userDisplayName ?? '',
-      tillLabel: deviceContext?.tillName ?? tillState.session?.tillName ?? '',
       isTrustedDevice: deviceContext?.isTrusted == true,
       hasOpenTillSession: tillState.hasOpenSession,
       permissionCodes: session?.permissionCodes.toSet() ?? const {},

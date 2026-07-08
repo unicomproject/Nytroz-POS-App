@@ -1,8 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/access/pos_access_codes.dart';
-import '../../../../auth/presentation/providers/session_provider.dart';
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../application/state/pos_home_dashboard_state.dart';
 import 'pos_status_chip.dart';
@@ -17,15 +18,10 @@ class PosHomeHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(authSessionProvider);
-    final sessionName = session?.userDisplayName.trim();
-    final userDisplayName = sessionName != null && sessionName.isNotEmpty
-        ? sessionName
-        : dashboard.fallbackUserDisplayName;
-    final canViewNotifications =
-        session?.hasPermission(PosPermissionCodes.viewNotifications) == true;
-    final canViewTillSession =
-        session?.hasPermission(PosPermissionCodes.viewTillSession) == true;
+    final perms = dashboard.grantedPermissionKeys ?? const {};
+    final userDisplayName = dashboard.fallbackUserDisplayName;
+    final canViewNotifications = perms.contains(PosPermissionCodes.viewNotifications);
+    final canViewTillSession = perms.contains(PosPermissionCodes.viewTillSession);
     final now = DateTime.now();
 
     return LayoutBuilder(
@@ -35,13 +31,14 @@ class PosHomeHeader extends ConsumerWidget {
           userDisplayName: userDisplayName,
           statusMessage: dashboard.isTillOpen
               ? dashboard.statusMessage
-              : '${dashboard.tillLabel} is not open.',
+              : '${dashboard.tillDisplayLabel.isNotEmpty ? dashboard.tillDisplayLabel : dashboard.tillLabel} is not open.',
         );
         final contextItems = _HeaderContext(
           now: now,
           dashboard: dashboard,
           showNotification: canViewNotifications,
           showTillStatus: canViewTillSession,
+          notificationCount: dashboard.notificationCount,
         );
 
         if (isCompact) {
@@ -102,12 +99,14 @@ class _HeaderContext extends StatelessWidget {
     required this.dashboard,
     required this.showNotification,
     required this.showTillStatus,
+    required this.notificationCount,
   });
 
   final DateTime now;
   final PosHomeDashboardState dashboard;
   final bool showNotification;
   final bool showTillStatus;
+  final int notificationCount;
 
   @override
   Widget build(BuildContext context) {
@@ -120,23 +119,43 @@ class _HeaderContext extends StatelessWidget {
           _NotificationButton(
             // Presentation-only until a notification module exists.
             onPressed: () {},
+            notificationCount: notificationCount,
           ),
-        if (showTillStatus)
+        if (showTillStatus && _shouldShowTillChip(dashboard))
           PosStatusChip(
+            displayLabel: dashboard.tillDisplayLabel,
             tillLabel: dashboard.tillLabel,
             statusLabel: dashboard.tillStatusLabel,
             isOpen: dashboard.isTillOpen,
           ),
-        _DateTimeChip(now: now),
+        _DateTimeChip(
+          serverNowUtc: dashboard.serverNowUtc,
+          serverTimeReceivedAt: dashboard.serverTimeReceivedAt,
+          outletTimezone: dashboard.outletTimezone,
+          fallbackNow: now,
+        ),
       ],
     );
   }
 }
 
+bool _shouldShowTillChip(PosHomeDashboardState dashboard) {
+  if (dashboard.tillDisplayLabel.trim().isNotEmpty) {
+    return true;
+  }
+
+  return dashboard.tillLabel.trim().isNotEmpty &&
+      dashboard.tillLabel != 'Till pending';
+}
+
 class _NotificationButton extends StatelessWidget {
-  const _NotificationButton({required this.onPressed});
+  const _NotificationButton({
+    required this.onPressed,
+    required this.notificationCount,
+  });
 
   final VoidCallback onPressed;
+  final int notificationCount;
 
   @override
   Widget build(BuildContext context) {
@@ -148,28 +167,44 @@ class _NotificationButton extends StatelessWidget {
       child: InkWell(
         onTap: onPressed,
         customBorder: const CircleBorder(),
-        child: const SizedBox(
+        child: SizedBox(
           width: 48,
           height: 48,
           child: Stack(
             alignment: Alignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.notifications_none_rounded,
                 color: TenantAdminColors.bodyText,
                 size: 25,
               ),
-              Positioned(
-                top: 10,
-                right: 10,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: TenantAdminColors.danger,
-                    shape: BoxShape.circle,
+              if (notificationCount > 0)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(
+                      color: TenantAdminColors.danger,
+                      shape: BoxShape.circle,
+                    ),
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: Center(
+                        child: Text(
+                          notificationCount > 99
+                              ? '99+'
+                              : notificationCount.toString(),
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: TenantAdminColors.surface,
+                                fontWeight: FontWeight.w800,
+                                height: 1,
+                              ),
+                        ),
+                      ),
+                    ),
                   ),
-                  child: SizedBox(width: 8, height: 8),
                 ),
-              ),
             ],
           ),
         ),
@@ -178,10 +213,76 @@ class _NotificationButton extends StatelessWidget {
   }
 }
 
-class _DateTimeChip extends StatelessWidget {
-  const _DateTimeChip({required this.now});
+class _DateTimeChip extends StatefulWidget {
+  const _DateTimeChip({
+    required this.serverNowUtc,
+    required this.serverTimeReceivedAt,
+    required this.outletTimezone,
+    required this.fallbackNow,
+  });
 
-  final DateTime now;
+  final DateTime? serverNowUtc;
+  final DateTime? serverTimeReceivedAt;
+  final String? outletTimezone;
+  final DateTime fallbackNow;
+
+  @override
+  State<_DateTimeChip> createState() => _DateTimeChipState();
+}
+
+class _DateTimeChipState extends State<_DateTimeChip> {
+  Timer? _timer;
+  late DateTime _displayNow;
+
+  @override
+  void initState() {
+    super.initState();
+    _displayNow = _resolveOutletNow();
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+      setState(() {
+        _displayNow = _resolveOutletNow();
+      });
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _DateTimeChip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.serverNowUtc != widget.serverNowUtc ||
+        oldWidget.serverTimeReceivedAt != widget.serverTimeReceivedAt ||
+        oldWidget.outletTimezone != widget.outletTimezone) {
+      setState(() {
+        _displayNow = _resolveOutletNow();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  DateTime _resolveOutletNow() {
+    final serverNowUtc = widget.serverNowUtc;
+    final receivedAt = widget.serverTimeReceivedAt;
+    if (serverNowUtc == null || receivedAt == null) {
+      return widget.fallbackNow;
+    }
+
+    final elapsed = DateTime.now().toUtc().difference(receivedAt);
+    final anchoredUtc = serverNowUtc.add(elapsed);
+    return anchoredUtc.add(_timezoneOffset(widget.outletTimezone));
+  }
+
+  Duration _timezoneOffset(String? outletTimezone) {
+    switch (outletTimezone?.trim()) {
+      case 'Asia/Colombo':
+        return const Duration(hours: 5, minutes: 30);
+      default:
+        return Duration.zero;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -207,7 +308,7 @@ class _DateTimeChip extends StatelessWidget {
           const SizedBox(width: TenantAdminSpacing.sm),
           Flexible(
             child: Text(
-              '${_formatTime(now)}  •  ${_formatDate(now)}',
+              '${_formatTime(_displayNow)}  •  ${_formatDate(_displayNow)}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
