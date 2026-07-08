@@ -153,8 +153,6 @@ class TenantAdminPermissionAliases {
     'outlet.detail.view': [
       'outlet.detail.view',
       'tenant.outlets.details.view',
-      'tenant.outlets.view',
-      'outlet.view',
     ],
     'outlet.location.view': [
       'outlet.location.view',
@@ -646,9 +644,7 @@ class TenantAdminPermissionAliases {
     ],
     'tenant.outlets.details.view': [
       'tenant.outlets.details.view',
-      'tenant.outlets.view',
       'outlet.detail.view',
-      'outlet.view',
     ],
     'tenant.outlets.revenue.view': [
       'tenant.outlets.revenue.view',
