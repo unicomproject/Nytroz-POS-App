@@ -995,6 +995,11 @@ final _openTillSession = TillSession(
 
 final _posHomeApiResponse = <String, dynamic>{
   'data': {
+    'contextResolved': true,
+    'cashier': {
+      'id': 'test-user',
+      'displayName': 'Cashier',
+    },
     'user': {
       'fullName': 'Cashier',
     },
@@ -1002,6 +1007,21 @@ final _posHomeApiResponse = <String, dynamic>{
       'outletName': 'Main Outlet',
       'tillName': 'Front Till',
       'tillSessionId': 'session-1',
+    },
+    'till': {
+      'name': 'Front Till',
+      'areaName': 'Front',
+      'number': 1,
+      'status': 'Open',
+      'sessionId': 'session-1',
+    },
+    'time': {
+      'serverNowUtc': '2026-07-08T12:00:00Z',
+      'outletTimezone': 'Asia/Colombo',
+      'businessDate': '2026-07-08',
+    },
+    'notifications': {
+      'unreadCount': 0,
     },
     'unreadNotificationCount': 0,
     'permissions': _defaultPermissions,
