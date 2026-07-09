@@ -16,6 +16,24 @@ String messageFromDioException(
   }
 
   final status = error.response?.statusCode;
+  if (status == 404) {
+    return contextPrefix != null
+        ? '$contextPrefix. Products API was not found on the server.'
+        : 'Products could not be loaded. The API endpoint was not found.';
+  }
+
+  if (status == 403) {
+    return contextPrefix != null
+        ? '$contextPrefix. You do not have permission to view products.'
+        : 'You do not have permission to view products.';
+  }
+
+  if (status != null && status >= 500) {
+    return contextPrefix != null
+        ? '$contextPrefix. Server error — please check backend logs.'
+        : 'Server error. Please check backend logs and try again.';
+  }
+
   if (status != null && contextPrefix != null) {
     return '$contextPrefix (HTTP $status).';
   }

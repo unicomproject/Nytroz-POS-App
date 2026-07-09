@@ -3,18 +3,26 @@ import 'package:dio/dio.dart';
 import '../../../../../core/network/dio_error_message.dart';
 
 const outletBackendFieldAliases = {
+  'outletName': 'outletName',
+  'OutletName': 'outletName',
   'name': 'outletName',
   'code': 'outletCode',
   'outletType': 'outletType',
   'phone': 'mainPhoneNumber',
+  'contactPhone': 'mainPhoneNumber',
   'email': 'emailAddress',
+  'contactEmail': 'emailAddress',
   'status': 'status',
   'addressLine1': 'addressLine1',
   'addressLine2': 'addressLine2',
   'city': 'city',
   'state': 'state',
+  'stateOrProvince': 'state',
+  'districtOrProvince': 'state',
   'country': 'country',
+  'countryCode': 'country',
   'postalCode': 'postalCode',
+  'timezone': 'timezone',
 };
 
 Map<String, String> outletValidationErrors(DioException error) {
@@ -48,16 +56,30 @@ Map<String, String> outletValidationErrors(DioException error) {
   }
 
   if (errors is Map) {
-    return errors.map((key, value) {
-      final field = key.toString();
-      final message = value is List && value.isNotEmpty
-          ? value.first.toString()
-          : value.toString();
-      return MapEntry(outletBackendFieldAliases[field] ?? field, message);
-    });
+    for (final entry in errors.entries) {
+      final field = entry.key.toString();
+      final message = entry.value is List && (entry.value as List).isNotEmpty
+          ? (entry.value as List).first.toString()
+          : entry.value.toString();
+      final key = outletBackendFieldAliases[field] ?? field;
+      mapped[key] = message;
+    }
+
+    if (mapped.isNotEmpty) {
+      return mapped;
+    }
   }
 
-  return const {};
+  final message = data['message']?.toString() ?? '';
+  final lowerMessage = message.toLowerCase();
+  if (lowerMessage.contains('timezone')) {
+    mapped['timezone'] = message;
+  } else if (lowerMessage.contains('outletname') ||
+      lowerMessage.contains('outlet name')) {
+    mapped['outletName'] = message;
+  }
+
+  return mapped;
 }
 
 String outletErrorMessage(DioException error,
@@ -104,6 +126,7 @@ const outletFieldSteps = {
   'state': 1,
   'country': 1,
   'postalCode': 1,
+  'timezone': 1,
 };
 
 int? outletErrorStep(Map<String, String> fieldErrors) {

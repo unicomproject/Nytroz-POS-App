@@ -9,6 +9,7 @@ import '../../domain/entities/outlet_details.dart';
 import '../providers/outlet_providers.dart';
 import '../providers/outlet_visibility_provider.dart';
 import '../utils/outlet_api_errors.dart';
+import '../config/outlet_timezone_options.dart';
 import '../widgets/outlet_form.dart';
 
 class EditOutletScreen extends ConsumerStatefulWidget {
@@ -122,6 +123,7 @@ OutletFormData _initialForm(OutletDetails outlet) {
     state: '',
     country: '',
     postalCode: '',
+    timezone: outlet.timezone ?? defaultOutletTimezone,
     openingHours: const [],
   );
 }

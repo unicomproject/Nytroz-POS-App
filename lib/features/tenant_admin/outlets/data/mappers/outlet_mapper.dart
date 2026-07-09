@@ -58,6 +58,7 @@ extension OutletDetailsMapper on OutletDetailsDto {
       code: code,
       address: address,
       status: status,
+      timezone: timezone,
       phone: phone,
       email: email,
       managerName: managerName,
