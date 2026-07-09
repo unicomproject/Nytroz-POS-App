@@ -8,7 +8,6 @@ import '../../../sale/presentation/widgets/payment/pos_bottom_action_buttons.dar
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../till/presentation/providers/till_provider.dart';
-import '../../domain/entities/cash_drawer_summary.dart';
 import '../providers/cash_drawer_provider.dart';
 import '../widgets/cash_drawer_actions_section.dart';
 import '../widgets/cash_drawer_movements_section.dart';
