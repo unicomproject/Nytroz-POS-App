@@ -108,6 +108,8 @@ class DeviceActivationRemoteDatasource {
       tillCode: _string(till['code']),
       tillName: _string(till['name']),
       pairedAt: DateTime.now(),
+      defaultOpeningFloatAmount: _double(till['defaultOpeningFloatAmount']),
+      currencyCode: _string(till['currencyCode'], fallback: 'LKR'),
     );
   }
 
@@ -135,6 +137,14 @@ class DeviceActivationRemoteDatasource {
 
     final text = value?.toString().trim().toLowerCase();
     return text == 'true' || text == '1';
+  }
+
+  double _double(Object? value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   String _messageFromDio(DioException error) {

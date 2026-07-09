@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
+import '../../../../core/storage/app_secure_storage.dart';
 import '../../domain/entities/open_till.dart';
 
 class TillSessionStorage {
@@ -10,12 +9,12 @@ class TillSessionStorage {
 
   static const _tillSessionKey = 'pos.tillSession';
 
-  final FlutterSecureStorage _storage;
+  final AppSecureStorage _storage;
 
   Future<void> save(TillSession session) async {
     await _storage.write(
-      key: _tillSessionKey,
-      value: jsonEncode(session.toJson()),
+      _tillSessionKey,
+      jsonEncode(session.toJson()),
     );
     developer.log(
       'Till session stored. sessionId=${session.sessionId}, status=${session.status}',
@@ -24,7 +23,7 @@ class TillSessionStorage {
   }
 
   Future<TillSession?> read() async {
-    final value = await _storage.read(key: _tillSessionKey);
+    final value = await _storage.read(_tillSessionKey);
     developer.log(
       'Till session retrieved. present=${value != null}',
       name: 'pos.session',
@@ -48,7 +47,7 @@ class TillSessionStorage {
   }
 
   Future<void> clear() async {
-    await _storage.delete(key: _tillSessionKey);
+    await _storage.delete(_tillSessionKey);
     developer.log('Till session cleared.', name: 'pos.session');
   }
 }

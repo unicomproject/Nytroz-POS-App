@@ -37,27 +37,13 @@ final postLoginRouteProvider = Provider<PostLoginRoute>((ref) {
     return PostLoginRoute.tenantAdminDashboard;
   }
 
-  if (authSession?.canActivatePosDevice == true &&
-      (device == null || !device.isTrusted)) {
-    developer.log(
-      'Post-login navigation: device activation required. route=${PostLoginRoute.deviceActivation.path}',
-      name: 'auth.navigation',
-    );
-    return PostLoginRoute.deviceActivation;
-  }
-
   if (authSession?.canOpenPosTill == true) {
-    if (device == null || !device.isTrusted) {
+    final deviceTrusted = device?.isTrusted == true;
+    if (!deviceTrusted || !tillState.hasOpenSession) {
       developer.log(
-        'Post-login navigation: POS till permission without trusted device. route=${PostLoginRoute.openTill.path}',
-        name: 'auth.navigation',
-      );
-      return PostLoginRoute.openTill;
-    }
-
-    if (!tillState.hasOpenSession) {
-      developer.log(
-        'Post-login navigation: till is closed. route=${PostLoginRoute.openTill.path}',
+        'Post-login navigation: open till required. '
+        'deviceTrusted=$deviceTrusted hasOpenSession=${tillState.hasOpenSession} '
+        'route=${PostLoginRoute.openTill.path}',
         name: 'auth.navigation',
       );
       return PostLoginRoute.openTill;
@@ -68,6 +54,15 @@ final postLoginRouteProvider = Provider<PostLoginRoute>((ref) {
       name: 'auth.navigation',
     );
     return PostLoginRoute.posHome;
+  }
+
+  if (authSession?.canActivatePosDevice == true &&
+      (device == null || !device.isTrusted)) {
+    developer.log(
+      'Post-login navigation: device activation required. route=${PostLoginRoute.deviceActivation.path}',
+      name: 'auth.navigation',
+    );
+    return PostLoginRoute.deviceActivation;
   }
 
   developer.log(

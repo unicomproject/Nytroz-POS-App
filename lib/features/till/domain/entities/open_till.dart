@@ -82,3 +82,45 @@ class TillException implements Exception {
 
   final String message;
 }
+
+class CloseTillForm {
+  const CloseTillForm({
+    required this.deviceContext,
+    required this.countedCash,
+    required this.expectedCash,
+    this.mismatchReason,
+    this.closingNote,
+  });
+
+  final PosDeviceContext deviceContext;
+  final double countedCash;
+  final double expectedCash;
+  final String? mismatchReason;
+  final String? closingNote;
+}
+
+class ClosedTillSession {
+  const ClosedTillSession({
+    required this.sessionId,
+    required this.tillId,
+    required this.openingFloat,
+    required this.expectedCash,
+    required this.countedCash,
+    required this.cashDifference,
+    required this.status,
+    required this.openedAt,
+    required this.closedAt,
+    this.closingNote,
+  });
+
+  final String sessionId;
+  final String tillId;
+  final double openingFloat;
+  final double expectedCash;
+  final double countedCash;
+  final double cashDifference;
+  final String status;
+  final DateTime openedAt;
+  final DateTime closedAt;
+  final String? closingNote;
+}

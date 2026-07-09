@@ -84,6 +84,11 @@ class _FakeTillRepository implements TillRepository {
   Future<TillSession?> getCurrentSession(OpenTillForm form) async {
     return currentSession;
   }
+
+  @override
+  Future<ClosedTillSession> closeTill(CloseTillForm form) async {
+    throw UnimplementedError();
+  }
 }
 
 final _openedAt = DateTime.utc(2026, 6, 16, 9);

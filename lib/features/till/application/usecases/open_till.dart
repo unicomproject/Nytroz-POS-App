@@ -13,4 +13,8 @@ class OpenTill {
   Future<TillSession?> currentSession(OpenTillForm form) {
     return _repository.getCurrentSession(form);
   }
+
+  Future<ClosedTillSession> closeTill(CloseTillForm form) {
+    return _repository.closeTill(form);
+  }
 }

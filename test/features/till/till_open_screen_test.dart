@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/core/network/dio_provider.dart';
+import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
 import 'package:nytroz_pos/features/device_activation/application/usecases/activate_device.dart';
 import 'package:nytroz_pos/features/device_activation/data/datasources/device_context_storage.dart';
 import 'package:nytroz_pos/features/device_activation/domain/entities/pos_device_context.dart';
@@ -136,11 +137,16 @@ class _FakeTillRepository implements TillRepository {
 
   @override
   Future<TillSession?> getCurrentSession(OpenTillForm form) async => null;
+
+  @override
+  Future<ClosedTillSession> closeTill(CloseTillForm form) async {
+    throw UnimplementedError();
+  }
 }
 
 class _TestDeviceContextStorage extends DeviceContextStorage {
   _TestDeviceContextStorage(this._deviceContext)
-      : super(const FlutterSecureStorage());
+      : super(const AppSecureStorage(FlutterSecureStorage()));
 
   final PosDeviceContext? _deviceContext;
 
@@ -160,7 +166,7 @@ class _TestDeviceContextStorage extends DeviceContextStorage {
 }
 
 class _TestTillSessionStorage extends TillSessionStorage {
-  _TestTillSessionStorage() : super(const FlutterSecureStorage());
+  _TestTillSessionStorage() : super(const AppSecureStorage(FlutterSecureStorage()));
 
   @override
   Future<TillSession?> read() async => null;

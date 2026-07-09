@@ -11,6 +11,8 @@ class OpenTillForm extends StatelessWidget {
     required this.outletName,
     required this.tillName,
     required this.deviceName,
+    required this.currencyCode,
+    required this.openingBy,
     required this.onBack,
     required this.onSubmit,
     this.errorMessage,
@@ -23,6 +25,8 @@ class OpenTillForm extends StatelessWidget {
   final String outletName;
   final String tillName;
   final String deviceName;
+  final String currencyCode;
+  final String openingBy;
   final VoidCallback onBack;
   final VoidCallback onSubmit;
   final String? errorMessage;
@@ -132,7 +136,7 @@ class OpenTillForm extends StatelessWidget {
                       fontWeight: FontWeight.w900,
                     ),
                     decoration: InputDecoration(
-                      prefixText: 'LKR ',
+                      prefixText: '${currencyCode.trim()} ',
                       suffixIcon: _hasValidAmount
                           ? const Icon(
                               Icons.check_circle,
@@ -221,6 +225,7 @@ class OpenTillForm extends StatelessWidget {
                     outletName: outletName,
                     tillName: tillName,
                     deviceName: deviceName,
+                    openingBy: openingBy,
                   ),
                   const SizedBox(height: 14),
                   SizedBox(
@@ -306,11 +311,13 @@ class _TillSummaryCard extends StatelessWidget {
     required this.outletName,
     required this.tillName,
     required this.deviceName,
+    required this.openingBy,
   });
 
   final String outletName;
   final String tillName;
   final String deviceName;
+  final String openingBy;
 
   @override
   Widget build(BuildContext context) {
@@ -336,6 +343,8 @@ class _TillSummaryCard extends StatelessWidget {
           _SummaryLine(label: 'Outlet', value: outletName),
           _SummaryLine(label: 'Till', value: tillName),
           _SummaryLine(label: 'Device', value: deviceName),
+          if (openingBy.trim().isNotEmpty)
+            _SummaryLine(label: 'Opening By', value: openingBy),
         ],
       ),
     );

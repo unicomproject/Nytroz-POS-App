@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/app/app.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/core/network/dio_provider.dart';
+import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
 import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.dart';
 import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
 import 'package:nytroz_pos/shared/pos_session/pos_session_bootstrap_provider.dart';
@@ -853,7 +854,7 @@ const _permissionsWithOnlineOrders = [
 ];
 
 class _TestAuthSessionStorage extends AuthSessionStorage {
-  _TestAuthSessionStorage(this.session) : super(const FlutterSecureStorage());
+  _TestAuthSessionStorage(this.session) : super(const AppSecureStorage(FlutterSecureStorage()));
 
   final AuthSession session;
 
@@ -917,11 +918,16 @@ class _FakeTillRepository implements TillRepository {
   Future<TillSession?> getCurrentSession(OpenTillForm form) async {
     return session;
   }
+
+  @override
+  Future<ClosedTillSession> closeTill(CloseTillForm form) async {
+    throw UnimplementedError();
+  }
 }
 
 class _TestDeviceContextStorage extends DeviceContextStorage {
   _TestDeviceContextStorage(this.deviceContext)
-      : super(const FlutterSecureStorage());
+      : super(const AppSecureStorage(FlutterSecureStorage()));
 
   final PosDeviceContext deviceContext;
 
@@ -946,7 +952,7 @@ class _TestDeviceContextStorage extends DeviceContextStorage {
 }
 
 class _TestTillSessionStorage extends TillSessionStorage {
-  _TestTillSessionStorage(this.session) : super(const FlutterSecureStorage());
+  _TestTillSessionStorage(this.session) : super(const AppSecureStorage(FlutterSecureStorage()));
 
   final TillSession session;
 

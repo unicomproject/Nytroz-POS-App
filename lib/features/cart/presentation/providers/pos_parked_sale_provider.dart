@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
 import 'package:nytroz_pos/core/storage/secure_storage_provider.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_cart_discount.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
@@ -84,10 +84,10 @@ class PosParkedSaleStorage {
 
   static const _storageKey = 'pos.parked_sales';
 
-  final FlutterSecureStorage _storage;
+  final AppSecureStorage _storage;
 
   Future<List<PosParkedSale>> readAll() async {
-    final value = await _storage.read(key: _storageKey);
+    final value = await _storage.read(_storageKey);
     if (value == null || value.trim().isEmpty) {
       return const [];
     }
@@ -112,8 +112,8 @@ class PosParkedSaleStorage {
 
   Future<void> saveAll(List<PosParkedSale> sales) async {
     await _storage.write(
-      key: _storageKey,
-      value: jsonEncode(sales.map((sale) => sale.toJson()).toList()),
+      _storageKey,
+      jsonEncode(sales.map((sale) => sale.toJson()).toList()),
     );
   }
 }

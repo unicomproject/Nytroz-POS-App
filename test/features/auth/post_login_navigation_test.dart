@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/core/network/dio_provider.dart';
+import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
 import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.dart';
 import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/post_login_navigation_provider.dart';
@@ -21,12 +22,21 @@ import 'package:nytroz_pos/shared/pos_session/pos_session_bootstrap_provider.dar
 
 void main() {
   group('Post-login navigation', () {
-    test('routes to device activation when device is not trusted', () {
+    test('routes cashier without trusted device to open till', () {
+      final container = _createContainer(session: _cashierSession);
+
+      final route = container.read(postLoginRouteProvider);
+
+      expect(route, PostLoginRoute.openTill);
+      container.dispose();
+    });
+
+    test('routes to open till when device is not trusted', () {
       final container = _createContainer(session: _posOperatorSession);
 
       final route = container.read(postLoginRouteProvider);
 
-      expect(route, PostLoginRoute.deviceActivation);
+      expect(route, PostLoginRoute.openTill);
       container.dispose();
     });
 
@@ -218,10 +228,15 @@ class _FakeTillRepository implements TillRepository {
   Future<TillSession?> getCurrentSession(OpenTillForm form) async {
     return session;
   }
+
+  @override
+  Future<ClosedTillSession> closeTill(CloseTillForm form) async {
+    throw UnimplementedError();
+  }
 }
 
 class _TestAuthSessionStorage extends AuthSessionStorage {
-  _TestAuthSessionStorage() : super(const FlutterSecureStorage());
+  _TestAuthSessionStorage() : super(const AppSecureStorage(FlutterSecureStorage()));
 
   @override
   Future<AuthSession?> read() async => null;
@@ -235,7 +250,7 @@ class _TestAuthSessionStorage extends AuthSessionStorage {
 
 class _TestDeviceContextStorage extends DeviceContextStorage {
   _TestDeviceContextStorage(this._deviceContext)
-      : super(const FlutterSecureStorage());
+      : super(const AppSecureStorage(FlutterSecureStorage()));
 
   final PosDeviceContext? _deviceContext;
 
@@ -260,7 +275,7 @@ class _TestDeviceContextStorage extends DeviceContextStorage {
 }
 
 class _TestTillSessionStorage extends TillSessionStorage {
-  _TestTillSessionStorage(this._session) : super(const FlutterSecureStorage());
+  _TestTillSessionStorage(this._session) : super(const AppSecureStorage(FlutterSecureStorage()));
 
   final TillSession? _session;
 
@@ -282,6 +297,16 @@ const _posOperatorSession = AuthSession(
   userDisplayName: 'Cashier',
   permissionCodes: [
     'tenant.till.manage',
+    'pos.till.open',
+    'pos.home.view',
+  ],
+);
+
+const _cashierSession = AuthSession(
+  accessToken: 'token',
+  userId: 'cashier-1',
+  userDisplayName: 'Cashier',
+  permissionCodes: [
     'pos.till.open',
     'pos.home.view',
   ],

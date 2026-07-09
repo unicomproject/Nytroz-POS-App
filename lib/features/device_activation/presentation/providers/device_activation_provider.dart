@@ -93,7 +93,23 @@ class DeviceActivationController extends StateNotifier<DeviceActivationState> {
           'No trusted device found on server for known fingerprints.',
           name: 'pos.session',
         );
-        state = state.copyWith(isRefreshing: false);
+
+        final cachedDevice = await _storage.read();
+        if (cachedDevice != null) {
+          developer.log(
+            'Keeping locally cached trusted device context after server miss.',
+            name: 'pos.session',
+          );
+          state = DeviceActivationState(deviceContext: cachedDevice);
+          return cachedDevice.isTrusted;
+        }
+
+        try {
+          await _storage.clear();
+        } catch (_) {
+          // Ignore secure-storage cleanup failures on web.
+        }
+        state = const DeviceActivationState();
         return false;
       }
 
@@ -102,7 +118,12 @@ class DeviceActivationController extends StateNotifier<DeviceActivationState> {
           'Current device response was not trusted or missing deviceId.',
           name: 'pos.session',
         );
-        state = state.copyWith(isRefreshing: false);
+        try {
+          await _storage.clear();
+        } catch (_) {
+          // Ignore secure-storage cleanup failures on web.
+        }
+        state = const DeviceActivationState();
         return false;
       }
 
@@ -184,9 +205,24 @@ class DeviceActivationController extends StateNotifier<DeviceActivationState> {
       return;
     }
 
-    final device = await _storage.read();
-    if (device != null) {
-      state = DeviceActivationState(deviceContext: device);
+    try {
+      final device = await _storage.read();
+      if (device != null) {
+        state = DeviceActivationState(deviceContext: device);
+      }
+    } catch (error, stackTrace) {
+      developer.log(
+        'Device context hydration failed.',
+        name: 'pos.session',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      try {
+        await _storage.clear();
+      } catch (_) {
+        // Ignore secure-storage cleanup failures on web.
+      }
+      state = const DeviceActivationState();
     }
   }
 

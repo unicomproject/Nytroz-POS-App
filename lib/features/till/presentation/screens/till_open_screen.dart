@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../../shared/pos_session/pos_session_context.dart';
 import '../../../../shared/pos_session/pos_session_provider.dart';
+import '../../../auth/presentation/providers/session_provider.dart';
 import '../providers/till_provider.dart';
 import '../../../../shared/pos_session/pos_session_bootstrap_provider.dart';
 import '../../../auth/presentation/providers/post_login_navigation_provider.dart';
@@ -19,10 +20,16 @@ class TillOpenScreen extends ConsumerStatefulWidget {
 
 class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _openingFloatController = TextEditingController(text: '150.00');
-  final _openingNoteController = TextEditingController(
-    text: 'Opening shift for morning session.',
-  );
+  late final TextEditingController _openingFloatController;
+  late final TextEditingController _openingNoteController;
+  bool _initializedOpeningFloat = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _openingFloatController = TextEditingController();
+    _openingNoteController = TextEditingController();
+  }
 
   @override
   void dispose() {
@@ -36,7 +43,14 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
     final deviceState = ref.watch(deviceActivationProvider);
     final tillState = ref.watch(tillProvider);
     final sessionContext = ref.watch(posSessionContextProvider);
+    final authSession = ref.watch(authSessionProvider);
     final device = deviceState.deviceContext;
+
+    if (device != null && !_initializedOpeningFloat) {
+      _initializedOpeningFloat = true;
+      final defaultFloat = device.defaultOpeningFloatAmount;
+      _openingFloatController.text = defaultFloat.toStringAsFixed(2);
+    }
 
     if (device == null || !device.isTrusted) {
       return Scaffold(
@@ -78,6 +92,8 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
                       outletName: sessionContext.outletName,
                       tillName: device.tillName,
                       deviceName: sessionContext.deviceCode,
+                      currencyCode: device.currencyCode,
+                      openingBy: authSession?.userDisplayName ?? '',
                       onBack: () => context.go('/pos/device-activation'),
                       onSubmit: _submitOpenTill,
                     ),
@@ -113,6 +129,8 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
                         outletName: sessionContext.outletName,
                         tillName: device.tillName,
                         deviceName: sessionContext.deviceCode,
+                        currencyCode: device.currencyCode,
+                        openingBy: authSession?.userDisplayName ?? '',
                         onBack: () => context.go('/pos/device-activation'),
                         onSubmit: _submitOpenTill,
                       ),

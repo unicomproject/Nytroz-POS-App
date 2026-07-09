@@ -8,7 +8,6 @@ import '../../../sale/presentation/widgets/payment/pos_bottom_action_buttons.dar
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../till/presentation/providers/till_provider.dart';
-import '../../domain/entities/cash_drawer_summary.dart';
 import '../providers/cash_drawer_provider.dart';
 import '../widgets/cash_drawer_actions_section.dart';
 import '../widgets/cash_drawer_movements_section.dart';
@@ -24,6 +23,17 @@ class PosCashDrawerScreen extends ConsumerStatefulWidget {
 }
 
 class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      ref.read(cashDrawerProvider.notifier).refresh();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider);
@@ -86,7 +96,7 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
                             actionsEnabled: actionsEnabled,
                             onCashIn: () => _onCashIn(context),
                             onCashOut: () => _onCashOut(context),
-                            onCloseTill: () => _onCloseTill(context, summary),
+                            onCloseTill: () => _onCloseTill(context),
                           ),
                           const SizedBox(height: TenantAdminSpacing.lg),
                           CashDrawerMovementsSection(
@@ -141,7 +151,6 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
 
   Future<void> _onCloseTill(
     BuildContext context,
-    CashDrawerSummary summary,
   ) async {
     if (!PosPermissionAccess.canCloseTill(
       ref.read(authSessionProvider)?.permissionCodes.toSet() ?? const {},
@@ -153,7 +162,8 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
       return;
     }
 
-    if (!summary.isOpen) {
+    final tillState = ref.read(tillProvider);
+    if (!tillState.hasOpenSession) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -164,6 +174,7 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
       return;
     }
 
+    ref.read(cashDrawerProvider.notifier).refresh();
     context.push('/pos/cash-drawer/close-till');
   }
 }

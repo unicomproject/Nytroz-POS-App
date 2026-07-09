@@ -51,9 +51,14 @@ class TillController extends StateNotifier<TillState> {
 
   Future<bool> refreshCurrentSession({
     required PosDeviceContext deviceContext,
+    bool force = false,
   }) async {
-    if (state.isRefreshing || state.hasOpenSession) {
+    if (state.isRefreshing) {
       return state.hasOpenSession;
+    }
+
+    if (!force && state.hasOpenSession) {
+      return true;
     }
 
     state = state.copyWith(isRefreshing: true, clearError: true);
@@ -68,7 +73,8 @@ class TillController extends StateNotifier<TillState> {
       );
 
       if (session == null) {
-        state = state.copyWith(isRefreshing: false);
+        await _storage.clear();
+        state = const TillState();
         return false;
       }
 
@@ -124,6 +130,47 @@ class TillController extends StateNotifier<TillState> {
         errorMessage: 'Till could not be opened. Try again.',
       );
       return false;
+    }
+  }
+
+  Future<ClosedTillSession?> closeTill({
+    required PosDeviceContext deviceContext,
+    required double countedCash,
+    required double expectedCash,
+    String? mismatchReason,
+    String? closingNote,
+  }) async {
+    if (state.isSubmitting) {
+      return null;
+    }
+
+    state = state.copyWith(isSubmitting: true, clearError: true);
+
+    try {
+      final closedSession = await _openTill.closeTill(
+        CloseTillForm(
+          deviceContext: deviceContext,
+          countedCash: countedCash,
+          expectedCash: expectedCash,
+          mismatchReason: mismatchReason,
+          closingNote: closingNote,
+        ),
+      );
+      await _storage.clear();
+      state = const TillState();
+      return closedSession;
+    } on TillException catch (error) {
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: error.message,
+      );
+      return null;
+    } catch (_) {
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: 'Till could not be closed. Try again.',
+      );
+      return null;
     }
   }
 
