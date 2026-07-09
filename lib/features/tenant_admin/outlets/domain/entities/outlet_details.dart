@@ -25,6 +25,7 @@ class OutletDetails {
     this.assignedTills = const [],
     this.staff = const [],
     this.needsAttention = const [],
+    this.timezone,
   });
 
   final String id;
@@ -32,6 +33,7 @@ class OutletDetails {
   final String code;
   final String address;
   final String status;
+  final String? timezone;
   final String? phone;
   final String? email;
   final String? managerName;
@@ -158,6 +160,7 @@ class OutletFormData {
     required this.country,
     required this.postalCode,
     required this.openingHours,
+    this.timezone = 'Asia/Colombo',
   });
 
   final String outletName;
@@ -174,6 +177,7 @@ class OutletFormData {
   final String country;
   final String postalCode;
   final List<OutletOpeningHour> openingHours;
+  final String timezone;
 }
 
 class OutletOpeningHour {

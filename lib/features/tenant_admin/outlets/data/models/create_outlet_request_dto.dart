@@ -16,6 +16,7 @@ class CreateOutletRequestDto {
     required this.country,
     required this.postalCode,
     required this.openingHours,
+    required this.timezone,
   });
 
   factory CreateOutletRequestDto.fromForm(OutletFormData form) {
@@ -34,6 +35,7 @@ class CreateOutletRequestDto {
       country: form.country,
       postalCode: form.postalCode,
       openingHours: form.openingHours,
+      timezone: form.timezone,
     );
   }
 
@@ -51,17 +53,19 @@ class CreateOutletRequestDto {
   final String country;
   final String postalCode;
   final List<OutletOpeningHour> openingHours;
+  final String timezone;
 
   Map<String, dynamic> toJson() {
     final businessHours = _businessHoursJson(openingHours);
 
     return {
-      'name': outletName,
+      'outletName': outletName,
+      'timezone': timezone,
       'status': _mapStatus(status),
       'outletType': _mapOutletType(outletType),
-      'isOnlineVisible': true,
-      'contactPhone': mainPhoneNumber,
-      'contactEmail': emailAddress,
+      'isDefaultOutlet': false,
+      'phone': mainPhoneNumber,
+      'email': emailAddress,
       'address': {
         'addressLine1': addressLine1,
         if (addressLine2 != null && addressLine2!.trim().isNotEmpty)
@@ -115,8 +119,9 @@ class CreateOutletRequestDto {
             hour.closeTime.trim().isNotEmpty)
           {
             'dayOfWeek': _dayOfWeek(hour.day),
-            'openTime': _normalizeTime(hour.openTime),
-            'closeTime': _normalizeTime(hour.closeTime),
+            'openingTime': _normalizeTime(hour.openTime),
+            'closingTime': _normalizeTime(hour.closeTime),
+            'isClosed': hour.closed,
           },
     ];
   }

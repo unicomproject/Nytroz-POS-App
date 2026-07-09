@@ -163,6 +163,7 @@ class OutletDetailsDto {
     this.assignedTills = const [],
     this.staff = const [],
     this.needsAttention = const [],
+    this.timezone,
   });
 
   factory OutletDetailsDto.fromJson(Map<String, dynamic> json) {
@@ -181,6 +182,7 @@ class OutletDetailsDto {
                   : json,
             ),
       status: json['status'] as String? ?? '',
+      timezone: json['timezone'] as String?,
       phone: json['phone'] as String? ?? json['contactPhone'] as String?,
       email: json['email'] as String? ?? json['contactEmail'] as String?,
       managerName: json['managerName'] as String?,
@@ -208,6 +210,7 @@ class OutletDetailsDto {
   final String code;
   final String address;
   final String status;
+  final String? timezone;
   final String? phone;
   final String? email;
   final String? managerName;

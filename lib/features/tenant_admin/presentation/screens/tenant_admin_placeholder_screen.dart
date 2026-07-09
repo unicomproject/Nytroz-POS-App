@@ -1602,18 +1602,28 @@ const _referenceUsers = [
   ),
 ];
 
+final _productListSearchProvider = StateProvider.autoDispose<String>((ref) => '');
+final _productListPageProvider = StateProvider.autoDispose<int>((ref) => 1);
+
 final _tenantAdminProductsProvider =
     FutureProvider.autoDispose<_TenantAdminProductPage>((ref) async {
+  final search = ref.watch(_productListSearchProvider).trim();
+  final page = ref.watch(_productListPageProvider);
+
   final response = await ref.watch(appDioProvider).get<dynamic>(
     '/api/v1/tenant-admin/products',
-    queryParameters: const {
-      'page': 1,
+    queryParameters: {
+      'page': page,
       'pageSize': 10,
+      if (search.isNotEmpty) 'search': search,
     },
   );
 
   final body = _asStringKeyMap(response.data);
-  return _TenantAdminProductPage.fromJson(_asStringKeyMap(body['data']));
+  final payload = body.containsKey('data')
+      ? _asStringKeyMap(body['data'])
+      : body;
+  return _TenantAdminProductPage.fromJson(payload);
 });
 
 Map<String, dynamic> _asStringKeyMap(Object? value) {
@@ -1668,14 +1678,19 @@ class _TenantAdminProductPage {
         .map((item) => _TenantAdminProductItem.fromJson(_asStringKeyMap(item)))
         .toList();
 
+    final summaryJson = _asStringKeyMap(json['summary']);
+    final hasSummary = summaryJson.isNotEmpty &&
+        (summaryJson.containsKey('totalProducts') ||
+            summaryJson.containsKey('activeProducts'));
+
     return _TenantAdminProductPage(
-      summary: _TenantAdminProductSummary.fromJson(
-        _asStringKeyMap(json['summary']),
-      ),
+      summary: hasSummary
+          ? _TenantAdminProductSummary.fromJson(summaryJson)
+          : _TenantAdminProductSummary.fromCounts(items),
       items: items,
       page: _asInt(json['page']),
       pageSize: _asInt(json['pageSize']),
-      totalCount: _asInt(json['totalCount']),
+      totalCount: _asInt(json['totalItems'] ?? json['totalCount']),
     );
   }
 
@@ -1703,6 +1718,30 @@ class _TenantAdminProductSummary {
     );
   }
 
+  factory _TenantAdminProductSummary.fromCounts(
+    List<_TenantAdminProductItem> items,
+  ) {
+    final active = items
+        .where((item) => item.status.toUpperCase() == 'ACTIVE')
+        .length;
+    final inactive = items
+        .where((item) => item.status.toUpperCase() == 'INACTIVE')
+        .length;
+    final categories = items
+        .map((item) => item.categoryName)
+        .whereType<String>()
+        .where((name) => name.isNotEmpty)
+        .toSet()
+        .length;
+
+    return _TenantAdminProductSummary(
+      totalProducts: items.length,
+      activeProducts: active,
+      inactiveProducts: inactive,
+      productCategories: categories,
+    );
+  }
+
   final int totalProducts;
   final int activeProducts;
   final int inactiveProducts;
@@ -1715,16 +1754,18 @@ class _TenantAdminProductItem {
     required this.name,
     required this.sku,
     required this.status,
-    required this.outletCount,
+    required this.stockQuantity,
     this.categoryName,
     this.barcode,
     this.sellingPrice,
+    this.currencyCode,
+    this.imageUrl,
   });
 
   factory _TenantAdminProductItem.fromJson(Map<String, dynamic> json) {
     return _TenantAdminProductItem(
-      id: _asString(json['id']),
-      name: _asString(json['name']),
+      id: _asString(json['productId'] ?? json['id']),
+      name: _asString(json['productName'] ?? json['name']),
       categoryName: _asString(json['categoryName']).isEmpty
           ? null
           : _asString(json['categoryName']),
@@ -1733,8 +1774,14 @@ class _TenantAdminProductItem {
           ? null
           : _asString(json['barcode']),
       sellingPrice: _asDouble(json['sellingPrice']),
+      currencyCode: _asString(json['currencyCode']).isEmpty
+          ? null
+          : _asString(json['currencyCode']),
+      stockQuantity: _asInt(json['stockQuantity']),
       status: _asString(json['status']),
-      outletCount: _asInt(json['outletCount']),
+      imageUrl: _asString(json['imageUrl']).isEmpty
+          ? null
+          : _asString(json['imageUrl']),
     );
   }
 
@@ -1744,8 +1791,10 @@ class _TenantAdminProductItem {
   final String sku;
   final String? barcode;
   final double? sellingPrice;
+  final String? currencyCode;
+  final int stockQuantity;
   final String status;
-  final int outletCount;
+  final String? imageUrl;
 }
 
 class _ProductListScreen extends ConsumerWidget {
@@ -1758,12 +1807,12 @@ class _ProductListScreen extends ConsumerWidget {
     return accessState.when(
       loading: () => const TenantAdminPageScaffold(
         title: 'Products',
-        subtitle: 'Manage items, pricing and availability across outlets.',
+        subtitle: 'Manage your products, categories and pricing.',
         child: TenantAdminLoadingSkeleton(rowCount: 8),
       ),
       error: (error, stackTrace) => TenantAdminPageScaffold(
         title: 'Products',
-        subtitle: 'Manage items, pricing and availability across outlets.',
+        subtitle: 'Manage your products, categories and pricing.',
         child: TenantAdminErrorState(
           title: 'Unable to load product access',
           message: 'Please try again.',
@@ -1785,20 +1834,21 @@ class _ProductListScreen extends ConsumerWidget {
         return LayoutBuilder(
           builder: (context, constraints) {
             final isCompact = constraints.maxWidth < 780;
+            final showInsights = constraints.maxWidth >= 1100;
             final canCreate = access.canAny(_productCreatePermissions);
             final productsState = ref.watch(_tenantAdminProductsProvider);
 
             return TenantAdminPageScaffold(
               title: 'Products',
-              subtitle:
-                  'Manage items, pricing and availability across outlets.',
+              subtitle: 'Manage your products, categories and pricing.',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _ProductToolbar(canCreate: canCreate, compact: isCompact),
                   const SizedBox(height: TenantAdminSpacing.xl),
-                  _ProductSummaryCards(
+                  _ProductInsightsSection(
                     compact: isCompact,
+                    showSidePanel: showInsights,
                     summary: productsState.valueOrNull?.summary,
                   ),
                   const SizedBox(height: TenantAdminSpacing.xl),
@@ -1828,41 +1878,33 @@ class _ProductToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const search = _SearchField(hintText: 'Search products by name or SKU');
     const filters = TenantAdminSecondaryButton(
       label: 'Filters',
       icon: Icons.tune,
       onPressed: null,
     );
     final addButton = TenantAdminPrimaryButton(
-      label: 'Add product',
+      label: 'Add Product',
       icon: Icons.add,
       onPressed:
           canCreate ? () => context.go('/tenant-admin/products/add') : null,
     );
 
     if (compact) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      return Wrap(
+        spacing: TenantAdminSpacing.sm,
+        runSpacing: TenantAdminSpacing.sm,
+        alignment: WrapAlignment.end,
         children: [
-          search,
-          const SizedBox(height: TenantAdminSpacing.md),
-          Wrap(
-            spacing: TenantAdminSpacing.sm,
-            runSpacing: TenantAdminSpacing.sm,
-            children: [
-              filters,
-              if (canCreate) addButton,
-            ],
-          ),
+          filters,
+          if (canCreate) addButton,
         ],
       );
     }
 
     return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        const Expanded(child: search),
-        const SizedBox(width: TenantAdminSpacing.md),
         filters,
         if (canCreate) ...[
           const SizedBox(width: TenantAdminSpacing.md),
@@ -1873,14 +1915,106 @@ class _ProductToolbar extends StatelessWidget {
   }
 }
 
-class _ProductSummaryCards extends StatelessWidget {
-  const _ProductSummaryCards({
+class _ProductInsightsSection extends StatelessWidget {
+  const _ProductInsightsSection({
     required this.compact,
+    required this.showSidePanel,
     required this.summary,
   });
 
   final bool compact;
+  final bool showSidePanel;
   final _TenantAdminProductSummary? summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final cards = _ProductSummaryCards(
+      compact: compact,
+      summary: summary,
+      columns: showSidePanel ? 2 : (compact ? 1 : 4),
+    );
+
+    if (!showSidePanel) {
+      return cards;
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(flex: 3, child: cards),
+        const SizedBox(width: TenantAdminSpacing.lg),
+        const SizedBox(
+          width: 320,
+          child: _TopSellingProductsPanel(),
+        ),
+      ],
+    );
+  }
+}
+
+class _TopSellingProductsPanel extends StatelessWidget {
+  const _TopSellingProductsPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Top Selling Products',
+                  style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: TenantAdminSpacing.sm,
+                  vertical: TenantAdminSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: TenantAdminColors.background,
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+                  border: Border.all(color: TenantAdminColors.border),
+                ),
+                child: Text(
+                  'This Month',
+                  style: TenantAdminTextStyles.muted(context).copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: TenantAdminSpacing.lg),
+          const TenantAdminEmptyState(
+            title: 'No sales data yet',
+            message: 'Top selling products will appear here once sales are recorded.',
+            icon: Icons.trending_up,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductSummaryCards extends StatelessWidget {
+  const _ProductSummaryCards({
+    required this.compact,
+    required this.summary,
+    this.columns = 4,
+  });
+
+  final bool compact;
+  final _TenantAdminProductSummary? summary;
+  final int columns;
 
   @override
   Widget build(BuildContext context) {
@@ -1907,7 +2041,7 @@ class _ProductSummaryCards extends StatelessWidget {
         color: TenantAdminColors.offline,
       ),
       _MetricData(
-        title: 'Product Categories',
+        title: 'Categories',
         value: '${summary?.productCategories ?? 0}',
         subtitle: 'Categories in use',
         icon: Icons.category_outlined,
@@ -1917,23 +2051,25 @@ class _ProductSummaryCards extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = compact
+        final resolvedColumns = compact
             ? 1
-            : constraints.maxWidth >= 960
-                ? 4
-                : 2;
+            : columns == 2
+                ? 2
+                : constraints.maxWidth >= 960
+                    ? 4
+                    : 2;
 
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: cards.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
+            crossAxisCount: resolvedColumns,
             crossAxisSpacing: TenantAdminSpacing.lg,
             mainAxisSpacing: TenantAdminSpacing.lg,
-            childAspectRatio: columns == 1
+            childAspectRatio: resolvedColumns == 1
                 ? 4.2
-                : columns == 2
+                : resolvedColumns == 2
                     ? 2.2
                     : 1.85,
           ),
@@ -1971,6 +2107,7 @@ class _ProductsTableCardLive extends StatelessWidget {
           message: error is DioException
               ? messageFromDioException(
                   error,
+                  contextPrefix: 'Unable to load products',
                   fallback: 'Please check the API server and try again.',
                 )
               : 'Please check the API server and try again.',
@@ -1982,7 +2119,7 @@ class _ProductsTableCardLive extends StatelessWidget {
   }
 }
 
-class _ProductsDataTableCard extends StatelessWidget {
+class _ProductsDataTableCard extends ConsumerWidget {
   const _ProductsDataTableCard({
     required this.access,
     required this.page,
@@ -1992,7 +2129,7 @@ class _ProductsDataTableCard extends StatelessWidget {
   final _TenantAdminProductPage page;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final canView = access.canAny(_productDetailPermissions);
     final canEdit = access.canAny(_productEditPermissions);
     final canStatus = access.canAny(_productStatusPermissions);
@@ -2003,12 +2140,21 @@ class _ProductsDataTableCard extends StatelessWidget {
     final calculatedEnd = page.page * page.pageSize;
     final end =
         calculatedEnd > page.totalCount ? page.totalCount : calculatedEnd;
+    final currentPage = ref.watch(_productListPageProvider);
+    final totalPages = page.pageSize == 0
+        ? 0
+        : (page.totalCount / page.pageSize).ceil();
 
     return Container(
       decoration: _cardDecoration(),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+            child: const _ProductTableSearchField(),
+          ),
+          const Divider(height: 1, color: TenantAdminColors.border),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: ConstrainedBox(
@@ -2020,12 +2166,12 @@ class _ProductsDataTableCard extends StatelessWidget {
                 columnSpacing: 24,
                 columns: const [
                   DataColumn(label: Checkbox(value: false, onChanged: null)),
-                  DataColumn(label: Text('Product Name')),
-                  DataColumn(label: Text('Category')),
+                  DataColumn(label: Text('Product')),
                   DataColumn(label: Text('SKU')),
+                  DataColumn(label: Text('Category')),
                   DataColumn(label: Text('Price')),
+                  DataColumn(label: Text('Stock')),
                   DataColumn(label: Text('Status')),
-                  DataColumn(label: Text('Outlets')),
                   DataColumn(label: Text('Actions')),
                 ],
                 rows: page.items
@@ -2038,12 +2184,11 @@ class _ProductsDataTableCard extends StatelessWidget {
                           DataCell(
                             _ProductNameCell(
                               name: product.name,
-                              subtitle: product.barcode == null
-                                  ? 'SKU ${product.sku}'
-                                  : 'SKU ${product.sku} • ${product.barcode}',
-                              icon: Icons.inventory_2_outlined,
+                              subtitle: product.categoryName ?? 'Uncategorised',
+                              imageUrl: product.imageUrl,
                             ),
                           ),
+                          DataCell(Text(product.sku)),
                           DataCell(
                             access.canAny(_productCategoryViewPermissions)
                                 ? _CategoryPill(
@@ -2052,16 +2197,20 @@ class _ProductsDataTableCard extends StatelessWidget {
                                   )
                                 : const _EmptyTableText('Hidden'),
                           ),
-                          DataCell(Text(product.sku)),
-                          DataCell(
-                            _EmptyTableText(_formatPrice(product.sellingPrice)),
-                          ),
-                          DataCell(
-                            _StatusPill(label: _titleCase(product.status)),
-                          ),
                           DataCell(
                             _EmptyTableText(
-                              '${product.outletCount} ${product.outletCount == 1 ? 'outlet' : 'outlets'}',
+                              _formatPrice(
+                                product.sellingPrice,
+                                product.currencyCode,
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            _EmptyTableText('${product.stockQuantity}'),
+                          ),
+                          DataCell(
+                            _ProductStatusIndicator(
+                              label: _titleCase(product.status),
                             ),
                           ),
                           DataCell(
@@ -2069,18 +2218,7 @@ class _ProductsDataTableCard extends StatelessWidget {
                                 ? Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      if (canView)
-                                        _ActionButton(
-                                          label: 'View',
-                                          icon: Icons.visibility_outlined,
-                                          onPressed: () => context.go(
-                                            '/tenant-admin/products/${product.id}',
-                                          ),
-                                        ),
-                                      if (canEdit) ...[
-                                        const SizedBox(
-                                          width: TenantAdminSpacing.sm,
-                                        ),
+                                      if (canEdit)
                                         TenantAdminIconButton(
                                           icon: Icons.edit_outlined,
                                           tooltip: 'Edit',
@@ -2088,15 +2226,40 @@ class _ProductsDataTableCard extends StatelessWidget {
                                             '/tenant-admin/products/${product.id}/edit',
                                           ),
                                         ),
-                                      ],
-                                      if (canStatus || canDelete) ...[
+                                      if (canView || canStatus || canDelete) ...[
                                         const SizedBox(
                                           width: TenantAdminSpacing.sm,
                                         ),
-                                        const TenantAdminIconButton(
-                                          icon: Icons.more_vert,
+                                        PopupMenuButton<String>(
                                           tooltip: 'More',
-                                          onPressed: null,
+                                          icon: const Icon(
+                                            Icons.more_vert,
+                                            size: 20,
+                                          ),
+                                          itemBuilder: (context) => [
+                                            if (canView)
+                                              const PopupMenuItem(
+                                                value: 'view',
+                                                child: Text('View details'),
+                                              ),
+                                            if (canStatus)
+                                              const PopupMenuItem(
+                                                value: 'status',
+                                                child: Text('Change status'),
+                                              ),
+                                            if (canDelete)
+                                              const PopupMenuItem(
+                                                value: 'delete',
+                                                child: Text('Delete'),
+                                              ),
+                                          ],
+                                          onSelected: (value) {
+                                            if (value == 'view') {
+                                              context.go(
+                                                '/tenant-admin/products/${product.id}',
+                                              );
+                                            }
+                                          },
                                         ),
                                       ],
                                     ],
@@ -2131,16 +2294,26 @@ class _ProductsDataTableCard extends StatelessWidget {
                   style: TenantAdminTextStyles.muted(context),
                 ),
                 const Spacer(),
-                const _PaginationButton(
+                _PaginationButton(
                   icon: Icons.chevron_left,
-                  enabled: false,
+                  enabled: currentPage > 1,
+                  onPressed: currentPage > 1
+                      ? () => ref
+                          .read(_productListPageProvider.notifier)
+                          .state = currentPage - 1
+                      : null,
                 ),
                 const SizedBox(width: TenantAdminSpacing.sm),
-                _PageNumberButton(label: '${page.page}', selected: true),
+                _PageNumberButton(label: '$currentPage', selected: true),
                 const SizedBox(width: TenantAdminSpacing.sm),
                 _PaginationButton(
                   icon: Icons.chevron_right,
-                  enabled: page.totalCount > end,
+                  enabled: totalPages > 0 && currentPage < totalPages,
+                  onPressed: totalPages > 0 && currentPage < totalPages
+                      ? () => ref
+                          .read(_productListPageProvider.notifier)
+                          .state = currentPage + 1
+                      : null,
                 ),
                 const SizedBox(width: TenantAdminSpacing.lg),
                 const _RowsPerPageButton(),
@@ -2152,8 +2325,15 @@ class _ProductsDataTableCard extends StatelessWidget {
     );
   }
 
-  static String _formatPrice(double? price) {
-    return price == null ? '-' : 'LKR ${price.toStringAsFixed(2)}';
+  static String _formatPrice(double? price, String? currencyCode) {
+    if (price == null) {
+      return '-';
+    }
+
+    final currency = (currencyCode == null || currencyCode.isEmpty)
+        ? 'LKR'
+        : currencyCode.toUpperCase();
+    return '$currency ${price.toStringAsFixed(2)}';
   }
 
   static String _titleCase(String value) {
@@ -2210,7 +2390,6 @@ class _ProductsTableCard extends StatelessWidget {
                         _ProductNameCell(
                           name: 'No products yet',
                           subtitle: 'Product provider is not connected yet',
-                          icon: Icons.inventory_2_outlined,
                         ),
                       ),
                       DataCell(
@@ -2305,22 +2484,76 @@ class _ProductsTableCard extends StatelessWidget {
   }
 }
 
+class _ProductTableSearchField extends ConsumerStatefulWidget {
+  const _ProductTableSearchField();
+
+  @override
+  ConsumerState<_ProductTableSearchField> createState() =>
+      _ProductTableSearchFieldState();
+}
+
+class _ProductTableSearchFieldState
+    extends ConsumerState<_ProductTableSearchField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      decoration: InputDecoration(
+        hintText: 'Search by product name, SKU or barcode...',
+        prefixIcon: const Icon(Icons.search, size: 20),
+        filled: true,
+        fillColor: TenantAdminColors.surface,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: TenantAdminSpacing.lg,
+          vertical: TenantAdminSpacing.md,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          borderSide: const BorderSide(color: TenantAdminColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          borderSide: const BorderSide(color: TenantAdminColors.border),
+        ),
+      ),
+      onChanged: (value) {
+        ref.read(_productListSearchProvider.notifier).state = value;
+        ref.read(_productListPageProvider.notifier).state = 1;
+      },
+    );
+  }
+}
+
 class _ProductNameCell extends StatelessWidget {
   const _ProductNameCell({
     required this.name,
     required this.subtitle,
-    required this.icon,
+    this.imageUrl,
   });
 
   final String name;
   final String subtitle;
-  final IconData icon;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _IconTile(icon: icon, color: TenantAdminColors.primary),
+        _ProductThumbnail(imageUrl: imageUrl),
         const SizedBox(width: TenantAdminSpacing.md),
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -2347,23 +2580,110 @@ class _ProductNameCell extends StatelessWidget {
   }
 }
 
-class _CategoryPill extends StatelessWidget {
-  const _CategoryPill({required this.label});
+class _ProductThumbnail extends StatelessWidget {
+  const _ProductThumbnail({this.imageUrl});
+
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImage = imageUrl != null && imageUrl!.isNotEmpty;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+      child: Container(
+        width: 40,
+        height: 40,
+        color: TenantAdminColors.background,
+        child: hasImage
+            ? Image.network(
+                imageUrl!,
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.inventory_2_outlined,
+                  color: TenantAdminColors.primary,
+                  size: 20,
+                ),
+              )
+            : const Icon(
+                Icons.inventory_2_outlined,
+                color: TenantAdminColors.primary,
+                size: 20,
+              ),
+      ),
+    );
+  }
+}
+
+class _ProductStatusIndicator extends StatelessWidget {
+  const _ProductStatusIndicator({required this.label});
 
   final String label;
 
   @override
   Widget build(BuildContext context) {
+    final isActive = label.toLowerCase() == 'active';
+    final color =
+        isActive ? TenantAdminColors.success : TenantAdminColors.mutedText;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: TenantAdminSpacing.sm),
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CategoryPill extends StatelessWidget {
+  const _CategoryPill({required this.label});
+
+  final String label;
+
+  Color _accentColor() {
+    const palette = <Color>[
+      TenantAdminColors.primary,
+      Color(0xFF8B5CF6),
+      Color(0xFFF97316),
+      Color(0xFF14B8A6),
+      Color(0xFFEC4899),
+    ];
+
+    return palette[label.hashCode.abs() % palette.length];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _accentColor();
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: TenantAdminColors.primary.withValues(alpha: 0.1),
+        color: accent.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
-        style: const TextStyle(
-          color: TenantAdminColors.primary,
+        style: TextStyle(
+          color: accent,
           fontWeight: FontWeight.w800,
           fontSize: 12,
         ),
@@ -5105,16 +5425,18 @@ class _PaginationButton extends StatelessWidget {
   const _PaginationButton({
     required this.icon,
     required this.enabled,
+    this.onPressed,
   });
 
   final IconData icon;
   final bool enabled;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
     return TenantAdminIconButton(
       icon: icon,
-      onPressed: enabled ? () {} : null,
+      onPressed: enabled ? onPressed : null,
     );
   }
 }

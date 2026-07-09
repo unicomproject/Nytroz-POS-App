@@ -46,6 +46,7 @@ void main() {
         city: 'Colombo',
         country: 'LK',
         postalCode: '00100',
+        timezone: 'Asia/Colombo',
         openingHours: [
           OutletOpeningHour(
             day: 'Mon',
@@ -58,12 +59,14 @@ void main() {
 
       final json = dto.toJson();
 
-      expect(json['name'], 'New Outlet');
+      expect(json['outletName'], 'New Outlet');
+      expect(json.containsKey('name'), isFalse);
+      expect(json['timezone'], 'Asia/Colombo');
       expect(json['status'], 'ACTIVE');
       expect(json['outletType'], 'STORE');
-      expect(json['contactPhone'], '+94771234567');
-      expect(json['contactEmail'], 'outlet@test.com');
-      expect(json['isOnlineVisible'], isTrue);
+      expect(json['phone'], '+94771234567');
+      expect(json['email'], 'outlet@test.com');
+      expect(json['isDefaultOutlet'], isFalse);
       expect(json['collectionEnabled'], isFalse);
       expect(json['address'], isA<Map>());
       expect(json['address']['addressLine1'], 'Line 1');
@@ -72,10 +75,12 @@ void main() {
       expect(json['businessHours'], [
         {
           'dayOfWeek': 1,
-          'openTime': '09:00:00',
-          'closeTime': '18:00:00',
+          'openingTime': '09:00:00',
+          'closingTime': '18:00:00',
+          'isClosed': false,
         },
       ]);
+      expect(json.containsKey('outletCode'), isFalse);
       expect(json.containsKey('code'), isFalse);
     });
   });

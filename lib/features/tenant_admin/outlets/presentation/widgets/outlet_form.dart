@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/outlet.dart';
 import '../../domain/entities/outlet_details.dart';
+import '../config/outlet_timezone_options.dart';
 import '../utils/outlet_api_errors.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
@@ -46,6 +47,7 @@ class _OutletFormState extends State<OutletForm> {
   late final TextEditingController _postalCode;
   late List<_OpeningHourDraft> _openingHours;
   String? _managerId;
+  late String _timezone;
 
   @override
   void initState() {
@@ -65,6 +67,7 @@ class _OutletFormState extends State<OutletForm> {
     _country = TextEditingController(text: initial?.country ?? 'LK');
     _postalCode = TextEditingController(text: initial?.postalCode ?? '');
     _managerId = initial?.managerId;
+    _timezone = _resolveTimezone(initial?.timezone);
     _openingHours = _initialOpeningHours(initial?.openingHours);
   }
 
@@ -227,6 +230,7 @@ class _OutletFormState extends State<OutletForm> {
               validator: _emailValidator,
               icon: Icons.mail_outline,
             ),
+            _timezoneDropdown(),
           ],
         );
       default:
@@ -253,6 +257,7 @@ class _OutletFormState extends State<OutletForm> {
                 _reviewLine('City', _city.text),
                 _reviewLine('District / Province', _state.text),
                 _reviewLine('Postal Code', _postalCode.text),
+                _reviewLine('Timezone', _timezone),
                 _reviewLine('Phone', _mainPhoneNumber.text),
                 _reviewLine('Email', _emailAddress.text),
               ],
@@ -313,6 +318,42 @@ class _OutletFormState extends State<OutletForm> {
           return;
         }
         setState(() => _outletType.text = value);
+      },
+    );
+  }
+
+  Widget _timezoneDropdown() {
+    final currentValue = outletTimezoneOptions.contains(_timezone)
+        ? _timezone
+        : defaultOutletTimezone;
+
+    return DropdownButtonFormField<String>(
+      initialValue: currentValue,
+      decoration: InputDecoration(
+        labelText: 'Timezone',
+        prefixIcon: const Icon(Icons.schedule_outlined, size: 18),
+        errorText: widget.backendErrors['timezone'],
+      ),
+      items: [
+        for (final option in outletTimezoneOptions)
+          DropdownMenuItem<String>(
+            value: option,
+            child: Text(option),
+          ),
+      ],
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Timezone is required';
+        }
+
+        return null;
+      },
+      onChanged: (value) {
+        if (value == null) {
+          return;
+        }
+
+        setState(() => _timezone = value);
       },
     );
   }
@@ -510,6 +551,7 @@ class _OutletFormState extends State<OutletForm> {
       ('addressLine1', 'Address line 1', _requiredValidator('Address line 1')),
       ('city', 'City', _requiredValidator('City')),
       ('postalCode', 'Postal code', _requiredValidator('Postal code')),
+      ('timezone', 'Timezone', _requiredValidator('Timezone')),
     ];
 
     for (final check in checks) {
@@ -522,6 +564,7 @@ class _OutletFormState extends State<OutletForm> {
         'addressLine1' => _addressLine1.text,
         'city' => _city.text,
         'postalCode' => _postalCode.text,
+        'timezone' => _timezone,
         _ => '',
       };
 
@@ -573,6 +616,7 @@ class _OutletFormState extends State<OutletForm> {
       state: _state.text.trim(),
       country: _country.text.trim().isEmpty ? 'LK' : _country.text.trim(),
       postalCode: _postalCode.text.trim(),
+      timezone: _timezone.trim().isEmpty ? defaultOutletTimezone : _timezone.trim(),
       openingHours: [
         for (final hour in _openingHours)
           OutletOpeningHour(
@@ -584,6 +628,15 @@ class _OutletFormState extends State<OutletForm> {
       ],
     );
   }
+}
+
+String _resolveTimezone(String? timezone) {
+  final value = timezone?.trim() ?? '';
+  if (value.isEmpty) {
+    return defaultOutletTimezone;
+  }
+
+  return outletTimezoneOptions.contains(value) ? value : defaultOutletTimezone;
 }
 
 List<_OpeningHourDraft> _initialOpeningHours(List<OutletOpeningHour>? values) {
