@@ -27,6 +27,11 @@ class PosCloseTillScreen extends ConsumerStatefulWidget {
 }
 
 class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
+  bool get _isEndShiftFlow {
+    final endShift = GoRouterState.of(context).uri.queryParameters['endShift'];
+    return endShift == 'true' || endShift == '1';
+  }
+
   final _formKey = GlobalKey<FormState>();
   final _countedCashController = TextEditingController();
   final _notesController = TextEditingController();
@@ -205,6 +210,11 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
   }
 
   void _goBack() {
+    if (_isEndShiftFlow) {
+      context.go('/pos/home');
+      return;
+    }
+
     if (context.canPop()) {
       context.pop();
       return;
@@ -245,6 +255,24 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
     if (success) {
       ref.read(closeTillFormProvider.notifier).reset();
       final message = ref.read(cashDrawerProvider).closeTillMessage;
+      if (_isEndShiftFlow) {
+        await ref.read(authSessionProvider.notifier).clear();
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                message ?? 'Shift ended. Till closed successfully.',
+              ),
+            ),
+          );
+        context.go('/tenant-login');
+        return;
+      }
+
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(

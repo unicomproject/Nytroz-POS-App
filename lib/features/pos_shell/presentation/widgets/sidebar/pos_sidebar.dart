@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../../auth/presentation/providers/session_provider.dart';
+import '../../../../till/presentation/providers/till_provider.dart';
 import '../../config/pos_shell_nav_destinations.dart';
 import '../../providers/pos_shell_navigation_provider.dart';
 import '../../../domain/entities/pos_shell_nav_destination.dart';
@@ -155,7 +156,9 @@ class _LogoPlaceholder extends StatelessWidget {
   }
 }
 
-enum _UserMenuAction { profile, logout }
+enum _UserMenuAction { profile, endShift }
+
+const _endShiftCloseTillRoute = '/pos/cash-drawer/close-till?endShift=true';
 
 class _UserMenu extends ConsumerWidget {
   const _UserMenu();
@@ -238,8 +241,8 @@ class _UserMenu extends ConsumerWidget {
           child: Text('Profile'),
         ),
         PopupMenuItem(
-          value: _UserMenuAction.logout,
-          child: Text('Logout'),
+          value: _UserMenuAction.endShift,
+          child: Text('End Shift'),
         ),
       ],
     );
@@ -251,11 +254,23 @@ class _UserMenu extends ConsumerWidget {
     switch (selected) {
       case _UserMenuAction.profile:
         context.go('/pos/profile');
-      case _UserMenuAction.logout:
-        await ref.read(authSessionProvider.notifier).clear();
-        if (context.mounted) {
-          context.go('/tenant-login');
-        }
+      case _UserMenuAction.endShift:
+        await _startEndShiftFlow(context, ref);
+    }
+  }
+
+  Future<void> _startEndShiftFlow(BuildContext context, WidgetRef ref) async {
+    final tillState = ref.read(tillProvider);
+    if (tillState.hasOpenSession) {
+      if (context.mounted) {
+        context.go(_endShiftCloseTillRoute);
+      }
+      return;
+    }
+
+    await ref.read(authSessionProvider.notifier).clear();
+    if (context.mounted) {
+      context.go('/tenant-login');
     }
   }
 }
