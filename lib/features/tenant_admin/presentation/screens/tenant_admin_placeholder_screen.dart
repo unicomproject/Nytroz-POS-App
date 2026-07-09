@@ -2150,9 +2150,9 @@ class _ProductsDataTableCard extends ConsumerWidget {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-            child: const _ProductTableSearchField(),
+          const Padding(
+            padding: EdgeInsets.all(TenantAdminSpacing.lg),
+            child: _ProductTableSearchField(),
           ),
           const Divider(height: 1, color: TenantAdminColors.border),
           SingleChildScrollView(
