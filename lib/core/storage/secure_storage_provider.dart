@@ -1,10 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
-  return const FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
+import 'app_secure_storage.dart';
+
+final secureStorageProvider = Provider<AppSecureStorage>((ref) {
+  return const AppSecureStorage(
+    FlutterSecureStorage(
+      aOptions: AndroidOptions(
+        encryptedSharedPreferences: true,
+      ),
+      webOptions: WebOptions(
+        dbName: 'nytroz_pos_secure_storage',
+        publicKey: 'nytroz_pos_secure_storage_key',
+      ),
     ),
   );
 });

@@ -133,12 +133,26 @@ class CloseTillFormController extends StateNotifier<CloseTillFormState> {
     _draftSnapshot = state.copyWith(hasDraft: true);
     state = state.copyWith(hasDraft: true);
   }
+
+  void applyDefaultCountedCash(double expectedCash) {
+    if (state.hasDraft || state.hasValidCountedCash || expectedCash < 0) {
+      return;
+    }
+
+    state = state.copyWith(
+      countedCashText: formatCloseTillCountedCashDefault(expectedCash),
+    );
+  }
 }
 
 final closeTillFormProvider =
     StateNotifierProvider.autoDispose<CloseTillFormController, CloseTillFormState>(
   (ref) => CloseTillFormController(),
 );
+
+String formatCloseTillCountedCashDefault(double expectedCash) {
+  return expectedCash.toStringAsFixed(2);
+}
 
 String formatCloseTillDifferenceLabel(double difference) {
   if (difference == 0) {

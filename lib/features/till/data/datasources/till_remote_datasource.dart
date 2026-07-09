@@ -75,6 +75,62 @@ class TillRemoteDatasource {
     }
   }
 
+  Future<ClosedTillSession> closeTill(CloseTillForm form) async {
+    final stopwatch = Stopwatch()..start();
+
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        ApiEndpoints.closeTill,
+        data: {
+          'deviceId': form.deviceContext.deviceId,
+          'tillId': form.deviceContext.tillId,
+          'countedCash': form.countedCash,
+          'expectedCash': form.expectedCash,
+          'mismatchReason': form.mismatchReason?.trim().isEmpty == true
+              ? null
+              : form.mismatchReason?.trim(),
+          'closingNote': form.closingNote?.trim().isEmpty == true
+              ? null
+              : form.closingNote?.trim(),
+        },
+      );
+      stopwatch.stop();
+      developer.log(
+        'API success. step=close-till endpoint=${ApiEndpoints.closeTill} status=${response.statusCode} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()}',
+        name: 'pos.session',
+      );
+
+      final data = _unwrapApiData(response.data ?? const {});
+      return _closedSessionFromJson(data);
+    } on DioException catch (error) {
+      stopwatch.stop();
+      developer.log(
+        'API failure. step=close-till endpoint=${ApiEndpoints.closeTill} status=${error.response?.statusCode ?? 'none'} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()} message=${_messageFromDio(error)}',
+        name: 'pos.session',
+      );
+      throw TillException(_messageFromDio(error));
+    }
+  }
+
+  ClosedTillSession _closedSessionFromJson(Map<String, dynamic> json) {
+    final session = _map(json['tillSession']);
+
+    return ClosedTillSession(
+      sessionId: _string(session['id']),
+      tillId: _string(session['tillId']),
+      openingFloat: _double(session['openingFloat'], 0),
+      expectedCash: _double(session['expectedCash'], 0),
+      countedCash: _double(session['countedCash'], 0),
+      cashDifference: _double(session['cashDifference'], 0),
+      status: _string(session['status'], fallback: 'closed'),
+      openedAt:
+          DateTime.tryParse(_string(session['openedAt'])) ?? DateTime.now(),
+      closedAt:
+          DateTime.tryParse(_string(session['closedAt'])) ?? DateTime.now(),
+      closingNote: session['closingNote']?.toString(),
+    );
+  }
+
   Map<String, dynamic> _unwrapApiData(Map<String, dynamic> json) {
     final data = json['data'];
     if (data is Map) {

@@ -39,16 +39,25 @@ class AuthSessionNotifier extends StateNotifier<AuthSession?> {
   }
 
   Future<void> _restoreSession() async {
-    final session = await _storage.read();
-    if (session == null) {
-      return;
-    }
+    try {
+      final session = await _storage.read();
+      if (session == null) {
+        return;
+      }
 
-    state = session;
-    developer.log(
-      'Auth session restored into memory. userId=${session.userId}',
-      name: 'auth.session',
-    );
+      state = session;
+      developer.log(
+        'Auth session restored into memory. userId=${session.userId}',
+        name: 'auth.session',
+      );
+    } catch (error, stackTrace) {
+      developer.log(
+        'Auth session restore failed.',
+        name: 'auth.session',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 }
 

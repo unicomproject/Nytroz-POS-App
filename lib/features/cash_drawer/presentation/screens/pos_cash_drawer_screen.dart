@@ -25,6 +25,17 @@ class PosCashDrawerScreen extends ConsumerStatefulWidget {
 
 class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      ref.read(cashDrawerProvider.notifier).refresh();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider);
     if (!PosPermissionAccess.canViewCashDrawer(
@@ -86,7 +97,7 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
                             actionsEnabled: actionsEnabled,
                             onCashIn: () => _onCashIn(context),
                             onCashOut: () => _onCashOut(context),
-                            onCloseTill: () => _onCloseTill(context, summary),
+                            onCloseTill: () => _onCloseTill(context),
                           ),
                           const SizedBox(height: TenantAdminSpacing.lg),
                           CashDrawerMovementsSection(
@@ -141,7 +152,6 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
 
   Future<void> _onCloseTill(
     BuildContext context,
-    CashDrawerSummary summary,
   ) async {
     if (!PosPermissionAccess.canCloseTill(
       ref.read(authSessionProvider)?.permissionCodes.toSet() ?? const {},
@@ -153,7 +163,8 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
       return;
     }
 
-    if (!summary.isOpen) {
+    final tillState = ref.read(tillProvider);
+    if (!tillState.hasOpenSession) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -164,6 +175,7 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
       return;
     }
 
+    ref.read(cashDrawerProvider.notifier).refresh();
     context.push('/pos/cash-drawer/close-till');
   }
 }

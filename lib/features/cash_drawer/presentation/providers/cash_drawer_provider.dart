@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../till/presentation/providers/till_provider.dart';
 import '../../../../shared/pos_session/pos_session_provider.dart';
 import '../../domain/entities/cash_drawer_summary.dart';
@@ -49,6 +50,7 @@ class CashDrawerState {
 
 class CashDrawerController extends StateNotifier<CashDrawerState> {
   CashDrawerController(this._ref) : super(const CashDrawerState()) {
+    _ref.listen(tillProvider, (_, __) => refresh());
     refresh();
   }
 
@@ -170,27 +172,45 @@ class CashDrawerController extends StateNotifier<CashDrawerState> {
       return false;
     }
 
+    final device = _ref.read(deviceActivationProvider).deviceContext;
+    if (device == null) {
+      state = state.copyWith(
+        errorMessage: 'Device context is required to close the till.',
+      );
+      return false;
+    }
+
     state = state.copyWith(isSubmitting: true, clearError: true);
 
-    await Future<void>.delayed(const Duration(milliseconds: 350));
+    final closedSession = await _ref.read(tillProvider.notifier).closeTill(
+          deviceContext: device,
+          countedCash: countedCash,
+          expectedCash: summary.currentExpectedCash,
+          mismatchReason: mismatchReason,
+          closingNote: note,
+        );
 
-    final difference = countedCash - summary.currentExpectedCash;
+    if (closedSession == null) {
+      final tillError = _ref.read(tillProvider).errorMessage;
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: tillError ?? 'Till could not be closed. Try again.',
+      );
+      return false;
+    }
+
+    final difference = closedSession.cashDifference;
     final differenceLabel = difference == 0
         ? 'balanced'
         : difference > 0
             ? 'over by ${formatLkr(difference.abs().round())}'
             : 'short by ${formatLkr(difference.abs().round())}';
 
-    final reasonSuffix = mismatchReason?.trim().isNotEmpty == true
-        ? ' Reason: $mismatchReason.'
-        : '';
-    final noteSuffix =
-        note?.trim().isNotEmpty == true ? ' Notes saved locally.' : '';
-
+    refresh();
     state = state.copyWith(
       isSubmitting: false,
-      closeTillMessage:
-          'Till close is not connected to the backend yet. Count was $differenceLabel.$reasonSuffix$noteSuffix',
+      clearCloseTillMessage: true,
+      closeTillMessage: 'Till closed successfully. Count was $differenceLabel.',
     );
     return true;
   }

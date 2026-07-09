@@ -1,21 +1,19 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
+import '../../../../core/storage/app_secure_storage.dart';
 import '../../domain/entities/auth_session.dart';
-
 class AuthSessionStorage {
   const AuthSessionStorage(this._storage);
 
   static const _sessionKey = 'auth.session';
 
-  final FlutterSecureStorage _storage;
+  final AppSecureStorage _storage;
 
   Future<void> save(AuthSession session) async {
     await _storage.write(
-      key: _sessionKey,
-      value: jsonEncode(session.toJson()),
+      _sessionKey,
+      jsonEncode(session.toJson()),
     );
     developer.log(
       'Auth session stored securely. accessTokenPresent=${session.accessToken.isNotEmpty}, refreshTokenPresent=${session.refreshToken?.isNotEmpty == true}',
@@ -24,7 +22,7 @@ class AuthSessionStorage {
   }
 
   Future<AuthSession?> read() async {
-    final value = await _storage.read(key: _sessionKey);
+    final value = await _storage.read(_sessionKey);
     developer.log(
       'Auth session retrieved from secure storage. present=${value != null}',
       name: 'auth.storage',
@@ -59,7 +57,7 @@ class AuthSessionStorage {
   }
 
   Future<void> clear() async {
-    await _storage.delete(key: _sessionKey);
+    await _storage.delete(_sessionKey);
     developer.log('Auth session cleared.', name: 'auth.storage');
   }
 }

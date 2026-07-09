@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/core/network/dio_provider.dart';
+import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
 import 'package:nytroz_pos/features/device_activation/application/usecases/activate_device.dart';
 import 'package:nytroz_pos/features/device_activation/data/datasources/device_context_storage.dart';
 import 'package:nytroz_pos/features/device_activation/domain/entities/pos_device_context.dart';
@@ -240,7 +241,7 @@ class _FakeDeviceActivationRepository implements DeviceActivationRepository {
 }
 
 class _TestDeviceContextStorage extends DeviceContextStorage {
-  _TestDeviceContextStorage() : super(const FlutterSecureStorage());
+  _TestDeviceContextStorage() : super(const AppSecureStorage(FlutterSecureStorage()));
 
   @override
   Future<PosDeviceContext?> read() async => _deviceContext;

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/core/network/dio_provider.dart';
+import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
 import 'package:nytroz_pos/features/auth/application/usecases/login.dart';
 import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.dart';
 import 'package:nytroz_pos/features/auth/domain/entities/auth_branding.dart';
@@ -189,7 +190,7 @@ class _FailingLogin extends Login {
 }
 
 class _TestAuthSessionStorage extends AuthSessionStorage {
-  _TestAuthSessionStorage() : super(const FlutterSecureStorage());
+  _TestAuthSessionStorage() : super(const AppSecureStorage(FlutterSecureStorage()));
 
   @override
   Future<AuthSession?> read() async => null;

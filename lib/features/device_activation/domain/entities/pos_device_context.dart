@@ -14,6 +14,8 @@ class PosDeviceContext {
     required this.tillCode,
     required this.tillName,
     required this.pairedAt,
+    this.defaultOpeningFloatAmount = 0,
+    this.currencyCode = 'LKR',
   });
 
   final String deviceId;
@@ -30,6 +32,8 @@ class PosDeviceContext {
   final String tillCode;
   final String tillName;
   final DateTime pairedAt;
+  final double defaultOpeningFloatAmount;
+  final String currencyCode;
 
   Map<String, dynamic> toJson() {
     return {
@@ -47,6 +51,8 @@ class PosDeviceContext {
       'tillCode': tillCode,
       'tillName': tillName,
       'pairedAt': pairedAt.toIso8601String(),
+      'defaultOpeningFloatAmount': defaultOpeningFloatAmount,
+      'currencyCode': currencyCode,
     };
   }
 
@@ -67,8 +73,19 @@ class PosDeviceContext {
       tillName: json['tillName'] as String? ?? '',
       pairedAt: DateTime.tryParse(json['pairedAt']?.toString() ?? '') ??
           DateTime.now(),
+      defaultOpeningFloatAmount:
+          _double(json['defaultOpeningFloatAmount']),
+      currencyCode: json['currencyCode'] as String? ?? 'LKR',
     );
   }
+}
+
+double _double(Object? value) {
+  if (value is num) {
+    return value.toDouble();
+  }
+
+  return double.tryParse(value?.toString() ?? '') ?? 0;
 }
 
 class DeviceActivationForm {

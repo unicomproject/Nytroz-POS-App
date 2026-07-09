@@ -110,8 +110,7 @@ class PosSessionBootstrapNotifier
       );
       var device = _ref.read(deviceActivationProvider).deviceContext;
 
-      if (session.canActivatePosDevice &&
-          (device == null || !device.isTrusted)) {
+      if (session.canActivatePosDevice) {
         final refreshed = await _runStep(
           'refresh-current-device',
           () =>
@@ -129,18 +128,17 @@ class PosSessionBootstrapNotifier
         }
       }
 
-      if (session.canOpenPosTill && device != null && device.isTrusted) {
-        await _runStep(
-          'hydrate-till-session',
-          () => _ref.read(tillProvider.notifier).ensureHydrated(),
-        );
-        var tillSession = _ref.read(tillProvider).session;
-
-        if (tillSession == null || tillSession.status != 'open') {
+      if (session.canOpenPosTill) {
+        if (device != null && device.isTrusted) {
+          await _runStep(
+            'hydrate-till-session',
+            () => _ref.read(tillProvider.notifier).ensureHydrated(),
+          );
           final refreshed = await _runStep(
             'refresh-current-till-session',
             () => _ref.read(tillProvider.notifier).refreshCurrentSession(
                   deviceContext: device!,
+                  force: true,
                 ),
           );
           final tillError = _ref.read(tillProvider).errorMessage;
@@ -150,6 +148,11 @@ class PosSessionBootstrapNotifier
               tillError,
             );
           }
+        } else {
+          await _runStep(
+            'clear-stale-till-session',
+            () => _ref.read(tillProvider.notifier).clear(),
+          );
         }
       }
       state = const PosSessionBootstrapState(isReady: true);

@@ -37,9 +37,10 @@ class AuthSession {
     return permissionCodes.contains(permissionCode);
   }
 
-  bool get canActivatePosDevice => hasPermission('tenant.till.manage');
-
   bool get canOpenPosTill => hasPermission(PosPermissionCodes.openTill);
+
+  bool get canActivatePosDevice =>
+      canOpenPosTill || hasPermission('tenant.till.manage');
 
   bool get canAccessTenantAdminDashboard {
     const dashboardCodes = [

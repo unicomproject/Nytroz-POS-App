@@ -1,7 +1,12 @@
 import 'dart:io' show Platform;
+import 'dart:math';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+
+import '../../../core/storage/platform_local_storage.dart';
+
+const webInstallationIdKey = 'pos.web.installationId';
 
 String legacyDeviceFingerprint() {
   if (!kIsWeb) {
@@ -29,12 +34,7 @@ String currentDevicePlatform() {
 
 Future<String> createStableDeviceFingerprint() async {
   if (kIsWeb) {
-    final legacy = legacyDeviceFingerprint();
-    if (legacy.isNotEmpty) {
-      return legacy;
-    }
-
-    return 'pos-web-unknown';
+    return createStableWebDeviceFingerprint();
   }
 
   final plugin = DeviceInfoPlugin();
@@ -53,6 +53,32 @@ Future<String> createStableDeviceFingerprint() async {
   }
 
   return 'pos-device-unknown';
+}
+
+Future<String> createStableWebDeviceFingerprint() async {
+  final existing = await PlatformLocalStorage.read(webInstallationIdKey);
+  if (existing != null && existing.trim().isNotEmpty) {
+    return 'pos-web-${existing.trim()}';
+  }
+
+  final installationId = _createInstallationId();
+  await PlatformLocalStorage.write(webInstallationIdKey, installationId);
+  return 'pos-web-$installationId';
+}
+
+String _createInstallationId() {
+  final random = Random.secure();
+  final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+  String hex(int value) => value.toRadixString(16).padLeft(2, '0');
+
+  return '${bytes.sublist(0, 4).map(hex).join()}-'
+      '${bytes.sublist(4, 6).map(hex).join()}-'
+      '${bytes.sublist(6, 8).map(hex).join()}-'
+      '${bytes.sublist(8, 10).map(hex).join()}-'
+      '${bytes.sublist(10, 16).map(hex).join()}';
 }
 
 List<String> uniqueFingerprints(Iterable<String> values) {

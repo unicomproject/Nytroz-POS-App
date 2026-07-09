@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../auth/presentation/providers/post_login_navigation_provider.dart';
+import '../../../../shared/pos_session/pos_session_bootstrap_provider.dart';
+
 import '../../../../core/access/pos_permission_access.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
@@ -28,14 +31,17 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
   final _countedCashController = TextEditingController();
   final _notesController = TextEditingController();
   final _managerPinController = TextEditingController();
+  var _initializedForm = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(closeTillFormProvider.notifier).reset();
-      ref.read(closeTillFormProvider.notifier).restoreDraftIfAvailable();
-      _syncControllersFromFormState();
+      if (!mounted) {
+        return;
+      }
+      ref.read(cashDrawerProvider.notifier).refresh();
+      _initializeCloseTillForm();
     });
   }
 
@@ -52,6 +58,26 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
     _countedCashController.text = formState.countedCashText;
     _notesController.text = formState.notes;
     _managerPinController.text = formState.managerPin;
+  }
+
+  void _initializeCloseTillForm() {
+    if (_initializedForm) {
+      return;
+    }
+
+    final tillState = ref.read(tillProvider);
+    final summary = ref.read(cashDrawerProvider).summary;
+    final formNotifier = ref.read(closeTillFormProvider.notifier);
+
+    formNotifier.reset();
+    formNotifier.restoreDraftIfAvailable();
+
+    if (tillState.hasOpenSession && summary != null && summary.isOpen) {
+      formNotifier.applyDefaultCountedCash(summary.currentExpectedCash);
+    }
+
+    _syncControllersFromFormState();
+    _initializedForm = true;
   }
 
   @override
@@ -73,6 +99,19 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
     final formState = ref.watch(closeTillFormProvider);
     final summary = drawerState.summary;
     final isSubmitting = drawerState.isSubmitting;
+
+    if (summary != null &&
+        tillState.hasOpenSession &&
+        summary.isOpen &&
+        !_initializedForm) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _initializedForm) {
+          return;
+        }
+        _initializeCloseTillForm();
+        setState(() {});
+      });
+    }
 
     if (summary == null) {
       return const ColoredBox(
@@ -211,11 +250,18 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
         ..showSnackBar(
           SnackBar(
             content: Text(
-              message ?? 'Till close request recorded locally.',
+              message ?? 'Till closed successfully.',
             ),
           ),
         );
-      _goBack();
+      await ref
+          .read(posSessionBootstrapProvider.notifier)
+          .bootstrap(force: true);
+      if (!mounted) {
+        return;
+      }
+      final route = ref.read(postLoginRouteProvider);
+      context.go(route.path);
       return;
     }
 
