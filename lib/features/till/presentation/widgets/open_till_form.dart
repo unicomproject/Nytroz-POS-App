@@ -16,6 +16,7 @@ class OpenTillForm extends StatelessWidget {
     required this.onBack,
     required this.onSubmit,
     this.errorMessage,
+    this.embedded = false,
   });
 
   final GlobalKey<FormState> formKey;
@@ -30,6 +31,7 @@ class OpenTillForm extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onSubmit;
   final String? errorMessage;
+  final bool embedded;
 
   bool get _hasValidAmount {
     final amount = double.tryParse(openingFloatController.text);
@@ -38,18 +40,9 @@ class OpenTillForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: formKey,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE4E9F3)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+    final formContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -274,8 +267,21 @@ class OpenTillForm extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
+        );
+
+    return Form(
+      key: formKey,
+      child: embedded
+          ? formContent
+          : Container(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFE4E9F3)),
+              ),
+              child: formContent,
+            ),
     );
   }
 

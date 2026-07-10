@@ -1,5 +1,27 @@
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 
+class PosCatalogCategory {
+  const PosCatalogCategory({
+    required this.id,
+    required this.name,
+  });
+
+  final String id;
+  final String name;
+}
+
+class PosCatalogCategoryOption {
+  const PosCatalogCategoryOption({
+    required this.name,
+    this.id,
+  });
+
+  final String? id;
+  final String name;
+
+  bool get isAll => id == null;
+}
+
 class PosCatalogProductSummary {
   const PosCatalogProductSummary({
     required this.productId,
@@ -7,13 +29,17 @@ class PosCatalogProductSummary {
     required this.categoryName,
     required this.basePrice,
     required this.hasVariants,
+    this.categoryId,
     this.variantId,
     this.description,
     this.imageUrl,
+    this.stockStatus = 'InStock',
+    this.availableQty,
     this.stockLabel = 'In Stock',
   });
 
   final String productId;
+  final String? categoryId;
   final String? variantId;
   final String name;
   final String? description;
@@ -21,7 +47,11 @@ class PosCatalogProductSummary {
   final String categoryName;
   final int basePrice;
   final bool hasVariants;
+  final String stockStatus;
+  final double? availableQty;
   final String stockLabel;
+
+  bool get isOutOfStock => stockStatus == 'OutOfStock';
 
   bool matches(String query) {
     return productId.toLowerCase().contains(query) ||
@@ -116,7 +146,7 @@ PosNewSaleProduct toCartProduct({
     hasVariants: summary.hasVariants,
     sku: variant?.sku,
     selectedAttributes: attributes,
-    maxQuantity: variant?.stockQty?.floor(),
+    maxQuantity: variant?.stockQty?.floor() ?? summary.availableQty?.floor(),
   );
 }
 
@@ -161,5 +191,19 @@ String stockStatusFromApi(String? value) {
     'out_of_stock' || 'OutOfStock' => 'OutOfStock',
     'low_stock' || 'LowStock' => 'LowStock',
     _ => 'InStock',
+  };
+}
+
+String stockLabelFromApi(String? stockStatus, num? availableQty) {
+  final normalized = stockStatusFromApi(stockStatus);
+
+  return switch (normalized) {
+    'OutOfStock' => 'Out of Stock',
+    'LowStock' => availableQty != null
+        ? '${availableQty.floor()} in stock'
+        : 'Low Stock',
+    _ => availableQty != null && availableQty > 0
+        ? '${availableQty.floor()} in stock'
+        : 'In Stock',
   };
 }

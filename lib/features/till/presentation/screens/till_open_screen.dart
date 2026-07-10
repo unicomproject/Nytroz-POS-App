@@ -6,10 +6,14 @@ import '../../../device_activation/presentation/providers/device_activation_prov
 import '../../../../shared/pos_session/pos_session_context.dart';
 import '../../../../shared/pos_session/pos_session_provider.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
+import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../providers/till_provider.dart';
 import '../../../../shared/pos_session/pos_session_bootstrap_provider.dart';
 import '../../../auth/presentation/providers/post_login_navigation_provider.dart';
 import '../widgets/open_till_form.dart';
+
+const double _openTillCompactBreakpoint = 760;
+const double _openTillSidebarWidth = 280;
 
 class TillOpenScreen extends ConsumerStatefulWidget {
   const TillOpenScreen({super.key});
@@ -54,93 +58,99 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
 
     if (device == null || !device.isTrusted) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF7F9FD),
-        body: SafeArea(
-          child: Center(
-            child: _BlockedPanel(
-              title: 'Device activation required',
-              message:
-                  'This POS device must be trusted before a till can be opened.',
-              actionLabel: 'Activate device',
-              onPressed: () => context.go('/pos/device-activation'),
-            ),
+        backgroundColor: TenantAdminColors.background,
+        body: Center(
+          child: _BlockedPanel(
+            title: 'Device activation required',
+            message:
+                'This POS device must be trusted before a till can be opened.',
+            actionLabel: 'Activate device',
+            onPressed: () => context.go('/pos/device-activation'),
           ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF020817),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isCompact = constraints.maxWidth < 760;
+      backgroundColor: TenantAdminColors.background,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < _openTillCompactBreakpoint;
 
-            if (isCompact) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  children: [
-                    PosSetupSidebar(contextData: sessionContext),
-                    const SizedBox(height: 14),
-                    OpenTillForm(
-                      formKey: _formKey,
-                      openingFloatController: _openingFloatController,
-                      openingNoteController: _openingNoteController,
-                      errorMessage: tillState.errorMessage,
-                      isSubmitting: tillState.isSubmitting,
-                      outletName: sessionContext.outletName,
-                      tillName: device.tillName,
-                      deviceName: sessionContext.deviceCode,
-                      currencyCode: device.currencyCode,
-                      openingBy: authSession?.userDisplayName ?? '',
-                      onBack: () => context.go('/pos/device-activation'),
-                      onSubmit: _submitOpenTill,
-                    ),
-                  ],
-                ),
-              );
-            }
+          if (isCompact) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(TenantAdminSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  PosSetupSidebar(
+                    contextData: sessionContext,
+                    stretchVertically: false,
+                  ),
+                  const SizedBox(height: TenantAdminSpacing.md),
+                  OpenTillForm(
+                    formKey: _formKey,
+                    openingFloatController: _openingFloatController,
+                    openingNoteController: _openingNoteController,
+                    errorMessage: tillState.errorMessage,
+                    isSubmitting: tillState.isSubmitting,
+                    outletName: sessionContext.outletName,
+                    tillName: device.tillName,
+                    deviceName: sessionContext.deviceCode,
+                    currencyCode: device.currencyCode,
+                    openingBy: authSession?.userDisplayName ?? '',
+                    onBack: () => context.go('/pos/device-activation'),
+                    onSubmit: _submitOpenTill,
+                  ),
+                ],
+              ),
+            );
+          }
 
-            return Row(
-              children: [
-                SizedBox(
-                  width: 224,
-                  child: PosSetupSidebar(contextData: sessionContext),
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                width: _openTillSidebarWidth,
+                child: PosSetupSidebar(
+                  contextData: sessionContext,
+                  stretchVertically: true,
                 ),
-                Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.fromLTRB(0, 16, 16, 16),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFFBFCFF),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(8),
-                        bottomLeft: Radius.circular(8),
-                      ),
+              ),
+              Expanded(
+                child: ColoredBox(
+                  color: TenantAdminColors.background,
+                  child: SingleChildScrollView(
+                    padding: TenantAdminInsets.pageForWidth(
+                      constraints.maxWidth - _openTillSidebarWidth,
                     ),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
-                      child: OpenTillForm(
-                        formKey: _formKey,
-                        openingFloatController: _openingFloatController,
-                        openingNoteController: _openingNoteController,
-                        errorMessage: tillState.errorMessage,
-                        isSubmitting: tillState.isSubmitting,
-                        outletName: sessionContext.outletName,
-                        tillName: device.tillName,
-                        deviceName: sessionContext.deviceCode,
-                        currencyCode: device.currencyCode,
-                        openingBy: authSession?.userDisplayName ?? '',
-                        onBack: () => context.go('/pos/device-activation'),
-                        onSubmit: _submitOpenTill,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 760),
+                        child: OpenTillForm(
+                          formKey: _formKey,
+                          openingFloatController: _openingFloatController,
+                          openingNoteController: _openingNoteController,
+                          errorMessage: tillState.errorMessage,
+                          isSubmitting: tillState.isSubmitting,
+                          outletName: sessionContext.outletName,
+                          tillName: device.tillName,
+                          deviceName: sessionContext.deviceCode,
+                          currencyCode: device.currencyCode,
+                          openingBy: authSession?.userDisplayName ?? '',
+                          embedded: true,
+                          onBack: () => context.go('/pos/device-activation'),
+                          onSubmit: _submitOpenTill,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -180,25 +190,17 @@ class PosSetupSidebar extends StatelessWidget {
   const PosSetupSidebar({
     super.key,
     required this.contextData,
+    this.stretchVertically = true,
   });
 
   final PosSessionContext contextData;
+  final bool stretchVertically;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 560),
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF071D40), Color(0xFF031126)],
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    final sidebarContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
           Row(
             children: [
               Container(
@@ -278,13 +280,34 @@ class PosSetupSidebar extends StatelessWidget {
             subtitle: 'Step 3 of 3',
             isActive: true,
           ),
-          const Spacer(),
+          if (stretchVertically) const Spacer(),
+          if (!stretchVertically) const SizedBox(height: 18),
           _SystemStatusCard(
             status: contextData.systemStatus,
             lastSync: contextData.lastSyncLabel,
           ),
         ],
+      );
+
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF071D40), Color(0xFF031126)],
+        ),
       ),
+      child: stretchVertically
+          ? SizedBox.expand(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                child: sidebarContent,
+              ),
+            )
+          : Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+              child: sidebarContent,
+            ),
     );
   }
 }
