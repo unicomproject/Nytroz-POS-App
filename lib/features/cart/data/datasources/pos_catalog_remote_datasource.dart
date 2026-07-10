@@ -47,7 +47,7 @@ class PosCatalogRemoteDatasource {
     return _mapDetail(_unwrapMap(response.data ?? const {}));
   }
 
-  Future<List<String>> getCategories({required String deviceId}) async {
+  Future<List<PosCatalogCategory>> getCategories({required String deviceId}) async {
     final response = await _dio.get<Map<String, dynamic>>(
       ApiEndpoints.posCatalogCategories,
       queryParameters: {'deviceId': deviceId},
@@ -55,8 +55,13 @@ class PosCatalogRemoteDatasource {
 
     final data = _unwrapList(response.data ?? const {});
     final categories = data
-        .map((item) => item['name']?.toString().trim() ?? '')
-        .where((name) => name.isNotEmpty && name.toLowerCase() != 'all')
+        .map(
+          (item) => PosCatalogCategory(
+            id: (item as Map)['id']?.toString() ?? '',
+            name: item['name']?.toString().trim() ?? '',
+          ),
+        )
+        .where((category) => category.id.isNotEmpty && category.name.isNotEmpty)
         .toList(growable: false);
 
     developer.log(
@@ -86,16 +91,22 @@ class PosCatalogRemoteDatasource {
   }
 
   PosCatalogProductSummary _mapSummary(Map<String, dynamic> json) {
+    final stockStatus = stockStatusFromApi(json['stockStatus']?.toString());
+    final availableQty = (json['availableQuantity'] as num?)?.toDouble();
+
     return PosCatalogProductSummary(
       productId: json['id']?.toString() ?? '',
       variantId: json['variantId']?.toString(),
       name: json['name']?.toString() ?? 'Product',
       description: json['description']?.toString(),
       imageUrl: _resolveImageUrl(json),
+      categoryId: json['categoryId']?.toString(),
       categoryName: json['categoryName']?.toString() ?? 'General',
       basePrice: parsePriceToInt(json['basePrice']),
       hasVariants: json['hasVariants'] == true,
-      stockLabel: 'From ${formatLkr(parsePriceToInt(json['basePrice']))}',
+      stockStatus: stockStatus,
+      availableQty: availableQty,
+      stockLabel: stockLabelFromApi(json['stockStatus']?.toString(), availableQty),
     );
   }
 

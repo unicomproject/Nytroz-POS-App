@@ -303,9 +303,9 @@ void main() {
 
       expect(find.text('No items added'), findsNothing);
       expect(find.text('Qty 1'), findsOneWidget);
-      // Product grid no longer renders price on tiles; cart shows unit price,
-      // line total, subtotal, and total.
-      expect(find.text('LKR 1,500.00'), findsNWidgets(4));
+      // Product grid and cart both show unit price; cart also shows line total,
+      // subtotal, and total.
+      expect(find.text('LKR 1,500.00'), findsNWidgets(5));
       expect(tester.widget<FilledButton>(paymentButton).onPressed, isNotNull);
 
       await tester.tap(find.text('General Admission').first);
@@ -318,7 +318,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Qty 1'), findsOneWidget);
-      expect(find.text('LKR 1,500.00'), findsNWidgets(4));
+      expect(find.text('LKR 1,500.00'), findsNWidgets(5));
 
       await tester.tap(find.byIcon(Icons.delete_outline_rounded));
       await tester.pumpAndSettle();
@@ -445,11 +445,11 @@ void main() {
       expect(find.text('All Products (12)'), findsOneWidget);
     });
 
-    test('posNewSaleProductMatchesCategory maps chip labels to products', () {
-      expect(posNewSaleProductMatchesCategory('Tickets', 'Tickets'), isTrue);
-      expect(posNewSaleProductMatchesCategory('Food', 'Tickets'), isFalse);
-      expect(posNewSaleProductMatchesCategory('Memberships', 'All'), isTrue);
-      expect(posNewSaleProductMatchesCategory('Services', 'Services'), isTrue);
+    test('stockLabelFromApi maps API stock status to labels', () {
+      expect(stockLabelFromApi('in_stock', null), 'In Stock');
+      expect(stockLabelFromApi('out_of_stock', 0), 'Out of Stock');
+      expect(stockLabelFromApi('low_stock', 3), '3 in stock');
+      expect(stockLabelFromApi('in_stock', 12), '12 in stock');
     });
 
     test('New Sale cart promotes recently added product to the top', () {
@@ -805,9 +805,14 @@ Future<void> _pumpPosHome(
         posHomeDashboardProvider.overrideWith(
           dashboardOverride ?? (ref) async => dashboard,
         ),
-        posNewSaleCatalogProvider.overrideWith(
-          (ref) async => testPosCatalogState,
+        posNewSaleCategoriesProvider.overrideWith(
+          (ref) async => testPosCatalogCategories,
         ),
+        posNewSaleCatalogProvider.overrideWith((ref) async {
+          final selectedCategoryId =
+              ref.watch(posNewSaleSelectedCategoryIdProvider);
+          return testPosCatalogStateForCategory(selectedCategoryId);
+        }),
       ],
       child: const NytrozPosApp(),
     ),

@@ -13,33 +13,6 @@ final posNewSaleSearchQueryProvider = StateProvider.autoDispose<String>(
   (ref) => '',
 );
 
-const posNewSaleCategories = <String>[
-  'All',
-  'Apparel',
-  'Accessories',
-  'Tickets',
-  'Services',
-  'Retail',
-  'Food',
-  'Drinks',
-  'Memberships',
-];
-
-final posNewSaleSelectedCategoryProvider = StateProvider.autoDispose<String>(
-  (ref) => posNewSaleCategories.first,
-);
-
-bool posNewSaleProductMatchesCategory(
-  String productCategory,
-  String selectedCategory,
-) {
-  if (selectedCategory == 'All') {
-    return true;
-  }
-
-  return productCategory.toLowerCase() == selectedCategory.toLowerCase();
-}
-
 class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
   @override
   PosNewSaleCartState build() => const PosNewSaleCartState();

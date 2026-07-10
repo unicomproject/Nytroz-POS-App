@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/widgets/pos_empty_cart_panel.dart';
@@ -44,8 +45,7 @@ class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen> {
       }
 
       ref.read(posNewSaleSearchQueryProvider.notifier).state = '';
-      ref.read(posNewSaleSelectedCategoryProvider.notifier).state =
-          posNewSaleCategories.first;
+      ref.read(posNewSaleSelectedCategoryIdProvider.notifier).state = null;
     });
   }
 
@@ -137,26 +137,32 @@ class _ProductSectionHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final query = ref.watch(posNewSaleSearchQueryProvider).trim();
-    final selectedCategory = ref.watch(posNewSaleSelectedCategoryProvider);
+    final selectedCategoryId = ref.watch(posNewSaleSelectedCategoryIdProvider);
+    final categoriesAsync = ref.watch(posNewSaleCategoriesProvider);
     final catalogAsync = ref.watch(posNewSaleCatalogProvider);
     final productCount = catalogAsync.maybeWhen(
       data: (catalog) => catalog.products.where((product) {
-        final matchesCategory = posNewSaleProductMatchesCategory(
-          product.categoryName,
-          selectedCategory,
-        );
         final matchesSearch =
             query.isEmpty || product.matches(query.toLowerCase());
-        return matchesCategory && matchesSearch;
+        return matchesSearch;
       }).length,
       orElse: () => 0,
+    );
+    final selectedCategoryName = categoriesAsync.maybeWhen(
+      data: (categories) => categories
+          .firstWhere(
+            (category) => category.id == selectedCategoryId,
+            orElse: () => const PosCatalogCategoryOption(name: 'All'),
+          )
+          .name,
+      orElse: () => 'All',
     );
     final hasSearch = query.isNotEmpty;
     final sectionTitle = hasSearch
         ? 'Search results for "$query"'
-        : selectedCategory == 'All'
+        : selectedCategoryId == null
             ? 'All Products ($productCount)'
-            : '$selectedCategory Products';
+            : '$selectedCategoryName Products';
 
     return Row(
       children: [

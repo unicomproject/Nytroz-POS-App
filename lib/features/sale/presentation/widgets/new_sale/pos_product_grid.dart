@@ -29,19 +29,12 @@ class PosProductGrid extends ConsumerWidget {
 
     return catalogAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const _CatalogLoadError(),
+      error: (error, _) => _CatalogLoadError(message: error.toString()),
       data: (catalog) {
         final query =
             ref.watch(posNewSaleSearchQueryProvider).trim().toLowerCase();
-        final selectedCategory = ref.watch(posNewSaleSelectedCategoryProvider);
         final products = catalog.products.where((product) {
-          final matchesCategory = posNewSaleProductMatchesCategory(
-            product.categoryName,
-            selectedCategory,
-          );
-          final matchesSearch = query.isEmpty || product.matches(query);
-
-          return matchesCategory && matchesSearch;
+          return query.isEmpty || product.matches(query);
         }).toList();
 
         return LayoutBuilder(
@@ -144,6 +137,16 @@ class _ProductTile extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                       ),
                 ),
+                const SizedBox(height: TenantAdminSpacing.xs),
+                Text(
+                  formatLkr(product.basePrice),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: TenantAdminColors.bodyText,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
                 if (product.hasVariants) ...[
                   const SizedBox(height: TenantAdminSpacing.xs),
                   Row(
@@ -173,6 +176,37 @@ class _ProductTile extends StatelessWidget {
                       ),
                     ],
                   ),
+                ] else ...[
+                  const SizedBox(height: TenantAdminSpacing.xs),
+                  Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: product.isOutOfStock
+                              ? TenantAdminColors.danger
+                              : TenantAdminColors.success,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: TenantAdminSpacing.xs),
+                      Expanded(
+                        child: Text(
+                          product.stockLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(
+                                color: TenantAdminColors.mutedText,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ],
             ),
@@ -184,10 +218,17 @@ class _ProductTile extends StatelessWidget {
 }
 
 class _CatalogLoadError extends StatelessWidget {
-  const _CatalogLoadError();
+  const _CatalogLoadError({this.message});
+
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
+    final details = message?.trim();
+    final showDetails = details != null &&
+        details.isNotEmpty &&
+        !details.contains('FutureProvider');
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -205,6 +246,23 @@ class _CatalogLoadError extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
           ),
+          if (showDetails) ...[
+            const SizedBox(height: TenantAdminSpacing.xs),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: TenantAdminSpacing.md,
+              ),
+              child: Text(
+                details,
+                textAlign: TextAlign.center,
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: TenantAdminColors.mutedText,
+                    ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -387,6 +445,16 @@ class _ProductVisual {
         ),
       'apparel' => const _ProductVisual(
           icon: Icons.checkroom_outlined,
+          backgroundColor: Color(0xFFEFF6FF),
+          iconColor: TenantAdminColors.info,
+        ),
+      'footwear' => const _ProductVisual(
+          icon: Icons.hiking_outlined,
+          backgroundColor: Color(0xFFF5F3FF),
+          iconColor: TenantAdminColors.pending,
+        ),
+      'sports' => const _ProductVisual(
+          icon: Icons.sports_soccer_outlined,
           backgroundColor: Color(0xFFEFF6FF),
           iconColor: TenantAdminColors.info,
         ),
