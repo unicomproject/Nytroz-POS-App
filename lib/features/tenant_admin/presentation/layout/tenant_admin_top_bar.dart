@@ -5,7 +5,12 @@ import '../providers/tenant_admin_context_provider.dart';
 import '../theme/tenant_admin_theme.dart';
 
 class TenantAdminTopBar extends ConsumerWidget implements PreferredSizeWidget {
-  const TenantAdminTopBar({super.key});
+  const TenantAdminTopBar({
+    super.key,
+    this.onMenuPressed,
+  });
+
+  final VoidCallback? onMenuPressed;
 
   @override
   Size get preferredSize => const Size.fromHeight(64);
@@ -17,6 +22,13 @@ class TenantAdminTopBar extends ConsumerWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: TenantAdminColors.navy,
       foregroundColor: Colors.white,
+      leading: onMenuPressed == null
+          ? null
+          : IconButton(
+              icon: const Icon(Icons.menu),
+              tooltip: 'Open navigation',
+              onPressed: onMenuPressed,
+            ),
       title: contextState.maybeWhen(
         data: (tenantContext) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,

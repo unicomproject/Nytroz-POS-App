@@ -212,6 +212,39 @@ class _TrackingTillRepository implements TillRepository {
       ),
     ];
   }
+
+  @override
+  Future<TillDetail> getTillById(String id) async {
+    return TillDetail(
+      id: id,
+      outletId: 'outlet-1',
+      outletName: 'High Street Store',
+      outletCode: 'OUT-001',
+      name: 'Front Counter Till',
+      code: 'TILL-001',
+      status: 'Active',
+      deviceStatus: 'Online',
+      needsAttention: false,
+    );
+  }
+
+  @override
+  Future<TillDetail> updateTill(String id, TillFormData form) async {
+    return TillDetail(
+      id: id,
+      outletId: form.outletId,
+      outletName: 'High Street Store',
+      outletCode: 'OUT-001',
+      name: form.name,
+      code: form.code,
+      status: form.status,
+      deviceStatus: 'Online',
+      needsAttention: false,
+    );
+  }
+
+  @override
+  Future<void> deleteTill(String id) async {}
 }
 
 TenantAdminAccessChecker _checker({

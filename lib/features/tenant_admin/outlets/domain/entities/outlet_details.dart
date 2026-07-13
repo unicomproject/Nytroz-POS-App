@@ -147,11 +147,14 @@ class OutletAttentionItem {
 class OutletFormData {
   const OutletFormData({
     required this.outletName,
-    required this.outletCode,
+    this.outletCode = '',
     required this.outletType,
     required this.status,
     required this.mainPhoneNumber,
     required this.emailAddress,
+    this.contactName,
+    this.contactPhone,
+    this.isDefaultOutlet = false,
     this.managerId,
     required this.addressLine1,
     this.addressLine2,
@@ -169,6 +172,9 @@ class OutletFormData {
   final String status;
   final String mainPhoneNumber;
   final String emailAddress;
+  final String? contactName;
+  final String? contactPhone;
+  final bool isDefaultOutlet;
   final String? managerId;
   final String addressLine1;
   final String? addressLine2;

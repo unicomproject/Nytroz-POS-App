@@ -11,6 +11,8 @@ class TillForm extends StatefulWidget {
     required this.backendErrors,
     required this.submitting,
     required this.onSubmit,
+    this.initialValue,
+    this.submitLabel = 'Create Till',
     this.showHardwareSection = true,
     this.hardwareReadOnly = false,
   });
@@ -19,6 +21,8 @@ class TillForm extends StatefulWidget {
   final Map<String, String> backendErrors;
   final bool submitting;
   final Future<void> Function(TillFormData form) onSubmit;
+  final TillFormData? initialValue;
+  final String submitLabel;
   final bool showHardwareSection;
   final bool hardwareReadOnly;
 
@@ -38,6 +42,24 @@ class _TillFormState extends State<TillForm> {
   final _noteController = TextEditingController();
   String? _selectedOutletId;
   String _status = 'active';
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialValue;
+    if (initial != null) {
+      _nameController.text = initial.name;
+      _codeController.text = initial.code;
+      _selectedOutletId = initial.outletId;
+      _status = initial.status;
+      _deviceNameController.text = initial.deviceName ?? '';
+      _printerNameController.text = initial.printerName ?? '';
+      _scannerNameController.text = initial.scannerName ?? '';
+      _cashDrawerNameController.text = initial.cashDrawerName ?? '';
+      _cardReaderNameController.text = initial.cardReaderName ?? '';
+      _noteController.text = initial.internalNote ?? '';
+    }
+  }
 
   @override
   void dispose() {
@@ -156,7 +178,7 @@ class _TillFormState extends State<TillForm> {
                   hint: 'Enter any note...',
                   controller: _noteController,
                   icon: Icons.sticky_note_2_outlined,
-                  maxLength: 250,
+                  maxLength: 500,
                   readOnly: widget.hardwareReadOnly,
                 ),
               ),
@@ -174,7 +196,7 @@ class _TillFormState extends State<TillForm> {
                 ),
                 const SizedBox(width: TenantAdminSpacing.md),
                 TenantAdminPrimaryButton(
-                  label: 'Create Till',
+                  label: widget.submitLabel,
                   icon: Icons.save_outlined,
                   loading: widget.submitting,
                   onPressed: widget.submitting ? null : _submit,
@@ -255,7 +277,7 @@ class _TillFormState extends State<TillForm> {
 
   Widget _outletDropdown() {
     return DropdownButtonFormField<String>(
-      initialValue: _selectedOutletId,
+      value: _selectedOutletId,
       decoration: InputDecoration(
         labelText: 'Assign Outlet',
         hintText: 'Select outlet',
@@ -283,7 +305,7 @@ class _TillFormState extends State<TillForm> {
 
   Widget _statusDropdown() {
     return DropdownButtonFormField<String>(
-      initialValue: _status,
+      value: _status,
       decoration: InputDecoration(
         labelText: 'Status',
         prefixIcon: const Icon(Icons.circle, size: 12),

@@ -151,3 +151,71 @@ class OutletOption {
   final String code;
   final String status;
 }
+
+class TillDetail {
+  const TillDetail({
+    required this.id,
+    required this.outletId,
+    required this.outletName,
+    required this.outletCode,
+    required this.name,
+    required this.code,
+    required this.status,
+    required this.deviceStatus,
+    required this.needsAttention,
+    this.lastActiveAt,
+    this.deviceName,
+    this.printerName,
+    this.scannerName,
+    this.cashDrawerName,
+    this.cardReaderName,
+    this.internalNote,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String outletId;
+  final String outletName;
+  final String outletCode;
+  final String name;
+  final String code;
+  final String status;
+  final String deviceStatus;
+  final bool needsAttention;
+  final DateTime? lastActiveAt;
+  final String? deviceName;
+  final String? printerName;
+  final String? scannerName;
+  final String? cashDrawerName;
+  final String? cardReaderName;
+  final String? internalNote;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  TillFormData toFormData() {
+    return TillFormData(
+      name: name,
+      code: code,
+      outletId: outletId,
+      status: _statusFormValue(status),
+      deviceName: deviceName,
+      printerName: printerName,
+      scannerName: scannerName,
+      cashDrawerName: cashDrawerName,
+      cardReaderName: cardReaderName,
+      internalNote: internalNote,
+    );
+  }
+}
+
+String _statusFormValue(String apiStatus) {
+  switch (apiStatus.trim().toLowerCase()) {
+    case 'inactive':
+      return 'inactive';
+    case 'maintenance':
+      return 'maintenance';
+    default:
+      return 'active';
+  }
+}

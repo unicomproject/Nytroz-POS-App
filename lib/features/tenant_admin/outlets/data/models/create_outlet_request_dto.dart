@@ -3,11 +3,13 @@ import '../../domain/entities/outlet_details.dart';
 class CreateOutletRequestDto {
   const CreateOutletRequestDto({
     required this.outletName,
-    required this.outletCode,
     required this.outletType,
     required this.status,
     required this.mainPhoneNumber,
     required this.emailAddress,
+    this.contactName,
+    this.contactPhone,
+    required this.isDefaultOutlet,
     this.managerId,
     required this.addressLine1,
     this.addressLine2,
@@ -21,30 +23,34 @@ class CreateOutletRequestDto {
 
   factory CreateOutletRequestDto.fromForm(OutletFormData form) {
     return CreateOutletRequestDto(
-      outletName: form.outletName,
-      outletCode: form.outletCode,
-      outletType: form.outletType,
-      status: form.status,
-      mainPhoneNumber: form.mainPhoneNumber,
-      emailAddress: form.emailAddress,
+      outletName: form.outletName.trim(),
+      outletType: form.outletType.trim(),
+      status: form.status.trim(),
+      mainPhoneNumber: form.mainPhoneNumber.trim(),
+      emailAddress: form.emailAddress.trim(),
+      contactName: form.contactName,
+      contactPhone: form.contactPhone,
+      isDefaultOutlet: form.isDefaultOutlet,
       managerId: form.managerId,
-      addressLine1: form.addressLine1,
+      addressLine1: form.addressLine1.trim(),
       addressLine2: form.addressLine2,
-      city: form.city,
+      city: form.city.trim(),
       state: form.state,
-      country: form.country,
-      postalCode: form.postalCode,
+      country: form.country.trim(),
+      postalCode: form.postalCode.trim(),
       openingHours: form.openingHours,
-      timezone: form.timezone,
+      timezone: form.timezone.trim(),
     );
   }
 
   final String outletName;
-  final String outletCode;
   final String outletType;
   final String status;
   final String mainPhoneNumber;
   final String emailAddress;
+  final String? contactName;
+  final String? contactPhone;
+  final bool isDefaultOutlet;
   final String? managerId;
   final String addressLine1;
   final String? addressLine2;
@@ -59,22 +65,25 @@ class CreateOutletRequestDto {
     final businessHours = _businessHoursJson(openingHours);
 
     return {
-      'outletName': outletName,
-      'timezone': timezone,
+      'outletName': outletName.trim(),
+      'timezone': timezone.trim(),
       'status': _mapStatus(status),
       'outletType': _mapOutletType(outletType),
-      'isDefaultOutlet': false,
-      'phone': mainPhoneNumber,
-      'email': emailAddress,
+      'isDefaultOutlet': isDefaultOutlet,
+      if (_nullable(mainPhoneNumber) != null) 'phone': _nullable(mainPhoneNumber),
+      if (_nullable(emailAddress) != null) 'email': _nullable(emailAddress),
       'address': {
         'addressLine1': addressLine1,
         if (addressLine2 != null && addressLine2!.trim().isNotEmpty)
-          'addressLine2': addressLine2,
+          'addressLine2': addressLine2!.trim(),
         'city': city,
         if (state != null && state!.trim().isNotEmpty)
-          'stateOrProvince': state,
-        if (postalCode.trim().isNotEmpty) 'postalCode': postalCode,
+          'stateOrProvince': state!.trim(),
+        if (postalCode.trim().isNotEmpty) 'postalCode': postalCode.trim(),
         'countryCode': _normalizeCountryCode(country),
+        if (_nullable(contactName) != null) 'contactName': _nullable(contactName),
+        if (_nullable(contactPhone) != null)
+          'contactPhone': _nullable(contactPhone),
       },
       if (businessHours.isNotEmpty) 'businessHours': businessHours,
       'collectionEnabled': false,
@@ -114,33 +123,37 @@ class CreateOutletRequestDto {
   ) {
     return [
       for (final hour in hours)
-        if (!hour.closed &&
-            hour.openTime.trim().isNotEmpty &&
-            hour.closeTime.trim().isNotEmpty)
-          {
-            'dayOfWeek': _dayOfWeek(hour.day),
-            'openingTime': _normalizeTime(hour.openTime),
-            'closingTime': _normalizeTime(hour.closeTime),
-            'isClosed': hour.closed,
-          },
+        {
+          'dayOfWeek': _dayOfWeek(hour.day),
+          if (!hour.closed) 'openingTime': _normalizeTime(hour.openTime),
+          if (!hour.closed) 'closingTime': _normalizeTime(hour.closeTime),
+          'isClosed': hour.closed,
+        },
     ];
   }
 
   static int _dayOfWeek(String day) {
     switch (day.trim().toLowerCase()) {
       case 'sun':
+      case 'sunday':
         return 0;
       case 'mon':
+      case 'monday':
         return 1;
       case 'tue':
+      case 'tuesday':
         return 2;
       case 'wed':
+      case 'wednesday':
         return 3;
       case 'thu':
+      case 'thursday':
         return 4;
       case 'fri':
+      case 'friday':
         return 5;
       case 'sat':
+      case 'saturday':
         return 6;
       default:
         return 1;
@@ -154,5 +167,10 @@ class CreateOutletRequestDto {
     }
 
     return trimmed;
+  }
+
+  static String? _nullable(String? value) {
+    final trimmed = value?.trim() ?? '';
+    return trimmed.isEmpty ? null : trimmed;
   }
 }
