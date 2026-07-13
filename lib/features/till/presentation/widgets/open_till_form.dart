@@ -1,6 +1,84 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+
+enum OpenTillFormDensity { regular, compact }
+
+class OpenTillLayoutMetrics {
+  const OpenTillLayoutMetrics({
+    required this.cardPadding,
+    required this.sectionGap,
+    required this.fieldGap,
+    required this.noteLines,
+    required this.buttonHeight,
+    required this.amountFontSize,
+    required this.titleFontSize,
+    required this.summaryLabelWidth,
+    required this.compactSummary,
+  });
+
+  final EdgeInsets cardPadding;
+  final double sectionGap;
+  final double fieldGap;
+  final int noteLines;
+  final double buttonHeight;
+  final double amountFontSize;
+  final double titleFontSize;
+  final double summaryLabelWidth;
+  final bool compactSummary;
+
+  factory OpenTillLayoutMetrics.resolve({
+    required double height,
+    required double width,
+    OpenTillFormDensity density = OpenTillFormDensity.regular,
+  }) {
+    final isCompactDensity = density == OpenTillFormDensity.compact;
+    final isTightHeight = height < 640;
+    final isCompactHeight = height < 720;
+
+    if (isCompactDensity || isTightHeight) {
+      return const OpenTillLayoutMetrics(
+        cardPadding: EdgeInsets.fromLTRB(20, 18, 20, 16),
+        sectionGap: 14,
+        fieldGap: 8,
+        noteLines: 2,
+        buttonHeight: 50,
+        amountFontSize: 24,
+        titleFontSize: 24,
+        summaryLabelWidth: 92,
+        compactSummary: true,
+      );
+    }
+
+    if (isCompactHeight) {
+      return const OpenTillLayoutMetrics(
+        cardPadding: EdgeInsets.fromLTRB(24, 20, 24, 18),
+        sectionGap: 16,
+        fieldGap: 10,
+        noteLines: 2,
+        buttonHeight: 52,
+        amountFontSize: 26,
+        titleFontSize: 26,
+        summaryLabelWidth: 100,
+        compactSummary: true,
+      );
+    }
+
+    return OpenTillLayoutMetrics(
+      cardPadding: const EdgeInsets.fromLTRB(28, 24, 28, 20),
+      sectionGap: width >= TenantAdminBreakpoints.tablet ? 20 : 18,
+      fieldGap: 10,
+      noteLines: 2,
+      buttonHeight: 52,
+      amountFontSize: 28,
+      titleFontSize: 28,
+      summaryLabelWidth: 108,
+      compactSummary: false,
+    );
+  }
+}
+
 class OpenTillForm extends StatelessWidget {
   const OpenTillForm({
     super.key,
@@ -13,10 +91,9 @@ class OpenTillForm extends StatelessWidget {
     required this.deviceName,
     required this.currencyCode,
     required this.openingBy,
-    required this.onBack,
     required this.onSubmit,
     this.errorMessage,
-    this.embedded = false,
+    this.density = OpenTillFormDensity.regular,
   });
 
   final GlobalKey<FormState> formKey;
@@ -28,10 +105,9 @@ class OpenTillForm extends StatelessWidget {
   final String deviceName;
   final String currencyCode;
   final String openingBy;
-  final VoidCallback onBack;
   final VoidCallback onSubmit;
   final String? errorMessage;
-  final bool embedded;
+  final OpenTillFormDensity density;
 
   bool get _hasValidAmount {
     final amount = double.tryParse(openingFloatController.text);
@@ -40,274 +116,360 @@ class OpenTillForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formContent = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 42,
-                  height: 42,
-                  child: OutlinedButton(
-                    onPressed: onBack,
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Icon(Icons.arrow_back),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Open Till',
-                        style: TextStyle(
-                          color: Color(0xFF050A30),
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Enter the starting cash amount to open $tillName.',
-                        style: const TextStyle(
-                          color: Color(0xFF5E6A82),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final metrics = OpenTillLayoutMetrics.resolve(
+          height: constraints.maxHeight.isFinite ? constraints.maxHeight : 900,
+          width: constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : MediaQuery.sizeOf(context).width,
+          density: density,
+        );
+
+        return Form(
+          key: formKey,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: TenantAdminColors.surface,
+              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              border: Border.all(color: TenantAdminColors.border),
+              boxShadow: TenantAdminShadows.card,
             ),
-            const SizedBox(height: 24),
-            _SectionCard(
+            child: Padding(
+              padding: metrics.cardPadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Starting Cash Amount',
-                    style: TextStyle(
-                      color: Color(0xFF050A30),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  _PageHeading(
+                    tillName: tillName,
+                    titleFontSize: metrics.titleFontSize,
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Enter the cash amount you have in the drawer to start.',
-                    style: TextStyle(
-                      color: Color(0xFF5E6A82),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  SizedBox(height: metrics.sectionGap),
+                  _CashAmountSection(
+                    openingFloatController: openingFloatController,
+                    currencyCode: currencyCode,
+                    errorMessage: errorMessage,
+                    hasValidAmount: _hasValidAmount,
+                    amountFontSize: metrics.amountFontSize,
+                    fieldGap: metrics.fieldGap,
+                    onChanged: () => (context as Element).markNeedsBuild(),
                   ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: openingFloatController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'^-?\d*\.?\d{0,2}'),
-                      ),
-                    ],
-                    onChanged: (_) {
-                      (context as Element).markNeedsBuild();
-                    },
-                    style: const TextStyle(
-                      color: Color(0xFF050A30),
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                    ),
-                    decoration: InputDecoration(
-                      prefixText: '${currencyCode.trim()} ',
-                      suffixIcon: _hasValidAmount
-                          ? const Icon(
-                              Icons.check_circle,
-                              color: Color(0xFF16A34A),
-                            )
-                          : null,
-                      errorText: errorMessage,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      border: _amountBorder(const Color(0xFFDCE4F2), 1),
-                      enabledBorder: _amountBorder(
-                        _hasValidAmount
-                            ? const Color(0xFF1B5BFF)
-                            : const Color(0xFFDCE4F2),
-                        _hasValidAmount ? 1.5 : 1,
-                      ),
-                      focusedBorder: _amountBorder(
-                        const Color(0xFF1B5BFF),
-                        1.5,
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Opening cash is required.';
-                      }
-                      final amount = double.tryParse(value);
-                      if (amount == null) {
-                        return 'Opening cash must be a valid number.';
-                      }
-                      if (amount < 0) {
-                        return 'Opening cash must be zero or more.';
-                      }
-                      return null;
-                    },
+                  SizedBox(height: metrics.sectionGap),
+                  _NoteSection(
+                    openingNoteController: openingNoteController,
+                    noteLines: metrics.noteLines,
+                    fieldGap: metrics.fieldGap,
+                    onChanged: () => (context as Element).markNeedsBuild(),
                   ),
-                  if (_hasValidAmount) ...[
-                    const SizedBox(height: 5),
-                    const Text(
-                      'Amount is valid',
-                      style: TextStyle(
-                        color: Color(0xFF16A34A),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 22),
-                  const Text(
-                    'Till Note (Optional)',
-                    style: TextStyle(
-                      color: Color(0xFF050A30),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Add a note for this till opening.',
-                    style: TextStyle(
-                      color: Color(0xFF5E6A82),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: openingNoteController,
-                    minLines: 3,
-                    maxLines: 3,
-                    maxLength: 100,
-                    decoration: InputDecoration(
-                      counterText: '${openingNoteController.text.length}/100',
-                      contentPadding: const EdgeInsets.all(14),
-                      border: _amountBorder(const Color(0xFFDCE4F2), 1),
-                      enabledBorder: _amountBorder(const Color(0xFFDCE4F2), 1),
-                      focusedBorder: _amountBorder(
-                        const Color(0xFF1B5BFF),
-                        1.5,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: metrics.fieldGap + 2),
                   _TillSummaryCard(
                     outletName: outletName,
                     tillName: tillName,
                     deviceName: deviceName,
                     openingBy: openingBy,
+                    labelWidth: metrics.summaryLabelWidth,
+                    compact: metrics.compactSummary,
                   ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    height: 52,
-                    child: FilledButton.icon(
-                      onPressed: isSubmitting ? null : onSubmit,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF034BFF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                      icon: isSubmitting
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Icon(Icons.lock_outline, size: 16),
-                      label: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Open Till',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Till will be opened and ready for transactions.',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  const Spacer(),
+                  _OpenTillSubmitButton(
+                    isSubmitting: isSubmitting,
+                    isEnabled: _hasValidAmount,
+                    buttonHeight: metrics.buttonHeight,
+                    onSubmit: onSubmit,
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         );
-
-    return Form(
-      key: formKey,
-      child: embedded
-          ? formContent
-          : Container(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFE4E9F3)),
-              ),
-              child: formContent,
-            ),
-    );
-  }
-
-  OutlineInputBorder _amountBorder(Color color, double width) {
-    return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(6),
-      borderSide: BorderSide(color: color, width: width),
+      },
     );
   }
 }
 
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.child});
+class _PageHeading extends StatelessWidget {
+  const _PageHeading({
+    required this.tillName,
+    required this.titleFontSize,
+  });
 
-  final Widget child;
+  final String tillName;
+  final double titleFontSize;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE4E9F3)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Open Till',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: TenantAdminColors.bodyText,
+                fontWeight: FontWeight.w900,
+                fontSize: titleFontSize,
+                height: 1.1,
+              ),
+        ),
+        const SizedBox(height: TenantAdminSpacing.xs),
+        Text(
+          'Enter the starting cash amount to open $tillName.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: TenantAdminColors.mutedText,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                height: 1.35,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CashAmountSection extends StatelessWidget {
+  const _CashAmountSection({
+    required this.openingFloatController,
+    required this.currencyCode,
+    required this.errorMessage,
+    required this.hasValidAmount,
+    required this.amountFontSize,
+    required this.fieldGap,
+    required this.onChanged,
+  });
+
+  final TextEditingController openingFloatController;
+  final String currencyCode;
+  final String? errorMessage;
+  final bool hasValidAmount;
+  final double amountFontSize;
+  final double fieldGap;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _FieldLabel(
+          title: 'Starting Cash Amount',
+          description: 'Enter the cash amount you have in the drawer to start.',
+        ),
+        SizedBox(height: fieldGap),
+        TextFormField(
+          controller: openingFloatController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^-?\d*\.?\d{0,2}')),
+          ],
+          onChanged: (_) => onChanged(),
+          style: TextStyle(
+            color: TenantAdminColors.bodyText,
+            fontSize: amountFontSize,
+            fontWeight: FontWeight.w900,
+          ),
+          decoration: InputDecoration(
+            prefixText: '${currencyCode.trim()} ',
+            suffixIcon: hasValidAmount
+                ? const Icon(
+                    Icons.check_circle,
+                    color: TenantAdminColors.success,
+                  )
+                : null,
+            errorText: errorMessage,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
+            border: _inputBorder(TenantAdminColors.border, 1),
+            enabledBorder: _inputBorder(
+              hasValidAmount
+                  ? const Color(0xFF1B5BFF)
+                  : TenantAdminColors.border,
+              hasValidAmount ? 1.5 : 1,
+            ),
+            focusedBorder: _inputBorder(const Color(0xFF1B5BFF), 1.5),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Opening cash is required.';
+            }
+            final amount = double.tryParse(value);
+            if (amount == null) {
+              return 'Opening cash must be a valid number.';
+            }
+            if (amount < 0) {
+              return 'Opening cash must be zero or more.';
+            }
+            return null;
+          },
+        ),
+        if (hasValidAmount) ...[
+          const SizedBox(height: TenantAdminSpacing.xs),
+          const Text(
+            'Amount is valid',
+            style: TextStyle(
+              color: TenantAdminColors.success,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _NoteSection extends StatelessWidget {
+  const _NoteSection({
+    required this.openingNoteController,
+    required this.noteLines,
+    required this.fieldGap,
+    required this.onChanged,
+  });
+
+  final TextEditingController openingNoteController;
+  final int noteLines;
+  final double fieldGap;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _FieldLabel(
+          title: 'Till Note (Optional)',
+          description: 'Add a note for this till opening.',
+        ),
+        SizedBox(height: fieldGap),
+        TextFormField(
+          controller: openingNoteController,
+          minLines: noteLines,
+          maxLines: noteLines,
+          maxLength: 100,
+          onChanged: (_) => onChanged(),
+          decoration: InputDecoration(
+            counterText: '${openingNoteController.text.length}/100',
+            contentPadding: const EdgeInsets.all(12),
+            border: _inputBorder(TenantAdminColors.border, 1),
+            enabledBorder: _inputBorder(TenantAdminColors.border, 1),
+            focusedBorder: _inputBorder(const Color(0xFF1B5BFF), 1.5),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel({
+    required this.title,
+    required this.description,
+  });
+
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: TenantAdminColors.bodyText,
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: TenantAdminSpacing.xs),
+        Text(
+          description,
+          style: const TextStyle(
+            color: TenantAdminColors.mutedText,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            height: 1.3,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _OpenTillSubmitButton extends StatelessWidget {
+  const _OpenTillSubmitButton({
+    required this.isSubmitting,
+    required this.isEnabled,
+    required this.buttonHeight,
+    required this.onSubmit,
+  });
+
+  final bool isSubmitting;
+  final bool isEnabled;
+  final double buttonHeight;
+  final VoidCallback onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: buttonHeight,
+      child: FilledButton(
+        onPressed: isSubmitting || !isEnabled ? null : onSubmit,
+        style: FilledButton.styleFrom(
+          backgroundColor: const Color(0xFF034BFF),
+          disabledBackgroundColor:
+              const Color(0xFF034BFF).withValues(alpha: 0.45),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+        ),
+        child: isSubmitting
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.lock_outline, size: 18),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Open Till',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Till will be opened and ready for transactions.',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white.withValues(alpha: 0.92),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
       ),
-      child: child,
     );
   }
 }
@@ -318,40 +480,67 @@ class _TillSummaryCard extends StatelessWidget {
     required this.tillName,
     required this.deviceName,
     required this.openingBy,
+    required this.labelWidth,
+    required this.compact,
   });
 
   final String outletName;
   final String tillName;
   final String deviceName;
   final String openingBy;
+  final double labelWidth;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(13),
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFFDFEFF),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE4E9F3)),
+        color: const Color(0xFFF8FAFF),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+        border: Border.all(color: TenantAdminColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Till Summary',
-            style: TextStyle(
-              color: Color(0xFF050A30),
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
+      child: Padding(
+        padding: EdgeInsets.all(
+          compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Till Summary',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: TenantAdminColors.bodyText,
+                    fontWeight: FontWeight.w900,
+                  ),
             ),
-          ),
-          const SizedBox(height: 8),
-          _SummaryLine(label: 'Outlet', value: outletName),
-          _SummaryLine(label: 'Till', value: tillName),
-          _SummaryLine(label: 'Device', value: deviceName),
-          if (openingBy.trim().isNotEmpty)
-            _SummaryLine(label: 'Opening By', value: openingBy),
-        ],
+            SizedBox(height: compact ? 6 : TenantAdminSpacing.sm),
+            _SummaryLine(
+              label: 'Outlet',
+              value: outletName,
+              labelWidth: labelWidth,
+              compact: compact,
+            ),
+            _SummaryLine(
+              label: 'Till',
+              value: tillName,
+              labelWidth: labelWidth,
+              compact: compact,
+            ),
+            _SummaryLine(
+              label: 'Device',
+              value: deviceName,
+              labelWidth: labelWidth,
+              compact: compact,
+            ),
+            if (openingBy.trim().isNotEmpty)
+              _SummaryLine(
+                label: 'Opening By',
+                value: openingBy,
+                labelWidth: labelWidth,
+                compact: compact,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -361,36 +550,58 @@ class _SummaryLine extends StatelessWidget {
   const _SummaryLine({
     required this.label,
     required this.value,
+    required this.labelWidth,
+    required this.compact,
   });
 
   final String label;
   final String value;
+  final double labelWidth;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
-      child: Column(
+      padding: EdgeInsets.only(
+        bottom: compact ? 4 : TenantAdminSpacing.sm,
+      ),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF5E6A82),
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
+          SizedBox(
+            width: labelWidth,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: TenantAdminColors.mutedText,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Color(0xFF050A30),
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
+          Expanded(
+            child: Text(
+              value,
+              softWrap: true,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: TenantAdminColors.bodyText,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                height: 1.25,
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+OutlineInputBorder _inputBorder(Color color, double width) {
+  return OutlineInputBorder(
+    borderRadius: BorderRadius.circular(6),
+    borderSide: BorderSide(color: color, width: width),
+  );
 }

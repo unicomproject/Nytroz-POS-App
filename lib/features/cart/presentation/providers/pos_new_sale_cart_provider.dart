@@ -52,8 +52,8 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
     );
 
     state = state.copyWith(
-      items: updatedItems,
-      cartDiscountSet: updatedItems.isEmpty,
+      items: _withoutItemDiscounts(updatedItems),
+      cartDiscountSet: true,
     );
   }
 
@@ -73,8 +73,8 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
     }
 
     state = state.copyWith(
-      items: updatedItems,
-      cartDiscountSet: updatedItems.isEmpty,
+      items: _withoutItemDiscounts(updatedItems),
+      cartDiscountSet: true,
     );
   }
 
@@ -94,9 +94,7 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
       quantity: existingItem.quantity + 1,
     );
     state = state.copyWith(
-      items: updatedItems,
-      cartDiscountSet: updatedItems.isEmpty,
-    );
+        items: _withoutItemDiscounts(updatedItems), cartDiscountSet: true);
   }
 
   void removeItem(String cartLineKey) {
@@ -107,8 +105,8 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
     final updatedItems = Map<String, PosNewSaleCartItem>.of(state.items)
       ..remove(cartLineKey);
     state = state.copyWith(
-      items: updatedItems,
-      cartDiscountSet: updatedItems.isEmpty,
+      items: _withoutItemDiscounts(updatedItems),
+      cartDiscountSet: true,
     );
   }
 
@@ -136,7 +134,11 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
       return;
     }
 
-    state = state.copyWith(cartDiscount: discount, cartDiscountSet: true);
+    state = state.copyWith(
+      cartDiscount: discount,
+      cartDiscountSet: true,
+      items: _withoutItemDiscounts(state.items),
+    );
   }
 
   void applyItemDiscount({
@@ -149,12 +151,24 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
     }
 
     final updatedItems = Map<String, PosNewSaleCartItem>.of(state.items);
-    updatedItems[cartLineKey] = item.copyWith(
+    final clearedItems = _withoutItemDiscounts(updatedItems);
+    clearedItems[cartLineKey] = item.copyWith(
       discount: discount,
       discountSet: true,
     );
-    state = state.copyWith(items: updatedItems);
+    state = state.copyWith(
+      items: clearedItems,
+      cartDiscountSet: true,
+    );
   }
+
+  Map<String, PosNewSaleCartItem> _withoutItemDiscounts(
+    Map<String, PosNewSaleCartItem> items,
+  ) =>
+      {
+        for (final entry in items.entries)
+          entry.key: entry.value.copyWith(discountSet: true),
+      };
 
   void clearCartDiscount() {
     state = state.copyWith(cartDiscountSet: true);
@@ -201,6 +215,33 @@ class PosNewSaleCartState {
 
   bool get hasDiscount => discount > 0;
 
+  String? get discountApplicationId {
+    if (cartDiscount?.isBackendApproved == true) {
+      return cartDiscount!.applicationId;
+    }
+    for (final item in items.values) {
+      if (item.discount?.isBackendApproved == true) {
+        return item.discount!.applicationId;
+      }
+    }
+    return null;
+  }
+
+  PosCartDiscount? get pendingDiscount {
+    if (cartDiscount?.isPendingApproval == true) return cartDiscount;
+    for (final item in items.values) {
+      if (item.discount?.isPendingApproval == true) return item.discount;
+    }
+    return null;
+  }
+
+  String? get pendingDiscountCartLineKey {
+    for (final entry in items.entries) {
+      if (entry.value.discount?.isPendingApproval == true) return entry.key;
+    }
+    return null;
+  }
+
   List<PosNewSaleCartItem> get itemList => List.unmodifiable(items.values);
 
   int get subtotal =>
@@ -213,7 +254,7 @@ class PosNewSaleCartState {
 
   int get cartDiscountAmount {
     final discount = cartDiscount;
-    if (discount == null) {
+    if (discount == null || discount.isPendingApproval) {
       return 0;
     }
 
@@ -265,7 +306,9 @@ class PosNewSaleCartItem {
 
   int get lineTotal => product.price * quantity;
 
-  int get discountAmount => discount?.amountFor(lineTotal) ?? 0;
+  int get discountAmount => discount?.isPendingApproval == true
+      ? 0
+      : discount?.amountFor(lineTotal) ?? 0;
 
   int get discountedLineTotal {
     final nextTotal = lineTotal - discountAmount;

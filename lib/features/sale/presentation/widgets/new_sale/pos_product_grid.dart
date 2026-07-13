@@ -165,13 +165,11 @@ class _ProductTile extends StatelessWidget {
                           'Select options',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelSmall
-                              ?.copyWith(
-                                color: TenantAdminColors.mutedText,
-                                fontWeight: FontWeight.w700,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: TenantAdminColors.mutedText,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                         ),
                       ),
                     ],
@@ -196,13 +194,11 @@ class _ProductTile extends StatelessWidget {
                           product.stockLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelSmall
-                              ?.copyWith(
-                                color: TenantAdminColors.mutedText,
-                                fontWeight: FontWeight.w700,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: TenantAdminColors.mutedText,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                         ),
                       ),
                     ],
@@ -360,7 +356,8 @@ class _ProductImage extends StatelessWidget {
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: double.infinity,
-                errorBuilder: (_, __, ___) => _ProductImageFallback(visual: visual),
+                errorBuilder: (_, __, ___) =>
+                    _ProductImageFallback(visual: visual),
               )
             : _ProductImageFallback(visual: visual),
       ),
@@ -371,31 +368,41 @@ class _ProductImage extends StatelessWidget {
 class _ProductImageFallback extends StatelessWidget {
   const _ProductImageFallback({required this.visual});
 
+  static const _dummyImageAsset = 'assets/images/product_dummy.png';
+
   final _ProductVisual visual;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Image.asset(
+      _dummyImageAsset,
+      fit: BoxFit.cover,
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: visual.backgroundColor,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-      ),
-      child: Center(
-        child: Container(
-          width: 38,
-          height: 38,
+      height: double.infinity,
+      errorBuilder: (_, __, ___) {
+        return Container(
+          width: double.infinity,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.82),
-            shape: BoxShape.circle,
+            color: visual.backgroundColor,
+            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
           ),
-          child: Icon(
-            visual.icon,
-            color: visual.iconColor,
-            size: 22,
+          child: Center(
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.82),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                visual.icon,
+                color: visual.iconColor,
+                size: 22,
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

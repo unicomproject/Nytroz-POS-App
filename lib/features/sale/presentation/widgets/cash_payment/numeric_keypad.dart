@@ -10,75 +10,127 @@ class NumericKeypad extends StatelessWidget {
 
   final ValueChanged<String> onKeyTap;
 
-  static const _keys = [
-    ['1', '2', '3'],
-    ['4', '5', '6'],
-    ['7', '8', '9'],
-    ['.', '0', 'backspace'],
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: _keys.map((row) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: TenantAdminSpacing.sm),
+      children: [
+        Expanded(
+          child: _buildStandardRow(['1', '2', '3', 'backspace'],
+              isUtilityAtEnd: true),
+        ),
+        const SizedBox(height: TenantAdminSpacing.sm),
+        Expanded(
+          child:
+              _buildStandardRow(['4', '5', '6', 'clear'], isUtilityAtEnd: true),
+        ),
+        const SizedBox(height: TenantAdminSpacing.sm),
+        Expanded(
+          child: _buildStandardRow(['7', '8', '9', '00'], isUtilityAtEnd: true),
+        ),
+        const SizedBox(height: TenantAdminSpacing.sm),
+        Expanded(
           child: Row(
-            children: row.map((key) {
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: TenantAdminSpacing.xs,
-                  ),
-                  child: _KeypadButton(
-                    label: key,
-                    onTap: () => onKeyTap(key),
-                  ),
-                ),
-              );
-            }).toList(growable: false),
+            children: [
+              Expanded(
+                child: _KeypadButton(label: '.', onTap: () => onKeyTap('.')),
+              ),
+              const SizedBox(width: TenantAdminSpacing.sm),
+              Expanded(
+                child: _KeypadButton(label: '0', onTap: () => onKeyTap('0')),
+              ),
+              const SizedBox(width: TenantAdminSpacing.sm),
+              const Expanded(child: SizedBox.shrink()),
+              const SizedBox(width: TenantAdminSpacing.sm),
+              const Expanded(child: SizedBox.shrink()),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStandardRow(List<String> keys, {bool isUtilityAtEnd = false}) {
+    return Row(
+      children: List.generate(keys.length, (index) {
+        final label = keys[index];
+        final isUtility = isUtilityAtEnd && index == keys.length - 1;
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(
+              right: index == keys.length - 1 ? 0 : TenantAdminSpacing.sm,
+            ),
+            child: _KeypadButton(
+              label: label,
+              onTap: () => onKeyTap(label),
+              variant: isUtility
+                  ? _KeypadButtonVariant.utility
+                  : _KeypadButtonVariant.standard,
+            ),
           ),
         );
-      }).toList(growable: false),
+      }),
     );
   }
 }
+
+enum _KeypadButtonVariant { standard, utility }
 
 class _KeypadButton extends StatelessWidget {
   const _KeypadButton({
     required this.label,
     required this.onTap,
+    this.variant = _KeypadButtonVariant.standard,
   });
 
   final String label;
   final VoidCallback onTap;
+  final _KeypadButtonVariant variant;
 
   @override
   Widget build(BuildContext context) {
     final isBackspace = label == 'backspace';
+    final isClear = label == 'clear';
+    final isUtility = variant == _KeypadButtonVariant.utility;
+
+    final backgroundColor = switch (variant) {
+      _KeypadButtonVariant.standard => TenantAdminColors.surface,
+      _KeypadButtonVariant.utility => TenantAdminColors.navySoft,
+    };
+    final foregroundColor =
+        isUtility ? Colors.white : TenantAdminColors.bodyText;
+    final borderColor =
+        isUtility ? Colors.transparent : TenantAdminColors.border;
 
     return Material(
-      color: TenantAdminColors.surface,
+      color: backgroundColor,
       borderRadius: BorderRadius.circular(TenantAdminRadius.md),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         child: Container(
-          height: 56,
+          height: double.infinity,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            border: Border.all(color: TenantAdminColors.border),
+            border: Border.all(color: borderColor),
           ),
           child: isBackspace
-              ? const Icon(Icons.backspace_outlined, size: 22)
-              : Text(
-                  label,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: TenantAdminColors.bodyText,
-                      ),
-                ),
+              ? Icon(Icons.backspace_outlined, size: 22, color: foregroundColor)
+              : isClear
+                  ? Text(
+                      'C',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: foregroundColor,
+                          ),
+                    )
+                  : Text(
+                      label.toUpperCase(),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: foregroundColor,
+                          ),
+                    ),
         ),
       ),
     );

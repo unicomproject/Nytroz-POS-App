@@ -10,76 +10,51 @@ class CashPaymentSummaryCard extends StatelessWidget {
     super.key,
     required this.total,
     required this.cashReceived,
-    this.embedded = false,
   });
 
   final int total;
   final int cashReceived;
-  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
     final changeDue = cashPaymentChangeDue(cashReceived, total);
     final isSufficient = changeDue >= 0;
 
-    final summaryContent = Column(
-      children: [
-        _SummaryRow(label: 'Total', value: formatLkr(total)),
-        const SizedBox(height: TenantAdminSpacing.md),
-        _SummaryRow(
-          label: 'Cash Received',
-          value: formatLkr(cashReceived),
-        ),
-        const Divider(height: TenantAdminSpacing.xl),
-        _SummaryRow(
-          label: 'Change Due',
-          value: isSufficient ? formatLkr(changeDue) : formatLkr(0),
-          valueColor: isSufficient
-              ? TenantAdminColors.success
-              : TenantAdminColors.danger,
-          emphasized: true,
-        ),
-        if (!isSufficient) ...[
-          const SizedBox(height: TenantAdminSpacing.md),
-          Text(
-            'Short by ${formatLkr(changeDue.abs())}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: TenantAdminColors.danger,
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-        ],
-      ],
-    );
-
-    if (embedded) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.payments_outlined,
-                color: TenantAdminColors.info,
-                size: 22,
-              ),
-              const SizedBox(width: TenantAdminSpacing.sm),
-              Text(
-                'Payment Summary',
-                style: TenantAdminTextStyles.sectionTitle(context),
-              ),
-            ],
-          ),
-          const SizedBox(height: TenantAdminSpacing.md),
-          summaryContent,
-        ],
-      );
-    }
-
     return PaymentPanelCard(
       title: 'Payment Summary',
       icon: Icons.payments_outlined,
-      child: summaryContent,
+      child: Column(
+        children: [
+          _SummaryRow(
+              label: 'Total to Pay',
+              value: formatLkr(total),
+              valueColor: TenantAdminColors.info),
+          const SizedBox(height: TenantAdminSpacing.md),
+          _SummaryRow(
+            label: 'Cash Received',
+            value: formatLkr(cashReceived),
+          ),
+          const Divider(height: TenantAdminSpacing.xl),
+          _SummaryRow(
+            label: 'Change Due',
+            value: isSufficient ? formatLkr(changeDue) : formatLkr(0),
+            valueColor: isSufficient
+                ? TenantAdminColors.success
+                : TenantAdminColors.danger,
+            emphasized: true,
+          ),
+          if (!isSufficient) ...[
+            const SizedBox(height: TenantAdminSpacing.md),
+            Text(
+              'Short by ${formatLkr(changeDue.abs())}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: TenantAdminColors.danger,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

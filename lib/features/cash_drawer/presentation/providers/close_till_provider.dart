@@ -7,7 +7,7 @@ import 'cash_drawer_provider.dart';
 
 enum CloseTillClosingStatus {
   balanced,
-  pendingApproval,
+  varianceReasonRequired,
   short,
   over,
 }
@@ -17,16 +17,12 @@ class CloseTillFormState {
     this.countedCashText = '',
     this.mismatchReason,
     this.notes = '',
-    this.managerPin = '',
-    this.obscureManagerPin = true,
     this.hasDraft = false,
   });
 
   final String countedCashText;
   final String? mismatchReason;
   final String notes;
-  final String managerPin;
-  final bool obscureManagerPin;
   final bool hasDraft;
 
   double? get parsedCountedCash {
@@ -51,7 +47,7 @@ class CloseTillFormState {
   CloseTillClosingStatus closingStatusFor(double expectedCash) {
     final difference = differenceFor(expectedCash);
     if (difference == null) {
-      return CloseTillClosingStatus.pendingApproval;
+      return CloseTillClosingStatus.varianceReasonRequired;
     }
     if (difference == 0) {
       return CloseTillClosingStatus.balanced;
@@ -67,15 +63,13 @@ class CloseTillFormState {
     if (difference == null || difference == 0) {
       return 'Balanced';
     }
-    return 'Pending Approval';
+    return 'Variance Reason Required';
   }
 
   CloseTillFormState copyWith({
     String? countedCashText,
     String? mismatchReason,
     String? notes,
-    String? managerPin,
-    bool? obscureManagerPin,
     bool? hasDraft,
     bool clearMismatchReason = false,
   }) {
@@ -84,8 +78,6 @@ class CloseTillFormState {
       mismatchReason:
           clearMismatchReason ? null : mismatchReason ?? this.mismatchReason,
       notes: notes ?? this.notes,
-      managerPin: managerPin ?? this.managerPin,
-      obscureManagerPin: obscureManagerPin ?? this.obscureManagerPin,
       hasDraft: hasDraft ?? this.hasDraft,
     );
   }
@@ -119,14 +111,6 @@ class CloseTillFormController extends StateNotifier<CloseTillFormState> {
 
   void setNotes(String value) {
     state = state.copyWith(notes: value);
-  }
-
-  void setManagerPin(String value) {
-    state = state.copyWith(managerPin: value);
-  }
-
-  void toggleManagerPinVisibility() {
-    state = state.copyWith(obscureManagerPin: !state.obscureManagerPin);
   }
 
   void saveDraft() {
@@ -208,7 +192,7 @@ CloseTillColorPair closeTillClosingStatusColors(String statusLabel) {
         background: Color(0xFFEFFAF3),
         border: Color(0xFFBBF7D0),
       );
-    case 'Pending Approval':
+    case 'Variance Reason Required':
     default:
       return const CloseTillColorPair(
         foreground: TenantAdminColors.warning,

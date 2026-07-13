@@ -32,7 +32,7 @@ Object? _responseFor(RequestOptions options) {
     return _context;
   }
 
-  if (method == 'GET' && path == '/api/tenant-admin/menu') {
+  if (method == 'GET' && path == '/api/v1/tenant-admin/menu') {
     return _menu;
   }
 

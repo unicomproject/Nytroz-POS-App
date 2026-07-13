@@ -6,16 +6,19 @@ class ApiEndpoints {
   static const openTill = '/api/v1/tills/open';
   static const closeTill = '/api/v1/tills/close';
   static const tenantLogin = '/api/v1/tenant-auth/login';
+  static const tenantRefresh = '/api/v1/tenant-auth/refresh';
+  static const tenantLogout = '/api/v1/tenant-auth/logout';
 
   static const tenantAdminOutlets = '/api/v1/tenant-admin/outlets';
-  static const tenantAdminOutletOptions = '/api/v1/tenant-admin/outlets/options';
-  static String tenantAdminOutlet(String id) => '/api/v1/tenant-admin/outlets/$id';
+  static const tenantAdminOutletOptions =
+      '/api/v1/tenant-admin/outlets/options';
+  static String tenantAdminOutlet(String id) =>
+      '/api/v1/tenant-admin/outlets/$id';
   static String tenantAdminOutletStatus(String id) =>
       '/api/v1/tenant-admin/outlets/$id/status';
   static const tenantAdminTills = '/api/v1/tenant-admin/tills';
   static String tenantAdminTill(String id) => '/api/v1/tenant-admin/tills/$id';
-  static const tenantAdminStaffManagers =
-      '/api/v1/tenant-admin/staff/managers';
+  static const tenantAdminStaffManagers = '/api/v1/tenant-admin/staff/managers';
 
   static const currentTillSession = '/api/v1/tills/current-session';
   static const posHome = '/api/v1/pos/home';
@@ -24,6 +27,11 @@ class ApiEndpoints {
   static const posCheckoutSummary = '/api/v1/pos/checkout/summary';
   static const posCheckoutStartPayment = '/api/v1/pos/checkout/start-payment';
   static const posCustomers = '/api/v1/customers';
+  static const posDiscounts = '/api/v1/pos/discounts';
+  static const posDiscountValidate = '/api/v1/pos/discounts/validate';
+  static const posDiscountApply = '/api/v1/pos/discounts/apply';
+  static String posDiscountApprove(String applicationId) =>
+      '/api/v1/pos/discounts/$applicationId/approve';
 
   static const posReturnSaleSearch = '/api/v1/pos/returns/sales/search';
 

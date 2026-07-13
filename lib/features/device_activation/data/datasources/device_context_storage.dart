@@ -85,13 +85,23 @@ class DeviceContextStorage {
   }
 
   Future<void> clear() async {
-    await _storage.delete(_deviceContextKey);
+    await clearContext();
     await _storage.delete(_deviceFingerprintKey);
     if (kIsWeb) {
-      await PlatformLocalStorage.delete(_deviceContextKey);
       await PlatformLocalStorage.delete(_deviceFingerprintKey);
     }
     developer.log('Device context cleared.', name: 'pos.session');
+  }
+
+  Future<void> clearContext() async {
+    await _storage.delete(_deviceContextKey);
+    if (kIsWeb) {
+      await PlatformLocalStorage.delete(_deviceContextKey);
+    }
+    developer.log(
+      'Device context cleared; fingerprint preserved.',
+      name: 'pos.session',
+    );
   }
 
   Future<void> _persistFingerprint(String fingerprint) async {

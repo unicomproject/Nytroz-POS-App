@@ -39,6 +39,15 @@ class PosCashPaymentNotifier extends StateNotifier<PosCashPaymentState> {
   }
 
   void appendKey(String key) {
+    if (key == 'ok') {
+      return;
+    }
+
+    if (key == 'clear') {
+      clearAmount();
+      return;
+    }
+
     if (key == '.') {
       if (state.inputBuffer.contains('.')) {
         return;
@@ -68,11 +77,13 @@ class PosCashPaymentNotifier extends StateNotifier<PosCashPaymentState> {
     }
 
     final digitCount = state.inputBuffer.replaceAll('.', '').length;
-    if (digitCount >= _maxDigitCount) {
+    final nextDigitCount = digitCount + key.replaceAll('.', '').length;
+    if (nextDigitCount > _maxDigitCount) {
       return;
     }
 
-    final nextBuffer = state.inputBuffer == '0' ? key : '${state.inputBuffer}$key';
+    final nextBuffer =
+        state.inputBuffer == '0' ? key : '${state.inputBuffer}$key';
     state = PosCashPaymentState(
       inputBuffer: nextBuffer,
       cashReceived: _parseAmount(nextBuffer),
@@ -99,8 +110,8 @@ class PosCashPaymentNotifier extends StateNotifier<PosCashPaymentState> {
   }
 }
 
-final posCashPaymentProvider =
-    StateNotifierProvider.autoDispose<PosCashPaymentNotifier, PosCashPaymentState>(
+final posCashPaymentProvider = StateNotifierProvider.autoDispose<
+    PosCashPaymentNotifier, PosCashPaymentState>(
   (ref) => PosCashPaymentNotifier(),
 );
 

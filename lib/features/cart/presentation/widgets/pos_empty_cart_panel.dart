@@ -5,8 +5,10 @@ import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/device_activation/presentation/providers/device_activation_provider.dart';
 import 'package:nytroz_pos/features/sale/domain/entities/pos_payment_method_type.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_product_variant_sheet.dart';
+import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
@@ -80,7 +82,8 @@ class _CartHeader extends ConsumerWidget {
             if (canClearCart && cartHasItems)
               IconButton(
                 visualDensity: VisualDensity.compact,
-                onPressed: () => ref.read(posNewSaleCartProvider.notifier).clear(),
+                onPressed: () =>
+                    ref.read(posNewSaleCartProvider.notifier).clear(),
                 tooltip: 'Clear cart',
                 icon: const Icon(Icons.delete_sweep_outlined),
                 color: TenantAdminColors.danger,
@@ -339,11 +342,24 @@ class _CartSummaryFooter extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authSessionProvider);
+    final deviceState = ref.watch(deviceActivationProvider);
+    final tillState = ref.watch(tillProvider);
     final canCheckout = PosPermissionAccess.canCheckoutSession(session);
     final hasPaymentMethod =
         allowedPosPaymentMethods(session?.permissionCodes.toSet() ?? const {})
             .isNotEmpty;
-    final canProceed = cart.hasItems && canCheckout && hasPaymentMethod;
+    final deviceContext = deviceState.deviceContext;
+    final hasTrustedDevice = deviceContext != null &&
+        deviceContext.isTrusted &&
+        deviceContext.deviceId.trim().isNotEmpty &&
+        deviceContext.outletId.trim().isNotEmpty &&
+        deviceContext.tillId.trim().isNotEmpty;
+    final hasOpenTillSession = tillState.hasOpenSession;
+    final canProceed = cart.hasItems &&
+        canCheckout &&
+        hasPaymentMethod &&
+        hasTrustedDevice &&
+        hasOpenTillSession;
 
     return DecoratedBox(
       decoration: const BoxDecoration(

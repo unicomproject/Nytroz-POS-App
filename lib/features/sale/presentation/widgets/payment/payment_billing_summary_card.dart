@@ -30,7 +30,12 @@ class PaymentBillingSummaryCard extends StatelessWidget {
           const SizedBox(height: 12),
           _SummaryRow(label: 'Subtotal', value: formatLkr(subtotal)),
           const SizedBox(height: 12),
-          _SummaryRow(label: 'Discount', value: formatLkr(discount)),
+          _SummaryRow(
+            label: 'Discount',
+            value:
+                discount > 0 ? '- ${formatLkr(discount)}' : formatLkr(discount),
+            valueColor: discount > 0 ? const Color(0xFF0F9F45) : null,
+          ),
           const SizedBox(height: 12),
           _SummaryRow(label: 'Tax', value: formatLkr(tax)),
           const Divider(height: 24),
@@ -50,11 +55,13 @@ class _SummaryRow extends StatelessWidget {
     required this.label,
     required this.value,
     this.emphasized = false,
+    this.valueColor,
   });
 
   final String label;
   final String value;
   final bool emphasized;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +76,10 @@ class _SummaryRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: Text(label, style: style)),
-        Text(value, style: style),
+        Text(
+          value,
+          style: style?.copyWith(color: valueColor),
+        ),
       ],
     );
   }

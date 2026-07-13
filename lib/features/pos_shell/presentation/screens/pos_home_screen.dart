@@ -245,21 +245,27 @@ class _DashboardSections extends StatelessWidget {
           children: [
             PosHomeHeader(dashboard: dashboard),
             if (dashboardStatus != null) ...[
-              const SizedBox(height: TenantAdminSpacing.md),
+              const SizedBox(height: TenantAdminSpacing.sm),
               dashboardStatus!,
             ],
-            const SizedBox(height: TenantAdminSpacing.lg),
+            const SizedBox(height: TenantAdminSpacing.sm),
             Expanded(
-              flex: hasBottomCards ? 6 : 1,
-              child: topGrid,
-            ),
-            if (hasBottomCards) ...[
-              const SizedBox(height: TenantAdminSpacing.lg),
-              Expanded(
-                flex: 5,
-                child: bottomGrid,
+              child: Column(
+                children: [
+                  Expanded(
+                    flex: hasBottomCards ? 7 : 1,
+                    child: topGrid,
+                  ),
+                  if (hasBottomCards) ...[
+                    const SizedBox(height: TenantAdminSpacing.sm),
+                    Expanded(
+                      flex: 5,
+                      child: bottomGrid,
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
           ],
         );
       },

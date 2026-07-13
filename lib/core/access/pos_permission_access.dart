@@ -12,14 +12,11 @@ class PosPermissionAccess {
   static const newSaleAccessCodes = [
     PosPermissionCodes.viewNewSale,
     PosPermissionCodes.createSale,
-    PosPermissionCodes.startSale,
-    'pos.sale.create',
   ];
 
   static const homeAccessCodes = [
     PosPermissionCodes.viewHome,
     PosPermissionCodes.viewDashboard,
-    'pos.sale.create',
   ];
 
   static const saleViewAccessCodes = [
@@ -55,13 +52,6 @@ class PosPermissionAccess {
 
   static const cashDrawerViewAccessCodes = [
     PosPermissionCodes.viewCashDrawer,
-    PosPermissionCodes.manageCashDrawer,
-    PosPermissionCodes.viewTill,
-    PosPermissionCodes.cashMovement,
-    PosPermissionCodes.openTill,
-    PosPermissionCodes.closeTill,
-    'pos.till.open',
-    'pos.till.close',
   ];
 
   static const parkedSaleAccessCodes = [
@@ -161,23 +151,19 @@ class PosPermissionAccess {
   }
 
   static bool canViewCashDrawer(Set<String> granted) {
-    return hasAny(granted, cashDrawerViewAccessCodes);
+    return granted.contains(PosPermissionCodes.viewCashDrawer);
   }
 
   static bool canCreateCashDrawerMovement(Set<String> granted) {
-    return granted.contains(PosPermissionCodes.createCashDrawerMovement) ||
-        granted.contains(PosPermissionCodes.cashMovement) ||
-        granted.contains(PosPermissionCodes.manageCashDrawer);
+    return granted.contains(PosPermissionCodes.manageCashDrawer);
   }
 
   static bool canManageCashDrawerActions(Set<String> granted) {
-    return granted.contains(PosPermissionCodes.manageCashDrawer) ||
-        canCreateCashDrawerMovement(granted);
+    return granted.contains(PosPermissionCodes.manageCashDrawer);
   }
 
   static bool canCloseTill(Set<String> granted) {
-    return granted.contains(PosPermissionCodes.closeTill) ||
-        granted.contains(PosPermissionCodes.manageCashDrawer);
+    return granted.contains(PosPermissionCodes.closeTill);
   }
 
   static bool canParkOrViewParkedSales(Set<String> granted) {
@@ -203,6 +189,27 @@ class PosPermissionAccess {
     );
   }
 
+  static bool canAcceptCardPayment(Set<String> granted) {
+    return canAcceptPaymentPermission(
+      granted,
+      PosPermissionCodes.acceptCardPayment,
+    );
+  }
+
+  static bool canAcceptQrPayment(Set<String> granted) {
+    return canAcceptPaymentPermission(
+      granted,
+      PosPermissionCodes.acceptQrPayment,
+    );
+  }
+
+  static bool canAcceptSplitPayment(Set<String> granted) {
+    return canAcceptPaymentPermission(
+      granted,
+      PosPermissionCodes.acceptSplitPayment,
+    );
+  }
+
   static bool canAcceptPaymentPermission(Set<String> granted, String code) {
     return granted.contains(code);
   }
@@ -219,6 +226,33 @@ class PosPermissionAccess {
 
     final granted = session.permissionCodes.toSet();
     return canCheckout(granted) && canAcceptCashPayment(granted);
+  }
+
+  static bool canAccessCardPaymentScreenSession(AuthSession? session) {
+    if (session == null) {
+      return false;
+    }
+
+    final granted = session.permissionCodes.toSet();
+    return canCheckout(granted) && canAcceptCardPayment(granted);
+  }
+
+  static bool canAccessQrPaymentScreenSession(AuthSession? session) {
+    if (session == null) {
+      return false;
+    }
+
+    final granted = session.permissionCodes.toSet();
+    return canCheckout(granted) && canAcceptQrPayment(granted);
+  }
+
+  static bool canAccessSplitPaymentScreenSession(AuthSession? session) {
+    if (session == null) {
+      return false;
+    }
+
+    final granted = session.permissionCodes.toSet();
+    return canCheckout(granted) && canAcceptSplitPayment(granted);
   }
 
   static bool canViewSales(Set<String> granted) {

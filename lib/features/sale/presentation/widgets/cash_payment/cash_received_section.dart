@@ -35,14 +35,29 @@ class CashReceivedSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Cash Received',
-              style: TenantAdminTextStyles.sectionTitle(context),
+            Row(
+              children: [
+                const Icon(
+                  Icons.payments_outlined,
+                  color: TenantAdminColors.success,
+                  size: 22,
+                ),
+                const SizedBox(width: TenantAdminSpacing.sm),
+                Text(
+                  'Cash Received',
+                  style: TenantAdminTextStyles.sectionTitle(context),
+                ),
+              ],
             ),
             const SizedBox(height: TenantAdminSpacing.lg),
             _CashAmountField(
               displayValue: _formatInputDisplay(inputBuffer, cashReceived),
               onClear: onClear,
+            ),
+            const SizedBox(height: TenantAdminSpacing.sm),
+            Text(
+              'Enter the amount received from the customer',
+              style: TenantAdminTextStyles.muted(context),
             ),
             const SizedBox(height: TenantAdminSpacing.lg),
             _ChangeDueBanner(
@@ -149,7 +164,7 @@ class _ChangeDueBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = isSufficient
         ? 'Change Due: ${formatLkr(changeDue.clamp(0, changeDue))}'
-        : 'Remaining: ${formatLkr(changeDue.abs())}';
+        : 'Remaining to receive: ${formatLkr(changeDue.abs())}';
 
     return Text(
       label,
@@ -181,22 +196,18 @@ class _HelperMessage extends StatelessWidget {
       _ => 'Return ${formatLkr(changeDue)} change to the customer.',
     };
 
-    final color = isSufficient
-        ? TenantAdminColors.success
-        : TenantAdminColors.warning;
+    final color =
+        isSufficient ? TenantAdminColors.success : TenantAdminColors.warning;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(TenantAdminSpacing.md),
       decoration: BoxDecoration(
-        color: isSufficient
-            ? const Color(0xFFF0FDF4)
-            : const Color(0xFFFFFBEB),
+        color: isSufficient ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         border: Border.all(
-          color: isSufficient
-              ? const Color(0xFFBBF7D0)
-              : const Color(0xFFFDE68A),
+          color:
+              isSufficient ? const Color(0xFFBBF7D0) : const Color(0xFFFDE68A),
         ),
       ),
       child: Row(

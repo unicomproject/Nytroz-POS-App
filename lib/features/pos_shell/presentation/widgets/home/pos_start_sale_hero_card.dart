@@ -161,13 +161,8 @@ class _HeroCopy extends StatelessWidget {
         ],
         SizedBox(
           height: compact ? 44 : 52,
-          child: ElevatedButton.icon(
+          child: ElevatedButton(
             onPressed: isEnabled ? onStartSale : null,
-            icon: const Icon(Icons.add_shopping_cart_rounded),
-            label: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(buttonLabel),
-            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: TenantAdminColors.surface,
               foregroundColor: TenantAdminColors.primary,
@@ -181,6 +176,21 @@ class _HeroCopy extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(TenantAdminRadius.md),
               ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.add_shopping_cart_rounded, size: 20),
+                const SizedBox(width: TenantAdminSpacing.sm),
+                Flexible(
+                  child: Text(
+                    buttonLabel,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: TenantAdminSpacing.sm),
+                const Icon(Icons.chevron_right_rounded, size: 20),
+              ],
             ),
           ),
         ),

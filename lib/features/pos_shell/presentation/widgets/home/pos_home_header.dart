@@ -20,8 +20,10 @@ class PosHomeHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final perms = dashboard.grantedPermissionKeys ?? const {};
     final userDisplayName = dashboard.fallbackUserDisplayName;
-    final canViewNotifications = perms.contains(PosPermissionCodes.viewNotifications);
-    final canViewTillSession = perms.contains(PosPermissionCodes.viewTillSession);
+    final canViewNotifications =
+        perms.contains(PosPermissionCodes.viewNotifications);
+    final canViewTillSession =
+        perms.contains(PosPermissionCodes.viewTillSession);
     final now = DateTime.now();
 
     return LayoutBuilder(
@@ -57,7 +59,12 @@ class PosHomeHeader extends ConsumerWidget {
           children: [
             Expanded(child: greeting),
             const SizedBox(width: TenantAdminSpacing.xl),
-            contextItems,
+            Flexible(
+              child: Align(
+                alignment: Alignment.topRight,
+                child: contextItems,
+              ),
+            ),
           ],
         );
       },
@@ -195,11 +202,12 @@ class _NotificationButton extends StatelessWidget {
                           notificationCount > 99
                               ? '99+'
                               : notificationCount.toString(),
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: TenantAdminColors.surface,
-                                fontWeight: FontWeight.w800,
-                                height: 1,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: TenantAdminColors.surface,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1,
+                                  ),
                         ),
                       ),
                     ),

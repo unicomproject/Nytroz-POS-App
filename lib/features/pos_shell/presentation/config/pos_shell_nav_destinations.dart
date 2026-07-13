@@ -38,7 +38,7 @@ const posShellNavDestinations = <PosShellNavDestination>[
   ),
   PosShellNavDestination(
     key: 'returns-refunds',
-    label: 'Return & Refund',
+    label: 'Returns & Refunds',
     icon: Icons.assignment_return_outlined,
     routePath: '/pos/returns-refunds',
     anyOfPermissionKeys: PosPermissionAccess.returnsViewAccessCodes,
@@ -51,5 +51,17 @@ const posShellNavDestinations = <PosShellNavDestination>[
     routePath: '/pos/cash-drawer',
     anyOfPermissionKeys: PosPermissionAccess.cashDrawerViewAccessCodes,
     routeExists: true,
+  ),
+  PosShellNavDestination(
+    key: 'reports',
+    label: 'Reports',
+    icon: Icons.bar_chart_rounded,
+    anyOfPermissionKeys: [
+      'report.view',
+      'reports.view',
+      'report.sales.view',
+      'reports.sales.view',
+    ],
+    unavailableMessage: 'Reports screen is not available yet.',
   ),
 ];

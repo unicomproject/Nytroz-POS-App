@@ -23,42 +23,43 @@ class PosShellNavItem extends StatelessWidget {
     final foregroundColor = selected
         ? Colors.white
         : isEnabled
-            ? Colors.white70
-            : Colors.white38;
+            ? Colors.white.withValues(alpha: 0.88)
+            : Colors.white.withValues(alpha: 0.38);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Material(
-        color: selected ? TenantAdminColors.info : Colors.transparent,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        color: selected ? const Color(0xFF075DFF) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
         child: Tooltip(
           message: isEnabled ? label : '$label is not available yet',
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            borderRadius: BorderRadius.circular(12),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 58),
+              constraints: const BoxConstraints(minHeight: 48),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: TenantAdminSpacing.xs,
-                  vertical: 6,
+                  horizontal: TenantAdminSpacing.md,
+                  vertical: TenantAdminSpacing.sm,
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Row(
                   children: [
-                    Icon(icon, color: foregroundColor, size: 23),
-                    const SizedBox(height: TenantAdminSpacing.xs),
-                    Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: foregroundColor,
-                            fontSize: 9.5,
-                            fontWeight:
-                                selected ? FontWeight.w700 : FontWeight.w600,
-                          ),
+                    Icon(icon, color: foregroundColor, size: 22),
+                    const SizedBox(width: TenantAdminSpacing.md),
+                    Expanded(
+                      child: Text(
+                        label,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: foregroundColor,
+                              fontSize: 13,
+                              fontWeight:
+                                  selected ? FontWeight.w800 : FontWeight.w600,
+                              height: 1.15,
+                            ),
+                      ),
                     ),
                   ],
                 ),

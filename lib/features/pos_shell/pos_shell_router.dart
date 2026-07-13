@@ -95,7 +95,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
                 GoRoute(
                   path: 'card',
                   builder: (context, state) =>
-                      _canProceedToPayment(ref.read(authSessionProvider))
+                      _canAcceptCardPayment(ref.read(authSessionProvider))
                           ? const PosPaymentPlaceholderScreen(
                               title: 'Card Payment',
                               subtitle: 'Accept card payment from customer',
@@ -105,7 +105,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
                 GoRoute(
                   path: 'qr',
                   builder: (context, state) =>
-                      _canProceedToPayment(ref.read(authSessionProvider))
+                      _canAcceptQrPayment(ref.read(authSessionProvider))
                           ? const PosPaymentPlaceholderScreen(
                               title: 'QR / Mobile Payment',
                               subtitle:
@@ -116,7 +116,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
                 GoRoute(
                   path: 'split',
                   builder: (context, state) =>
-                      _canProceedToPayment(ref.read(authSessionProvider))
+                      _canAcceptSplitPayment(ref.read(authSessionProvider))
                           ? const PosPaymentPlaceholderScreen(
                               title: 'Split Payment',
                               subtitle: 'Accept split payment from customer',
@@ -218,7 +218,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
         GoRoute(
           path: '/pos/profile',
           builder: (context, state) =>
-              _canViewPosHome(ref.read(authSessionProvider))
+              _isAuthenticated(ref.read(authSessionProvider))
                   ? const PosPlaceholderScreen(title: 'Profile')
                   : const TenantAdminForbiddenScreen(),
         ),
@@ -287,8 +287,7 @@ _PosShellHeader _headerForPath(String path) {
       'Review credit amounts and confirm the return credit.',
     '/pos/returns-refunds/settlement' =>
       'Select how the customer credit should be settled.',
-    '/pos/returns-refunds/receipt' =>
-      'Review and print the return receipt.',
+    '/pos/returns-refunds/receipt' => 'Review and print the return receipt.',
     _ => 'Ready for sales, service, and till operations.',
   };
 
@@ -326,6 +325,21 @@ bool _canProceedToPayment(AuthSession? session) {
 bool _canAcceptCashPayment(AuthSession? session) {
   return _canStartNewSale(session) &&
       PosPermissionAccess.canAccessCashPaymentScreenSession(session);
+}
+
+bool _canAcceptCardPayment(AuthSession? session) {
+  return _canStartNewSale(session) &&
+      PosPermissionAccess.canAccessCardPaymentScreenSession(session);
+}
+
+bool _canAcceptQrPayment(AuthSession? session) {
+  return _canStartNewSale(session) &&
+      PosPermissionAccess.canAccessQrPaymentScreenSession(session);
+}
+
+bool _canAcceptSplitPayment(AuthSession? session) {
+  return _canStartNewSale(session) &&
+      PosPermissionAccess.canAccessSplitPaymentScreenSession(session);
 }
 
 bool _canViewPaymentSuccess(AuthSession? session) {
@@ -369,10 +383,9 @@ bool _canCreateCashDrawerMovement(AuthSession? session) {
 }
 
 bool _canCloseTill(AuthSession? session) {
-  return _canViewCashDrawer(session) &&
+  return _isAuthenticated(session) &&
       PosPermissionAccess.canCloseTill(
-        session?.permissionCodes.toSet() ?? const {},
-      );
+          session?.permissionCodes.toSet() ?? const {});
 }
 
 bool _canViewParkedSales(AuthSession? session) {
@@ -380,4 +393,8 @@ bool _canViewParkedSales(AuthSession? session) {
       PosPermissionAccess.canParkOrViewParkedSales(
         session?.permissionCodes.toSet() ?? const {},
       );
+}
+
+bool _isAuthenticated(AuthSession? session) {
+  return session != null && session.isAuthenticated;
 }

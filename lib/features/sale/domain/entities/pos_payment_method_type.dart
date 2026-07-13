@@ -21,12 +21,39 @@ extension PosPaymentMethodTypeX on PosPaymentMethodType {
 
   String get continueButtonLabel => 'Continue with $title';
 
+  String get description {
+    return switch (this) {
+      PosPaymentMethodType.cash => 'Accept payment in cash',
+      PosPaymentMethodType.card => 'Debit / Credit card payment',
+      PosPaymentMethodType.qrMobile => 'Scan QR or pay via mobile',
+      PosPaymentMethodType.split => 'Pay using multiple methods',
+    };
+  }
+
   IconData get icon {
     return switch (this) {
       PosPaymentMethodType.cash => Icons.payments_outlined,
       PosPaymentMethodType.card => Icons.credit_card_rounded,
       PosPaymentMethodType.qrMobile => Icons.qr_code_2_rounded,
       PosPaymentMethodType.split => Icons.call_split_rounded,
+    };
+  }
+
+  Color get tintColor {
+    return switch (this) {
+      PosPaymentMethodType.cash => const Color(0xFFF1FBF5),
+      PosPaymentMethodType.card => const Color(0xFFF3F6FF),
+      PosPaymentMethodType.qrMobile => const Color(0xFFF7F3FF),
+      PosPaymentMethodType.split => const Color(0xFFFFF7EF),
+    };
+  }
+
+  Color get accentColor {
+    return switch (this) {
+      PosPaymentMethodType.cash => const Color(0xFF15803D),
+      PosPaymentMethodType.card => const Color(0xFF2563EB),
+      PosPaymentMethodType.qrMobile => const Color(0xFF7C3AED),
+      PosPaymentMethodType.split => const Color(0xFFEA580C),
     };
   }
 
@@ -49,7 +76,8 @@ extension PosPaymentMethodTypeX on PosPaymentMethodType {
   }
 }
 
-List<PosPaymentMethodType> allowedPosPaymentMethods(Set<String> permissionCodes) {
+List<PosPaymentMethodType> allowedPosPaymentMethods(
+    Set<String> permissionCodes) {
   return PosPaymentMethodType.values
       .where((method) => permissionCodes.contains(method.permissionCode))
       .toList(growable: false);

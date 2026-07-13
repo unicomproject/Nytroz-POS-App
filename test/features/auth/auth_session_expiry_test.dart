@@ -33,5 +33,21 @@ void main() {
       expect(expiredSession.isExpired, isTrue);
       expect(expiredSession.isAuthenticated, isFalse);
     });
+
+    test('keeps an expired access-token session refreshable', () {
+      final session = AuthSession(
+        accessToken: 'expired-access-token',
+        refreshToken: 'active-refresh-token',
+        refreshTokenExpiresAt:
+            DateTime.now().toUtc().add(const Duration(days: 1)),
+        userId: 'user-1',
+        userDisplayName: 'User',
+        expiresAt: DateTime.now().toUtc().subtract(const Duration(minutes: 1)),
+      );
+
+      expect(session.isExpired, isTrue);
+      expect(session.canRefresh, isTrue);
+      expect(session.isAuthenticated, isTrue);
+    });
   });
 }

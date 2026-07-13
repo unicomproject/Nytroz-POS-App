@@ -68,50 +68,100 @@ class PosHomeBottomGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columnCount = _columnCountFor(constraints.maxWidth, cards.length);
         final hasBoundedHeight = constraints.hasBoundedHeight;
-        final rowCount = (cards.length / columnCount).ceil();
-        final availableSpacing =
-            TenantAdminSpacing.lg * (rowCount - 1).clamp(0, rowCount);
-        final itemExtent = hasBoundedHeight
-            ? ((constraints.maxHeight - availableSpacing) / rowCount)
-                .clamp(_minimumCardHeight, _maximumCardHeight)
-            : _comfortableCardHeight;
+        final cardRow = _QuickActionCardRow(cards: cards);
 
-        return GridView.builder(
-          shrinkWrap: !hasBoundedHeight,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: cards.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columnCount,
-            crossAxisSpacing: TenantAdminSpacing.lg,
-            mainAxisSpacing: TenantAdminSpacing.lg,
-            mainAxisExtent: itemExtent,
-          ),
-          itemBuilder: (context, index) => cards[index],
+        if (!hasBoundedHeight) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _QuickActionsHeading(context: context),
+              const SizedBox(height: TenantAdminSpacing.md),
+              cardRow,
+            ],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _QuickActionsHeading(context: context),
+            const SizedBox(height: TenantAdminSpacing.md),
+            Expanded(child: cardRow),
+          ],
         );
       },
     );
   }
 }
 
-const _minimumCardHeight = 230.0;
-const _comfortableCardHeight = 260.0;
-const _maximumCardHeight = 340.0;
-const _fourColumnMinimumWidth = 1040.0;
+class _QuickActionsHeading extends StatelessWidget {
+  const _QuickActionsHeading({required this.context});
 
-int _columnCountFor(double width, int itemCount) {
-  if (itemCount == 1) {
-    return 1;
+  final BuildContext context;
+
+  @override
+  Widget build(BuildContext _) {
+    return Text(
+      'Quick Actions',
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: TenantAdminColors.bodyText,
+            fontWeight: FontWeight.w900,
+          ),
+    );
   }
+}
 
-  if (width < TenantAdminBreakpoints.mobile) {
-    return 1;
+class _QuickActionCardRow extends StatelessWidget {
+  const _QuickActionCardRow({required this.cards});
+
+  final List<Widget> cards;
+
+  static const _minSquareSize = 118.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final spacing = TenantAdminSpacing.md * (cards.length - 1);
+        final cardWidth = (constraints.maxWidth - spacing) / cards.length;
+        final fitsSingleRowSquares = cardWidth >= _minSquareSize;
+
+        if (fitsSingleRowSquares) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var index = 0; index < cards.length; index++) ...[
+                if (index > 0) const SizedBox(width: TenantAdminSpacing.md),
+                Expanded(
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: cards[index],
+                  ),
+                ),
+              ],
+            ],
+          );
+        }
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const ClampingScrollPhysics(),
+          child: Row(
+            children: [
+              for (var index = 0; index < cards.length; index++) ...[
+                if (index > 0) const SizedBox(width: TenantAdminSpacing.md),
+                SizedBox(
+                  width: _minSquareSize,
+                  height: _minSquareSize,
+                  child: cards[index],
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
   }
-
-  if (width < _fourColumnMinimumWidth) {
-    return itemCount < 2 ? itemCount : 2;
-  }
-
-  return itemCount < 4 ? itemCount : 4;
 }

@@ -14,6 +14,7 @@ class PosHomeRemoteDatasource {
     String? outletId,
     String? tillId,
     String? deviceId,
+    String? deviceFingerprint,
   }) async {
     final stopwatch = Stopwatch()..start();
     final queryParameters = <String, dynamic>{};
@@ -27,6 +28,9 @@ class PosHomeRemoteDatasource {
     if (deviceId != null && deviceId.trim().isNotEmpty) {
       queryParameters['deviceId'] = deviceId.trim();
     }
+    if (deviceFingerprint != null && deviceFingerprint.trim().isNotEmpty) {
+      queryParameters['deviceFingerprint'] = deviceFingerprint.trim();
+    }
 
     try {
       final response = await _dio.get<Map<String, dynamic>>(
@@ -34,8 +38,14 @@ class PosHomeRemoteDatasource {
         queryParameters: queryParameters,
       );
       stopwatch.stop();
+      final fingerprintAttached =
+          deviceFingerprint?.trim().isNotEmpty == true;
       developer.log(
-        'API success. step=pos-home endpoint=${ApiEndpoints.posHome} status=${response.statusCode} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()} deviceId=${deviceId ?? 'none'} tillId=${tillId ?? 'none'}',
+        'API success. step=pos-home endpoint=${ApiEndpoints.posHome} '
+        'status=${response.statusCode} '
+        'durationMs=${stopwatch.elapsedMilliseconds} '
+        'authAttached=${_hasAuthHeader()} deviceId=${deviceId ?? 'none'} '
+        'tillId=${tillId ?? 'none'} fingerprintAttached=$fingerprintAttached',
         name: 'pos.home',
       );
 
@@ -202,7 +212,8 @@ class PosHomeDashboardPayload {
       cards: PosHomeCardsPayload.fromJson(cards),
       serverNowUtc: _parseDateTime(time['serverNowUtc']),
       outletTimezone: _nullableString(time['outletTimezone']),
-      businessDate: _parseDateOnly(time['businessDate'] ?? till['businessDate']),
+      businessDate:
+          _parseDateOnly(time['businessDate'] ?? till['businessDate']),
     );
   }
 

@@ -45,6 +45,7 @@ import 'support/pos_catalog_test_fixtures.dart';
 
 void main() {
   group('POS Home', () {
+    const posTabletViewport = Size(1280, 768);
     testWidgets('/pos/home renders the dashboard and Start Sale hero', (
       tester,
     ) async {
@@ -62,7 +63,8 @@ void main() {
       await _pumpPosHome(tester, size: const Size(1200, 900));
 
       expect(find.text('Manage Online Orders'), findsNothing);
-      expect(find.text('Returns & Refunds'), findsOneWidget);
+      expect(find.text('Quick Actions'), findsOneWidget);
+      expect(find.text('Returns & Refunds'), findsWidgets);
       expect(find.text('Add Customer'), findsWidgets);
       expect(find.text('Parked Sales'), findsOneWidget);
       expect(find.text('Cash Drawer'), findsWidgets);
@@ -97,7 +99,7 @@ void main() {
 
       expect(find.text('Manage Online Orders'), findsNothing);
       expect(find.text('Start a Sale'), findsOneWidget);
-      expect(find.text('Returns & Refunds'), findsOneWidget);
+      expect(find.text('Returns & Refunds'), findsWidgets);
       expect(find.text('Add Customer'), findsWidgets);
       expect(find.text('Parked Sales'), findsOneWidget);
       expect(find.text('Cash Drawer'), findsWidgets);
@@ -107,6 +109,8 @@ void main() {
       await _pumpPosHome(tester, size: const Size(1024, 768));
 
       expect(find.byType(PosSidebar), findsOneWidget);
+      expect(find.text('OneVerz POS'), findsOneWidget);
+      expect(find.text('NytrozPOS'), findsNothing);
       expect(find.byType(PosDesktopTopBar), findsNothing);
       expect(find.byType(PosMobileTopBar), findsNothing);
       final homeItem = tester.widget<PosShellNavItem>(
@@ -176,8 +180,9 @@ void main() {
       expect(_sidebarDestination('New Sale'), findsNothing);
       expect(_sidebarDestination('Orders'), findsNothing);
       expect(_sidebarDestination('Customers'), findsNothing);
-      expect(_sidebarDestination('Return & Refund'), findsNothing);
+      expect(_sidebarDestination('Returns & Refunds'), findsNothing);
       expect(_sidebarDestination('Cash Drawer'), findsNothing);
+      expect(_sidebarDestination('Reports'), findsNothing);
     });
 
     testWidgets(
@@ -195,6 +200,7 @@ void main() {
           PosPermissionCodes.viewReturns,
           PosPermissionCodes.viewRefunds,
           PosPermissionCodes.viewCashDrawer,
+          'reports.view',
         ],
       );
 
@@ -202,8 +208,9 @@ void main() {
       expect(_sidebarDestination('New Sale'), findsOneWidget);
       expect(_sidebarDestination('Orders'), findsOneWidget);
       expect(_sidebarDestination('Customers'), findsOneWidget);
-      expect(_sidebarDestination('Return & Refund'), findsOneWidget);
+      expect(_sidebarDestination('Returns & Refunds'), findsOneWidget);
       expect(_sidebarDestination('Cash Drawer'), findsOneWidget);
+      expect(_sidebarDestination('Reports'), findsOneWidget);
     });
 
     testWidgets('New Sale sidebar destination opens placeholder screen', (
@@ -223,7 +230,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(PosNewSaleScreen), findsOneWidget);
-      expect(find.text('All Products (12)'), findsOneWidget);
+      expect(find.text('All Products (13)'), findsOneWidget);
       expect(find.text('No items added'), findsOneWidget);
       expect(find.byType(PosHomeScreen), findsNothing);
     });
@@ -249,12 +256,12 @@ void main() {
       );
     });
 
-    testWidgets('user with start sale permission can open New Sale shell', (
+    testWidgets('user with pos.new_sale.view can open New Sale shell', (
       tester,
     ) async {
       await _pumpPosHome(
         tester,
-        size: const Size(1024, 768),
+        size: posTabletViewport,
         permissionCodes: const [
           PosPermissionCodes.viewHome,
           PosPermissionCodes.viewNewSale,
@@ -270,12 +277,72 @@ void main() {
       expect(find.text('Proceed to Payment'), findsOneWidget);
     });
 
+    testWidgets('user with sales.create alias can open New Sale shell', (
+      tester,
+    ) async {
+      await _pumpPosHome(
+        tester,
+        size: posTabletViewport,
+        permissionCodes: const [
+          PosPermissionCodes.viewHome,
+          PosPermissionCodes.createSale,
+        ],
+      );
+
+      _goFromCurrentRoute(tester, '/pos/new-sale');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PosNewSaleScreen), findsOneWidget);
+    });
+
+    testWidgets('Add Customer action hides with customers.view only', (
+      tester,
+    ) async {
+      await _pumpPosHome(
+        tester,
+        size: posTabletViewport,
+        permissionCodes: const [
+          PosPermissionCodes.viewHome,
+          PosPermissionCodes.viewNewSale,
+          PosPermissionCodes.viewProducts,
+          PosPermissionCodes.viewNewSaleCustomers,
+        ],
+      );
+
+      _goFromCurrentRoute(tester, '/pos/new-sale');
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(OutlinedButton, 'Add Customer'), findsNothing);
+    });
+
+    testWidgets('Add Customer action shows with customers.create',
+        (tester) async {
+      await _pumpPosHome(
+        tester,
+        size: posTabletViewport,
+        permissionCodes: const [
+          PosPermissionCodes.viewHome,
+          PosPermissionCodes.viewNewSale,
+          PosPermissionCodes.viewProducts,
+          PosPermissionCodes.createNewSaleCustomer,
+        ],
+      );
+
+      _goFromCurrentRoute(tester, '/pos/new-sale');
+      await tester.pumpAndSettle();
+
+      expect(
+        find.widgetWithText(OutlinedButton, 'Add Customer'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('product taps add to cart and update New Sale totals', (
       tester,
     ) async {
       await _pumpPosHome(
         tester,
-        size: const Size(1024, 768),
+        size: posTabletViewport,
         permissionCodes: const [
           PosPermissionCodes.viewHome,
           PosPermissionCodes.viewNewSale,
@@ -332,7 +399,7 @@ void main() {
     ) async {
       await _pumpPosHome(
         tester,
-        size: const Size(1024, 768),
+        size: posTabletViewport,
         permissionCodes: const [
           PosPermissionCodes.viewHome,
           PosPermissionCodes.viewNewSale,
@@ -353,7 +420,7 @@ void main() {
       await tester.enterText(find.byType(TextField), '');
       await tester.pumpAndSettle();
 
-      expect(find.text('All Products (12)'), findsOneWidget);
+      expect(find.text('All Products (13)'), findsOneWidget);
       expect(find.text('General Admission'), findsOneWidget);
       expect(find.text('Snack Combo'), findsOneWidget);
     });
@@ -363,7 +430,7 @@ void main() {
     ) async {
       await _pumpPosHome(
         tester,
-        size: const Size(1024, 768),
+        size: posTabletViewport,
         permissionCodes: const [
           PosPermissionCodes.viewHome,
           PosPermissionCodes.viewNewSale,
@@ -400,7 +467,7 @@ void main() {
 
       expect(tester.widget<TextField>(find.byType(TextField)).controller?.text,
           isEmpty);
-      expect(find.text('All Products (12)'), findsOneWidget);
+      expect(find.text('All Products (13)'), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(GridView),
@@ -414,7 +481,7 @@ void main() {
     testWidgets('New Sale category chips filter product grid', (tester) async {
       await _pumpPosHome(
         tester,
-        size: const Size(1024, 768),
+        size: posTabletViewport,
         permissionCodes: const [
           PosPermissionCodes.viewHome,
           PosPermissionCodes.viewNewSale,
@@ -442,7 +509,7 @@ void main() {
 
       expect(find.text('General Admission'), findsOneWidget);
       expect(find.text('Snack Combo'), findsOneWidget);
-      expect(find.text('All Products (12)'), findsOneWidget);
+      expect(find.text('All Products (13)'), findsOneWidget);
     });
 
     test('stockLabelFromApi maps API stock status to labels', () {
@@ -658,7 +725,7 @@ void main() {
     ) async {
       await _pumpPosHome(
         tester,
-        size: const Size(1024, 768),
+        size: posTabletViewport,
         permissionCodes: const [
           PosPermissionCodes.viewHome,
           PosPermissionCodes.viewNewSale,
@@ -672,7 +739,7 @@ void main() {
 
       _goFromCurrentRoute(tester, '/pos/new-sale');
       await tester.pumpAndSettle();
-      tester.view.physicalSize = const Size(1024, 560);
+      tester.view.physicalSize = const Size(1280, 560);
       await tester.pumpAndSettle();
 
       expect(find.byType(PosNewSaleScreen), findsOneWidget);
@@ -802,6 +869,32 @@ Future<void> _pumpPosHome(
           notifier.state = const PosSessionBootstrapState(isReady: true);
           return notifier;
         }),
+        deviceContextStorageProvider.overrideWithValue(
+          _TestDeviceContextStorage(_trustedDevice),
+        ),
+        tillSessionStorageProvider.overrideWithValue(
+          _TestTillSessionStorage(_openTillSession),
+        ),
+        activateDeviceProvider.overrideWithValue(
+          ActivateDevice(_FakeDeviceActivationRepository(_trustedDevice)),
+        ),
+        openTillProvider.overrideWithValue(
+          OpenTill(_FakeTillRepository(_openTillSession)),
+        ),
+        deviceActivationProvider.overrideWith(
+          (ref) => _PresetDeviceActivationController(
+            ref.watch(activateDeviceProvider),
+            ref.watch(deviceContextStorageProvider),
+            _trustedDevice,
+          ),
+        ),
+        tillProvider.overrideWith(
+          (ref) => _PresetTillController(
+            ref.watch(openTillProvider),
+            ref.watch(tillSessionStorageProvider),
+            _openTillSession,
+          ),
+        ),
         posHomeDashboardProvider.overrideWith(
           dashboardOverride ?? (ref) async => dashboard,
         ),
@@ -859,7 +952,8 @@ const _permissionsWithOnlineOrders = [
 ];
 
 class _TestAuthSessionStorage extends AuthSessionStorage {
-  _TestAuthSessionStorage(this.session) : super(const AppSecureStorage(FlutterSecureStorage()));
+  _TestAuthSessionStorage(this.session)
+      : super(const AppSecureStorage(FlutterSecureStorage()));
 
   final AuthSession session;
 
@@ -957,7 +1051,8 @@ class _TestDeviceContextStorage extends DeviceContextStorage {
 }
 
 class _TestTillSessionStorage extends TillSessionStorage {
-  _TestTillSessionStorage(this.session) : super(const AppSecureStorage(FlutterSecureStorage()));
+  _TestTillSessionStorage(this.session)
+      : super(const AppSecureStorage(FlutterSecureStorage()));
 
   final TillSession session;
 

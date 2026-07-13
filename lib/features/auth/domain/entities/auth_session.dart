@@ -10,11 +10,13 @@ class AuthSession {
     required this.userDisplayName,
     this.permissionCodes = const [],
     this.refreshToken,
+    this.refreshTokenExpiresAt,
     this.expiresAt,
   });
 
   final String accessToken;
   final String? refreshToken;
+  final DateTime? refreshTokenExpiresAt;
   final String userId;
   final String userDisplayName;
   final List<String> permissionCodes;
@@ -31,7 +33,17 @@ class AuthSession {
     return DateTime.now().toUtc().isAfter(expiry.toUtc());
   }
 
-  bool get isAuthenticated => accessToken.isNotEmpty && !isExpired;
+  bool get canRefresh {
+    final token = refreshToken;
+    if (token == null || token.isEmpty) {
+      return false;
+    }
+    final expiry = refreshTokenExpiresAt;
+    return expiry == null || DateTime.now().toUtc().isBefore(expiry.toUtc());
+  }
+
+  bool get isAuthenticated =>
+      accessToken.isNotEmpty && (!isExpired || canRefresh);
 
   bool hasPermission(String permissionCode) {
     return permissionCodes.contains(permissionCode);
@@ -60,6 +72,7 @@ class AuthSession {
     return {
       'accessToken': accessToken,
       'refreshToken': refreshToken,
+      'refreshTokenExpiresAt': refreshTokenExpiresAt?.toIso8601String(),
       'userId': userId,
       'userDisplayName': userDisplayName,
       'permissionCodes': permissionCodes,
@@ -71,6 +84,9 @@ class AuthSession {
     return AuthSession(
       accessToken: json['accessToken'] as String? ?? '',
       refreshToken: json['refreshToken'] as String?,
+      refreshTokenExpiresAt: DateTime.tryParse(
+        json['refreshTokenExpiresAt']?.toString() ?? '',
+      ),
       userId: json['userId'] as String? ?? '',
       userDisplayName: json['userDisplayName'] as String? ?? '',
       permissionCodes: _resolveStoredPermissionCodes(

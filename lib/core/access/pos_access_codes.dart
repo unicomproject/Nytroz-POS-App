@@ -29,6 +29,7 @@ class PosPermissionCodes {
   static const viewNewSaleCustomers = 'customers.view';
   static const createNewSaleCustomer = 'customers.create';
   static const applySaleDiscount = 'sales.discount.apply';
+  static const approveSaleDiscount = 'sales.discount.approve';
   static const createParkedSale = 'sales.park.create';
   static const checkoutSale = 'sales.checkout';
   static const acceptCashPayment = 'payments.cash.accept';

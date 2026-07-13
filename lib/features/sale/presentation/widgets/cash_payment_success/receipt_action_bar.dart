@@ -6,11 +6,13 @@ import '../payment/pos_bottom_action_buttons.dart';
 class ReceiptActionBar extends StatelessWidget {
   const ReceiptActionBar({
     super.key,
+    this.onViewReceiptPreview,
     this.onPrintReceipt,
     this.onNewSale,
     this.onViewSales,
   });
 
+  final VoidCallback? onViewReceiptPreview;
   final VoidCallback? onPrintReceipt;
   final VoidCallback? onNewSale;
   final VoidCallback? onViewSales;
@@ -21,6 +23,12 @@ class ReceiptActionBar extends StatelessWidget {
       builder: (context, constraints) {
         final useCompact = constraints.maxWidth < 760;
         final actions = <Widget>[
+          if (onViewReceiptPreview != null)
+            _OutlinedAction(
+              label: 'View Receipt',
+              icon: Icons.receipt_long_outlined,
+              onPressed: onViewReceiptPreview!,
+            ),
           if (onPrintReceipt != null)
             _OutlinedAction(
               label: 'Print Receipt',

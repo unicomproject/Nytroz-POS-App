@@ -21,16 +21,7 @@ class AuthSessionNotifier extends StateNotifier<AuthSession?> {
       'Auth session set in memory. userId=${session.userId}, accessTokenPresent=${session.accessToken.isNotEmpty}',
       name: 'auth.session',
     );
-    unawaited(
-      _storage.save(session).catchError((Object error, StackTrace stackTrace) {
-        developer.log(
-          'Auth session storage failed after memory update.',
-          name: 'auth.storage',
-          error: error,
-          stackTrace: stackTrace,
-        );
-      }),
-    );
+    await _storage.save(session);
   }
 
   Future<void> clear() async {
