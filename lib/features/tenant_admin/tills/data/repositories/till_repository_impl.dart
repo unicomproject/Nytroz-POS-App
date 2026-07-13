@@ -16,23 +16,26 @@ class TillRepositoryImpl implements TillRepository {
   }
 
   @override
-  Future<CreatedTill> createTill(TillFormData form) async {
-    final dto = await _remoteDatasource.createTill(
-      CreateTillRequestDto(
-        tillName: form.name,
-        tillCode: form.code,
-        outletId: form.outletId,
-        status: form.status,
-        deviceName: form.deviceName,
-        printerName: form.printerName,
-        scannerName: form.scannerName,
-        cashDrawerName: form.cashDrawerName,
-        cardReaderName: form.cardReaderName,
-        internalNote: form.internalNote,
-      ),
-    );
+  Future<TillDetail> getTillById(String id) async {
+    final dto = await _remoteDatasource.getTillById(id);
+    return TillMapper.toDetailEntity(dto);
+  }
 
+  @override
+  Future<CreatedTill> createTill(TillFormData form) async {
+    final dto = await _remoteDatasource.createTill(_toRequestDto(form));
     return TillMapper.toCreatedEntity(dto);
+  }
+
+  @override
+  Future<TillDetail> updateTill(String id, TillFormData form) async {
+    final dto = await _remoteDatasource.updateTill(id, _toRequestDto(form));
+    return TillMapper.toDetailEntity(dto);
+  }
+
+  @override
+  Future<void> deleteTill(String id) async {
+    await _remoteDatasource.deleteTill(id);
   }
 
   @override
@@ -48,5 +51,20 @@ class TillRepositoryImpl implements TillRepository {
           ),
         )
         .toList(growable: false);
+  }
+
+  CreateTillRequestDto _toRequestDto(TillFormData form) {
+    return CreateTillRequestDto(
+      tillName: form.name,
+      tillCode: form.code,
+      outletId: form.outletId,
+      status: form.status,
+      deviceName: form.deviceName,
+      printerName: form.printerName,
+      scannerName: form.scannerName,
+      cashDrawerName: form.cashDrawerName,
+      cardReaderName: form.cardReaderName,
+      internalNote: form.internalNote,
+    );
   }
 }

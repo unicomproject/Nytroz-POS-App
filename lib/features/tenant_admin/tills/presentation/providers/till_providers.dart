@@ -2,9 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/network/dio_provider.dart';
 import '../../application/usecases/create_till.dart';
+import '../../application/usecases/delete_till.dart';
+import '../../application/usecases/get_till_by_id.dart';
 import '../../application/usecases/get_tills.dart';
+import '../../application/usecases/update_till.dart';
 import '../../data/datasources/till_remote_datasource.dart';
 import '../../data/repositories/till_repository_impl.dart';
+import '../../../presentation/providers/tenant_admin_access_provider.dart';
 import '../../domain/entities/till.dart';
 import '../../domain/repositories/till_repository.dart';
 import '../utils/till_list_filters.dart';
@@ -23,6 +27,30 @@ final getTillsProvider = Provider<GetTills>((ref) {
 
 final createTillProvider = Provider<CreateTill>((ref) {
   return CreateTill(ref.watch(tillRepositoryProvider));
+});
+
+final getTillByIdProvider = Provider<GetTillById>((ref) {
+  return GetTillById(ref.watch(tillRepositoryProvider));
+});
+
+final updateTillProvider = Provider<UpdateTill>((ref) {
+  return UpdateTill(ref.watch(tillRepositoryProvider));
+});
+
+final deleteTillProvider = Provider<DeleteTill>((ref) {
+  return DeleteTill(ref.watch(tillRepositoryProvider));
+});
+
+final tillDetailProvider =
+    FutureProvider.autoDispose.family<TillDetail?, String>((ref, tillId) async {
+  final accessChecker =
+      await ref.watch(tenantAdminAccessCheckerProvider.future);
+
+  if (!accessChecker.canAccessTillModule()) {
+    return null;
+  }
+
+  return ref.watch(getTillByIdProvider).call(tillId);
 });
 
 final tillOutletOptionsProvider = FutureProvider<List<OutletOption>>((ref) {

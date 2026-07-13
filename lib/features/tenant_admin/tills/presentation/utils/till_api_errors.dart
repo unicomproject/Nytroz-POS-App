@@ -61,6 +61,14 @@ String tillErrorMessage(DioException error, {String fallback = 'Request failed'}
   return error.message ?? fallback;
 }
 
+String tillUnexpectedErrorMessage(Object error, {String fallback = 'Failed to save till'}) {
+  if (error is DioException) {
+    return tillSubmitErrorMessage(error, tillValidationErrors(error), fallback: fallback);
+  }
+
+  return fallback;
+}
+
 String tillSubmitErrorMessage(
   DioException error,
   Map<String, String> fieldErrors, {
@@ -92,7 +100,22 @@ String tillSubmitErrorMessage(
     );
   }
 
-  return tillErrorMessage(error, fallback: fallback);
+  final message = tillErrorMessage(error, fallback: fallback);
+  final traceId = tillErrorTraceId(error);
+  if (traceId != null && traceId.isNotEmpty) {
+    return '$message (Ref: $traceId)';
+  }
+
+  return message;
+}
+
+String? tillErrorTraceId(DioException error) {
+  final data = error.response?.data;
+  if (data is Map && data['traceId'] != null) {
+    return data['traceId'].toString();
+  }
+
+  return null;
 }
 
 String formatTillSales(double amount, String currency) {

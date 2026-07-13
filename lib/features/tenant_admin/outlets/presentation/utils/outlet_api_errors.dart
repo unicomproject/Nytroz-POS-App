@@ -12,16 +12,25 @@ const outletBackendFieldAliases = {
   'contactPhone': 'mainPhoneNumber',
   'email': 'emailAddress',
   'contactEmail': 'emailAddress',
+  'contactName': 'contactName',
+  'address.contactName': 'contactName',
+  'address.contactPhone': 'contactPhone',
   'status': 'status',
   'addressLine1': 'addressLine1',
+  'address.addressLine1': 'addressLine1',
   'addressLine2': 'addressLine2',
+  'address.addressLine2': 'addressLine2',
   'city': 'city',
+  'address.city': 'city',
   'state': 'state',
   'stateOrProvince': 'state',
+  'address.stateOrProvince': 'state',
   'districtOrProvince': 'state',
   'country': 'country',
   'countryCode': 'country',
+  'address.countryCode': 'country',
   'postalCode': 'postalCode',
+  'address.postalCode': 'postalCode',
   'timezone': 'timezone',
 };
 
@@ -34,8 +43,32 @@ Map<String, String> outletValidationErrors(DioException error) {
   final mapped = <String, String>{};
 
   final errors = data['errors'];
-  if (errors is List) {
-    for (final item in errors) {
+  _addFieldErrors(mapped, errors);
+  if (mapped.isNotEmpty) {
+    return mapped;
+  }
+
+  final details = data['details'];
+  _addFieldErrors(mapped, details);
+  if (mapped.isNotEmpty) {
+    return mapped;
+  }
+
+  final message = data['message']?.toString() ?? '';
+  final lowerMessage = message.toLowerCase();
+  if (lowerMessage.contains('timezone')) {
+    mapped['timezone'] = message;
+  } else if (lowerMessage.contains('outletname') ||
+      lowerMessage.contains('outlet name')) {
+    mapped['outletName'] = message;
+  }
+
+  return mapped;
+}
+
+void _addFieldErrors(Map<String, String> mapped, Object? source) {
+  if (source is List) {
+    for (final item in source) {
       if (item is! Map) {
         continue;
       }
@@ -49,37 +82,20 @@ Map<String, String> outletValidationErrors(DioException error) {
       final key = outletBackendFieldAliases[field] ?? field;
       mapped[key] = message;
     }
-
-    if (mapped.isNotEmpty) {
-      return mapped;
-    }
+    return;
   }
 
-  if (errors is Map) {
-    for (final entry in errors.entries) {
+  if (source is Map) {
+    for (final entry in source.entries) {
       final field = entry.key.toString();
-      final message = entry.value is List && (entry.value as List).isNotEmpty
-          ? (entry.value as List).first.toString()
-          : entry.value.toString();
+      final value = entry.value;
+      final message = value is List && value.isNotEmpty
+          ? value.first.toString()
+          : value.toString();
       final key = outletBackendFieldAliases[field] ?? field;
       mapped[key] = message;
     }
-
-    if (mapped.isNotEmpty) {
-      return mapped;
-    }
   }
-
-  final message = data['message']?.toString() ?? '';
-  final lowerMessage = message.toLowerCase();
-  if (lowerMessage.contains('timezone')) {
-    mapped['timezone'] = message;
-  } else if (lowerMessage.contains('outletname') ||
-      lowerMessage.contains('outlet name')) {
-    mapped['outletName'] = message;
-  }
-
-  return mapped;
 }
 
 String outletErrorMessage(DioException error,
@@ -120,6 +136,8 @@ const outletFieldSteps = {
   'mainPhoneNumber': 1,
   'emailAddress': 1,
   'managerId': 0,
+  'contactName': 1,
+  'contactPhone': 1,
   'addressLine1': 1,
   'addressLine2': 1,
   'city': 1,
@@ -127,17 +145,22 @@ const outletFieldSteps = {
   'country': 1,
   'postalCode': 1,
   'timezone': 1,
+  'businessHours': 2,
+  'businessHours.dayOfWeek': 2,
+  'businessHours.openingTime': 2,
+  'businessHours.closingTime': 2,
 };
 
 int? outletErrorStep(Map<String, String> fieldErrors) {
-  var step = 2;
+  var step = 3;
 
   for (final field in fieldErrors.keys) {
-    final fieldStep = outletFieldSteps[field];
+    final fieldStep =
+        field.startsWith('businessHours') ? 2 : outletFieldSteps[field];
     if (fieldStep != null && fieldStep < step) {
       step = fieldStep;
     }
   }
 
-  return step == 2 ? null : step;
+  return step == 3 ? null : step;
 }

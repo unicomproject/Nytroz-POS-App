@@ -382,38 +382,97 @@ class TenantAdminPermissionAliases {
     'roles.permissions.update': [
       'roles.permissions.update',
     ],
+    'tenant.products.view': [
+      'tenant.products.view',
+      'product.view',
+      'products.view',
+      'catalog.product.view',
+      'catalog.products.view',
+    ],
     'product.view': [
       'product.view',
       'products.view',
       'catalog.product.view',
       'catalog.products.view',
+      'tenant.products.view',
     ],
     'products.view': [
       'product.view',
       'products.view',
       'catalog.product.view',
       'catalog.products.view',
+      'tenant.products.view',
     ],
     'catalog.product.view': [
       'product.view',
       'products.view',
       'catalog.product.view',
       'catalog.products.view',
+      'tenant.products.view',
     ],
     'product.create': [
       'product.create',
       'products.create',
       'catalog.product.create',
+      'catalog.products.create',
+      'tenant.products.create',
     ],
     'products.create': [
       'product.create',
       'products.create',
       'catalog.product.create',
+      'catalog.products.create',
+      'tenant.products.create',
     ],
     'catalog.product.create': [
       'product.create',
       'products.create',
       'catalog.product.create',
+      'catalog.products.create',
+      'tenant.products.create',
+    ],
+    'tenant.products.create': [
+      'tenant.products.create',
+      'product.create',
+      'products.create',
+      'catalog.product.create',
+      'catalog.products.create',
+    ],
+    'tenant.products.dashboard.view': [
+      'tenant.products.dashboard.view',
+    ],
+    'tenant.categories.view': [
+      'tenant.categories.view',
+      'catalog.categories.view',
+      'category.view',
+    ],
+    'tenant.brands.view': [
+      'tenant.brands.view',
+      'catalog.brands.view',
+      'brand.view',
+    ],
+    'tenant.brands.create': [
+      'tenant.brands.create',
+      'catalog.brands.create',
+      'catalog.brands.manage',
+      'brand.create',
+    ],
+    'tenant.brands.update': [
+      'tenant.brands.update',
+      'catalog.brands.update',
+      'catalog.brands.manage',
+      'brand.update',
+    ],
+    'tenant.brands.delete': [
+      'tenant.brands.delete',
+      'catalog.brands.delete',
+      'catalog.brands.manage',
+      'brand.delete',
+    ],
+    'tenant.variant.templates.view': [
+      'tenant.variant.templates.view',
+      'catalog.variant.templates.view',
+      'variant.templates.view',
     ],
     'catalog.product.update': [
       'product.create',
@@ -717,6 +776,7 @@ class TenantAdminPermissionAliases {
       'product.create',
       'products.create',
       'catalog.product.create',
+      'tenant.products.create',
     ],
     'catalog.products.update': [
       'catalog.products.update',
@@ -727,8 +787,45 @@ class TenantAdminPermissionAliases {
     'inventory.stock.view': [
       'inventory.stock.view',
       'inventory.view',
+      'tenant.stock.view',
       'dashboard.stock_alerts.view',
       'inventory.stock_alerts.view',
+    ],
+    'tenant.stock.view': [
+      'tenant.stock.view',
+      'inventory.stock.view',
+      'inventory.view',
+      'dashboard.stock_alerts.view',
+      'inventory.stock_alerts.view',
+    ],
+    'tenant.stock.in': [
+      'tenant.stock.in',
+    ],
+    'tenant.stock.out': [
+      'tenant.stock.out',
+    ],
+    'tenant.stock.value.view': [
+      'tenant.stock.value.view',
+    ],
+    'tenant.stock.movements.view': [
+      'tenant.stock.movements.view',
+    ],
+    'tenant.stock.expiry.view': [
+      'tenant.stock.expiry.view',
+      'inventory.alert.view',
+      'inventory.stock_alerts.view',
+    ],
+    'tenant.stock.adjustments.view': [
+      'tenant.stock.adjustments.view',
+      'inventory.adjust',
+    ],
+    'tenant.stock.transfers.view': [
+      'tenant.stock.transfers.view',
+    ],
+    'tenant.reports.products.view': [
+      'tenant.reports.products.view',
+      'report.view',
+      'reports.view',
     ],
     'outlets.update': [
       'outlets.create',

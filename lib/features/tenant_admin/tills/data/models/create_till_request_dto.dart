@@ -47,13 +47,15 @@ class CreateTillRequestDto {
   static String _normalizeStatus(String value) {
     switch (value.trim().toLowerCase()) {
       case 'active':
-        return 'Active';
+        return 'ACTIVE';
       case 'inactive':
-        return 'Inactive';
+        return 'INACTIVE';
       case 'maintenance':
-        return 'Maintenance';
+        return 'MAINTENANCE';
       default:
-        return value.trim();
+        return value.trim().toUpperCase();
     }
   }
 }
+
+typedef UpdateTillRequestDto = CreateTillRequestDto;

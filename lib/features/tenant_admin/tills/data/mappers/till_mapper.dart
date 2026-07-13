@@ -47,4 +47,27 @@ class TillMapper {
       status: dto.status,
     );
   }
+
+  static TillDetail toDetailEntity(TillDetailDto dto) {
+    return TillDetail(
+      id: dto.id,
+      outletId: dto.outletId,
+      outletName: dto.outletName,
+      outletCode: dto.outletCode,
+      name: dto.name,
+      code: dto.code,
+      status: dto.status,
+      deviceStatus: dto.deviceStatus,
+      needsAttention: dto.needsAttention,
+      lastActiveAt: dto.lastActiveAt,
+      deviceName: dto.deviceName,
+      printerName: dto.printerName,
+      scannerName: dto.scannerName,
+      cashDrawerName: dto.cashDrawerName,
+      cardReaderName: dto.cardReaderName,
+      internalNote: dto.internalNote,
+      createdAt: dto.createdAt,
+      updatedAt: dto.updatedAt,
+    );
+  }
 }

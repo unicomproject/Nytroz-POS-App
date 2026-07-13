@@ -38,6 +38,31 @@ class TillRemoteDatasource {
     );
   }
 
+  Future<TillDetailDto> getTillById(String id) async {
+    final response = await _dio.get<dynamic>('$_tillPath/$id');
+    return TillDetailDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<TillDetailDto> updateTill(
+    String id,
+    UpdateTillRequestDto request,
+  ) async {
+    final response = await _dio.put<dynamic>(
+      '$_tillPath/$id',
+      data: request.toJson(),
+    );
+
+    return TillDetailDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<void> deleteTill(String id) async {
+    await _dio.delete<dynamic>('$_tillPath/$id');
+  }
+
   Future<List<OutletOptionDto>> getOutletOptions() async {
     final response = await _dio.get<dynamic>(_outletOptionsPath);
     final data = response.data;

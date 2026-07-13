@@ -164,6 +164,10 @@ Object? _responseFor(RequestOptions options) {
     return _createdOutlet(options.data);
   }
 
+  if (method == 'GET' && path == '/api/v1/tenant-admin/outlets/options') {
+    return _outletOptions;
+  }
+
   if (method == 'GET' && path == '/api/v1/tenant-admin/tills') {
     return _tills;
   }
@@ -350,10 +354,10 @@ const _menu = [
   {
     'key': 'stock',
     'label': 'Stock',
-    'route': '/tenant-admin/stock',
+    'route': '/tenant-admin/stock/current',
     'iconKey': 'inventory',
     'featureCode': 'inventory.stock',
-    'permissionCode': 'inventory.view',
+    'permissionCode': 'tenant.stock.view',
     'visible': true,
     'order': 7,
   },
@@ -687,18 +691,44 @@ const _tills = {
   },
 };
 
+const _outletOptions = {
+  'data': [
+    {
+      'outletId': 'outlet-1',
+      'outletName': 'Development Main Store',
+      'outletCode': 'DEV-STORE-01',
+      'status': 'Active',
+    },
+  ],
+};
+
 Map<String, Object?> _createdTill(Object? data, {String id = 'till-new'}) {
   final body = data is Map ? Map<String, dynamic>.from(data) : const {};
+  final tillName = body['tillName']?.toString() ?? body['name']?.toString() ?? 'New Till';
+  final tillCode = body['tillCode']?.toString() ?? body['code']?.toString() ?? 'TILL-NEW';
+  final status = body['status']?.toString() ?? 'Active';
 
   return {
     'success': true,
     'message': 'Till created successfully.',
     'data': {
-      'id': id,
+      'tillId': id,
       'outletId': body['outletId']?.toString() ?? 'outlet-1',
-      'name': body['name']?.toString() ?? 'New Till',
-      'code': body['code']?.toString() ?? 'TILL-NEW',
-      'status': body['status']?.toString() ?? 'active',
+      'outletName': 'Development Main Store',
+      'outletCode': 'DEV-STORE-01',
+      'tillName': tillName,
+      'tillCode': tillCode,
+      'status': status,
+      'deviceStatus': 'Offline',
+      'needsAttention': true,
+      'deviceName': body['deviceName'],
+      'printerName': body['printerName'],
+      'scannerName': body['scannerName'],
+      'cashDrawerName': body['cashDrawerName'],
+      'cardReaderName': body['cardReaderName'],
+      'internalNote': body['internalNote'],
+      'createdAt': '2026-07-10T12:00:00Z',
+      'updatedAt': '2026-07-10T12:00:00Z',
     },
   };
 }

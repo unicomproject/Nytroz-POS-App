@@ -121,7 +121,7 @@ class TenantAdminAccessChecker {
           TenantAdminPermissionCodes.catalogProductView,
         ]);
       case TenantAdminFeatureCodes.inventoryManagement:
-        return can(TenantAdminPermissionCodes.inventoryView);
+        return can(TenantAdminPermissionCodes.tenantStockView);
       case TenantAdminFeatureCodes.reportsAnalytics:
         return can(TenantAdminPermissionCodes.reportView);
       case TenantAdminFeatureCodes.sales:
@@ -275,6 +275,8 @@ class TenantAdminAccessChecker {
         return canAccessTillModule();
       case 'staff':
         return canAccessUserModule();
+      case 'products':
+        return canAccessProductsSidebar();
       default:
         return canShowAction(menuItem.featureCode, menuItem.permissionCode);
     }
@@ -408,6 +410,10 @@ class TenantAdminAccessChecker {
   }
 
   bool canViewQuickAction(TenantDashboardQuickAction action) {
+    if (action.key == 'add-product' || action.key == 'add_product') {
+      return canCreateProduct();
+    }
+
     final config = quickActionConfigForKey(action.key);
     if (config != null) {
       if (_hasFullDashboardAccess) {
@@ -594,6 +600,221 @@ class TenantAdminAccessChecker {
 
   bool canOverrideUserPermissions() {
     return can(TenantAdminPermissionCodes.tenantUsersPermissionOverride);
+  }
+
+  bool hasProductManagementEntitlement() {
+    return canAccessFeature(TenantAdminFeatureCodes.productManagement);
+  }
+
+  bool canViewProductDashboard() {
+    return can(TenantAdminPermissionCodes.tenantProductsDashboardView);
+  }
+
+  bool canFetchProductDashboard() => canViewProductDashboard();
+
+  bool canViewProductDashboardDateFilter() => canViewProductDashboard();
+
+  bool canViewProductDashboardOutletFilter() {
+    return canViewProductDashboard() &&
+        can(TenantAdminPermissionCodes.outletView) &&
+        accessibleOutletCount > 1;
+  }
+
+  bool canViewProductDashboardSummarySection() {
+    return canViewProductDashboard() && canAny([
+      TenantAdminPermissionCodes.tenantStockView,
+      TenantAdminPermissionCodes.tenantProductsView,
+    ]);
+  }
+
+  bool canViewProductDashboardTotalProducts() {
+    return canViewProductDashboard() &&
+        can(TenantAdminPermissionCodes.tenantProductsView);
+  }
+
+  bool canViewProductDashboardLowStock() {
+    return canViewProductDashboard() &&
+        can(TenantAdminPermissionCodes.tenantStockView);
+  }
+
+  bool canViewProductDashboardOutOfStock() {
+    return canViewProductDashboard() &&
+        can(TenantAdminPermissionCodes.tenantStockView);
+  }
+
+  bool canViewProductDashboardExpiryAlerts() {
+    return canViewProductDashboard() &&
+        can(TenantAdminPermissionCodes.tenantStockExpiryView);
+  }
+
+  bool canViewProductDashboardStockAdded() {
+    return canViewProductDashboard() &&
+        can(TenantAdminPermissionCodes.tenantStockView);
+  }
+
+  bool canViewProductDashboardFastMoving() {
+    return canViewProductDashboard() &&
+        can(TenantAdminPermissionCodes.tenantReportsProductsView);
+  }
+
+  bool canNavigateProductDashboardTotalProducts() => canViewProductListNav();
+
+  bool canNavigateProductDashboardLowStock() =>
+      can(TenantAdminPermissionCodes.tenantStockView);
+
+  bool canNavigateProductDashboardOutOfStock() =>
+      can(TenantAdminPermissionCodes.tenantStockView);
+
+  bool canNavigateProductDashboardExpiryAlerts() =>
+      can(TenantAdminPermissionCodes.tenantStockExpiryView);
+
+  bool canNavigateProductDashboardStockAdded() =>
+      can(TenantAdminPermissionCodes.tenantStockIn);
+
+  bool canNavigateProductDashboardFastMoving() =>
+      can(TenantAdminPermissionCodes.tenantReportsProductsView);
+
+  bool canNavigateProductDashboardStockInMovement() =>
+      can(TenantAdminPermissionCodes.tenantStockIn);
+
+  bool canNavigateProductDashboardStockOutMovement() =>
+      can(TenantAdminPermissionCodes.tenantStockOut);
+
+  bool canNavigateProductDashboardAdjustments() =>
+      can(TenantAdminPermissionCodes.tenantStockAdjustmentsView);
+
+  bool canNavigateProductDashboardTransfers() =>
+      can(TenantAdminPermissionCodes.tenantStockTransfersView);
+
+  bool canViewProductDashboardStockValue() {
+    return canViewProductDashboard() &&
+        can(TenantAdminPermissionCodes.tenantStockValueView);
+  }
+
+  bool canViewProductDashboardStockMovement() {
+    return canViewProductDashboard() &&
+        can(TenantAdminPermissionCodes.tenantStockMovementsView);
+  }
+
+  bool canViewProductListNav() {
+    return can(TenantAdminPermissionCodes.tenantProductsView);
+  }
+
+  bool canViewCategoriesNav() {
+    return can(TenantAdminPermissionCodes.tenantCategoriesView);
+  }
+
+  bool canViewBrandsNav() {
+    return can(TenantAdminPermissionCodes.tenantBrandsView);
+  }
+
+  bool canFetchBrandList() => canViewBrandsNav();
+
+  bool canCreateBrand() {
+    return canAny([
+      TenantAdminPermissionCodes.tenantBrandsCreate,
+      'catalog.brands.create',
+      'catalog.brands.manage',
+    ]);
+  }
+
+  bool canUpdateBrand() {
+    return canAny([
+      TenantAdminPermissionCodes.tenantBrandsUpdate,
+      'catalog.brands.update',
+      'catalog.brands.manage',
+    ]);
+  }
+
+  bool canDeleteBrand() {
+    return canAny([
+      TenantAdminPermissionCodes.tenantBrandsDelete,
+      'catalog.brands.delete',
+      'catalog.brands.manage',
+    ]);
+  }
+
+  bool canViewVariantTemplatesNav() {
+    return can(TenantAdminPermissionCodes.tenantVariantTemplatesView);
+  }
+
+  bool canViewCurrentStock() {
+    return can(TenantAdminPermissionCodes.tenantStockView);
+  }
+
+  bool canStockIn() {
+    return can(TenantAdminPermissionCodes.tenantStockIn);
+  }
+
+  bool canAccessCurrentStockPage() => canViewCurrentStock();
+
+  bool canAccessStockInPage() => canStockIn();
+
+  bool canViewStockNav() => canViewCurrentStock();
+
+  bool canFetchCurrentStockList() => canViewCurrentStock();
+
+  bool canFetchCurrentStockSummary() => canViewCurrentStock();
+
+  bool canCreateProductNav() {
+    return can(TenantAdminPermissionCodes.tenantProductsCreate);
+  }
+
+  bool canAccessProductsSidebar() {
+    return canAny([
+      TenantAdminPermissionCodes.tenantProductsDashboardView,
+      TenantAdminPermissionCodes.tenantProductsView,
+      TenantAdminPermissionCodes.tenantProductsCreate,
+      TenantAdminPermissionCodes.tenantCategoriesView,
+      TenantAdminPermissionCodes.tenantBrandsView,
+      TenantAdminPermissionCodes.tenantVariantTemplatesView,
+    ]);
+  }
+
+  bool canAccessProductModule() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tenantProductsView);
+  }
+
+  bool canAccessProductListPage() => canAccessProductModule();
+
+  bool canFetchProductList() => canAccessProductListPage();
+
+  bool canFetchProductSummary() => canAccessProductListPage();
+
+  bool canCreateProduct() {
+    return hasProductManagementEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantProductsCreate,
+          TenantAdminPermissionCodes.catalogProductsCreate,
+          TenantAdminPermissionCodes.productCreate,
+          TenantAdminPermissionCodes.catalogProductCreate,
+        ]);
+  }
+
+  bool canAccessAddProductPage() => canCreateProduct();
+
+  bool canViewProductDetail() {
+    return hasProductManagementEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantProductsDetailsView,
+          TenantAdminPermissionCodes.tenantProductsView,
+          TenantAdminPermissionCodes.productView,
+          TenantAdminPermissionCodes.catalogProductView,
+        ]);
+  }
+
+  bool canUpdateProduct() {
+    return hasProductManagementEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantProductsUpdate,
+          'catalog.product.update',
+        ]);
+  }
+
+  bool canDeleteProduct() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tenantProductsDelete);
   }
 
   bool canViewOutletDetail() {
@@ -962,6 +1183,173 @@ class UserListVisibility {
       showPagination: showPage,
       showActionsColumn: rowActions.isNotEmpty,
       visibleRowActions: rowActions,
+    );
+  }
+}
+
+class ProductListVisibility {
+  const ProductListVisibility({
+    required this.showPage,
+    required this.showTitle,
+    required this.showSubtitle,
+    required this.showSearch,
+    required this.showAddProduct,
+    required this.showSummarySection,
+    required this.showList,
+    required this.showPagination,
+    required this.showActionsColumn,
+    required this.showViewAction,
+    required this.showEditAction,
+    required this.showStatusAction,
+    required this.showDeleteAction,
+  });
+
+  final bool showPage;
+  final bool showTitle;
+  final bool showSubtitle;
+  final bool showSearch;
+  final bool showAddProduct;
+  final bool showSummarySection;
+  final bool showList;
+  final bool showPagination;
+  final bool showActionsColumn;
+  final bool showViewAction;
+  final bool showEditAction;
+  final bool showStatusAction;
+  final bool showDeleteAction;
+
+  static ProductListVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage = access.canAccessProductListPage();
+    final showViewAction = showPage && access.canViewProductDetail();
+    final showEditAction = showPage && access.canUpdateProduct();
+    final showStatusAction = showPage && access.canUpdateProduct();
+    final showDeleteAction = showPage && access.canDeleteProduct();
+
+    return ProductListVisibility(
+      showPage: showPage,
+      showTitle: showPage,
+      showSubtitle: showPage,
+      showSearch: showPage,
+      showAddProduct: access.canCreateProduct(),
+      showSummarySection: access.canFetchProductSummary(),
+      showList: showPage,
+      showPagination: showPage,
+      showActionsColumn:
+          showViewAction || showEditAction || showStatusAction || showDeleteAction,
+      showViewAction: showViewAction,
+      showEditAction: showEditAction,
+      showStatusAction: showStatusAction,
+      showDeleteAction: showDeleteAction,
+    );
+  }
+}
+
+class BrandListVisibility {
+  const BrandListVisibility({
+    required this.showPage,
+    required this.showTitle,
+    required this.showSubtitle,
+    required this.showSearch,
+    required this.showAddBrand,
+    required this.showList,
+    required this.showEditBrand,
+    required this.showDeleteBrand,
+  });
+
+  final bool showPage;
+  final bool showTitle;
+  final bool showSubtitle;
+  final bool showSearch;
+  final bool showAddBrand;
+  final bool showList;
+  final bool showEditBrand;
+  final bool showDeleteBrand;
+
+  static BrandListVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage = access.canFetchBrandList();
+
+    return BrandListVisibility(
+      showPage: showPage,
+      showTitle: showPage,
+      showSubtitle: showPage,
+      showSearch: showPage,
+      showAddBrand: access.canCreateBrand(),
+      showList: showPage,
+      showEditBrand: access.canUpdateBrand(),
+      showDeleteBrand: access.canDeleteBrand(),
+    );
+  }
+}
+
+class CurrentStockVisibility {
+  const CurrentStockVisibility({
+    required this.showPage,
+    required this.showTitle,
+    required this.showSubtitle,
+    required this.showSummarySection,
+    required this.showFilters,
+    required this.showList,
+    required this.showPagination,
+    required this.showStockInAction,
+  });
+
+  final bool showPage;
+  final bool showTitle;
+  final bool showSubtitle;
+  final bool showSummarySection;
+  final bool showFilters;
+  final bool showList;
+  final bool showPagination;
+  final bool showStockInAction;
+
+  static CurrentStockVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage = access.canAccessCurrentStockPage();
+
+    return CurrentStockVisibility(
+      showPage: showPage,
+      showTitle: showPage,
+      showSubtitle: showPage,
+      showSummarySection: access.canFetchCurrentStockSummary(),
+      showFilters: showPage,
+      showList: showPage,
+      showPagination: showPage,
+      showStockInAction: access.canStockIn(),
+    );
+  }
+}
+
+class StockInVisibility {
+  const StockInVisibility({
+    required this.showPage,
+    required this.showTitle,
+    required this.showSubtitle,
+    required this.showForm,
+    required this.showSubmitAction,
+  });
+
+  final bool showPage;
+  final bool showTitle;
+  final bool showSubtitle;
+  final bool showForm;
+  final bool showSubmitAction;
+
+  static StockInVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage = access.canAccessStockInPage();
+
+    return StockInVisibility(
+      showPage: showPage,
+      showTitle: showPage,
+      showSubtitle: showPage,
+      showForm: showPage,
+      showSubmitAction: showPage,
     );
   }
 }

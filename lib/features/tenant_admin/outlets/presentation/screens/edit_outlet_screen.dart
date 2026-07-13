@@ -9,7 +9,6 @@ import '../../domain/entities/outlet_details.dart';
 import '../providers/outlet_providers.dart';
 import '../providers/outlet_visibility_provider.dart';
 import '../utils/outlet_api_errors.dart';
-import '../config/outlet_timezone_options.dart';
 import '../widgets/outlet_form.dart';
 
 class EditOutletScreen extends ConsumerStatefulWidget {
@@ -31,7 +30,6 @@ class _EditOutletScreenState extends ConsumerState<EditOutletScreen> {
   @override
   Widget build(BuildContext context) {
     final detailsState = ref.watch(outletDetailsProvider(widget.outletId));
-    final managersState = ref.watch(outletManagersProvider);
 
     return detailsState.when(
       loading: () => const TenantAdminPageScaffold(
@@ -57,10 +55,6 @@ class _EditOutletScreenState extends ConsumerState<EditOutletScreen> {
         subtitle: 'Update outlet details.',
         child: OutletForm(
           initialValue: _initialForm(outlet),
-          managers: managersState.maybeWhen(
-            data: (managers) => managers,
-            orElse: () => const [],
-          ),
           backendErrors: _fieldErrors,
           submitting: _submitting,
           onSubmit: _submit,
@@ -114,7 +108,7 @@ OutletFormData _initialForm(OutletDetails outlet) {
   return OutletFormData(
     outletName: outlet.name,
     outletCode: outlet.code,
-    outletType: 'Retail',
+    outletType: 'STORE',
     status: outlet.status,
     mainPhoneNumber: outlet.phone ?? outlet.managerPhone ?? '',
     emailAddress: outlet.email ?? '',
@@ -123,7 +117,7 @@ OutletFormData _initialForm(OutletDetails outlet) {
     state: '',
     country: '',
     postalCode: '',
-    timezone: outlet.timezone ?? defaultOutletTimezone,
+    timezone: outlet.timezone ?? 'UTC',
     openingHours: const [],
   );
 }
