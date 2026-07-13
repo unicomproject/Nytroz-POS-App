@@ -8,8 +8,8 @@ import '../providers/login_provider.dart';
 import '../providers/session_provider.dart';
 import '../widgets/auth_error_banner.dart';
 
-const _logoAsset = 'assets/images/logo.png';
-const _terminalAsset = 'assets/images/log-screen-terminal.png';
+const _brandPanelAsset = 'assets/images/login_brand_panel.png';
+const _brandPanelBackground = Color(0xFF000E2B);
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -266,66 +266,29 @@ class _LoginBrandPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final logoSize = compact ? 72.0 : 96.0;
-    final terminalWidth = compact ? 300.0 : 440.0;
-    final terminalHeight = compact ? 215.0 : 320.0;
-    final titleSize = compact ? 34.0 : 40.0;
-    final taglineSize = compact ? 18.0 : 20.0;
+    final image = Image.asset(
+      _brandPanelAsset,
+      fit: BoxFit.contain,
+    );
 
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFFFFFFF),
-            Color(0xFFF3F7FF),
-          ],
-        ),
-      ),
-      child: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? TenantAdminSpacing.lg : 48,
-            vertical: compact ? TenantAdminSpacing.xl : 32,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                _logoAsset,
-                width: logoSize,
-                height: logoSize,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              Text(
-                'Nytroz POS',
-                style: TextStyle(
-                  color: TenantAdminColors.navy,
-                  fontSize: titleSize,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: TenantAdminSpacing.sm),
-              Text(
-                'Smart Cashier System',
-                style: TextStyle(
-                  color: TenantAdminColors.bodyText,
-                  fontSize: taglineSize,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(height: compact ? TenantAdminSpacing.xl : 48),
-              Image.asset(
-                _terminalAsset,
-                width: terminalWidth,
-                height: terminalHeight,
-                fit: BoxFit.contain,
-              ),
-            ],
+    if (compact) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: ColoredBox(
+          color: _brandPanelBackground,
+          child: SizedBox(
+            width: double.infinity,
+            height: 480,
+            child: image,
           ),
         ),
+      );
+    }
+
+    return ColoredBox(
+      color: _brandPanelBackground,
+      child: SizedBox.expand(
+        child: Center(child: image),
       ),
     );
   }

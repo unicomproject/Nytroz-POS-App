@@ -16,14 +16,12 @@ class CloseTillFormCard extends ConsumerWidget {
     required this.formKey,
     required this.countedCashController,
     required this.notesController,
-    required this.managerPinController,
     required this.expectedCash,
   });
 
   final GlobalKey<FormState> formKey;
   final TextEditingController countedCashController;
   final TextEditingController notesController;
-  final TextEditingController managerPinController;
   final double expectedCash;
 
   @override
@@ -152,34 +150,6 @@ class CloseTillFormCard extends ConsumerWidget {
                 alignLabelWithHint: true,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                ),
-              ),
-            ),
-            const SizedBox(height: TenantAdminSpacing.lg),
-            TextFormField(
-              controller: managerPinController,
-              obscureText: formState.obscureManagerPin,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(6),
-              ],
-              onChanged:
-                  ref.read(closeTillFormProvider.notifier).setManagerPin,
-              decoration: InputDecoration(
-                labelText: 'Manager PIN',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                ),
-                suffixIcon: IconButton(
-                  onPressed: ref
-                      .read(closeTillFormProvider.notifier)
-                      .toggleManagerPinVisibility,
-                  icon: Icon(
-                    formState.obscureManagerPin
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                  ),
                 ),
               ),
             ),

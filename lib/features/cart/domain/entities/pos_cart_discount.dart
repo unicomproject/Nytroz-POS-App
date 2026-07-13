@@ -15,11 +15,36 @@ class PosCartDiscount {
     required this.valueType,
     required this.value,
     this.reason,
+    this.policyId,
+    this.applicationId,
+    this.status = 'local',
+    this.cartHash,
+    this.source = 'MANUAL',
   });
 
   final PosDiscountValueType valueType;
   final double value;
   final String? reason;
+  final String? policyId;
+  final String? applicationId;
+  final String status;
+  final String? cartHash;
+  final String source;
+
+  bool get isBackendApproved =>
+      applicationId != null && (status == 'approved' || status == 'applied');
+  bool get isPendingApproval => status == 'pending_approval';
+
+  PosCartDiscount copyWith({String? status}) => PosCartDiscount(
+        valueType: valueType,
+        value: value,
+        reason: reason,
+        policyId: policyId,
+        applicationId: applicationId,
+        status: status ?? this.status,
+        cartHash: cartHash,
+        source: source,
+      );
 
   int amountFor(int baseAmount) {
     if (baseAmount <= 0 || value <= 0) {
@@ -39,6 +64,11 @@ class PosCartDiscount {
       'valueType': valueType.name,
       'value': value,
       'reason': reason,
+      'policyId': policyId,
+      'applicationId': applicationId,
+      'status': status,
+      'cartHash': cartHash,
+      'source': source,
     };
   }
 
@@ -53,6 +83,11 @@ class PosCartDiscount {
       valueType: valueType,
       value: _doubleValue(json['value']),
       reason: _nullableString(json['reason']),
+      policyId: _nullableString(json['policyId']),
+      applicationId: _nullableString(json['applicationId']),
+      status: _nullableString(json['status']) ?? 'local',
+      cartHash: _nullableString(json['cartHash']),
+      source: _nullableString(json['source']) ?? 'MANUAL',
     );
   }
 }

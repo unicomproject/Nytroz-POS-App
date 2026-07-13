@@ -30,7 +30,7 @@ class CloseTillMismatchWarningCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Mismatch review required',
+                  'Cash variance reason is required',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: TenantAdminColors.danger,
                         fontWeight: FontWeight.w800,
@@ -38,7 +38,7 @@ class CloseTillMismatchWarningCard extends StatelessWidget {
                 ),
                 const SizedBox(height: TenantAdminSpacing.xs),
                 Text(
-                  'There is a cash difference. Manager review and approval are required before closing the till.',
+                  'Please provide a reason for the cash difference before closing the till.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: TenantAdminColors.danger,
                         fontWeight: FontWeight.w600,

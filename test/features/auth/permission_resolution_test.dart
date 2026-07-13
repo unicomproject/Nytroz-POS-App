@@ -23,11 +23,44 @@ void main() {
   });
 
   group('POS legacy permission seeds', () {
-    test('pos.sale.create grants home and new sale access', () {
-      const granted = {'pos.sale.create'};
+    test('sales.create grants new sale access only', () {
+      const granted = {'sales.create'};
 
-      expect(PosPermissionAccess.canViewHome(granted), isTrue);
+      expect(PosPermissionAccess.canViewHome(granted), isFalse);
       expect(PosPermissionAccess.canAccessNewSale(granted), isTrue);
+    });
+
+    test('legacy pos.sale.create alone does not directly grant New Sale', () {
+      const granted = {'pos.sale.create'};
+      expect(PosPermissionAccess.canAccessNewSale(granted), isFalse);
+    });
+
+    test('pos.home.view and pos.dashboard.view grant home access', () {
+      expect(
+        PosPermissionAccess.canViewHome(const {'pos.home.view'}),
+        isTrue,
+      );
+      expect(
+        PosPermissionAccess.canViewHome(const {'pos.dashboard.view'}),
+        isTrue,
+      );
+    });
+
+    test('cash drawer view and manage are separated', () {
+      expect(
+        PosPermissionAccess.canViewCashDrawer(const {'cash_drawer.view'}),
+        isTrue,
+      );
+      expect(
+        PosPermissionAccess.canViewCashDrawer(const {'cash_drawer.manage'}),
+        isFalse,
+      );
+      expect(
+        PosPermissionAccess.canCreateCashDrawerMovement(
+          const {'cash_drawer.manage'},
+        ),
+        isTrue,
+      );
     });
   });
 
@@ -41,6 +74,30 @@ void main() {
       );
 
       expect(session.canAccessTenantAdminDashboard, isTrue);
+    });
+  });
+
+  group('AuthSession POS till access', () {
+    test('canOpenPosTill is true when pos.till.open exists', () {
+      const session = AuthSession(
+        accessToken: 'token',
+        userId: 'cashier-1',
+        userDisplayName: 'Cashier',
+        permissionCodes: ['pos.till.open'],
+      );
+
+      expect(session.canOpenPosTill, isTrue);
+    });
+
+    test('canOpenPosTill is false when pos.till.open is absent', () {
+      const session = AuthSession(
+        accessToken: 'token',
+        userId: 'cashier-1',
+        userDisplayName: 'Cashier',
+        permissionCodes: ['pos.home.view'],
+      );
+
+      expect(session.canOpenPosTill, isFalse);
     });
   });
 }

@@ -82,6 +82,11 @@ AuthSession authSessionFromJson(Map<String, dynamic> json) {
     accessToken: accessToken,
     refreshToken: payload['refreshToken'] as String? ??
         payload['RefreshToken'] as String?,
+    refreshTokenExpiresAt: DateTime.tryParse(
+      payload['refreshTokenExpiresAt']?.toString() ??
+          payload['RefreshTokenExpiresAt']?.toString() ??
+          '',
+    ),
     userId: user['tenantUserId']?.toString() ??
         user['TenantUserId']?.toString() ??
         user['id']?.toString() ??
@@ -152,7 +157,8 @@ List<String> _permissionCodesFromJson(Map<String, dynamic> payload) {
       _mapValue(payload['user'], 'permissions') ??
       _mapValue(payload['user'], 'Permissions');
 
-  developer.log('Raw permissions from backend: $rawPermissions', name: 'auth.mapper');
+  developer.log('Raw permissions from backend: $rawPermissions',
+      name: 'auth.mapper');
 
   if (rawPermissions is Iterable) {
     final parsed = rawPermissions
@@ -170,7 +176,7 @@ List<String> _permissionCodesFromJson(Map<String, dynamic> payload) {
         .map((item) => item.trim())
         .where((item) => item.isNotEmpty)
         .toList(growable: false);
-    
+
     developer.log('Final parsed permissions: $parsed', name: 'auth.mapper');
     return parsed;
   }

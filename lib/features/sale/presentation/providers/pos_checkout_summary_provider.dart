@@ -87,20 +87,15 @@ class PosCheckoutSummaryViewData {
     final methods =
         apiMethods.where(sessionMethods.contains).toList(growable: false);
 
-    final localDiscount = cart.discount;
     final subtotal = payload.billingSummary.subtotal;
     final tax = payload.billingSummary.tax;
-    final totalPayable = localDiscount > 0
-        ? (subtotal - localDiscount + tax).clamp(0, subtotal + tax).toInt()
-        : payload.billingSummary.totalPayable;
 
     return PosCheckoutSummaryViewData(
       itemCount: payload.billingSummary.itemCount,
       subtotal: subtotal,
-      discount:
-          localDiscount > 0 ? localDiscount : payload.billingSummary.discount,
+      discount: payload.billingSummary.discount,
       tax: tax,
-      totalPayable: totalPayable,
+      totalPayable: payload.billingSummary.totalPayable,
       saleType: payload.saleDetails.saleType,
       itemsInCart: payload.saleDetails.itemsInCart,
       saleDate: payload.saleDetails.saleDate,
@@ -146,6 +141,7 @@ final posCheckoutSummaryProvider =
               deviceId: deviceContext.deviceId,
               lines: lines,
               customerId: cart.selectedCustomer?.customerId,
+              discountApplicationId: cart.discountApplicationId,
             );
 
     return PosCheckoutSummaryViewData.fromPayload(
@@ -175,7 +171,6 @@ List<PosCheckoutLineRequest> checkoutLinesFromCart(PosNewSaleCartState cart) {
           quantity: item.quantity,
         ),
       )
-      .where((line) => line.variantId.isNotEmpty)
       .toList(growable: false);
 }
 

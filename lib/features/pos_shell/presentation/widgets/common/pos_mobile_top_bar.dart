@@ -24,17 +24,22 @@ class PosMobileTopBar extends ConsumerWidget implements PreferredSizeWidget {
       foregroundColor: Colors.white,
       elevation: 0,
       titleSpacing: TenantAdminSpacing.lg,
-      title: const Row(
+      title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.local_activity_outlined, size: 24),
-          SizedBox(width: TenantAdminSpacing.sm),
+          Image.asset(
+            'assets/images/logo.png',
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: TenantAdminSpacing.sm),
           Text(
-            'NytrozPOS',
-            style: TextStyle(
-              fontSize: 19,
-              fontWeight: FontWeight.w800,
-            ),
+            'OneVerz POS',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
           ),
         ],
       ),

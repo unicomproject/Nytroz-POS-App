@@ -23,11 +23,6 @@ class PosNewSaleActionBar extends ConsumerWidget {
           data: (sales) => sales.length,
           orElse: () => 0,
         );
-    final canViewOrCreateCustomer =
-        session?.hasPermission(PosPermissionCodes.viewNewSaleCustomers) ==
-                true ||
-            session?.hasPermission(PosPermissionCodes.createNewSaleCustomer) ==
-                true;
     final canCreateCustomer =
         session?.hasPermission(PosPermissionCodes.createNewSaleCustomer) ==
             true;
@@ -50,7 +45,7 @@ class PosNewSaleActionBar extends ConsumerWidget {
     final customerLabel =
         selectedCustomer == null ? 'Add Customer' : 'Change customer';
     final actions = <Widget>[
-      if (canViewOrCreateCustomer)
+      if (canCreateCustomer)
         Expanded(
           child: _ActionButton(
             icon: Icons.person_add_alt_1_outlined,

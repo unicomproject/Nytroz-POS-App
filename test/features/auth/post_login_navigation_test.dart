@@ -22,21 +22,21 @@ import 'package:nytroz_pos/shared/pos_session/pos_session_bootstrap_provider.dar
 
 void main() {
   group('Post-login navigation', () {
-    test('routes cashier without trusted device to open till', () {
+    test('routes cashier without trusted device to device activation', () {
       final container = _createContainer(session: _cashierSession);
 
       final route = container.read(postLoginRouteProvider);
 
-      expect(route, PostLoginRoute.openTill);
+      expect(route, PostLoginRoute.deviceActivation);
       container.dispose();
     });
 
-    test('routes to open till when device is not trusted', () {
+    test('routes to device activation when device is not trusted', () {
       final container = _createContainer(session: _posOperatorSession);
 
       final route = container.read(postLoginRouteProvider);
 
-      expect(route, PostLoginRoute.openTill);
+      expect(route, PostLoginRoute.deviceActivation);
       container.dispose();
     });
 
@@ -236,7 +236,8 @@ class _FakeTillRepository implements TillRepository {
 }
 
 class _TestAuthSessionStorage extends AuthSessionStorage {
-  _TestAuthSessionStorage() : super(const AppSecureStorage(FlutterSecureStorage()));
+  _TestAuthSessionStorage()
+      : super(const AppSecureStorage(FlutterSecureStorage()));
 
   @override
   Future<AuthSession?> read() async => null;
@@ -275,7 +276,8 @@ class _TestDeviceContextStorage extends DeviceContextStorage {
 }
 
 class _TestTillSessionStorage extends TillSessionStorage {
-  _TestTillSessionStorage(this._session) : super(const AppSecureStorage(FlutterSecureStorage()));
+  _TestTillSessionStorage(this._session)
+      : super(const AppSecureStorage(FlutterSecureStorage()));
 
   final TillSession? _session;
 

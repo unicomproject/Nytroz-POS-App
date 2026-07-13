@@ -16,6 +16,7 @@ class PosCheckoutRemoteDatasource {
     required List<PosCheckoutLineRequest> lines,
     String saleType = 'NewSale',
     String? customerId,
+    String? discountApplicationId,
   }) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
@@ -25,6 +26,7 @@ class PosCheckoutRemoteDatasource {
           saleType: saleType,
           lines: lines,
           customerId: customerId,
+          discountApplicationId: discountApplicationId,
         ),
       );
 
@@ -55,6 +57,8 @@ class PosCheckoutRemoteDatasource {
     int? cashReceived,
     String saleType = 'NewSale',
     String? customerId,
+    String? discountApplicationId,
+    required String idempotencyKey,
   }) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
@@ -65,8 +69,10 @@ class PosCheckoutRemoteDatasource {
             saleType: saleType,
             lines: lines,
             customerId: customerId,
+            discountApplicationId: discountApplicationId,
           ),
           'paymentMethod': paymentMethod,
+          'idempotencyKey': idempotencyKey,
           if (cashReceived != null) 'cashReceived': cashReceived,
         },
       );
@@ -108,12 +114,15 @@ class PosCheckoutRemoteDatasource {
     required String saleType,
     required List<PosCheckoutLineRequest> lines,
     String? customerId,
+    String? discountApplicationId,
   }) {
     return {
       'deviceId': deviceId,
       'saleType': saleType,
       'lines': lines.map((line) => line.toJson()).toList(growable: false),
       if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
+      if (discountApplicationId != null && discountApplicationId.isNotEmpty)
+        'discountApplicationId': discountApplicationId,
     };
   }
 

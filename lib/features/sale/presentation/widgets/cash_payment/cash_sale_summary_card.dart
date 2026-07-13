@@ -12,8 +12,8 @@ class CashSaleSummaryCard extends StatelessWidget {
     required this.discount,
     required this.tax,
     required this.total,
-    this.discountPercent = 0,
-    this.taxPercent = 0,
+    this.discountPercent,
+    this.taxPercent,
   });
 
   final int itemCount;
@@ -21,11 +21,16 @@ class CashSaleSummaryCard extends StatelessWidget {
   final int discount;
   final int tax;
   final int total;
-  final int discountPercent;
-  final int taxPercent;
+  final int? discountPercent;
+  final int? taxPercent;
 
   @override
   Widget build(BuildContext context) {
+    final resolvedDiscountPercent = discountPercent ??
+        (subtotal > 0 ? ((discount / subtotal) * 100).round() : 0);
+    final resolvedTaxPercent =
+        taxPercent ?? (subtotal > 0 ? ((tax / subtotal) * 100).round() : 0);
+
     return PaymentPanelCard(
       title: 'Sale Summary',
       icon: Icons.receipt_long_outlined,
@@ -37,19 +42,20 @@ class CashSaleSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: TenantAdminSpacing.md),
           _SummaryRow(
-            label: 'Discount ($discountPercent%)',
+            label: 'Discount ($resolvedDiscountPercent%)',
             value: '- ${formatLkr(discount)}',
           ),
           const SizedBox(height: TenantAdminSpacing.md),
           _SummaryRow(
-            label: 'Tax ($taxPercent%)',
+            label: 'Tax ($resolvedTaxPercent%)',
             value: formatLkr(tax),
           ),
           const Divider(height: TenantAdminSpacing.xl),
           _SummaryRow(
-            label: 'Total',
+            label: 'Total to Pay',
             value: formatLkr(total),
             emphasized: true,
+            valueColor: TenantAdminColors.info,
           ),
         ],
       ),
@@ -62,11 +68,13 @@ class _SummaryRow extends StatelessWidget {
     required this.label,
     required this.value,
     this.emphasized = false,
+    this.valueColor,
   });
 
   final String label;
   final String value;
   final bool emphasized;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +91,10 @@ class _SummaryRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: Text(label, style: style)),
-        Text(value, style: style),
+        Text(
+          value,
+          style: style?.copyWith(color: valueColor ?? style.color),
+        ),
       ],
     );
   }

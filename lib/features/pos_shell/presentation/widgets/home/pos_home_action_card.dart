@@ -10,12 +10,16 @@ class PosHomeActionCard extends StatelessWidget {
     required this.action,
     required this.icon,
     required this.description,
+    required this.iconColor,
+    required this.iconBackgroundColor,
     this.onTap,
   });
 
   final PosHomeAction action;
   final IconData icon;
   final String description;
+  final Color iconColor;
+  final Color iconBackgroundColor;
   final VoidCallback? onTap;
 
   @override
@@ -24,23 +28,10 @@ class PosHomeActionCard extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isTight =
-            (constraints.hasBoundedHeight && constraints.maxHeight < 250) ||
-                (constraints.hasBoundedWidth && constraints.maxWidth < 310);
-        final iconContainerSize = isTight ? 48.0 : 68.0;
-        final iconSize = isTight ? 26.0 : 36.0;
-        final titleStyle = isTight
-            ? Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: TenantAdminColors.bodyText,
-                  fontWeight: FontWeight.w800,
-                )
-            : TenantAdminTextStyles.sectionTitle(context);
-        final descriptionStyle = isTight
-            ? Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: TenantAdminColors.mutedText,
-                  height: 1.35,
-                )
-            : TenantAdminTextStyles.muted(context).copyWith(height: 1.4);
+        final isCompact = constraints.maxHeight < 150;
+        final isTiny = constraints.maxWidth < 100;
+        final iconSize = isTiny ? 36.0 : (isCompact ? 44.0 : 52.0);
+        final iconGlyphSize = isTiny ? 20.0 : (isCompact ? 24.0 : 28.0);
 
         return PosDashboardCardContainer(
           padding: EdgeInsets.zero,
@@ -59,51 +50,82 @@ class PosHomeActionCard extends StatelessWidget {
                 enabled: canInvoke,
                 child: Padding(
                   padding: EdgeInsets.all(
-                    isTight ? TenantAdminSpacing.md : TenantAdminSpacing.xl,
+                    isTiny
+                        ? TenantAdminSpacing.sm
+                        : isCompact
+                            ? TenantAdminSpacing.md
+                            : TenantAdminSpacing.lg,
                   ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 260),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            width: iconContainerSize,
-                            height: iconContainerSize,
-                            decoration: const BoxDecoration(
-                              color: TenantAdminColors.secondary,
-                              shape: BoxShape.circle,
+                            width: iconSize,
+                            height: iconSize,
+                            decoration: BoxDecoration(
+                              color: iconBackgroundColor,
+                              borderRadius:
+                                  BorderRadius.circular(TenantAdminRadius.md),
                             ),
                             child: Icon(
                               icon,
-                              color: TenantAdminColors.info,
-                              size: iconSize,
+                              color: iconColor,
+                              size: iconGlyphSize,
                             ),
                           ),
-                          SizedBox(
-                            height: isTight
-                                ? TenantAdminSpacing.sm
-                                : TenantAdminSpacing.lg,
-                          ),
-                          Text(
-                            action.label,
-                            maxLines: isTight ? 1 : 2,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: titleStyle,
-                          ),
-                          const SizedBox(height: TenantAdminSpacing.sm),
-                          Text(
-                            description,
-                            maxLines: isTight ? 2 : 3,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: descriptionStyle,
-                          ),
+                          if (!isTiny) ...[
+                            const Spacer(),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              color: canInvoke
+                                  ? TenantAdminColors.mutedText
+                                  : TenantAdminColors.mutedText
+                                      .withValues(alpha: 0.45),
+                              size: isCompact ? 22 : 24,
+                            ),
+                          ],
                         ],
                       ),
-                    ),
+                      SizedBox(
+                        height: isTiny
+                            ? TenantAdminSpacing.xs
+                            : isCompact
+                                ? TenantAdminSpacing.sm
+                                : TenantAdminSpacing.md,
+                      ),
+                      Text(
+                        action.label,
+                        maxLines: isTiny ? 1 : 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: TenantAdminColors.bodyText,
+                              fontWeight: FontWeight.w800,
+                              fontSize: isTiny ? 11 : null,
+                              height: 1.2,
+                            ),
+                      ),
+                      if (!isTiny) ...[
+                        const SizedBox(height: TenantAdminSpacing.xs),
+                        Expanded(
+                          child: Text(
+                            description,
+                            maxLines: isCompact ? 2 : 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                  color: TenantAdminColors.mutedText,
+                                  height: 1.35,
+                                  fontSize: isCompact ? 11 : null,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),

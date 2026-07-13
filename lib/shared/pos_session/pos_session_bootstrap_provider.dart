@@ -42,19 +42,40 @@ class PosSessionBootstrapNotifier
     _ref.listen<AuthSession?>(
       authSessionProvider,
       (previous, next) {
-        if (next == null || !next.isAuthenticated) {
-          state = const PosSessionBootstrapState();
-          return;
-        }
-
-        if (previous?.accessToken == next.accessToken && state.isReady) {
-          return;
-        }
-
-        unawaited(bootstrap());
+        unawaited(_handleAuthChanged(previous, next));
       },
       fireImmediately: true,
     );
+  }
+
+  Future<void> _handleAuthChanged(
+    AuthSession? previous,
+    AuthSession? next,
+  ) async {
+    final userChanged = previous != null &&
+        next != null &&
+        previous.userId.trim().isNotEmpty &&
+        next.userId.trim().isNotEmpty &&
+        previous.userId != next.userId;
+
+    if (next == null || !next.isAuthenticated) {
+      await _ref.read(tillProvider.notifier).clear();
+      state = const PosSessionBootstrapState();
+      return;
+    }
+
+    if (userChanged) {
+      await _ref.read(tillProvider.notifier).clear();
+      state = const PosSessionBootstrapState();
+    }
+
+    if (!userChanged &&
+        previous?.accessToken == next.accessToken &&
+        state.isReady) {
+      return;
+    }
+
+    await bootstrap(force: userChanged);
   }
 
   Future<void> bootstrap({bool force = false}) async {

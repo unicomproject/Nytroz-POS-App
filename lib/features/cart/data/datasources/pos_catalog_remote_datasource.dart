@@ -47,7 +47,8 @@ class PosCatalogRemoteDatasource {
     return _mapDetail(_unwrapMap(response.data ?? const {}));
   }
 
-  Future<List<PosCatalogCategory>> getCategories({required String deviceId}) async {
+  Future<List<PosCatalogCategory>> getCategories(
+      {required String deviceId}) async {
     final response = await _dio.get<Map<String, dynamic>>(
       ApiEndpoints.posCatalogCategories,
       queryParameters: {'deviceId': deviceId},
@@ -106,7 +107,8 @@ class PosCatalogRemoteDatasource {
       hasVariants: json['hasVariants'] == true,
       stockStatus: stockStatus,
       availableQty: availableQty,
-      stockLabel: stockLabelFromApi(json['stockStatus']?.toString(), availableQty),
+      stockLabel:
+          stockLabelFromApi(json['stockStatus']?.toString(), availableQty),
     );
   }
 
@@ -147,7 +149,8 @@ class PosCatalogRemoteDatasource {
   }
 
   String? _resolveImageUrl(Map<String, dynamic> json) {
-    final imageUrl = json['imageStorageKey']?.toString().trim();
+    final imageUrl =
+        (json['imageUrl'] ?? json['imageStorageKey'])?.toString().trim();
     return imageUrl?.isNotEmpty == true ? imageUrl : null;
   }
 

@@ -24,5 +24,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/pos_start_sale_background.png
+    - assets/images/product_dummy.png
     - assets/images/logo.png
     - assets/images/log-screen-terminal.png
+    - assets/images/login_brand_panel.png

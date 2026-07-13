@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
@@ -195,9 +196,8 @@ class _TopBarSearchFieldState extends ConsumerState<_TopBarSearchField> {
     final canSearchProducts =
         session?.hasPermission(PosPermissionCodes.searchProducts) == true;
     final isSearchEnabled = isNewSaleBrowseRoute && canSearchProducts;
-    final searchQuery = isSearchEnabled
-        ? ref.watch(posNewSaleSearchQueryProvider)
-        : '';
+    final searchQuery =
+        isSearchEnabled ? ref.watch(posNewSaleSearchQueryProvider) : '';
     _syncControllerText(searchQuery);
 
     return ConstrainedBox(
@@ -319,14 +319,23 @@ class _TillStatusChip extends ConsumerWidget {
     if (session?.hasPermission(PosPermissionCodes.viewTillSession) != true) {
       return const SizedBox.shrink();
     }
+    final tillState = ref.watch(tillProvider);
+    final isOpen = tillState.hasOpenSession;
+    final statusLabel = isOpen ? 'Till Open' : 'Till Closed';
+    final statusColor =
+        isOpen ? TenantAdminColors.success : TenantAdminColors.mutedText;
+    final statusBackground =
+        isOpen ? const Color(0xFFEFFAF3) : const Color(0xFFF3F4F6);
+    final statusBorder =
+        isOpen ? const Color(0xFFBBE7C8) : const Color(0xFFD1D5DB);
 
     return Container(
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFFAF3),
+        color: statusBackground,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        border: Border.all(color: const Color(0xFFBBE7C8)),
+        border: Border.all(color: statusBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -334,22 +343,22 @@ class _TillStatusChip extends ConsumerWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: const BoxDecoration(
-              color: TenantAdminColors.success,
+            decoration: BoxDecoration(
+              color: statusColor,
               shape: BoxShape.circle,
             ),
           ),
           const SizedBox(width: TenantAdminSpacing.sm),
           Text(
-            'Till Open',
+            statusLabel,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: TenantAdminColors.success,
+                      color: statusColor,
                       fontWeight: FontWeight.w800,
                     ) ??
-                const TextStyle(
-                  color: TenantAdminColors.success,
+                TextStyle(
+                  color: statusColor,
                   fontWeight: FontWeight.w800,
                 ),
           ),

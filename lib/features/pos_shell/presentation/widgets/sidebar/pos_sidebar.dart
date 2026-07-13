@@ -4,11 +4,16 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../../auth/presentation/providers/session_provider.dart';
+import '../../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../../till/presentation/providers/till_provider.dart';
+import '../../../../../core/access/pos_permission_access.dart';
 import '../../config/pos_shell_nav_destinations.dart';
 import '../../providers/pos_shell_navigation_provider.dart';
 import '../../../domain/entities/pos_shell_nav_destination.dart';
 import '../pos_shell_nav_item.dart';
+
+const _oneVerzLogoAsset = 'assets/images/logo.png';
+const _sidebarWidth = 208.0;
 
 class PosSidebar extends ConsumerWidget {
   const PosSidebar({super.key});
@@ -21,43 +26,46 @@ class PosSidebar extends ConsumerWidget {
         .where((destination) => destination.isVisible(grantedPermissions))
         .toList(growable: false);
 
-    return Container(
-      width: 92,
-      color: TenantAdminColors.navy,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const _BrandHeader(),
-              const SizedBox(height: TenantAdminSpacing.md),
-              Expanded(
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    ...visibleDestinations.map((destination) {
-                      return PosShellNavItem(
-                        icon: destination.icon,
-                        label: destination.label,
-                        selected: _isDestinationSelected(
-                          destination,
-                          currentPath,
-                        ),
-                        isEnabled: destination.isEnabled(grantedPermissions),
-                        onTap: () => _handleDestinationTap(
-                          context,
-                          destination,
-                          grantedPermissions,
-                        ),
-                      );
-                    }),
-                  ],
+    return SizedBox(
+      width: _sidebarWidth,
+      child: ColoredBox(
+        color: TenantAdminColors.navy,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const _BrandHeader(),
+                const SizedBox(height: TenantAdminSpacing.lg),
+                Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    physics: const ClampingScrollPhysics(),
+                    children: [
+                      ...visibleDestinations.map((destination) {
+                        return PosShellNavItem(
+                          icon: destination.icon,
+                          label: destination.label,
+                          selected: _isDestinationSelected(
+                            destination,
+                            currentPath,
+                          ),
+                          isEnabled: destination.isEnabled(grantedPermissions),
+                          onTap: () => _handleDestinationTap(
+                            context,
+                            destination,
+                            grantedPermissions,
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: TenantAdminSpacing.md),
-              const _UserMenu(),
-            ],
+                const SizedBox(height: TenantAdminSpacing.md),
+                const _UserProfileBlock(),
+              ],
+            ),
           ),
         ),
       ),
@@ -108,6 +116,11 @@ bool _isDestinationSelected(
     return true;
   }
 
+  if (destination.key == 'returns-refunds' &&
+      currentPath.startsWith('/pos/returns-refunds')) {
+    return true;
+  }
+
   return false;
 }
 
@@ -116,42 +129,36 @@ class _BrandHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       children: [
-        _LogoPlaceholder(),
-        SizedBox(height: TenantAdminSpacing.xs),
-        Text(
-          'NytrozPOS',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: const Color(0xFF075DFF),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Image.asset(
+              _oneVerzLogoAsset,
+              width: 28,
+              height: 28,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
+        const SizedBox(height: TenantAdminSpacing.sm),
+        Text(
+          'OneVerz POS',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                height: 1.15,
+              ),
+        ),
       ],
-    );
-  }
-}
-
-class _LogoPlaceholder extends StatelessWidget {
-  const _LogoPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        color: TenantAdminColors.info,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      ),
-      child: const Icon(
-        Icons.local_activity_outlined,
-        color: Colors.white,
-        size: 24,
-      ),
     );
   }
 }
@@ -160,45 +167,76 @@ enum _UserMenuAction { profile, endShift }
 
 const _endShiftCloseTillRoute = '/pos/cash-drawer/close-till?endShift=true';
 
-class _UserMenu extends ConsumerWidget {
-  const _UserMenu();
+class _UserProfileBlock extends ConsumerWidget {
+  const _UserProfileBlock();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Tooltip(
-      message: 'User profile',
-      child: SizedBox(
-        height: 52,
-        child: Material(
-          color: Colors.transparent,
-          shape: const CircleBorder(),
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: () => _showUserMenu(context, ref),
-            child: const Stack(
-              alignment: Alignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: TenantAdminColors.navySoft,
-                  child: Icon(Icons.person_outline, color: Colors.white),
-                ),
-                Positioned(
-                  right: 15,
-                  bottom: 6,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: TenantAdminColors.success,
-                      shape: BoxShape.circle,
-                      border: Border.fromBorderSide(
-                        BorderSide(color: TenantAdminColors.navy, width: 2),
+    final displayName = ref.watch(authSessionProvider)?.userDisplayName.trim();
+    final resolvedName =
+        displayName == null || displayName.isEmpty ? 'Cashier' : displayName;
+
+    return Material(
+      color: Colors.white.withValues(alpha: 0.06),
+      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        onTap: () => _showUserMenu(context, ref),
+        child: Padding(
+          padding: const EdgeInsets.all(TenantAdminSpacing.md),
+          child: Row(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: const Color(0xFF075DFF),
+                    child: Text(
+                      _initialsFor(resolvedName),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    child: SizedBox(width: 12, height: 12),
                   ),
+                  const Positioned(
+                    right: -1,
+                    bottom: 0,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: TenantAdminColors.success,
+                        shape: BoxShape.circle,
+                        border: Border.fromBorderSide(
+                          BorderSide(color: TenantAdminColors.navy, width: 2),
+                        ),
+                      ),
+                      child: SizedBox(width: 10, height: 10),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: TenantAdminSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      resolvedName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -215,6 +253,7 @@ class _UserMenu extends ConsumerWidget {
 
     const menuWidth = 168.0;
     const menuHeight = 104.0;
+    final canEndShift = _canEndShift(ref);
     final offset = box.localToGlobal(Offset.zero, ancestor: overlay);
     final left = offset.dx + box.size.width + TenantAdminSpacing.sm;
     final top = (offset.dy + box.size.height - menuHeight).clamp(
@@ -235,14 +274,15 @@ class _UserMenu extends ConsumerWidget {
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         side: const BorderSide(color: TenantAdminColors.border),
       ),
-      items: const [
-        PopupMenuItem(
+      items: [
+        const PopupMenuItem(
           value: _UserMenuAction.profile,
           child: Text('Profile'),
         ),
         PopupMenuItem(
           value: _UserMenuAction.endShift,
-          child: Text('End Shift'),
+          enabled: canEndShift,
+          child: const Text('End Shift'),
         ),
       ],
     );
@@ -260,17 +300,57 @@ class _UserMenu extends ConsumerWidget {
   }
 
   Future<void> _startEndShiftFlow(BuildContext context, WidgetRef ref) async {
-    final tillState = ref.read(tillProvider);
-    if (tillState.hasOpenSession) {
-      if (context.mounted) {
-        context.go(_endShiftCloseTillRoute);
-      }
+    if (_canEndShift(ref)) {
+      context.go(_endShiftCloseTillRoute);
       return;
     }
 
-    await ref.read(authSessionProvider.notifier).clear();
-    if (context.mounted) {
-      context.go('/tenant-login');
-    }
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('An open assigned till is required to end shift.'),
+        ),
+      );
   }
+}
+
+bool _canEndShift(WidgetRef ref) {
+  final session = ref.read(authSessionProvider);
+  if (session == null || !session.isAuthenticated) {
+    return false;
+  }
+
+  final granted = session.permissionCodes.toSet();
+  if (!PosPermissionAccess.canCloseTill(granted)) {
+    return false;
+  }
+
+  final deviceContext = ref.read(deviceActivationProvider).deviceContext;
+  if (deviceContext == null ||
+      !deviceContext.isTrusted ||
+      deviceContext.deviceId.trim().isEmpty ||
+      deviceContext.tillId.trim().isEmpty) {
+    return false;
+  }
+
+  final tillSession = ref.read(tillProvider).session;
+  if (tillSession == null || tillSession.status != 'open') {
+    return false;
+  }
+
+  return tillSession.tillId == deviceContext.tillId &&
+      tillSession.openedDeviceId == deviceContext.deviceId;
+}
+
+String _initialsFor(String name) {
+  final parts = name.trim().split(RegExp(r'\s+'));
+  if (parts.isEmpty || parts.first.isEmpty) {
+    return 'C';
+  }
+  if (parts.length == 1) {
+    final end = parts.first.length < 2 ? parts.first.length : 2;
+    return parts.first.substring(0, end).toUpperCase();
+  }
+  return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
 }

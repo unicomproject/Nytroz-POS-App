@@ -6,6 +6,57 @@ const testServicesCategoryId = 'cat-services';
 const testRetailCategoryId = 'cat-retail';
 const testFoodCategoryId = 'cat-food';
 const testMembershipsCategoryId = 'cat-memberships';
+const testVariableProductId = 'variable-jersey';
+
+const testVariableProductSummary = PosCatalogProductSummary(
+  productId: testVariableProductId,
+  categoryId: testRetailCategoryId,
+  name: 'Pro Team Jersey',
+  categoryName: 'Retail',
+  basePrice: 10000,
+  hasVariants: true,
+  stockLabel: 'From LKR 10,000.00',
+);
+
+const testVariableProductDetail = PosCatalogProductDetail(
+  summary: testVariableProductSummary,
+  variantGroups: [
+    PosCatalogVariantGroup(
+      name: 'Size',
+      options: ['Small', 'Medium'],
+    ),
+    PosCatalogVariantGroup(
+      name: 'Color',
+      options: ['Blue', 'Red'],
+    ),
+  ],
+  variants: [
+    PosCatalogVariant(
+      variantId: 'variant-small-blue',
+      sku: 'JER-S-BLU',
+      price: 10000,
+      stockStatus: 'InStock',
+      stockQty: 20,
+      attributes: {'Size': 'Small', 'Color': 'Blue'},
+    ),
+    PosCatalogVariant(
+      variantId: 'variant-medium-blue',
+      sku: 'JER-M-BLU',
+      price: 12000,
+      stockStatus: 'InStock',
+      stockQty: 15,
+      attributes: {'Size': 'Medium', 'Color': 'Blue'},
+    ),
+    PosCatalogVariant(
+      variantId: 'variant-small-red',
+      sku: 'JER-S-RED',
+      price: 10000,
+      stockStatus: 'OutOfStock',
+      stockQty: 0,
+      attributes: {'Size': 'Small', 'Color': 'Red'},
+    ),
+  ],
+);
 
 const testPosCatalogCategories = <PosCatalogCategoryOption>[
   PosCatalogCategoryOption(name: 'All'),
@@ -126,6 +177,7 @@ const testPosCatalogState = PosNewSaleCatalogState(
       hasVariants: false,
       stockLabel: 'Available',
     ),
+    testVariableProductSummary,
   ],
 );
 

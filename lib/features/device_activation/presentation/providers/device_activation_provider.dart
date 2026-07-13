@@ -94,18 +94,8 @@ class DeviceActivationController extends StateNotifier<DeviceActivationState> {
           name: 'pos.session',
         );
 
-        final cachedDevice = await _storage.read();
-        if (cachedDevice != null) {
-          developer.log(
-            'Keeping locally cached trusted device context after server miss.',
-            name: 'pos.session',
-          );
-          state = DeviceActivationState(deviceContext: cachedDevice);
-          return cachedDevice.isTrusted;
-        }
-
         try {
-          await _storage.clear();
+          await _storage.clearContext();
         } catch (_) {
           // Ignore secure-storage cleanup failures on web.
         }
@@ -119,7 +109,7 @@ class DeviceActivationController extends StateNotifier<DeviceActivationState> {
           name: 'pos.session',
         );
         try {
-          await _storage.clear();
+          await _storage.clearContext();
         } catch (_) {
           // Ignore secure-storage cleanup failures on web.
         }
@@ -218,7 +208,7 @@ class DeviceActivationController extends StateNotifier<DeviceActivationState> {
         stackTrace: stackTrace,
       );
       try {
-        await _storage.clear();
+        await _storage.clearContext();
       } catch (_) {
         // Ignore secure-storage cleanup failures on web.
       }

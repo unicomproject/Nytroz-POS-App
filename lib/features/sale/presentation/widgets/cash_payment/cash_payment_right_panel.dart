@@ -18,30 +18,29 @@ class CashPaymentRightPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-        border: Border.all(color: TenantAdminColors.border),
-        boxShadow: TenantAdminShadows.card,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            CashPaymentSummaryCard(
-              total: total,
-              cashReceived: cashReceived,
-              embedded: true,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CashPaymentSummaryCard(
+          total: total,
+          cashReceived: cashReceived,
+        ),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        Expanded(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: TenantAdminColors.surface,
+              borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+              border: Border.all(color: TenantAdminColors.border),
+              boxShadow: TenantAdminShadows.card,
             ),
-            const SizedBox(height: TenantAdminSpacing.lg),
-            Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(TenantAdminSpacing.lg),
               child: NumericKeypad(onKeyTap: onKeyTap),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

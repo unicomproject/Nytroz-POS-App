@@ -37,7 +37,7 @@ void main() {
       expect(lines.single.toJson(), {'variantId': 'variant-id', 'qty': 2});
     });
 
-    test('does not send productId as variantId when variant is missing', () {
+    test('preserves an invalid missing variant for backend rejection', () {
       const product = PosNewSaleProduct(
         id: 'product-id',
         productId: 'product-id',
@@ -53,7 +53,8 @@ void main() {
 
       final lines = checkoutLinesFromCart(cart);
 
-      expect(lines, isEmpty);
+      expect(lines, hasLength(1));
+      expect(lines.single.variantId, isEmpty);
     });
   });
 

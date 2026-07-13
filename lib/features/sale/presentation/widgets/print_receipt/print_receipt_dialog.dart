@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/access/pos_permission_access.dart';
 import '../../../../../shared/pos_session/pos_session_provider.dart';
 import '../../../../auth/presentation/providers/session_provider.dart';
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -35,6 +36,33 @@ class _PrintReceiptDialogState extends ConsumerState<PrintReceiptDialog> {
     final successData = ref.watch(posCashPaymentSuccessProvider);
     final session = ref.watch(authSessionProvider);
     final sessionContext = ref.watch(posSessionContextProvider);
+    final canViewReceipt = PosPermissionAccess.canViewReceiptSession(session);
+    final canPrintReceipt =
+        PosPermissionAccess.canPrintReceiptsSession(session);
+
+    if (!canViewReceipt) {
+      return _buildShell(
+        context,
+        child: Padding(
+          padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Receipt preview unavailable',
+                style: TenantAdminTextStyles.sectionTitle(context),
+              ),
+              const SizedBox(height: TenantAdminSpacing.sm),
+              Text(
+                'You do not have permission to preview this receipt.',
+                textAlign: TextAlign.center,
+                style: TenantAdminTextStyles.muted(context),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     if (successData == null) {
       return _buildShell(
@@ -50,7 +78,7 @@ class _PrintReceiptDialogState extends ConsumerState<PrintReceiptDialog> {
               ),
               const SizedBox(height: TenantAdminSpacing.sm),
               Text(
-                'Complete a cash payment to preview and print the receipt.',
+                'Complete a cash payment to preview the receipt.',
                 textAlign: TextAlign.center,
                 style: TenantAdminTextStyles.muted(context),
               ),
@@ -92,20 +120,22 @@ class _PrintReceiptDialogState extends ConsumerState<PrintReceiptDialog> {
             ),
           ),
           const SizedBox(height: TenantAdminSpacing.md),
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              TenantAdminSpacing.md,
-              0,
-              TenantAdminSpacing.md,
-              TenantAdminSpacing.md + MediaQuery.viewInsetsOf(context).bottom,
+          if (canPrintReceipt)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                TenantAdminSpacing.md,
+                0,
+                TenantAdminSpacing.md,
+                TenantAdminSpacing.md + MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: PosBottomFilledButton(
+                label: 'Print Receipt',
+                icon: Icons.print_outlined,
+                isLoading: _printing,
+                onPressed:
+                    _printing ? null : () => _onPrint(successData.saleId),
+              ),
             ),
-            child: PosBottomFilledButton(
-              label: 'Print Receipt',
-              icon: Icons.print_outlined,
-              isLoading: _printing,
-              onPressed: _printing ? null : () => _onPrint(successData.saleId),
-            ),
-          ),
         ],
       ),
     );

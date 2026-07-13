@@ -39,8 +39,8 @@ class PosCashPaymentSuccessScreen extends ConsumerWidget {
       builder: (context, constraints) {
         final granted = session?.permissionCodes.toSet() ?? const <String>{};
         final canViewSales = PosPermissionAccess.canViewSales(granted);
-        final canViewPaymentDetails =
-            canViewSales || PosPermissionAccess.canAcceptCashPayment(granted);
+        final canViewReceipts = PosPermissionAccess.canViewReceipts(granted);
+        final canViewPaymentDetails = canViewSales || canViewReceipts;
         final canPrintReceipt = PosPermissionAccess.canPrintReceipts(granted);
         final canStartNewSale = PosPermissionAccess.canAccessNewSale(granted);
         final padding = TenantAdminInsets.pageForWidth(constraints.maxWidth);
@@ -152,6 +152,9 @@ class PosCashPaymentSuccessScreen extends ConsumerWidget {
               ),
               const SizedBox(height: TenantAdminSpacing.lg),
               ReceiptActionBar(
+                onViewReceiptPreview: canViewReceipts && !canPrintReceipt
+                    ? () => showPrintReceiptDialog(context, ref)
+                    : null,
                 onPrintReceipt: canPrintReceipt
                     ? () => showPrintReceiptDialog(context, ref)
                     : null,

@@ -45,11 +45,14 @@ final posHomeDashboardProvider =
     tillSession?.tillId,
   );
   final deviceId = deviceContext.deviceId.trim();
+  final deviceFingerprint = deviceContext.deviceFingerprint.trim();
 
   final payload = await ref.watch(posHomeRemoteDatasourceProvider).getPosHome(
         outletId: outletId.isEmpty ? null : outletId,
         tillId: tillId.isEmpty ? null : tillId,
         deviceId: deviceId.isEmpty ? null : deviceId,
+        deviceFingerprint:
+            deviceFingerprint.isEmpty ? null : deviceFingerprint,
       );
 
   if (!payload.contextResolved) {
@@ -76,7 +79,8 @@ void _ensureAuthorizationHeader(Dio dio, AuthSession session) {
 }
 
 String _resolveContextId(String primary, String? fallback) {
-  final resolved = primary.trim().isNotEmpty ? primary.trim() : fallback?.trim() ?? '';
+  final resolved =
+      primary.trim().isNotEmpty ? primary.trim() : fallback?.trim() ?? '';
   return resolved;
 }
 
@@ -150,7 +154,7 @@ PosHomeDashboardState buildPosHomeShellState({
         isEnabled: true,
         targetRoute: '/pos/customers',
         featureKey: PosFeatureCodes.customers,
-        permissionKey: PosPermissionCodes.viewNewSaleCustomers,
+        permissionKey: PosPermissionCodes.createNewSaleCustomer,
         metricValue: '--',
         metricLabel: 'Customer profiles',
       ),
@@ -239,8 +243,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         description: 'Begin a new in-store sale.',
         iconKey: 'new-sale',
         buttonLabel: 'Start New Sale',
-        isEnabled: cards.startSale.enabled ||
-            PosPermissionAccess.canAccessNewSale(permissions),
+        isEnabled: cards.startSale.enabled,
         targetRoute: '/pos/new-sale',
         featureKey: PosFeatureCodes.sales,
         permissionKey: PosPermissionCodes.viewNewSale,
@@ -279,11 +282,10 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         description: 'Create a customer profile for future visits.',
         iconKey: 'add-customer',
         buttonLabel: 'Add Customer',
-        isEnabled: cards.customers.enabled ||
-            PosPermissionAccess.canViewCustomers(permissions),
+        isEnabled: cards.customers.enabled,
         targetRoute: '/pos/customers',
         featureKey: PosFeatureCodes.customers,
-        permissionKey: PosPermissionCodes.viewNewSaleCustomers,
+        permissionKey: PosPermissionCodes.createNewSaleCustomer,
         metricValue: '${cards.customers.count ?? 0}',
         metricLabel: 'Customer profiles',
       ),

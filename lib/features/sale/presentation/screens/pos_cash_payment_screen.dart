@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
+import '../../../till/presentation/providers/till_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/pos_checkout_api_exception.dart';
@@ -29,13 +31,18 @@ class PosCashPaymentScreen extends ConsumerStatefulWidget {
 
 class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
   bool _isSubmitting = false;
+  final String _idempotencyKey =
+      'pos-${DateTime.now().microsecondsSinceEpoch}-${UniqueKey()}';
 
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider);
     final cart = ref.watch(posNewSaleCartProvider);
+    final tillState = ref.watch(tillProvider);
     final summaryAsync = ref.watch(posCheckoutSummaryProvider);
     final cashState = ref.watch(posCashPaymentProvider);
+    final canViewTillSession =
+        session?.hasPermission(PosPermissionCodes.viewTillSession) == true;
 
     if (!PosPermissionAccess.canAccessCashPaymentScreenSession(session)) {
       return const TenantAdminForbiddenScreen();
@@ -81,7 +88,13 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  CashPaymentHeader(onBack: () => context.pop()),
+                  CashPaymentHeader(
+                    onBack: () => context.pop(),
+                    showTillStatus: canViewTillSession,
+                    tillStatusLabel:
+                        tillState.hasOpenSession ? 'Till Open' : 'Till Closed',
+                    isTillOpen: tillState.hasOpenSession,
+                  ),
                   const SizedBox(height: TenantAdminSpacing.lg),
                   Expanded(
                     child: useWideLayout
@@ -89,7 +102,7 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Expanded(
-                                flex: 3,
+                                flex: 7,
                                 child: Column(
                                   children: [
                                     CashSaleSummaryCard(
@@ -117,7 +130,7 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
                               ),
                               const SizedBox(width: TenantAdminSpacing.lg),
                               Expanded(
-                                flex: 2,
+                                flex: 5,
                                 child: CashPaymentRightPanel(
                                   total: total,
                                   cashReceived: cashReceived,
@@ -221,6 +234,8 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
                 lines: checkoutLinesFromCart(cart),
                 cashReceived: cashReceived,
                 customerId: cart.selectedCustomer?.customerId,
+                discountApplicationId: cart.discountApplicationId,
+                idempotencyKey: _idempotencyKey,
               );
 
       ref

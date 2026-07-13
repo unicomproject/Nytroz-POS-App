@@ -35,7 +35,6 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
   final _formKey = GlobalKey<FormState>();
   final _countedCashController = TextEditingController();
   final _notesController = TextEditingController();
-  final _managerPinController = TextEditingController();
   var _initializedForm = false;
 
   @override
@@ -54,7 +53,6 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
   void dispose() {
     _countedCashController.dispose();
     _notesController.dispose();
-    _managerPinController.dispose();
     super.dispose();
   }
 
@@ -62,7 +60,6 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
     final formState = ref.read(closeTillFormProvider);
     _countedCashController.text = formState.countedCashText;
     _notesController.text = formState.notes;
-    _managerPinController.text = formState.managerPin;
   }
 
   void _initializeCloseTillForm() {
@@ -90,8 +87,7 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
     final session = ref.watch(authSessionProvider);
     final granted = session?.permissionCodes.toSet() ?? const {};
 
-    if (!PosPermissionAccess.canViewCashDrawer(granted) ||
-        !PosPermissionAccess.canCloseTill(granted)) {
+    if (!PosPermissionAccess.canCloseTill(granted)) {
       return const TenantAdminForbiddenScreen();
     }
 
@@ -180,7 +176,6 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
                             formKey: _formKey,
                             countedCashController: _countedCashController,
                             notesController: _notesController,
-                            managerPinController: _managerPinController,
                             expectedCash: expectedCash,
                           ),
                           if (showMismatchWarning) ...[
