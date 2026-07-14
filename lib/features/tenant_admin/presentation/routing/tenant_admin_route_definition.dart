@@ -22,7 +22,7 @@ const tenantAdminRouteDefinitions = [
     menuKey: 'dashboard',
     title: 'Dashboard',
     featureCode: 'tenant_admin.dashboard',
-    permissionCode: 'dashboard.view',
+    permissionCode: 'tenant.dashboard.view',
   ),
   TenantAdminRouteDefinition(
     path: '/tenant-admin/outlets',

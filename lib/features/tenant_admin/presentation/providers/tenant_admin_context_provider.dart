@@ -29,7 +29,20 @@ final tenantAdminContextProvider =
     FutureProvider<TenantAdminContext>((ref) async {
   ref.watch(authHeaderSyncProvider);
 
-  final session = ref.watch(authSessionProvider);
+  final currentSession = ref.watch(authSessionProvider);
+  if (currentSession == null || !currentSession.isAuthenticated) {
+    throw const TenantAdminContextException(
+      code: TenantAdminContextErrorCodes.authRequired,
+      message: 'Sign in is required to load tenant admin access.',
+    );
+  }
+
+  final session = currentSession.isExpired
+      ? await ref
+          .read(authSessionProvider.notifier)
+          .ensureFreshSession(ref.read(appDioProvider))
+      : currentSession;
+
   if (session == null || !session.isAuthenticated) {
     throw const TenantAdminContextException(
       code: TenantAdminContextErrorCodes.authRequired,

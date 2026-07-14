@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/network/dio_provider.dart';
 import '../../features/auth/domain/entities/auth_session.dart';
 import '../../features/auth/presentation/providers/session_provider.dart';
 import '../../features/device_activation/presentation/providers/device_activation_provider.dart';
@@ -87,7 +88,17 @@ class PosSessionBootstrapNotifier
     );
 
     try {
-      final session = _ref.read(authSessionProvider);
+      var session = _ref.read(authSessionProvider);
+      if (session != null && session.isExpired && session.canRefresh) {
+        final refreshedSession = await _runStep<AuthSession?>(
+          'refresh-auth-session',
+          () => _ref
+              .read(authSessionProvider.notifier)
+              .ensureFreshSession(_ref.read(appDioProvider)),
+        );
+        session = refreshedSession;
+      }
+
       if (session == null ||
           !session.isAuthenticated ||
           !session.requiresPosDeviceBootstrap) {
