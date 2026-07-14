@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/features/sale/presentation/widgets/payment/pos_bottom_action_buttons.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
@@ -392,12 +393,12 @@ class _CartSummaryFooter extends ConsumerWidget {
               emphasized: true,
             ),
             const SizedBox(height: TenantAdminSpacing.sm),
-            FilledButton.icon(
+            PosPrimaryActionButton(
               onPressed: canProceed
                   ? () => context.push('/pos/new-sale/payment')
                   : null,
-              icon: const Icon(Icons.payments_outlined),
-              label: const Text('Proceed to Payment'),
+              icon: Icons.payments_outlined,
+              label: 'Proceed to Payment',
             ),
           ],
         ),

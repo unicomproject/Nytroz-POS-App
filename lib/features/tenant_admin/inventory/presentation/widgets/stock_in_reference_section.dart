@@ -40,7 +40,7 @@ class StockInReferenceSection extends ConsumerWidget {
           ),
           const SizedBox(height: TenantAdminSpacing.lg),
           DropdownButtonFormField<String?>(
-            value: form.outletId,
+            initialValue: form.outletId,
             decoration: InputDecoration(
               labelText: 'Outlet *',
               border: const OutlineInputBorder(),

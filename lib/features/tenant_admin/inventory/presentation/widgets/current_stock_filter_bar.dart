@@ -196,7 +196,7 @@ class _OutletFilter extends ConsumerWidget {
     final selected = ref.watch(currentStockOutletFilterProvider);
 
     return DropdownButtonFormField<String?>(
-      value: selected,
+      initialValue: selected,
       decoration: const InputDecoration(
         labelText: 'Outlet',
         border: OutlineInputBorder(),
@@ -229,7 +229,7 @@ class _StockStatusFilter extends ConsumerWidget {
     final selected = ref.watch(currentStockStatusFilterProvider);
 
     return DropdownButtonFormField<String?>(
-      value: selected,
+      initialValue: selected,
       decoration: const InputDecoration(
         labelText: 'Stock status',
         border: OutlineInputBorder(),
@@ -264,7 +264,7 @@ class _ExpiryStatusFilter extends ConsumerWidget {
     final selected = ref.watch(currentStockExpiryFilterProvider);
 
     return DropdownButtonFormField<String?>(
-      value: selected,
+      initialValue: selected,
       decoration: const InputDecoration(
         labelText: 'Expiry status',
         border: OutlineInputBorder(),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
 
@@ -87,7 +88,7 @@ class UserProfileImageUpload extends StatelessWidget {
 
   Future<void> _pickFile(BuildContext context) async {
     final controller = TextEditingController();
-    final selected = await showDialog<String>(
+    final selected = await showAppDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Select profile image'),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../providers/pos_print_receipt_provider.dart';
@@ -114,7 +115,7 @@ class PrinterOptionsCard extends ConsumerWidget {
     required String selectedId,
     required ValueChanged<String> onSelected,
   }) async {
-    final selected = await showModalBottomSheet<String>(
+    final selected = await showAppModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
       builder: (context) {
@@ -139,7 +140,8 @@ class PrinterOptionsCard extends ConsumerWidget {
                 ListTile(
                   title: Text(option.label),
                   trailing: option.id == selectedId
-                      ? const Icon(Icons.check_rounded, color: TenantAdminColors.info)
+                      ? const Icon(Icons.check_rounded,
+                          color: TenantAdminColors.info)
                       : null,
                   onTap: () => Navigator.of(context).pop(option.id),
                 ),
@@ -160,7 +162,7 @@ class PrinterOptionsCard extends ConsumerWidget {
     required int selectedCopies,
     required ValueChanged<int> onSelected,
   }) async {
-    final selected = await showModalBottomSheet<int>(
+    final selected = await showAppModalBottomSheet<int>(
       context: context,
       showDragHandle: true,
       builder: (context) {
@@ -185,7 +187,8 @@ class PrinterOptionsCard extends ConsumerWidget {
                 ListTile(
                   title: Text('$copies'),
                   trailing: copies == selectedCopies
-                      ? const Icon(Icons.check_rounded, color: TenantAdminColors.info)
+                      ? const Icon(Icons.check_rounded,
+                          color: TenantAdminColors.info)
                       : null,
                   onTap: () => Navigator.of(context).pop(copies),
                 ),

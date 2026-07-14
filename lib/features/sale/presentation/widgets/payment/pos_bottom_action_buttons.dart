@@ -25,25 +25,6 @@ ButtonStyle posBottomOutlinedButtonStyle() {
   );
 }
 
-ButtonStyle posBottomFilledButtonStyle({
-  Color backgroundColor = TenantAdminColors.info,
-  Color? disabledBackgroundColor,
-}) {
-  return FilledButton.styleFrom(
-    minimumSize: const Size(0, PosBottomActionSizes.minHeight),
-    padding: const EdgeInsets.symmetric(
-      horizontal: PosBottomActionSizes.horizontalPadding,
-      vertical: PosBottomActionSizes.verticalPadding,
-    ),
-    backgroundColor: backgroundColor,
-    disabledBackgroundColor:
-        disabledBackgroundColor ?? TenantAdminColors.border,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-    ),
-  );
-}
-
 class PosBottomOutlinedButton extends StatelessWidget {
   const PosBottomOutlinedButton({
     super.key,
@@ -84,7 +65,7 @@ class PosBottomFilledButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.isLoading = false,
-    this.backgroundColor = TenantAdminColors.info,
+    this.backgroundColor,
     this.disabledBackgroundColor,
   });
 
@@ -92,44 +73,117 @@ class PosBottomFilledButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final IconData? icon;
   final bool isLoading;
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final Color? disabledBackgroundColor;
 
   @override
   Widget build(BuildContext context) {
-    final style = posBottomFilledButtonStyle(
+    return PosPrimaryActionButton(
+      label: label,
+      onPressed: onPressed,
+      icon: icon,
+      isLoading: isLoading,
       backgroundColor: backgroundColor,
       disabledBackgroundColor: disabledBackgroundColor,
     );
+  }
+}
 
-    if (isLoading) {
-      return FilledButton(
-        onPressed: null,
-        style: style,
-        child: const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: Colors.white,
+class PosPrimaryActionButton extends StatelessWidget {
+  const PosPrimaryActionButton({
+    super.key,
+    this.label,
+    this.child,
+    required this.onPressed,
+    this.icon,
+    this.isLoading = false,
+    this.backgroundColor,
+    this.disabledBackgroundColor,
+    this.minimumHeight = PosBottomActionSizes.minHeight,
+    this.horizontalPadding = PosBottomActionSizes.horizontalPadding,
+    this.verticalPadding = PosBottomActionSizes.verticalPadding,
+    this.borderRadius = TenantAdminRadius.md,
+  }) : assert(label != null || child != null);
+
+  final String? label;
+  final Widget? child;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final bool isLoading;
+  final Color? backgroundColor;
+  final Color? disabledBackgroundColor;
+  final double minimumHeight;
+  final double horizontalPadding;
+  final double verticalPadding;
+  final double borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    final showActiveTheme = onPressed != null || isLoading;
+    final radius = BorderRadius.circular(borderRadius);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: showActiveTheme
+            ? backgroundColor
+            : disabledBackgroundColor ?? TenantAdminColors.border,
+        gradient: showActiveTheme && backgroundColor == null
+            ? const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  TenantAdminColors.navySoft,
+                  TenantAdminColors.primary,
+                ],
+              )
+            : null,
+        borderRadius: radius,
+        boxShadow: showActiveTheme ? TenantAdminShadows.card : null,
+      ),
+      child: FilledButton(
+        onPressed: isLoading ? null : onPressed,
+        style: FilledButton.styleFrom(
+          minimumSize: Size(0, minimumHeight),
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: verticalPadding,
           ),
+          backgroundColor: Colors.transparent,
+          disabledBackgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          disabledForegroundColor: Colors.white70,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: radius),
         ),
-      );
-    }
-
-    if (icon != null) {
-      return FilledButton.icon(
-        onPressed: onPressed,
-        style: style,
-        icon: Icon(icon, size: PosBottomActionSizes.iconSize),
-        label: Text(label),
-      );
-    }
-
-    return FilledButton(
-      onPressed: onPressed,
-      style: style,
-      child: Text(label),
+        child: isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : child ??
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, size: PosBottomActionSizes.iconSize),
+                      const SizedBox(width: TenantAdminSpacing.sm),
+                    ],
+                    Flexible(
+                      child: Text(
+                        label!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ],
+                ),
+      ),
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:nytroz_pos/features/cart/presentation/providers/pos_parked_sale_
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_discount_dialog.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_parked_sale_dialog.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_new_sale_customer_dialog.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../../../core/access/pos_access_codes.dart';
 import '../../../../auth/presentation/providers/session_provider.dart';
@@ -148,7 +149,7 @@ class PosNewSaleActionBar extends ConsumerWidget {
 Future<PosParkedSaleReference?> _showParkedSaleReferenceDialog(
   BuildContext context,
 ) {
-  return showDialog<PosParkedSaleReference>(
+  return showAppDialog<PosParkedSaleReference>(
     context: context,
     builder: (_) => const _ParkedSaleReferenceDialog(),
   );

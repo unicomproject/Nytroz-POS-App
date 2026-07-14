@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/features/sale/presentation/widgets/payment/pos_bottom_action_buttons.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../../cart/domain/entities/pos_cart_discount.dart';
 import '../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
@@ -15,7 +17,7 @@ Future<void> showPosDiscountDialog({
   required BuildContext context,
   required WidgetRef ref,
 }) {
-  return showDialog<void>(
+  return showAppDialog<void>(
     context: context,
     builder: (_) => UncontrolledProviderScope(
       container: ProviderScope.containerOf(context),
@@ -58,7 +60,8 @@ class _PosDiscountDialogState extends ConsumerState<_PosDiscountDialog> {
   @override
   Widget build(BuildContext context) {
     final cart = ref.watch(posNewSaleCartProvider);
-    final selectedItem = _selectedItemKey == null ? null : cart.items[_selectedItemKey];
+    final selectedItem =
+        _selectedItemKey == null ? null : cart.items[_selectedItemKey];
     final cartVariantIds = cart.itemList
         .map((item) => item.product.variantId)
         .whereType<String>()
@@ -66,7 +69,9 @@ class _PosDiscountDialogState extends ConsumerState<_PosDiscountDialog> {
         .toList(growable: false);
     final catalogQuery = PosDiscountCatalogQuery(
       scope: _scope == _DiscountScope.item ? 'LINE' : 'ORDER',
-      variantId: _scope == _DiscountScope.item ? selectedItem?.product.variantId : null,
+      variantId: _scope == _DiscountScope.item
+          ? selectedItem?.product.variantId
+          : null,
       variantIds: _scope == _DiscountScope.item ? const [] : cartVariantIds,
       customerId: cart.selectedCustomer?.customerId,
       quantity: _scope == _DiscountScope.item
@@ -94,9 +99,11 @@ class _PosDiscountDialogState extends ConsumerState<_PosDiscountDialog> {
     final selectedPolicy =
         matchingPolicies.where((x) => x.id == _selectedPolicyId).firstOrNull ??
             (matchingPolicies.isEmpty ? null : matchingPolicies.first);
-    if (_predefined && selectedPolicy != null &&
+    if (_predefined &&
+        selectedPolicy != null &&
         (_selectedPolicyId != selectedPolicy.id ||
-            _valueController.text != selectedPolicy.predefinedValue.toString())) {
+            _valueController.text !=
+                selectedPolicy.predefinedValue.toString())) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || !_predefined) return;
         setState(() {
@@ -131,9 +138,7 @@ class _PosDiscountDialogState extends ConsumerState<_PosDiscountDialog> {
                     _formKey.currentState?.reset();
                   });
                 },
-                onClear: cart.hasDiscount
-                    ? () => _clearDiscounts(cart)
-                    : null,
+                onClear: cart.hasDiscount ? () => _clearDiscounts(cart) : null,
                 onClose: () => Navigator.of(context).pop(),
               );
               final form = _DiscountForm(
@@ -173,8 +178,9 @@ class _PosDiscountDialogState extends ConsumerState<_PosDiscountDialog> {
                 catalogError: catalogAsync?.hasError == true
                     ? catalogAsync!.error.toString()
                     : null,
-                waitingForItemSelection:
-                    _predefined && _scope == _DiscountScope.item && selectedItem == null,
+                waitingForItemSelection: _predefined &&
+                    _scope == _DiscountScope.item &&
+                    selectedItem == null,
                 onPolicyChanged: (policy) {
                   setState(() {
                     _selectedPolicyId = policy?.id;
@@ -187,9 +193,8 @@ class _PosDiscountDialogState extends ConsumerState<_PosDiscountDialog> {
                   });
                 },
                 onPredefinedChanged: (value) {
-                  final nextPolicy = value && policies.isNotEmpty
-                      ? policies.first
-                      : null;
+                  final nextPolicy =
+                      value && policies.isNotEmpty ? policies.first : null;
                   setState(() {
                     _predefined = value;
                     _selectedPolicyId = nextPolicy?.id;
@@ -247,7 +252,8 @@ class _PosDiscountDialogState extends ConsumerState<_PosDiscountDialog> {
     final reason = _reasonController.text.trim();
     PosDiscountPolicy? policy;
     if (_predefined) {
-      final selectedItem = _selectedItemKey == null ? null : cart.items[_selectedItemKey];
+      final selectedItem =
+          _selectedItemKey == null ? null : cart.items[_selectedItemKey];
       if (_scope == _DiscountScope.item && selectedItem == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Select a cart item first.')),
@@ -261,7 +267,9 @@ class _PosDiscountDialogState extends ConsumerState<_PosDiscountDialog> {
           .toList(growable: false);
       final query = PosDiscountCatalogQuery(
         scope: _scope == _DiscountScope.item ? 'LINE' : 'ORDER',
-        variantId: _scope == _DiscountScope.item ? selectedItem?.product.variantId : null,
+        variantId: _scope == _DiscountScope.item
+            ? selectedItem?.product.variantId
+            : null,
         variantIds: _scope == _DiscountScope.item ? const [] : cartVariantIds,
         customerId: cart.selectedCustomer?.customerId,
         quantity: _scope == _DiscountScope.item
@@ -270,7 +278,8 @@ class _PosDiscountDialogState extends ConsumerState<_PosDiscountDialog> {
         cartSubtotal: cart.subtotal.toDouble(),
       );
       final catalog = ref.read(posDiscountCatalogProvider(query)).valueOrNull;
-      final policies = catalog?.discounts.where((x) => x.id == _selectedPolicyId);
+      final policies =
+          catalog?.discounts.where((x) => x.id == _selectedPolicyId);
       policy = policies?.firstOrNull;
     }
     if (_predefined && policy == null) {
@@ -289,10 +298,9 @@ class _PosDiscountDialogState extends ConsumerState<_PosDiscountDialog> {
         valueType: _valueType,
         value: _predefined ? policy!.predefinedValue : value,
         isLineDiscount: _scope == _DiscountScope.item,
-        targetVariantId:
-            _scope == _DiscountScope.item
-                ? cart.items[_selectedItemKey]?.product.variantId
-                : null,
+        targetVariantId: _scope == _DiscountScope.item
+            ? cart.items[_selectedItemKey]?.product.variantId
+            : null,
         reason: reason.isEmpty ? null : reason,
         predefined: _predefined,
       );
@@ -678,20 +686,21 @@ class _DiscountForm extends ConsumerWidget {
                     : 'No applicable order discount policies.')
               else if (predefined)
                 DropdownButtonFormField<PosDiscountPolicy>(
-                key: ValueKey('${valueType.name}-${selectedPolicy?.id}'),
-                initialValue: selectedPolicy,
-                decoration: const InputDecoration(labelText: 'Discount Policy'),
-                items: policies
-                    .map((policy) => DropdownMenuItem(
-                          value: policy,
-                          child: Text(
-                              '${policy.name} (max ${policy.absoluteValueLimit})'),
-                        ))
-                    .toList(),
-                onChanged: onPolicyChanged,
-                validator: (value) =>
-                    value == null ? 'Select a discount policy' : null,
-              ),
+                  key: ValueKey('${valueType.name}-${selectedPolicy?.id}'),
+                  initialValue: selectedPolicy,
+                  decoration:
+                      const InputDecoration(labelText: 'Discount Policy'),
+                  items: policies
+                      .map((policy) => DropdownMenuItem(
+                            value: policy,
+                            child: Text(
+                                '${policy.name} (max ${policy.absoluteValueLimit})'),
+                          ))
+                      .toList(),
+                  onChanged: onPolicyChanged,
+                  validator: (value) =>
+                      value == null ? 'Select a discount policy' : null,
+                ),
               if (scope == _DiscountScope.item) ...[
                 const SizedBox(height: TenantAdminSpacing.lg),
                 _ItemPicker(
@@ -771,10 +780,11 @@ class _DiscountForm extends ConsumerWidget {
                 },
               ),
               const SizedBox(height: TenantAdminSpacing.lg),
-              FilledButton.icon(
+              PosPrimaryActionButton(
                 onPressed: cart.hasItems && !submitting ? onApply : null,
-                icon: const Icon(Icons.discount_outlined),
-                label: Text(submitting ? 'Applying…' : 'Apply Discount'),
+                icon: Icons.discount_outlined,
+                isLoading: submitting,
+                label: 'Apply Discount',
               ),
             ],
           ),

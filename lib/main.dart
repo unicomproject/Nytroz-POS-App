@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
@@ -11,6 +12,9 @@ import 'flavors/development/tenant_admin_dev_api_interceptor.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (kDebugMode) {
+    debugPrint('[startup] main() executed; starting cold-start bootstrap.');
+  }
 
   const useDevApiFallback = bool.fromEnvironment(
     'USE_DEV_API_FALLBACK',

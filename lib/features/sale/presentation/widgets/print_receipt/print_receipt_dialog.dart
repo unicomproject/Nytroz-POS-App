@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../../../core/access/pos_permission_access.dart';
 import '../../../../../shared/pos_session/pos_session_provider.dart';
@@ -13,7 +14,7 @@ import 'print_receipt_actions.dart';
 /// Opens the receipt preview + print action as a modal on the Payment Success
 /// screen (no route navigation).
 Future<void> showPrintReceiptDialog(BuildContext context, WidgetRef ref) {
-  return showDialog<void>(
+  return showAppDialog<void>(
     context: context,
     barrierDismissible: true,
     barrierColor: Colors.black.withValues(alpha: 0.45),

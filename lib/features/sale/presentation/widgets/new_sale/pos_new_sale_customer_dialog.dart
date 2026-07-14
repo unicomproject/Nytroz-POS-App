@@ -5,6 +5,8 @@ import 'package:nytroz_pos/core/network/dio_provider.dart';
 import 'package:nytroz_pos/features/device_activation/presentation/providers/device_activation_provider.dart';
 import 'package:nytroz_pos/features/sale/data/datasources/pos_customer_remote_datasource.dart';
 import 'package:nytroz_pos/features/sale/domain/entities/pos_customer.dart';
+import 'package:nytroz_pos/features/sale/presentation/widgets/payment/pos_bottom_action_buttons.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
@@ -15,7 +17,7 @@ Future<PosCustomer?> showPosNewSaleCustomerDialog({
 }) {
   final container = ProviderScope.containerOf(context, listen: false);
 
-  return showDialog<PosCustomer>(
+  return showAppDialog<PosCustomer>(
     context: context,
     builder: (_) => UncontrolledProviderScope(
       container: container,
@@ -271,18 +273,13 @@ class _PosNewSaleCustomerDialogState
             },
           ),
           const SizedBox(height: TenantAdminSpacing.md),
-          FilledButton.icon(
+          PosPrimaryActionButton(
             onPressed: widget.canCreateCustomer && !_isCreating
                 ? _createCustomer
                 : null,
-            icon: _isCreating
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.person_add_alt_1_rounded),
-            label: Text(_isCreating ? 'Saving...' : 'Create Customer'),
+            icon: Icons.person_add_alt_1_rounded,
+            isLoading: _isCreating,
+            label: 'Create Customer',
           ),
         ],
       ),

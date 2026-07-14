@@ -12,11 +12,16 @@ import '../../data/mappers/auth_mapper.dart';
 import '../../domain/entities/auth_session.dart';
 
 class AuthSessionNotifier extends StateNotifier<AuthSession?> {
-  AuthSessionNotifier(this._storage) : super(null) {
+  AuthSessionNotifier(
+    this._storage, {
+    void Function()? onHydrated,
+  })  : _onHydrated = onHydrated,
+        super(null) {
     _restoreSession();
   }
 
   final AuthSessionStorage _storage;
+  final void Function()? _onHydrated;
   Future<AuthSession?>? _refreshInFlight;
 
   Future<void> setSession(AuthSession session) async {
@@ -115,9 +120,13 @@ class AuthSessionNotifier extends StateNotifier<AuthSession?> {
         error: error,
         stackTrace: stackTrace,
       );
+    } finally {
+      _onHydrated?.call();
     }
   }
 }
+
+final authSessionHydratedProvider = StateProvider<bool>((ref) => false);
 
 final authSessionStorageProvider = Provider<AuthSessionStorage>((ref) {
   return AuthSessionStorage(ref.watch(secureStorageProvider));
@@ -125,7 +134,16 @@ final authSessionStorageProvider = Provider<AuthSessionStorage>((ref) {
 
 final authSessionProvider =
     StateNotifierProvider<AuthSessionNotifier, AuthSession?>(
-  (ref) => AuthSessionNotifier(ref.watch(authSessionStorageProvider)),
+  (ref) => AuthSessionNotifier(
+    ref.watch(authSessionStorageProvider),
+    onHydrated: () {
+      ref.read(authSessionHydratedProvider.notifier).state = true;
+      developer.log(
+        'Auth session hydration finished.',
+        name: 'auth.session',
+      );
+    },
+  ),
 );
 
 final authHeaderSyncProvider = Provider<void>((ref) {
