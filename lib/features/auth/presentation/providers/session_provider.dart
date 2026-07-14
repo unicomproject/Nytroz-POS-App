@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/storage/secure_storage_provider.dart';
 import '../../data/datasources/auth_session_storage.dart';
+import '../../data/mappers/auth_mapper.dart';
 import '../../domain/entities/auth_session.dart';
 
 class AuthSessionNotifier extends StateNotifier<AuthSession?> {
@@ -19,6 +22,7 @@ class AuthSessionNotifier extends StateNotifier<AuthSession?> {
 
   final AuthSessionStorage _storage;
   final void Function()? _onHydrated;
+  Future<AuthSession?>? _refreshInFlight;
 
   Future<void> setSession(AuthSession session) async {
     state = session;
@@ -32,6 +36,69 @@ class AuthSessionNotifier extends StateNotifier<AuthSession?> {
   Future<void> clear() async {
     await _storage.clear();
     state = null;
+  }
+
+  Future<AuthSession?> ensureFreshSession(Dio dio) async {
+    final current = state;
+    if (current == null) {
+      return null;
+    }
+
+    if (!current.isExpired) {
+      dio.options.headers['Authorization'] = 'Bearer ${current.accessToken}';
+      return current;
+    }
+
+    if (!current.canRefresh) {
+      dio.options.headers.remove('Authorization');
+      await clear();
+      return null;
+    }
+
+    return _refreshInFlight ??= _refreshExpiredSession(dio, current);
+  }
+
+  Future<AuthSession?> _refreshExpiredSession(
+    Dio dio,
+    AuthSession expiredSession,
+  ) async {
+    try {
+      developer.log(
+        'Access token expired; refreshing before protected API call.',
+        name: 'auth.session',
+      );
+      final response = await dio.post<Map<String, dynamic>>(
+        ApiEndpoints.tenantRefresh,
+        data: {'refreshToken': expiredSession.refreshToken},
+        options: Options(headers: const {'Authorization': null}),
+      );
+      final refreshed = authSessionFromJson(response.data ?? const {});
+      await setSession(refreshed);
+      dio.options.headers['Authorization'] = 'Bearer ${refreshed.accessToken}';
+      return refreshed;
+    } on DioException catch (error, stackTrace) {
+      developer.log(
+        'Access token refresh failed. status=${error.response?.statusCode ?? 'none'}',
+        name: 'auth.session',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (_isRefreshRejected(error.response?.statusCode)) {
+        dio.options.headers.remove('Authorization');
+        await clear();
+      }
+      return null;
+    } catch (error, stackTrace) {
+      developer.log(
+        'Access token refresh failed unexpectedly.',
+        name: 'auth.session',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return null;
+    } finally {
+      _refreshInFlight = null;
+    }
   }
 
   Future<void> _restoreSession() async {
@@ -105,3 +172,6 @@ final authHeaderSyncProvider = Provider<void>((ref) {
     applyHeader(next);
   });
 });
+
+bool _isRefreshRejected(int? statusCode) =>
+    statusCode == 400 || statusCode == 401 || statusCode == 403;

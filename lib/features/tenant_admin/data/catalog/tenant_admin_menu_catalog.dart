@@ -8,7 +8,7 @@ const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
     route: '/tenant-admin/dashboard',
     iconKey: 'dashboard',
     featureCode: TenantAdminFeatureCodes.dashboard,
-    permissionCode: TenantAdminPermissionCodes.tenantAdminDashboardView,
+    permissionCode: TenantAdminPermissionCodes.tenantDashboardView,
     visible: true,
     order: 1,
   ),

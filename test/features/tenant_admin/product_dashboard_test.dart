@@ -516,7 +516,7 @@ void main() {
 
         ),
 
-        '/tenant-admin/stock?filter=low-stock',
+        '/tenant-admin/stock/current?stockStatus=LOW_STOCK',
 
       );
 
