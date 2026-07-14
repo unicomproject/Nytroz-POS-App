@@ -139,7 +139,7 @@ class _BrandFormDialogState extends State<BrandFormDialog> {
               ),
               const SizedBox(height: TenantAdminSpacing.md),
               DropdownButtonFormField<String>(
-                value: _status,
+                initialValue: _status,
                 decoration: const InputDecoration(
                   labelText: 'Status',
                   border: OutlineInputBorder(),

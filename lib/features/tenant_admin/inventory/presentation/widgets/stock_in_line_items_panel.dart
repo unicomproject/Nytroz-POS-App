@@ -229,7 +229,7 @@ class _StockInLineEditorState extends ConsumerState<_StockInLineEditor> {
               }
 
               return DropdownButtonFormField<String?>(
-                value: widget.line.productVariantId,
+                initialValue: widget.line.productVariantId,
                 decoration: InputDecoration(
                   labelText: 'Variant *',
                   border: const OutlineInputBorder(),
