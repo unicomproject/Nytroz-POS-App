@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
@@ -70,8 +71,7 @@ class UserListPanel extends ConsumerWidget {
                     ? TenantAdminPrimaryButton(
                         label: 'Add New User',
                         icon: Icons.add,
-                        onPressed: () =>
-                            context.go('/tenant-admin/staff/add'),
+                        onPressed: () => context.go('/tenant-admin/staff/add'),
                       )
                     : statusFilter != UserStatusFilter.all
                         ? TenantAdminSecondaryButton(
@@ -127,7 +127,7 @@ class UserListPanel extends ConsumerWidget {
     WidgetRef ref,
     TenantUser user,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete user'),
@@ -251,8 +251,7 @@ class _PaginationFooter extends StatelessWidget {
           ),
           Text('$page / $totalPages'),
           IconButton(
-            onPressed:
-                page < totalPages ? () => onPageChanged(page + 1) : null,
+            onPressed: page < totalPages ? () => onPageChanged(page + 1) : null,
             icon: const Icon(Icons.chevron_right, size: 18),
           ),
         ],

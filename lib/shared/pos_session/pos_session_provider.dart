@@ -17,7 +17,7 @@ final posSessionContextProvider = Provider<PosSessionContext>((ref) {
   final tillName = deviceContext?.tillName.trim();
 
   return PosSessionContext(
-    brandName: 'Nytroz',
+    brandName: 'OneVerz',
     brandSubtitle: 'POS',
     outletName: _valueOrPending(outletName, 'Outlet pending'),
     outletLocation: '',

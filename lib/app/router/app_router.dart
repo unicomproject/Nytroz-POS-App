@@ -23,6 +23,7 @@ final routerRefreshProvider = Provider<RouterRefreshNotifier>((ref) {
   final notifier = RouterRefreshNotifier();
   ref.onDispose(notifier.dispose);
   ref.listen(authSessionProvider, (_, __) => notifier.refresh());
+  ref.listen(authSessionHydratedProvider, (_, __) => notifier.refresh());
   ref.listen(posSessionBootstrapProvider, (_, __) => notifier.refresh());
   ref.listen(postLoginRouteProvider, (_, __) => notifier.refresh());
   ref.listen(deviceActivationProvider, (previous, next) {
@@ -44,7 +45,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
   final router = GoRouter(
     refreshListenable: refresh,
-    initialLocation: '/tenant-login',
+    initialLocation: posSessionBootRoute,
+    overridePlatformDefaultLocation: !kIsWeb,
     routes: [
       ...authRoutes(),
       GoRoute(
@@ -59,79 +61,101 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final session = ref.read(authSessionProvider);
       final isAuthenticated = session?.isAuthenticated ?? false;
+      final authSessionHydrated = ref.read(authSessionHydratedProvider);
       final bootstrap = ref.read(posSessionBootstrapProvider);
       final authenticatedInitialRoute = ref.read(postLoginRouteProvider).path;
       final path = state.uri.path;
-      final isAuthRoute = path == '/tenant-login' ||
-          path.startsWith('/tenant-admin/payment') ||
-          path.startsWith('/tenant-admin/setup');
-      final isTenantAdminRoute = path.startsWith('/tenant-admin');
-      final isProtectedPosRoute = path == posSessionBootRoute ||
-          path == '/device-activation' ||
-          path == '/open-till' ||
-          path == '/till-open' ||
-          path.startsWith('/pos/');
+      final destination = resolveAppRedirect(
+        path: path,
+        authSessionHydrated: authSessionHydrated,
+        isAuthenticated: isAuthenticated,
+        bootstrapReady: bootstrap.isReady,
+        authenticatedInitialRoute: authenticatedInitialRoute,
+      );
 
-      if (isTenantAdminRoute && !isAuthRoute && !isAuthenticated) {
-        return '/tenant-login';
+      if (kDebugMode && destination != null && destination != path) {
+        debugPrint(
+          '[startup] redirect path=$path hydrated=$authSessionHydrated '
+          'authenticated=$isAuthenticated bootstrapReady=${bootstrap.isReady} '
+          'destination=$destination',
+        );
       }
-
-      if (isProtectedPosRoute && !isAuthenticated) {
-        return '/tenant-login';
-      }
-
-      if (isAuthenticated && !bootstrap.isReady) {
-        if (path != posSessionBootRoute) {
-          return posSessionBootRoute;
-        }
-
-        return null;
-      }
-
-      if (path == posSessionBootRoute && bootstrap.isReady) {
-        return authenticatedInitialRoute;
-      }
-
-      if (path == '/tenant-login' && isAuthenticated) {
-        return bootstrap.isReady
-            ? authenticatedInitialRoute
-            : posSessionBootRoute;
-      }
-
-      if (bootstrap.isReady && session != null) {
-        if ((path == '/device-activation' ||
-                path == '/pos/device-activation') &&
-            authenticatedInitialRoute != PostLoginRoute.deviceActivation.path) {
-          return authenticatedInitialRoute;
-        }
-
-        if ((path == '/open-till' ||
-                path == '/till-open' ||
-                path == '/pos/open-till') &&
-            authenticatedInitialRoute == PostLoginRoute.posHome.path) {
-          return authenticatedInitialRoute;
-        }
-
-        if (path.startsWith('/pos/') &&
-            authenticatedInitialRoute != PostLoginRoute.posHome.path &&
-            path != authenticatedInitialRoute) {
-          return authenticatedInitialRoute;
-        }
-
-        if (path.startsWith('/tenant-admin') &&
-            authenticatedInitialRoute !=
-                PostLoginRoute.tenantAdminDashboard.path &&
-            !path.startsWith('/tenant-admin/payment') &&
-            !path.startsWith('/tenant-admin/setup') &&
-            authenticatedInitialRoute.startsWith('/pos/')) {
-          return authenticatedInitialRoute;
-        }
-      }
-
-      return null;
+      return destination;
     },
   );
 
   ref.onDispose(router.dispose);
   return router;
 });
+
+@visibleForTesting
+String? resolveAppRedirect({
+  required String path,
+  required bool authSessionHydrated,
+  required bool isAuthenticated,
+  required bool bootstrapReady,
+  required String authenticatedInitialRoute,
+}) {
+  final isPublicExternalRoute = path.startsWith('/tenant-admin/payment') ||
+      path.startsWith('/tenant-admin/setup');
+  final isAuthRoute = path == '/tenant-login' || isPublicExternalRoute;
+  final isTenantAdminRoute = path.startsWith('/tenant-admin');
+  final isProtectedPosRoute = path == posSessionBootRoute ||
+      path == '/device-activation' ||
+      path == '/open-till' ||
+      path == '/till-open' ||
+      path.startsWith('/pos/');
+
+  if (!authSessionHydrated && !isPublicExternalRoute) {
+    return path == posSessionBootRoute ? null : posSessionBootRoute;
+  }
+
+  if (isTenantAdminRoute && !isAuthRoute && !isAuthenticated) {
+    return '/tenant-login';
+  }
+
+  if (isProtectedPosRoute && !isAuthenticated) {
+    return '/tenant-login';
+  }
+
+  if (isAuthenticated && !bootstrapReady) {
+    return path == posSessionBootRoute ? null : posSessionBootRoute;
+  }
+
+  if (path == posSessionBootRoute && bootstrapReady) {
+    return authenticatedInitialRoute;
+  }
+
+  if (path == '/tenant-login' && isAuthenticated) {
+    return bootstrapReady ? authenticatedInitialRoute : posSessionBootRoute;
+  }
+
+  if (bootstrapReady && isAuthenticated) {
+    if ((path == '/device-activation' || path == '/pos/device-activation') &&
+        authenticatedInitialRoute != PostLoginRoute.deviceActivation.path) {
+      return authenticatedInitialRoute;
+    }
+
+    if ((path == '/open-till' ||
+            path == '/till-open' ||
+            path == '/pos/open-till') &&
+        authenticatedInitialRoute == PostLoginRoute.posHome.path) {
+      return authenticatedInitialRoute;
+    }
+
+    if (path.startsWith('/pos/') &&
+        authenticatedInitialRoute != PostLoginRoute.posHome.path &&
+        path != authenticatedInitialRoute) {
+      return authenticatedInitialRoute;
+    }
+
+    if (path.startsWith('/tenant-admin') &&
+        authenticatedInitialRoute != PostLoginRoute.tenantAdminDashboard.path &&
+        !isPublicExternalRoute &&
+        authenticatedInitialRoute.startsWith('/pos/')) {
+      return authenticatedInitialRoute;
+    }
+  }
+
+  return null;
+}

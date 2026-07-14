@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../../auth/presentation/providers/session_provider.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
@@ -165,7 +166,7 @@ class _AddTillScreenState extends ConsumerState<AddTillScreen> {
     CreatedTill till,
     String outletName,
   ) {
-    return showDialog<void>(
+    return showAppDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (context) {

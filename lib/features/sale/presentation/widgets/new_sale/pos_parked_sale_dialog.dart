@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_parked_sale_provider.dart';
+import 'package:nytroz_pos/features/sale/presentation/widgets/payment/pos_bottom_action_buttons.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
@@ -11,7 +13,7 @@ Future<PosParkedSale?> showPosParkedSaleDialog({
 }) {
   final container = ProviderScope.containerOf(context, listen: false);
 
-  return showDialog<PosParkedSale>(
+  return showAppDialog<PosParkedSale>(
     context: context,
     builder: (_) => UncontrolledProviderScope(
       container: container,
@@ -211,7 +213,7 @@ class _ParkedSaleTile extends ConsumerWidget {
             Row(
               children: [
                 Expanded(
-                  child: FilledButton.icon(
+                  child: PosPrimaryActionButton(
                     onPressed: () async {
                       final recalled = await ref
                           .read(posParkedSaleProvider.notifier)
@@ -220,8 +222,8 @@ class _ParkedSaleTile extends ConsumerWidget {
                         Navigator.of(context).pop(recalled);
                       }
                     },
-                    icon: const Icon(Icons.restore_rounded),
-                    label: const Text('Recall'),
+                    icon: Icons.restore_rounded,
+                    label: 'Recall',
                   ),
                 ),
                 const SizedBox(width: TenantAdminSpacing.sm),
@@ -240,7 +242,7 @@ class _ParkedSaleTile extends ConsumerWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(

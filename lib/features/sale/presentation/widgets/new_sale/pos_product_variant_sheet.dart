@@ -6,6 +6,8 @@ import 'package:nytroz_pos/features/auth/presentation/providers/session_provider
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/sale/presentation/widgets/payment/pos_bottom_action_buttons.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
@@ -15,7 +17,7 @@ Future<void> showPosProductVariantSheet({
   required PosCatalogProductSummary summary,
   PosNewSaleCartItem? existingCartItem,
 }) {
-  return showDialog<void>(
+  return showAppDialog<void>(
     context: context,
     barrierDismissible: true,
     barrierColor: Colors.black.withValues(alpha: 0.42),
@@ -424,14 +426,11 @@ class _PosProductVariantSheetState
           ),
         ],
         const SizedBox(height: TenantAdminSpacing.lg),
-        FilledButton(
+        PosPrimaryActionButton(
           onPressed: canSubmit && matchedVariant != null
               ? () => _submit(detail, matchedVariant)
               : null,
-          style: FilledButton.styleFrom(
-            padding:
-                const EdgeInsets.symmetric(vertical: TenantAdminSpacing.md),
-          ),
+          verticalPadding: TenantAdminSpacing.md,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

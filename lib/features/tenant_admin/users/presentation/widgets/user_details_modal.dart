@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
@@ -12,7 +13,7 @@ import '../utils/user_api_errors.dart';
 import 'user_status_badge.dart';
 
 Future<void> showUserDetailsModal(BuildContext context, String userId) {
-  return showDialog<void>(
+  return showAppDialog<void>(
     context: context,
     builder: (context) => UserDetailsModal(userId: userId),
   );
@@ -188,7 +189,7 @@ class _UserDetailsContent extends ConsumerWidget {
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete user'),

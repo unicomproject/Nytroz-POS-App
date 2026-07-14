@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nytroz_pos/features/sale/presentation/widgets/payment/pos_bottom_action_buttons.dart';
 import 'package:flutter/services.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -414,61 +415,48 @@ class _OpenTillSubmitButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: buttonHeight,
-      child: FilledButton(
+      child: PosPrimaryActionButton(
         onPressed: isSubmitting || !isEnabled ? null : onSubmit,
-        style: FilledButton.styleFrom(
-          backgroundColor: const Color(0xFF034BFF),
-          disabledBackgroundColor:
-              const Color(0xFF034BFF).withValues(alpha: 0.45),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-        ),
-        child: isSubmitting
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : Row(
+        isLoading: isSubmitting,
+        minimumHeight: buttonHeight,
+        horizontalPadding: 16,
+        verticalPadding: 0,
+        borderRadius: TenantAdminRadius.sm,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.lock_outline, size: 18),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.lock_outline, size: 18),
-                  const SizedBox(width: 10),
-                  Flexible(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Open Till',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Till will be opened and ready for transactions.',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white.withValues(alpha: 0.92),
-                          ),
-                        ),
-                      ],
+                  const Text(
+                    'Open Till',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Till will be opened and ready for transactions.',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withValues(alpha: 0.92),
                     ),
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
       ),
     );
   }

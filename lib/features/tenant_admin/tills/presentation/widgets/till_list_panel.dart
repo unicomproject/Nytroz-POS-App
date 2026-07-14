@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
@@ -437,7 +438,7 @@ Future<void> _showFilterSheet(
   WidgetRef ref,
   TillStatusFilter currentFilter,
 ) {
-  return showModalBottomSheet<void>(
+  return showAppModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
     builder: (context) {

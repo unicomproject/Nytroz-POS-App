@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../../core/access/tenant_admin_access_codes.dart';
 import '../../../../core/network/dio_error_message.dart';
@@ -1224,7 +1225,7 @@ Future<void> _showUserDetailsDialog(
   required bool canEdit,
   required bool canDelete,
 }) {
-  return showDialog<void>(
+  return showAppDialog<void>(
     context: context,
     builder: (context) => _UserDetailsDialog(
       user: user,
@@ -1602,7 +1603,8 @@ const _referenceUsers = [
   ),
 ];
 
-final _productListSearchProvider = StateProvider.autoDispose<String>((ref) => '');
+final _productListSearchProvider =
+    StateProvider.autoDispose<String>((ref) => '');
 final _productListPageProvider = StateProvider.autoDispose<int>((ref) => 1);
 
 final _tenantAdminProductsProvider =
@@ -1620,9 +1622,8 @@ final _tenantAdminProductsProvider =
   );
 
   final body = _asStringKeyMap(response.data);
-  final payload = body.containsKey('data')
-      ? _asStringKeyMap(body['data'])
-      : body;
+  final payload =
+      body.containsKey('data') ? _asStringKeyMap(body['data']) : body;
   return _TenantAdminProductPage.fromJson(payload);
 });
 
@@ -1721,12 +1722,10 @@ class _TenantAdminProductSummary {
   factory _TenantAdminProductSummary.fromCounts(
     List<_TenantAdminProductItem> items,
   ) {
-    final active = items
-        .where((item) => item.status.toUpperCase() == 'ACTIVE')
-        .length;
-    final inactive = items
-        .where((item) => item.status.toUpperCase() == 'INACTIVE')
-        .length;
+    final active =
+        items.where((item) => item.status.toUpperCase() == 'ACTIVE').length;
+    final inactive =
+        items.where((item) => item.status.toUpperCase() == 'INACTIVE').length;
     final categories = items
         .map((item) => item.categoryName)
         .whereType<String>()
@@ -1996,7 +1995,8 @@ class _TopSellingProductsPanel extends StatelessWidget {
           const SizedBox(height: TenantAdminSpacing.lg),
           const TenantAdminEmptyState(
             title: 'No sales data yet',
-            message: 'Top selling products will appear here once sales are recorded.',
+            message:
+                'Top selling products will appear here once sales are recorded.',
             icon: Icons.trending_up,
           ),
         ],
@@ -2141,9 +2141,8 @@ class _ProductsDataTableCard extends ConsumerWidget {
     final end =
         calculatedEnd > page.totalCount ? page.totalCount : calculatedEnd;
     final currentPage = ref.watch(_productListPageProvider);
-    final totalPages = page.pageSize == 0
-        ? 0
-        : (page.totalCount / page.pageSize).ceil();
+    final totalPages =
+        page.pageSize == 0 ? 0 : (page.totalCount / page.pageSize).ceil();
 
     return Container(
       decoration: _cardDecoration(),
@@ -2226,7 +2225,9 @@ class _ProductsDataTableCard extends ConsumerWidget {
                                             '/tenant-admin/products/${product.id}/edit',
                                           ),
                                         ),
-                                      if (canView || canStatus || canDelete) ...[
+                                      if (canView ||
+                                          canStatus ||
+                                          canDelete) ...[
                                         const SizedBox(
                                           width: TenantAdminSpacing.sm,
                                         ),

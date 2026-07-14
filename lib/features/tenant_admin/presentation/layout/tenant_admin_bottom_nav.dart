@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../domain/entities/tenant_admin_menu_item.dart';
 
@@ -84,7 +85,7 @@ class TenantAdminBottomNav extends StatelessWidget {
 }
 
 void _showMoreMenu(BuildContext context, List<TenantAdminMenuItem> items) {
-  showModalBottomSheet<void>(
+  showAppModalBottomSheet<void>(
     context: context,
     builder: (context) {
       return SafeArea(

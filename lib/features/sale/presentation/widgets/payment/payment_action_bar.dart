@@ -54,35 +54,10 @@ class _PrimaryBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: PosBottomActionSizes.minHeight,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [TenantAdminColors.navySoft, TenantAdminColors.primary],
-          ),
-          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-          boxShadow: TenantAdminShadows.card,
-        ),
-        child: FilledButton.icon(
-          onPressed: onPressed,
-          style: FilledButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            ),
-          ),
-          icon: const Icon(Icons.shopping_cart_checkout_rounded, size: 18),
-          label: const Text(
-            'Back to Cart',
-            style: TextStyle(fontWeight: FontWeight.w800),
-          ),
-        ),
-      ),
+    return PosPrimaryActionButton(
+      label: 'Back to Cart',
+      icon: Icons.shopping_cart_checkout_rounded,
+      onPressed: onPressed,
     );
   }
 }

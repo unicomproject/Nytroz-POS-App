@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../domain/entities/outlet.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
@@ -245,7 +246,7 @@ class OutletTable extends ConsumerWidget {
     WidgetRef ref,
     Outlet outlet,
   ) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
