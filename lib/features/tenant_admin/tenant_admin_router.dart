@@ -15,9 +15,22 @@ import 'outlets/presentation/screens/edit_outlet_screen.dart';
 import 'outlets/presentation/screens/outlet_details_screen.dart';
 import 'outlets/presentation/screens/outlet_list_screen.dart';
 import 'tills/presentation/screens/add_till_screen.dart';
+import 'tills/presentation/screens/edit_till_screen.dart';
+import 'tills/presentation/screens/till_details_screen.dart';
 import 'tills/presentation/screens/till_list_screen.dart';
 import 'users/presentation/screens/add_edit_user_screen.dart';
 import 'users/presentation/screens/user_list_screen.dart';
+import 'products/presentation/dashboard/product_dashboard_page.dart';
+import 'products/presentation/navigation/products_coming_soon_screen.dart';
+import 'products/presentation/navigation/products_route_guard.dart';
+import 'products/presentation/navigation/products_sidebar_routes.dart';
+import 'products/presentation/screens/add_product_screen.dart';
+import 'products/presentation/screens/product_detail_screen.dart';
+import 'products/presentation/screens/product_list_screen.dart';
+import 'brands/presentation/screens/brand_list_screen.dart';
+import 'inventory/presentation/navigation/inventory_routes.dart';
+import 'inventory/presentation/screens/current_stock_screen.dart';
+import 'inventory/presentation/screens/stock_in_screen.dart';
 import '../auth/presentation/providers/session_provider.dart';
 import 'presentation/providers/tenant_admin_access_provider.dart';
 import 'presentation/providers/tenant_admin_context_provider.dart';
@@ -77,6 +90,10 @@ List<RouteBase> tenantAdminRoutes(Ref ref) {
         GoRoute(
           path: '/tenant-admin/roles',
           redirect: (context, state) => '/tenant-admin/roles-permissions',
+        ),
+        GoRoute(
+          path: InventoryRoutes.stockRoot,
+          redirect: (context, state) => InventoryRoutes.currentStock,
         ),
         ...tenantAdminRouteDefinitions.map(
           (definition) => _tenantAdminModuleRoute(ref, definition),
@@ -180,6 +197,24 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return const AddTillScreen();
   }
 
+  if (definition.path == '/tenant-admin/tills/:id/edit') {
+    final tillId = state.pathParameters['id'];
+    if (tillId == null || tillId.isEmpty) {
+      return const TillListScreen();
+    }
+
+    return EditTillScreen(tillId: tillId);
+  }
+
+  if (definition.path == '/tenant-admin/tills/:id') {
+    final tillId = state.pathParameters['id'];
+    if (tillId == null || tillId.isEmpty) {
+      return const TillListScreen();
+    }
+
+    return TillDetailsScreen(tillId: tillId);
+  }
+
   if (definition.path == '/tenant-admin/staff') {
     return const UserListScreen();
   }
@@ -195,6 +230,57 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
   if (definition.path == '/tenant-admin/staff/:id') {
     // User Details is a modal launched from the list, not a routed screen.
     return const UserListScreen();
+  }
+
+  if (definition.path == ProductsSidebarRoutes.dashboard) {
+    return const ProductDashboardPage();
+  }
+
+  if (definition.path == ProductsSidebarRoutes.list) {
+    return const ProductListScreen();
+  }
+
+  if (definition.path == ProductsSidebarRoutes.add) {
+    return const AddProductScreen();
+  }
+
+  if (definition.path == ProductsSidebarRoutes.categories) {
+    return ProductsComingSoonScreen(
+      title: definition.title,
+      permissionCode: definition.permissionCode,
+    );
+  }
+
+  if (definition.path == ProductsSidebarRoutes.brands) {
+    return const BrandListScreen();
+  }
+
+  if (definition.path == ProductsSidebarRoutes.variantTemplates) {
+    return ProductsComingSoonScreen(
+      title: definition.title,
+      permissionCode: definition.permissionCode,
+    );
+  }
+
+  if (definition.path == InventoryRoutes.currentStock) {
+    return const CurrentStockScreen();
+  }
+
+  if (definition.path == InventoryRoutes.stockIn) {
+    return const StockInScreen();
+  }
+
+  if (definition.path == '/tenant-admin/products/:id') {
+    return ProductDetailScreen(
+      productId: state.pathParameters['id'] ?? '',
+    );
+  }
+
+  if (definition.path == '/tenant-admin/products/:id/edit') {
+    return ProductDetailScreen(
+      productId: state.pathParameters['id'] ?? '',
+      isEditRoute: true,
+    );
   }
 
   return TenantAdminPlaceholderScreen(
@@ -306,6 +392,43 @@ bool _canAccessRoute(
   if (definition.path == '/tenant-admin/staff' ||
       definition.path == '/tenant-admin/staff/:id') {
     return accessChecker.canAccessUserModule();
+  }
+
+  if (definition.path == ProductsSidebarRoutes.dashboard) {
+    return accessChecker.canViewProductDashboard();
+  }
+
+  if (definition.path == ProductsSidebarRoutes.list ||
+      definition.path == ProductsSidebarRoutes.add ||
+      definition.path == ProductsSidebarRoutes.categories ||
+      definition.path == ProductsSidebarRoutes.brands ||
+      definition.path == ProductsSidebarRoutes.variantTemplates) {
+    return ProductsRouteGuard.canAccessPath(accessChecker, definition.path);
+  }
+
+  if (definition.path == '/tenant-admin/products') {
+    return accessChecker.canViewProductListNav();
+  }
+
+  if (definition.path == '/tenant-admin/products/add') {
+    return accessChecker.canCreateProductNav();
+  }
+
+  if (definition.path == '/tenant-admin/products/:id/edit') {
+    return accessChecker.canAccessProductModule() &&
+        accessChecker.canUpdateProduct();
+  }
+
+  if (definition.path == '/tenant-admin/products/:id') {
+    return accessChecker.canAccessProductModule();
+  }
+
+  if (definition.path == InventoryRoutes.currentStock) {
+    return accessChecker.canAccessCurrentStockPage();
+  }
+
+  if (definition.path == InventoryRoutes.stockIn) {
+    return accessChecker.canAccessStockInPage();
   }
 
   final menuItem = _findMenuItem(items, definition.menuKey);

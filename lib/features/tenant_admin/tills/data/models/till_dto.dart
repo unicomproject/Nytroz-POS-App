@@ -128,6 +128,71 @@ class TillListResultDto {
   final int totalCount;
 }
 
+class TillDetailDto {
+  const TillDetailDto({
+    required this.id,
+    required this.outletId,
+    required this.outletName,
+    required this.outletCode,
+    required this.name,
+    required this.code,
+    required this.status,
+    required this.deviceStatus,
+    required this.needsAttention,
+    this.lastActiveAt,
+    this.deviceName,
+    this.printerName,
+    this.scannerName,
+    this.cashDrawerName,
+    this.cardReaderName,
+    this.internalNote,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  factory TillDetailDto.fromJson(Map<String, dynamic> json) {
+    return TillDetailDto(
+      id: json['tillId']?.toString() ?? json['id']?.toString() ?? '',
+      outletId: json['outletId']?.toString() ?? '',
+      outletName: json['outletName'] as String? ?? '',
+      outletCode: json['outletCode'] as String? ?? '',
+      name: json['tillName'] as String? ?? json['name'] as String? ?? '',
+      code: json['tillCode'] as String? ?? json['code'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      deviceStatus: json['deviceStatus'] as String? ?? '',
+      needsAttention: json['needsAttention'] == true,
+      lastActiveAt: _dateValue(json['lastActiveAt']),
+      deviceName: json['deviceName'] as String?,
+      printerName: json['printerName'] as String?,
+      scannerName: json['scannerName'] as String?,
+      cashDrawerName: json['cashDrawerName'] as String?,
+      cardReaderName: json['cardReaderName'] as String?,
+      internalNote: json['internalNote'] as String?,
+      createdAt: _dateValue(json['createdAt']),
+      updatedAt: _dateValue(json['updatedAt']),
+    );
+  }
+
+  final String id;
+  final String outletId;
+  final String outletName;
+  final String outletCode;
+  final String name;
+  final String code;
+  final String status;
+  final String deviceStatus;
+  final bool needsAttention;
+  final DateTime? lastActiveAt;
+  final String? deviceName;
+  final String? printerName;
+  final String? scannerName;
+  final String? cashDrawerName;
+  final String? cardReaderName;
+  final String? internalNote;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+}
+
 class CreatedTillDto {
   const CreatedTillDto({
     required this.id,

@@ -140,6 +140,19 @@ class _AddTillScreenState extends ConsumerState<AddTillScreen> {
           ),
         );
       }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              tillUnexpectedErrorMessage(
+                error,
+                fallback: 'Failed to create till. Please try again.',
+              ),
+            ),
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _submitting = false);

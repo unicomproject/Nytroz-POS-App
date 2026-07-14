@@ -37,11 +37,13 @@ void main() {
     test('maps form fields to backend create payload', () {
       const dto = CreateOutletRequestDto(
         outletName: 'New Outlet',
-        outletCode: '',
-        outletType: 'Retail',
-        status: 'Active',
+        outletType: 'STORE',
+        status: 'ACTIVE',
         mainPhoneNumber: '+94771234567',
         emailAddress: 'outlet@test.com',
+        contactName: 'Ops Lead',
+        contactPhone: '+94770000000',
+        isDefaultOutlet: true,
         addressLine1: 'Line 1',
         city: 'Colombo',
         country: 'LK',
@@ -49,10 +51,16 @@ void main() {
         timezone: 'Asia/Colombo',
         openingHours: [
           OutletOpeningHour(
-            day: 'Mon',
+            day: 'Monday',
             openTime: '09:00',
             closeTime: '18:00',
             closed: false,
+          ),
+          OutletOpeningHour(
+            day: 'Sunday',
+            openTime: '',
+            closeTime: '',
+            closed: true,
           ),
         ],
       );
@@ -66,18 +74,24 @@ void main() {
       expect(json['outletType'], 'STORE');
       expect(json['phone'], '+94771234567');
       expect(json['email'], 'outlet@test.com');
-      expect(json['isDefaultOutlet'], isFalse);
+      expect(json['isDefaultOutlet'], isTrue);
       expect(json['collectionEnabled'], isFalse);
       expect(json['address'], isA<Map>());
       expect(json['address']['addressLine1'], 'Line 1');
       expect(json['address']['city'], 'Colombo');
       expect(json['address']['countryCode'], 'LK');
+      expect(json['address']['contactName'], 'Ops Lead');
+      expect(json['address']['contactPhone'], '+94770000000');
       expect(json['businessHours'], [
         {
           'dayOfWeek': 1,
           'openingTime': '09:00:00',
           'closingTime': '18:00:00',
           'isClosed': false,
+        },
+        {
+          'dayOfWeek': 0,
+          'isClosed': true,
         },
       ]);
       expect(json.containsKey('outletCode'), isFalse);

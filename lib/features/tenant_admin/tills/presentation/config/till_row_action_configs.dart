@@ -46,7 +46,7 @@ const tillRowActionConfigs = <TillRowActionConfig>[
   TillRowActionConfig(
     id: 'delete',
     actionId: TillRowActionId.delete,
-    label: 'Delete',
+    label: 'Deactivate till',
     icon: Icons.delete_outline,
     permission: TenantAdminPermissionCodes.tillDelete,
     showInMoreMenu: true,

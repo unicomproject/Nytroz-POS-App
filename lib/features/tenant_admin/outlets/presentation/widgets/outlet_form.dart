@@ -1,25 +1,23 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/entities/outlet.dart';
 import '../../domain/entities/outlet_details.dart';
-import '../config/outlet_timezone_options.dart';
 import '../utils/outlet_api_errors.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_form_section.dart';
-import '../../../presentation/widgets/tenant_admin_stepper_header.dart';
+import 'business_hours_editor.dart';
+import 'outlet_review_section.dart';
+import 'outlet_wizard_stepper.dart';
 
 class OutletForm extends StatefulWidget {
   const OutletForm({
     super.key,
-    required this.managers,
     required this.onSubmit,
     this.initialValue,
     this.backendErrors = const {},
     this.submitting = false,
   });
 
-  final List<OutletManagerOption> managers;
   final OutletFormData? initialValue;
   final Map<String, String> backendErrors;
   final bool submitting;
@@ -30,44 +28,57 @@ class OutletForm extends StatefulWidget {
 }
 
 class _OutletFormState extends State<OutletForm> {
+  static const _steps = [
+    'Outlet Details',
+    'Location & Contact',
+    'Business Hours',
+    'Review & Create',
+  ];
+
   final _formKey = GlobalKey<FormState>();
   var _step = 0;
+  var _submitted = false;
 
   late final TextEditingController _outletName;
-  late final TextEditingController _outletCode;
-  late final TextEditingController _outletType;
-  var _status = 'Active';
   late final TextEditingController _mainPhoneNumber;
   late final TextEditingController _emailAddress;
+  late final TextEditingController _contactName;
+  late final TextEditingController _contactPhone;
   late final TextEditingController _addressLine1;
   late final TextEditingController _addressLine2;
   late final TextEditingController _city;
   late final TextEditingController _state;
-  late final TextEditingController _country;
+  late final TextEditingController _countryCode;
   late final TextEditingController _postalCode;
-  late List<_OpeningHourDraft> _openingHours;
-  String? _managerId;
-  late String _timezone;
+  late final TextEditingController _timezone;
+  late List<BusinessHoursDraft> _openingHours;
+  final _businessHourErrors = <String, String>{};
+
+  String _outletType = 'STORE';
+  String _status = 'ACTIVE';
+  bool _isDefaultOutlet = false;
 
   @override
   void initState() {
     super.initState();
     final initial = widget.initialValue;
     _outletName = TextEditingController(text: initial?.outletName ?? '');
-    _outletCode = TextEditingController(text: initial?.outletCode ?? '');
-    _outletType = TextEditingController(text: initial?.outletType ?? 'Retail');
-    _status = initial?.status ?? 'Active';
+    _outletType = _normalizeOutletType(initial?.outletType ?? 'STORE');
+    _status = _normalizeStatus(initial?.status ?? 'ACTIVE');
     _mainPhoneNumber =
         TextEditingController(text: initial?.mainPhoneNumber ?? '');
     _emailAddress = TextEditingController(text: initial?.emailAddress ?? '');
+    _contactName = TextEditingController(text: initial?.contactName ?? '');
+    _contactPhone = TextEditingController(text: initial?.contactPhone ?? '');
     _addressLine1 = TextEditingController(text: initial?.addressLine1 ?? '');
     _addressLine2 = TextEditingController(text: initial?.addressLine2 ?? '');
     _city = TextEditingController(text: initial?.city ?? '');
     _state = TextEditingController(text: initial?.state ?? '');
-    _country = TextEditingController(text: initial?.country ?? 'LK');
+    _countryCode = TextEditingController(text: initial?.country ?? '');
     _postalCode = TextEditingController(text: initial?.postalCode ?? '');
-    _managerId = initial?.managerId;
-    _timezone = _resolveTimezone(initial?.timezone);
+    // Backend has no timezone reference endpoint yet; use the backend default.
+    _timezone = TextEditingController(text: initial?.timezone ?? 'UTC');
+    _isDefaultOutlet = initial?.isDefaultOutlet ?? false;
     _openingHours = _initialOpeningHours(initial?.openingHours);
   }
 
@@ -88,16 +99,17 @@ class _OutletFormState extends State<OutletForm> {
   @override
   void dispose() {
     _outletName.dispose();
-    _outletCode.dispose();
-    _outletType.dispose();
     _mainPhoneNumber.dispose();
     _emailAddress.dispose();
+    _contactName.dispose();
+    _contactPhone.dispose();
     _addressLine1.dispose();
     _addressLine2.dispose();
     _city.dispose();
     _state.dispose();
-    _country.dispose();
+    _countryCode.dispose();
     _postalCode.dispose();
+    _timezone.dispose();
     for (final hour in _openingHours) {
       hour.openTime.dispose();
       hour.closeTime.dispose();
@@ -109,44 +121,26 @@ class _OutletFormState extends State<OutletForm> {
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
+      autovalidateMode: _submitted
+          ? AutovalidateMode.onUserInteraction
+          : AutovalidateMode.disabled,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TenantAdminStepperHeader(
-            steps: const [
-              'Outlet Details',
-              'Location & Contact',
-              'Review & Create',
-            ],
+          OutletWizardStepper(
+            steps: _steps,
             currentStep: _step,
+            onStepSelected: (step) => setState(() => _step = step),
           ),
           const SizedBox(height: TenantAdminSpacing.xl),
           _buildStep(),
           const SizedBox(height: TenantAdminSpacing.xl),
-          Row(
-            children: [
-              if (_step > 0)
-                TenantAdminSecondaryButton(
-                  label: 'Back',
-                  icon: Icons.arrow_back,
-                  onPressed: widget.submitting
-                      ? null
-                      : () => setState(() => _step -= 1),
-                ),
-              const Spacer(),
-              TenantAdminSecondaryButton(
-                label: 'Save draft',
-                icon: Icons.save,
-                onPressed: widget.submitting ? null : () {},
-              ),
-              const SizedBox(width: TenantAdminSpacing.md),
-              TenantAdminPrimaryButton(
-                label: _step == 2 ? 'Create Outlet' : 'Next',
-                icon: _step == 2 ? Icons.check : Icons.arrow_forward,
-                loading: widget.submitting,
-                onPressed: widget.submitting ? null : _continue,
-              ),
-            ],
+          _OutletWizardActions(
+            step: _step,
+            lastStep: _steps.length - 1,
+            submitting: widget.submitting,
+            onBack: _step == 0 ? null : () => setState(() => _step -= 1),
+            onNext: _continue,
           ),
         ],
       ),
@@ -154,211 +148,273 @@ class _OutletFormState extends State<OutletForm> {
   }
 
   Widget _buildStep() {
-    switch (_step) {
-      case 0:
-        return TenantAdminFormSection(
-          title: 'Outlet Details',
-          subtitle: 'Provide basic information about the outlet.',
-          children: [
-            _twoColumnRow(
-              _field('outletName', 'Outlet Name', _outletName,
-                  isRequired: true, icon: Icons.storefront_outlined),
-              _field('outletCode', 'Outlet Code', _outletCode,
-                  hintText: 'Optional — backend auto-generates OUT-001',
-                  icon: Icons.tag),
-            ),
-            _twoColumnRow(_outletTypeDropdown(), _statusSelector()),
-            DropdownButtonFormField<String>(
-              initialValue:
-                  widget.managers.any((manager) => manager.id == _managerId)
-                      ? _managerId
-                      : null,
-              decoration: InputDecoration(
-                labelText: 'Manager',
-                errorText: widget.backendErrors['managerId'],
-              ),
-              items: [
-                for (final manager in widget.managers)
-                  DropdownMenuItem<String>(
-                    value: manager.id,
-                    child: Text(manager.displayName),
-                  ),
-              ],
-              onChanged: widget.managers.isEmpty
-                  ? null
-                  : (value) => setState(() => _managerId = value),
-              hint: Text(
-                widget.managers.isEmpty
-                    ? 'No managers available'
-                    : 'Select manager',
-              ),
-            ),
-          ],
-        );
-      case 1:
-        return TenantAdminFormSection(
-          title: 'Location & Contact',
+    return switch (_step) {
+      0 => _OutletDetailsStep(
+          outletName: _outletName,
+          outletType: _outletType,
+          status: _status,
+          timezone: _timezone,
+          isDefaultOutlet: _isDefaultOutlet,
+          errors: widget.backendErrors,
+          onOutletTypeChanged: (value) => setState(() => _outletType = value),
+          onStatusChanged: (value) => setState(() => _status = value),
+          onDefaultChanged: (value) => setState(() => _isDefaultOutlet = value),
+        ),
+      1 => _OutletLocationContactStep(
+          addressLine1: _addressLine1,
+          addressLine2: _addressLine2,
+          city: _city,
+          state: _state,
+          postalCode: _postalCode,
+          countryCode: _countryCode,
+          mainPhone: _mainPhoneNumber,
+          email: _emailAddress,
+          contactName: _contactName,
+          contactPhone: _contactPhone,
+          errors: widget.backendErrors,
+        ),
+      2 => TenantAdminFormSection(
+          title: 'Business Hours',
           subtitle:
-              'Provide the location and contact information for the outlet.',
+              'Configure Monday through Sunday using the backend day mapping: Sunday is 0, Monday is 1.',
           children: [
-            _twoColumnRow(
-              _field('addressLine1', 'Address Line 1', _addressLine1,
-                  isRequired: true, icon: Icons.location_city_outlined),
-              _field('addressLine2', 'Address Line 2 (optional)', _addressLine2,
-                  icon: Icons.apartment_outlined),
-            ),
-            _twoColumnRow(
-              _field('city', 'City', _city,
-                  isRequired: true, icon: Icons.place_outlined),
-              _field('state', 'District / Province', _state,
-                  icon: Icons.map_outlined),
-            ),
-            _twoColumnRow(
-              _field('postalCode', 'Postal Code', _postalCode,
-                  isRequired: true, icon: Icons.local_post_office_outlined),
-              _field('mainPhoneNumber', 'Phone Number', _mainPhoneNumber,
-                  isRequired: true,
-                  keyboardType: TextInputType.phone,
-                  icon: Icons.phone_outlined),
-            ),
-            _field(
-              'emailAddress',
-              'Email Address',
-              _emailAddress,
-              isRequired: true,
-              keyboardType: TextInputType.emailAddress,
-              validator: _emailValidator,
-              icon: Icons.mail_outline,
-            ),
-            _timezoneDropdown(),
-          ],
-        );
-      default:
-        return TenantAdminFormSection(
-          title: 'Review & Confirm',
-          subtitle:
-              'Please review the details below before creating the outlet.',
-          children: [
-            _reviewGroup(
-              title: 'Outlet Details',
-              icon: Icons.storefront_outlined,
-              children: [
-                _reviewLine('Outlet Name', _outletName.text),
-                _reviewLine('Outlet Code', _outletCode.text),
-                _reviewLine('Outlet Type', _outletType.text),
-                _reviewLine('Status', _status),
-              ],
-            ),
-            _reviewGroup(
-              title: 'Location & Contact',
-              icon: Icons.location_on_outlined,
-              children: [
-                _reviewLine('Address', _addressLine1.text),
-                _reviewLine('City', _city.text),
-                _reviewLine('District / Province', _state.text),
-                _reviewLine('Postal Code', _postalCode.text),
-                _reviewLine('Timezone', _timezone),
-                _reviewLine('Phone', _mainPhoneNumber.text),
-                _reviewLine('Email', _emailAddress.text),
-              ],
+            BusinessHoursEditor(
+              hours: _openingHours,
+              errors: _businessHourErrors,
+              onChanged: () => setState(_businessHourErrors.clear),
+              onApplyMondayToWeekdays: _applyMondayToWeekdays,
             ),
           ],
-        );
-    }
+        ),
+      _ => _OutletReviewStep(
+          form: _formData(),
+          onEdit: (step) => setState(() => _step = step),
+        ),
+    };
   }
 
-  Widget _field(
-    String key,
-    String label,
-    TextEditingController controller, {
-    bool isRequired = false,
-    TextInputType? keyboardType,
-    String? Function(String? value)? validator,
-    IconData? icon,
-    String? hintText,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hintText,
-        prefixIcon: icon == null ? null : Icon(icon, size: 18),
-        errorText: widget.backendErrors[key],
-      ),
-      validator: (value) {
-        if (isRequired && (value == null || value.trim().isEmpty)) {
-          return '$label is required';
-        }
+  Future<void> _continue() async {
+    setState(() => _submitted = true);
 
-        return validator?.call(value);
-      },
+    if (!_validateCurrentStep()) {
+      return;
+    }
+
+    if (_step < _steps.length - 1) {
+      setState(() => _step += 1);
+      return;
+    }
+
+    await widget.onSubmit(_formData());
+  }
+
+  bool _validateCurrentStep() {
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return false;
+    }
+
+    if (_step == 2) {
+      final errors = _validateBusinessHours();
+      setState(() {
+        _businessHourErrors
+          ..clear()
+          ..addAll(errors);
+      });
+      return errors.isEmpty;
+    }
+
+    return true;
+  }
+
+  Map<String, String> _validateBusinessHours() {
+    final errors = <String, String>{};
+    final seenDays = <int>{};
+
+    for (final hour in _openingHours) {
+      if (!seenDays.add(hour.dayOfWeek)) {
+        errors['businessHours.${hour.dayOfWeek}'] =
+            'Business hours can contain only one entry per day.';
+        continue;
+      }
+
+      if (hour.closed) {
+        continue;
+      }
+
+      final open = _minutes(hour.openTime.text);
+      final close = _minutes(hour.closeTime.text);
+      if (open == null || close == null) {
+        errors['businessHours.${hour.dayOfWeek}'] =
+            'Opening and closing times are required when the outlet is open.';
+      } else if (open >= close) {
+        errors['businessHours.${hour.dayOfWeek}'] =
+            'Closing time must be later than opening time.';
+      }
+    }
+
+    return errors;
+  }
+
+  void _applyMondayToWeekdays() {
+    final monday = _openingHours.firstWhere((hour) => hour.dayOfWeek == 1);
+    setState(() {
+      for (final hour in _openingHours
+          .where((hour) => hour.dayOfWeek >= 1 && hour.dayOfWeek <= 5)) {
+        hour.closed = monday.closed;
+        hour.openTime.text = monday.openTime.text;
+        hour.closeTime.text = monday.closeTime.text;
+      }
+      _businessHourErrors.clear();
+    });
+  }
+
+  OutletFormData _formData() {
+    return OutletFormData(
+      outletName: _outletName.text.trim(),
+      outletType: _outletType,
+      status: _status,
+      mainPhoneNumber: _mainPhoneNumber.text.trim(),
+      emailAddress: _emailAddress.text.trim(),
+      contactName: _nullable(_contactName.text),
+      contactPhone: _nullable(_contactPhone.text),
+      isDefaultOutlet: _isDefaultOutlet,
+      addressLine1: _addressLine1.text.trim(),
+      addressLine2: _nullable(_addressLine2.text),
+      city: _city.text.trim(),
+      state: _nullable(_state.text),
+      country: _countryCode.text.trim().toUpperCase(),
+      postalCode: _postalCode.text.trim(),
+      timezone: _timezone.text.trim(),
+      openingHours: [
+        for (final hour in _openingHours)
+          OutletOpeningHour(
+            day: hour.dayLabel,
+            openTime: hour.openTime.text.trim(),
+            closeTime: hour.closeTime.text.trim(),
+            closed: hour.closed,
+          ),
+      ],
+    );
+  }
+
+  bool _mapsEqual(Map<String, String> a, Map<String, String> b) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (final entry in a.entries) {
+      if (b[entry.key] != entry.value) {
+        return false;
+      }
+    }
+    return true;
+  }
+}
+
+class _OutletDetailsStep extends StatelessWidget {
+  const _OutletDetailsStep({
+    required this.outletName,
+    required this.outletType,
+    required this.status,
+    required this.timezone,
+    required this.isDefaultOutlet,
+    required this.errors,
+    required this.onOutletTypeChanged,
+    required this.onStatusChanged,
+    required this.onDefaultChanged,
+  });
+
+  final TextEditingController outletName;
+  final String outletType;
+  final String status;
+  final TextEditingController timezone;
+  final bool isDefaultOutlet;
+  final Map<String, String> errors;
+  final ValueChanged<String> onOutletTypeChanged;
+  final ValueChanged<String> onStatusChanged;
+  final ValueChanged<bool> onDefaultChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return TenantAdminFormSection(
+      title: 'Outlet Details',
+      subtitle:
+          'Outlet code is generated by the backend after creation; the current create API does not accept a custom outlet code.',
+      children: [
+        _twoColumnRow(
+          _field(
+            'outletName',
+            'Outlet Name',
+            outletName,
+            errors: errors,
+            isRequired: true,
+            maxLength: 200,
+            icon: Icons.storefront_outlined,
+          ),
+          _outletTypeDropdown(),
+        ),
+        _twoColumnRow(_statusSelector(context), _timezoneField()),
+        Material(
+          color: Colors.transparent,
+          child: SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Default Outlet'),
+            subtitle: const Text(
+              'Making this the default outlet may replace the existing default outlet.',
+            ),
+            value: isDefaultOutlet,
+            onChanged: onDefaultChanged,
+          ),
+        ),
+      ],
     );
   }
 
   Widget _outletTypeDropdown() {
-    final currentValue =
-        const ['Retail', 'Warehouse'].contains(_outletType.text)
-            ? _outletType.text
-            : 'Retail';
-
     return DropdownButtonFormField<String>(
-      initialValue: currentValue,
+      initialValue: outletType,
       decoration: InputDecoration(
         labelText: 'Outlet Type',
         prefixIcon: const Icon(Icons.sell_outlined, size: 18),
-        errorText: widget.backendErrors['outletType'],
+        errorText: errors['outletType'],
       ),
       items: const [
-        DropdownMenuItem(value: 'Retail', child: Text('Retail')),
-        DropdownMenuItem(value: 'Warehouse', child: Text('Warehouse')),
+        DropdownMenuItem(value: 'STORE', child: Text('Store')),
+        DropdownMenuItem(value: 'WAREHOUSE', child: Text('Warehouse')),
       ],
+      validator: (value) => value == null || value.trim().isEmpty
+          ? 'Outlet type is required.'
+          : null,
       onChanged: (value) {
-        if (value == null) {
-          return;
+        if (value != null) {
+          onOutletTypeChanged(value);
         }
-        setState(() => _outletType.text = value);
       },
     );
   }
 
-  Widget _timezoneDropdown() {
-    final currentValue = outletTimezoneOptions.contains(_timezone)
-        ? _timezone
-        : defaultOutletTimezone;
-
-    return DropdownButtonFormField<String>(
-      initialValue: currentValue,
+  Widget _timezoneField() {
+    return TextFormField(
+      controller: timezone,
       decoration: InputDecoration(
         labelText: 'Timezone',
         prefixIcon: const Icon(Icons.schedule_outlined, size: 18),
-        errorText: widget.backendErrors['timezone'],
+        errorText: errors['timezone'],
+        helperText: 'Use an IANA timezone code, for example UTC.',
       ),
-      items: [
-        for (final option in outletTimezoneOptions)
-          DropdownMenuItem<String>(
-            value: option,
-            child: Text(option),
-          ),
-      ],
       validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return 'Timezone is required';
+        final trimmed = value?.trim() ?? '';
+        if (trimmed.isEmpty) {
+          return 'Timezone is required.';
         }
-
+        if (trimmed.length > 80) {
+          return 'Timezone must be 80 characters or less.';
+        }
         return null;
-      },
-      onChanged: (value) {
-        if (value == null) {
-          return;
-        }
-
-        setState(() => _timezone = value);
       },
     );
   }
 
-  Widget _statusSelector() {
+  Widget _statusSelector(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -370,336 +426,485 @@ class _OutletFormState extends State<OutletForm> {
           ),
         ),
         const SizedBox(height: TenantAdminSpacing.sm),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: TenantAdminColors.border),
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-          ),
-          child: Row(
-            children: [
-              Expanded(child: _statusOption('Active')),
-              Expanded(child: _statusOption('Inactive')),
-            ],
-          ),
+        SegmentedButton<String>(
+          segments: const [
+            ButtonSegment(
+              value: 'ACTIVE',
+              label: Text('Active'),
+              icon: Icon(Icons.check_circle_outline),
+            ),
+            ButtonSegment(
+              value: 'INACTIVE',
+              label: Text('Inactive'),
+              icon: Icon(Icons.pause_circle_outline),
+            ),
+          ],
+          selected: {status},
+          onSelectionChanged: (value) => onStatusChanged(value.first),
         ),
+        if (errors['status'] != null) ...[
+          const SizedBox(height: TenantAdminSpacing.xs),
+          Text(
+            errors['status']!,
+            style: const TextStyle(color: TenantAdminColors.danger),
+          ),
+        ],
       ],
     );
   }
+}
 
-  Widget _statusOption(String value) {
-    final selected = _status == value;
-    return InkWell(
-      onTap: () => setState(() => _status = value),
-      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: TenantAdminSpacing.md),
-        decoration: BoxDecoration(
-          color: selected
-              ? TenantAdminColors.success.withValues(alpha: 0.10)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+class _OutletLocationContactStep extends StatelessWidget {
+  const _OutletLocationContactStep({
+    required this.addressLine1,
+    required this.addressLine2,
+    required this.city,
+    required this.state,
+    required this.postalCode,
+    required this.countryCode,
+    required this.mainPhone,
+    required this.email,
+    required this.contactName,
+    required this.contactPhone,
+    required this.errors,
+  });
+
+  final TextEditingController addressLine1;
+  final TextEditingController addressLine2;
+  final TextEditingController city;
+  final TextEditingController state;
+  final TextEditingController postalCode;
+  final TextEditingController countryCode;
+  final TextEditingController mainPhone;
+  final TextEditingController email;
+  final TextEditingController contactName;
+  final TextEditingController contactPhone;
+  final Map<String, String> errors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TenantAdminFormSection(
+          title: 'Outlet Address',
+          subtitle:
+              'Country uses the backend country-code contract. No country reference API exists yet.',
           children: [
-            Icon(
-              Icons.circle,
-              size: 8,
-              color: selected
-                  ? TenantAdminColors.success
-                  : TenantAdminColors.mutedText,
+            _twoColumnRow(
+              _field(
+                'addressLine1',
+                'Address Line 1',
+                addressLine1,
+                errors: errors,
+                isRequired: true,
+                maxLength: 255,
+                icon: Icons.location_city_outlined,
+              ),
+              _field(
+                'addressLine2',
+                'Address Line 2',
+                addressLine2,
+                errors: errors,
+                maxLength: 255,
+                icon: Icons.apartment_outlined,
+              ),
             ),
-            const SizedBox(width: TenantAdminSpacing.sm),
-            Text(
-              value,
-              style: TextStyle(
-                color: selected
-                    ? TenantAdminColors.success
-                    : TenantAdminColors.mutedText,
-                fontWeight: FontWeight.w700,
+            _twoColumnRow(
+              _field(
+                'city',
+                'City',
+                city,
+                errors: errors,
+                isRequired: true,
+                maxLength: 120,
+                icon: Icons.place_outlined,
+              ),
+              _field(
+                'state',
+                'State / Province',
+                state,
+                errors: errors,
+                maxLength: 120,
+                icon: Icons.map_outlined,
+              ),
+            ),
+            _twoColumnRow(
+              _field(
+                'postalCode',
+                'Postal Code',
+                postalCode,
+                errors: errors,
+                maxLength: 30,
+                icon: Icons.local_post_office_outlined,
+              ),
+              _field(
+                'country',
+                'Country Code',
+                countryCode,
+                errors: errors,
+                isRequired: true,
+                maxLength: 2,
+                icon: Icons.flag_outlined,
+                validator: _countryCodeValidator,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  String? _emailValidator(String? value) {
-    final email = value?.trim() ?? '';
-    if (email.isEmpty) {
-      return null;
-    }
-
-    final emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-    if (!emailPattern.hasMatch(email)) {
-      return 'Enter a valid email address';
-    }
-
-    return null;
-  }
-
-  Widget _reviewLine(String label, String value) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 160,
-          child:
-              Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+        const SizedBox(height: TenantAdminSpacing.xl),
+        TenantAdminFormSection(
+          title: 'Contact Details',
+          subtitle:
+              'Optional contact fields are omitted from the request when blank.',
+          children: [
+            _twoColumnRow(
+              _field(
+                'mainPhoneNumber',
+                'Outlet Phone',
+                mainPhone,
+                errors: errors,
+                maxLength: 40,
+                keyboardType: TextInputType.phone,
+                icon: Icons.phone_outlined,
+                validator: _phoneValidator,
+              ),
+              _field(
+                'emailAddress',
+                'Outlet Email',
+                email,
+                errors: errors,
+                maxLength: 255,
+                keyboardType: TextInputType.emailAddress,
+                icon: Icons.mail_outline,
+                validator: _emailValidator,
+              ),
+            ),
+            _twoColumnRow(
+              _field(
+                'contactName',
+                'Contact Person',
+                contactName,
+                errors: errors,
+                maxLength: 150,
+                icon: Icons.person_outline,
+              ),
+              _field(
+                'contactPhone',
+                'Contact Phone',
+                contactPhone,
+                errors: errors,
+                maxLength: 40,
+                keyboardType: TextInputType.phone,
+                icon: Icons.contact_phone_outlined,
+                validator: _phoneValidator,
+              ),
+            ),
+          ],
         ),
-        Expanded(child: Text(value.isEmpty ? '-' : value)),
       ],
     );
   }
+}
 
-  Widget _reviewGroup({
-    required String title,
-    required IconData icon,
-    required List<Widget> children,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-      decoration: BoxDecoration(
-        color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        border: Border.all(color: TenantAdminColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 18, color: TenantAdminColors.primary),
-              const SizedBox(width: TenantAdminSpacing.sm),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-            ],
-          ),
-          const SizedBox(height: TenantAdminSpacing.md),
-          ...children,
-        ],
-      ),
+class _OutletReviewStep extends StatelessWidget {
+  const _OutletReviewStep({
+    required this.form,
+    required this.onEdit,
+  });
+
+  final OutletFormData form;
+  final ValueChanged<int> onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    return TenantAdminFormSection(
+      title: 'Review & Create',
+      subtitle: 'Review the supported fields that will be sent to the backend.',
+      children: [
+        OutletReviewSection(
+          title: 'Outlet Details',
+          icon: Icons.storefront_outlined,
+          onEdit: () => onEdit(0),
+          items: [
+            OutletReviewItem('Outlet Name', form.outletName),
+            const OutletReviewItem('Outlet Code', 'Generated by backend'),
+            OutletReviewItem(
+                'Outlet Type', _displayOutletType(form.outletType)),
+            OutletReviewItem('Timezone', form.timezone),
+            OutletReviewItem(
+                'Default Outlet', form.isDefaultOutlet ? 'Yes' : 'No'),
+            OutletReviewItem('Status', _displayStatus(form.status)),
+          ],
+        ),
+        OutletReviewSection(
+          title: 'Location',
+          icon: Icons.location_on_outlined,
+          onEdit: () => onEdit(1),
+          items: [
+            OutletReviewItem('Address Line 1', form.addressLine1),
+            OutletReviewItem('Address Line 2', form.addressLine2 ?? ''),
+            OutletReviewItem('City', form.city),
+            OutletReviewItem('State / Province', form.state ?? ''),
+            OutletReviewItem('Postal Code', form.postalCode),
+            OutletReviewItem('Country Code', form.country),
+          ],
+        ),
+        OutletReviewSection(
+          title: 'Contact',
+          icon: Icons.contact_phone_outlined,
+          onEdit: () => onEdit(1),
+          items: [
+            OutletReviewItem('Outlet Phone', form.mainPhoneNumber),
+            OutletReviewItem('Outlet Email', form.emailAddress),
+            OutletReviewItem('Contact Person', form.contactName ?? ''),
+            OutletReviewItem('Contact Phone', form.contactPhone ?? ''),
+          ],
+        ),
+        OutletReviewSection(
+          title: 'Business Hours',
+          icon: Icons.schedule_outlined,
+          onEdit: () => onEdit(2),
+          items: [
+            for (final hour in form.openingHours)
+              OutletReviewItem(
+                hour.day,
+                hour.closed ? 'Closed' : '${hour.openTime} - ${hour.closeTime}',
+              ),
+          ],
+        ),
+      ],
     );
   }
+}
 
-  Widget _twoColumnRow(Widget first, Widget second) {
+class _OutletWizardActions extends StatelessWidget {
+  const _OutletWizardActions({
+    required this.step,
+    required this.lastStep,
+    required this.submitting,
+    required this.onBack,
+    required this.onNext,
+  });
+
+  final int step;
+  final int lastStep;
+  final bool submitting;
+  final VoidCallback? onBack;
+  final VoidCallback onNext;
+
+  @override
+  Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 720) {
+        final narrow = constraints.maxWidth < TenantAdminBreakpoints.mobile;
+        final back = onBack == null
+            ? const SizedBox.shrink()
+            : TenantAdminSecondaryButton(
+                label: 'Back',
+                icon: Icons.arrow_back,
+                onPressed: submitting ? null : onBack,
+              );
+        final next = TenantAdminPrimaryButton(
+          label: step == lastStep ? 'Create Outlet' : 'Next',
+          icon: step == lastStep ? Icons.check : Icons.arrow_forward,
+          loading: submitting,
+          onPressed: submitting ? null : onNext,
+        );
+
+        if (narrow) {
           return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              first,
-              const SizedBox(height: TenantAdminSpacing.lg),
-              second,
+              next,
+              if (onBack != null) ...[
+                const SizedBox(height: TenantAdminSpacing.sm),
+                back,
+              ],
             ],
           );
         }
 
         return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: first),
-            const SizedBox(width: TenantAdminSpacing.xl),
-            Expanded(child: second),
+            if (onBack != null) back,
+            const Spacer(),
+            next,
           ],
         );
       },
     );
   }
+}
 
-  Future<void> _continue() async {
-    if (_step < 2) {
-      if (!_formKey.currentState!.validate()) {
-        return;
+Widget _field(
+  String key,
+  String label,
+  TextEditingController controller, {
+  required Map<String, String> errors,
+  bool isRequired = false,
+  int? maxLength,
+  TextInputType? keyboardType,
+  String? Function(String? value)? validator,
+  IconData? icon,
+}) {
+  return TextFormField(
+    controller: controller,
+    keyboardType: keyboardType,
+    maxLength: maxLength,
+    decoration: InputDecoration(
+      labelText: label,
+      prefixIcon: icon == null ? null : Icon(icon, size: 18),
+      errorText: errors[key],
+      counterText: '',
+    ),
+    validator: (value) {
+      final trimmed = value?.trim() ?? '';
+      if (isRequired && trimmed.isEmpty) {
+        return '$label is required.';
       }
-
-      setState(() => _step += 1);
-      return;
-    }
-
-    final validationError = _submitValidationError();
-    if (validationError != null) {
-      final fieldKey = validationError.$1;
-      final message = validationError.$2;
-      final errorStep = outletErrorStep({fieldKey: message});
-      if (errorStep != null) {
-        setState(() => _step = errorStep);
+      if (maxLength != null && trimmed.length > maxLength) {
+        return '$label must be $maxLength characters or less.';
       }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
+      return validator?.call(value);
+    },
+  );
+}
+
+Widget _twoColumnRow(Widget first, Widget second) {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      if (constraints.maxWidth < 720) {
+        return Column(
+          children: [
+            first,
+            const SizedBox(height: TenantAdminSpacing.lg),
+            second,
+          ],
         );
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _formKey.currentState?.validate();
-        });
-      }
-      return;
-    }
-
-    await widget.onSubmit(_formData());
-  }
-
-  (String, String)? _submitValidationError() {
-    final checks = <(String, String, String? Function(String? value)?)>[
-      ('outletName', 'Outlet name', _requiredValidator('Outlet name')),
-      ('outletType', 'Outlet type', _requiredValidator('Outlet type')),
-      (
-        'mainPhoneNumber',
-        'Main phone number',
-        _requiredValidator('Main phone number')
-      ),
-      ('emailAddress', 'Email address', _emailValidator),
-      ('addressLine1', 'Address line 1', _requiredValidator('Address line 1')),
-      ('city', 'City', _requiredValidator('City')),
-      ('postalCode', 'Postal code', _requiredValidator('Postal code')),
-      ('timezone', 'Timezone', _requiredValidator('Timezone')),
-    ];
-
-    for (final check in checks) {
-      final value = switch (check.$1) {
-        'outletName' => _outletName.text,
-        'outletCode' => _outletCode.text,
-        'outletType' => _outletType.text,
-        'mainPhoneNumber' => _mainPhoneNumber.text,
-        'emailAddress' => _emailAddress.text,
-        'addressLine1' => _addressLine1.text,
-        'city' => _city.text,
-        'postalCode' => _postalCode.text,
-        'timezone' => _timezone,
-        _ => '',
-      };
-
-      final message = check.$3?.call(value);
-      if (message != null) {
-        return (check.$1, message);
-      }
-    }
-
-    return null;
-  }
-
-  String? Function(String? value) _requiredValidator(String label) {
-    return (value) {
-      if (value == null || value.trim().isEmpty) {
-        return '$label is required';
       }
 
-      return null;
-    };
-  }
-
-  bool _mapsEqual(Map<String, String> a, Map<String, String> b) {
-    if (a.length != b.length) {
-      return false;
-    }
-
-    for (final entry in a.entries) {
-      if (b[entry.key] != entry.value) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  OutletFormData _formData() {
-    return OutletFormData(
-      outletName: _outletName.text.trim(),
-      outletCode: _outletCode.text.trim(),
-      outletType: _outletType.text.trim(),
-      status: _status,
-      mainPhoneNumber: _mainPhoneNumber.text.trim(),
-      emailAddress: _emailAddress.text.trim(),
-      managerId: _managerId,
-      addressLine1: _addressLine1.text.trim(),
-      addressLine2: _addressLine2.text.trim(),
-      city: _city.text.trim(),
-      state: _state.text.trim(),
-      country: _country.text.trim().isEmpty ? 'LK' : _country.text.trim(),
-      postalCode: _postalCode.text.trim(),
-      timezone: _timezone.trim().isEmpty ? defaultOutletTimezone : _timezone.trim(),
-      openingHours: [
-        for (final hour in _openingHours)
-          OutletOpeningHour(
-            day: hour.day,
-            openTime: hour.openTime.text.trim(),
-            closeTime: hour.closeTime.text.trim(),
-            closed: hour.closed,
-          ),
-      ],
-    );
-  }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: first),
+          const SizedBox(width: TenantAdminSpacing.xl),
+          Expanded(child: second),
+        ],
+      );
+    },
+  );
 }
 
-String _resolveTimezone(String? timezone) {
-  final value = timezone?.trim() ?? '';
-  if (value.isEmpty) {
-    return defaultOutletTimezone;
-  }
-
-  return outletTimezoneOptions.contains(value) ? value : defaultOutletTimezone;
-}
-
-List<_OpeningHourDraft> _initialOpeningHours(List<OutletOpeningHour>? values) {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+List<BusinessHoursDraft> _initialOpeningHours(List<OutletOpeningHour>? values) {
+  const days = [
+    ('Sunday', 0),
+    ('Monday', 1),
+    ('Tuesday', 2),
+    ('Wednesday', 3),
+    ('Thursday', 4),
+    ('Friday', 5),
+    ('Saturday', 6),
+  ];
 
   return [
-    for (final day in days)
-      _OpeningHourDraft(
-        day: day,
-        openTime: TextEditingController(
-          text: values
-                  ?.firstWhere(
-                    (value) => value.day == day,
-                    orElse: () => const OutletOpeningHour(
-                      day: '',
-                      openTime: '08:00',
-                      closeTime: '20:00',
-                      closed: false,
-                    ),
-                  )
-                  .openTime ??
-              '08:00',
-        ),
-        closeTime: TextEditingController(
-          text: values
-                  ?.firstWhere(
-                    (value) => value.day == day,
-                    orElse: () => const OutletOpeningHour(
-                      day: '',
-                      openTime: '08:00',
-                      closeTime: '20:00',
-                      closed: false,
-                    ),
-                  )
-                  .closeTime ??
-              '20:00',
-        ),
-        closed: values
-                ?.firstWhere(
-                  (value) => value.day == day,
-                  orElse: () => const OutletOpeningHour(
-                    day: '',
-                    openTime: '08:00',
-                    closeTime: '20:00',
-                    closed: false,
-                  ),
-                )
-                .closed ??
-            false,
-      ),
+    for (final day in days) _draftForDay(day.$1, day.$2, values),
   ];
 }
 
-class _OpeningHourDraft {
-  _OpeningHourDraft({
-    required this.day,
-    required this.openTime,
-    required this.closeTime,
-    required this.closed,
-  });
+BusinessHoursDraft _draftForDay(
+  String label,
+  int dayOfWeek,
+  List<OutletOpeningHour>? values,
+) {
+  OutletOpeningHour? existing;
+  for (final value in values ?? const <OutletOpeningHour>[]) {
+    if (value.day == label) {
+      existing = value;
+      break;
+    }
+  }
 
-  final String day;
-  final TextEditingController openTime;
-  final TextEditingController closeTime;
-  bool closed;
+  return BusinessHoursDraft(
+    dayLabel: label,
+    dayOfWeek: dayOfWeek,
+    openTime: TextEditingController(text: existing?.openTime ?? '09:00'),
+    closeTime: TextEditingController(text: existing?.closeTime ?? '17:00'),
+    closed: existing?.closed ?? false,
+  );
+}
+
+String _normalizeOutletType(String value) {
+  final normalized = value.trim().toUpperCase();
+  return normalized == 'WAREHOUSE' ? 'WAREHOUSE' : 'STORE';
+}
+
+String _normalizeStatus(String value) {
+  final normalized = value.trim().toUpperCase();
+  return normalized == 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
+}
+
+String _displayOutletType(String value) {
+  return _normalizeOutletType(value) == 'WAREHOUSE' ? 'Warehouse' : 'Store';
+}
+
+String _displayStatus(String value) {
+  return _normalizeStatus(value) == 'INACTIVE' ? 'Inactive' : 'Active';
+}
+
+String? _nullable(String value) {
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
+}
+
+String? _emailValidator(String? value) {
+  final email = value?.trim() ?? '';
+  if (email.isEmpty) {
+    return null;
+  }
+  final emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+  if (!emailPattern.hasMatch(email)) {
+    return 'Enter a valid email address.';
+  }
+  return null;
+}
+
+String? _phoneValidator(String? value) {
+  final phone = value?.trim() ?? '';
+  if (phone.isEmpty) {
+    return null;
+  }
+  final valid = RegExp(r'^[0-9+()\-\s]{6,40}$').hasMatch(phone);
+  return valid ? null : 'Enter a valid phone number.';
+}
+
+String? _countryCodeValidator(String? value) {
+  final country = value?.trim() ?? '';
+  if (country.isEmpty) {
+    return 'Country code is required.';
+  }
+  if (!RegExp(r'^[A-Za-z]{2}$').hasMatch(country)) {
+    return 'Country code must be 2 letters.';
+  }
+  const supportedCountries = {'LK', 'IN', 'GB', 'US'};
+  if (!supportedCountries.contains(country.toUpperCase())) {
+    return 'Country code must be one of LK, IN, GB, or US.';
+  }
+  return null;
+}
+
+int? _minutes(String value) {
+  final parts = value.trim().split(':');
+  if (parts.length < 2) {
+    return null;
+  }
+  final hour = int.tryParse(parts[0]);
+  final minute = int.tryParse(parts[1]);
+  if (hour == null ||
+      minute == null ||
+      hour < 0 ||
+      hour > 23 ||
+      minute < 0 ||
+      minute > 59) {
+    return null;
+  }
+  return hour * 60 + minute;
 }

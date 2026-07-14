@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../auth/presentation/providers/session_provider.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
-import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/outlet_details.dart';
 import '../providers/outlet_providers.dart';
 import '../providers/outlet_visibility_provider.dart';
@@ -27,7 +27,6 @@ class _AddOutletScreenState extends ConsumerState<AddOutletScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final managersState = ref.watch(outletManagersProvider);
     final createdOutlet = _createdOutlet;
 
     if (createdOutlet != null) {
@@ -52,20 +51,10 @@ class _AddOutletScreenState extends ConsumerState<AddOutletScreen> {
     return TenantAdminPageScaffold(
       title: 'Create Outlet',
       subtitle: 'Set up a new outlet using the wizard.',
-      child: managersState.when(
-        loading: () => const TenantAdminLoadingSkeleton(rowCount: 4),
-        error: (error, stackTrace) => OutletForm(
-          managers: const [],
-          backendErrors: _fieldErrors,
-          submitting: _submitting,
-          onSubmit: _submit,
-        ),
-        data: (managers) => OutletForm(
-          managers: managers,
-          backendErrors: _fieldErrors,
-          submitting: _submitting,
-          onSubmit: _submit,
-        ),
+      child: OutletForm(
+        backendErrors: _fieldErrors,
+        submitting: _submitting,
+        onSubmit: _submit,
       ),
     );
   }
@@ -84,6 +73,19 @@ class _AddOutletScreenState extends ConsumerState<AddOutletScreen> {
       }
       setState(() => _createdOutlet = outlet);
     } on DioException catch (error) {
+      if (error.response?.statusCode == 401) {
+        await ref.read(authSessionProvider.notifier).clear();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Your session has expired. Please sign in again.'),
+            ),
+          );
+          context.go('/tenant-login');
+        }
+        return;
+      }
+
       final fieldErrors = outletValidationErrors(error);
       setState(() => _fieldErrors = fieldErrors);
       if (mounted) {

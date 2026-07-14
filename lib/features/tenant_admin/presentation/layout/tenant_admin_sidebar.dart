@@ -6,6 +6,9 @@ import '../../../auth/presentation/providers/session_provider.dart';
 import '../../domain/entities/tenant_admin_context.dart';
 import '../../domain/entities/tenant_admin_menu_item.dart';
 import '../../domain/services/tenant_admin_access_checker.dart';
+import '../../products/presentation/navigation/products_sidebar_menu.dart';
+
+final tenantAdminSidebarCollapsedProvider = StateProvider<bool>((ref) => false);
 
 class TenantAdminSidebar extends ConsumerWidget {
   const TenantAdminSidebar({
@@ -23,8 +26,12 @@ class TenantAdminSidebar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      width: 230,
+    final collapsed = ref.watch(tenantAdminSidebarCollapsedProvider);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOut,
+      width: collapsed ? 78 : 230,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -41,7 +48,7 @@ class TenantAdminSidebar extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 22, 18, 18),
+              padding: EdgeInsets.fromLTRB(collapsed ? 12 : 20, 22, 18, 18),
               child: Row(
                 children: [
                   Container(
@@ -66,33 +73,54 @@ class TenantAdminSidebar extends ConsumerWidget {
                       size: 22,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Nytroz POS',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.2,
+                  if (!collapsed) ...[
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Nytroz POS',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.2,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Tenant Admin',
-                          style: TextStyle(
-                            color: Color(0xFF9FB0CA),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                          SizedBox(height: 2),
+                          Text(
+                            'Tenant Admin',
+                            style: TextStyle(
+                              color: Color(0xFF9FB0CA),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Align(
+                alignment:
+                    collapsed ? Alignment.center : Alignment.centerRight,
+                child: IconButton(
+                  tooltip: collapsed ? 'Expand sidebar' : 'Collapse sidebar',
+                  onPressed: () {
+                    ref.read(tenantAdminSidebarCollapsedProvider.notifier).state =
+                        !collapsed;
+                  },
+                  icon: Icon(
+                    collapsed ? Icons.last_page : Icons.first_page,
+                    color: const Color(0xFFB8C4D8),
+                    size: 18,
+                  ),
+                ),
               ),
             ),
             Expanded(
@@ -100,27 +128,36 @@ class TenantAdminSidebar extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(14, 2, 14, 14),
                 children: [
                   for (final item in items)
-                    _SidebarNavItem(
-                      icon: _iconFor(item.iconKey),
-                      label: item.label,
-                      selected: currentPath == item.route ||
-                          currentPath.startsWith('${item.route}/'),
-                      onTap: () => context.go(item.route),
-                    ),
-                  const _SidebarNavItem(
+                    if (item.key == 'products')
+                      ProductsSidebarMenu(
+                        currentPath: currentPath,
+                        collapsed: collapsed,
+                      )
+                    else
+                      _SidebarNavItem(
+                        icon: _iconFor(item.iconKey),
+                        label: item.label,
+                        selected: currentPath == item.route ||
+                            currentPath.startsWith('${item.route}/'),
+                        collapsed: collapsed,
+                        onTap: () => context.go(item.route),
+                      ),
+                  _SidebarNavItem(
                     icon: Icons.help_outline,
                     label: 'Help & Support',
                     selected: false,
                     enabled: false,
+                    collapsed: collapsed,
                   ),
                 ],
               ),
             ),
-            _SidebarFooter(
-              tenantContext: tenantContext,
-              accessChecker: accessChecker,
-              onSignOut: () => _signOut(ref, context),
-            ),
+            if (!collapsed)
+              _SidebarFooter(
+                tenantContext: tenantContext,
+                accessChecker: accessChecker,
+                onSignOut: () => _signOut(ref, context),
+              ),
           ],
         ),
       ),
@@ -141,6 +178,7 @@ class _SidebarNavItem extends StatelessWidget {
     required this.label,
     required this.selected,
     this.enabled = true,
+    this.collapsed = false,
     this.onTap,
   });
 
@@ -148,6 +186,7 @@ class _SidebarNavItem extends StatelessWidget {
   final String label;
   final bool selected;
   final bool enabled;
+  final bool collapsed;
   final VoidCallback? onTap;
 
   @override
@@ -158,7 +197,7 @@ class _SidebarNavItem extends StatelessWidget {
             ? const Color(0xFFD8E0EE)
             : const Color(0xFF7D8BA3);
 
-    return Padding(
+    final content = Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Material(
         color: Colors.transparent,
@@ -192,25 +231,38 @@ class _SidebarNavItem extends StatelessWidget {
                           ? const Color(0xFFB8C4D8)
                           : const Color(0xFF708097),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: itemColor,
-                      fontSize: 13,
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                if (!collapsed) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: itemColor,
+                        fontSize: 13,
+                        fontWeight:
+                            selected ? FontWeight.w800 : FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
         ),
       ),
     );
+
+    if (collapsed && enabled) {
+      return Tooltip(
+        message: label,
+        waitDuration: const Duration(milliseconds: 350),
+        child: content,
+      );
+    }
+
+    return content;
   }
 }
 
@@ -373,7 +425,7 @@ IconData _iconFor(String iconKey) {
     case 'shield':
       return Icons.security;
     case 'products':
-      return Icons.list;
+      return Icons.inventory_2_outlined;
     case 'inventory':
       return Icons.storage;
     case 'reports':

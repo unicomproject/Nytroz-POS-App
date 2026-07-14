@@ -58,3 +58,21 @@ final tillHardwareManageAccessProvider = Provider<bool>((ref) {
     orElse: () => false,
   );
 });
+
+final tillUpdateAccessProvider = Provider<bool>((ref) {
+  final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+
+  return accessState.maybeWhen(
+    data: (accessChecker) => accessChecker.canUpdateTill(),
+    orElse: () => false,
+  );
+});
+
+final tillDeleteAccessProvider = Provider<bool>((ref) {
+  final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+
+  return accessState.maybeWhen(
+    data: (accessChecker) => accessChecker.canDeleteTill(),
+    orElse: () => false,
+  );
+});

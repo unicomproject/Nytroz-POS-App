@@ -22,7 +22,12 @@ const dashboardQuickActionConfigs = <DashboardWidgetPermissionConfig>[
   ),
   DashboardWidgetPermissionConfig(
     id: 'add-product',
-    permission: TenantAdminPermissionCodes.productCreate,
+    permissionsAny: [
+      TenantAdminPermissionCodes.tenantProductsCreate,
+      TenantAdminPermissionCodes.catalogProductsCreate,
+      TenantAdminPermissionCodes.productCreate,
+      TenantAdminPermissionCodes.catalogProductCreate,
+    ],
     legacyIds: ['add_product'],
   ),
   DashboardWidgetPermissionConfig(
