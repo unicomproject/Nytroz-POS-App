@@ -361,6 +361,128 @@ class TenantAdminAccessChecker {
     ]);
   }
 
+  bool canAccessReportsModule() {
+    return canAccessFeature(TenantAdminFeatureCodes.reportsAnalytics) &&
+        canAny([
+          TenantAdminPermissionCodes.reportView,
+          TenantAdminPermissionCodes.reportSalesView,
+          TenantAdminPermissionCodes.tenantReportsSalesView,
+        ]);
+  }
+
+  bool canViewReportsDashboard() {
+    return canAccessReportsModule() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantReportsDashboardView,
+          TenantAdminPermissionCodes.reportView,
+        ]);
+  }
+
+  bool canViewSalesReport() {
+    return canAccessReportsModule() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantReportsSalesView,
+          TenantAdminPermissionCodes.reportSalesView,
+        ]);
+  }
+
+  bool canViewSalesTransactions() => canViewSalesReport();
+
+  bool canViewProductSalesReport() {
+    return canAccessReportsModule() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantReportsProductsView,
+          TenantAdminPermissionCodes.tenantReportsSalesView,
+        ]);
+  }
+
+  bool canViewCategorySalesReport() => canViewProductSalesReport();
+
+  bool canViewPaymentReport() {
+    return canAccessReportsModule() &&
+        can(TenantAdminPermissionCodes.tenantReportsPaymentsView);
+  }
+
+  bool canViewTaxReport() {
+    return canAccessReportsModule() &&
+        can(TenantAdminPermissionCodes.tenantReportsTaxView);
+  }
+
+  bool canViewDiscountReport() {
+    return canAccessReportsModule() &&
+        can(TenantAdminPermissionCodes.tenantReportsDiscountsView);
+  }
+
+  bool canViewReturnRefundReport() {
+    return canAccessReportsModule() &&
+        can(TenantAdminPermissionCodes.tenantReportsReturnsView);
+  }
+
+  bool canViewCashierPerformance() {
+    return canAccessReportsModule() &&
+        can(TenantAdminPermissionCodes.tenantReportsCashiersView);
+  }
+
+  bool canViewDailySalesReport() {
+    return canAccessReportsModule() &&
+        can(TenantAdminPermissionCodes.tenantReportsDailySalesView);
+  }
+
+  bool canViewStockReport() {
+    return canAccessReportsModule() &&
+        can(TenantAdminPermissionCodes.tenantStockView);
+  }
+
+  bool canViewLowStockReport() => canViewStockReport();
+
+  bool canViewOutOfStockReport() => canViewStockReport();
+
+  bool canViewBatchExpiryReport() {
+    return canViewStockReport() &&
+        can(TenantAdminPermissionCodes.tenantStockExpiryView);
+  }
+
+  bool canViewStockMovements() {
+    return canViewStockReport() &&
+        can(TenantAdminPermissionCodes.tenantStockMovementsView);
+  }
+
+  bool canViewInventoryValuation() {
+    return canViewStockReport() &&
+        can(TenantAdminPermissionCodes.tenantStockValueView);
+  }
+
+  bool canViewStockValue() => canViewInventoryValuation();
+
+  bool canViewOutletReport() {
+    return canAccessReportsModule() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantReportsOutletsView,
+          TenantAdminPermissionCodes.tenantOutletsRevenueView,
+          TenantAdminPermissionCodes.tenantReportsSalesView,
+        ]);
+  }
+
+  bool canViewTillSummary() {
+    return canViewOutletReport() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantReportsTillsView,
+          TenantAdminPermissionCodes.tenantTillsView,
+        ]);
+  }
+
+  bool canViewSalesTransactionDetail() => canViewSalesTransactions();
+
+  bool canExportReports() {
+    return canAccessReportsModule() &&
+        can(TenantAdminPermissionCodes.tenantReportsExport);
+  }
+
+  bool canViewCustomerPii() {
+    return canAccessReportsModule() &&
+        can(TenantAdminPermissionCodes.tenantReportsCustomerPiiView);
+  }
+
   bool canViewNeedsAttentionSection() {
     return _hasFullDashboardAccess ||
         can(TenantAdminPermissionCodes.dashboardAttentionView);
@@ -621,10 +743,11 @@ class TenantAdminAccessChecker {
   }
 
   bool canViewProductDashboardSummarySection() {
-    return canViewProductDashboard() && canAny([
-      TenantAdminPermissionCodes.tenantStockView,
-      TenantAdminPermissionCodes.tenantProductsView,
-    ]);
+    return canViewProductDashboard() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantStockView,
+          TenantAdminPermissionCodes.tenantProductsView,
+        ]);
   }
 
   bool canViewProductDashboardTotalProducts() {
@@ -1236,8 +1359,10 @@ class ProductListVisibility {
       showSummarySection: access.canFetchProductSummary(),
       showList: showPage,
       showPagination: showPage,
-      showActionsColumn:
-          showViewAction || showEditAction || showStatusAction || showDeleteAction,
+      showActionsColumn: showViewAction ||
+          showEditAction ||
+          showStatusAction ||
+          showDeleteAction,
       showViewAction: showViewAction,
       showEditAction: showEditAction,
       showStatusAction: showStatusAction,

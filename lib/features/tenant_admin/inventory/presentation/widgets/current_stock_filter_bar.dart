@@ -141,7 +141,8 @@ class CurrentStockFilterBar extends ConsumerWidget {
             left: TenantAdminSpacing.lg,
             right: TenantAdminSpacing.lg,
             top: TenantAdminSpacing.lg,
-            bottom: MediaQuery.viewInsetsOf(context).bottom + TenantAdminSpacing.lg,
+            bottom:
+                MediaQuery.viewInsetsOf(context).bottom + TenantAdminSpacing.lg,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -297,7 +298,9 @@ int currentStockActiveFilterCount(WidgetRef ref) {
   if (query.search != null && query.search!.trim().isNotEmpty) count++;
   if (query.stockStatus != null && query.stockStatus!.isNotEmpty) count++;
   if (query.expiryStatus != null && query.expiryStatus!.isNotEmpty) count++;
-  if (query.batchNumber != null && query.batchNumber!.trim().isNotEmpty) count++;
+  if (query.batchNumber != null && query.batchNumber!.trim().isNotEmpty) {
+    count++;
+  }
 
   return count;
 }

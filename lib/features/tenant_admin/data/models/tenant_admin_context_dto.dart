@@ -13,6 +13,11 @@ class TenantAdminContextDto {
     required this.permissions,
     required this.runtimeFlags,
     this.subscriptionStatus,
+    this.tenantTimezone,
+    this.currentBusinessDate,
+    this.currencyCode,
+    this.locale,
+    this.accessibleOutletIds = const [],
   });
 
   factory TenantAdminContextDto.fromApiJson(Map<String, dynamic> json) {
@@ -33,12 +38,12 @@ class TenantAdminContextDto {
     final roles = _mapList(json['roles'], (item) => item);
     final outlets = _mapList(json['outlets'], (item) => item);
     final enabledFeatures = _resolveStringList(
-      json['enabledFeatures'],
-      json['features'],
+      json['enabledFeatureCodes'],
+      json['enabledFeatures'] ?? json['features'],
     );
     final effectivePermissions = _resolveStringList(
-      json['effectivePermissions'],
-      json['permissions'],
+      json['effectivePermissionCodes'],
+      json['effectivePermissions'] ?? json['permissions'],
     );
     final runtimeFlags = _stringList(json['runtimeFlags']);
     final subscription = _map(json['subscription']);
@@ -91,6 +96,13 @@ class TenantAdminContextDto {
           ),
       ],
       subscriptionStatus: subscription['status']?.toString(),
+      tenantTimezone: json['tenantTimezone']?.toString(),
+      currentBusinessDate: DateTime.tryParse(
+        json['currentBusinessDate']?.toString() ?? '',
+      ),
+      currencyCode: json['currencyCode']?.toString(),
+      locale: json['locale']?.toString(),
+      accessibleOutletIds: _stringList(json['accessibleOutletIds']),
     );
   }
 
@@ -122,6 +134,13 @@ class TenantAdminContextDto {
         TenantAdminRuntimeFlagDto.fromJson,
       ),
       subscriptionStatus: json['subscriptionStatus'] as String?,
+      tenantTimezone: json['tenantTimezone'] as String?,
+      currentBusinessDate: DateTime.tryParse(
+        json['currentBusinessDate']?.toString() ?? '',
+      ),
+      currencyCode: json['currencyCode'] as String?,
+      locale: json['locale'] as String?,
+      accessibleOutletIds: _stringList(json['accessibleOutletIds']),
     );
   }
 
@@ -136,6 +155,11 @@ class TenantAdminContextDto {
   final List<TenantAdminPermissionDto> permissions;
   final List<TenantAdminRuntimeFlagDto> runtimeFlags;
   final String? subscriptionStatus;
+  final String? tenantTimezone;
+  final DateTime? currentBusinessDate;
+  final String? currencyCode;
+  final String? locale;
+  final List<String> accessibleOutletIds;
 }
 
 class TenantAdminRoleScopeDto {

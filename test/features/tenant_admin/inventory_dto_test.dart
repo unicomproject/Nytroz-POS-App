@@ -99,13 +99,13 @@ void main() {
 
   group('CreateStockInRequestDto', () {
     test('serializes stock in request fields', () {
-      final json = CreateStockInRequestDto(
+      final json = const CreateStockInRequestDto(
         outletId: 'bbbbbbbb-0001-4000-8000-000000000001',
         referenceNumber: 'GRN-001',
         receivedAt: '2026-07-12T10:00:00Z',
         notes: 'Morning delivery',
         idempotencyKey: 'key-1',
-        items: const [
+        items: [
           StockInLineRequestDto(
             productVariantId: 'eeeeeeee-0001-4000-8000-000000000001',
             batchNumber: 'BATCH-001',

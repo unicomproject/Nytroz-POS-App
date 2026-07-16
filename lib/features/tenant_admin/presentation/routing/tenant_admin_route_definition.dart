@@ -272,6 +272,13 @@ const tenantAdminRouteDefinitions = [
     permissionCode: 'reports.view',
   ),
   TenantAdminRouteDefinition(
+    path: '/tenant-admin/reports/sales/:orderId',
+    menuKey: 'reports',
+    title: 'Transaction Detail',
+    featureCode: 'reports',
+    permissionCode: 'reports.view',
+  ),
+  TenantAdminRouteDefinition(
     path: '/tenant-admin/reports/stock',
     menuKey: 'reports',
     title: 'Stock Report',

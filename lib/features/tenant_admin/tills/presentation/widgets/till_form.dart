@@ -122,7 +122,8 @@ class _TillFormState extends State<TillForm> {
               _sectionHeader(
                 icon: Icons.devices_outlined,
                 title: 'Hardware Details',
-                subtitle: 'Add hardware information if available for this till.',
+                subtitle:
+                    'Add hardware information if available for this till.',
               ),
               const SizedBox(height: TenantAdminSpacing.lg),
               _twoColumnRow(

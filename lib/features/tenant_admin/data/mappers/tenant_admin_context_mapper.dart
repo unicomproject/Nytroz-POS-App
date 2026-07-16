@@ -17,6 +17,11 @@ extension TenantAdminContextMapper on TenantAdminContextDto {
           permissions.map((permission) => permission.toEntity()).toList(),
       runtimeFlags: runtimeFlags.map((flag) => flag.toEntity()).toList(),
       subscriptionStatus: subscriptionStatus,
+      tenantTimezone: tenantTimezone,
+      currentBusinessDate: currentBusinessDate,
+      currencyCode: currencyCode,
+      locale: locale,
+      accessibleOutletIds: accessibleOutletIds,
     );
   }
 }

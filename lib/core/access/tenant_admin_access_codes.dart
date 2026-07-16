@@ -131,7 +131,8 @@ class TenantAdminPermissionCodes {
   static const tenantUsersDelete = 'tenant.users.delete';
   static const tenantUsersDisable = 'tenant.users.disable';
   static const tenantUsersDetailsView = 'tenant.users.details.view';
-  static const tenantUsersPermissionOverride = 'tenant.users.permission_override';
+  static const tenantUsersPermissionOverride =
+      'tenant.users.permission_override';
   static const tenantRolesView = 'tenant.roles.view';
   static const tenantPermissionsView = 'tenant.permissions.view';
   static const tenantProductsView = 'tenant.products.view';
@@ -163,6 +164,18 @@ class TenantAdminPermissionCodes {
   static const tenantHardwareView = 'tenant.hardware.view';
   static const tenantHardwareManage = 'tenant.hardware.manage';
   static const tenantReportsSalesView = 'tenant.reports.sales.view';
+  static const tenantReportsDashboardView = 'tenant.reports.dashboard.view';
+  static const tenantReportsPaymentsView = 'tenant.reports.payments.view';
+  static const tenantReportsTaxView = 'tenant.reports.tax.view';
+  static const tenantReportsDiscountsView = 'tenant.reports.discounts.view';
+  static const tenantReportsReturnsView = 'tenant.reports.returns.view';
+  static const tenantReportsCashiersView = 'tenant.reports.cashiers.view';
+  static const tenantReportsOutletsView = 'tenant.reports.outlets.view';
+  static const tenantReportsTillsView = 'tenant.reports.tills.view';
+  static const tenantReportsDailySalesView = 'tenant.reports.daily-sales.view';
+  static const tenantReportsExport = 'tenant.reports.export';
+  static const tenantReportsCustomerPiiView =
+      'tenant.reports.customer-pii.view';
   static const catalogProductView = 'catalog.product.view';
   static const catalogProductCreate = 'catalog.product.create';
   static const catalogProductsCreate = 'catalog.products.create';
