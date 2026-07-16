@@ -229,7 +229,7 @@ class _StockInLineEditorState extends ConsumerState<_StockInLineEditor> {
               }
 
               return DropdownButtonFormField<String?>(
-                value: widget.line.productVariantId,
+                initialValue: widget.line.productVariantId,
                 decoration: InputDecoration(
                   labelText: 'Variant *',
                   border: const OutlineInputBorder(),
@@ -282,7 +282,11 @@ class _StockInLineEditorState extends ConsumerState<_StockInLineEditor> {
               contentPadding: EdgeInsets.zero,
               title: const Text('Manufactured date'),
               subtitle: Text(
-                widget.line.manufacturedDate?.toLocal().toString().split(' ').first ??
+                widget.line.manufacturedDate
+                        ?.toLocal()
+                        .toString()
+                        .split(' ')
+                        .first ??
                     'Not set',
               ),
               trailing: IconButton(
@@ -335,8 +339,7 @@ class _StockInLineEditorState extends ConsumerState<_StockInLineEditor> {
             children: [
               Expanded(
                 child: TextFormField(
-                  initialValue:
-                      widget.line.quantity?.toString() ?? '',
+                  initialValue: widget.line.quantity?.toString() ?? '',
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(

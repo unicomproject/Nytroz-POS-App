@@ -11,6 +11,11 @@ class TenantAdminContext {
     required this.permissions,
     required this.runtimeFlags,
     this.subscriptionStatus,
+    this.tenantTimezone,
+    this.currentBusinessDate,
+    this.currencyCode,
+    this.locale,
+    this.accessibleOutletIds = const [],
   });
 
   final String tenantId;
@@ -24,6 +29,11 @@ class TenantAdminContext {
   final List<TenantAdminPermission> permissions;
   final List<TenantAdminRuntimeFlag> runtimeFlags;
   final String? subscriptionStatus;
+  final String? tenantTimezone;
+  final DateTime? currentBusinessDate;
+  final String? currencyCode;
+  final String? locale;
+  final List<String> accessibleOutletIds;
 }
 
 class TenantAdminRoleScope {

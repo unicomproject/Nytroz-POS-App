@@ -122,7 +122,8 @@ class _TillFormState extends State<TillForm> {
               _sectionHeader(
                 icon: Icons.devices_outlined,
                 title: 'Hardware Details',
-                subtitle: 'Add hardware information if available for this till.',
+                subtitle:
+                    'Add hardware information if available for this till.',
               ),
               const SizedBox(height: TenantAdminSpacing.lg),
               _twoColumnRow(
@@ -277,7 +278,7 @@ class _TillFormState extends State<TillForm> {
 
   Widget _outletDropdown() {
     return DropdownButtonFormField<String>(
-      value: _selectedOutletId,
+      initialValue: _selectedOutletId,
       decoration: InputDecoration(
         labelText: 'Assign Outlet',
         hintText: 'Select outlet',
@@ -305,7 +306,7 @@ class _TillFormState extends State<TillForm> {
 
   Widget _statusDropdown() {
     return DropdownButtonFormField<String>(
-      value: _status,
+      initialValue: _status,
       decoration: InputDecoration(
         labelText: 'Status',
         prefixIcon: const Icon(Icons.circle, size: 12),

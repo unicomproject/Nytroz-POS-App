@@ -4,7 +4,7 @@ import 'package:nytroz_pos/features/tenant_admin/products/data/models/product_cr
 void main() {
   group('ProductCreateRequestDto', () {
     test('maps create request to backend payload', () {
-      final dto = ProductCreateRequestDto(
+      const dto = ProductCreateRequestDto(
         productName: 'Espresso Beans',
         sku: 'ESP-001',
         barcode: '1234567890',
@@ -19,7 +19,7 @@ void main() {
         openingStockQuantity: 10,
         minimumStockAlertQuantity: 2,
         stockUnit: 'EA',
-        outletIds: const ['55555555-5555-5555-5555-555555555555'],
+        outletIds: ['55555555-5555-5555-5555-555555555555'],
         status: 'ACTIVE',
       );
 

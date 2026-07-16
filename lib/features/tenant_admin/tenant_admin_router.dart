@@ -1,4 +1,3 @@
-
 //new
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +30,11 @@ import 'brands/presentation/screens/brand_list_screen.dart';
 import 'inventory/presentation/navigation/inventory_routes.dart';
 import 'inventory/presentation/screens/current_stock_screen.dart';
 import 'inventory/presentation/screens/stock_in_screen.dart';
+import 'reports/presentation/screens/outlet_report_screen.dart';
+import 'reports/presentation/screens/reports_dashboard_screen.dart';
+import 'reports/presentation/screens/sales_report_screen.dart';
+import 'reports/presentation/screens/sales_transaction_detail_screen.dart';
+import 'reports/presentation/screens/stock_report_screen.dart';
 import '../auth/presentation/providers/session_provider.dart';
 import 'presentation/providers/tenant_admin_access_provider.dart';
 import 'presentation/providers/tenant_admin_context_provider.dart';
@@ -270,6 +274,28 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return const StockInScreen();
   }
 
+  if (definition.path == '/tenant-admin/reports') {
+    return const ReportsDashboardScreen();
+  }
+
+  if (definition.path == '/tenant-admin/reports/sales') {
+    return const SalesReportScreen();
+  }
+
+  if (definition.path == '/tenant-admin/reports/sales/:orderId') {
+    return SalesTransactionDetailScreen(
+      orderId: state.pathParameters['orderId'] ?? '',
+    );
+  }
+
+  if (definition.path == '/tenant-admin/reports/stock') {
+    return const StockReportScreen();
+  }
+
+  if (definition.path == '/tenant-admin/reports/outlets') {
+    return const OutletReportScreen();
+  }
+
   if (definition.path == '/tenant-admin/products/:id') {
     return ProductDetailScreen(
       productId: state.pathParameters['id'] ?? '',
@@ -429,6 +455,26 @@ bool _canAccessRoute(
 
   if (definition.path == InventoryRoutes.stockIn) {
     return accessChecker.canAccessStockInPage();
+  }
+
+  if (definition.path == '/tenant-admin/reports') {
+    return accessChecker.canViewReportsDashboard();
+  }
+
+  if (definition.path == '/tenant-admin/reports/sales') {
+    return accessChecker.canViewSalesReport();
+  }
+
+  if (definition.path == '/tenant-admin/reports/sales/:orderId') {
+    return accessChecker.canViewSalesTransactionDetail();
+  }
+
+  if (definition.path == '/tenant-admin/reports/stock') {
+    return accessChecker.canViewStockReport();
+  }
+
+  if (definition.path == '/tenant-admin/reports/outlets') {
+    return accessChecker.canViewOutletReport();
   }
 
   final menuItem = _findMenuItem(items, definition.menuKey);

@@ -81,7 +81,7 @@ class ProductDashboardSummaryCard extends StatelessWidget {
                       ),
                       const Spacer(),
                       if (isClickable)
-                        Icon(
+                        const Icon(
                           Icons.chevron_right,
                           size: 18,
                           color: TenantAdminColors.mutedText,

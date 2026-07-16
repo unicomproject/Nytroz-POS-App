@@ -4,7 +4,7 @@ import 'package:nytroz_pos/features/tenant_admin/products/data/models/product_cr
 void main() {
   group('ProductCreateRequestDto update payload', () {
     test('maps update request with optional pricing and variants', () {
-      final dto = ProductCreateRequestDto(
+      const dto = ProductCreateRequestDto(
         productName: 'Espresso Beans',
         sku: 'ESP-001',
         categoryId: '11111111-1111-1111-1111-111111111111',
@@ -17,9 +17,9 @@ void main() {
         minimumStockAlertQuantity: 2,
         maximumStockQuantity: 100,
         stockUnit: 'EA',
-        outletIds: const ['55555555-5555-5555-5555-555555555555'],
+        outletIds: ['55555555-5555-5555-5555-555555555555'],
         hasVariants: true,
-        variants: const [
+        variants: [
           ProductVariantRequestDto(
             variantName: '250g Pack',
             sku: 'ESP-001-250',
