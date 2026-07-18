@@ -21,12 +21,16 @@ class OutletListPanel extends ConsumerWidget {
     required this.visibility,
     required this.statusFilter,
     required this.isMobile,
+    this.showPanelTitle = true,
+    this.showAddButton = true,
   });
 
   final OutletListResult result;
   final OutletListVisibility visibility;
   final OutletStatusFilter statusFilter;
   final bool isMobile;
+  final bool showPanelTitle;
+  final bool showAddButton;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,40 +52,23 @@ class OutletListPanel extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: TenantAdminSpacing.lg,
-              vertical: TenantAdminSpacing.md,
+            padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (showPanelTitle) ...[
+                  _PanelTitle(countLabel: outletCountLabel),
+                  const SizedBox(height: TenantAdminSpacing.lg),
+                ],
+                _Toolbar(
+                  visibility: visibility,
+                  statusFilter: statusFilter,
+                  summary: result.summary,
+                  isMobile: isMobile,
+                  showAddButton: showAddButton,
+                ),
+              ],
             ),
-            child: isMobile
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _PanelTitle(countLabel: outletCountLabel),
-                      const SizedBox(height: TenantAdminSpacing.lg),
-                      _Toolbar(
-                        visibility: visibility,
-                        statusFilter: statusFilter,
-                        summary: result.summary,
-                        isMobile: true,
-                      ),
-                    ],
-                  )
-                : Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _PanelTitle(countLabel: outletCountLabel),
-                      const SizedBox(width: TenantAdminSpacing.xl),
-                      Expanded(
-                        flex: 5,
-                        child: _Toolbar(
-                          visibility: visibility,
-                          statusFilter: statusFilter,
-                          summary: result.summary,
-                          isMobile: false,
-                        ),
-                      ),
-                    ],
-                  ),
           ),
           const Divider(height: 1, color: TenantAdminColors.border),
           if (result.items.isEmpty)
@@ -218,12 +205,14 @@ class _Toolbar extends ConsumerWidget {
     required this.statusFilter,
     required this.summary,
     required this.isMobile,
+    required this.showAddButton,
   });
 
   final OutletListVisibility visibility;
   final OutletStatusFilter statusFilter;
   final OutletListSummary summary;
   final bool isMobile;
+  final bool showAddButton;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -241,6 +230,23 @@ class _Toolbar extends ConsumerWidget {
         ),
       if (visibility.showFilter) ...[
         if (visibility.showSearch) const SizedBox(width: TenantAdminSpacing.sm),
+        SizedBox(
+          width: isMobile ? double.infinity : 142,
+          child: const _OutletTypeFilter(),
+        ),
+        const SizedBox(width: TenantAdminSpacing.sm),
+        SizedBox(
+          width: isMobile ? double.infinity : 142,
+          child: _OutletStatusDropdown(
+            value: statusFilter,
+            onChanged: (value) {
+              ref.read(outletStatusFilterProvider.notifier).state =
+                  value ?? OutletStatusFilter.all;
+              ref.read(outletPageProvider.notifier).state = 1;
+            },
+          ),
+        ),
+        const SizedBox(width: TenantAdminSpacing.sm),
         TenantAdminSecondaryButton(
           label: 'Filters',
           icon: Icons.filter_alt_outlined,
@@ -250,11 +256,16 @@ class _Toolbar extends ConsumerWidget {
       ],
       const SizedBox(width: TenantAdminSpacing.sm),
       TenantAdminSecondaryButton(
-        label: 'Sort',
-        icon: Icons.swap_vert,
-        onPressed: () => _showSortSheet(context, ref),
+        label: 'Clear',
+        icon: Icons.refresh,
+        onPressed: () {
+          ref.read(outletSearchProvider.notifier).state = '';
+          ref.read(outletStatusFilterProvider.notifier).state =
+              OutletStatusFilter.all;
+          ref.read(outletPageProvider.notifier).state = 1;
+        },
       ),
-      if (visibility.showAddOutlet) ...[
+      if (visibility.showAddOutlet && showAddButton) ...[
         const SizedBox(width: TenantAdminSpacing.sm),
         TenantAdminPrimaryButton(
           label: isMobile ? 'Add' : 'Add outlet',
@@ -281,6 +292,72 @@ class _Toolbar extends ConsumerWidget {
 
     return Row(children: children);
   }
+}
+
+class _OutletTypeFilter extends StatelessWidget {
+  const _OutletTypeFilter();
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<String>(
+      initialValue: 'all',
+      isExpanded: true,
+      decoration: _dropdownDecoration(),
+      items: const [
+        DropdownMenuItem(value: 'all', child: Text('All Types')),
+      ],
+      onChanged: (_) {},
+    );
+  }
+}
+
+class _OutletStatusDropdown extends StatelessWidget {
+  const _OutletStatusDropdown({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final OutletStatusFilter value;
+  final ValueChanged<OutletStatusFilter?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<OutletStatusFilter>(
+      initialValue: value,
+      isExpanded: true,
+      decoration: _dropdownDecoration(),
+      items: OutletStatusFilter.values
+          .map(
+            (filter) => DropdownMenuItem(
+              value: filter,
+              child: Text(filter == OutletStatusFilter.all
+                  ? 'All Status'
+                  : filter.label),
+            ),
+          )
+          .toList(),
+      onChanged: onChanged,
+    );
+  }
+}
+
+InputDecoration _dropdownDecoration() {
+  return InputDecoration(
+    filled: true,
+    fillColor: TenantAdminColors.surface,
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: TenantAdminSpacing.md,
+      vertical: TenantAdminSpacing.sm,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+      borderSide: const BorderSide(color: TenantAdminColors.border),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+      borderSide: const BorderSide(color: TenantAdminColors.primary),
+    ),
+  );
 }
 
 class _MobilePagination extends StatelessWidget {
@@ -396,70 +473,6 @@ Future<void> _showFilterSheet(
                   child: const Text('Reset filters'),
                 ),
               ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
-}
-
-Future<void> _showSortSheet(BuildContext context, WidgetRef ref) {
-  const options = [
-    ('name', 'Outlet Name'),
-    ('code', 'Outlet Code'),
-    ('status', 'Status'),
-  ];
-
-  final currentSortBy = ref.read(outletSortByProvider);
-  final currentDirection = ref.read(outletSortDirectionProvider);
-
-  return showAppModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
-    builder: (context) {
-      return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            TenantAdminSpacing.xl,
-            TenantAdminSpacing.md,
-            TenantAdminSpacing.xl,
-            TenantAdminSpacing.xl,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Sort outlets',
-                style: TenantAdminTextStyles.sectionTitle(context),
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              for (final option in options)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(option.$2),
-                  trailing: currentSortBy == option.$1
-                      ? Icon(
-                          currentDirection == 'desc'
-                              ? Icons.arrow_downward
-                              : Icons.arrow_upward,
-                          color: TenantAdminColors.primary,
-                        )
-                      : null,
-                  onTap: () {
-                    if (currentSortBy == option.$1) {
-                      ref.read(outletSortDirectionProvider.notifier).state =
-                          currentDirection == 'asc' ? 'desc' : 'asc';
-                    } else {
-                      ref.read(outletSortByProvider.notifier).state = option.$1;
-                      ref.read(outletSortDirectionProvider.notifier).state =
-                          'asc';
-                    }
-                    ref.read(outletPageProvider.notifier).state = 1;
-                    Navigator.of(context).pop();
-                  },
-                ),
             ],
           ),
         ),

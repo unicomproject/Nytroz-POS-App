@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../domain/entities/outlet_list_query.dart';
 import '../models/create_outlet_request_dto.dart';
 import '../models/outlet_detail_dtos.dart';
+import '../models/outlet_create_options_dto.dart';
 import '../models/outlet_dto.dart';
 
 class OutletRemoteDatasource {
@@ -10,81 +11,38 @@ class OutletRemoteDatasource {
 
   final Dio _dio;
 
-  static const _tenantAdminOutletBase = '/api/v1/tenant-admin/outlets';
-
-  static const _outletPaths = [
-    '/api/v1/outlets',
-    '/api/v1/tenant-admin/outlets',
-    '/api/tenant-admin/outlets',
-  ];
+  static const _outletBase = '/api/v1/outlets';
 
   Future<OutletListResultDto> getOutlets(OutletListQuery query) async {
-    DioException? lastError;
+    final response = await _dio.get<dynamic>(
+      _outletBase,
+      queryParameters: _listQueryParameters(query),
+    );
 
-    for (final path in _outletPaths) {
-      try {
-        final response = await _dio.get<dynamic>(
-          path,
-          queryParameters: _listQueryParameters(query),
-        );
-
-        return _parseListResponse(response.data, response.requestOptions);
-      } on DioException catch (error) {
-        lastError = error;
-        if (error.response?.statusCode == 404) {
-          continue;
-        }
-
-        rethrow;
-      }
-    }
-
-    if (lastError != null) {
-      throw lastError;
-    }
-
-    return OutletListResultDto.fromArray(const []);
+    return _parseListResponse(response.data, response.requestOptions);
   }
 
-  Future<OutletListSummaryDto?> getOutletSummary() async {
-    DioException? lastError;
-
-    for (final path in _outletPaths) {
-      try {
-        final response = await _dio.get<dynamic>('$path/summary');
-        final payload = _unwrapApiPayload(
-          response.data,
-          response.requestOptions,
-        );
-
-        return OutletListSummaryDto.fromJson(payload);
-      } on DioException catch (error) {
-        lastError = error;
-        if (error.response?.statusCode == 404 ||
-            error.response?.statusCode == 403) {
-          return null;
-        }
-
-        rethrow;
-      }
-    }
-
-    if (lastError != null) {
-      throw lastError;
-    }
-
-    return null;
+  Future<OutletCreateOptionsDto> getCreateOptions() async {
+    final response = await _dio.get<dynamic>('$_outletBase/create-options');
+    return OutletCreateOptionsDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
   }
 
   Future<OutletDetailsDto> getOutletDetails(String id) async {
-    return _requestOutletDetails(
-      (path) => _dio.get<dynamic>('$path/$id'),
+    final response = await _dio.get<dynamic>('$_outletBase/$id');
+    return OutletDetailsDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
     );
   }
 
   Future<OutletDetailsDto> createOutlet(CreateOutletRequestDto request) async {
-    return _requestOutletDetails(
-      (path) => _dio.post<dynamic>(path, data: request.toJson()),
+    final response = await _dio.post<dynamic>(
+      _outletBase,
+      data: request.toJson(),
+    );
+    return OutletDetailsDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
     );
   }
 
@@ -92,104 +50,29 @@ class OutletRemoteDatasource {
     String id,
     CreateOutletRequestDto request,
   ) async {
-    return _requestOutletDetails(
-      (path) => _dio.put<dynamic>('$path/$id', data: request.toJson()),
+    final response = await _dio.put<dynamic>(
+      '$_outletBase/$id',
+      data: request.toJson(),
+    );
+    return OutletDetailsDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
     );
   }
 
   Future<void> deleteOutlet(String id) async {
-    DioException? lastError;
-
-    for (final path in _outletPaths) {
-      try {
-        await _dio.delete<void>('$path/$id');
-        return;
-      } on DioException catch (error) {
-        lastError = error;
-        if (error.response?.statusCode == 404) {
-          continue;
-        }
-
-        rethrow;
-      }
-    }
-
-    if (lastError != null) {
-      throw lastError;
-    }
+    await _dio.delete<void>('$_outletBase/$id');
   }
 
   Future<void> updateOutletStatus(String id, String status) async {
-    DioException? lastError;
-
-    for (final path in _outletPaths) {
-      try {
-        await _dio.patch<void>(
-          '$path/$id/status',
-          data: {'status': status},
-        );
-        return;
-      } on DioException catch (error) {
-        lastError = error;
-        if (error.response?.statusCode == 404) {
-          continue;
-        }
-
-        rethrow;
-      }
-    }
-
-    if (lastError != null) {
-      throw lastError;
-    }
+    final _ = (id, status);
+    throw UnsupportedError(
+      'Outlet status PATCH is not supported by the current backend contract. '
+      'Use the outlet edit flow, which sends PUT /api/v1/outlets/{id}.',
+    );
   }
 
   Future<List<OutletManagerOptionDto>> getManagerOptions() async {
-    final response = await _dio.get<dynamic>(
-      '/api/tenant-admin/staff/managers',
-    );
-    final data = response.data;
-    final items = data is Map ? data['items'] : data;
-
-    if (items is! List) {
-      return const [];
-    }
-
-    return items
-        .whereType<Map>()
-        .map((item) => OutletManagerOptionDto.fromJson(
-              Map<String, dynamic>.from(item),
-            ))
-        .toList(growable: false);
-  }
-
-  Future<OutletDetailsDto> _requestOutletDetails(
-    Future<Response<dynamic>> Function(String path) request,
-  ) async {
-    DioException? lastError;
-
-    for (final path in _outletPaths) {
-      try {
-        final response = await request(path);
-        return OutletDetailsDto.fromJson(
-          _unwrapApiPayload(response.data, response.requestOptions),
-        );
-      } on DioException catch (error) {
-        lastError = error;
-        if (error.response?.statusCode == 404) {
-          continue;
-        }
-
-        rethrow;
-      }
-    }
-
-    throw lastError ??
-        DioException(
-          requestOptions: RequestOptions(path: _outletPaths.first),
-          type: DioExceptionType.badResponse,
-          message: 'Outlet API is unavailable.',
-        );
+    return const [];
   }
 
   Map<String, dynamic> _listQueryParameters(OutletListQuery query) {
@@ -197,12 +80,8 @@ class OutletRemoteDatasource {
       'page': query.page,
       'pageNumber': query.page,
       'pageSize': query.pageSize,
-      'sortBy': query.sortBy,
-      'sortDirection': query.sortDirection,
       if (query.search != null && query.search!.trim().isNotEmpty)
         'search': query.search!.trim(),
-      if (query.status != null && query.status!.trim().isNotEmpty)
-        'status': query.status!.trim(),
     };
   }
 
@@ -264,31 +143,27 @@ class OutletRemoteDatasource {
   }
 
   Future<OutletDetailDto> getOutletDetail(String id) async {
-    final response = await _dio.get<dynamic>('$_tenantAdminOutletBase/$id');
+    final response = await _dio.get<dynamic>('$_outletBase/$id');
     return OutletDetailDto.fromJson(
       _unwrapApiPayload(response.data, response.requestOptions),
     );
   }
 
   Future<OutletRevenueSummaryDto> getOutletRevenueSummary(String id) async {
-    final response =
-        await _dio.get<dynamic>('$_tenantAdminOutletBase/$id/revenue-summary');
-    return OutletRevenueSummaryDto.fromJson(
-      _unwrapApiPayload(response.data, response.requestOptions),
+    throw UnsupportedError(
+      'Outlet revenue summary is not supported by the current backend contract.',
     );
   }
 
   Future<OutletAssignedUsersDto> getOutletAssignedUsers(String id) async {
-    final response = await _dio.get<dynamic>('$_tenantAdminOutletBase/$id/users');
-    return OutletAssignedUsersDto.fromJson(
-      _unwrapApiPayload(response.data, response.requestOptions),
+    throw UnsupportedError(
+      'Outlet assigned users are not supported by the current backend contract.',
     );
   }
 
   Future<OutletTillsDetailDto> getOutletTillsDetail(String id) async {
-    final response = await _dio.get<dynamic>('$_tenantAdminOutletBase/$id/tills');
-    return OutletTillsDetailDto.fromJson(
-      _unwrapApiPayload(response.data, response.requestOptions),
+    throw UnsupportedError(
+      'Outlet tills detail is not supported by the current backend contract.',
     );
   }
 }

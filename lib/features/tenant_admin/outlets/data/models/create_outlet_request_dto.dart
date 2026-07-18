@@ -114,8 +114,7 @@ class CreateOutletRequestDto {
   }
 
   static String _normalizeCountryCode(String country) {
-    final code = country.trim().toUpperCase();
-    return code.length == 2 ? code : 'LK';
+    return country.trim().toUpperCase();
   }
 
   static List<Map<String, dynamic>> _businessHoursJson(

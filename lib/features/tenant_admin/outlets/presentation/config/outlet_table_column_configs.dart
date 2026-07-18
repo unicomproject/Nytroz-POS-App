@@ -70,6 +70,12 @@ const outletTableColumnConfigs = <OutletTableColumnConfig>[
     permission: TenantAdminPermissionCodes.outletStatusView,
     sortKey: 'status',
   ),
+  OutletTableColumnConfig(
+    id: 'tills',
+    columnId: OutletTableColumnId.tills,
+    label: 'Tills',
+    permission: TenantAdminPermissionCodes.outletView,
+  ),
 ];
 
 List<OutletTableColumnConfig> visibleOutletTableColumns(

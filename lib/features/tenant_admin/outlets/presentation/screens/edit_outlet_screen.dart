@@ -30,6 +30,31 @@ class _EditOutletScreenState extends ConsumerState<EditOutletScreen> {
   @override
   Widget build(BuildContext context) {
     final detailsState = ref.watch(outletDetailsProvider(widget.outletId));
+    final optionsState = ref.watch(outletCreateOptionsProvider);
+
+    if (detailsState.isLoading || optionsState.isLoading) {
+      return const TenantAdminPageScaffold(
+        title: 'Edit outlet',
+        subtitle: 'Update outlet details.',
+        child: TenantAdminLoadingSkeleton(rowCount: 8),
+      );
+    }
+
+    final error = detailsState.error ?? optionsState.error;
+    if (error != null) {
+      return TenantAdminPageScaffold(
+        title: 'Edit outlet',
+        subtitle: 'Update outlet details.',
+        child: TenantAdminErrorState(
+          title: 'Unable to load outlet',
+          message: 'Please try again.',
+          onRetry: () {
+            ref.invalidate(outletDetailsProvider(widget.outletId));
+            ref.invalidate(outletCreateOptionsProvider);
+          },
+        ),
+      );
+    }
 
     return detailsState.when(
       loading: () => const TenantAdminPageScaffold(
@@ -55,6 +80,7 @@ class _EditOutletScreenState extends ConsumerState<EditOutletScreen> {
         subtitle: 'Update outlet details.',
         child: OutletForm(
           initialValue: _initialForm(outlet),
+          createOptions: optionsState.value,
           backendErrors: _fieldErrors,
           submitting: _submitting,
           onSubmit: _submit,
@@ -108,16 +134,18 @@ OutletFormData _initialForm(OutletDetails outlet) {
   return OutletFormData(
     outletName: outlet.name,
     outletCode: outlet.code,
-    outletType: 'STORE',
+    outletType: outlet.outletType ?? 'STORE',
     status: outlet.status,
     mainPhoneNumber: outlet.phone ?? outlet.managerPhone ?? '',
     emailAddress: outlet.email ?? '',
-    addressLine1: outlet.address,
-    city: '',
-    state: '',
-    country: '',
-    postalCode: '',
+    isDefaultOutlet: outlet.isDefaultOutlet,
+    addressLine1: outlet.addressLine1 ?? outlet.address,
+    addressLine2: outlet.addressLine2,
+    city: outlet.city ?? '',
+    state: outlet.state,
+    country: outlet.countryCode ?? '',
+    postalCode: outlet.postalCode ?? '',
     timezone: outlet.timezone ?? 'UTC',
-    openingHours: const [],
+    openingHours: outlet.businessHours,
   );
 }

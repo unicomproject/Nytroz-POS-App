@@ -29,7 +29,8 @@ class AddProductWizard extends ConsumerStatefulWidget {
   ConsumerState<AddProductWizard> createState() => _AddProductWizardState();
 }
 
-class _AddProductWizardState extends ConsumerState<AddProductWizard> {  final _nameController = TextEditingController();
+class _AddProductWizardState extends ConsumerState<AddProductWizard> {
+  final _nameController = TextEditingController();
   final _skuController = TextEditingController();
   final _barcodeController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -114,8 +115,7 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {  final _n
   }
 
   Widget _buildBasicStep() {
-    final subCategories =
-        widget.options.subCategoriesForCategory(_categoryId);
+    final subCategories = widget.options.subCategoriesForCategory(_categoryId);
     final twoColumns = MediaQuery.sizeOf(context).width >= 720;
 
     final fields = <Widget>[
@@ -233,32 +233,37 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {  final _n
       ),
     ];
 
+    final formFields = _BasicDetailsFields(
+      fields: fields,
+      twoColumns: twoColumns,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Basic details', style: TenantAdminTextStyles.sectionTitle(context)),
+        Text('Basic details',
+            style: TenantAdminTextStyles.sectionTitle(context)),
         const SizedBox(height: TenantAdminSpacing.lg),
-        if (!twoColumns)
-          for (final field in fields) ...[
-            field,
-            const SizedBox(height: TenantAdminSpacing.lg),
-          ]
-        else
-          for (var index = 0; index < fields.length; index += 2) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: fields[index]),
-                const SizedBox(width: TenantAdminSpacing.lg),
-                Expanded(
-                  child: index + 1 < fields.length
-                      ? fields[index + 1]
-                      : const SizedBox.shrink(),
-                ),
-              ],
-            ),
-            const SizedBox(height: TenantAdminSpacing.lg),
-          ],
+        if (MediaQuery.sizeOf(context).width >= 1100)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 3, child: formFields),
+              const SizedBox(width: TenantAdminSpacing.xl),
+              Container(
+                width: 1,
+                height: 520,
+                color: TenantAdminColors.border,
+              ),
+              const SizedBox(width: TenantAdminSpacing.xl),
+              const Expanded(flex: 2, child: _ProductImagesPanel()),
+            ],
+          )
+        else ...[
+          formFields,
+          const SizedBox(height: TenantAdminSpacing.xl),
+          const _ProductImagesPanel(),
+        ],
       ],
     );
   }
@@ -302,12 +307,14 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {  final _n
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Stock details', style: TenantAdminTextStyles.sectionTitle(context)),
+        Text('Stock details',
+            style: TenantAdminTextStyles.sectionTitle(context)),
         const SizedBox(height: TenantAdminSpacing.lg),
         SwitchListTile(
           value: _trackStock,
-          onChanged:
-              _dropdownsEnabled ? (value) => setState(() => _trackStock = value) : null,
+          onChanged: _dropdownsEnabled
+              ? (value) => setState(() => _trackStock = value)
+              : null,
           title: const Text('Track stock for this product'),
           subtitle: const Text('Enable opening stock and low stock alerts.'),
           contentPadding: EdgeInsets.zero,
@@ -343,7 +350,8 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {  final _n
         const SizedBox(height: TenantAdminSpacing.xl),
         Text(
           'Assign Outlets',
-          style: TenantAdminTextStyles.sectionTitle(context).copyWith(fontSize: 16),
+          style: TenantAdminTextStyles.sectionTitle(context)
+              .copyWith(fontSize: 16),
         ),
         const SizedBox(height: TenantAdminSpacing.md),
         if (_fieldErrors['outletIds'] != null)
@@ -400,21 +408,28 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {  final _n
     );
     final subCategoryLabel = labelForId(
       _subCategoryId,
-      widget.options.subCategoriesForCategory(_categoryId)
+      widget.options
+          .subCategoriesForCategory(_categoryId)
           .map((item) => (id: item.id, label: item.name))
           .toList(),
     );
     final brandLabel = labelForId(
       _brandId,
-      widget.options.brands.map((item) => (id: item.id, label: item.name)).toList(),
+      widget.options.brands
+          .map((item) => (id: item.id, label: item.name))
+          .toList(),
     );
     final unitLabel = labelForId(
       _unitId,
-      widget.options.units.map((item) => (id: item.id, label: item.name)).toList(),
+      widget.options.units
+          .map((item) => (id: item.id, label: item.name))
+          .toList(),
     );
     final taxLabel = labelForId(
       _taxId,
-      widget.options.taxes.map((item) => (id: item.id, label: item.name)).toList(),
+      widget.options.taxes
+          .map((item) => (id: item.id, label: item.name))
+          .toList(),
     );
     final variantLabel = labelForId(
       _variantTemplateId,
@@ -549,13 +564,11 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {  final _n
       openingStockQuantity: _trackStock
           ? double.tryParse(_openingStockController.text.trim())
           : null,
-      minimumStockAlertQuantity: _trackStock
-          ? double.tryParse(_lowStockController.text.trim())
-          : null,
+      minimumStockAlertQuantity:
+          _trackStock ? double.tryParse(_lowStockController.text.trim()) : null,
       stockUnit: _trackStock ? unitCode : null,
-      outletIds: _trackStock
-          ? _selectedOutletIds.toList(growable: false)
-          : const [],
+      outletIds:
+          _trackStock ? _selectedOutletIds.toList(growable: false) : const [],
       status: 'ACTIVE',
     );
 
@@ -613,6 +626,296 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {  final _n
         ),
       );
     }
+  }
+}
+
+class _BasicDetailsFields extends StatelessWidget {
+  const _BasicDetailsFields({
+    required this.fields,
+    required this.twoColumns,
+  });
+
+  final List<Widget> fields;
+  final bool twoColumns;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!twoColumns) {
+      return Column(
+        children: [
+          for (final field in fields) ...[
+            field,
+            const SizedBox(height: TenantAdminSpacing.lg),
+          ],
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        for (var index = 0; index < fields.length; index += 2) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: fields[index]),
+              const SizedBox(width: TenantAdminSpacing.lg),
+              Expanded(
+                child: index + 1 < fields.length
+                    ? fields[index + 1]
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+          const SizedBox(height: TenantAdminSpacing.lg),
+        ],
+      ],
+    );
+  }
+}
+
+class _ProductImagesPanel extends StatelessWidget {
+  const _ProductImagesPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Product images',
+          style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+            fontSize: 16,
+          ),
+        ),
+        const SizedBox(height: TenantAdminSpacing.sm),
+        Text(
+          'Add images to showcase your product. First image will be used as cover.',
+          style: TenantAdminTextStyles.muted(context),
+        ),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        const _ImageDropZone(),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final tileWidth =
+                constraints.maxWidth < 420 ? constraints.maxWidth : 150.0;
+            return Wrap(
+              spacing: TenantAdminSpacing.lg,
+              runSpacing: TenantAdminSpacing.lg,
+              children: [
+                SizedBox(width: tileWidth, child: const _CoverImageTile()),
+                for (var index = 0; index < 3; index += 1)
+                  SizedBox(width: tileWidth, child: const _AddImageTile()),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: TenantAdminSpacing.xl),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(
+              Icons.info_outline,
+              size: 20,
+              color: TenantAdminColors.mutedText,
+            ),
+            const SizedBox(width: TenantAdminSpacing.sm),
+            Expanded(
+              child: Text(
+                'You can upload up to 8 images. Recommended size 2000×2000px.',
+                style: TenantAdminTextStyles.muted(context),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ImageDropZone extends StatelessWidget {
+  const _ImageDropZone();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 170,
+      decoration: BoxDecoration(
+        color: TenantAdminColors.background,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        border: Border.all(
+          color: TenantAdminColors.primary.withValues(alpha: 0.35),
+          style: BorderStyle.solid,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.cloud_upload_outlined,
+            color: TenantAdminColors.mutedText,
+            size: 38,
+          ),
+          const SizedBox(height: TenantAdminSpacing.md),
+          RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: TenantAdminColors.bodyText,
+                    fontWeight: FontWeight.w700,
+                  ),
+              children: const [
+                TextSpan(text: 'Drag & drop product images here\nor '),
+                TextSpan(
+                  text: 'browse files',
+                  style: TextStyle(color: TenantAdminColors.primary),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: TenantAdminSpacing.md),
+          Text(
+            'PNG, JPG, JPEG up to 5MB each',
+            style: TenantAdminTextStyles.muted(context),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CoverImageTile extends StatelessWidget {
+  const _CoverImageTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          height: 160,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            border: Border.all(color: TenantAdminColors.primary),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFFE9F0FF),
+                Color(0xFFF7E6D5),
+                Color(0xFF8A6B4E),
+              ],
+            ),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                top: TenantAdminSpacing.sm,
+                left: TenantAdminSpacing.sm,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: TenantAdminSpacing.sm,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: TenantAdminColors.primary,
+                    borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.star, color: Colors.white, size: 14),
+                      SizedBox(width: 4),
+                      Text(
+                        'Cover',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                top: TenantAdminSpacing.sm,
+                right: TenantAdminSpacing.sm,
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+                  ),
+                  child: const Icon(
+                    Icons.more_horiz,
+                    color: TenantAdminColors.bodyText,
+                    size: 18,
+                  ),
+                ),
+              ),
+              Center(
+                child: Container(
+                  width: 86,
+                  height: 86,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.76),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.inventory_2_outlined,
+                    color: TenantAdminColors.bodyText,
+                    size: 42,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: TenantAdminSpacing.sm),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: null,
+            icon: const Icon(Icons.star_outline, size: 18),
+            label: const Text('Set as cover'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AddImageTile extends StatelessWidget {
+  const _AddImageTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 160,
+      decoration: BoxDecoration(
+        color: TenantAdminColors.surface,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        border: Border.all(
+          color: TenantAdminColors.primary.withValues(alpha: 0.28),
+        ),
+      ),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.add, color: TenantAdminColors.bodyText, size: 30),
+          SizedBox(height: TenantAdminSpacing.md),
+          Text(
+            'Add image',
+            style: TextStyle(
+              color: TenantAdminColors.mutedText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -684,12 +987,14 @@ class _StepperItem extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 14,
-          backgroundColor:
-              selected || done ? TenantAdminColors.primary : TenantAdminColors.background,
+          backgroundColor: selected || done
+              ? TenantAdminColors.primary
+              : TenantAdminColors.background,
           child: Text(
             '$number',
             style: TextStyle(
-              color: selected || done ? Colors.white : TenantAdminColors.mutedText,
+              color:
+                  selected || done ? Colors.white : TenantAdminColors.mutedText,
               fontWeight: FontWeight.w800,
               fontSize: 12,
             ),

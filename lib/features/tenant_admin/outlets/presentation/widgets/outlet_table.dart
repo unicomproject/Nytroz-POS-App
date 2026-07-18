@@ -217,6 +217,13 @@ class OutletTable extends ConsumerWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                _ActionIconButton(
+                  icon: Icons.visibility_outlined,
+                  tooltip: 'View outlet',
+                  onPressed: () =>
+                      context.go('/tenant-admin/outlets/${outlet.id}'),
+                ),
+                if (canEdit) const SizedBox(width: TenantAdminSpacing.sm),
                 if (canEdit)
                   _ActionIconButton(
                     icon: Icons.edit_outlined,

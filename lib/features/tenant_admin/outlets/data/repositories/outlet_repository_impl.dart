@@ -1,4 +1,5 @@
 import '../../domain/entities/outlet.dart';
+import '../../domain/entities/outlet_create_options.dart';
 import '../../domain/entities/outlet_detail_entities.dart';
 import '../../domain/entities/outlet_details.dart';
 import '../../domain/entities/outlet_list_query.dart';
@@ -15,24 +16,13 @@ class OutletRepositoryImpl implements OutletRepository {
   @override
   Future<OutletListResult> getOutlets({required OutletListQuery query}) async {
     final dto = await _remoteDatasource.getOutlets(query);
-    var result = dto.toEntity();
+    return dto.toEntity();
+  }
 
-    final summaryDto = await _remoteDatasource.getOutletSummary();
-    if (summaryDto != null &&
-        (summaryDto.totalOutlets > 0 ||
-            summaryDto.activeOutlets > 0 ||
-            summaryDto.inactiveOutlets > 0)) {
-      result = OutletListResult(
-        summary: summaryDto.toEntity(),
-        items: result.items,
-        page: result.page,
-        pageSize: result.pageSize,
-        totalCount:
-            result.totalCount > 0 ? result.totalCount : summaryDto.totalOutlets,
-      );
-    }
-
-    return result;
+  @override
+  Future<OutletCreateOptions> getCreateOptions() async {
+    final dto = await _remoteDatasource.getCreateOptions();
+    return dto.toEntity();
   }
 
   @override

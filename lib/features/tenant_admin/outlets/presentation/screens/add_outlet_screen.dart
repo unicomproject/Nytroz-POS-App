@@ -7,6 +7,7 @@ import '../../../../auth/presentation/providers/session_provider.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
+import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/outlet_details.dart';
 import '../providers/outlet_providers.dart';
 import '../providers/outlet_visibility_provider.dart';
@@ -28,6 +29,7 @@ class _AddOutletScreenState extends ConsumerState<AddOutletScreen> {
   @override
   Widget build(BuildContext context) {
     final createdOutlet = _createdOutlet;
+    final optionsState = ref.watch(outletCreateOptionsProvider);
 
     if (createdOutlet != null) {
       return TenantAdminPageScaffold(
@@ -48,13 +50,30 @@ class _AddOutletScreenState extends ConsumerState<AddOutletScreen> {
       );
     }
 
-    return TenantAdminPageScaffold(
-      title: 'Create Outlet',
-      subtitle: 'Set up a new outlet using the wizard.',
-      child: OutletForm(
-        backendErrors: _fieldErrors,
-        submitting: _submitting,
-        onSubmit: _submit,
+    return optionsState.when(
+      loading: () => const TenantAdminPageScaffold(
+        title: 'Create Outlet',
+        subtitle: 'Set up a new outlet using the wizard.',
+        child: TenantAdminLoadingSkeleton(rowCount: 6),
+      ),
+      error: (error, stackTrace) => TenantAdminPageScaffold(
+        title: 'Create Outlet',
+        subtitle: 'Set up a new outlet using the wizard.',
+        child: TenantAdminErrorState(
+          title: 'Unable to load outlet options',
+          message: outletLoadErrorMessage(error),
+          onRetry: () => ref.invalidate(outletCreateOptionsProvider),
+        ),
+      ),
+      data: (options) => TenantAdminPageScaffold(
+        title: 'Create Outlet',
+        subtitle: 'Set up a new outlet using the wizard.',
+        child: OutletForm(
+          createOptions: options,
+          backendErrors: _fieldErrors,
+          submitting: _submitting,
+          onSubmit: _submit,
+        ),
       ),
     );
   }
