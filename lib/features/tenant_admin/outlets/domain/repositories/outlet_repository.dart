@@ -1,10 +1,13 @@
 import '../entities/outlet.dart';
+import '../entities/outlet_create_options.dart';
 import '../entities/outlet_detail_entities.dart';
 import '../entities/outlet_details.dart';
 import '../entities/outlet_list_query.dart';
 
 abstract class OutletRepository {
   Future<OutletListResult> getOutlets({required OutletListQuery query});
+
+  Future<OutletCreateOptions> getCreateOptions();
 
   Future<OutletDetails> getOutletDetails(String id);
 

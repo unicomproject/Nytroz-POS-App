@@ -5,6 +5,15 @@ class OutletDetails {
     required this.code,
     required this.address,
     required this.status,
+    this.outletType,
+    this.isDefaultOutlet = false,
+    this.addressLine1,
+    this.addressLine2,
+    this.city,
+    this.state,
+    this.countryCode,
+    this.postalCode,
+    this.businessHours = const [],
     this.phone,
     this.email,
     this.managerName,
@@ -33,6 +42,15 @@ class OutletDetails {
   final String code;
   final String address;
   final String status;
+  final String? outletType;
+  final bool isDefaultOutlet;
+  final String? addressLine1;
+  final String? addressLine2;
+  final String? city;
+  final String? state;
+  final String? countryCode;
+  final String? postalCode;
+  final List<OutletOpeningHour> businessHours;
   final String? timezone;
   final String? phone;
   final String? email;

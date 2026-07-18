@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/data/models/create_outlet_request_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/outlets/data/models/outlet_create_options_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/data/models/outlet_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/domain/entities/outlet_details.dart';
 
@@ -37,7 +38,7 @@ void main() {
     test('maps form fields to backend create payload', () {
       const dto = CreateOutletRequestDto(
         outletName: 'New Outlet',
-        outletType: 'STORE',
+        outletType: 'Store',
         status: 'ACTIVE',
         mainPhoneNumber: '+94771234567',
         emailAddress: 'outlet@test.com',
@@ -48,7 +49,7 @@ void main() {
         city: 'Colombo',
         country: 'LK',
         postalCode: '00100',
-        timezone: 'Asia/Colombo',
+        timezone: 'Europe/London',
         openingHours: [
           OutletOpeningHour(
             day: 'Monday',
@@ -69,7 +70,7 @@ void main() {
 
       expect(json['outletName'], 'New Outlet');
       expect(json.containsKey('name'), isFalse);
-      expect(json['timezone'], 'Asia/Colombo');
+      expect(json['timezone'], 'Europe/London');
       expect(json['status'], 'ACTIVE');
       expect(json['outletType'], 'STORE');
       expect(json['phone'], '+94771234567');
@@ -96,6 +97,125 @@ void main() {
       ]);
       expect(json.containsKey('outletCode'), isFalse);
       expect(json.containsKey('code'), isFalse);
+    });
+
+    test('does not silently replace unsupported country codes', () {
+      const dto = CreateOutletRequestDto(
+        outletName: 'New Outlet',
+        outletType: 'STORE',
+        status: 'ACTIVE',
+        mainPhoneNumber: '',
+        emailAddress: '',
+        isDefaultOutlet: false,
+        addressLine1: 'Line 1',
+        city: 'Colombo',
+        country: 'LKA',
+        postalCode: '',
+        timezone: 'Asia/Colombo',
+        openingHours: [],
+      );
+
+      final json = dto.toJson();
+
+      expect(json['address']['countryCode'], 'LKA');
+    });
+
+    test('trims and uppercases country code before request serialization', () {
+      const dto = CreateOutletRequestDto(
+        outletName: 'New Outlet',
+        outletType: 'STORE',
+        status: 'ACTIVE',
+        mainPhoneNumber: '',
+        emailAddress: '',
+        isDefaultOutlet: false,
+        addressLine1: 'Line 1',
+        city: 'Colombo',
+        country: ' lk ',
+        postalCode: '',
+        timezone: 'Asia/Colombo',
+        openingHours: [],
+      );
+
+      final json = dto.toJson();
+
+      expect(json['address']['countryCode'], 'LK');
+    });
+  });
+
+  group('OutletCreateOptionsDto', () {
+    test('parses backend create options payload', () {
+      final dto = OutletCreateOptionsDto.fromJson({
+        'outletTypes': [
+          {'value': 'STORE', 'label': 'Store'},
+          {'value': 'WAREHOUSE', 'label': 'Warehouse'},
+        ],
+        'countries': [
+          {'code': 'LK', 'name': 'Sri Lanka'},
+          {'code': 'IN', 'name': 'India'},
+        ],
+        'timezones': [
+          {'value': 'Europe/London', 'label': 'Europe/London'},
+          {'value': 'Asia/Colombo', 'label': 'Asia/Colombo'},
+        ],
+        'defaults': {
+          'countryCode': 'LK',
+          'timezone': {
+            'value': 'Europe/London',
+            'label': 'Europe/London',
+          },
+          'status': 'ACTIVE',
+        },
+      });
+
+      final entity = dto.toEntity();
+
+      expect(entity.outletTypes.first.value, 'STORE');
+      expect(entity.outletTypes.first.label, 'Store');
+      expect(entity.outletTypes.last.value, 'WAREHOUSE');
+      expect(entity.outletTypes.last.label, 'Warehouse');
+      expect(entity.countries.first.code, 'LK');
+      expect(entity.countries.first.name, 'Sri Lanka');
+      expect(entity.countries.first.label, 'Sri Lanka (LK)');
+      expect(entity.countries.last.code, 'IN');
+      expect(entity.countries.last.name, 'India');
+      expect(entity.timezones.first.value, 'Europe/London');
+      expect(entity.timezones.first.label, 'Europe/London');
+      expect(entity.defaults.countryCode, 'LK');
+      expect(entity.defaults.timezone, 'Europe/London');
+      expect(entity.defaults.status, 'ACTIVE');
+    });
+
+    test('never converts outlet type and timezone option objects to strings',
+        () {
+      final dto = OutletCreateOptionsDto.fromJson({
+        'outletTypes': [
+          {'value': 'STORE', 'label': 'Store'},
+        ],
+        'timezones': [
+          {'value': 'Europe/London', 'label': 'Europe/London'},
+        ],
+      });
+
+      final entity = dto.toEntity();
+
+      expect(entity.outletTypes.single.value, 'STORE');
+      expect(entity.timezones.single.value, 'Europe/London');
+      expect(entity.outletTypes.single.value, isNot(contains('{value:')));
+      expect(entity.timezones.single.value, isNot(contains('{value:')));
+    });
+
+    test('never converts country objects to object strings', () {
+      final dto = OutletCreateOptionsDto.fromJson({
+        'countries': [
+          {'code': 'LK', 'name': 'Sri Lanka'},
+        ],
+      });
+
+      final country = dto.toEntity().countries.single;
+
+      expect(country.code, 'LK');
+      expect(country.name, 'Sri Lanka');
+      expect(country.code, isNot(contains('{code:')));
     });
   });
 }

@@ -20,19 +20,32 @@ class OutletDetailDto {
   });
 
   factory OutletDetailDto.fromJson(Map<String, dynamic> json) {
+    final address = json['address'] is Map
+        ? Map<String, dynamic>.from(json['address'] as Map)
+        : const <String, dynamic>{};
+
     return OutletDetailDto(
       outletId: json['outletId']?.toString() ?? json['id']?.toString() ?? '',
       outletName: json['outletName'] as String? ?? json['name'] as String? ?? '',
       outletCode: json['outletCode'] as String? ?? json['code'] as String? ?? '',
       outletType: json['outletType'] as String? ?? '',
       status: json['status'] as String? ?? '',
-      addressLine1: json['addressLine1'] as String?,
-      addressLine2: json['addressLine2'] as String?,
-      city: json['city'] as String?,
-      districtOrProvince: json['districtOrProvince'] as String?,
-      postalCode: json['postalCode'] as String?,
-      phoneNumber: json['phoneNumber'] as String? ?? json['contactPhone'] as String?,
-      emailAddress: json['emailAddress'] as String? ?? json['contactEmail'] as String?,
+      addressLine1:
+          address['addressLine1'] as String? ?? json['addressLine1'] as String?,
+      addressLine2:
+          address['addressLine2'] as String? ?? json['addressLine2'] as String?,
+      city: address['city'] as String? ?? json['city'] as String?,
+      districtOrProvince: address['stateOrProvince'] as String? ??
+          address['state'] as String? ??
+          json['districtOrProvince'] as String?,
+      postalCode:
+          address['postalCode'] as String? ?? json['postalCode'] as String?,
+      phoneNumber: json['phoneNumber'] as String? ??
+          json['phone'] as String? ??
+          json['contactPhone'] as String?,
+      emailAddress: json['emailAddress'] as String? ??
+          json['email'] as String? ??
+          json['contactEmail'] as String?,
       managerName: json['managerName'] as String?,
       operatingHours: json['operatingHours'] as String?,
       openingDate: json['openingDate']?.toString(),

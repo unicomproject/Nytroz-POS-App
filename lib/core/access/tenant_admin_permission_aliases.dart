@@ -177,12 +177,15 @@ class TenantAdminPermissionAliases {
     'outlet.update': [
       'outlet.update',
       'outlets.update',
+      'tenant.outlets.manage',
     ],
     'outlet.status.update': [
       'outlet.status.update',
+      'tenant.outlets.manage',
     ],
     'outlet.delete': [
       'outlet.delete',
+      'tenant.outlets.manage',
     ],
     'till.create': [
       'till.create',
@@ -681,6 +684,7 @@ class TenantAdminPermissionAliases {
     ],
     'tenant.outlets.manage': [
       'tenant.outlets.manage',
+      'tenant.outlets.view',
       'tenant.outlets.update',
       'outlet.view',
       'outlets.view',
@@ -688,6 +692,8 @@ class TenantAdminPermissionAliases {
       'outlets.create',
       'outlet.update',
       'outlets.update',
+      'outlet.delete',
+      'outlet.status.update',
       'outlet.detail.view',
       'tenant.outlets.details.view',
       'tenant.outlets.revenue.view',

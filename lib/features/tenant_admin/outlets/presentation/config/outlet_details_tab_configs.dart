@@ -21,17 +21,15 @@ const outletDetailsTabConfigs = <OutletDetailsTabConfig>[
     id: 'revenue',
     permissionsAny: [
       TenantAdminPermissionCodes.tenantOutletsRevenueView,
-      TenantAdminPermissionCodes.tenantReportsSalesView,
       TenantAdminPermissionCodes.outletSalesSummaryView,
     ],
     label: 'Revenue',
-    icon: Icons.show_chart_outlined,
+    icon: Icons.trending_up,
   ),
   OutletDetailsTabConfig(
     id: 'assigned-users',
     permissionsAny: [
       TenantAdminPermissionCodes.tenantOutletsUsersView,
-      TenantAdminPermissionCodes.tenantUsersView,
       TenantAdminPermissionCodes.userView,
     ],
     label: 'Assigned Users',
@@ -41,7 +39,6 @@ const outletDetailsTabConfigs = <OutletDetailsTabConfig>[
     id: 'tills',
     permissionsAny: [
       TenantAdminPermissionCodes.tenantOutletsTillsView,
-      TenantAdminPermissionCodes.tenantTillsView,
       TenantAdminPermissionCodes.tillView,
     ],
     label: 'Tills',

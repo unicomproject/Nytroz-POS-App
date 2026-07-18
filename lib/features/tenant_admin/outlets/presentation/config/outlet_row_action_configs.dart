@@ -43,13 +43,6 @@ const outletRowActionConfigs = <OutletRowActionConfig>[
     permission: TenantAdminPermissionCodes.outletUpdate,
   ),
   OutletRowActionConfig(
-    id: 'toggle_status',
-    actionId: OutletRowActionId.toggleStatus,
-    label: 'Activate / deactivate',
-    icon: Icons.toggle_on,
-    permission: TenantAdminPermissionCodes.outletStatusUpdate,
-  ),
-  OutletRowActionConfig(
     id: 'delete',
     actionId: OutletRowActionId.delete,
     label: 'Delete outlet',

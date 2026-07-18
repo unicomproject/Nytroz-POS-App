@@ -58,6 +58,15 @@ extension OutletDetailsMapper on OutletDetailsDto {
       code: code,
       address: address,
       status: status,
+      outletType: outletType,
+      isDefaultOutlet: isDefaultOutlet,
+      addressLine1: addressLine1,
+      addressLine2: addressLine2,
+      city: city,
+      state: state,
+      countryCode: countryCode,
+      postalCode: postalCode,
+      businessHours: businessHours.map((hour) => hour.toEntity()).toList(),
       timezone: timezone,
       phone: phone,
       email: email,
@@ -138,6 +147,47 @@ extension OutletDetailsMapper on OutletDetailsDto {
 
     return todaySalesAmount! * 6.2;
   }
+}
+
+extension OutletOpeningHourMapper on OutletOpeningHourDto {
+  OutletOpeningHour toEntity() {
+    return OutletOpeningHour(
+      day: _dayLabel(dayOfWeek),
+      openTime: _trimSeconds(openingTime),
+      closeTime: _trimSeconds(closingTime),
+      closed: isClosed,
+    );
+  }
+}
+
+String _dayLabel(int dayOfWeek) {
+  switch (dayOfWeek) {
+    case 0:
+      return 'Sun';
+    case 1:
+      return 'Mon';
+    case 2:
+      return 'Tue';
+    case 3:
+      return 'Wed';
+    case 4:
+      return 'Thu';
+    case 5:
+      return 'Fri';
+    case 6:
+      return 'Sat';
+    default:
+      return 'Mon';
+  }
+}
+
+String _trimSeconds(String value) {
+  final trimmed = value.trim();
+  if (trimmed.length >= 5) {
+    return trimmed.substring(0, 5);
+  }
+
+  return trimmed;
 }
 
 String? _metricSubtitle(List<OutletDetailMetricDto> metrics, String title) {

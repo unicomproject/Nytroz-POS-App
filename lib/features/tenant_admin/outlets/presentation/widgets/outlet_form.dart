@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/entities/outlet_create_options.dart';
 import '../../domain/entities/outlet_details.dart';
 import '../utils/outlet_api_errors.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
@@ -14,11 +15,13 @@ class OutletForm extends StatefulWidget {
     super.key,
     required this.onSubmit,
     this.initialValue,
+    this.createOptions,
     this.backendErrors = const {},
     this.submitting = false,
   });
 
   final OutletFormData? initialValue;
+  final OutletCreateOptions? createOptions;
   final Map<String, String> backendErrors;
   final bool submitting;
   final Future<void> Function(OutletFormData form) onSubmit;
@@ -62,9 +65,15 @@ class _OutletFormState extends State<OutletForm> {
   void initState() {
     super.initState();
     final initial = widget.initialValue;
+    final defaults = widget.createOptions?.defaults;
     _outletName = TextEditingController(text: initial?.outletName ?? '');
-    _outletType = _normalizeOutletType(initial?.outletType ?? 'STORE');
-    _status = _normalizeStatus(initial?.status ?? 'ACTIVE');
+    _outletType = _resolveOptionValue(
+      initial?.outletType ??
+          _firstOptionValue(widget.createOptions?.outletTypes),
+      widget.createOptions?.outletTypes,
+      normalize: _normalizeCanonicalOutletType,
+    );
+    _status = _normalizeStatus(initial?.status ?? defaults?.status ?? 'ACTIVE');
     _mainPhoneNumber =
         TextEditingController(text: initial?.mainPhoneNumber ?? '');
     _emailAddress = TextEditingController(text: initial?.emailAddress ?? '');
@@ -74,10 +83,15 @@ class _OutletFormState extends State<OutletForm> {
     _addressLine2 = TextEditingController(text: initial?.addressLine2 ?? '');
     _city = TextEditingController(text: initial?.city ?? '');
     _state = TextEditingController(text: initial?.state ?? '');
-    _countryCode = TextEditingController(text: initial?.country ?? '');
+    _countryCode = TextEditingController(
+        text: initial?.country ?? defaults?.countryCode ?? '');
     _postalCode = TextEditingController(text: initial?.postalCode ?? '');
-    // Backend has no timezone reference endpoint yet; use the backend default.
-    _timezone = TextEditingController(text: initial?.timezone ?? 'UTC');
+    _timezone = TextEditingController(
+      text: _resolveOptionValue(
+        initial?.timezone ?? defaults?.timezone,
+        widget.createOptions?.timezones,
+      ),
+    );
     _isDefaultOutlet = initial?.isDefaultOutlet ?? false;
     _openingHours = _initialOpeningHours(initial?.openingHours);
   }
@@ -154,6 +168,8 @@ class _OutletFormState extends State<OutletForm> {
           outletType: _outletType,
           status: _status,
           timezone: _timezone,
+          outletTypes: widget.createOptions?.outletTypes ?? const [],
+          timezones: widget.createOptions?.timezones ?? const [],
           isDefaultOutlet: _isDefaultOutlet,
           errors: widget.backendErrors,
           onOutletTypeChanged: (value) => setState(() => _outletType = value),
@@ -171,6 +187,7 @@ class _OutletFormState extends State<OutletForm> {
           email: _emailAddress,
           contactName: _contactName,
           contactPhone: _contactPhone,
+          countries: widget.createOptions?.countries ?? const [],
           errors: widget.backendErrors,
         ),
       2 => TenantAdminFormSection(
@@ -316,6 +333,8 @@ class _OutletDetailsStep extends StatelessWidget {
     required this.outletType,
     required this.status,
     required this.timezone,
+    required this.outletTypes,
+    required this.timezones,
     required this.isDefaultOutlet,
     required this.errors,
     required this.onOutletTypeChanged,
@@ -327,6 +346,8 @@ class _OutletDetailsStep extends StatelessWidget {
   final String outletType;
   final String status;
   final TextEditingController timezone;
+  final List<OutletSelectOption> outletTypes;
+  final List<OutletSelectOption> timezones;
   final bool isDefaultOutlet;
   final Map<String, String> errors;
   final ValueChanged<String> onOutletTypeChanged;
@@ -370,29 +391,63 @@ class _OutletDetailsStep extends StatelessWidget {
   }
 
   Widget _outletTypeDropdown() {
+    final options = outletTypes.isEmpty && outletType.trim().isNotEmpty
+        ? [
+            OutletSelectOption(
+              value: _normalizeCanonicalOutletType(outletType),
+              label: _displayOutletType(outletType),
+            ),
+          ]
+        : outletTypes;
+    final value = _matchingOptionValue(outletType, options);
+
     return DropdownButtonFormField<String>(
-      initialValue: outletType,
+      initialValue: value,
       decoration: InputDecoration(
         labelText: 'Outlet Type',
         prefixIcon: const Icon(Icons.sell_outlined, size: 18),
         errorText: errors['outletType'],
       ),
-      items: const [
-        DropdownMenuItem(value: 'STORE', child: Text('Store')),
-        DropdownMenuItem(value: 'WAREHOUSE', child: Text('Warehouse')),
+      items: [
+        for (final option in options)
+          DropdownMenuItem(
+            value: option.value,
+            child: Text(option.label),
+          ),
       ],
-      validator: (value) => value == null || value.trim().isEmpty
-          ? 'Outlet type is required.'
-          : null,
+      validator: (value) => _outletTypeValidator(value, options),
       onChanged: (value) {
         if (value != null) {
-          onOutletTypeChanged(value);
+          onOutletTypeChanged(_normalizeCanonicalOutletType(value));
         }
       },
     );
   }
 
   Widget _timezoneField() {
+    if (timezones.isNotEmpty) {
+      final value = _matchingOptionValue(timezone.text, timezones);
+      return DropdownButtonFormField<String>(
+        initialValue: value,
+        decoration: InputDecoration(
+          labelText: 'Timezone',
+          prefixIcon: const Icon(Icons.schedule_outlined, size: 18),
+          errorText: errors['timezone'],
+        ),
+        items: [
+          for (final option in timezones)
+            DropdownMenuItem(
+              value: option.value,
+              child: Text(option.label),
+            ),
+        ],
+        validator: (value) => _timezoneValidator(value, timezones),
+        onChanged: (value) {
+          timezone.text = value ?? '';
+        },
+      );
+    }
+
     return TextFormField(
       controller: timezone,
       decoration: InputDecoration(
@@ -466,6 +521,7 @@ class _OutletLocationContactStep extends StatelessWidget {
     required this.email,
     required this.contactName,
     required this.contactPhone,
+    required this.countries,
     required this.errors,
   });
 
@@ -479,6 +535,7 @@ class _OutletLocationContactStep extends StatelessWidget {
   final TextEditingController email;
   final TextEditingController contactName;
   final TextEditingController contactPhone;
+  final List<OutletCountryOption> countries;
   final Map<String, String> errors;
 
   @override
@@ -537,16 +594,7 @@ class _OutletLocationContactStep extends StatelessWidget {
                 maxLength: 30,
                 icon: Icons.local_post_office_outlined,
               ),
-              _field(
-                'country',
-                'Country Code',
-                countryCode,
-                errors: errors,
-                isRequired: true,
-                maxLength: 2,
-                icon: Icons.flag_outlined,
-                validator: _countryCodeValidator,
-              ),
+              _countryCodeInput(),
             ),
           ],
         ),
@@ -601,6 +649,47 @@ class _OutletLocationContactStep extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _countryCodeInput() {
+    if (countries.isEmpty) {
+      return _field(
+        'country',
+        'Country Code',
+        countryCode,
+        errors: errors,
+        isRequired: true,
+        maxLength: 2,
+        icon: Icons.flag_outlined,
+        validator: (value) => _countryCodeValidator(value, const []),
+      );
+    }
+
+    final current = countryCode.text.trim().toUpperCase();
+    final countryCodes = countries.map((country) => country.code).toList();
+    final value = countryCodes.contains(current) ? current : null;
+
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      decoration: InputDecoration(
+        labelText: 'Country Code',
+        prefixIcon: const Icon(Icons.flag_outlined, size: 18),
+        errorText: errors['country'],
+      ),
+      items: [
+        for (final country in countries)
+          DropdownMenuItem(
+            value: country.code,
+            child: Text(country.label),
+          ),
+      ],
+      validator: (value) => value == null || value.trim().isEmpty
+          ? 'Country Code is required.'
+          : _countryCodeValidator(value, countryCodes),
+      onChanged: (value) {
+        countryCode.text = value ?? '';
+      },
     );
   }
 }
@@ -833,9 +922,11 @@ BusinessHoursDraft _draftForDay(
 }
 
 String _normalizeOutletType(String value) {
-  final normalized = value.trim().toUpperCase();
-  return normalized == 'WAREHOUSE' ? 'WAREHOUSE' : 'STORE';
+  return value.trim().toUpperCase();
 }
+
+String _normalizeCanonicalOutletType(String value) =>
+    value.trim().toUpperCase();
 
 String _normalizeStatus(String value) {
   final normalized = value.trim().toUpperCase();
@@ -843,11 +934,103 @@ String _normalizeStatus(String value) {
 }
 
 String _displayOutletType(String value) {
-  return _normalizeOutletType(value) == 'WAREHOUSE' ? 'Warehouse' : 'Store';
+  final normalized = _normalizeOutletType(value);
+  if (normalized == 'STORE') {
+    return 'Store';
+  }
+  if (normalized == 'WAREHOUSE') {
+    return 'Warehouse';
+  }
+
+  return value.trim();
 }
 
 String _displayStatus(String value) {
   return _normalizeStatus(value) == 'INACTIVE' ? 'Inactive' : 'Active';
+}
+
+String _resolveOptionValue(
+  String? value,
+  List<OutletSelectOption>? options, {
+  String Function(String value)? normalize,
+}) {
+  final normalizedValue = normalize?.call(value ?? '') ?? (value ?? '').trim();
+  if (normalizedValue.isEmpty) {
+    return '';
+  }
+
+  for (final option in options ?? const <OutletSelectOption>[]) {
+    final optionValue = normalize?.call(option.value) ?? option.value.trim();
+    if (optionValue == normalizedValue) {
+      return option.value;
+    }
+  }
+
+  if (options != null && options.isNotEmpty) {
+    return '';
+  }
+
+  return normalizedValue;
+}
+
+String? _firstOptionValue(List<OutletSelectOption>? options) {
+  if (options == null || options.isEmpty) {
+    return null;
+  }
+
+  return options.first.value;
+}
+
+String? _matchingOptionValue(
+  String value,
+  List<OutletSelectOption> options, {
+  String Function(String value)? normalize,
+}) {
+  final normalizedValue = normalize?.call(value) ?? value.trim();
+  for (final option in options) {
+    final optionValue = normalize?.call(option.value) ?? option.value.trim();
+    if (optionValue == normalizedValue) {
+      return option.value;
+    }
+  }
+
+  return null;
+}
+
+String? _outletTypeValidator(
+  String? value,
+  List<OutletSelectOption> options,
+) {
+  final normalized = _normalizeCanonicalOutletType(value ?? '');
+  if (normalized.isEmpty) {
+    return 'Outlet type is required.';
+  }
+
+  final supportedValues = options
+      .map((option) => _normalizeCanonicalOutletType(option.value))
+      .toSet();
+  if (supportedValues.isNotEmpty && !supportedValues.contains(normalized)) {
+    return 'Select a valid outlet type.';
+  }
+
+  return null;
+}
+
+String? _timezoneValidator(
+  String? value,
+  List<OutletSelectOption> options,
+) {
+  final normalized = value?.trim() ?? '';
+  if (normalized.isEmpty) {
+    return 'Timezone is required.';
+  }
+
+  final supportedValues = options.map((option) => option.value.trim()).toSet();
+  if (supportedValues.isNotEmpty && !supportedValues.contains(normalized)) {
+    return 'Select a valid timezone.';
+  }
+
+  return null;
 }
 
 String? _nullable(String value) {
@@ -876,7 +1059,7 @@ String? _phoneValidator(String? value) {
   return valid ? null : 'Enter a valid phone number.';
 }
 
-String? _countryCodeValidator(String? value) {
+String? _countryCodeValidator(String? value, List<String> supportedCountries) {
   final country = value?.trim() ?? '';
   if (country.isEmpty) {
     return 'Country code is required.';
@@ -884,9 +1067,9 @@ String? _countryCodeValidator(String? value) {
   if (!RegExp(r'^[A-Za-z]{2}$').hasMatch(country)) {
     return 'Country code must be 2 letters.';
   }
-  const supportedCountries = {'LK', 'IN', 'GB', 'US'};
-  if (!supportedCountries.contains(country.toUpperCase())) {
-    return 'Country code must be one of LK, IN, GB, or US.';
+  if (supportedCountries.isNotEmpty &&
+      !supportedCountries.contains(country.toUpperCase())) {
+    return 'Country code must be one of ${supportedCountries.join(', ')}.';
   }
   return null;
 }

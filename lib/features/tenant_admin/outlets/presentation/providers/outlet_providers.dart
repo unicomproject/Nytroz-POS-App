@@ -9,6 +9,7 @@ import '../../application/usecases/update_outlet.dart';
 import '../../data/datasources/outlet_remote_datasource.dart';
 import '../../data/repositories/outlet_repository_impl.dart';
 import '../../domain/entities/outlet.dart';
+import '../../domain/entities/outlet_create_options.dart';
 import '../../domain/entities/outlet_details.dart';
 import '../../domain/entities/outlet_list_query.dart';
 import '../../domain/repositories/outlet_repository.dart';
@@ -63,6 +64,10 @@ final outletDetailsProvider =
 final outletManagersProvider =
     FutureProvider<List<OutletManagerOption>>((ref) async {
   return ref.watch(outletRepositoryProvider).getManagerOptions();
+});
+
+final outletCreateOptionsProvider = FutureProvider<OutletCreateOptions>((ref) {
+  return ref.watch(outletRepositoryProvider).getCreateOptions();
 });
 
 final outletListQueryProvider = Provider<OutletListQuery>((ref) {

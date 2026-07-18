@@ -146,6 +146,15 @@ class OutletDetailsDto {
     required this.code,
     required this.address,
     required this.status,
+    this.outletType,
+    this.isDefaultOutlet = false,
+    this.addressLine1,
+    this.addressLine2,
+    this.city,
+    this.state,
+    this.countryCode,
+    this.postalCode,
+    this.businessHours = const [],
     this.phone,
     this.email,
     this.managerName,
@@ -169,6 +178,9 @@ class OutletDetailsDto {
   factory OutletDetailsDto.fromJson(Map<String, dynamic> json) {
     final todaySales = json['todaySales'] ?? json['todaysSales'];
     final weekSales = json['weekSales'];
+    final addressJson = json['address'] is Map
+        ? Map<String, dynamic>.from(json['address'] as Map)
+        : const <String, dynamic>{};
 
     return OutletDetailsDto(
       id: json['id']?.toString() ?? '',
@@ -176,12 +188,27 @@ class OutletDetailsDto {
       code: json['code'] as String? ?? json['outletCode'] as String? ?? '',
       address: json['address'] is String
           ? json['address'] as String
-          : _formatAddress(
-              json['address'] is Map
-                  ? Map<String, dynamic>.from(json['address'] as Map)
-                  : json,
-            ),
+          : _formatAddress(addressJson.isNotEmpty ? addressJson : json),
       status: json['status'] as String? ?? '',
+      outletType: json['outletType'] as String?,
+      isDefaultOutlet: json['isDefaultOutlet'] == true,
+      addressLine1:
+          addressJson['addressLine1'] as String? ?? json['addressLine1'] as String?,
+      addressLine2:
+          addressJson['addressLine2'] as String? ?? json['addressLine2'] as String?,
+      city: addressJson['city'] as String? ?? json['city'] as String?,
+      state: addressJson['stateOrProvince'] as String? ??
+          addressJson['state'] as String? ??
+          json['stateOrProvince'] as String? ??
+          json['state'] as String?,
+      countryCode: addressJson['countryCode'] as String? ??
+          addressJson['country'] as String? ??
+          json['countryCode'] as String? ??
+          json['country'] as String?,
+      postalCode:
+          addressJson['postalCode'] as String? ?? json['postalCode'] as String?,
+      businessHours:
+          _mapList(json['businessHours'], OutletOpeningHourDto.fromJson),
       timezone: json['timezone'] as String?,
       phone: json['phone'] as String? ?? json['contactPhone'] as String?,
       email: json['email'] as String? ?? json['contactEmail'] as String?,
@@ -210,6 +237,15 @@ class OutletDetailsDto {
   final String code;
   final String address;
   final String status;
+  final String? outletType;
+  final bool isDefaultOutlet;
+  final String? addressLine1;
+  final String? addressLine2;
+  final String? city;
+  final String? state;
+  final String? countryCode;
+  final String? postalCode;
+  final List<OutletOpeningHourDto> businessHours;
   final String? timezone;
   final String? phone;
   final String? email;
@@ -228,6 +264,29 @@ class OutletDetailsDto {
   final List<OutletRelatedItemDto> assignedTills;
   final List<OutletRelatedItemDto> staff;
   final List<OutletAttentionItemDto> needsAttention;
+}
+
+class OutletOpeningHourDto {
+  const OutletOpeningHourDto({
+    required this.dayOfWeek,
+    required this.openingTime,
+    required this.closingTime,
+    required this.isClosed,
+  });
+
+  factory OutletOpeningHourDto.fromJson(Map<String, dynamic> json) {
+    return OutletOpeningHourDto(
+      dayOfWeek: _intValue(json['dayOfWeek'], fallback: 1),
+      openingTime: json['openingTime']?.toString() ?? '09:00',
+      closingTime: json['closingTime']?.toString() ?? '17:00',
+      isClosed: json['isClosed'] == true,
+    );
+  }
+
+  final int dayOfWeek;
+  final String openingTime;
+  final String closingTime;
+  final bool isClosed;
 }
 
 class OutletDetailMetricDto {
