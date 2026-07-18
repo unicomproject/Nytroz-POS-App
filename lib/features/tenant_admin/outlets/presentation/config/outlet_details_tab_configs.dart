@@ -18,6 +18,33 @@ class OutletDetailsTabConfig extends OutletWidgetPermissionConfig {
 
 const outletDetailsTabConfigs = <OutletDetailsTabConfig>[
   OutletDetailsTabConfig(
+    id: 'revenue',
+    permissionsAny: [
+      TenantAdminPermissionCodes.tenantOutletsRevenueView,
+      TenantAdminPermissionCodes.outletSalesSummaryView,
+    ],
+    label: 'Revenue',
+    icon: Icons.trending_up,
+  ),
+  OutletDetailsTabConfig(
+    id: 'assigned-users',
+    permissionsAny: [
+      TenantAdminPermissionCodes.tenantOutletsUsersView,
+      TenantAdminPermissionCodes.userView,
+    ],
+    label: 'Assigned Users',
+    icon: Icons.people_outline,
+  ),
+  OutletDetailsTabConfig(
+    id: 'tills',
+    permissionsAny: [
+      TenantAdminPermissionCodes.tenantOutletsTillsView,
+      TenantAdminPermissionCodes.tillView,
+    ],
+    label: 'Tills',
+    icon: Icons.point_of_sale_outlined,
+  ),
+  OutletDetailsTabConfig(
     id: 'information',
     permissionsAny: [
       TenantAdminPermissionCodes.tenantOutletsDetailsView,
