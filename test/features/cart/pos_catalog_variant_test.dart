@@ -128,7 +128,14 @@ void main() {
       expect(stockStatusFromApi('in_stock'), 'InStock');
       expect(stockStatusFromApi('out_of_stock'), 'OutOfStock');
       expect(stockStatusFromApi('low_stock'), 'LowStock');
-      expect(stockStatusFromApi(null), 'InStock');
+      expect(stockStatusFromApi(null), 'Unknown');
+      expect(stockStatusFromApi('unexpected'), 'Unknown');
+    });
+
+    test('missing stock never renders a positive label', () {
+      expect(stockLabelFromApi(null, null), 'Unavailable');
+      expect(stockLabelFromApi('out_of_stock', 0), 'Out of Stock');
+      expect(stockLabelFromApi('in_stock', 5), '5 in stock');
     });
   });
 }

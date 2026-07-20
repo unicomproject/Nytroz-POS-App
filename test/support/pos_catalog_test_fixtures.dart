@@ -15,6 +15,7 @@ const testVariableProductSummary = PosCatalogProductSummary(
   categoryName: 'Retail',
   basePrice: 10000,
   hasVariants: true,
+  stockStatus: 'InStock',
   stockLabel: 'From LKR 10,000.00',
 );
 
@@ -76,6 +77,7 @@ const testPosCatalogState = PosNewSaleCatalogState(
       categoryName: 'Tickets',
       basePrice: 1500,
       hasVariants: false,
+      stockStatus: 'InStock',
       stockLabel: '24 in stock',
     ),
     PosCatalogProductSummary(
@@ -85,6 +87,7 @@ const testPosCatalogState = PosNewSaleCatalogState(
       categoryName: 'Tickets',
       basePrice: 4500,
       hasVariants: false,
+      stockStatus: 'InStock',
       stockLabel: '12 in stock',
     ),
     PosCatalogProductSummary(
@@ -94,6 +97,7 @@ const testPosCatalogState = PosNewSaleCatalogState(
       categoryName: 'Services',
       basePrice: 2000,
       hasVariants: false,
+      stockStatus: 'InStock',
       stockLabel: 'Available',
     ),
     PosCatalogProductSummary(
@@ -103,6 +107,7 @@ const testPosCatalogState = PosNewSaleCatalogState(
       categoryName: 'Retail',
       basePrice: 2750,
       hasVariants: false,
+      stockStatus: 'InStock',
       stockLabel: '18 in stock',
     ),
     PosCatalogProductSummary(
@@ -112,6 +117,7 @@ const testPosCatalogState = PosNewSaleCatalogState(
       categoryName: 'Food',
       basePrice: 950,
       hasVariants: false,
+      stockStatus: 'InStock',
       stockLabel: '32 in stock',
     ),
     PosCatalogProductSummary(
@@ -121,6 +127,7 @@ const testPosCatalogState = PosNewSaleCatalogState(
       categoryName: 'Memberships',
       basePrice: 12000,
       hasVariants: false,
+      stockStatus: 'InStock',
       stockLabel: 'Available',
     ),
     PosCatalogProductSummary(
@@ -130,6 +137,7 @@ const testPosCatalogState = PosNewSaleCatalogState(
       categoryName: 'Tickets',
       basePrice: 5200,
       hasVariants: false,
+      stockStatus: 'InStock',
       stockLabel: '16 in stock',
     ),
     PosCatalogProductSummary(
@@ -139,6 +147,7 @@ const testPosCatalogState = PosNewSaleCatalogState(
       categoryName: 'Retail',
       basePrice: 1250,
       hasVariants: false,
+      stockStatus: 'InStock',
       stockLabel: '40 in stock',
     ),
     PosCatalogProductSummary(
@@ -148,6 +157,7 @@ const testPosCatalogState = PosNewSaleCatalogState(
       categoryName: 'Services',
       basePrice: 700,
       hasVariants: false,
+      stockStatus: 'InStock',
       stockLabel: 'Available',
     ),
     PosCatalogProductSummary(
@@ -157,6 +167,7 @@ const testPosCatalogState = PosNewSaleCatalogState(
       categoryName: 'Food',
       basePrice: 650,
       hasVariants: false,
+      stockStatus: 'InStock',
       stockLabel: '50 in stock',
     ),
     PosCatalogProductSummary(
@@ -166,6 +177,7 @@ const testPosCatalogState = PosNewSaleCatalogState(
       categoryName: 'Tickets',
       basePrice: 900,
       hasVariants: false,
+      stockStatus: 'InStock',
       stockLabel: '28 in stock',
     ),
     PosCatalogProductSummary(
@@ -175,6 +187,7 @@ const testPosCatalogState = PosNewSaleCatalogState(
       categoryName: 'Memberships',
       basePrice: 18000,
       hasVariants: false,
+      stockStatus: 'InStock',
       stockLabel: 'Available',
     ),
     testVariableProductSummary,

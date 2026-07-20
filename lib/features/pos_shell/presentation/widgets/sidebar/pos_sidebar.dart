@@ -13,7 +13,7 @@ import '../../../domain/entities/pos_shell_nav_destination.dart';
 import '../pos_shell_nav_item.dart';
 
 const _oneVerzLogoAsset = 'assets/images/logo.png';
-const _sidebarWidth = 208.0;
+const _sidebarWidth = 160.0;
 
 class PosSidebar extends ConsumerWidget {
   const PosSidebar({super.key});
@@ -32,12 +32,12 @@ class PosSidebar extends ConsumerWidget {
         color: TenantAdminColors.navy,
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+            padding: const EdgeInsets.fromLTRB(12, 22, 12, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const _BrandHeader(),
-                const SizedBox(height: TenantAdminSpacing.lg),
+                const SizedBox(height: 30),
                 Expanded(
                   child: ListView(
                     padding: EdgeInsets.zero,
@@ -129,34 +129,36 @@ class _BrandHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         DecoratedBox(
           decoration: BoxDecoration(
             color: const Color(0xFF075DFF),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(7),
             child: Image.asset(
               _oneVerzLogoAsset,
-              width: 28,
-              height: 28,
+              width: 24,
+              height: 24,
               fit: BoxFit.contain,
             ),
           ),
         ),
-        const SizedBox(height: TenantAdminSpacing.sm),
-        Text(
-          'OneVerz POS',
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                height: 1.15,
-              ),
+        const SizedBox(width: TenantAdminSpacing.md),
+        Flexible(
+          child: Text(
+            'SCS-TIX',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                ),
+          ),
         ),
       ],
     );

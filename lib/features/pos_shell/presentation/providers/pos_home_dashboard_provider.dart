@@ -134,8 +134,8 @@ PosHomeDashboardState buildPosHomeShellState({
       ),
       const PosHomeAction(
         key: 'returns-refunds',
-        label: 'Returns & Refunds',
-        description: 'Review eligible items for return or refund.',
+        label: 'Returns & Exchanges',
+        description: 'Review eligible items for return or exchange.',
         iconKey: 'return',
         buttonLabel: 'Start Return',
         isEnabled: true,
@@ -264,12 +264,12 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         ),
       PosHomeAction(
         key: 'returns-refunds',
-        label: 'Returns & Refunds',
-        description: 'Review eligible items for return or refund.',
+        label: 'Returns & Exchanges',
+        description: 'Review eligible items for return or exchange.',
         iconKey: 'return',
         buttonLabel: 'Start Return',
         isEnabled: cards.returnsRefunds.enabled ||
-            PosPermissionAccess.canViewReturnsOrRefunds(permissions),
+            PosPermissionAccess.canViewReturns(permissions),
         targetRoute: '/pos/returns-refunds',
         featureKey: PosFeatureCodes.returns,
         permissionKey: PosPermissionCodes.viewReturns,

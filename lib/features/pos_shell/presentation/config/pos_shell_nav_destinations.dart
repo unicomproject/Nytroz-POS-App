@@ -33,15 +33,15 @@ const posShellNavDestinations = <PosShellNavDestination>[
     label: 'Customers',
     icon: Icons.people_outline_rounded,
     routePath: '/pos/customers',
-    anyOfPermissionKeys: PosPermissionAccess.customerViewOrCreateAccessCodes,
+    anyOfPermissionKeys: PosPermissionAccess.customerViewAccessCodes,
     routeExists: true,
   ),
   PosShellNavDestination(
     key: 'returns-refunds',
-    label: 'Returns & Refunds',
+    label: 'Returns & Exchanges',
     icon: Icons.assignment_return_outlined,
     routePath: '/pos/returns-refunds',
-    anyOfPermissionKeys: PosPermissionAccess.returnsViewAccessCodes,
+    permissionKey: PosPermissionCodes.viewReturns,
     routeExists: true,
   ),
   PosShellNavDestination(

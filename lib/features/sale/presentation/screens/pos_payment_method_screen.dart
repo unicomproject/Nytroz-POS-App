@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:nytroz_pos/shared/widgets/pos_action_buttons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
@@ -270,10 +271,11 @@ class _CheckoutErrorFallback extends StatelessWidget {
                   child: const Text('Back to Cart'),
                 ),
                 const SizedBox(width: TenantAdminSpacing.sm),
-                FilledButton.icon(
+                PosPrimaryActionButton(
+                  label: 'Retry',
                   onPressed: onRetry,
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Retry'),
+                  leadingIcon: Icons.refresh_rounded,
+                  compact: true,
                 ),
               ],
             ),

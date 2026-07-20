@@ -17,80 +17,50 @@ class ReturnReasonOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onSelected,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-          decoration: BoxDecoration(
-            color: TenantAdminColors.surface,
-            borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-            border: Border.all(
-              color: selected
-                  ? TenantAdminColors.primary
-                  : TenantAdminColors.border,
-              width: selected ? 2 : 1,
+    return InkWell(
+      onTap: onSelected,
+      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: TenantAdminSpacing.xs),
+        child: Row(
+          children: [
+            RadioGroup<String>(
+              groupValue: selected ? option.code : null,
+              onChanged: (_) => onSelected(),
+              child: Radio<String>(
+                value: option.code,
+                activeColor: TenantAdminColors.primary,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
             ),
-            boxShadow: selected ? TenantAdminShadows.card : null,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _SelectionIndicator(selected: selected),
-              const SizedBox(width: TenantAdminSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            const SizedBox(width: TenantAdminSpacing.xs),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    option.displayName,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: TenantAdminColors.bodyText,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  if (option.description?.trim().isNotEmpty == true) ...[
+                    const SizedBox(height: 2),
                     Text(
-                      option.title,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
+                      option.description!.trim(),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: TenantAdminColors.mutedText,
                           ),
                     ),
-                    const SizedBox(height: TenantAdminSpacing.xs),
-                    Text(
-                      option.description,
-                      style: TenantAdminTextStyles.muted(context),
-                    ),
                   ],
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
-}
-
-class _SelectionIndicator extends StatelessWidget {
-  const _SelectionIndicator({required this.selected});
-
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 22,
-      height: 22,
-      margin: const EdgeInsets.only(top: 2),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: selected
-              ? TenantAdminColors.primary
-              : TenantAdminColors.border,
-          width: 2,
-        ),
-        color: selected ? TenantAdminColors.primary : Colors.transparent,
-      ),
-      child: selected
-          ? const Icon(Icons.check, size: 14, color: Colors.white)
-          : null,
     );
   }
 }

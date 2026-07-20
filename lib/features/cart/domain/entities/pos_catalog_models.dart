@@ -33,9 +33,9 @@ class PosCatalogProductSummary {
     this.variantId,
     this.description,
     this.imageUrl,
-    this.stockStatus = 'InStock',
+    this.stockStatus = 'Unknown',
     this.availableQty,
-    this.stockLabel = 'In Stock',
+    this.stockLabel = 'Unavailable',
   });
 
   final String productId;
@@ -51,7 +51,7 @@ class PosCatalogProductSummary {
   final double? availableQty;
   final String stockLabel;
 
-  bool get isOutOfStock => stockStatus == 'OutOfStock';
+  bool get isOutOfStock => stockStatus != 'InStock' && stockStatus != 'LowStock';
 
   bool matches(String query) {
     return productId.toLowerCase().contains(query) ||
@@ -87,7 +87,7 @@ class PosCatalogVariant {
   final String stockStatus;
   final Map<String, String> attributes;
 
-  bool get isOutOfStock => stockStatus == 'OutOfStock';
+  bool get isOutOfStock => stockStatus != 'InStock' && stockStatus != 'LowStock';
 
   bool get isLowStock => stockStatus == 'LowStock';
 }
@@ -158,7 +158,8 @@ String _stockLabelForVariant(PosCatalogVariant? variant, String fallback) {
   return switch (variant.stockStatus) {
     'OutOfStock' => 'Out of Stock',
     'LowStock' => 'Low Stock',
-    _ => 'In Stock',
+    'InStock' => 'In Stock',
+    _ => 'Unavailable',
   };
 }
 
@@ -190,7 +191,8 @@ String stockStatusFromApi(String? value) {
   return switch (value) {
     'out_of_stock' || 'OutOfStock' => 'OutOfStock',
     'low_stock' || 'LowStock' => 'LowStock',
-    _ => 'InStock',
+    'in_stock' || 'InStock' => 'InStock',
+    _ => 'Unknown',
   };
 }
 
@@ -202,8 +204,9 @@ String stockLabelFromApi(String? stockStatus, num? availableQty) {
     'LowStock' => availableQty != null
         ? '${availableQty.floor()} in stock'
         : 'Low Stock',
-    _ => availableQty != null && availableQty > 0
+    'InStock' => availableQty != null && availableQty > 0
         ? '${availableQty.floor()} in stock'
         : 'In Stock',
+    _ => 'Unavailable',
   };
 }

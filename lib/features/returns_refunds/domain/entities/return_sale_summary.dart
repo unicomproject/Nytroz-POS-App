@@ -101,12 +101,14 @@ class ReturnSaleSearchPage {
     required this.page,
     required this.pageSize,
     required this.totalCount,
+    this.paymentMethods = const [],
   });
 
   final List<ReturnSaleSummary> items;
   final int page;
   final int pageSize;
   final int totalCount;
+  final List<ReturnPaymentMethodFilterOption> paymentMethods;
 
   factory ReturnSaleSearchPage.fromJson(Map<String, dynamic> json) {
     final itemsJson = json['items'];
@@ -116,12 +118,21 @@ class ReturnSaleSearchPage {
             .map(ReturnSaleSummary.fromJson)
             .toList(growable: false)
         : const <ReturnSaleSummary>[];
+    final paymentMethodsJson = json['paymentMethods'];
+    final paymentMethods = paymentMethodsJson is List
+        ? paymentMethodsJson
+            .whereType<Map<String, dynamic>>()
+            .map(ReturnPaymentMethodFilterOption.fromJson)
+            .where((option) => option.code.isNotEmpty)
+            .toList(growable: false)
+        : const <ReturnPaymentMethodFilterOption>[];
 
     return ReturnSaleSearchPage(
       items: items,
       page: _readInt(json, 'page'),
       pageSize: _readInt(json, 'pageSize'),
       totalCount: _readInt(json, 'totalCount'),
+      paymentMethods: paymentMethods,
     );
   }
 
@@ -131,5 +142,24 @@ class ReturnSaleSearchPage {
       return value.toInt();
     }
     return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+}
+
+class ReturnPaymentMethodFilterOption {
+  const ReturnPaymentMethodFilterOption({
+    required this.code,
+    required this.label,
+  });
+
+  final String code;
+  final String label;
+
+  factory ReturnPaymentMethodFilterOption.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return ReturnPaymentMethodFilterOption(
+      code: (json['code'] ?? '').toString().trim(),
+      label: (json['label'] ?? '').toString().trim(),
+    );
   }
 }

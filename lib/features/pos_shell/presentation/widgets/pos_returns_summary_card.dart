@@ -19,7 +19,7 @@ class PosReturnsSummaryCard extends StatelessWidget {
     return PosHomeActionCard(
       action: action,
       icon: Icons.assignment_return_outlined,
-      description: 'Process returns and issue refunds quickly.',
+      description: 'Process returns and exchanges quickly.',
       iconColor: TenantAdminColors.info,
       iconBackgroundColor: const Color(0xFFE8F1FF),
       onTap: action.routeExists ? onViewReturns : null,

@@ -83,6 +83,10 @@ class ReturnCreditPreview {
     required this.validityDays,
     this.expiresAt,
     required this.selectedItemCount,
+    this.canProceed = false,
+    this.requiresApproval = false,
+    this.policyMessage,
+    this.draftVersion,
   });
 
   final String saleId;
@@ -104,6 +108,10 @@ class ReturnCreditPreview {
   final int validityDays;
   final DateTime? expiresAt;
   final int selectedItemCount;
+  final bool canProceed;
+  final bool requiresApproval;
+  final String? policyMessage;
+  final int? draftVersion;
 
   factory ReturnCreditPreview.fromJson(Map<String, dynamic> json) {
     final itemsJson = json['items'];
@@ -137,6 +145,10 @@ class ReturnCreditPreview {
       validityDays: _readInt(json, 'validityDays'),
       expiresAt: _readDateTime(json['expiresAt']),
       selectedItemCount: _readInt(json, 'selectedItemCount'),
+      canProceed: json['canProceed'] == true,
+      requiresApproval: json['requiresApproval'] == true,
+      policyMessage: _readNullableString(json, 'policyMessage'),
+      draftVersion: _readIntNullable(json, 'draftVersion'),
     );
   }
 
@@ -182,6 +194,17 @@ int _readInt(Map<String, dynamic> json, String key) {
     return value.toInt();
   }
   return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+int? _readIntNullable(Map<String, dynamic> json, String key) {
+  final value = json[key];
+  if (value == null) {
+    return null;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  return int.tryParse(value.toString());
 }
 
 DateTime? _readDateTime(Object? value) {

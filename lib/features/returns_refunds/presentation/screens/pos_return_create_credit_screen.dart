@@ -49,7 +49,7 @@ class _PosReturnCreateCreditScreenState
     final session = ref.watch(authSessionProvider);
     final granted = session?.permissionCodes.toSet() ?? const {};
 
-    if (!PosPermissionAccess.canViewReturnsOrRefunds(granted)) {
+    if (!PosPermissionAccess.canCreateRefund(granted)) {
       return const TenantAdminForbiddenScreen();
     }
 
@@ -76,7 +76,10 @@ class _PosReturnCreateCreditScreenState
                 children: [
                   _Header(onBack: _goBack),
                   const SizedBox(height: TenantAdminSpacing.lg),
-                  const ReturnStepper(currentStep: ReturnFlowSteps.createCredit),
+                  ReturnStepper(
+                    currentStep: ReturnFlowSteps.createCredit,
+                    selectedBranch: flowState.selectedResolution,
+                  ),
                   const SizedBox(height: TenantAdminSpacing.lg),
                   if (!hasPrerequisites)
                     const Expanded(
@@ -213,11 +216,12 @@ class _PosReturnCreateCreditScreenState
   }
 
   void _goBack() {
+    ref.read(returnFlowProvider.notifier).setStep(ReturnFlowSteps.chooseOption);
     if (context.canPop()) {
       context.pop();
       return;
     }
-    context.go('/pos/returns-refunds/return-reason');
+    context.go('/pos/returns-refunds/choose-option');
   }
 
   void _editItems() {

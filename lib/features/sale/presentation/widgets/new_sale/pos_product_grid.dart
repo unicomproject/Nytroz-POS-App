@@ -60,7 +60,7 @@ class PosProductGrid extends ConsumerWidget {
 
                 return _ProductTile(
                   product: product,
-                  onTap: canAddItems
+                  onTap: canAddItems && !product.isOutOfStock
                       ? () => _handleProductTap(context, ref, product)
                       : null,
                 );
@@ -147,7 +147,7 @@ class _ProductTile extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                       ),
                 ),
-                if (product.hasVariants) ...[
+                if (product.hasVariants && !product.isOutOfStock) ...[
                   const SizedBox(height: TenantAdminSpacing.xs),
                   Row(
                     children: [

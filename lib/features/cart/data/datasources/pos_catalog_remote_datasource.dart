@@ -113,6 +113,8 @@ class PosCatalogRemoteDatasource {
   }
 
   PosCatalogProductDetail _mapDetail(Map<String, dynamic> json) {
+    final stockStatus = stockStatusFromApi(json['stockStatus']?.toString());
+    final availableQty = (json['availableQuantity'] as num?)?.toDouble();
     final summary = PosCatalogProductSummary(
       productId: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Product',
@@ -121,6 +123,12 @@ class PosCatalogRemoteDatasource {
       categoryName: json['categoryName']?.toString() ?? 'General',
       basePrice: parsePriceToInt(json['basePrice']),
       hasVariants: json['hasVariants'] == true,
+      stockStatus: stockStatus,
+      availableQty: availableQty,
+      stockLabel: stockLabelFromApi(
+        json['stockStatus']?.toString(),
+        availableQty,
+      ),
     );
 
     final variantGroups = (json['variantGroups'] as List? ?? const [])

@@ -8,10 +8,18 @@ import '../cash_drawer/presentation/screens/pos_cash_drawer_screen.dart';
 import '../cash_drawer/presentation/screens/pos_cash_drop_screen.dart';
 import '../cash_drawer/presentation/screens/pos_cash_in_screen.dart';
 import '../cash_drawer/presentation/screens/pos_close_till_screen.dart';
+import '../customers/presentation/screens/pos_customers_screen.dart';
+import '../returns_refunds/presentation/navigation/returns_route_guard.dart';
 import '../returns_refunds/presentation/screens/pos_return_create_credit_screen.dart';
 import '../returns_refunds/presentation/screens/pos_return_receipt_screen.dart';
+import '../returns_refunds/presentation/screens/pos_return_sale_summary_screen.dart';
 import '../returns_refunds/presentation/screens/pos_return_settlement_screen.dart';
+import '../returns_refunds/presentation/screens/pos_return_check_eligibility_screen.dart';
 import '../returns_refunds/presentation/screens/pos_return_eligibility_screen.dart';
+import '../returns_refunds/presentation/screens/pos_return_refund_details_screen.dart';
+import '../returns_refunds/presentation/screens/pos_return_choose_option_screen.dart';
+import '../returns_refunds/presentation/screens/pos_return_exchange_flow_screen.dart';
+import '../returns_refunds/presentation/screens/pos_return_inspect_items_screen.dart';
 import '../returns_refunds/presentation/screens/pos_return_reason_screen.dart';
 import '../returns_refunds/presentation/screens/pos_return_search_sale_screen.dart';
 import '../sale/presentation/screens/pos_cash_payment_success_screen.dart';
@@ -35,6 +43,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
           title: header.title,
           subtitle: header.subtitle,
           showTopBar: shouldShowPosTopBar(state.uri.path),
+          showTopBarSearch: shouldShowPosTopBarSearch(state.uri.path),
           child: child,
         );
       },
@@ -131,7 +140,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
           path: '/pos/customers',
           builder: (context, state) =>
               _canViewCustomers(ref.read(authSessionProvider))
-                  ? const PosPlaceholderScreen(title: 'Customers')
+                  ? const PosCustomersScreen()
                   : const TenantAdminForbiddenScreen(),
         ),
         GoRoute(
@@ -142,37 +151,112 @@ List<RouteBase> posShellRoutes(Ref ref) {
                   : const TenantAdminForbiddenScreen(),
           routes: [
             GoRoute(
+              path: 'summary',
+              builder: (context, state) =>
+                  _canAccessReturnsPath(
+                    ref.read(authSessionProvider),
+                    '/pos/returns-refunds/summary',
+                  )
+                      ? const PosReturnSaleSummaryScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
               path: 'eligibility',
               builder: (context, state) =>
-                  _canViewReturnsRefunds(ref.read(authSessionProvider))
+                  _canAccessReturnsPath(
+                    ref.read(authSessionProvider),
+                    '/pos/returns-refunds/eligibility',
+                  )
                       ? const PosReturnEligibilityScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'check-eligibility',
+              builder: (context, state) =>
+                  _canAccessReturnsPath(
+                    ref.read(authSessionProvider),
+                    '/pos/returns-refunds/check-eligibility',
+                  )
+                      ? const PosReturnCheckEligibilityScreen()
                       : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
               path: 'return-reason',
               builder: (context, state) =>
-                  _canViewReturnsRefunds(ref.read(authSessionProvider))
+                  _canAccessReturnsPath(
+                    ref.read(authSessionProvider),
+                    '/pos/returns-refunds/return-reason',
+                  )
                       ? const PosReturnReasonScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'inspect-items',
+              builder: (context, state) =>
+                  _canAccessReturnsPath(
+                    ref.read(authSessionProvider),
+                    '/pos/returns-refunds/inspect-items',
+                  )
+                      ? const PosReturnInspectItemsScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'choose-option',
+              builder: (context, state) =>
+                  _canAccessReturnsPath(
+                    ref.read(authSessionProvider),
+                    '/pos/returns-refunds/choose-option',
+                  )
+                      ? const PosReturnChooseOptionScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'refund-details',
+              builder: (context, state) =>
+                  _canAccessReturnsPath(
+                    ref.read(authSessionProvider),
+                    '/pos/returns-refunds/refund-details',
+                  )
+                      ? const PosReturnRefundDetailsScreen()
                       : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
               path: 'create-credit',
               builder: (context, state) =>
-                  _canViewReturnsRefunds(ref.read(authSessionProvider))
+                  _canAccessReturnsPath(
+                    ref.read(authSessionProvider),
+                    '/pos/returns-refunds/create-credit',
+                  )
                       ? const PosReturnCreateCreditScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'exchange',
+              builder: (context, state) =>
+                  _canAccessReturnsPath(
+                    ref.read(authSessionProvider),
+                    '/pos/returns-refunds/exchange',
+                  )
+                      ? const PosReturnExchangeFlowScreen()
                       : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
               path: 'settlement',
               builder: (context, state) =>
-                  _canViewReturnsRefunds(ref.read(authSessionProvider))
+                  _canAccessReturnsPath(
+                    ref.read(authSessionProvider),
+                    '/pos/returns-refunds/settlement',
+                  )
                       ? const PosReturnSettlementScreen()
                       : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
               path: 'receipt',
               builder: (context, state) =>
-                  _canViewReturnsRefunds(ref.read(authSessionProvider))
+                  _canAccessReturnsPath(
+                    ref.read(authSessionProvider),
+                    '/pos/returns-refunds/receipt',
+                  )
                       ? const PosReturnReceiptScreen()
                       : const TenantAdminForbiddenScreen(),
             ),
@@ -232,12 +316,24 @@ bool shouldShowPosTopBar(String path) {
     return false;
   }
 
+  if (path == '/pos/customers') {
+    return false;
+  }
+
+  if (path.startsWith('/pos/returns-refunds')) {
+    return false;
+  }
+
   if (path == '/pos/new-sale/payment' ||
       path.startsWith('/pos/new-sale/payment/')) {
     return false;
   }
 
   return true;
+}
+
+bool shouldShowPosTopBarSearch(String path) {
+  return !path.startsWith('/pos/returns-refunds');
 }
 
 _PosShellHeader _headerForPath(String path) {
@@ -254,12 +350,18 @@ _PosShellHeader _headerForPath(String path) {
     '/pos/new-sale/payment/split' => 'Split Payment',
     '/pos/orders' => 'Orders',
     '/pos/customers' => 'Customers',
-    '/pos/returns-refunds' => 'Return & Refund',
-    '/pos/returns-refunds/eligibility' => 'Eligibility & Select Items',
+    '/pos/returns-refunds' => 'Returns & Exchanges',
+    '/pos/returns-refunds/summary' => 'Original Sale Summary',
+    '/pos/returns-refunds/eligibility' => 'Select Items',
+    '/pos/returns-refunds/check-eligibility' => 'Check Eligibility',
     '/pos/returns-refunds/return-reason' => 'Return Reason',
-    '/pos/returns-refunds/create-credit' => 'Create Credit',
-    '/pos/returns-refunds/settlement' => 'Settlement',
-    '/pos/returns-refunds/receipt' => 'Receipt',
+    '/pos/returns-refunds/inspect-items' => 'Inspect Items',
+    '/pos/returns-refunds/choose-option' => 'Choose Option',
+    '/pos/returns-refunds/refund-details' => 'Refund Details',
+    '/pos/returns-refunds/create-credit' => 'Refund Flow',
+    '/pos/returns-refunds/exchange' => 'Exchange Flow',
+    '/pos/returns-refunds/settlement' => 'Review & Confirm',
+    '/pos/returns-refunds/receipt' => 'Receipt / Success',
     '/pos/cash-drawer' => 'Cash Drawer',
     '/pos/cash-drawer/cash-in' => 'Cash In',
     '/pos/cash-drawer/cash-drop' => 'Cash Drop',
@@ -278,16 +380,29 @@ _PosShellHeader _headerForPath(String path) {
     '/pos/cash-drawer/close-till' =>
       'Count the cash in the drawer and close the till.',
     '/pos/returns-refunds' =>
-      'Find and select the original sale to begin the return or refund.',
+      'Find and select the original sale to begin the return or exchange.',
+    '/pos/returns-refunds/summary' =>
+      'Review the original sale details and purchased items.',
     '/pos/returns-refunds/eligibility' =>
-      'Review return eligibility and select items to return.',
+      'Choose the items and quantities to include in the return or exchange.',
+    '/pos/returns-refunds/check-eligibility' =>
+      'Validate return eligibility based on policy rules.',
     '/pos/returns-refunds/return-reason' =>
-      'Capture the reason for each item being returned.',
+      'Choose the reason for the return or exchange and capture notes if needed.',
+    '/pos/returns-refunds/inspect-items' =>
+      'Inspect the condition of each selected item and add notes or photos if needed.',
+    '/pos/returns-refunds/choose-option' =>
+      'Choose whether the customer wants a Refund or Exchange.',
+    '/pos/returns-refunds/refund-details' =>
+      'Select the refund method and confirm the refund.',
     '/pos/returns-refunds/create-credit' =>
-      'Review credit amounts and confirm the return credit.',
+      'Review refund credit calculation and confirm the return credit.',
+    '/pos/returns-refunds/exchange' =>
+      'Select replacement products and complete the exchange.',
     '/pos/returns-refunds/settlement' =>
-      'Select how the customer credit should be settled.',
-    '/pos/returns-refunds/receipt' => 'Review and print the return receipt.',
+      'Review the return details and complete the process.',
+    '/pos/returns-refunds/receipt' =>
+      'Return or exchange completed successfully.',
     _ => 'Ready for sales, service, and till operations.',
   };
 
@@ -362,10 +477,11 @@ bool _canViewCustomers(AuthSession? session) {
 }
 
 bool _canViewReturnsRefunds(AuthSession? session) {
-  return _canViewPosHome(session) &&
-      PosPermissionAccess.canViewReturnsOrRefunds(
-        session?.permissionCodes.toSet() ?? const {},
-      );
+  return ReturnsRouteGuard.canAccessPath(session, '/pos/returns-refunds');
+}
+
+bool _canAccessReturnsPath(AuthSession? session, String path) {
+  return ReturnsRouteGuard.canAccessPath(session, path);
 }
 
 bool _canViewCashDrawer(AuthSession? session) {

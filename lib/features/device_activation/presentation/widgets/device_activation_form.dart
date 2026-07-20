@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../../shared/widgets/pos_action_buttons.dart';
 
 class DeviceActivationForm extends StatelessWidget {
   const DeviceActivationForm({
@@ -135,35 +136,12 @@ class DeviceActivationForm extends StatelessWidget {
             },
           ),
           SizedBox(height: isWide ? 28 : TenantAdminSpacing.lg),
-          SizedBox(
-            height: isWide ? 62 : 56,
-            child: ElevatedButton(
-              onPressed: isSubmitting ? null : onSubmit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: TenantAdminColors.navy,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                ),
-              ),
-              child: isSubmitting
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(
-                      'Activate Device',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: isWide ? 18 : 17,
-                      ),
-                    ),
-            ),
+          PosPrimaryActionButton(
+            label: 'Activate Device',
+            onPressed: isSubmitting ? null : onSubmit,
+            isLoading: isSubmitting,
+            fullWidth: true,
+            minimumHeight: isWide ? 62 : 56,
           ),
         ],
       ),

@@ -38,6 +38,11 @@ class PosPermissionAccess {
     PosPermissionCodes.createCustomer,
   ];
 
+  static const customerUpdateAccessCodes = [
+    PosPermissionCodes.updateNewSaleCustomer,
+    PosPermissionCodes.updateCustomer,
+  ];
+
   static const customerViewOrCreateAccessCodes = [
     ...customerViewAccessCodes,
     ...customerCreateAccessCodes,
@@ -45,9 +50,39 @@ class PosPermissionAccess {
 
   static const returnsViewAccessCodes = [
     PosPermissionCodes.viewReturns,
+  ];
+
+  static const refundsViewAccessCodes = [
     PosPermissionCodes.viewRefunds,
+  ];
+
+  static const exchangesViewAccessCodes = [
+    PosPermissionCodes.viewExchanges,
+  ];
+
+  /// Sidebar / module entry: any returns, refunds, or exchanges view right.
+  static const returnsModuleAccessCodes = [
+    PosPermissionCodes.viewReturns,
+    PosPermissionCodes.viewRefunds,
+    PosPermissionCodes.viewExchanges,
+  ];
+
+  static const returnsCreateAccessCodes = [
+    PosPermissionCodes.createReturn,
+  ];
+
+  static const refundsCreateAccessCodes = [
     PosPermissionCodes.createRefund,
-    PosPermissionCodes.processRefund,
+    PosPermissionCodes.createReturn,
+  ];
+
+  static const exchangesCreateAccessCodes = [
+    PosPermissionCodes.createExchange,
+    PosPermissionCodes.createReturn,
+  ];
+
+  static const refundApproveAccessCodes = [
+    PosPermissionCodes.approveRefund,
   ];
 
   static const cashDrawerViewAccessCodes = [
@@ -143,11 +178,110 @@ class PosPermissionAccess {
   }
 
   static bool canViewCustomers(Set<String> granted) {
-    return hasAny(granted, customerViewOrCreateAccessCodes);
+    return hasAny(granted, customerViewAccessCodes);
   }
 
+  static bool canCreateCustomer(Set<String> granted) {
+    return hasAny(granted, customerCreateAccessCodes);
+  }
+
+  /// Requires canonical customers.update (legacy pos.customers.update accepted).
+  static bool canEditCustomer(Set<String> granted) {
+    return hasAny(granted, customerUpdateAccessCodes);
+  }
+
+  static bool canAttachCustomerToSale(Set<String> granted) {
+    return canViewCustomers(granted) &&
+        granted.contains(PosPermissionCodes.manageCart);
+  }
+
+  /// Module entry for Returns & Exchanges (sidebar + shared early steps).
   static bool canViewReturnsOrRefunds(Set<String> granted) {
+    return hasAny(granted, returnsModuleAccessCodes);
+  }
+
+  static bool canViewReturns(Set<String> granted) {
     return hasAny(granted, returnsViewAccessCodes);
+  }
+
+  static bool canCreateReturn(Set<String> granted) {
+    return hasAny(granted, returnsCreateAccessCodes);
+  }
+
+  static bool canViewRefunds(Set<String> granted) {
+    return hasAny(granted, refundsViewAccessCodes);
+  }
+
+  static bool canCreateRefund(Set<String> granted) {
+    return hasAny(granted, refundsCreateAccessCodes);
+  }
+
+  static bool canViewExchanges(Set<String> granted) {
+    return hasAny(granted, exchangesViewAccessCodes);
+  }
+
+  static bool canCreateExchange(Set<String> granted) {
+    return hasAny(granted, exchangesCreateAccessCodes);
+  }
+
+  static bool canApproveRefund(Set<String> granted) {
+    return hasAny(granted, refundApproveAccessCodes);
+  }
+
+  static bool canCompleteRefundBranch(Set<String> granted) {
+    return canCreateRefund(granted);
+  }
+
+  static bool canCompleteExchangeBranch(Set<String> granted) {
+    return canCreateExchange(granted);
+  }
+
+  /// Strict Refund branch processing (preview, methods, refund details).
+  static bool canProcessRefund(Set<String> granted) {
+    return canViewReturns(granted) &&
+        canCreateReturn(granted) &&
+        granted.contains(PosPermissionCodes.createRefund);
+  }
+
+  /// Alias for resolution save on Choose Option.
+  static bool canSelectRefundResolution(Set<String> granted) =>
+      canProcessRefund(granted);
+
+  /// Strict Exchange branch processing (products, replacement, preview, exchange flow).
+  static bool canProcessExchange(Set<String> granted) {
+    return canViewReturns(granted) &&
+        canCreateReturn(granted) &&
+        granted.contains(PosPermissionCodes.createExchange);
+  }
+
+  /// Alias for resolution save on Choose Option.
+  static bool canSelectExchangeResolution(Set<String> granted) =>
+      canProcessExchange(granted);
+
+  /// Immediate Refund success or historical reload with receipts.view.
+  static bool canViewRefundSuccess(Set<String> granted) {
+    return canProcessRefund(granted) ||
+        (canViewReturns(granted) &&
+            granted.contains(PosPermissionCodes.viewReceipts));
+  }
+
+  /// Immediate Exchange success or historical reload with receipts.view.
+  static bool canViewExchangeSuccess(Set<String> granted) {
+    return canProcessExchange(granted) ||
+        (canViewReturns(granted) &&
+            granted.contains(PosPermissionCodes.viewReceipts));
+  }
+
+  /// Route entry for Step 10 before branch resolution is known.
+  static bool canAccessReturnSuccessRoute(Set<String> granted) {
+    return canProcessRefund(granted) ||
+        canProcessExchange(granted) ||
+        (canViewReturns(granted) &&
+            granted.contains(PosPermissionCodes.viewReceipts));
+  }
+
+  static bool canStartNewReturn(Set<String> granted) {
+    return canViewReturns(granted) && canCreateReturn(granted);
   }
 
   static bool canViewCashDrawer(Set<String> granted) {
@@ -328,10 +462,22 @@ class PosPermissionAccess {
         return hasAny(granted, customerViewAccessCodes);
       case PosPermissionCodes.createNewSaleCustomer:
         return hasAny(granted, customerCreateAccessCodes);
+      case PosPermissionCodes.updateNewSaleCustomer:
+        return hasAny(granted, customerUpdateAccessCodes);
       case PosPermissionCodes.viewReturns:
+        return canViewReturns(granted);
+      case PosPermissionCodes.createReturn:
+        return canCreateReturn(granted);
       case PosPermissionCodes.viewRefunds:
+        return canViewRefunds(granted);
       case PosPermissionCodes.createRefund:
-        return canViewReturnsOrRefunds(granted);
+        return canCreateRefund(granted);
+      case PosPermissionCodes.viewExchanges:
+        return canViewExchanges(granted);
+      case PosPermissionCodes.createExchange:
+        return canCreateExchange(granted);
+      case PosPermissionCodes.approveRefund:
+        return canApproveRefund(granted);
       case PosPermissionCodes.viewCashDrawer:
       case PosPermissionCodes.manageCashDrawer:
         return canViewCashDrawer(granted);

@@ -27,6 +27,12 @@ class ApiEndpoints {
   static const posCheckoutSummary = '/api/v1/pos/checkout/summary';
   static const posCheckoutStartPayment = '/api/v1/pos/checkout/start-payment';
   static const posCustomers = '/api/v1/customers';
+  static const posCustomersSummary = '/api/v1/customers/summary';
+  static String posCustomer(String customerId) => '/api/v1/customers/$customerId';
+  static String posCustomerOrders(String customerId) =>
+      '/api/v1/customers/$customerId/orders';
+  static String posCustomerAttachToSale(String customerId) =>
+      '/api/v1/customers/$customerId/attach-to-sale';
   static const posDiscounts = '/api/v1/pos/discounts';
   static const posDiscountValidate = '/api/v1/pos/discounts/validate';
   static const posDiscountApply = '/api/v1/pos/discounts/apply';
@@ -34,15 +40,56 @@ class ApiEndpoints {
       '/api/v1/pos/discounts/$applicationId/approve';
 
   static const posReturnSaleSearch = '/api/v1/pos/returns/sales/search';
+  static const posReturnReasons = '/api/v1/pos/returns/reasons';
+  static String posReturnSaleReasonsValidate(String saleId) =>
+      '/api/v1/pos/returns/sales/$saleId/reasons/validate';
+  static const posReturnInspectionConditions =
+      '/api/v1/pos/returns/inspection/conditions';
+
+  static String posReturnSaleInspectionValidate(String saleId) =>
+      '/api/v1/pos/returns/sales/$saleId/inspection/validate';
+
+  static String posReturnSaleInspectionDraft(String saleId) =>
+      '/api/v1/pos/returns/sales/$saleId/inspection/draft';
+
+  static String posReturnSaleInspectionMedia(String saleId) =>
+      '/api/v1/pos/returns/sales/$saleId/inspection/media';
+
+  static String posReturnInspectionMedia(String mediaId) =>
+      '/api/v1/pos/returns/inspection/media/$mediaId';
 
   static String posReturnSaleEligibility(String saleId) =>
       '/api/v1/pos/returns/sales/$saleId/eligibility';
+
+  static String posReturnSaleEligibilityCheck(String saleId) =>
+      '/api/v1/pos/returns/sales/$saleId/eligibility-check';
 
   static String posReturnSaleCreditPreview(String saleId) =>
       '/api/v1/pos/returns/sales/$saleId/credit-preview';
 
   static String posReturnSaleComplete(String saleId) =>
       '/api/v1/pos/returns/sales/$saleId/complete';
+
+  static String posReturnCompletion(String returnId) =>
+      '/api/v1/pos/returns/completions/$returnId';
+
+  static String posReturnSaleResolution(String saleId) =>
+      '/api/v1/pos/returns/sales/$saleId/resolution';
+
+  static String posReturnSaleRefundMethods(String saleId) =>
+      '/api/v1/pos/returns/sales/$saleId/refund-methods';
+
+  static String posReturnSaleRefundMethod(String saleId) =>
+      '/api/v1/pos/returns/sales/$saleId/refund-method';
+
+  static String posReturnSaleExchangeProducts(String saleId) =>
+      '/api/v1/pos/returns/sales/$saleId/exchange/products';
+
+  static String posReturnSaleExchangeReplacement(String saleId) =>
+      '/api/v1/pos/returns/sales/$saleId/exchange/replacement';
+
+  static String posReturnSaleExchangePreview(String saleId) =>
+      '/api/v1/pos/returns/sales/$saleId/exchange-preview';
 
   static String posReceipt(String saleId) => '/api/v1/pos/receipts/$saleId';
 
