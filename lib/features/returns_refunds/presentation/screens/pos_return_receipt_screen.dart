@@ -6,15 +6,17 @@ import '../../../../core/access/pos_permission_access.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../../tenant_admin/presentation/widgets/tenant_admin_states.dart';
+import '../../../till/presentation/providers/till_provider.dart';
 import '../../domain/entities/return_flow_steps.dart';
 import '../providers/return_flow_provider.dart';
-import '../providers/return_receipt_provider.dart';
-import '../widgets/return_completed_success_banner.dart';
-import '../widgets/return_receipt_actions_card.dart';
-import '../widgets/return_receipt_audit_card.dart';
-import '../widgets/return_receipt_preview_card.dart';
-import '../widgets/return_receipt_summary_panel.dart';
+import '../providers/return_success_display.dart';
+import '../providers/return_success_provider.dart';
+import '../widgets/receipt_success/completed_items_summary_card.dart';
+import '../widgets/receipt_success/completion_details_card.dart';
+import '../widgets/receipt_success/completion_information_banner.dart';
+import '../widgets/receipt_success/invalid_completion_state.dart';
+import '../widgets/receipt_success/return_exchange_success_hero.dart';
+import '../widgets/receipt_success/success_page_actions.dart';
 import '../widgets/return_stepper.dart';
 
 class PosReturnReceiptScreen extends ConsumerStatefulWidget {
@@ -25,14 +27,42 @@ class PosReturnReceiptScreen extends ConsumerStatefulWidget {
       _PosReturnReceiptScreenState();
 }
 
-class _PosReturnReceiptScreenState extends ConsumerState<PosReturnReceiptScreen> {
+class _PosReturnReceiptScreenState
+    extends ConsumerState<PosReturnReceiptScreen> {
+  String? _routeReturnId;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(returnFlowProvider.notifier).setStep(ReturnFlowSteps.receipt);
-      ref.read(returnReceiptProvider.notifier).completeReturnIfNeeded();
+      final queryReturnId =
+          GoRouterState.of(context).uri.queryParameters['returnId'];
+      _routeReturnId = queryReturnId?.trim();
+      ref.read(returnSuccessProvider.notifier).loadCompletion(
+            returnId: _routeReturnId,
+          );
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final queryReturnId =
+        GoRouterState.of(context).uri.queryParameters['returnId']?.trim();
+    if (queryReturnId != null &&
+        queryReturnId.isNotEmpty &&
+        queryReturnId != _routeReturnId) {
+      _routeReturnId = queryReturnId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        ref.read(returnSuccessProvider.notifier).loadCompletion(
+              returnId: _routeReturnId,
+            );
+      });
+    }
   }
 
   @override
@@ -40,216 +70,348 @@ class _PosReturnReceiptScreenState extends ConsumerState<PosReturnReceiptScreen>
     final session = ref.watch(authSessionProvider);
     final granted = session?.permissionCodes.toSet() ?? const {};
 
-    if (!PosPermissionAccess.canViewReturnsOrRefunds(granted)) {
+    if (!PosPermissionAccess.canAccessReturnSuccessRoute(granted)) {
       return const TenantAdminForbiddenScreen();
     }
 
     final flowState = ref.watch(returnFlowProvider);
-    final receiptState = ref.watch(returnReceiptProvider);
-    final receipt = receiptState.receipt;
+    final successState = ref.watch(returnSuccessProvider);
+    // Completion GET is the only success authority — never fall back to memory.
+    final receipt = successState.loadStatus == ReturnSuccessLoadStatus.loaded
+        ? successState.receipt
+        : null;
+    final display = receipt == null
+        ? null
+        : buildReturnSuccessDisplayFromReceipt(receipt);
 
-    final hasPrerequisites = flowState.selectedSale != null &&
-        flowState.selectedReturnLines.isNotEmpty &&
-        flowState.selectedReasonCode != null &&
-        flowState.creditPreviewConfirmed &&
-        flowState.selectedSettlementMethodCode != null;
+    if (successState.loadStatus == ReturnSuccessLoadStatus.permissionDenied ||
+        (receipt != null && !_canViewBranch(granted, receipt.isExchange))) {
+      return const TenantAdminForbiddenScreen();
+    }
 
-    return ColoredBox(
-      color: TenantAdminColors.background,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final padding = TenantAdminInsets.pageForWidth(constraints.maxWidth);
-          final useThreeColumns = constraints.maxWidth >= 1200;
+    final canPrint = PosPermissionAccess.canPrintReceipts(granted) &&
+        (display?.canPrint ?? false) &&
+        successState.printStatus != ReturnSuccessPrintStatus.inProgress;
+    final canStartNew = PosPermissionAccess.canStartNewReturn(granted);
+    final canGoHome = PosPermissionAccess.canViewHome(granted);
 
-          return Padding(
-            padding: padding,
-            child: SizedBox.expand(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          return;
+        }
+        if (canGoHome) {
+          _backToHome();
+        }
+      },
+      child: ColoredBox(
+        color: TenantAdminColors.background,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final padding = constraints.maxWidth >= TenantAdminBreakpoints.tablet
+                ? const EdgeInsets.fromLTRB(22, 20, 22, 22)
+                : TenantAdminInsets.pageForWidth(constraints.maxWidth);
+            final twoColumn = constraints.maxWidth >= 760;
+
+            return Padding(
+              padding: padding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _Header(onBack: _goBack),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  const ReturnStepper(currentStep: ReturnFlowSteps.receipt),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  if (!hasPrerequisites)
-                    const Expanded(
-                      child: TenantAdminEmptyState(
-                        title: 'Return flow incomplete',
-                        message:
-                            'Complete settlement before viewing the receipt.',
-                        icon: Icons.receipt_long_outlined,
-                      ),
-                    )
-                  else if (receiptState.isLoading)
-                    const Expanded(
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (receiptState.errorMessage != null)
-                    Expanded(
-                      child: TenantAdminErrorState(
-                        title: 'Unable to complete return',
-                        message: receiptState.errorMessage!,
-                        onRetry: () => ref
-                            .read(returnReceiptProvider.notifier)
-                            .completeReturnIfNeeded(),
-                      ),
-                    )
-                  else if (receipt == null)
-                    const Expanded(
-                      child: TenantAdminEmptyState(
-                        title: 'No receipt data',
-                        message: 'Return receipt details are unavailable.',
-                        icon: Icons.receipt_long_outlined,
-                      ),
-                    )
-                  else ...[
-                    const ReturnCompletedSuccessBanner(),
+                  const Align(
+                    alignment: Alignment.centerRight,
+                    child: _TopStatus(),
+                  ),
+                  const SizedBox(height: TenantAdminSpacing.md),
+                  ReturnStepper(
+                    currentStep: ReturnFlowSteps.receipt,
+                    selectedBranch: flowState.selectedResolution,
+                  ),
+                  const SizedBox(height: TenantAdminSpacing.xl),
+                  Expanded(
+                    child: _buildBody(
+                      context: context,
+                      successState: successState,
+                      display: display,
+                      twoColumn: twoColumn,
+                      canGoHome: canGoHome,
+                    ),
+                  ),
+                  if (display != null) ...[
                     const SizedBox(height: TenantAdminSpacing.lg),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            useThreeColumns
-                                ? Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        flex: 3,
-                                        child: ReturnReceiptPreviewCard(
-                                          receipt: receipt,
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        width: TenantAdminSpacing.lg,
-                                      ),
-                                      Expanded(
-                                        flex: 2,
-                                        child: ReturnReceiptActionsCard(
-                                          onPrintReceipt: () =>
-                                              _printReceipt(context),
-                                          onNewReturn: _startNewReturn,
-                                          onBackToDashboard:
-                                              _backToDashboard,
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        width: TenantAdminSpacing.lg,
-                                      ),
-                                      Expanded(
-                                        flex: 2,
-                                        child: ReturnReceiptSummaryPanel(
-                                          receipt: receipt,
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      ReturnReceiptPreviewCard(
-                                        receipt: receipt,
-                                      ),
-                                      const SizedBox(
-                                        height: TenantAdminSpacing.lg,
-                                      ),
-                                      ReturnReceiptActionsCard(
-                                        onPrintReceipt: () =>
-                                            _printReceipt(context),
-                                        onNewReturn: _startNewReturn,
-                                        onBackToDashboard: _backToDashboard,
-                                      ),
-                                      const SizedBox(
-                                        height: TenantAdminSpacing.lg,
-                                      ),
-                                      ReturnReceiptSummaryPanel(
-                                        receipt: receipt,
-                                      ),
-                                    ],
-                                  ),
-                            const SizedBox(height: TenantAdminSpacing.lg),
-                            ReturnReceiptAuditCard(receipt: receipt),
-                          ],
-                        ),
-                      ),
+                    SuccessPageActions(
+                      isPrinting: successState.printStatus ==
+                          ReturnSuccessPrintStatus.inProgress,
+                      isNavigating: successState.isNavigating,
+                      printEnabled:
+                          canPrint || successState.auditPendingAfterPrint,
+                      startNewReturnEnabled: canStartNew,
+                      backToHomeEnabled: canGoHome,
+                      hasBeenPrinted: display.hasBeenPrinted,
+                      auditPending: successState.auditPendingAfterPrint,
+                      onPrintReceipt: _printReceipt,
+                      onRetryAudit: _retryAudit,
+                      onStartNewReturn: _startNewReturn,
+                      onBackToHome: _backToHome,
                     ),
                   ],
                 ],
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
 
-  void _goBack() {
-    if (context.canPop()) {
-      context.pop();
+  Widget _buildBody({
+    required BuildContext context,
+    required ReturnSuccessState successState,
+    required ReturnSuccessDisplay? display,
+    required bool twoColumn,
+    required bool canGoHome,
+  }) {
+    if (successState.loadStatus == ReturnSuccessLoadStatus.loading ||
+        successState.loadStatus == ReturnSuccessLoadStatus.idle) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (display == null) {
+      return InvalidCompletionState(
+        title: _invalidTitle(successState.loadStatus),
+        message: successState.loadMessage ??
+            'This success page can only be shown after a confirmed return or exchange completion.',
+        showBackToReview: false,
+        showRetry: successState.loadStatus == ReturnSuccessLoadStatus.failed ||
+            successState.loadStatus == ReturnSuccessLoadStatus.notReady ||
+            successState.loadStatus == ReturnSuccessLoadStatus.notFound,
+        onRetry: _retryLoad,
+        onBackToHome: canGoHome
+            ? _backToHome
+            : () {
+                context.go('/pos');
+              },
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (twoColumn)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 6,
+                  child: Column(
+                    children: [
+                      ReturnExchangeSuccessHero(
+                        heading: display.heading,
+                        supportingMessage: display.supportingMessage,
+                      ),
+                      const SizedBox(height: TenantAdminSpacing.xl),
+                      CompletionDetailsCard(display: display),
+                      if (display.settlementMessage != null) ...[
+                        const SizedBox(height: TenantAdminSpacing.lg),
+                        CompletionInformationBanner(
+                          message: display.settlementMessage!,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: TenantAdminSpacing.xl),
+                Expanded(
+                  flex: 4,
+                  child: CompletedItemsSummaryCard(
+                    items: display.items,
+                    currencyCode: display.currencyCode,
+                    totalItems: display.itemCount,
+                  ),
+                ),
+              ],
+            )
+          else ...[
+            ReturnExchangeSuccessHero(
+              heading: display.heading,
+              supportingMessage: display.supportingMessage,
+            ),
+            const SizedBox(height: TenantAdminSpacing.xl),
+            CompletionDetailsCard(display: display),
+            if (display.settlementMessage != null) ...[
+              const SizedBox(height: TenantAdminSpacing.lg),
+              CompletionInformationBanner(
+                message: display.settlementMessage!,
+              ),
+            ],
+            const SizedBox(height: TenantAdminSpacing.lg),
+            CompletedItemsSummaryCard(
+              items: display.items,
+              currencyCode: display.currencyCode,
+              totalItems: display.itemCount,
+            ),
+          ],
+          if (successState.printMessage != null) ...[
+            const SizedBox(height: TenantAdminSpacing.md),
+            Text(
+              successState.printMessage!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: TenantAdminColors.mutedText,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _invalidTitle(ReturnSuccessLoadStatus status) {
+    switch (status) {
+      case ReturnSuccessLoadStatus.notFound:
+        return 'Receipt not found';
+      case ReturnSuccessLoadStatus.exchangeIncomplete:
+        return 'Exchange incomplete';
+      case ReturnSuccessLoadStatus.notReady:
+        return 'Completion pending';
+      case ReturnSuccessLoadStatus.permissionDenied:
+        return 'Permission Denied';
+      default:
+        return 'Completion details unavailable';
+    }
+  }
+
+  bool _canViewBranch(Set<String> granted, bool isExchange) {
+    return isExchange
+        ? PosPermissionAccess.canViewExchangeSuccess(granted)
+        : PosPermissionAccess.canViewRefundSuccess(granted);
+  }
+
+  Future<void> _printReceipt() async {
+    final granted =
+        ref.read(authSessionProvider)?.permissionCodes.toSet() ?? const {};
+    if (!PosPermissionAccess.canPrintReceipts(granted)) {
       return;
     }
-    context.go('/pos/returns-refunds/settlement');
+    await ref.read(returnSuccessProvider.notifier).requestPrint();
   }
 
-  void _printReceipt(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Return receipt printing will be available soon.'),
-      ),
-    );
+  Future<void> _retryAudit() async {
+    await ref.read(returnSuccessProvider.notifier).retryAuditOnly();
+  }
+
+  void _retryLoad() {
+    ref.read(returnSuccessProvider.notifier).loadCompletion(
+          returnId: _routeReturnId,
+        );
   }
 
   void _startNewReturn() {
-    ref.read(returnFlowProvider.notifier).reset();
+    final granted =
+        ref.read(authSessionProvider)?.permissionCodes.toSet() ?? const {};
+    if (!PosPermissionAccess.canStartNewReturn(granted)) {
+      return;
+    }
+    final notifier = ref.read(returnSuccessProvider.notifier);
+    if (!notifier.beginNavigation()) {
+      return;
+    }
+    notifier.resetReturnExchangeDraft();
     context.go('/pos/returns-refunds');
   }
 
-  void _backToDashboard() {
-    ref.read(returnFlowProvider.notifier).reset();
+  void _backToHome() {
+    final granted =
+        ref.read(authSessionProvider)?.permissionCodes.toSet() ?? const {};
+    if (!PosPermissionAccess.canViewHome(granted)) {
+      return;
+    }
+    final notifier = ref.read(returnSuccessProvider.notifier);
+    if (!notifier.beginNavigation()) {
+      return;
+    }
+    notifier.resetReturnExchangeDraft();
     context.go('/pos/home');
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header({required this.onBack});
-
-  final VoidCallback onBack;
+class _TopStatus extends ConsumerWidget {
+  const _TopStatus();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tillState = ref.watch(tillProvider);
+    final session = tillState.session;
+    final now = DateTime.now();
+    final isOpen = tillState.hasOpenSession;
+    final tillLabel = (session?.tillName.trim().isNotEmpty ?? false)
+        ? session!.tillName.trim()
+        : (session?.tillCode.trim().isNotEmpty ?? false)
+            ? session!.tillCode.trim()
+            : 'Till';
+
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(
-          onPressed: onBack,
-          tooltip: 'Back to Settlement',
-          icon: const Icon(Icons.arrow_back_rounded),
-          style: IconButton.styleFrom(
-            backgroundColor: TenantAdminColors.surface,
-            side: const BorderSide(color: TenantAdminColors.border),
+        Container(
+          height: 44,
+          padding:
+              const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md),
+          decoration: BoxDecoration(
+            color: TenantAdminColors.surface,
+            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+            border: Border.all(color: TenantAdminColors.border),
           ),
-        ),
-        const SizedBox(width: TenantAdminSpacing.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Text(
-                'Return Completed',
-                style: TenantAdminTextStyles.pageTitle(context),
+              Icon(
+                Icons.verified_user_outlined,
+                color: isOpen
+                    ? TenantAdminColors.success
+                    : TenantAdminColors.mutedText,
+                size: 22,
               ),
-              const SizedBox(height: TenantAdminSpacing.xs),
+              const SizedBox(width: TenantAdminSpacing.sm),
               Text(
-                'The return has been processed successfully.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: TenantAdminColors.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
+                '$tillLabel ${isOpen ? 'Open' : 'Closed'}',
+                style: const TextStyle(fontWeight: FontWeight.w800),
               ),
             ],
           ),
+        ),
+        const SizedBox(width: TenantAdminSpacing.xl),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '${now.hour % 12 == 0 ? 12 : now.hour % 12}:${now.minute.toString().padLeft(2, '0')} ${now.hour >= 12 ? 'PM' : 'AM'}',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            Text(
+              '${weekdays[now.weekday - 1]}, ${now.day} ${months[now.month - 1]}',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: TenantAdminColors.mutedText,
+                  ),
+            ),
+          ],
         ),
       ],
     );

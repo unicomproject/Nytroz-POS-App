@@ -13,12 +13,14 @@ class PosShellScaffold extends StatelessWidget {
     required this.subtitle,
     required this.child,
     this.showTopBar = true,
+    this.showTopBarSearch = true,
   });
 
   final String title;
   final String subtitle;
   final Widget child;
   final bool showTopBar;
+  final bool showTopBarSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +43,7 @@ class PosShellScaffold extends StatelessWidget {
                           PosDesktopTopBar(
                             title: title,
                             subtitle: subtitle,
+                            showSearch: showTopBarSearch,
                           ),
                         Expanded(child: child),
                       ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../../../shared/widgets/pos_action_buttons.dart';
 
 class PosStartSaleHeroCard extends StatelessWidget {
   const PosStartSaleHeroCard({
@@ -159,40 +160,13 @@ class _HeroCopy extends StatelessWidget {
           ),
           const SizedBox(height: TenantAdminSpacing.sm),
         ],
-        SizedBox(
-          height: compact ? 44 : 52,
-          child: ElevatedButton(
-            onPressed: isEnabled ? onStartSale : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: TenantAdminColors.surface,
-              foregroundColor: TenantAdminColors.primary,
-              disabledBackgroundColor:
-                  TenantAdminColors.surface.withValues(alpha: 0.72),
-              disabledForegroundColor:
-                  TenantAdminColors.primary.withValues(alpha: 0.62),
-              padding: const EdgeInsets.symmetric(
-                horizontal: TenantAdminSpacing.lg,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.add_shopping_cart_rounded, size: 20),
-                const SizedBox(width: TenantAdminSpacing.sm),
-                Flexible(
-                  child: Text(
-                    buttonLabel,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: TenantAdminSpacing.sm),
-                const Icon(Icons.chevron_right_rounded, size: 20),
-              ],
-            ),
-          ),
+        PosPrimaryActionButton(
+          label: buttonLabel,
+          leadingIcon: Icons.add_shopping_cart_rounded,
+          trailingIcon: Icons.chevron_right_rounded,
+          onPressed: isEnabled ? onStartSale : null,
+          compact: compact,
+          minimumHeight: compact ? 44 : 52,
         ),
       ],
     );

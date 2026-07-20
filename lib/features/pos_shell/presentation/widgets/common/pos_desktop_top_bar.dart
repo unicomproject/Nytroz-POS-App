@@ -15,10 +15,12 @@ class PosDesktopTopBar extends StatefulWidget {
     super.key,
     required this.title,
     required this.subtitle,
+    this.showSearch = true,
   });
 
   final String title;
   final String subtitle;
+  final bool showSearch;
 
   @override
   State<PosDesktopTopBar> createState() => _PosDesktopTopBarState();
@@ -83,12 +85,15 @@ class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
                       ? TenantAdminSpacing.sm
                       : TenantAdminSpacing.lg,
                 ),
-                const Expanded(child: _TopBarSearchField()),
-                SizedBox(
-                  width: veryCompact
-                      ? TenantAdminSpacing.sm
-                      : TenantAdminSpacing.lg,
-                ),
+                if (widget.showSearch) ...[
+                  const Expanded(child: _TopBarSearchField()),
+                  SizedBox(
+                    width: veryCompact
+                        ? TenantAdminSpacing.sm
+                        : TenantAdminSpacing.lg,
+                  ),
+                ] else
+                  const Spacer(),
                 const _NotificationButton(),
                 if (!veryCompact) ...[
                   const SizedBox(width: TenantAdminSpacing.sm),

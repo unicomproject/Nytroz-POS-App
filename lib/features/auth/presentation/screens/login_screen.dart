@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:developer' as developer;
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../../shared/widgets/pos_action_buttons.dart';
 import '../../domain/entities/auth_exception.dart';
 import '../providers/login_provider.dart';
 import '../providers/session_provider.dart';
@@ -182,35 +183,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
           SizedBox(height: isWide ? 28 : TenantAdminSpacing.lg),
-          SizedBox(
-            height: isWide ? 62 : 56,
-            child: ElevatedButton(
-              onPressed: _submitting ? null : _login,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: TenantAdminColors.navy,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                ),
-              ),
-              child: _submitting
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(
-                      'Sign In',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: isWide ? 18 : 17,
-                      ),
-                    ),
-            ),
+          PosPrimaryActionButton(
+            label: 'Sign In',
+            semanticLabel: 'Sign in to Nytroz POS',
+            onPressed: _submitting ? null : _login,
+            isLoading: _submitting,
+            fullWidth: true,
+            minimumHeight: isWide ? 62 : 56,
           ),
         ],
       ),

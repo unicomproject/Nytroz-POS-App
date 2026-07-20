@@ -109,7 +109,7 @@ void main() {
       await _pumpPosHome(tester, size: const Size(1024, 768));
 
       expect(find.byType(PosSidebar), findsOneWidget);
-      expect(find.text('OneVerz POS'), findsOneWidget);
+      expect(find.text('SCS-TIX'), findsOneWidget);
       expect(find.text('NytrozPOS'), findsNothing);
       expect(find.byType(PosDesktopTopBar), findsNothing);
       expect(find.byType(PosMobileTopBar), findsNothing);
@@ -180,7 +180,7 @@ void main() {
       expect(_sidebarDestination('New Sale'), findsNothing);
       expect(_sidebarDestination('Orders'), findsNothing);
       expect(_sidebarDestination('Customers'), findsNothing);
-      expect(_sidebarDestination('Returns & Refunds'), findsNothing);
+      expect(_sidebarDestination('Returns & Exchanges'), findsNothing);
       expect(_sidebarDestination('Cash Drawer'), findsNothing);
       expect(_sidebarDestination('Reports'), findsNothing);
     });
@@ -208,7 +208,7 @@ void main() {
       expect(_sidebarDestination('New Sale'), findsOneWidget);
       expect(_sidebarDestination('Orders'), findsOneWidget);
       expect(_sidebarDestination('Customers'), findsOneWidget);
-      expect(_sidebarDestination('Returns & Refunds'), findsOneWidget);
+      expect(_sidebarDestination('Returns & Exchanges'), findsOneWidget);
       expect(_sidebarDestination('Cash Drawer'), findsOneWidget);
       expect(_sidebarDestination('Reports'), findsOneWidget);
     });
@@ -681,8 +681,8 @@ void main() {
         ],
       );
 
-      final button = tester.widget<ElevatedButton>(
-        find.widgetWithText(ElevatedButton, 'Start New Sale'),
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Start New Sale'),
       );
 
       expect(button.onPressed, isNull);

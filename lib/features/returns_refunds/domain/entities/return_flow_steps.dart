@@ -1,7 +1,22 @@
-/// Six-step return and refund workflow labels.
+enum ReturnsExchangeStep {
+  searchSale,
+  saleSummary,
+  selectItems,
+  checkEligibility,
+  returnReason,
+  inspectItems,
+  chooseOption,
+  branchAction,
+  reviewAndConfirm,
+  receiptSuccess,
+}
+
+/// Implemented return flow states. Some visual milestones are future branch
+/// states and can be displayed before they have separate routable screens.
 abstract final class ReturnFlowSteps {
   static const labels = [
     'Search Sale',
+    'Sale Summary',
     'Eligibility & Select Items',
     'Return Reason',
     'Create Credit',
@@ -9,12 +24,20 @@ abstract final class ReturnFlowSteps {
     'Receipt',
   ];
 
-  static const searchSale = 0;
-  static const eligibilityAndItems = 1;
-  static const returnReason = 2;
-  static const createCredit = 3;
-  static const settlement = 4;
-  static const receipt = 5;
+  static const searchSale = ReturnsExchangeStep.searchSale;
+  static const saleSummary = ReturnsExchangeStep.saleSummary;
+  static const selectItems = ReturnsExchangeStep.selectItems;
+  static const checkEligibility = ReturnsExchangeStep.checkEligibility;
+  static const eligibilityAndItems = ReturnsExchangeStep.selectItems;
+  static const returnReason = ReturnsExchangeStep.returnReason;
+  static const inspectItems = ReturnsExchangeStep.inspectItems;
+  static const chooseOption = ReturnsExchangeStep.chooseOption;
+  static const branchAction = ReturnsExchangeStep.branchAction;
+  static const refundFlow = ReturnsExchangeStep.branchAction;
+  static const exchangeFlow = ReturnsExchangeStep.branchAction;
+  static const createCredit = ReturnsExchangeStep.branchAction;
+  static const settlement = ReturnsExchangeStep.reviewAndConfirm;
+  static const receipt = ReturnsExchangeStep.receiptSuccess;
 }
 
 enum ReturnSearchTab {

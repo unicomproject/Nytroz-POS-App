@@ -20,21 +20,36 @@ class ReturnSearchFilterTabs extends StatelessWidget {
       runSpacing: TenantAdminSpacing.sm,
       children: ReturnSearchTab.values.map((tab) {
         final selected = tab == selectedTab;
-        return ChoiceChip(
-          label: Text(tab.label),
-          selected: selected,
-          onSelected: (_) => onTabSelected(tab),
-          selectedColor: TenantAdminColors.primary.withValues(alpha: 0.12),
-          labelStyle: TextStyle(
-            color: selected
-                ? TenantAdminColors.primary
-                : TenantAdminColors.bodyText,
-            fontWeight: FontWeight.w700,
+        return Material(
+          color: selected
+              ? TenantAdminColors.primary.withValues(alpha: 0.08)
+              : TenantAdminColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+            side: BorderSide(
+              color: selected
+                  ? TenantAdminColors.primary
+                  : TenantAdminColors.border,
+            ),
           ),
-          side: BorderSide(
-            color: selected
-                ? TenantAdminColors.primary
-                : TenantAdminColors.border,
+          child: InkWell(
+            onTap: () => onTabSelected(tab),
+            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 76, minHeight: 36),
+              child: Center(
+                child: Text(
+                  tab.label,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: selected
+                            ? TenantAdminColors.primary
+                            : TenantAdminColors.bodyText,
+                        fontWeight:
+                            selected ? FontWeight.w900 : FontWeight.w700,
+                      ),
+                ),
+              ),
+            ),
           ),
         );
       }).toList(growable: false),

@@ -22,13 +22,19 @@ class ReturnSaleResultCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onSelected,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-        child: Container(
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
           width: double.infinity,
-          padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+          padding: EdgeInsets.symmetric(
+            horizontal: _horizontalPaddingForWidth(context),
+            vertical: TenantAdminSpacing.md,
+          ),
           decoration: BoxDecoration(
-            color: TenantAdminColors.surface,
-            borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+            color: selected
+                ? TenantAdminColors.secondary
+                : TenantAdminColors.surface,
+            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
             border: Border.all(
               color: selected
                   ? TenantAdminColors.primary
@@ -37,85 +43,219 @@ class ReturnSaleResultCard extends StatelessWidget {
             ),
             boxShadow: selected ? TenantAdminShadows.card : null,
           ),
-          child: Row(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final mobile =
+                  constraints.maxWidth < TenantAdminBreakpoints.mobile;
+              if (mobile) {
+                return _MobileResult(
+                  sale: sale,
+                  selected: selected,
+                );
+              }
+
+              return _WideResult(
+                sale: sale,
+                selected: selected,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WideResult extends StatelessWidget {
+  const _WideResult({
+    required this.sale,
+    required this.selected,
+  });
+
+  final ReturnSaleSummary sale;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final titleStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: TenantAdminColors.bodyText,
+          fontWeight: FontWeight.w900,
+        );
+    final bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: TenantAdminColors.bodyText,
+          fontWeight: FontWeight.w700,
+        );
+    final mutedStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: TenantAdminColors.mutedText,
+          fontWeight: FontWeight.w700,
+        );
+
+    return Row(
+      children: [
+        _SelectionIndicator(selected: selected),
+        const SizedBox(width: TenantAdminSpacing.lg),
+        Expanded(
+          flex: 20,
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _SelectionIndicator(selected: selected),
-              const SizedBox(width: TenantAdminSpacing.sm),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final useGrid =
-                        constraints.maxWidth >= TenantAdminBreakpoints.mobile;
-
-                    final fields = [
-                      _Field(label: 'Invoice No', value: sale.invoiceNo),
-                      _Field(
-                        label: 'Customer Name',
-                        value: sale.customerName.isEmpty
-                            ? 'Walk-in customer'
-                            : sale.customerName,
-                      ),
-                      _Field(
-                        label: 'Sale Date & Time',
-                        value: formatReturnSaleDateTime(sale.saleDate),
-                      ),
-                      _Field(
-                        label: 'Payment Method',
-                        value: sale.paymentDisplay.isEmpty
-                            ? '-'
-                            : sale.paymentDisplay,
-                      ),
-                      _Field(
-                        label: 'Total Amount',
-                        value: formatReturnSaleAmount(sale),
-                        emphasize: true,
-                      ),
-                      _Field(
-                        label: 'Items',
-                        value:
-                            '${sale.itemCount} item${sale.itemCount == 1 ? '' : 's'}',
-                      ),
-                    ];
-
-                    if (useGrid) {
-                      return Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(child: fields[0]),
-                              Expanded(child: fields[1]),
-                              Expanded(child: fields[2]),
-                            ],
-                          ),
-                          const SizedBox(height: TenantAdminSpacing.md),
-                          Row(
-                            children: [
-                              Expanded(child: fields[3]),
-                              Expanded(child: fields[4]),
-                              Expanded(child: fields[5]),
-                            ],
-                          ),
-                        ],
-                      );
-                    }
-
-                    return Column(
-                      children: [
-                        for (var index = 0; index < fields.length; index += 1) ...[
-                          if (index > 0)
-                            const SizedBox(height: TenantAdminSpacing.sm),
-                          fields[index],
-                        ],
-                      ],
-                    );
-                  },
-                ),
+              Text(
+                sale.invoiceNo,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: titleStyle,
+              ),
+              const SizedBox(height: TenantAdminSpacing.xs),
+              Text(
+                _customerName(sale),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: bodyStyle,
               ),
             ],
           ),
         ),
-      ),
+        Expanded(
+          flex: 22,
+          child: Text(
+            formatReturnSaleDateTime(sale.saleDate),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: bodyStyle,
+          ),
+        ),
+        Expanded(
+          flex: 20,
+          child: Text(
+            sale.paymentDisplay.isEmpty ? '-' : sale.paymentDisplay,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: mutedStyle?.copyWith(color: TenantAdminColors.info),
+          ),
+        ),
+        Expanded(
+          flex: 17,
+          child: Text(
+            formatReturnSaleAmount(sale),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: titleStyle,
+          ),
+        ),
+        const SizedBox(width: TenantAdminSpacing.lg),
+        SizedBox(
+          width: 68,
+          child: Text(
+            _itemCount(sale),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: mutedStyle,
+          ),
+        ),
+        const SizedBox(width: TenantAdminSpacing.sm),
+        const Icon(
+          Icons.chevron_right_rounded,
+          color: TenantAdminColors.mutedText,
+        ),
+      ],
+    );
+  }
+}
+
+class _MobileResult extends StatelessWidget {
+  const _MobileResult({
+    required this.sale,
+    required this.selected,
+  });
+
+  final ReturnSaleSummary sale;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final titleStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: TenantAdminColors.bodyText,
+          fontWeight: FontWeight.w900,
+        );
+    final amountStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
+          color: TenantAdminColors.bodyText,
+          fontWeight: FontWeight.w900,
+        );
+    final metaStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: TenantAdminColors.info,
+          fontWeight: FontWeight.w700,
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            _SelectionIndicator(selected: selected),
+            const SizedBox(width: TenantAdminSpacing.md),
+            Expanded(
+              child: Text(
+                sale.invoiceNo,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: titleStyle,
+              ),
+            ),
+            Flexible(
+              child: Text(
+                formatReturnSaleAmount(sale),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.right,
+                style: amountStyle,
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: TenantAdminColors.mutedText,
+            ),
+          ],
+        ),
+        const SizedBox(height: TenantAdminSpacing.xs),
+        Padding(
+          padding: const EdgeInsets.only(left: 40),
+          child: Text(
+            _customerName(sale),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: metaStyle,
+          ),
+        ),
+        const SizedBox(height: TenantAdminSpacing.sm),
+        Padding(
+          padding: const EdgeInsets.only(left: 40),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  formatReturnSaleDateTime(sale.saleDate),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: metaStyle,
+                ),
+              ),
+              const SizedBox(width: TenantAdminSpacing.md),
+              Expanded(
+                child: Text(
+                  sale.paymentDisplay.isEmpty ? '-' : sale.paymentDisplay,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: metaStyle,
+                ),
+              ),
+              const SizedBox(width: TenantAdminSpacing.md),
+              Text(_itemCount(sale), style: metaStyle),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -128,60 +268,37 @@ class _SelectionIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 22,
-      height: 22,
-      margin: const EdgeInsets.only(top: 2),
+      width: 24,
+      height: 24,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: selected
-              ? TenantAdminColors.primary
-              : TenantAdminColors.border,
+          color:
+              selected ? TenantAdminColors.primary : TenantAdminColors.border,
           width: 2,
         ),
         color: selected ? TenantAdminColors.primary : Colors.transparent,
       ),
       child: selected
-          ? const Icon(Icons.check, size: 14, color: Colors.white)
+          ? const Icon(Icons.check_rounded, size: 15, color: Colors.white)
           : null,
     );
   }
 }
 
-class _Field extends StatelessWidget {
-  const _Field({
-    required this.label,
-    required this.value,
-    this.emphasize = false,
-  });
+String _customerName(ReturnSaleSummary sale) {
+  return sale.customerName.trim().isEmpty
+      ? 'Walk-in customer'
+      : sale.customerName.trim();
+}
 
-  final String label;
-  final String value;
-  final bool emphasize;
+String _itemCount(ReturnSaleSummary sale) {
+  return '${sale.itemCount} item${sale.itemCount == 1 ? '' : 's'}';
+}
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: TenantAdminColors.mutedText,
-                fontWeight: FontWeight.w600,
-              ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.xs),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: emphasize
-                    ? TenantAdminColors.primary
-                    : TenantAdminColors.bodyText,
-                fontWeight: emphasize ? FontWeight.w900 : FontWeight.w700,
-              ),
-        ),
-      ],
-    );
-  }
+double _horizontalPaddingForWidth(BuildContext context) {
+  final width = MediaQuery.sizeOf(context).width;
+  return width < TenantAdminBreakpoints.mobile
+      ? TenantAdminSpacing.md
+      : TenantAdminSpacing.lg;
 }

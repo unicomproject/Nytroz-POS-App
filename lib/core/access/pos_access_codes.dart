@@ -28,6 +28,7 @@ class PosPermissionCodes {
   static const clearCart = 'sales.cart.clear';
   static const viewNewSaleCustomers = 'customers.view';
   static const createNewSaleCustomer = 'customers.create';
+  static const updateNewSaleCustomer = 'customers.update';
   static const applySaleDiscount = 'sales.discount.apply';
   static const approveSaleDiscount = 'sales.discount.approve';
   static const createParkedSale = 'sales.park.create';
@@ -40,8 +41,12 @@ class PosPermissionCodes {
   static const printReceipts = 'receipts.print';
   static const viewOrders = 'orders.view';
   static const viewReturns = 'returns.view';
+  static const createReturn = 'returns.create';
   static const viewRefunds = 'refunds.view';
   static const createRefund = 'refunds.create';
+  static const viewExchanges = 'exchanges.view';
+  static const createExchange = 'exchanges.create';
+  static const approveRefund = 'pos.refund.approve';
   static const viewCashDrawer = 'cash_drawer.view';
   static const manageCashDrawer = 'cash_drawer.manage';
   static const createCashDrawerMovement = 'cash_drawer.movement.create';
@@ -52,8 +57,12 @@ class PosPermissionCodes {
   static const viewParkedSales = 'pos.sale.park.view';
   static const viewCustomers = 'pos.customers.view';
   static const createCustomer = 'pos.customers.create';
+  /// Legacy alias — prefer [updateNewSaleCustomer].
+  static const updateCustomer = 'pos.customers.update';
   static const applyDiscount = 'pos.discount.apply';
+  /// Legacy alias — prefer [createRefund] / [approveRefund].
   static const processRefund = 'pos.refund.process';
+  /// Legacy alias — prefer [createExchange].
   static const processExchange = 'pos.exchange.process';
   static const manageOnlineOrders = 'pos.online_orders.manage';
   static const openTill = 'pos.till.open';

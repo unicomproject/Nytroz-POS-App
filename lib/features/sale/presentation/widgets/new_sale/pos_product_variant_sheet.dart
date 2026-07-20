@@ -583,7 +583,8 @@ class _StockStatusBadge extends StatelessWidget {
     final (label, color) = switch (stockStatus) {
       'OutOfStock' => ('Out of Stock', TenantAdminColors.danger),
       'LowStock' => ('Low Stock', TenantAdminColors.warning),
-      _ => ('In Stock', TenantAdminColors.success),
+      'InStock' => ('In Stock', TenantAdminColors.success),
+      _ => ('Unavailable', TenantAdminColors.mutedText),
     };
 
     return Row(

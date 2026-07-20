@@ -43,8 +43,7 @@ class ReturnSoldItemRow extends ConsumerWidget {
           final leading = Checkbox(
             value: isSelected,
             onChanged: item.isReturnable
-                ? (_) => notifier.toggleItemSelection(item.saleLineId,
-                    isReturnable: item.isReturnable)
+                ? (_) => notifier.toggleItemSelection(item.saleLineId)
                 : null,
             activeColor: TenantAdminColors.primary,
           );

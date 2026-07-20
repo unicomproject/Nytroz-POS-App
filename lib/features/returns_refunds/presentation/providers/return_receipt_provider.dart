@@ -7,6 +7,7 @@ import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../domain/entities/return_receipt.dart';
 import 'return_flow_provider.dart';
+import 'return_resolution_provider.dart';
 import 'return_search_provider.dart';
 
 class ReturnReceiptState {
@@ -53,11 +54,14 @@ class ReturnReceiptController extends StateNotifier<ReturnReceiptState> {
     final reasonCode = flowState.selectedReasonCode;
     final settlementCode = flowState.selectedSettlementMethodCode;
     final lines = flowState.selectedReturnLines;
+    final resolution = _ref.read(returnResolutionProvider).savedResolution;
 
     if (sale == null ||
         reasonCode == null ||
         settlementCode == null ||
         lines.isEmpty ||
+        resolution == null ||
+        resolution.version < 1 ||
         !flowState.creditPreviewConfirmed) {
       state = state.copyWith(
         isLoading: false,
@@ -99,6 +103,9 @@ class ReturnReceiptController extends StateNotifier<ReturnReceiptState> {
                   },
                 )
                 .toList(growable: false),
+            expectedVersion: resolution.version,
+            idempotencyKey:
+                '${sale.saleId}:${resolution.draftId}:${resolution.version}:complete',
           );
 
       _ref.read(returnFlowProvider.notifier).setCompletedReceipt(receipt);

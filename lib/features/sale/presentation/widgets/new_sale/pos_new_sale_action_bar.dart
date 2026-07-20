@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nytroz_pos/shared/widgets/pos_action_buttons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
@@ -232,9 +233,10 @@ class _ParkedSaleReferenceDialogState
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
-        FilledButton(
+        PosPrimaryActionButton(
+          label: 'Save',
           onPressed: _submit,
-          child: const Text('Save'),
+          compact: true,
         ),
       ],
     );
