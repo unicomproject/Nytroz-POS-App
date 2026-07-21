@@ -26,7 +26,15 @@ import '../../support/pos_catalog_test_fixtures.dart';
 
 Future<void> _tapProduct(WidgetTester tester, String productName) async {
   final productFinder = find.text(productName);
-  await tester.tap(productFinder);
+  final productCard = find
+      .ancestor(
+        of: productFinder,
+        matching: find.byType(InkWell),
+      )
+      .first;
+  final inkWell = tester.widget<InkWell>(productCard);
+  expect(inkWell.onTap, isNotNull);
+  inkWell.onTap!();
   await tester.pumpAndSettle();
 }
 
@@ -57,6 +65,33 @@ void main() {
       expect(find.text('Small'), findsOneWidget);
       expect(find.text('Blue'), findsOneWidget);
       expect(find.text('LKR 10,000.00'), findsWidgets);
+      expect(
+        find.descendant(
+          of: find.byType(PosProductVariantSheet),
+          matching: find.byType(AspectRatio),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('variant selector remains usable at smaller tablet width', (
+      tester,
+    ) async {
+      await _pumpNewSaleWithVariantCatalog(
+        tester,
+        size: const Size(800, 700),
+        catalog: const PosNewSaleCatalogState(
+          products: [testVariableProductSummary],
+        ),
+      );
+      await _tapProduct(tester, 'Pro Team Jersey');
+
+      expect(find.byType(PosProductVariantSheet), findsOneWidget);
+      expect(find.text('Size'), findsOneWidget);
+      expect(find.text('Color'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Add to Cart'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('selected variant price updates and adds separate cart line', (
@@ -122,8 +157,8 @@ void main() {
 Future<void> _pumpNewSaleWithVariantCatalog(
   WidgetTester tester, {
   PosNewSaleCatalogState? catalog,
+  Size size = const Size(1280, 900),
 }) async {
-  const size = Size(1280, 900);
   const permissionCodes = [
     PosPermissionCodes.viewHome,
     PosPermissionCodes.viewNewSale,

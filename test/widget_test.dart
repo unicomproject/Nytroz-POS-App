@@ -337,7 +337,7 @@ void main() {
       );
     });
 
-    testWidgets('product taps add to cart and update New Sale totals', (
+    testWidgets('product quick-add and card taps update New Sale totals', (
       tester,
     ) async {
       await _pumpPosHome(
@@ -365,7 +365,7 @@ void main() {
       expect(tester.widget<FilledButton>(paymentButton).onPressed, isNull);
       expect(find.text('No items added'), findsOneWidget);
 
-      await tester.tap(find.text('General Admission'));
+      await tester.tap(find.bySemanticsLabel('Add product to cart').first);
       await tester.pumpAndSettle();
 
       expect(find.text('No items added'), findsNothing);
@@ -410,6 +410,21 @@ void main() {
 
       _goFromCurrentRoute(tester, '/pos/new-sale');
       await tester.pumpAndSettle();
+
+      final scannerButton = find.byKey(
+        const Key('new-sale-scanner-button'),
+      );
+      final searchField = find.byType(TextField);
+      expect(scannerButton, findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, 'Scanner'), findsOneWidget);
+      expect(
+        tester.getSize(scannerButton).height,
+        tester.getSize(searchField).height,
+      );
+
+      await tester.tap(scannerButton);
+      await tester.pump();
+      expect(tester.widget<TextField>(searchField).focusNode?.hasFocus, isTrue);
 
       await tester.enterText(find.byType(TextField), 'coffee');
       await tester.pumpAndSettle();
@@ -904,7 +919,18 @@ Future<void> _pumpPosHome(
         posNewSaleCatalogProvider.overrideWith((ref) async {
           final selectedCategoryId =
               ref.watch(posNewSaleSelectedCategoryIdProvider);
-          return testPosCatalogStateForCategory(selectedCategoryId);
+          final query =
+              ref.watch(posNewSaleSearchQueryProvider).trim().toLowerCase();
+          final catalog = testPosCatalogStateForCategory(selectedCategoryId);
+          if (query.isEmpty) {
+            return catalog;
+          }
+
+          return PosNewSaleCatalogState(
+            products: catalog.products
+                .where((product) => product.matches(query))
+                .toList(growable: false),
+          );
         }),
       ],
       child: const NytrozPosApp(),

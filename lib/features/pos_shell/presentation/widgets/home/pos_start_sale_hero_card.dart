@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../../../../shared/widgets/pos_action_buttons.dart';
 
 class PosStartSaleHeroCard extends StatelessWidget {
   const PosStartSaleHeroCard({
@@ -33,63 +32,83 @@ class PosStartSaleHeroCard extends StatelessWidget {
                 ? 300.0
                 : 330.0;
         final tightHeight = height < 240;
+        final imageWidthFactor = isCompact ? 0.48 : 0.52;
+        final heroRadius = BorderRadius.circular(TenantAdminRadius.xl);
 
         return SizedBox(
+          width: double.infinity,
           height: height,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+              borderRadius: heroRadius,
               boxShadow: TenantAdminShadows.card,
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+              borderRadius: heroRadius,
+              clipBehavior: Clip.antiAlias,
               child: Stack(
                 fit: StackFit.expand,
+                clipBehavior: Clip.hardEdge,
                 children: [
-                  Image.asset(
-                    'assets/images/pos_start_sale_background.png',
-                    fit: BoxFit.cover,
-                    alignment: Alignment.centerRight,
+                  const ColoredBox(
+                    color: TenantAdminColors.startSaleHero,
                   ),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [
-                          TenantAdminColors.navy.withValues(alpha: 0.96),
-                          TenantAdminColors.navy.withValues(
-                            alpha: isCompact ? 0.78 : 0.7,
-                          ),
-                          TenantAdminColors.primary.withValues(
-                            alpha: isCompact ? 0.38 : 0.08,
-                          ),
-                        ],
-                        stops: const [0, 0.48, 1],
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                    width: constraints.maxWidth * imageWidthFactor,
+                    child: Image.asset(
+                      'assets/images/pos_start_sale_background.png',
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.centerRight,
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            TenantAdminColors.startSaleHero,
+                            TenantAdminColors.startSaleHero.withValues(
+                              alpha: 0.96,
+                            ),
+                            TenantAdminColors.startSaleHero.withValues(
+                              alpha: 0,
+                            ),
+                          ],
+                          stops: const [0, 0.44, 0.7],
+                        ),
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: EdgeInsets.all(
-                      isCompact || tightHeight
-                          ? TenantAdminSpacing.lg
-                          : TenantAdminSpacing.xxl,
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth:
-                              isCompact ? 270 : constraints.maxWidth * 0.52,
-                        ),
-                        child: _HeroCopy(
-                          isEnabled: isEnabled,
-                          disabledMessage: disabledMessage,
-                          title: title,
-                          description: description,
-                          buttonLabel: buttonLabel,
-                          onStartSale: onStartSale,
-                          compact: isCompact || tightHeight,
+                  Positioned.fill(
+                    child: Padding(
+                      padding: EdgeInsets.all(
+                        isCompact || tightHeight
+                            ? TenantAdminSpacing.lg
+                            : TenantAdminSpacing.xxl,
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: constraints.maxWidth *
+                                (isCompact ? 0.52 : 0.48),
+                          ),
+                          child: _HeroCopy(
+                            isEnabled: isEnabled,
+                            disabledMessage: disabledMessage,
+                            title: title,
+                            description: description,
+                            buttonLabel: buttonLabel,
+                            onStartSale: onStartSale,
+                            compact: isCompact || tightHeight,
+                          ),
                         ),
                       ),
                     ),
@@ -160,13 +179,39 @@ class _HeroCopy extends StatelessWidget {
           ),
           const SizedBox(height: TenantAdminSpacing.sm),
         ],
-        PosPrimaryActionButton(
-          label: buttonLabel,
-          leadingIcon: Icons.add_shopping_cart_rounded,
-          trailingIcon: Icons.chevron_right_rounded,
+        FilledButton(
           onPressed: isEnabled ? onStartSale : null,
-          compact: compact,
-          minimumHeight: compact ? 44 : 52,
+          style: FilledButton.styleFrom(
+            minimumSize: Size(0, compact ? 44 : 52),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            backgroundColor: Colors.white,
+            foregroundColor: TenantAdminColors.startSaleHero,
+            disabledBackgroundColor: Colors.white.withValues(alpha: 0.55),
+            disabledForegroundColor:
+                TenantAdminColors.startSaleHero.withValues(alpha: 0.55),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              const Icon(Icons.add_shopping_cart_rounded, size: 18),
+              const SizedBox(width: TenantAdminSpacing.sm),
+              Flexible(
+                child: Text(
+                  buttonLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+              SizedBox(
+                width: compact ? TenantAdminSpacing.xs : TenantAdminSpacing.md,
+              ),
+              const Icon(Icons.chevron_right_rounded, size: 18),
+            ],
+          ),
         ),
       ],
     );

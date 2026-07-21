@@ -11,8 +11,8 @@ import '../../../auth/presentation/providers/post_login_navigation_provider.dart
 import '../widgets/open_till_form.dart';
 
 const _oneVerzLogoAsset = 'assets/images/logo.png';
-const _maxFormWidth = 1040.0;
-const _contentWidthFraction = 0.82;
+const _maxFormWidth = 1400.0;
+const _contentWidthFraction = 0.96;
 const _scrollFallbackHeight = 420.0;
 
 double _horizontalPaddingFor(double width) {
@@ -22,7 +22,7 @@ double _horizontalPaddingFor(double width) {
   if (width < TenantAdminBreakpoints.tablet) {
     return TenantAdminSpacing.xl;
   }
-  return 32;
+  return 24;
 }
 
 double _contentWidthFor(double maxWidth) {
@@ -234,6 +234,15 @@ class _OneVerzAppHeader extends StatelessWidget {
         ),
         child: Row(
           children: [
+            IconButton(
+              tooltip: 'Back',
+              onPressed: Navigator.of(context).canPop()
+                  ? () => Navigator.of(context).maybePop()
+                  : null,
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+              color: TenantAdminColors.navy,
+            ),
+            const SizedBox(width: TenantAdminSpacing.sm),
             Image.asset(
               _oneVerzLogoAsset,
               width: 34,

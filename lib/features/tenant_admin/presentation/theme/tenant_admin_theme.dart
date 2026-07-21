@@ -5,6 +5,7 @@ class TenantAdminColors {
 
   static const navy = Color(0xFF071A33);
   static const navySoft = Color(0xFF0E2748);
+  static const startSaleHero = Color(0xFF001C38);
   static const background = Color(0xFFF8FAFF);
   static const surface = Colors.white;
   static const border = Color(0xFFE5EAF4);
