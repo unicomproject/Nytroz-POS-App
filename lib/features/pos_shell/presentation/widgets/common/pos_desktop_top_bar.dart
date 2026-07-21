@@ -28,6 +28,7 @@ class PosDesktopTopBar extends StatefulWidget {
 
 class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
   late DateTime _now;
+  final FocusNode _searchFocusNode = FocusNode();
   Timer? _timer;
 
   @override
@@ -44,6 +45,7 @@ class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
   @override
   void dispose() {
     _timer?.cancel();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -61,6 +63,8 @@ class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 1040;
           final veryCompact = constraints.maxWidth < 760;
+          final showScanner = widget.showSearch &&
+              GoRouterState.of(context).uri.path == '/pos/new-sale';
 
           return Padding(
             padding: EdgeInsets.symmetric(
@@ -86,12 +90,22 @@ class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
                       : TenantAdminSpacing.lg,
                 ),
                 if (widget.showSearch) ...[
-                  const Expanded(child: _TopBarSearchField()),
+                  Expanded(
+                    child: _TopBarSearchField(focusNode: _searchFocusNode),
+                  ),
                   SizedBox(
                     width: veryCompact
                         ? TenantAdminSpacing.sm
                         : TenantAdminSpacing.lg,
                   ),
+                  if (showScanner) ...[
+                    _ScannerButton(searchFocusNode: _searchFocusNode),
+                    SizedBox(
+                      width: veryCompact
+                          ? TenantAdminSpacing.sm
+                          : TenantAdminSpacing.lg,
+                    ),
+                  ],
                 ] else
                   const Spacer(),
                 const _NotificationButton(),
@@ -161,7 +175,9 @@ class _TitleBlock extends StatelessWidget {
 }
 
 class _TopBarSearchField extends ConsumerStatefulWidget {
-  const _TopBarSearchField();
+  const _TopBarSearchField({required this.focusNode});
+
+  final FocusNode focusNode;
 
   @override
   ConsumerState<_TopBarSearchField> createState() => _TopBarSearchFieldState();
@@ -211,6 +227,7 @@ class _TopBarSearchFieldState extends ConsumerState<_TopBarSearchField> {
         height: 44,
         child: TextField(
           controller: _controller,
+          focusNode: widget.focusNode,
           enabled: isSearchEnabled,
           textInputAction: TextInputAction.search,
           onChanged: (value) {
@@ -259,6 +276,45 @@ class _TopBarSearchFieldState extends ConsumerState<_TopBarSearchField> {
               borderSide: const BorderSide(color: TenantAdminColors.border),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ScannerButton extends ConsumerWidget {
+  const _ScannerButton({required this.searchFocusNode});
+
+  final FocusNode searchFocusNode;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(authSessionProvider);
+    final canSearchProducts =
+        session?.hasPermission(PosPermissionCodes.searchProducts) == true;
+
+    return SizedBox(
+      height: 44,
+      child: OutlinedButton.icon(
+        key: const Key('new-sale-scanner-button'),
+        onPressed: canSearchProducts ? searchFocusNode.requestFocus : null,
+        icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
+        label: const Text('Scanner'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: TenantAdminColors.primary,
+          backgroundColor: TenantAdminColors.surface,
+          disabledForegroundColor:
+              TenantAdminColors.mutedText.withValues(alpha: 0.55),
+          padding: const EdgeInsets.symmetric(
+            horizontal: TenantAdminSpacing.md,
+          ),
+          side: const BorderSide(color: TenantAdminColors.border),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          ),
+          textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
         ),
       ),
     );

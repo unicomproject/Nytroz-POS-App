@@ -31,11 +31,7 @@ class PosProductGrid extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _CatalogLoadError(message: error.toString()),
       data: (catalog) {
-        final query =
-            ref.watch(posNewSaleSearchQueryProvider).trim().toLowerCase();
-        final products = catalog.products.where((product) {
-          return query.isEmpty || product.matches(query);
-        }).toList();
+        final products = catalog.products;
 
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -147,64 +143,110 @@ class _ProductTile extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                       ),
                 ),
-                if (product.hasVariants && !product.isOutOfStock) ...[
-                  const SizedBox(height: TenantAdminSpacing.xs),
-                  Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          color: TenantAdminColors.success,
-                          shape: BoxShape.circle,
-                        ),
+                const SizedBox(height: TenantAdminSpacing.xs),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ProductStatus(
+                        label: product.hasVariants && !product.isOutOfStock
+                            ? 'Select options'
+                            : product.stockLabel,
+                        isOutOfStock: product.isOutOfStock,
                       ),
-                      const SizedBox(width: TenantAdminSpacing.xs),
-                      Expanded(
-                        child: Text(
-                          'Select options',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: TenantAdminColors.mutedText,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ] else ...[
-                  const SizedBox(height: TenantAdminSpacing.xs),
-                  Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: product.isOutOfStock
-                              ? TenantAdminColors.danger
-                              : TenantAdminColors.success,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.xs),
-                      Expanded(
-                        child: Text(
-                          product.stockLabel,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: TenantAdminColors.mutedText,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(width: TenantAdminSpacing.xs),
+                    _ProductQuickAddButton(onTap: onTap),
+                  ],
+                ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductStatus extends StatelessWidget {
+  const _ProductStatus({
+    required this.label,
+    required this.isOutOfStock,
+  });
+
+  final String label;
+  final bool isOutOfStock;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: isOutOfStock
+                ? TenantAdminColors.danger
+                : TenantAdminColors.success,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: TenantAdminSpacing.xs),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: TenantAdminColors.mutedText,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProductQuickAddButton extends StatelessWidget {
+  const _ProductQuickAddButton({required this.onTap});
+
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = onTap != null;
+
+    return Semantics(
+      button: true,
+      enabled: isEnabled,
+      label: 'Add product to cart',
+      child: SizedBox.square(
+        dimension: 44,
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const CircleBorder(),
+            child: Center(
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isEnabled
+                      ? TenantAdminColors.surface
+                      : TenantAdminColors.background,
+                  border: Border.all(color: TenantAdminColors.border),
+                ),
+                child: Icon(
+                  Icons.add,
+                  size: 20,
+                  color: isEnabled
+                      ? TenantAdminColors.primary
+                      : TenantAdminColors.mutedText.withValues(alpha: 0.45),
+                ),
+              ),
             ),
           ),
         ),
@@ -323,7 +365,7 @@ class _NoProductsFound extends StatelessWidget {
           ),
           const SizedBox(height: TenantAdminSpacing.xs),
           Text(
-            'Try a product name, category or SKU.',
+            'Try a product name, SKU or barcode.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: TenantAdminColors.mutedText,
                 ),

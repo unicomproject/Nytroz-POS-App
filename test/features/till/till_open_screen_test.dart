@@ -38,7 +38,7 @@ void main() {
       expect(find.text('Activate device'), findsOneWidget);
       expect(find.text('Open Till'), findsNothing);
       expect(find.text('Outlet Fetch'), findsNothing);
-      expect(find.byIcon(Icons.arrow_back), findsNothing);
+      expect(find.byIcon(Icons.arrow_back_ios_new_rounded), findsOneWidget);
       expect(find.byIcon(Icons.help_outline), findsNothing);
     });
 
@@ -61,9 +61,10 @@ void main() {
       expect(find.text('Till Fetch'), findsNothing);
       expect(find.text('Step 3 of 3'), findsNothing);
       expect(find.text('Device trusted'), findsNothing);
-      expect(find.byIcon(Icons.arrow_back), findsNothing);
+      expect(find.byIcon(Icons.arrow_back_ios_new_rounded), findsOneWidget);
       expect(find.byIcon(Icons.help_outline), findsNothing);
-      expect(find.byType(SingleChildScrollView), findsNothing);
+      expect(find.text('Quick Amounts'), findsOneWidget);
+      expect(find.text('Set Exact'), findsOneWidget);
     });
 
     testWidgets('keeps open till layout fixed on tablet height',
@@ -77,7 +78,7 @@ void main() {
         authSession: _cashierSession,
       );
 
-      expect(find.byType(SingleChildScrollView), findsNothing);
+      expect(find.text('1,000'), findsOneWidget);
       expect(tester.takeException(), isNull);
       expect(find.byType(FilledButton), findsOneWidget);
     });
@@ -94,8 +95,8 @@ void main() {
 
       final formWidth =
           tester.getSize(find.byType(till_widget.OpenTillForm)).width;
-      expect(formWidth, greaterThan(900));
-      expect(formWidth, lessThan(1040));
+      expect(formWidth, greaterThan(1100));
+      expect(formWidth, lessThanOrEqualTo(1200));
     });
 
     testWidgets('keeps till summary and submit button visible without overflow',

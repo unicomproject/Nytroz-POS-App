@@ -47,7 +47,6 @@ class _PosProductVariantSheetState
     extends ConsumerState<PosProductVariantSheet> {
   final Map<String, String> _selectedAttributes = {};
   late int _quantity;
-  int _selectedImageIndex = 0;
   String? _availabilityMessage;
   bool _isSubmitting = false;
 
@@ -162,18 +161,24 @@ class _PosProductVariantSheetState
       _availabilityMessage = null;
     }
 
-    final images = <String>[
-      if (detail.summary.imageUrl != null &&
-          detail.summary.imageUrl!.isNotEmpty)
-        detail.summary.imageUrl!,
-    ];
-    if (_selectedImageIndex >= images.length) {
-      _selectedImageIndex = 0;
-    }
+    final screenSize = MediaQuery.sizeOf(context);
+    final imageUrl = detail.summary.imageUrl?.isNotEmpty == true
+        ? detail.summary.imageUrl
+        : null;
+    final useTwoColumns = screenSize.width >= 900;
+    final maxBodyHeight = (screenSize.height * 0.72).clamp(360.0, 700.0);
 
-    final isCompact = MediaQuery.sizeOf(context).width < 980;
+    final detailsPane = _buildDetailsPane(
+      context: context,
+      detail: detail,
+      matchedVariant: matchedVariant,
+      unitPrice: unitPrice,
+      maxQuantity: maxQuantity,
+      canSubmit: canSubmit,
+    );
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Align(
           alignment: Alignment.topRight,
@@ -183,122 +188,74 @@ class _PosProductVariantSheetState
             tooltip: 'Close',
           ),
         ),
-        Expanded(
-          child: SingleChildScrollView(
-            child: isCompact
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildImagePane(images),
-                      const SizedBox(height: TenantAdminSpacing.lg),
-                      _buildDetailsPane(
-                        context: context,
-                        detail: detail,
-                        matchedVariant: matchedVariant,
-                        unitPrice: unitPrice,
-                        maxQuantity: maxQuantity,
-                        canSubmit: canSubmit,
-                      ),
-                    ],
-                  )
-                : Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 11, child: _buildImagePane(images)),
-                      const SizedBox(width: TenantAdminSpacing.lg),
-                      Expanded(
-                        flex: 13,
-                        child: _buildDetailsPane(
-                          context: context,
-                          detail: detail,
-                          matchedVariant: matchedVariant,
-                          unitPrice: unitPrice,
-                          maxQuantity: maxQuantity,
-                          canSubmit: canSubmit,
-                        ),
-                      ),
-                    ],
+        if (useTwoColumns)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 5, child: _buildImagePane(imageUrl)),
+              const SizedBox(width: TenantAdminSpacing.lg),
+              Expanded(
+                flex: 6,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: maxBodyHeight),
+                  child: SingleChildScrollView(child: detailsPane),
+                ),
+              ),
+            ],
+          )
+        else
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxBodyHeight),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 320),
+                      child: _buildImagePane(imageUrl),
+                    ),
                   ),
+                  const SizedBox(height: TenantAdminSpacing.lg),
+                  detailsPane,
+                ],
+              ),
+            ),
           ),
-        ),
       ],
     );
   }
 
-  Widget _buildImagePane(List<String> images) {
-    final imageUrl = images.isEmpty ? null : images[_selectedImageIndex];
+  Widget _buildImagePane(String? imageUrl) {
     final borderRadius = BorderRadius.circular(TenantAdminRadius.lg);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AspectRatio(
-          aspectRatio: 1,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: TenantAdminColors.background,
-              borderRadius: borderRadius,
-              border: Border.all(color: TenantAdminColors.border),
-            ),
-            child: ClipRRect(
-              borderRadius: borderRadius,
-              child: imageUrl == null
-                  ? const Icon(
-                      Icons.inventory_2_outlined,
-                      color: TenantAdminColors.mutedText,
-                      size: 72,
-                    )
-                  : Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(
-                        Icons.broken_image_outlined,
-                        color: TenantAdminColors.mutedText,
-                        size: 72,
-                      ),
-                    ),
-            ),
-          ),
+    return AspectRatio(
+      aspectRatio: 1,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: TenantAdminColors.background,
+          borderRadius: borderRadius,
+          border: Border.all(color: TenantAdminColors.border),
         ),
-        if (images.length > 1) ...[
-          const SizedBox(height: TenantAdminSpacing.md),
-          Wrap(
-            spacing: TenantAdminSpacing.sm,
-            runSpacing: TenantAdminSpacing.sm,
-            children: List.generate(images.length, (index) {
-              final isSelected = _selectedImageIndex == index;
-              return InkWell(
-                onTap: () => setState(() => _selectedImageIndex = index),
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                    border: Border.all(
-                      color: isSelected
-                          ? TenantAdminColors.primary
-                          : TenantAdminColors.border,
-                      width: isSelected ? 2 : 1,
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                    child: Image.network(
-                      images[index],
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(
-                        Icons.broken_image_outlined,
-                        color: TenantAdminColors.mutedText,
-                      ),
-                    ),
+        child: ClipRRect(
+          borderRadius: borderRadius,
+          child: imageUrl == null
+              ? const Icon(
+                  Icons.inventory_2_outlined,
+                  color: TenantAdminColors.mutedText,
+                  size: 72,
+                )
+              : Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.broken_image_outlined,
+                    color: TenantAdminColors.mutedText,
+                    size: 72,
                   ),
                 ),
-              );
-            }),
-          ),
-        ],
-      ],
+        ),
+      ),
     );
   }
 

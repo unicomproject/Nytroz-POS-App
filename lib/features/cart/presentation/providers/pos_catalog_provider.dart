@@ -5,11 +5,13 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/access/pos_permission_access.dart';
 import '../../../../core/network/dio_error_message.dart';
-import '../../../../core/network/dio_provider.dart';import '../../../auth/domain/entities/auth_session.dart';
+import '../../../../core/network/dio_provider.dart';
+import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../data/datasources/pos_catalog_remote_datasource.dart';
 import '../../domain/entities/pos_catalog_models.dart';
+import 'pos_new_sale_cart_provider.dart';
 
 final posCatalogRemoteDatasourceProvider =
     Provider<PosCatalogRemoteDatasource>((ref) {
@@ -73,6 +75,16 @@ final posNewSaleCatalogProvider =
   final session = ref.watch(authSessionProvider);
   ref.watch(deviceActivationProvider);
   final selectedCategoryId = ref.watch(posNewSaleSelectedCategoryIdProvider);
+  final searchQuery = ref.watch(posNewSaleSearchQueryProvider).trim();
+
+  if (searchQuery.isNotEmpty) {
+    var wasDisposed = false;
+    ref.onDispose(() => wasDisposed = true);
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    if (wasDisposed) {
+      return const PosNewSaleCatalogState(products: []);
+    }
+  }
 
   if (session == null || !session.isAuthenticated) {
     throw StateError('POS catalog requires an active session.');
@@ -97,6 +109,7 @@ final posNewSaleCatalogProvider =
         await ref.read(posCatalogRemoteDatasourceProvider).getProducts(
               deviceId: deviceContext.deviceId,
               categoryId: selectedCategoryId,
+              search: searchQuery,
             );
 
     return PosNewSaleCatalogState(products: products);

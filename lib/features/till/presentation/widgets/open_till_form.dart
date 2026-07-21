@@ -1,86 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:nytroz_pos/features/sale/presentation/widgets/payment/pos_bottom_action_buttons.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../shared/widgets/pos_action_buttons.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
 enum OpenTillFormDensity { regular, compact }
 
-class OpenTillLayoutMetrics {
-  const OpenTillLayoutMetrics({
-    required this.cardPadding,
-    required this.sectionGap,
-    required this.fieldGap,
-    required this.noteLines,
-    required this.buttonHeight,
-    required this.amountFontSize,
-    required this.titleFontSize,
-    required this.summaryLabelWidth,
-    required this.compactSummary,
-  });
-
-  final EdgeInsets cardPadding;
-  final double sectionGap;
-  final double fieldGap;
-  final int noteLines;
-  final double buttonHeight;
-  final double amountFontSize;
-  final double titleFontSize;
-  final double summaryLabelWidth;
-  final bool compactSummary;
-
-  factory OpenTillLayoutMetrics.resolve({
-    required double height,
-    required double width,
-    OpenTillFormDensity density = OpenTillFormDensity.regular,
-  }) {
-    final isCompactDensity = density == OpenTillFormDensity.compact;
-    final isTightHeight = height < 640;
-    final isCompactHeight = height < 720;
-
-    if (isCompactDensity || isTightHeight) {
-      return const OpenTillLayoutMetrics(
-        cardPadding: EdgeInsets.fromLTRB(20, 18, 20, 16),
-        sectionGap: 14,
-        fieldGap: 8,
-        noteLines: 2,
-        buttonHeight: 50,
-        amountFontSize: 24,
-        titleFontSize: 24,
-        summaryLabelWidth: 92,
-        compactSummary: true,
-      );
-    }
-
-    if (isCompactHeight) {
-      return const OpenTillLayoutMetrics(
-        cardPadding: EdgeInsets.fromLTRB(24, 20, 24, 18),
-        sectionGap: 16,
-        fieldGap: 10,
-        noteLines: 2,
-        buttonHeight: 52,
-        amountFontSize: 26,
-        titleFontSize: 26,
-        summaryLabelWidth: 100,
-        compactSummary: true,
-      );
-    }
-
-    return OpenTillLayoutMetrics(
-      cardPadding: const EdgeInsets.fromLTRB(28, 24, 28, 20),
-      sectionGap: width >= TenantAdminBreakpoints.tablet ? 20 : 18,
-      fieldGap: 10,
-      noteLines: 2,
-      buttonHeight: 52,
-      amountFontSize: 28,
-      titleFontSize: 28,
-      summaryLabelWidth: 108,
-      compactSummary: false,
-    );
-  }
-}
-
-class OpenTillForm extends StatelessWidget {
+class OpenTillForm extends StatefulWidget {
   const OpenTillForm({
     super.key,
     required this.formKey,
@@ -110,356 +36,428 @@ class OpenTillForm extends StatelessWidget {
   final String? errorMessage;
   final OpenTillFormDensity density;
 
+  @override
+  State<OpenTillForm> createState() => _OpenTillFormState();
+}
+
+class _OpenTillFormState extends State<OpenTillForm> {
+  static const quickAmounts = <int>[100, 500, 1000];
+
   bool get _hasValidAmount {
-    final amount = double.tryParse(openingFloatController.text);
+    final amount = double.tryParse(widget.openingFloatController.text);
     return amount != null && amount >= 0;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.openingFloatController.addListener(_refresh);
+  }
+
+  @override
+  void didUpdateWidget(covariant OpenTillForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.openingFloatController != widget.openingFloatController) {
+      oldWidget.openingFloatController.removeListener(_refresh);
+      widget.openingFloatController.addListener(_refresh);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.openingFloatController.removeListener(_refresh);
+    super.dispose();
+  }
+
+  void _refresh() {
+    if (mounted) setState(() {});
+  }
+
+  void _setAmount(num amount) {
+    widget.openingFloatController.text = amount.toStringAsFixed(2);
+    widget.openingFloatController.selection = TextSelection.collapsed(
+      offset: widget.openingFloatController.text.length,
+    );
+  }
+
+  void _enterDigit(String digit) {
+    final current = widget.openingFloatController.text;
+    final whole = current.split('.').first.replaceAll(RegExp(r'[^0-9]'), '');
+    final next = whole == '0' ? digit : '$whole$digit';
+    _setAmount(double.tryParse(next) ?? 0);
+  }
+
+  void _backspace() {
+    final whole = widget.openingFloatController.text.split('.').first;
+    if (whole.length <= 1) return _setAmount(0);
+    _setAmount(double.tryParse(whole.substring(0, whole.length - 1)) ?? 0);
   }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final metrics = OpenTillLayoutMetrics.resolve(
-          height: constraints.maxHeight.isFinite ? constraints.maxHeight : 900,
-          width: constraints.maxWidth.isFinite
-              ? constraints.maxWidth
-              : MediaQuery.sizeOf(context).width,
-          density: density,
-        );
-
-        return Form(
-          key: formKey,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: TenantAdminColors.surface,
-              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-              border: Border.all(color: TenantAdminColors.border),
-              boxShadow: TenantAdminShadows.card,
-            ),
-            child: Padding(
-              padding: metrics.cardPadding,
-              child: Column(
+        final wide = constraints.maxWidth >= 900;
+        final content = wide
+            ? Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _PageHeading(
-                    tillName: tillName,
-                    titleFontSize: metrics.titleFontSize,
-                  ),
-                  SizedBox(height: metrics.sectionGap),
-                  _CashAmountSection(
-                    openingFloatController: openingFloatController,
-                    currencyCode: currencyCode,
-                    errorMessage: errorMessage,
-                    hasValidAmount: _hasValidAmount,
-                    amountFontSize: metrics.amountFontSize,
-                    fieldGap: metrics.fieldGap,
-                    onChanged: () => (context as Element).markNeedsBuild(),
-                  ),
-                  SizedBox(height: metrics.sectionGap),
-                  _NoteSection(
-                    openingNoteController: openingNoteController,
-                    noteLines: metrics.noteLines,
-                    fieldGap: metrics.fieldGap,
-                    onChanged: () => (context as Element).markNeedsBuild(),
-                  ),
-                  SizedBox(height: metrics.fieldGap + 2),
-                  _TillSummaryCard(
-                    outletName: outletName,
-                    tillName: tillName,
-                    deviceName: deviceName,
-                    openingBy: openingBy,
-                    labelWidth: metrics.summaryLabelWidth,
-                    compact: metrics.compactSummary,
-                  ),
-                  const Spacer(),
-                  _OpenTillSubmitButton(
-                    isSubmitting: isSubmitting,
-                    isEnabled: _hasValidAmount,
-                    buttonHeight: metrics.buttonHeight,
-                    onSubmit: onSubmit,
-                  ),
+                  Expanded(flex: 3, child: _detailsCard(context)),
+                  const SizedBox(width: 20),
+                  Expanded(flex: 2, child: _keypadCard(context)),
                 ],
-              ),
-            ),
-          ),
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _detailsCard(context),
+                  const SizedBox(height: 16),
+                  SizedBox(height: 600, child: _keypadCard(context)),
+                ],
+              );
+
+        final body = Form(
+          key: widget.formKey,
+          child: wide
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: content),
+                    const SizedBox(height: 14),
+                    _bottomAction(),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [content, const SizedBox(height: 16), _bottomAction()],
+                ),
         );
+
+        return wide
+            ? body
+            : SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                child: body,
+              );
       },
     );
   }
-}
 
-class _PageHeading extends StatelessWidget {
-  const _PageHeading({
-    required this.tillName,
-    required this.titleFontSize,
-  });
-
-  final String tillName;
-  final double titleFontSize;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Open Till',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: TenantAdminColors.bodyText,
-                fontWeight: FontWeight.w900,
-                fontSize: titleFontSize,
-                height: 1.1,
-              ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.xs),
-        Text(
-          'Enter the starting cash amount to open $tillName.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+  Widget _detailsCard(BuildContext context) {
+    return _SurfaceCard(
+      child: SingleChildScrollView(
+        child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Open Till',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: TenantAdminColors.navy,
+                  fontWeight: FontWeight.w900,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Enter the starting cash amount to open ${widget.tillName}.',
+            style: const TextStyle(
+              color: TenantAdminColors.mutedText,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 20),
+          const _FieldHeading(
+            title: 'Starting Cash Amount',
+            description: 'Enter the cash amount you have in the drawer to start.',
+          ),
+          const SizedBox(height: 10),
+          TextFormField(
+            key: const Key('opening-cash-field'),
+            controller: widget.openingFloatController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+            ],
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Opening cash is required.';
+              }
+              final amount = double.tryParse(value);
+              if (amount == null || amount < 0) {
+                return 'Enter a valid non-negative amount.';
+              }
+              return null;
+            },
+            style: const TextStyle(
+              color: TenantAdminColors.navy,
+              fontSize: 34,
+              fontWeight: FontWeight.w900,
+            ),
+            decoration: InputDecoration(
+              prefixText: '${widget.currencyCode}  ',
+              prefixStyle: const TextStyle(
                 color: TenantAdminColors.mutedText,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                height: 1.35,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
               ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
+              enabledBorder: _border(TenantAdminColors.primary, 2),
+              focusedBorder: _border(TenantAdminColors.primary, 2),
+              errorBorder: _border(Colors.red, 1.5),
+              focusedErrorBorder: _border(Colors.red, 2),
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (widget.errorMessage != null) ...[
+            _StatusMessage(
+              icon: Icons.error_outline,
+              color: Colors.red,
+              message: widget.errorMessage!,
+            ),
+          ] else if (_hasValidAmount) ...[
+            const _StatusMessage(
+              icon: Icons.check_circle_outline,
+              color: Color(0xff16a34a),
+              message: 'Amount is valid',
+            ),
+          ],
+          const SizedBox(height: 18),
+          const _FieldHeading(
+            title: 'Till Note (Optional)',
+            description: 'Add a note for this till opening.',
+          ),
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: widget.openingNoteController,
+            maxLength: 100,
+            minLines: 2,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'Enter note (optional)...',
+              alignLabelWithHint: true,
+              enabledBorder: _border(TenantAdminColors.border, 1),
+              focusedBorder: _border(TenantAdminColors.primary, 1.5),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _TillSummaryCard(
+            outletName: widget.outletName,
+            tillName: widget.tillName,
+            deviceName: widget.deviceName,
+            openingBy: widget.openingBy,
+          ),
+        ],
         ),
-      ],
+      ),
     );
   }
-}
 
-class _CashAmountSection extends StatelessWidget {
-  const _CashAmountSection({
-    required this.openingFloatController,
-    required this.currencyCode,
-    required this.errorMessage,
-    required this.hasValidAmount,
-    required this.amountFontSize,
-    required this.fieldGap,
-    required this.onChanged,
-  });
-
-  final TextEditingController openingFloatController;
-  final String currencyCode;
-  final String? errorMessage;
-  final bool hasValidAmount;
-  final double amountFontSize;
-  final double fieldGap;
-  final VoidCallback onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const _FieldLabel(
-          title: 'Starting Cash Amount',
-          description: 'Enter the cash amount you have in the drawer to start.',
-        ),
-        SizedBox(height: fieldGap),
-        TextFormField(
-          controller: openingFloatController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^-?\d*\.?\d{0,2}')),
-          ],
-          onChanged: (_) => onChanged(),
-          style: TextStyle(
-            color: TenantAdminColors.bodyText,
-            fontSize: amountFontSize,
-            fontWeight: FontWeight.w900,
-          ),
-          decoration: InputDecoration(
-            prefixText: '${currencyCode.trim()} ',
-            suffixIcon: hasValidAmount
-                ? const Icon(
-                    Icons.check_circle,
-                    color: TenantAdminColors.success,
-                  )
-                : null,
-            errorText: errorMessage,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 14,
-            ),
-            border: _inputBorder(TenantAdminColors.border, 1),
-            enabledBorder: _inputBorder(
-              hasValidAmount
-                  ? const Color(0xFF1B5BFF)
-                  : TenantAdminColors.border,
-              hasValidAmount ? 1.5 : 1,
-            ),
-            focusedBorder: _inputBorder(const Color(0xFF1B5BFF), 1.5),
-          ),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Opening cash is required.';
-            }
-            final amount = double.tryParse(value);
-            if (amount == null) {
-              return 'Opening cash must be a valid number.';
-            }
-            if (amount < 0) {
-              return 'Opening cash must be zero or more.';
-            }
-            return null;
-          },
-        ),
-        if (hasValidAmount) ...[
-          const SizedBox(height: TenantAdminSpacing.xs),
+  Widget _keypadCard(BuildContext context) {
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    return _SurfaceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           const Text(
-            'Amount is valid',
+            'Quick Amounts',
             style: TextStyle(
-              color: TenantAdminColors.success,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
+              color: TenantAdminColors.navy,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              for (var i = 0; i < quickAmounts.length; i++) ...[
+                Expanded(
+                  child: _QuickAmountButton(
+                    amount: quickAmounts[i],
+                    onPressed: () => _setAmount(quickAmounts[i]),
+                  ),
+                ),
+                if (i != quickAmounts.length - 1) const SizedBox(width: 10),
+              ],
+            ],
+          ),
+          const SizedBox(height: 18),
+          for (var row = 0; row < 3; row++) ...[
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var column = 0; column < 3; column++) ...[
+                    Expanded(
+                      child: _KeypadButton(
+                        label: keys[(row * 3) + column],
+                        onPressed: () =>
+                            _enterDigit(keys[(row * 3) + column]),
+                      ),
+                    ),
+                    if (column != 2) const SizedBox(width: 10),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _KeypadButton(
+                    icon: Icons.backspace_outlined,
+                    semanticLabel: 'Delete digit',
+                    onPressed: _backspace,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _KeypadButton(
+                    label: '0',
+                    onPressed: () => _enterDigit('0'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _KeypadButton(
+                    label: 'C',
+                    labelColor: const Color(0xffef3158),
+                    onPressed: () => _setAmount(0),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            key: const Key('set-exact-amount'),
+            onPressed: () => FocusScope.of(context).unfocus(),
+            icon: const Icon(Icons.point_of_sale_outlined),
+            label: const Text('Set Exact'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+              foregroundColor: TenantAdminColors.primary,
+              backgroundColor: const Color(0xffeef3ff),
+              side: BorderSide.none,
+              textStyle: const TextStyle(fontWeight: FontWeight.w900),
             ),
           ),
         ],
-      ],
+      ),
     );
   }
-}
 
-class _NoteSection extends StatelessWidget {
-  const _NoteSection({
-    required this.openingNoteController,
-    required this.noteLines,
-    required this.fieldGap,
-    required this.onChanged,
-  });
-
-  final TextEditingController openingNoteController;
-  final int noteLines;
-  final double fieldGap;
-  final VoidCallback onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const _FieldLabel(
-          title: 'Till Note (Optional)',
-          description: 'Add a note for this till opening.',
-        ),
-        SizedBox(height: fieldGap),
-        TextFormField(
-          controller: openingNoteController,
-          minLines: noteLines,
-          maxLines: noteLines,
-          maxLength: 100,
-          onChanged: (_) => onChanged(),
-          decoration: InputDecoration(
-            counterText: '${openingNoteController.text.length}/100',
-            contentPadding: const EdgeInsets.all(12),
-            border: _inputBorder(TenantAdminColors.border, 1),
-            enabledBorder: _inputBorder(TenantAdminColors.border, 1),
-            focusedBorder: _inputBorder(const Color(0xFF1B5BFF), 1.5),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel({
-    required this.title,
-    required this.description,
-  });
-
-  final String title;
-  final String description;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            color: TenantAdminColors.bodyText,
-            fontSize: 14,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.xs),
-        Text(
-          description,
-          style: const TextStyle(
-            color: TenantAdminColors.mutedText,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            height: 1.3,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OpenTillSubmitButton extends StatelessWidget {
-  const _OpenTillSubmitButton({
-    required this.isSubmitting,
-    required this.isEnabled,
-    required this.buttonHeight,
-    required this.onSubmit,
-  });
-
-  final bool isSubmitting;
-  final bool isEnabled;
-  final double buttonHeight;
-  final VoidCallback onSubmit;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: buttonHeight,
+  Widget _bottomAction() {
+    return _SurfaceCard(
+      padding: const EdgeInsets.all(14),
       child: PosPrimaryActionButton(
-        onPressed: isSubmitting || !isEnabled ? null : onSubmit,
-        isLoading: isSubmitting,
-        minimumHeight: buttonHeight,
-        horizontalPadding: 16,
-        verticalPadding: 0,
-        borderRadius: TenantAdminRadius.sm,
-        child: Row(
+        key: const Key('open-till-button'),
+        onPressed: _hasValidAmount && !widget.isSubmitting
+            ? widget.onSubmit
+            : null,
+        isLoading: widget.isSubmitting,
+        fullWidth: true,
+        minimumHeight: 64,
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.lock_outline, size: 18),
-            const SizedBox(width: 10),
-            Flexible(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Open Till',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Till will be opened and ready for transactions.',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.92),
-                    ),
-                  ),
-                ],
-              ),
+            Icon(Icons.lock_open_outlined, size: 23),
+            SizedBox(width: 14),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Open Till', style: TextStyle(fontWeight: FontWeight.w900)),
+                Text(
+                  'The till will be opened and ready for transactions.',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
   }
+}
+
+class _SurfaceCard extends StatelessWidget {
+  const _SurfaceCard({
+    required this.child,
+    this.padding = const EdgeInsets.all(24),
+  });
+
+  final Widget child;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+        decoration: BoxDecoration(
+          color: TenantAdminColors.surface,
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          border: Border.all(color: TenantAdminColors.border),
+          boxShadow: TenantAdminShadows.card,
+        ),
+        child: Padding(padding: padding, child: child),
+      );
+}
+
+class _FieldHeading extends StatelessWidget {
+  const _FieldHeading({required this.title, required this.description});
+
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: TenantAdminColors.navy,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            description,
+            style: const TextStyle(
+              color: TenantAdminColors.mutedText,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      );
+}
+
+class _StatusMessage extends StatelessWidget {
+  const _StatusMessage({
+    required this.icon,
+    required this.color,
+    required this.message,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Icon(icon, size: 17, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      );
 }
 
 class _TillSummaryCard extends StatelessWidget {
@@ -468,128 +466,124 @@ class _TillSummaryCard extends StatelessWidget {
     required this.tillName,
     required this.deviceName,
     required this.openingBy,
-    required this.labelWidth,
-    required this.compact,
   });
 
   final String outletName;
   final String tillName;
   final String deviceName;
   final String openingBy;
-  final double labelWidth;
-  final bool compact;
 
   @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFF),
-        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-        border: Border.all(color: TenantAdminColors.border),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(
-          compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xfff8faff),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: TenantAdminColors.border),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
+            const Text(
               'Till Summary',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: TenantAdminColors.bodyText,
-                    fontWeight: FontWeight.w900,
-                  ),
+              style: TextStyle(color: TenantAdminColors.navy, fontWeight: FontWeight.w900),
             ),
-            SizedBox(height: compact ? 6 : TenantAdminSpacing.sm),
-            _SummaryLine(
-              label: 'Outlet',
-              value: outletName,
-              labelWidth: labelWidth,
-              compact: compact,
-            ),
-            _SummaryLine(
-              label: 'Till',
-              value: tillName,
-              labelWidth: labelWidth,
-              compact: compact,
-            ),
-            _SummaryLine(
-              label: 'Device',
-              value: deviceName,
-              labelWidth: labelWidth,
-              compact: compact,
-            ),
-            if (openingBy.trim().isNotEmpty)
-              _SummaryLine(
-                label: 'Opening By',
-                value: openingBy,
-                labelWidth: labelWidth,
-                compact: compact,
-              ),
+            const SizedBox(height: 8),
+            _SummaryRow(icon: Icons.store_outlined, label: 'Outlet', value: outletName),
+            _SummaryRow(icon: Icons.point_of_sale_outlined, label: 'Till', value: tillName),
+            _SummaryRow(icon: Icons.developer_board_outlined, label: 'Device', value: deviceName),
+            _SummaryRow(icon: Icons.person_outline, label: 'Opening By', value: openingBy),
           ],
         ),
-      ),
-    );
-  }
+      );
 }
 
-class _SummaryLine extends StatelessWidget {
-  const _SummaryLine({
-    required this.label,
-    required this.value,
-    required this.labelWidth,
-    required this.compact,
-  });
-
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({required this.icon, required this.label, required this.value});
+  final IconData icon;
   final String label;
   final String value;
-  final double labelWidth;
-  final bool compact;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: compact ? 4 : TenantAdminSpacing.sm,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: labelWidth,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: TenantAdminColors.mutedText,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          children: [
+            Icon(icon, size: 17, color: TenantAdminColors.mutedText),
+            const SizedBox(width: 9),
+            SizedBox(
+              width: 88,
+              child: Text(label, style: const TextStyle(color: TenantAdminColors.mutedText, fontSize: 12)),
+            ),
+            Expanded(
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: TenantAdminColors.navy, fontSize: 12, fontWeight: FontWeight.w900),
               ),
             ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              softWrap: true,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: TenantAdminColors.bodyText,
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-                height: 1.25,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
 }
 
-OutlineInputBorder _inputBorder(Color color, double width) {
-  return OutlineInputBorder(
-    borderRadius: BorderRadius.circular(6),
-    borderSide: BorderSide(color: color, width: width),
-  );
+class _QuickAmountButton extends StatelessWidget {
+  const _QuickAmountButton({required this.amount, required this.onPressed});
+  final int amount;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(48),
+          foregroundColor: TenantAdminColors.primary,
+          side: const BorderSide(color: TenantAdminColors.border),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+        ),
+        child: Text(amount == 1000 ? '1,000' : '$amount'),
+      );
 }
+
+class _KeypadButton extends StatelessWidget {
+  const _KeypadButton({
+    required this.onPressed,
+    this.label,
+    this.icon,
+    this.semanticLabel,
+    this.labelColor = TenantAdminColors.navy,
+  });
+  final VoidCallback onPressed;
+  final String? label;
+  final IconData? icon;
+  final String? semanticLabel;
+  final Color labelColor;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        label: semanticLabel,
+        button: true,
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            padding: EdgeInsets.zero,
+            minimumSize: const Size(60, 58),
+            foregroundColor: labelColor,
+            side: const BorderSide(color: TenantAdminColors.border),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          child: icon != null
+              ? Icon(icon, size: 24)
+              : Text(
+                  label!,
+                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900, color: labelColor),
+                ),
+        ),
+      );
+}
+
+OutlineInputBorder _border(Color color, double width) => OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: color, width: width),
+    );

@@ -64,6 +64,32 @@ void main() {
       );
     });
 
+    testWidgets('quick amount and keypad update the opening amount',
+        (tester) async {
+      final formKey = GlobalKey<FormState>();
+      final openingFloatController = TextEditingController(text: '0.00');
+      final openingNoteController = TextEditingController();
+
+      await _pumpOpenTillForm(
+        tester,
+        formKey: formKey,
+        openingFloatController: openingFloatController,
+        openingNoteController: openingNoteController,
+      );
+
+      await tester.tap(find.text('500'));
+      await tester.pump();
+      expect(openingFloatController.text, '500.00');
+
+      await tester.tap(find.text('2'));
+      await tester.pump();
+      expect(openingFloatController.text, '5002.00');
+
+      await tester.tap(find.text('C'));
+      await tester.pump();
+      expect(openingFloatController.text, '0.00');
+    });
+
     testWidgets('disables submit while request is in progress', (tester) async {
       final formKey = GlobalKey<FormState>();
       final openingFloatController = TextEditingController(text: '150.00');
