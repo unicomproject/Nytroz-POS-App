@@ -194,17 +194,21 @@ class _HeroCopy extends StatelessWidget {
             ),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: MainAxisSize.max,
             children: [
               const Icon(Icons.add_shopping_cart_rounded, size: 18),
               const SizedBox(width: TenantAdminSpacing.sm),
-              Text(
-                buttonLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w800),
+              Flexible(
+                child: Text(
+                  buttonLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
               ),
-              const SizedBox(width: TenantAdminSpacing.md),
+              SizedBox(
+                width: compact ? TenantAdminSpacing.xs : TenantAdminSpacing.md,
+              ),
               const Icon(Icons.chevron_right_rounded, size: 18),
             ],
           ),

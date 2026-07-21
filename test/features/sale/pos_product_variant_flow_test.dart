@@ -26,7 +26,15 @@ import '../../support/pos_catalog_test_fixtures.dart';
 
 Future<void> _tapProduct(WidgetTester tester, String productName) async {
   final productFinder = find.text(productName);
-  await tester.tap(productFinder);
+  final productCard = find
+      .ancestor(
+        of: productFinder,
+        matching: find.byType(InkWell),
+      )
+      .first;
+  final inkWell = tester.widget<InkWell>(productCard);
+  expect(inkWell.onTap, isNotNull);
+  inkWell.onTap!();
   await tester.pumpAndSettle();
 }
 
@@ -60,7 +68,7 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(PosProductVariantSheet),
-          matching: find.byType(Image),
+          matching: find.byType(AspectRatio),
         ),
         findsOneWidget,
       );

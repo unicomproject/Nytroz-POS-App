@@ -919,7 +919,18 @@ Future<void> _pumpPosHome(
         posNewSaleCatalogProvider.overrideWith((ref) async {
           final selectedCategoryId =
               ref.watch(posNewSaleSelectedCategoryIdProvider);
-          return testPosCatalogStateForCategory(selectedCategoryId);
+          final query =
+              ref.watch(posNewSaleSearchQueryProvider).trim().toLowerCase();
+          final catalog = testPosCatalogStateForCategory(selectedCategoryId);
+          if (query.isEmpty) {
+            return catalog;
+          }
+
+          return PosNewSaleCatalogState(
+            products: catalog.products
+                .where((product) => product.matches(query))
+                .toList(growable: false),
+          );
         }),
       ],
       child: const NytrozPosApp(),

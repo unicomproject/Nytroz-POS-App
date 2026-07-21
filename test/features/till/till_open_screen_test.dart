@@ -112,7 +112,7 @@ void main() {
 
       expect(find.text('Till Summary'), findsOneWidget);
       expect(find.text('CASHIER001@GMAIL.COM'), findsOneWidget);
-      expect(find.text('Till will be opened and ready for transactions.'),
+      expect(find.text('The till will be opened and ready for transactions.'),
           findsOneWidget);
       expect(tester.takeException(), isNull);
     });
