@@ -41,11 +41,21 @@ class PosPaymentMethodScreen extends ConsumerWidget {
 
     return summaryAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _CheckoutErrorFallback(
-        message: _messageForCheckoutError(error),
-        onBack: () => context.pop(),
-        onRetry: () => ref.invalidate(posCheckoutSummaryProvider),
-      ),
+      error: (error, _) {
+        final expiredDiscount = error is PosCheckoutApiException &&
+            error.code == 'pos_checkout.discount_application_expired';
+        return _CheckoutErrorFallback(
+          message: _messageForCheckoutError(error),
+          retryLabel: expiredDiscount ? 'Remove Discount & Retry' : 'Retry',
+          onBack: () => context.pop(),
+          onRetry: () {
+            if (expiredDiscount) {
+              ref.read(posNewSaleCartProvider.notifier).clearDiscounts();
+            }
+            ref.invalidate(posCheckoutSummaryProvider);
+          },
+        );
+      },
       data: (summary) {
         final allowedMethods = summary.paymentMethods.toSet();
         final canViewTillSession =
@@ -232,11 +242,13 @@ class _CheckoutErrorFallback extends StatelessWidget {
     required this.message,
     required this.onBack,
     required this.onRetry,
+    this.retryLabel = 'Retry',
   });
 
   final String message;
   final VoidCallback onBack;
   final VoidCallback onRetry;
+  final String retryLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -272,7 +284,7 @@ class _CheckoutErrorFallback extends StatelessWidget {
                 ),
                 const SizedBox(width: TenantAdminSpacing.sm),
                 PosPrimaryActionButton(
-                  label: 'Retry',
+                  label: retryLabel,
                   onPressed: onRetry,
                   leadingIcon: Icons.refresh_rounded,
                   compact: true,

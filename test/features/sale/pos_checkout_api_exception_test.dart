@@ -52,6 +52,26 @@ void main() {
       expect(exception.isNetworkUnavailable, isFalse);
     });
 
+    test('preserves backend checkout error code for recovery actions', () {
+      final error = DioException(
+        requestOptions: RequestOptions(path: '/api/v1/pos/checkout/summary'),
+        type: DioExceptionType.badResponse,
+        response: Response(
+          requestOptions: RequestOptions(path: '/api/v1/pos/checkout/summary'),
+          statusCode: 409,
+          data: const {
+            'code': 'pos_checkout.discount_application_expired',
+            'message': 'The approved discount has expired.',
+          },
+        ),
+      );
+
+      final exception = checkoutApiExceptionFromDio(error);
+
+      expect(exception.code, 'pos_checkout.discount_application_expired');
+      expect(exception.message, 'The approved discount has expired.');
+    });
+
     test('uses validation problem errors when backend omits message', () {
       final error = DioException(
         requestOptions: RequestOptions(path: '/api/v1/pos/checkout/summary'),

@@ -161,17 +161,21 @@ class _CartItemList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final reversedItems = items.reversed.toList(growable: false);
+
     return ListView.separated(
       clipBehavior: Clip.hardEdge,
       padding: const EdgeInsets.only(bottom: TenantAdminSpacing.sm),
-      itemCount: items.length,
+      itemCount: reversedItems.length,
       separatorBuilder: (_, __) => const Divider(
         height: TenantAdminSpacing.xl,
       ),
       itemBuilder: (context, index) {
+        final item = reversedItems[index];
+
         return _CartItemRow(
-          item: items[index],
-          onTap: () => _handleCartItemTap(context, ref, items[index]),
+          item: item,
+          onTap: () => _handleCartItemTap(context, ref, item),
         );
       },
     );

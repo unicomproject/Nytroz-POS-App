@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,8 +33,14 @@ import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_mo
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/pos_shell_nav_item.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/sidebar/pos_sidebar.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
+import 'package:nytroz_pos/features/cart/domain/entities/pos_barcode_lookup_result.dart';
+import 'package:nytroz_pos/features/cart/data/datasources/pos_barcode_remote_datasource.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_search_coordinator.dart';
+import 'package:nytroz_pos/features/sale/presentation/providers/pos_barcode_scan_controller.dart';
+import 'package:nytroz_pos/features/sale/presentation/providers/pos_camera_scanner_provider.dart';
+import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_camera_barcode_scanner.dart';
 import 'package:nytroz_pos/features/sale/presentation/screens/pos_new_sale_screen.dart';
 import 'package:nytroz_pos/features/till/application/usecases/open_till.dart';
 import 'package:nytroz_pos/features/till/data/datasources/till_session_storage.dart';
@@ -422,10 +429,6 @@ void main() {
         tester.getSize(searchField).height,
       );
 
-      await tester.tap(scannerButton);
-      await tester.pump();
-      expect(tester.widget<TextField>(searchField).focusNode?.hasFocus, isTrue);
-
       await tester.enterText(find.byType(TextField), 'coffee');
       await tester.pumpAndSettle();
 
@@ -438,6 +441,227 @@ void main() {
       expect(find.text('All Products (13)'), findsOneWidget);
       expect(find.text('General Admission'), findsOneWidget);
       expect(find.text('Snack Combo'), findsOneWidget);
+    });
+
+    testWidgets(
+        'camera scanner reuses exact pipeline and preserves leading zero',
+        (tester) async {
+      final exact = _WidgetBarcodeGateway();
+      var launcherCalls = 0;
+      await _pumpPosHome(
+        tester,
+        size: posTabletViewport,
+        barcodeGateway: exact,
+        cameraSupported: true,
+        cameraLauncher: (_) async {
+          launcherCalls++;
+          return const PosCameraScanResult.barcode('0012345678905');
+        },
+      );
+      _goFromCurrentRoute(tester, '/pos/new-sale');
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'manual query');
+
+      await tester.tap(find.byKey(const Key('new-sale-scanner-button')));
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+          tester.element(find.byType(PosNewSaleScreen)));
+      expect(launcherCalls, 1);
+      expect(exact.calls.single.$2, '0012345678905');
+      expect(tester.widget<TextField>(find.byType(TextField)).controller?.text,
+          isEmpty);
+      expect(container.read(posNewSaleSearchQueryProvider), isEmpty);
+      expect(container.read(posNewSaleCartProvider).items, hasLength(1));
+      expect(find.text('2 × Team Jersey — Blue added'), findsOneWidget);
+    });
+
+    testWidgets(
+        'camera cancellation is silent and two intentional sessions run',
+        (tester) async {
+      final exact = _WidgetBarcodeGateway();
+      final results = <PosCameraScanResult>[
+        const PosCameraScanResult.cancelled(),
+        const PosCameraScanResult.barcode('2000000000114'),
+        const PosCameraScanResult.barcode('2000000000114'),
+      ];
+      var launcherCalls = 0;
+      await _pumpPosHome(
+        tester,
+        size: posTabletViewport,
+        barcodeGateway: exact,
+        cameraSupported: true,
+        cameraLauncher: (_) async => results[launcherCalls++],
+      );
+      _goFromCurrentRoute(tester, '/pos/new-sale');
+      await tester.pumpAndSettle();
+      final button = find.byKey(const Key('new-sale-scanner-button'));
+
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(exact.calls, isEmpty);
+
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+
+      expect(launcherCalls, 3);
+      expect(exact.calls.map((call) => call.$2),
+          ['2000000000114', '2000000000114']);
+      final container = ProviderScope.containerOf(
+          tester.element(find.byType(PosNewSaleScreen)));
+      expect(
+        container.read(posNewSaleCartProvider).items.values.single.quantity,
+        4,
+      );
+    });
+
+    testWidgets(
+        'Windows camera fallback does not launch plugin or exact lookup',
+        (tester) async {
+      final exact = _WidgetBarcodeGateway();
+      var launcherCalls = 0;
+      await _pumpPosHome(
+        tester,
+        size: posTabletViewport,
+        barcodeGateway: exact,
+        cameraSupported: false,
+        cameraLauncher: (_) async {
+          launcherCalls++;
+          return const PosCameraScanResult.failed();
+        },
+      );
+      _goFromCurrentRoute(tester, '/pos/new-sale');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('new-sale-scanner-button')));
+      await tester.pump();
+
+      expect(launcherCalls, 0);
+      expect(exact.calls, isEmpty);
+      expect(find.textContaining('Camera scanning is unavailable'),
+          findsOneWidget);
+    });
+
+    testWidgets('camera permission denial shows safe settings guidance',
+        (tester) async {
+      final exact = _WidgetBarcodeGateway();
+      await _pumpPosHome(
+        tester,
+        size: posTabletViewport,
+        barcodeGateway: exact,
+        cameraSupported: true,
+        cameraLauncher: (_) async =>
+            const PosCameraScanResult.permissionDenied(),
+      );
+      _goFromCurrentRoute(tester, '/pos/new-sale');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('new-sale-scanner-button')));
+      await tester.pump();
+
+      expect(exact.calls, isEmpty);
+      expect(
+        find.text(
+          'Camera access is disabled. Enable it in system settings.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'focused HID scan clears search, cancels catalog search and shows feedback once',
+        (tester) async {
+      final exact = _WidgetBarcodeGateway();
+      final catalogSearches = <String>[];
+      await _pumpPosHome(
+        tester,
+        size: posTabletViewport,
+        barcodeGateway: exact,
+        catalogSearches: catalogSearches,
+      );
+      _goFromCurrentRoute(tester, '/pos/new-sale');
+      await tester.pumpAndSettle();
+
+      final search = find.byType(TextField);
+      await tester.tap(search);
+      await tester.enterText(search, '82111001003');
+      for (final digit in '82111001003'.split('')) {
+        await simulateKeyDownEvent(_widgetDigitKey(digit), character: digit);
+        await simulateKeyUpEvent(_widgetDigitKey(digit));
+      }
+      await simulateKeyDownEvent(LogicalKeyboardKey.enter);
+      await simulateKeyUpEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+
+      final container = ProviderScope.containerOf(tester.element(search));
+      expect(tester.widget<TextField>(search).controller?.text, isEmpty);
+      expect(container.read(posNewSaleSearchQueryProvider), isEmpty);
+      await tester.pump(const Duration(milliseconds: 351));
+      await tester.pumpAndSettle();
+
+      expect(exact.calls, [('device-1', '82111001003')]);
+      expect(catalogSearches, isNot(contains('82111001003')));
+      expect(find.text('2 × Team Jersey — Blue added'), findsOneWidget);
+      expect(container.read(posNewSaleCartProvider).items, hasLength(1));
+
+      container.read(posNewSaleSelectedCategoryIdProvider.notifier).state =
+          'harmless-rebuild';
+      await tester.pump();
+      expect(find.text('2 × Team Jersey — Blue added'), findsOneWidget);
+
+      await tester.enterText(search, 'jersey');
+      await tester.pump(const Duration(milliseconds: 351));
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextField>(search).controller?.text, 'jersey');
+      expect(container.read(posNewSaleSearchQueryProvider), 'jersey');
+      expect(catalogSearches, contains('jersey'));
+      expect(exact.calls, hasLength(1));
+    });
+
+    testWidgets('failed exact lookup stays clear and next scan succeeds',
+        (tester) async {
+      final exact = _WidgetBarcodeGateway(notFoundFirst: true);
+      final catalogSearches = <String>[];
+      await _pumpPosHome(
+        tester,
+        size: posTabletViewport,
+        barcodeGateway: exact,
+        catalogSearches: catalogSearches,
+      );
+      _goFromCurrentRoute(tester, '/pos/new-sale');
+      await tester.pumpAndSettle();
+      final search = find.byType(TextField);
+      final container = ProviderScope.containerOf(tester.element(search));
+
+      Future<void> scan(String barcode) async {
+        await tester.tap(search);
+        await tester.enterText(search, barcode);
+        for (final digit in barcode.split('')) {
+          await simulateKeyDownEvent(_widgetDigitKey(digit), character: digit);
+          await simulateKeyUpEvent(_widgetDigitKey(digit));
+        }
+        await simulateKeyDownEvent(LogicalKeyboardKey.enter);
+        await simulateKeyUpEvent(LogicalKeyboardKey.enter);
+        await tester.pump(const Duration(milliseconds: 351));
+        await tester.pumpAndSettle();
+      }
+
+      await scan('82111001003');
+      expect(tester.widget<TextField>(search).controller?.text, isEmpty);
+      expect(container.read(posNewSaleSearchQueryProvider), isEmpty);
+      expect(catalogSearches, isNot(contains('82111001003')));
+      expect(find.text('Product not found for barcode 82111001003'),
+          findsOneWidget);
+
+      await scan('2000000000114');
+      expect(
+          exact.calls.map((call) => call.$2), ['82111001003', '2000000000114']);
+      expect(tester.widget<TextField>(search).controller?.text, isEmpty);
+      expect(find.text('2 × Team Jersey — Blue added'), findsOneWidget);
+      expect(container.read(posBarcodeScanControllerProvider).feedbackEvent?.id,
+          2);
     });
 
     testWidgets('New Sale reopens with empty search while preserving cart', (
@@ -852,6 +1076,10 @@ Future<void> _pumpPosHome(
   List<String> permissionCodes = _defaultPermissions,
   Future<PosHomeDashboardState> Function(Ref ref)? dashboardOverride,
   bool settle = true,
+  PosBarcodeLookupGateway? barcodeGateway,
+  List<String>? catalogSearches,
+  bool? cameraSupported,
+  PosCameraScannerLauncher? cameraLauncher,
 }) async {
   final dashboard = dashboardState ?? _referenceDashboardState(permissionCodes);
   final testDio = Dio(
@@ -919,8 +1147,18 @@ Future<void> _pumpPosHome(
         posNewSaleCatalogProvider.overrideWith((ref) async {
           final selectedCategoryId =
               ref.watch(posNewSaleSelectedCategoryIdProvider);
+          ref.watch(posNewSaleSearchCancellationProvider);
           final query =
               ref.watch(posNewSaleSearchQueryProvider).trim().toLowerCase();
+          if (query.isNotEmpty) {
+            var disposed = false;
+            ref.onDispose(() => disposed = true);
+            await Future<void>.delayed(const Duration(milliseconds: 350));
+            if (disposed) {
+              return const PosNewSaleCatalogState(products: []);
+            }
+            catalogSearches?.add(query);
+          }
           final catalog = testPosCatalogStateForCategory(selectedCategoryId);
           if (query.isEmpty) {
             return catalog;
@@ -932,6 +1170,12 @@ Future<void> _pumpPosHome(
                 .toList(growable: false),
           );
         }),
+        if (barcodeGateway != null)
+          posBarcodeLookupGatewayProvider.overrideWithValue(barcodeGateway),
+        if (cameraSupported != null)
+          posCameraScannerSupportedProvider.overrideWithValue(cameraSupported),
+        if (cameraLauncher != null)
+          posCameraScannerLauncherProvider.overrideWithValue(cameraLauncher),
       ],
       child: const NytrozPosApp(),
     ),
@@ -1049,6 +1293,60 @@ class _FakeTillRepository implements TillRepository {
     throw UnimplementedError();
   }
 }
+
+class _WidgetBarcodeGateway implements PosBarcodeLookupGateway {
+  _WidgetBarcodeGateway({this.notFoundFirst = false});
+
+  final bool notFoundFirst;
+  final List<(String, String)> calls = [];
+
+  @override
+  Future<PosBarcodeLookupResult> getProductByBarcode({
+    required String deviceId,
+    required String barcode,
+  }) async {
+    calls.add((deviceId, barcode));
+    if (notFoundFirst && calls.length == 1) {
+      final options = RequestOptions(path: '/barcode');
+      throw DioException(
+        requestOptions: options,
+        type: DioExceptionType.badResponse,
+        response: Response(
+          requestOptions: options,
+          statusCode: 404,
+          data: const {'code': 'pos_barcode.not_found'},
+        ),
+      );
+    }
+    return PosBarcodeLookupResult(
+      productId: 'product-scanned',
+      variantId: 'variant-scanned',
+      barcode: barcode,
+      barcodeType: 'EAN13',
+      productName: 'Team Jersey',
+      variantName: 'Blue',
+      sku: 'TEAM-BLUE',
+      quantityPerScan: 2,
+      price: 2500,
+      availableQuantity: 20,
+      stockStatus: 'InStock',
+    );
+  }
+}
+
+LogicalKeyboardKey _widgetDigitKey(String digit) =>
+    <String, LogicalKeyboardKey>{
+      '0': LogicalKeyboardKey.digit0,
+      '1': LogicalKeyboardKey.digit1,
+      '2': LogicalKeyboardKey.digit2,
+      '3': LogicalKeyboardKey.digit3,
+      '4': LogicalKeyboardKey.digit4,
+      '5': LogicalKeyboardKey.digit5,
+      '6': LogicalKeyboardKey.digit6,
+      '7': LogicalKeyboardKey.digit7,
+      '8': LogicalKeyboardKey.digit8,
+      '9': LogicalKeyboardKey.digit9,
+    }[digit]!;
 
 class _TestDeviceContextStorage extends DeviceContextStorage {
   _TestDeviceContextStorage(this.deviceContext)

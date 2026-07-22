@@ -28,7 +28,8 @@ class ApiEndpoints {
   static const posCheckoutStartPayment = '/api/v1/pos/checkout/start-payment';
   static const posCustomers = '/api/v1/customers';
   static const posCustomersSummary = '/api/v1/customers/summary';
-  static String posCustomer(String customerId) => '/api/v1/customers/$customerId';
+  static String posCustomer(String customerId) =>
+      '/api/v1/customers/$customerId';
   static String posCustomerOrders(String customerId) =>
       '/api/v1/customers/$customerId/orders';
   static String posCustomerAttachToSale(String customerId) =>
@@ -98,6 +99,9 @@ class ApiEndpoints {
 
   static String posProductDetail(String productId) =>
       '/api/v1/pos/products/$productId';
+
+  static String posProductByBarcode(String barcode) =>
+      '/api/v1/pos/products/by-barcode/${Uri.encodeComponent(barcode)}';
 
   static String posProductVariants(String productId) =>
       '/api/v1/pos/products/$productId/variants';
