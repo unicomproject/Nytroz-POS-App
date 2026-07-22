@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
+import 'package:nytroz_pos/features/cart/domain/entities/pos_resolved_sale_item.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/cart/presentation/providers/pos_resolved_variant_cart_action.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/payment/pos_bottom_action_buttons.dart';
 import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
@@ -477,7 +479,13 @@ class _PosProductVariantSheetState
     final notifier = ref.read(posNewSaleCartProvider.notifier);
 
     if (widget.existingCartItem == null) {
-      notifier.addToCart(cartProduct, quantity: _quantity);
+      ref.read(posResolvedVariantCartActionProvider).add(
+            PosResolvedSaleItem.fromCatalog(
+              summary: detail.summary,
+              variant: variant,
+            ),
+            requestedQuantity: _quantity,
+          );
     } else {
       notifier.updateCartItem(
         cartLineKey: widget.existingCartItem!.product.cartLineKey,

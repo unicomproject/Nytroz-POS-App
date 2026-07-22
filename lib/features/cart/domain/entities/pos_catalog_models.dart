@@ -31,6 +31,9 @@ class PosCatalogProductSummary {
     required this.hasVariants,
     this.categoryId,
     this.variantId,
+    this.sku,
+    this.barcode,
+    this.variantName,
     this.description,
     this.imageUrl,
     this.stockStatus = 'Unknown',
@@ -41,6 +44,9 @@ class PosCatalogProductSummary {
   final String productId;
   final String? categoryId;
   final String? variantId;
+  final String? sku;
+  final String? barcode;
+  final String? variantName;
   final String name;
   final String? description;
   final String? imageUrl;
@@ -51,10 +57,13 @@ class PosCatalogProductSummary {
   final double? availableQty;
   final String stockLabel;
 
-  bool get isOutOfStock => stockStatus != 'InStock' && stockStatus != 'LowStock';
+  bool get isOutOfStock =>
+      stockStatus != 'InStock' && stockStatus != 'LowStock';
 
   bool matches(String query) {
     return productId.toLowerCase().contains(query) ||
+        (sku?.toLowerCase().contains(query) ?? false) ||
+        (barcode?.toLowerCase().contains(query) ?? false) ||
         name.toLowerCase().contains(query) ||
         categoryName.toLowerCase().contains(query);
   }
@@ -87,7 +96,8 @@ class PosCatalogVariant {
   final String stockStatus;
   final Map<String, String> attributes;
 
-  bool get isOutOfStock => stockStatus != 'InStock' && stockStatus != 'LowStock';
+  bool get isOutOfStock =>
+      stockStatus != 'InStock' && stockStatus != 'LowStock';
 
   bool get isLowStock => stockStatus == 'LowStock';
 }
@@ -143,8 +153,9 @@ PosNewSaleProduct toCartProduct({
     category: summary.categoryName,
     price: unitPrice,
     stockLabel: _stockLabelForVariant(variant, summary.stockLabel),
+    stockStatus: variant?.stockStatus ?? summary.stockStatus,
     hasVariants: summary.hasVariants,
-    sku: variant?.sku,
+    sku: variant?.sku ?? summary.sku,
     selectedAttributes: attributes,
     maxQuantity: variant?.stockQty?.floor() ?? summary.availableQty?.floor(),
   );
@@ -201,9 +212,8 @@ String stockLabelFromApi(String? stockStatus, num? availableQty) {
 
   return switch (normalized) {
     'OutOfStock' => 'Out of Stock',
-    'LowStock' => availableQty != null
-        ? '${availableQty.floor()} in stock'
-        : 'Low Stock',
+    'LowStock' =>
+      availableQty != null ? '${availableQty.floor()} in stock' : 'Low Stock',
     'InStock' => availableQty != null && availableQty > 0
         ? '${availableQty.floor()} in stock'
         : 'In Stock',

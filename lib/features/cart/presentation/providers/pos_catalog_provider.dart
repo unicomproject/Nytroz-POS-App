@@ -12,6 +12,7 @@ import '../../../device_activation/presentation/providers/device_activation_prov
 import '../../data/datasources/pos_catalog_remote_datasource.dart';
 import '../../domain/entities/pos_catalog_models.dart';
 import 'pos_new_sale_cart_provider.dart';
+import 'pos_new_sale_search_coordinator.dart';
 
 final posCatalogRemoteDatasourceProvider =
     Provider<PosCatalogRemoteDatasource>((ref) {
@@ -75,6 +76,7 @@ final posNewSaleCatalogProvider =
   final session = ref.watch(authSessionProvider);
   ref.watch(deviceActivationProvider);
   final selectedCategoryId = ref.watch(posNewSaleSelectedCategoryIdProvider);
+  ref.watch(posNewSaleSearchCancellationProvider);
   final searchQuery = ref.watch(posNewSaleSearchQueryProvider).trim();
 
   if (searchQuery.isNotEmpty) {

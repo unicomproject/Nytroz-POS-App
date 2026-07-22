@@ -98,6 +98,9 @@ class PosCatalogRemoteDatasource {
     return PosCatalogProductSummary(
       productId: json['id']?.toString() ?? '',
       variantId: json['variantId']?.toString(),
+      sku: json['sku']?.toString(),
+      barcode: json['barcode']?.toString(),
+      variantName: json['variantName']?.toString(),
       name: json['name']?.toString() ?? 'Product',
       description: json['description']?.toString(),
       imageUrl: _resolveImageUrl(json),
@@ -117,6 +120,8 @@ class PosCatalogRemoteDatasource {
     final availableQty = (json['availableQuantity'] as num?)?.toDouble();
     final summary = PosCatalogProductSummary(
       productId: json['id']?.toString() ?? '',
+      sku: json['sku']?.toString(),
+      barcode: json['barcode']?.toString(),
       name: json['name']?.toString() ?? 'Product',
       description: json['description']?.toString(),
       imageUrl: _resolveImageUrl(json),

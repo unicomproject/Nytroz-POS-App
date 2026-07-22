@@ -8,11 +8,22 @@ import 'package:nytroz_pos/features/cart/presentation/widgets/pos_empty_cart_pan
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../widgets/new_sale/pos_new_sale_action_bar.dart';
+import '../widgets/new_sale/pos_barcode_scanner_listener.dart';
 import '../widgets/new_sale/pos_product_category_chips.dart';
 import '../widgets/new_sale/pos_product_grid.dart';
+import '../providers/pos_barcode_scan_controller.dart';
+import '../providers/pos_barcode_scan_feedback.dart';
+import '../providers/pos_camera_scanner_provider.dart';
+import '../widgets/new_sale/pos_camera_barcode_scanner.dart';
+import '../../../cart/presentation/providers/pos_new_sale_search_coordinator.dart';
 
 class PosNewSaleScreen extends ConsumerStatefulWidget {
-  const PosNewSaleScreen({super.key});
+  const PosNewSaleScreen({
+    this.onBarcodeCaptured,
+    super.key,
+  });
+
+  final ValueChanged<String>? onBarcodeCaptured;
 
   @override
   ConsumerState<PosNewSaleScreen> createState() => _PosNewSaleScreenState();
@@ -20,6 +31,8 @@ class PosNewSaleScreen extends ConsumerStatefulWidget {
 
 class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen> {
   String? _lastRoutePath;
+  int _lastFeedbackEventId = 0;
+  bool _cameraScannerOpening = false;
 
   @override
   void didChangeDependencies() {
@@ -49,58 +62,134 @@ class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen> {
     });
   }
 
+  Future<void> _openCameraScanner() async {
+    if (_cameraScannerOpening ||
+        !mounted ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    _cameraScannerOpening = true;
+    try {
+      final result = ref.read(posCameraScannerSupportedProvider)
+          ? await ref.read(posCameraScannerLauncherProvider)(context)
+          : const PosCameraScanResult.unsupported();
+      if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+      final barcode = result.barcode?.trim();
+      if (result.type == PosCameraScanResultType.barcode &&
+          barcode != null &&
+          barcode.isNotEmpty) {
+        ref.read(posNewSaleSearchCoordinatorProvider).clearForScanner();
+        ref.read(posBarcodeScanControllerProvider.notifier).enqueue(barcode);
+        return;
+      }
+      final message = switch (result.type) {
+        PosCameraScanResultType.permissionDenied =>
+          'Camera access is disabled. Enable it in system settings.',
+        PosCameraScanResultType.unavailable =>
+          'No camera is available on this device.',
+        PosCameraScanResultType.failed => 'Unable to start the camera scanner.',
+        PosCameraScanResultType.unsupported =>
+          'Camera scanning is unavailable on this device. Use the connected barcode scanner.',
+        _ => null,
+      };
+      if (message != null) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(message)));
+      }
+    } finally {
+      _cameraScannerOpening = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final useSideBySide =
-            constraints.maxWidth >= TenantAdminBreakpoints.tablet;
-        final padding = EdgeInsets.all(
-          constraints.maxWidth >= TenantAdminBreakpoints.tablet
-              ? TenantAdminSpacing.lg
-              : TenantAdminSpacing.md,
-        );
+    ref.watch(posBarcodeScanControllerProvider);
+    ref.listen(
+      posBarcodeScanControllerProvider.select((state) => state.feedbackEvent),
+      (_, event) {
+        if (event == null || event.id <= _lastFeedbackEventId || !mounted) {
+          return;
+        }
+        _lastFeedbackEventId = event.id;
+        if (ModalRoute.of(context)?.isCurrent != true) {
+          return;
+        }
+        final feedback = barcodeFeedbackPresentation(event);
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(
+            content: Text(feedback.message),
+            backgroundColor: feedback.isSuccess
+                ? TenantAdminColors.success
+                : TenantAdminColors.danger,
+          ));
+      },
+    );
+    ref.listen<int>(posCameraScannerRequestProvider, (_, requestId) {
+      if (requestId > 0) {
+        _openCameraScanner();
+      }
+    });
+    final scannerEnabled = ModalRoute.of(context)?.isCurrent ?? true;
+    return PosBarcodeScannerListener(
+      enabled: scannerEnabled,
+      onBarcodeScanned: (barcode) {
+        ref.read(posNewSaleSearchCoordinatorProvider).clearForScanner();
+        widget.onBarcodeCaptured?.call(barcode);
+        ref.read(posBarcodeScanControllerProvider.notifier).enqueue(barcode);
+      },
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useSideBySide =
+              constraints.maxWidth >= TenantAdminBreakpoints.tablet;
+          final padding = EdgeInsets.all(
+            constraints.maxWidth >= TenantAdminBreakpoints.tablet
+                ? TenantAdminSpacing.lg
+                : TenantAdminSpacing.md,
+          );
 
-        if (!useSideBySide) {
-          final cartHeight = constraints.maxHeight < 720 ? 360.0 : 390.0;
+          if (!useSideBySide) {
+            final cartHeight = constraints.maxHeight < 720 ? 360.0 : 390.0;
+
+            return Padding(
+              padding: padding,
+              child: Column(
+                children: [
+                  const Expanded(
+                    flex: 6,
+                    child: _ProductArea(showActionBar: true),
+                  ),
+                  const SizedBox(height: TenantAdminSpacing.md),
+                  SizedBox(
+                    height: cartHeight,
+                    child: const PosEmptyCartPanel(),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final cartWidth = constraints.maxWidth < 1180 ? 330.0 : 360.0;
 
           return Padding(
             padding: padding,
-            child: Column(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Expanded(
-                  flex: 6,
                   child: _ProductArea(showActionBar: true),
                 ),
-                const SizedBox(height: TenantAdminSpacing.md),
+                const SizedBox(width: TenantAdminSpacing.md),
                 SizedBox(
-                  height: cartHeight,
+                  width: cartWidth,
                   child: const PosEmptyCartPanel(),
                 ),
               ],
             ),
           );
-        }
-
-        final cartWidth = constraints.maxWidth < 1180 ? 330.0 : 360.0;
-
-        return Padding(
-          padding: padding,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Expanded(
-                child: _ProductArea(showActionBar: true),
-              ),
-              const SizedBox(width: TenantAdminSpacing.md),
-              SizedBox(
-                width: cartWidth,
-                child: const PosEmptyCartPanel(),
-              ),
-            ],
-          ),
-        );
-      },
+        },
+      ),
     );
   }
 }
@@ -141,11 +230,7 @@ class _ProductSectionHeader extends ConsumerWidget {
     final categoriesAsync = ref.watch(posNewSaleCategoriesProvider);
     final catalogAsync = ref.watch(posNewSaleCatalogProvider);
     final productCount = catalogAsync.maybeWhen(
-      data: (catalog) => catalog.products.where((product) {
-        final matchesSearch =
-            query.isEmpty || product.matches(query.toLowerCase());
-        return matchesSearch;
-      }).length,
+      data: (catalog) => catalog.products.length,
       orElse: () => 0,
     );
     final selectedCategoryName = categoriesAsync.maybeWhen(

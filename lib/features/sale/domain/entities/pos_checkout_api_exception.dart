@@ -3,11 +3,13 @@ import 'package:dio/dio.dart';
 class PosCheckoutApiException implements Exception {
   PosCheckoutApiException({
     required this.message,
+    this.code,
     this.statusCode,
     this.isNetworkUnavailable = false,
   });
 
   final String message;
+  final String? code;
   final int? statusCode;
   final bool isNetworkUnavailable;
 
@@ -46,8 +48,10 @@ bool _looksLikeNetworkFailure(DioException error) {
 }
 
 PosCheckoutApiException checkoutApiExceptionFromDio(DioException error) {
+  final data = error.response?.data;
   return PosCheckoutApiException(
     message: _messageFromDio(error),
+    code: data is Map ? (data['code'] ?? data['errorCode'])?.toString() : null,
     statusCode: error.response?.statusCode,
     isNetworkUnavailable: isCheckoutNetworkFallback(error),
   );

@@ -4,8 +4,10 @@ import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
+import 'package:nytroz_pos/features/cart/domain/entities/pos_resolved_sale_item.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/cart/presentation/providers/pos_resolved_variant_cart_action.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'pos_product_variant_sheet.dart';
@@ -73,6 +75,35 @@ class PosProductGrid extends ConsumerWidget {
     WidgetRef ref,
     PosCatalogProductSummary product,
   ) async {
+    if (product.variantId case final matchedVariantId?) {
+      final detail = await ref.read(
+        posProductDetailProvider(product.productId).future,
+      );
+      final matchedVariant = detail.variants
+          .where((variant) => variant.variantId == matchedVariantId)
+          .firstOrNull;
+
+      if (matchedVariant == null || matchedVariant.isOutOfStock) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('The matched product option is unavailable.'),
+            ),
+          );
+        }
+        return;
+      }
+
+      ref.read(posResolvedVariantCartActionProvider).add(
+            PosResolvedSaleItem.fromCatalog(
+              summary: product,
+              variant: matchedVariant,
+            ),
+            requestedQuantity: 1,
+          );
+      return;
+    }
+
     if (product.hasVariants) {
       await showPosProductVariantSheet(
         context: context,
@@ -82,12 +113,9 @@ class PosProductGrid extends ConsumerWidget {
       return;
     }
 
-    ref.read(posNewSaleCartProvider.notifier).addToCart(
-          toCartProduct(
-            summary: product,
-            variant: null,
-            quantity: 1,
-          ),
+    ref.read(posResolvedVariantCartActionProvider).add(
+          PosResolvedSaleItem.fromCatalog(summary: product),
+          requestedQuantity: 1,
         );
   }
 }
@@ -148,9 +176,11 @@ class _ProductTile extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _ProductStatus(
-                        label: product.hasVariants && !product.isOutOfStock
-                            ? 'Select options'
-                            : product.stockLabel,
+                        label: product.variantName?.trim().isNotEmpty == true
+                            ? product.variantName!
+                            : product.hasVariants && !product.isOutOfStock
+                                ? 'Select options'
+                                : product.stockLabel,
                         isOutOfStock: product.isOutOfStock,
                       ),
                     ),

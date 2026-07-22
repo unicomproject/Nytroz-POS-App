@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/sale/presentation/providers/pos_camera_scanner_provider.dart';
 import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -99,7 +100,7 @@ class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
                         : TenantAdminSpacing.lg,
                   ),
                   if (showScanner) ...[
-                    _ScannerButton(searchFocusNode: _searchFocusNode),
+                    const _ScannerButton(),
                     SizedBox(
                       width: veryCompact
                           ? TenantAdminSpacing.sm
@@ -283,9 +284,7 @@ class _TopBarSearchFieldState extends ConsumerState<_TopBarSearchField> {
 }
 
 class _ScannerButton extends ConsumerWidget {
-  const _ScannerButton({required this.searchFocusNode});
-
-  final FocusNode searchFocusNode;
+  const _ScannerButton();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -297,7 +296,13 @@ class _ScannerButton extends ConsumerWidget {
       height: 44,
       child: OutlinedButton.icon(
         key: const Key('new-sale-scanner-button'),
-        onPressed: canSearchProducts ? searchFocusNode.requestFocus : null,
+        onPressed: canSearchProducts
+            ? () {
+                final current = ref.read(posCameraScannerRequestProvider);
+                ref.read(posCameraScannerRequestProvider.notifier).state =
+                    current + 1;
+              }
+            : null,
         icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
         label: const Text('Scanner'),
         style: OutlinedButton.styleFrom(

@@ -17,11 +17,34 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
   @override
   PosNewSaleCartState build() => const PosNewSaleCartState();
 
-  void addToCart(PosNewSaleProduct product, {int quantity = 1}) {
+  PosCartMutationResult addToCart(
+    PosNewSaleProduct product, {
+    int quantity = 1,
+  }) {
+    if (quantity <= 0) {
+      return PosCartMutationResult.invalidQuantity;
+    }
+    if (product.price <= 0) {
+      return PosCartMutationResult.priceUnavailable;
+    }
+    if (product.stockStatus == 'OutOfStock' || product.maxQuantity == 0) {
+      return PosCartMutationResult.outOfStock;
+    }
+    if (product.stockStatus != 'InStock' && product.stockStatus != 'LowStock') {
+      return PosCartMutationResult.productUnavailable;
+    }
+
     final cartKey = product.cartLineKey;
     final existingItem = state.items[cartKey];
     final nextQuantity = (existingItem?.quantity ?? 0) + quantity;
+    final maxQuantity = product.maxQuantity;
+    if (maxQuantity != null && nextQuantity > maxQuantity) {
+      return PosCartMutationResult.insufficientStock;
+    }
     _upsertCartItem(product, nextQuantity);
+    return existingItem == null
+        ? PosCartMutationResult.added
+        : PosCartMutationResult.quantityIncreased;
   }
 
   void updateCartItem({
@@ -84,17 +107,7 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
       return;
     }
 
-    final maxQty = existingItem.product.maxQuantity;
-    if (maxQty != null && existingItem.quantity >= maxQty) {
-      return;
-    }
-
-    final updatedItems = Map<String, PosNewSaleCartItem>.of(state.items);
-    updatedItems[cartLineKey] = existingItem.copyWith(
-      quantity: existingItem.quantity + 1,
-    );
-    state = state.copyWith(
-        items: _withoutItemDiscounts(updatedItems), cartDiscountSet: true);
+    addToCart(existingItem.product);
   }
 
   void removeItem(String cartLineKey) {
@@ -339,6 +352,7 @@ class PosNewSaleProduct {
     this.variantId,
     this.sku,
     this.stockLabel = 'In Stock',
+    this.stockStatus = 'InStock',
     this.hasVariants = false,
     this.selectedAttributes = const {},
     this.maxQuantity,
@@ -352,6 +366,7 @@ class PosNewSaleProduct {
   final int price;
   final String? sku;
   final String stockLabel;
+  final String stockStatus;
   final bool hasVariants;
   final Map<String, String> selectedAttributes;
   final int? maxQuantity;
@@ -367,6 +382,17 @@ class PosNewSaleProduct {
         category.toLowerCase().contains(query) ||
         (sku?.toLowerCase().contains(query) ?? false);
   }
+}
+
+enum PosCartMutationResult {
+  added,
+  quantityIncreased,
+  invalidQuantity,
+  outOfStock,
+  insufficientStock,
+  productUnavailable,
+  variantUnavailable,
+  priceUnavailable,
 }
 
 String formatLkr(int value) {
