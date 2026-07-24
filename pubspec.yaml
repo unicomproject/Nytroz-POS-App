@@ -26,6 +26,12 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/pos_start_sale_background.png
+    - assets/images/pos_home_start_new_sale.png
+    - assets/images/pos_home_returns_exchanges.png
+    - assets/images/pos_home_cash_drawer.png
+    - assets/images/pos_home_resume_held_sales.png
+    - assets/images/pos_home_online_orders.png
+    - assets/images/pos_home_end_shift.png
     - assets/images/product_dummy.png
     - assets/images/logo.png
     - assets/images/log-screen-terminal.png
