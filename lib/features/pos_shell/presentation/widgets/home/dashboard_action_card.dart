@@ -111,32 +111,43 @@ class PosHomeActionTile extends StatelessWidget {
                                       ),
                                 ),
                               ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                    width: 50,
-                                    height: 50,
-                                    decoration: BoxDecoration(
-                                      color: TenantAdminColors.surface,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: enabled
-                                            ? accent
-                                            : TenantAdminColors.offline,
-                                        width: 1.5,
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final showDotPattern =
+                                      constraints.maxWidth >= 92;
+                                  final actionSize =
+                                      constraints.maxWidth < 56 ? 40.0 : 50.0;
+
+                                  return Row(
+                                    children: [
+                                      SizedBox.square(
+                                        dimension: actionSize,
+                                        child: DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            color: TenantAdminColors.surface,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: enabled
+                                                  ? accent
+                                                  : TenantAdminColors.offline,
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            Icons.arrow_forward_rounded,
+                                            color: enabled
+                                                ? accent
+                                                : TenantAdminColors.offline,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                    child: Icon(
-                                      Icons.arrow_forward_rounded,
-                                      color: enabled
-                                          ? accent
-                                          : TenantAdminColors.offline,
-                                    ),
-                                  ),
-                                  const DashboardDotPattern(),
-                                ],
+                                      if (showDotPattern) ...[
+                                        const Spacer(),
+                                        const DashboardDotPattern(),
+                                      ],
+                                    ],
+                                  );
+                                },
                               ),
                             ],
                           ),
