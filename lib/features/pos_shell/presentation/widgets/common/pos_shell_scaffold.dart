@@ -14,6 +14,7 @@ class PosShellScaffold extends StatelessWidget {
     required this.child,
     this.showTopBar = true,
     this.showTopBarSearch = true,
+    this.showSidebar = true,
   });
 
   final String title;
@@ -21,14 +22,16 @@ class PosShellScaffold extends StatelessWidget {
   final Widget child;
   final bool showTopBar;
   final bool showTopBarSearch;
+  final bool showSidebar;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final showSidebar = constraints.maxWidth >= _posShellMobileBreakpoint;
+        final useSidebar =
+            showSidebar && constraints.maxWidth >= _posShellMobileBreakpoint;
 
-        if (showSidebar) {
+        if (useSidebar) {
           return Scaffold(
             body: Row(
               children: [

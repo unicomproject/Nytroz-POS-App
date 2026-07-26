@@ -5,6 +5,13 @@ class PosHomeDashboardState {
   const PosHomeDashboardState({
     required this.actions,
     required this.fallbackUserDisplayName,
+    this.cashierRoleLabel = '',
+    this.businessDisplayName = '',
+    this.businessLogoUrl,
+    this.outletName = '',
+    this.deviceName = '',
+    this.deviceStatus = '',
+    this.summary,
     required this.tillLabel,
     required this.tillStatusLabel,
     this.tillDisplayLabel = '',
@@ -30,6 +37,13 @@ class PosHomeDashboardState {
 
   // Mock/view-only fallback until a POS operator session is available.
   final String fallbackUserDisplayName;
+  final String cashierRoleLabel;
+  final String businessDisplayName;
+  final String? businessLogoUrl;
+  final String outletName;
+  final String deviceName;
+  final String deviceStatus;
+  final PosHomeSummaryState? summary;
 
   // Mock/view-only copy until POS session state is implemented.
   final String tillLabel;
@@ -152,6 +166,28 @@ class PosHomeDashboardState {
 
     return const PosHomeActionAccess(isVisible: true, isEnabled: true);
   }
+}
+
+class PosHomeSummaryState {
+  const PosHomeSummaryState({
+    required this.scope,
+    required this.currencyCode,
+    required this.grossSalesAmount,
+    required this.transactionCount,
+    required this.refundAmount,
+    required this.refundCount,
+    required this.discountAmount,
+    required this.netSalesAmount,
+  });
+
+  final String scope;
+  final String currencyCode;
+  final double grossSalesAmount;
+  final int transactionCount;
+  final double refundAmount;
+  final int refundCount;
+  final double discountAmount;
+  final double netSalesAmount;
 }
 
 class PosHomeActionAccess {

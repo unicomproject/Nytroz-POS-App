@@ -30,6 +30,7 @@ import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_shell_n
 import 'package:nytroz_pos/features/pos_shell/presentation/screens/pos_home_screen.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_desktop_top_bar.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_mobile_top_bar.dart';
+import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/dashboard_action_card.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/pos_shell_nav_item.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/sidebar/pos_sidebar.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
@@ -38,6 +39,7 @@ import 'package:nytroz_pos/features/cart/data/datasources/pos_barcode_remote_dat
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_search_coordinator.dart';
+import 'package:nytroz_pos/features/cash_drawer/presentation/screens/pos_close_till_screen.dart';
 import 'package:nytroz_pos/features/sale/presentation/providers/pos_barcode_scan_controller.dart';
 import 'package:nytroz_pos/features/sale/presentation/providers/pos_camera_scanner_provider.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_camera_barcode_scanner.dart';
@@ -53,15 +55,42 @@ import 'support/pos_catalog_test_fixtures.dart';
 void main() {
   group('POS Home', () {
     const posTabletViewport = Size(1280, 768);
-    testWidgets('/pos/home renders the dashboard and Start Sale hero', (
+    testWidgets('/pos/home renders the current dashboard actions', (
       tester,
     ) async {
       await _pumpPosHome(tester, size: const Size(1200, 900));
 
       expect(find.byType(PosHomeScreen), findsOneWidget);
-      expect(find.text('Hello, Cashier 👋'), findsOneWidget);
-      expect(find.text('Start a Sale'), findsOneWidget);
-      expect(find.text('Start New Sale'), findsOneWidget);
+      expect(find.text('Cashier'), findsOneWidget);
+      expect(find.text('Start New Sale'), findsWidgets);
+      expect(find.text('Cash Drawer'), findsWidgets);
+    });
+
+    testWidgets('End Shift opens Close Till with the end-shift flag', (
+      tester,
+    ) async {
+      await _pumpPosHome(
+        tester,
+        size: const Size(1200, 900),
+        permissionCodes: const [
+          ..._defaultPermissions,
+          PosPermissionCodes.closeTill,
+        ],
+      );
+
+      final endShiftAction = find.byWidgetPredicate(
+        (widget) => widget is PosHomeActionTile && widget.title == 'End Shift',
+      );
+      expect(endShiftAction, findsOneWidget);
+      await tester.tap(endShiftAction);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PosCloseTillScreen), findsOneWidget);
+      final state = GoRouterState.of(
+        tester.element(find.byType(PosCloseTillScreen)),
+      );
+      expect(state.uri.path, '/pos/cash-drawer/close-till');
+      expect(state.uri.queryParameters['endShift'], 'true');
     });
 
     testWidgets('renders the complete reference dashboard cards', (
@@ -70,12 +99,9 @@ void main() {
       await _pumpPosHome(tester, size: const Size(1200, 900));
 
       expect(find.text('Manage Online Orders'), findsNothing);
-      expect(find.text('Quick Actions'), findsOneWidget);
-      expect(find.text('Returns & Refunds'), findsWidgets);
-      expect(find.text('Add Customer'), findsWidgets);
-      expect(find.text('Parked Sales'), findsOneWidget);
+      expect(find.text('Returns & Exchanges'), findsOneWidget);
+      expect(find.text('Resume Held Sales'), findsOneWidget);
       expect(find.text('Cash Drawer'), findsWidgets);
-      expect(find.text('Orders'), findsNothing);
       expect(find.text('Returns Today'), findsNothing);
       expect(find.text('Refunded Today'), findsNothing);
       expect(find.text('Total Customers'), findsNothing);
@@ -105,25 +131,21 @@ void main() {
       );
 
       expect(find.text('Manage Online Orders'), findsNothing);
-      expect(find.text('Start a Sale'), findsOneWidget);
-      expect(find.text('Returns & Refunds'), findsWidgets);
-      expect(find.text('Add Customer'), findsWidgets);
-      expect(find.text('Parked Sales'), findsOneWidget);
+      expect(find.text('Start New Sale'), findsWidgets);
+      expect(find.text('Returns & Exchanges'), findsOneWidget);
+      expect(find.text('Resume Held Sales'), findsOneWidget);
       expect(find.text('Cash Drawer'), findsWidgets);
     });
 
-    testWidgets('tablet width shows the sidebar', (tester) async {
+    testWidgets('POS Home uses its dedicated navigation at tablet width', (
+      tester,
+    ) async {
       await _pumpPosHome(tester, size: const Size(1024, 768));
 
-      expect(find.byType(PosSidebar), findsOneWidget);
-      expect(find.text('SCS-TIX'), findsOneWidget);
-      expect(find.text('NytrozPOS'), findsNothing);
+      expect(find.byType(PosSidebar), findsNothing);
       expect(find.byType(PosDesktopTopBar), findsNothing);
       expect(find.byType(PosMobileTopBar), findsNothing);
-      final homeItem = tester.widget<PosShellNavItem>(
-        find.widgetWithText(PosShellNavItem, 'Home'),
-      );
-      expect(homeItem.selected, isTrue);
+      expect(find.byType(PosHomeScreen), findsOneWidget);
     });
 
     testWidgets('POS Home shell renders while dashboard provider is loading', (
@@ -139,9 +161,9 @@ void main() {
       );
 
       expect(find.byType(PosHomeScreen), findsOneWidget);
-      expect(find.text('Hello, Cashier 👋'), findsOneWidget);
-      expect(find.text('Start a Sale'), findsOneWidget);
-      expect(find.text('Dashboard metrics are loading.'), findsOneWidget);
+      expect(find.text('Cashier'), findsOneWidget);
+      expect(find.text('Start New Sale'), findsWidgets);
+      expect(find.text('Dashboard information is loading.'), findsOneWidget);
 
       pendingDashboard.complete(_referenceDashboardState(_defaultPermissions));
     });
@@ -158,8 +180,8 @@ void main() {
       );
 
       expect(find.byType(PosHomeScreen), findsOneWidget);
-      expect(find.text('Hello, Cashier 👋'), findsOneWidget);
-      expect(find.text('Start a Sale'), findsOneWidget);
+      expect(find.text('Cashier'), findsOneWidget);
+      expect(find.text('Start New Sale'), findsWidgets);
       expect(find.text('Dashboard failed'), findsOneWidget);
       expect(find.widgetWithText(TextButton, 'Retry'), findsOneWidget);
     });
@@ -167,7 +189,7 @@ void main() {
     testWidgets('Home remains on /pos/home when tapped', (tester) async {
       await _pumpPosHome(tester, size: const Size(1024, 768));
 
-      await tester.tap(_sidebarDestination('Home'));
+      _goFromCurrentRoute(tester, '/pos/home');
       await tester.pumpAndSettle();
 
       expect(find.byType(PosHomeScreen), findsOneWidget);
@@ -182,6 +204,8 @@ void main() {
         size: const Size(1024, 768),
         permissionCodes: const [PosPermissionCodes.viewHome],
       );
+      _goFromCurrentRoute(tester, '/pos/new-sale');
+      await tester.pumpAndSettle();
 
       expect(_sidebarDestination('Home'), findsOneWidget);
       expect(_sidebarDestination('New Sale'), findsNothing);
@@ -210,6 +234,8 @@ void main() {
           'reports.view',
         ],
       );
+      _goFromCurrentRoute(tester, '/pos/new-sale');
+      await tester.pumpAndSettle();
 
       expect(_sidebarDestination('Home'), findsOneWidget);
       expect(_sidebarDestination('New Sale'), findsOneWidget);
@@ -220,7 +246,7 @@ void main() {
       expect(_sidebarDestination('Reports'), findsOneWidget);
     });
 
-    testWidgets('New Sale sidebar destination opens placeholder screen', (
+    testWidgets('New Sale home destination opens the sale screen', (
       tester,
     ) async {
       await _pumpPosHome(
@@ -233,7 +259,7 @@ void main() {
         ],
       );
 
-      await tester.tap(_sidebarDestination('New Sale'));
+      _goFromCurrentRoute(tester, '/pos/new-sale');
       await tester.pumpAndSettle();
 
       expect(find.byType(PosNewSaleScreen), findsOneWidget);
@@ -920,11 +946,15 @@ void main() {
         ],
       );
 
-      final button = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Start New Sale'),
+      final action = tester.widget<PosHomeActionTile>(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is PosHomeActionTile && widget.title == 'Start New Sale',
+        ),
       );
 
-      expect(button.onPressed, isNull);
+      expect(action.enabled, isFalse);
+      expect(action.onPressed, isNull);
     });
 
     testWidgets('phone width POS Home does not show the shared top bar', (

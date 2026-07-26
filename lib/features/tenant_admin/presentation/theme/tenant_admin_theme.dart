@@ -20,6 +20,32 @@ class TenantAdminColors {
   static const info = Color(0xFF2563EB);
   static const pending = Color(0xFF7C3AED);
   static const offline = Color(0xFF94A3B8);
+  static const posHomeProfileStart = Color(0xFF142C55);
+  static const posHomeProfileEnd = Color(0xFF0B1C38);
+  static const posHomeSaleCard = Color(0xFFE8F2FF);
+  static const posHomeReturnsCard = Color(0xFFFFF0E6);
+  static const posHomeCashCard = Color(0xFFE8F8F0);
+  static const posHomeOrdersCard = Color(0xFFF1EBFF);
+  static const posHomeHeldCard = Color(0xFFFFF7D9);
+  static const posHomeEndShiftCard = Color(0xFFFFE9ED);
+  static const posHomeDot = Color(0x29081B3A);
+  static const posHomeDarkBackground = Color(0xFF030303);
+  static const posHomeDarkSurface = Color(0xFF101010);
+  static const posHomeDarkBorder = Color(0xFF555555);
+  static const posHomeOrangeStart = Color(0xFFFFC400);
+  static const posHomeOrangeEnd = Color(0xFFFF6A00);
+  static const posHomeTealStart = Color(0xFF13DCC7);
+  static const posHomeTealEnd = Color(0xFF009688);
+  static const posHomeGreenStart = Color(0xFF9CEB22);
+  static const posHomeGreenEnd = Color(0xFF22B814);
+  static const posHomeBlueStart = Color(0xFF18B9FF);
+  static const posHomeBlueEnd = Color(0xFF0878DF);
+  static const posHomePurpleStart = Color(0xFFB759D0);
+  static const posHomePurpleEnd = Color(0xFF6B1AA4);
+  static const posHomeRedStart = Color(0xFFFF685C);
+  static const posHomeRedEnd = Color(0xFFF51F2B);
+  static const posHomeProfileBlueStart = Color(0xFF53B5FF);
+  static const posHomeProfileBlueEnd = Color(0xFF0752C8);
 }
 
 class TenantAdminSpacing {

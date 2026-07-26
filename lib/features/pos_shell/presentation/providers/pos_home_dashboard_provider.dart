@@ -51,8 +51,7 @@ final posHomeDashboardProvider =
         outletId: outletId.isEmpty ? null : outletId,
         tillId: tillId.isEmpty ? null : tillId,
         deviceId: deviceId.isEmpty ? null : deviceId,
-        deviceFingerprint:
-            deviceFingerprint.isEmpty ? null : deviceFingerprint,
+        deviceFingerprint: deviceFingerprint.isEmpty ? null : deviceFingerprint,
       );
 
   if (!payload.contextResolved) {
@@ -209,6 +208,24 @@ PosHomeDashboardState _mapPayloadToDashboardState({
 
   return PosHomeDashboardState(
     fallbackUserDisplayName: payload.userDisplayName,
+    cashierRoleLabel: payload.cashierRoleLabel,
+    businessDisplayName: payload.businessDisplayName,
+    businessLogoUrl: payload.businessLogoUrl,
+    outletName: payload.outletName,
+    deviceName: payload.deviceName,
+    deviceStatus: payload.deviceStatus,
+    summary: payload.summary == null
+        ? null
+        : PosHomeSummaryState(
+            scope: payload.summary!.scope,
+            currencyCode: payload.summary!.currencyCode,
+            grossSalesAmount: payload.summary!.grossSalesAmount,
+            transactionCount: payload.summary!.transactionCount,
+            refundAmount: payload.summary!.refundAmount,
+            refundCount: payload.summary!.refundCount,
+            discountAmount: payload.summary!.discountAmount,
+            netSalesAmount: payload.summary!.netSalesAmount,
+          ),
     tillLabel: payload.tillName,
     tillStatusLabel: payload.tillStatusLabel,
     tillDisplayLabel: payload.tillDisplayLabel,

@@ -38,8 +38,7 @@ class PosHomeRemoteDatasource {
         queryParameters: queryParameters,
       );
       stopwatch.stop();
-      final fingerprintAttached =
-          deviceFingerprint?.trim().isNotEmpty == true;
+      final fingerprintAttached = deviceFingerprint?.trim().isNotEmpty == true;
       developer.log(
         'API success. step=pos-home endpoint=${ApiEndpoints.posHome} '
         'status=${response.statusCode} '
@@ -111,6 +110,12 @@ class PosHomeDashboardPayload {
     this.serverNowUtc,
     this.outletTimezone,
     this.businessDate,
+    this.cashierRoleLabel = '',
+    this.businessDisplayName = '',
+    this.businessLogoUrl,
+    this.deviceName = '',
+    this.deviceStatus = '',
+    this.summary,
   });
 
   final bool contextResolved;
@@ -132,6 +137,12 @@ class PosHomeDashboardPayload {
   final DateTime? serverNowUtc;
   final String? outletTimezone;
   final DateTime? businessDate;
+  final String cashierRoleLabel;
+  final String businessDisplayName;
+  final String? businessLogoUrl;
+  final String deviceName;
+  final String deviceStatus;
+  final PosHomeSummaryPayload? summary;
 
   factory PosHomeDashboardPayload.fromJson(Map<String, dynamic> json) {
     final contextResolved = json['contextResolved'] == true;
@@ -167,6 +178,9 @@ class PosHomeDashboardPayload {
     final cards = _map(json['cards']);
     final time = _map(json['time']);
     final notifications = _map(json['notifications']);
+    final branding = _map(json['branding']);
+    final device = _map(json['device']);
+    final summary = _map(json['summary']);
 
     final areaName = _string(till['areaName'], fallback: '');
     final number = _int(till['number']);
@@ -214,6 +228,12 @@ class PosHomeDashboardPayload {
       outletTimezone: _nullableString(time['outletTimezone']),
       businessDate:
           _parseDateOnly(time['businessDate'] ?? till['businessDate']),
+      cashierRoleLabel: _string(cashier['roleLabel']),
+      businessDisplayName: _string(branding['displayName']),
+      businessLogoUrl: _nullableString(branding['logoUrl']),
+      deviceName: _string(device['name']),
+      deviceStatus: _string(device['status']),
+      summary: summary.isEmpty ? null : PosHomeSummaryPayload.fromJson(summary),
     );
   }
 
@@ -340,6 +360,47 @@ class PosHomeDashboardPayload {
 
     return DateTime(parsed.year, parsed.month, parsed.day);
   }
+}
+
+class PosHomeSummaryPayload {
+  const PosHomeSummaryPayload({
+    required this.scope,
+    required this.currencyCode,
+    required this.grossSalesAmount,
+    required this.transactionCount,
+    required this.refundAmount,
+    required this.refundCount,
+    required this.discountAmount,
+    required this.netSalesAmount,
+  });
+
+  final String scope;
+  final String currencyCode;
+  final double grossSalesAmount;
+  final int transactionCount;
+  final double refundAmount;
+  final int refundCount;
+  final double discountAmount;
+  final double netSalesAmount;
+
+  factory PosHomeSummaryPayload.fromJson(Map<String, dynamic> json) {
+    return PosHomeSummaryPayload(
+      scope: json['scope']?.toString() ?? 'CURRENT_TILL_SESSION',
+      currencyCode: json['currencyCode']?.toString() ?? '',
+      grossSalesAmount: _number(json['grossSalesAmount']),
+      transactionCount: _whole(json['transactionCount']),
+      refundAmount: _number(json['refundAmount']),
+      refundCount: _whole(json['refundCount']),
+      discountAmount: _number(json['discountAmount']),
+      netSalesAmount: _number(json['netSalesAmount']),
+    );
+  }
+
+  static double _number(Object? value) =>
+      value is num ? value.toDouble() : double.tryParse('$value') ?? 0;
+
+  static int _whole(Object? value) =>
+      value is num ? value.toInt() : int.tryParse('$value') ?? 0;
 }
 
 class PosHomeCardsPayload {

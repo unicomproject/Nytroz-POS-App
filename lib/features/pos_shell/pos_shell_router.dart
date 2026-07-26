@@ -44,6 +44,8 @@ List<RouteBase> posShellRoutes(Ref ref) {
           subtitle: header.subtitle,
           showTopBar: shouldShowPosTopBar(state.uri.path),
           showTopBarSearch: shouldShowPosTopBarSearch(state.uri.path),
+          showSidebar: state.uri.path != '/pos/home' &&
+              !state.uri.path.startsWith('/pos/home/'),
           child: child,
         );
       },
@@ -152,113 +154,102 @@ List<RouteBase> posShellRoutes(Ref ref) {
           routes: [
             GoRoute(
               path: 'summary',
-              builder: (context, state) =>
-                  _canAccessReturnsPath(
-                    ref.read(authSessionProvider),
-                    '/pos/returns-refunds/summary',
-                  )
-                      ? const PosReturnSaleSummaryScreen()
-                      : const TenantAdminForbiddenScreen(),
+              builder: (context, state) => _canAccessReturnsPath(
+                ref.read(authSessionProvider),
+                '/pos/returns-refunds/summary',
+              )
+                  ? const PosReturnSaleSummaryScreen()
+                  : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
               path: 'eligibility',
-              builder: (context, state) =>
-                  _canAccessReturnsPath(
-                    ref.read(authSessionProvider),
-                    '/pos/returns-refunds/eligibility',
-                  )
-                      ? const PosReturnEligibilityScreen()
-                      : const TenantAdminForbiddenScreen(),
+              builder: (context, state) => _canAccessReturnsPath(
+                ref.read(authSessionProvider),
+                '/pos/returns-refunds/eligibility',
+              )
+                  ? const PosReturnEligibilityScreen()
+                  : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
               path: 'check-eligibility',
-              builder: (context, state) =>
-                  _canAccessReturnsPath(
-                    ref.read(authSessionProvider),
-                    '/pos/returns-refunds/check-eligibility',
-                  )
-                      ? const PosReturnCheckEligibilityScreen()
-                      : const TenantAdminForbiddenScreen(),
+              builder: (context, state) => _canAccessReturnsPath(
+                ref.read(authSessionProvider),
+                '/pos/returns-refunds/check-eligibility',
+              )
+                  ? const PosReturnCheckEligibilityScreen()
+                  : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
               path: 'return-reason',
-              builder: (context, state) =>
-                  _canAccessReturnsPath(
-                    ref.read(authSessionProvider),
-                    '/pos/returns-refunds/return-reason',
-                  )
-                      ? const PosReturnReasonScreen()
-                      : const TenantAdminForbiddenScreen(),
+              builder: (context, state) => _canAccessReturnsPath(
+                ref.read(authSessionProvider),
+                '/pos/returns-refunds/return-reason',
+              )
+                  ? const PosReturnReasonScreen()
+                  : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
               path: 'inspect-items',
-              builder: (context, state) =>
-                  _canAccessReturnsPath(
-                    ref.read(authSessionProvider),
-                    '/pos/returns-refunds/inspect-items',
-                  )
-                      ? const PosReturnInspectItemsScreen()
-                      : const TenantAdminForbiddenScreen(),
+              builder: (context, state) => _canAccessReturnsPath(
+                ref.read(authSessionProvider),
+                '/pos/returns-refunds/inspect-items',
+              )
+                  ? const PosReturnInspectItemsScreen()
+                  : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
               path: 'choose-option',
-              builder: (context, state) =>
-                  _canAccessReturnsPath(
-                    ref.read(authSessionProvider),
-                    '/pos/returns-refunds/choose-option',
-                  )
-                      ? const PosReturnChooseOptionScreen()
-                      : const TenantAdminForbiddenScreen(),
+              builder: (context, state) => _canAccessReturnsPath(
+                ref.read(authSessionProvider),
+                '/pos/returns-refunds/choose-option',
+              )
+                  ? const PosReturnChooseOptionScreen()
+                  : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
               path: 'refund-details',
-              builder: (context, state) =>
-                  _canAccessReturnsPath(
-                    ref.read(authSessionProvider),
-                    '/pos/returns-refunds/refund-details',
-                  )
-                      ? const PosReturnRefundDetailsScreen()
-                      : const TenantAdminForbiddenScreen(),
+              builder: (context, state) => _canAccessReturnsPath(
+                ref.read(authSessionProvider),
+                '/pos/returns-refunds/refund-details',
+              )
+                  ? const PosReturnRefundDetailsScreen()
+                  : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
               path: 'create-credit',
-              builder: (context, state) =>
-                  _canAccessReturnsPath(
-                    ref.read(authSessionProvider),
-                    '/pos/returns-refunds/create-credit',
-                  )
-                      ? const PosReturnCreateCreditScreen()
-                      : const TenantAdminForbiddenScreen(),
+              builder: (context, state) => _canAccessReturnsPath(
+                ref.read(authSessionProvider),
+                '/pos/returns-refunds/create-credit',
+              )
+                  ? const PosReturnCreateCreditScreen()
+                  : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
               path: 'exchange',
-              builder: (context, state) =>
-                  _canAccessReturnsPath(
-                    ref.read(authSessionProvider),
-                    '/pos/returns-refunds/exchange',
-                  )
-                      ? const PosReturnExchangeFlowScreen()
-                      : const TenantAdminForbiddenScreen(),
+              builder: (context, state) => _canAccessReturnsPath(
+                ref.read(authSessionProvider),
+                '/pos/returns-refunds/exchange',
+              )
+                  ? const PosReturnExchangeFlowScreen()
+                  : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
               path: 'settlement',
-              builder: (context, state) =>
-                  _canAccessReturnsPath(
-                    ref.read(authSessionProvider),
-                    '/pos/returns-refunds/settlement',
-                  )
-                      ? const PosReturnSettlementScreen()
-                      : const TenantAdminForbiddenScreen(),
+              builder: (context, state) => _canAccessReturnsPath(
+                ref.read(authSessionProvider),
+                '/pos/returns-refunds/settlement',
+              )
+                  ? const PosReturnSettlementScreen()
+                  : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
               path: 'receipt',
-              builder: (context, state) =>
-                  _canAccessReturnsPath(
-                    ref.read(authSessionProvider),
-                    '/pos/returns-refunds/receipt',
-                  )
-                      ? const PosReturnReceiptScreen()
-                      : const TenantAdminForbiddenScreen(),
+              builder: (context, state) => _canAccessReturnsPath(
+                ref.read(authSessionProvider),
+                '/pos/returns-refunds/receipt',
+              )
+                  ? const PosReturnReceiptScreen()
+                  : const TenantAdminForbiddenScreen(),
             ),
           ],
         ),
