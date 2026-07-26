@@ -124,7 +124,7 @@ List<Widget> buildPosHomeActionCards({
       TenantAdminColors.posHomeRedEnd,
     ],
     accent: TenantAdminColors.danger,
-    route: '/pos/cash-drawer/close-till',
+    route: '/pos/cash-drawer/close-till?endShift=true',
   );
   return cards;
 }
