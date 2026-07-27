@@ -5,9 +5,14 @@ import '../../../application/state/pos_home_dashboard_state.dart';
 import 'session_summary_card.dart';
 
 class PosHomeSummarySection extends StatelessWidget {
-  const PosHomeSummarySection({super.key, required this.summary});
+  const PosHomeSummarySection({
+    super.key,
+    required this.summary,
+    this.onRetry,
+  });
 
   final PosHomeSummaryState? summary;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +25,20 @@ class PosHomeSummarySection extends StatelessWidget {
           borderRadius: BorderRadius.circular(TenantAdminRadius.md),
           border: Border.all(color: TenantAdminColors.border),
         ),
-        child: const Text('Current session summary is unavailable.'),
+        child: Row(
+          children: [
+            const Expanded(
+              child: Text('Current session summary is unavailable.'),
+            ),
+            if (onRetry != null)
+              TextButton.icon(
+                key: const Key('pos-home-summary-retry'),
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Retry'),
+              ),
+          ],
+        ),
       );
     }
     final data = summary!;

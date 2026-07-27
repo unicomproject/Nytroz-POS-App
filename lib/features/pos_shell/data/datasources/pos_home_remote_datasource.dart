@@ -233,7 +233,11 @@ class PosHomeDashboardPayload {
       businessLogoUrl: _nullableString(branding['logoUrl']),
       deviceName: _string(device['name']),
       deviceStatus: _string(device['status']),
-      summary: summary.isEmpty ? null : PosHomeSummaryPayload.fromJson(summary),
+      summary: summary.isEmpty
+          ? PosHomeSummaryPayload.zero(
+              currencyCode: _string(till['currencyCode'], fallback: 'LKR'),
+            )
+          : PosHomeSummaryPayload.fromJson(summary),
     );
   }
 
@@ -382,6 +386,19 @@ class PosHomeSummaryPayload {
   final int refundCount;
   final double discountAmount;
   final double netSalesAmount;
+
+  factory PosHomeSummaryPayload.zero({required String currencyCode}) {
+    return PosHomeSummaryPayload(
+      scope: 'CURRENT_TILL_SESSION',
+      currencyCode: currencyCode,
+      grossSalesAmount: 0,
+      transactionCount: 0,
+      refundAmount: 0,
+      refundCount: 0,
+      discountAmount: 0,
+      netSalesAmount: 0,
+    );
+  }
 
   factory PosHomeSummaryPayload.fromJson(Map<String, dynamic> json) {
     return PosHomeSummaryPayload(

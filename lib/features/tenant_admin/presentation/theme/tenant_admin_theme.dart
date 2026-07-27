@@ -46,6 +46,17 @@ class TenantAdminColors {
   static const posHomeRedEnd = Color(0xFFF51F2B);
   static const posHomeProfileBlueStart = Color(0xFF53B5FF);
   static const posHomeProfileBlueEnd = Color(0xFF0752C8);
+  static const posNewSaleAccent = Color(0xFFFF2D1A);
+  static const posNewSaleAccentEnd = Color(0xFFFF6A00);
+  static const posNewSaleSearchText = Color(0xFF101828);
+  static const posNewSaleSearchHint = Color(0xFF173A84);
+  static const posNewSaleOnline = Color(0xFF00E522);
+  static const posNewSaleOnlineBorder = Color(0xFF006B1B);
+  static const posNewSaleHoldAction = Color(0xFFA600BE);
+  static const posNewSaleClearAction = Color(0xFFFF3B30);
+  static const posNewSaleDiscountAction = Color(0xFF008F8B);
+  static const posNewSaleCustomAction = Color(0xFFFF8A00);
+  static const posNewSaleCustomerAction = Color(0xFF2563EB);
 }
 
 class TenantAdminSpacing {

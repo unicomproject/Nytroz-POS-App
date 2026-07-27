@@ -139,82 +139,127 @@ class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen> {
         widget.onBarcodeCaptured?.call(barcode);
         ref.read(posBarcodeScanControllerProvider.notifier).enqueue(barcode);
       },
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final useSideBySide =
-              constraints.maxWidth >= TenantAdminBreakpoints.tablet;
-          final padding = EdgeInsets.all(
-            constraints.maxWidth >= TenantAdminBreakpoints.tablet
-                ? TenantAdminSpacing.lg
-                : TenantAdminSpacing.md,
-          );
+      child: ColoredBox(
+        color: TenantAdminColors.posHomeDarkBackground,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final useSideBySide =
+                constraints.maxWidth >= TenantAdminBreakpoints.tablet;
+            final padding = EdgeInsets.fromLTRB(
+              constraints.maxWidth >= TenantAdminBreakpoints.tablet
+                  ? TenantAdminSpacing.md
+                  : TenantAdminSpacing.md,
+              TenantAdminSpacing.md,
+              constraints.maxWidth >= TenantAdminBreakpoints.tablet
+                  ? TenantAdminSpacing.md
+                  : TenantAdminSpacing.md,
+              TenantAdminSpacing.md,
+            );
 
-          if (!useSideBySide) {
-            final cartHeight = constraints.maxHeight < 720 ? 360.0 : 390.0;
+            if (!useSideBySide) {
+              return SingleChildScrollView(
+                padding: padding,
+                child: SizedBox(
+                  height: constraints.maxHeight < 760 ? 1060 : 1180,
+                  child: const Column(
+                    children: [
+                      Expanded(
+                        child: _ProductPanel(),
+                      ),
+                      SizedBox(height: TenantAdminSpacing.md),
+                      SizedBox(
+                        height: 500,
+                        child: PosEmptyCartPanel(),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
 
             return Padding(
               padding: padding,
-              child: Column(
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Expanded(
-                    flex: 6,
-                    child: _ProductArea(showActionBar: true),
+                  Expanded(
+                    flex: 3,
+                    child: KeyedSubtree(
+                      key: Key('new-sale-products-panel'),
+                      child: _ProductPanel(),
+                    ),
                   ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  SizedBox(
-                    height: cartHeight,
-                    child: const PosEmptyCartPanel(),
+                  SizedBox(width: TenantAdminSpacing.md),
+                  Expanded(
+                    flex: 2,
+                    child: KeyedSubtree(
+                      key: Key('new-sale-cart-panel'),
+                      child: PosEmptyCartPanel(),
+                    ),
                   ),
                 ],
               ),
             );
-          }
-
-          final cartWidth = constraints.maxWidth < 1180 ? 330.0 : 360.0;
-
-          return Padding(
-            padding: padding,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Expanded(
-                  child: _ProductArea(showActionBar: true),
-                ),
-                const SizedBox(width: TenantAdminSpacing.md),
-                SizedBox(
-                  width: cartWidth,
-                  child: const PosEmptyCartPanel(),
-                ),
-              ],
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }
 }
 
-class _ProductArea extends StatelessWidget {
-  const _ProductArea({
-    this.showActionBar = false,
-  });
-
-  final bool showActionBar;
+class _ProductPanel extends StatelessWidget {
+  const _ProductPanel();
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: TenantAdminColors.surface,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        border: Border.all(color: TenantAdminColors.border),
+        boxShadow: TenantAdminShadows.card,
+      ),
+      child: const Padding(
+        padding: EdgeInsets.all(TenantAdminSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _QuickProductsTitle(),
+            SizedBox(height: TenantAdminSpacing.md),
+            PosProductCategoryChips(),
+            SizedBox(height: TenantAdminSpacing.md),
+            _ProductSectionHeader(),
+            SizedBox(height: TenantAdminSpacing.sm),
+            Expanded(child: PosProductGrid()),
+            SizedBox(height: TenantAdminSpacing.md),
+            PosNewSaleActionBar(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickProductsTitle extends StatelessWidget {
+  const _QuickProductsTitle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
       children: [
-        const PosProductCategoryChips(),
-        const SizedBox(height: TenantAdminSpacing.sm),
-        const _ProductSectionHeader(),
-        const SizedBox(height: TenantAdminSpacing.sm),
-        const Expanded(child: PosProductGrid()),
-        if (showActionBar) ...[
-          const SizedBox(height: TenantAdminSpacing.sm),
-          const PosNewSaleActionBar(),
-        ],
+        const Icon(
+          Icons.grid_view_rounded,
+          color: TenantAdminColors.danger,
+          size: 24,
+        ),
+        const SizedBox(width: TenantAdminSpacing.sm),
+        Text(
+          'Quick Products',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: TenantAdminColors.bodyText,
+                fontWeight: FontWeight.w900,
+              ),
+        ),
       ],
     );
   }

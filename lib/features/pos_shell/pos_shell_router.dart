@@ -45,7 +45,13 @@ List<RouteBase> posShellRoutes(Ref ref) {
           showTopBar: shouldShowPosTopBar(state.uri.path),
           showTopBarSearch: shouldShowPosTopBarSearch(state.uri.path),
           showSidebar: state.uri.path != '/pos/home' &&
+              state.uri.path != '/pos/new-sale' &&
               !state.uri.path.startsWith('/pos/home/'),
+          showBottomNavigation: shouldShowPosCashierBottomNavigation(
+            state.uri.path,
+            ref.read(authSessionProvider),
+          ),
+          isNewSale: state.uri.path == '/pos/new-sale',
           child: child,
         );
       },
@@ -325,6 +331,18 @@ bool shouldShowPosTopBar(String path) {
 
 bool shouldShowPosTopBarSearch(String path) {
   return !path.startsWith('/pos/returns-refunds');
+}
+
+bool shouldShowPosCashierBottomNavigation(
+  String path,
+  AuthSession? session,
+) {
+  return switch (path) {
+    '/pos/home' => _canViewPosHome(session),
+    '/pos/new-sale' => _canStartNewSale(session),
+    '/pos/customers' => _canViewCustomers(session),
+    _ => false,
+  };
 }
 
 _PosShellHeader _headerForPath(String path) {

@@ -26,6 +26,7 @@ class PosHomeScreen extends ConsumerWidget {
       ),
       error: (error, _) => PosHomeDashboard(
         dashboard: shellDashboard,
+        onSummaryRetry: () => ref.invalidate(posHomeDashboardProvider),
         status: _DashboardInlineStatus.error(
           message: error is PosHomeException
               ? error.message
