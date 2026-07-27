@@ -10,6 +10,7 @@ import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_new_s
 import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../../../core/access/pos_access_codes.dart';
+import '../../../../../core/access/pos_permission_access.dart';
 import '../../../../auth/presentation/providers/session_provider.dart';
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
@@ -30,13 +31,14 @@ class PosNewSaleActionBar extends ConsumerWidget {
             true;
     final canApplyDiscount =
         session?.hasPermission(PosPermissionCodes.applySaleDiscount) == true;
+    final canClearCart = PosPermissionAccess.canClearCart(
+      session?.permissionCodes.toSet() ?? const {},
+    );
     final canCreateParkedSale =
         session?.hasPermission(PosPermissionCodes.createParkedSale) == true;
     final canViewParkedSales =
         session?.hasPermission(PosPermissionCodes.viewParkedSales) == true ||
             canCreateParkedSale;
-    final parkedSaleLabel =
-        cart.hasItems ? 'Save as Parked Sale' : 'Recall Parked Sale';
     final parkedSaleAction = cart.hasItems
         ? canCreateParkedSale
             ? () => _saveParkedSale(context, ref, cart)
@@ -46,49 +48,64 @@ class PosNewSaleActionBar extends ConsumerWidget {
             : null;
     final customerLabel =
         selectedCustomer == null ? 'Add Customer' : 'Change customer';
-    final actions = <Widget>[
-      if (canCreateCustomer)
-        Expanded(
-          child: _ActionButton(
-            icon: Icons.person_add_alt_1_outlined,
-            label: customerLabel,
-            onPressed: () async {
-              final customer = await showPosNewSaleCustomerDialog(
-                context: context,
-                ref: ref,
-                canCreateCustomer: canCreateCustomer,
-              );
-              if (customer != null) {
-                ref.read(posNewSaleCartProvider.notifier).setCustomer(customer);
-              }
-            },
-          ),
+    final actions = <_ActionButton>[
+      if (canCreateParkedSale || canViewParkedSales)
+        _ActionButton(
+          icon: Icons.pause_circle_outline_rounded,
+          label: cart.hasItems ? 'Hold Sale' : 'Recall Sale',
+          backgroundColor: TenantAdminColors.posNewSaleHoldAction,
+          tooltip: cart.hasItems
+              ? 'Save current cart as a parked sale'
+              : parkedSaleCount > 0
+                  ? 'Recall a parked sale'
+                  : 'No parked sales to recall',
+          onPressed: parkedSaleAction,
+        ),
+      if (canClearCart)
+        _ActionButton(
+          icon: Icons.delete_outline_rounded,
+          label: 'Clear Cart',
+          backgroundColor: TenantAdminColors.posNewSaleClearAction,
+          tooltip: cart.hasItems
+              ? 'Remove every item from the current sale'
+              : 'The current sale is empty',
+          onPressed:
+              cart.hasItems ? () => _confirmClearCart(context, ref) : null,
         ),
       if (canApplyDiscount)
-        Expanded(
-          child: _ActionButton(
-            icon: Icons.discount_outlined,
-            label: cart.hasDiscount ? 'Edit Discount' : 'Apply Discount',
-            tooltip: cart.hasItems
-                ? 'Apply discount to this cart'
-                : 'Add products before applying a discount',
-            onPressed: cart.hasItems
-                ? () => showPosDiscountDialog(context: context, ref: ref)
-                : null,
-          ),
+        _ActionButton(
+          icon: Icons.discount_outlined,
+          label: cart.hasDiscount ? 'Edit Discount' : 'Add Discount',
+          backgroundColor: TenantAdminColors.posNewSaleDiscountAction,
+          tooltip: cart.hasItems
+              ? 'Apply discount to this cart'
+              : 'Add products before applying a discount',
+          onPressed: cart.hasItems
+              ? () => showPosDiscountDialog(context: context, ref: ref)
+              : null,
         ),
-      if (canCreateParkedSale || canViewParkedSales)
-        Expanded(
-          child: _ActionButton(
-            icon: Icons.pause_circle_outline_rounded,
-            label: parkedSaleLabel,
-            tooltip: cart.hasItems
-                ? 'Save current cart as a parked sale'
-                : parkedSaleCount > 0
-                    ? 'Recall a parked sale'
-                    : 'No parked sales to recall',
-            onPressed: parkedSaleAction,
-          ),
+      const _ActionButton(
+        icon: Icons.add_box_outlined,
+        label: 'Custom Item',
+        backgroundColor: TenantAdminColors.posNewSaleCustomAction,
+        tooltip: 'Custom items are not available in the current POS contract',
+        onPressed: null,
+      ),
+      if (canCreateCustomer)
+        _ActionButton(
+          icon: Icons.person_add_alt_1_outlined,
+          label: customerLabel,
+          backgroundColor: TenantAdminColors.posNewSaleCustomerAction,
+          onPressed: () async {
+            final customer = await showPosNewSaleCustomerDialog(
+              context: context,
+              ref: ref,
+              canCreateCustomer: canCreateCustomer,
+            );
+            if (customer != null) {
+              ref.read(posNewSaleCartProvider.notifier).setCustomer(customer);
+            }
+          },
         ),
     ];
 
@@ -96,14 +113,60 @@ class PosNewSaleActionBar extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    return Row(
-      children: [
-        for (var index = 0; index < actions.length; index += 1) ...[
-          if (index > 0) const SizedBox(width: TenantAdminSpacing.sm),
-          actions[index],
-        ],
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 680) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (var index = 0; index < actions.length; index += 1) ...[
+                  if (index > 0) const SizedBox(width: TenantAdminSpacing.sm),
+                  SizedBox(width: 150, child: actions[index]),
+                ],
+              ],
+            ),
+          );
+        }
+
+        return Row(
+          children: [
+            for (var index = 0; index < actions.length; index += 1) ...[
+              if (index > 0) const SizedBox(width: TenantAdminSpacing.sm),
+              Expanded(child: actions[index]),
+            ],
+          ],
+        );
+      },
     );
+  }
+
+  Future<void> _confirmClearCart(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final confirmed = await showAppDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Clear current sale?'),
+        content: const Text(
+          'All items and the applied discount will be removed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Clear Cart'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      ref.read(posNewSaleCartProvider.notifier).clear();
+    }
   }
 
   Future<void> _saveParkedSale(
@@ -267,12 +330,14 @@ class _ActionButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onPressed,
+    required this.backgroundColor,
     this.tooltip,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback? onPressed;
+  final Color backgroundColor;
   final String? tooltip;
 
   @override
@@ -281,7 +346,7 @@ class _ActionButton extends StatelessWidget {
       message: tooltip ?? label,
       child: SizedBox(
         height: 42,
-        child: OutlinedButton.icon(
+        child: FilledButton.icon(
           onPressed: onPressed,
           icon: Icon(icon, size: 18),
           label: Text(
@@ -289,7 +354,11 @@ class _ActionButton extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          style: OutlinedButton.styleFrom(
+          style: FilledButton.styleFrom(
+            backgroundColor: backgroundColor,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: backgroundColor.withValues(alpha: 0.42),
+            disabledForegroundColor: Colors.white.withValues(alpha: 0.82),
             padding: const EdgeInsets.symmetric(
               horizontal: TenantAdminSpacing.sm,
             ),

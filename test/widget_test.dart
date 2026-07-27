@@ -30,8 +30,8 @@ import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_shell_n
 import 'package:nytroz_pos/features/pos_shell/presentation/screens/pos_home_screen.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_desktop_top_bar.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_mobile_top_bar.dart';
+import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_cashier_bottom_navigation.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/dashboard_action_card.dart';
-import 'package:nytroz_pos/features/pos_shell/presentation/widgets/pos_shell_nav_item.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/sidebar/pos_sidebar.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_barcode_lookup_result.dart';
@@ -183,7 +183,11 @@ void main() {
       expect(find.text('Cashier'), findsOneWidget);
       expect(find.text('Start New Sale'), findsWidgets);
       expect(find.text('Dashboard failed'), findsOneWidget);
-      expect(find.widgetWithText(TextButton, 'Retry'), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Retry'), findsNWidgets(2));
+      expect(
+        find.byKey(const Key('pos-home-summary-retry')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Home remains on /pos/home when tapped', (tester) async {
@@ -196,7 +200,7 @@ void main() {
       expect(find.byType(SnackBar), findsNothing);
     });
 
-    testWidgets('sidebar hides destinations without permission', (
+    testWidgets('New Sale route does not render sidebar without permission', (
       tester,
     ) async {
       await _pumpPosHome(
@@ -207,17 +211,11 @@ void main() {
       _goFromCurrentRoute(tester, '/pos/new-sale');
       await tester.pumpAndSettle();
 
-      expect(_sidebarDestination('Home'), findsOneWidget);
-      expect(_sidebarDestination('New Sale'), findsNothing);
-      expect(_sidebarDestination('Orders'), findsNothing);
-      expect(_sidebarDestination('Customers'), findsNothing);
-      expect(_sidebarDestination('Returns & Exchanges'), findsNothing);
-      expect(_sidebarDestination('Cash Drawer'), findsNothing);
-      expect(_sidebarDestination('Reports'), findsNothing);
+      expect(find.byType(PosSidebar), findsNothing);
+      expect(find.byType(PosCashierBottomNavigation), findsNothing);
     });
 
-    testWidgets(
-        'sidebar renders destinations from backend New Sale permissions', (
+    testWidgets('New Sale renders fixed navigation from backend permissions', (
       tester,
     ) async {
       await _pumpPosHome(
@@ -237,13 +235,13 @@ void main() {
       _goFromCurrentRoute(tester, '/pos/new-sale');
       await tester.pumpAndSettle();
 
-      expect(_sidebarDestination('Home'), findsOneWidget);
-      expect(_sidebarDestination('New Sale'), findsOneWidget);
-      expect(_sidebarDestination('Orders'), findsOneWidget);
-      expect(_sidebarDestination('Customers'), findsOneWidget);
-      expect(_sidebarDestination('Returns & Exchanges'), findsOneWidget);
-      expect(_sidebarDestination('Cash Drawer'), findsOneWidget);
-      expect(_sidebarDestination('Reports'), findsOneWidget);
+      expect(find.byType(PosSidebar), findsNothing);
+      expect(find.byType(PosCashierBottomNavigation), findsOneWidget);
+      expect(find.text('Home'), findsWidgets);
+      expect(find.text('New Sale'), findsWidgets);
+      expect(find.text('Orders'), findsOneWidget);
+      expect(find.text('Customers'), findsOneWidget);
+      expect(find.text('Settings'), findsOneWidget);
     });
 
     testWidgets('New Sale home destination opens the sale screen', (
@@ -365,7 +363,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.widgetWithText(OutlinedButton, 'Add Customer'),
+        find.widgetWithText(FilledButton, 'Add Customer'),
         findsOneWidget,
       );
     });
@@ -449,11 +447,8 @@ void main() {
       );
       final searchField = find.byType(TextField);
       expect(scannerButton, findsOneWidget);
-      expect(find.widgetWithText(OutlinedButton, 'Scanner'), findsOneWidget);
-      expect(
-        tester.getSize(scannerButton).height,
-        tester.getSize(searchField).height,
-      );
+      expect(find.text('Scan barcode or search products'), findsOneWidget);
+      expect(tester.getSize(searchField).height, 58);
 
       await tester.enterText(find.byType(TextField), 'coffee');
       await tester.pumpAndSettle();
@@ -988,8 +983,8 @@ void main() {
       expect(find.byType(PosSidebar), findsNothing);
     });
 
-    testWidgets('short desktop New Sale keeps sidebar destinations scrollable',
-        (
+    testWidgets(
+        'tablet New Sale removes sidebar and keeps fixed bottom navigation', (
       tester,
     ) async {
       await _pumpPosHome(
@@ -1012,8 +1007,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(PosNewSaleScreen), findsOneWidget);
-      expect(find.byType(PosSidebar), findsOneWidget);
-      expect(_sidebarDestination('New Sale'), findsOneWidget);
+      expect(find.byType(PosSidebar), findsNothing);
+      expect(find.byType(PosCashierBottomNavigation), findsOneWidget);
+      expect(find.text('New Sale'), findsWidgets);
+
+      final productSize = tester.getSize(
+        find.byKey(const Key('new-sale-products-panel')),
+      );
+      final cartSize = tester.getSize(
+        find.byKey(const Key('new-sale-cart-panel')),
+      );
+      expect(productSize.width / cartSize.width, closeTo(1.5, 0.02));
     });
 
     testWidgets('New Sale scroll areas stay constrained on desktop sizes', (
@@ -1057,7 +1061,7 @@ void main() {
         final productGrid = find.byType(GridView);
         final cartList = find.byType(ListView).last;
         final addCustomerButton = find.widgetWithText(
-          OutlinedButton,
+          FilledButton,
           'Add Customer',
         );
         final paymentButton = find.widgetWithText(
@@ -1093,10 +1097,6 @@ void _goFromCurrentRoute(WidgetTester tester, String route) {
 void _goFromWidget<T extends Widget>(WidgetTester tester, String route) {
   final context = tester.element(find.byType(T));
   context.go(route);
-}
-
-Finder _sidebarDestination(String label) {
-  return find.widgetWithText(PosShellNavItem, label);
 }
 
 Future<void> _pumpPosHome(

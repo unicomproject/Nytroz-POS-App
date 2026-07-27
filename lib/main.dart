@@ -21,9 +21,27 @@ Future<void> main() async {
     defaultValue: false,
   );
 
-  final apiBaseUrl = await resolveApiBaseUrl();
+  late final String apiBaseUrl;
+  try {
+    apiBaseUrl = await resolveApiBaseUrl();
+  } on ApiConfigurationException catch (error, stackTrace) {
+    developer.log(
+      error.message,
+      name: 'api.config',
+      error: error,
+      stackTrace: stackTrace,
+    );
+    rethrow;
+  }
+  final resolvedUri = Uri.parse(apiBaseUrl);
+  final safeOrigin = resolvedUri.replace(
+    userInfo: '',
+    path: '',
+    query: '',
+    fragment: '',
+  );
   developer.log(
-    'API base URL resolved. baseUrl=$apiBaseUrl',
+    'API base URL resolved. origin=$safeOrigin',
     name: 'api.config',
   );
 

@@ -23,12 +23,16 @@ Dio buildAppDio({
     InterceptorsWrapper(
       onError: (error, handler) {
         if (_isNetworkFailure(error)) {
+          final requestUri = error.requestOptions.uri;
+          final safeRequestUri = requestUri.replace(
+            userInfo: '',
+            query: '',
+            fragment: '',
+          );
           developer.log(
-            'API base URL unreachable. baseUrl=${dio.options.baseUrl} '
-            'uri=${error.requestOptions.uri} type=${error.type.name} '
-            'message=${error.message}',
+            'API request unreachable. uri=$safeRequestUri '
+            'type=${error.type.name}',
             name: 'api.network',
-            error: error.error,
           );
         }
         handler.next(error);

@@ -6,7 +6,6 @@ import 'cashier_profile_card.dart';
 import 'dashboard_action_builder.dart';
 import 'dashboard_action_grid.dart';
 import 'pos_dashboard_header.dart';
-import 'pos_home_bottom_navigation.dart';
 import 'session_summary_panel.dart';
 
 export 'dashboard_action_card.dart' show PosHomeActionTile;
@@ -17,10 +16,12 @@ class PosHomeDashboard extends StatelessWidget {
     super.key,
     required this.dashboard,
     this.status,
+    this.onSummaryRetry,
   });
 
   final PosHomeDashboardState dashboard;
   final Widget? status;
+  final VoidCallback? onSummaryRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +49,7 @@ class PosHomeDashboard extends StatelessWidget {
               );
         return ColoredBox(
           color: TenantAdminColors.posHomeDarkBackground,
-          child: SafeArea(child: body),
+          child: body,
         );
       },
     );
@@ -88,9 +89,10 @@ class PosHomeDashboard extends StatelessWidget {
           ),
         ),
       const SizedBox(height: TenantAdminSpacing.md),
-      PosHomeSummarySection(summary: dashboard.summary),
-      const SizedBox(height: TenantAdminSpacing.md),
-      const PosHomeBottomNavigation(),
+      PosHomeSummarySection(
+        summary: dashboard.summary,
+        onRetry: onSummaryRetry,
+      ),
     ];
   }
 }

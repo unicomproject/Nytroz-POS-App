@@ -57,7 +57,7 @@ class PosProductCategoryChips extends ConsumerWidget {
                         .state = category.id;
                   }
                 },
-                selectedColor: TenantAdminColors.info,
+                selectedColor: TenantAdminColors.posNewSaleAccent,
                 backgroundColor: TenantAdminColors.surface,
                 labelStyle: TextStyle(
                   color: selected ? Colors.white : TenantAdminColors.bodyText,

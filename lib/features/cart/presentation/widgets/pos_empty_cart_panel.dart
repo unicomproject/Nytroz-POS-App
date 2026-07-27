@@ -76,10 +76,40 @@ class _CartHeader extends ConsumerWidget {
             ),
             const SizedBox(width: TenantAdminSpacing.sm),
             Text(
-              'Cart',
+              'Current Sale',
               style: TenantAdminTextStyles.sectionTitle(context),
             ),
-            const Spacer(),
+            if (cartHasItems) ...[
+              const SizedBox(width: TenantAdminSpacing.sm),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: TenantAdminSpacing.sm,
+                      vertical: TenantAdminSpacing.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: TenantAdminColors.secondary,
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+                      border: Border.all(color: TenantAdminColors.border),
+                    ),
+                    child: Text(
+                      '${ref.watch(posNewSaleCartProvider).itemList.length} Lines • '
+                      '${ref.watch(posNewSaleCartProvider).itemList.fold<int>(0, (total, item) => total + item.quantity)} Items',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: TenantAdminColors.info,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ),
+                ),
+              ),
+            ] else
+              const Spacer(),
+            if (cartHasItems) const SizedBox(width: TenantAdminSpacing.xs),
             if (canClearCart && cartHasItems)
               IconButton(
                 visualDensity: VisualDensity.compact,

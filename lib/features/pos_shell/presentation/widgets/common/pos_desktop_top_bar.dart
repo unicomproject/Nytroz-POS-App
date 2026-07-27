@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/device_activation/presentation/providers/device_activation_provider.dart';
 import 'package:nytroz_pos/features/sale/presentation/providers/pos_camera_scanner_provider.dart';
 import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
 
@@ -52,12 +53,19 @@ class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
 
   @override
   Widget build(BuildContext context) {
+    final isNewSale = GoRouterState.of(context).uri.path == '/pos/new-sale';
     return Container(
       height: 72,
-      decoration: const BoxDecoration(
-        color: TenantAdminColors.surface,
+      decoration: BoxDecoration(
+        color: isNewSale
+            ? TenantAdminColors.posHomeDarkBackground
+            : TenantAdminColors.surface,
         border: Border(
-          bottom: BorderSide(color: TenantAdminColors.border),
+          bottom: BorderSide(
+            color: isNewSale
+                ? TenantAdminColors.posHomeDarkBorder
+                : TenantAdminColors.border,
+          ),
         ),
       ),
       child: LayoutBuilder(
@@ -79,11 +87,13 @@ class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
                     minWidth: veryCompact ? 116 : 156,
                     maxWidth: compact ? 180 : 240,
                   ),
-                  child: _TitleBlock(
-                    title: widget.title,
-                    subtitle: widget.subtitle,
-                    showSubtitle: !veryCompact,
-                  ),
+                  child: showScanner
+                      ? const _NewSaleBrand()
+                      : _TitleBlock(
+                          title: widget.title,
+                          subtitle: widget.subtitle,
+                          showSubtitle: !veryCompact,
+                        ),
                 ),
                 SizedBox(
                   width: veryCompact
@@ -92,29 +102,26 @@ class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
                 ),
                 if (widget.showSearch) ...[
                   Expanded(
-                    child: _TopBarSearchField(focusNode: _searchFocusNode),
+                    child: showScanner
+                        ? _NewSaleSearchField(focusNode: _searchFocusNode)
+                        : _TopBarSearchField(focusNode: _searchFocusNode),
                   ),
                   SizedBox(
                     width: veryCompact
                         ? TenantAdminSpacing.sm
                         : TenantAdminSpacing.lg,
                   ),
-                  if (showScanner) ...[
-                    const _ScannerButton(),
-                    SizedBox(
-                      width: veryCompact
-                          ? TenantAdminSpacing.sm
-                          : TenantAdminSpacing.lg,
-                    ),
-                  ],
                 ] else
                   const Spacer(),
-                const _NotificationButton(),
+                _NotificationButton(dark: showScanner),
                 if (!veryCompact) ...[
                   const SizedBox(width: TenantAdminSpacing.sm),
-                  const _TillStatusChip(),
+                  if (showScanner)
+                    const _TerminalOnlineChip()
+                  else
+                    const _TillStatusChip(),
                 ],
-                if (!compact) ...[
+                if (!compact && !showScanner) ...[
                   const SizedBox(width: TenantAdminSpacing.md),
                   _DateTimeBlock(now: _now),
                 ],
@@ -123,6 +130,46 @@ class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
           );
         },
       ),
+    );
+  }
+}
+
+class _NewSaleBrand extends StatelessWidget {
+  const _NewSaleBrand();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Image.asset(
+          'assets/images/logo.png',
+          width: 38,
+          height: 38,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(width: TenantAdminSpacing.sm),
+        Flexible(
+          child: RichText(
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            text: TextSpan(
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: TenantAdminColors.surface,
+                    fontWeight: FontWeight.w800,
+                  ),
+              children: const [
+                TextSpan(text: 'OneVerz '),
+                TextSpan(
+                  text: 'POS',
+                  style: TextStyle(
+                    color: TenantAdminColors.posNewSaleAccentEnd,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -283,43 +330,149 @@ class _TopBarSearchFieldState extends ConsumerState<_TopBarSearchField> {
   }
 }
 
-class _ScannerButton extends ConsumerWidget {
-  const _ScannerButton();
+class _NewSaleSearchField extends ConsumerStatefulWidget {
+  const _NewSaleSearchField({required this.focusNode});
+
+  final FocusNode focusNode;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(authSessionProvider);
-    final canSearchProducts =
-        session?.hasPermission(PosPermissionCodes.searchProducts) == true;
+  ConsumerState<_NewSaleSearchField> createState() =>
+      _NewSaleSearchFieldState();
+}
 
-    return SizedBox(
-      height: 44,
-      child: OutlinedButton.icon(
-        key: const Key('new-sale-scanner-button'),
-        onPressed: canSearchProducts
-            ? () {
-                final current = ref.read(posCameraScannerRequestProvider);
-                ref.read(posCameraScannerRequestProvider.notifier).state =
-                    current + 1;
-              }
-            : null,
-        icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
-        label: const Text('Scanner'),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: TenantAdminColors.primary,
-          backgroundColor: TenantAdminColors.surface,
-          disabledForegroundColor:
-              TenantAdminColors.mutedText.withValues(alpha: 0.55),
-          padding: const EdgeInsets.symmetric(
-            horizontal: TenantAdminSpacing.md,
-          ),
-          side: const BorderSide(color: TenantAdminColors.border),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-          ),
-          textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+class _NewSaleSearchFieldState extends ConsumerState<_NewSaleSearchField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final session = ref.watch(authSessionProvider);
+    final canSearch =
+        session?.hasPermission(PosPermissionCodes.searchProducts) == true;
+    final query = canSearch ? ref.watch(posNewSaleSearchQueryProvider) : '';
+    if (_controller.text != query) {
+      _controller.value = TextEditingValue(
+        text: query,
+        selection: TextSelection.collapsed(offset: query.length),
+      );
+    }
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 720),
+      child: SizedBox(
+        height: 58,
+        child: TextField(
+          controller: _controller,
+          focusNode: widget.focusNode,
+          enabled: canSearch,
+          textInputAction: TextInputAction.search,
+          onChanged: (value) {
+            ref.read(posNewSaleSearchQueryProvider.notifier).state = value;
+          },
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: TenantAdminColors.posNewSaleSearchText,
                 fontWeight: FontWeight.w800,
               ),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: TenantAdminColors.surface,
+            prefixIcon: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md),
+              child: Icon(
+                Icons.qr_code_2_rounded,
+                color: TenantAdminColors.posNewSaleAccent,
+                size: 34,
+              ),
+            ),
+            prefixIconConstraints: const BoxConstraints(minWidth: 58),
+            hint: const Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Scan barcode or search products',
+                  style: TextStyle(
+                    color: TenantAdminColors.posNewSaleSearchText,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Use scanner or type product name',
+                  style: TextStyle(
+                    color: TenantAdminColors.posNewSaleSearchHint,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            suffixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (query.isNotEmpty)
+                  IconButton(
+                    onPressed: () {
+                      ref.read(posNewSaleSearchQueryProvider.notifier).state =
+                          '';
+                    },
+                    tooltip: 'Clear search',
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                IconButton(
+                  key: const Key('new-sale-scanner-button'),
+                  onPressed: canSearch
+                      ? () {
+                          final current =
+                              ref.read(posCameraScannerRequestProvider);
+                          ref
+                              .read(posCameraScannerRequestProvider.notifier)
+                              .state = current + 1;
+                        }
+                      : null,
+                  tooltip: 'Open barcode scanner',
+                  icon: const Icon(
+                    Icons.center_focus_strong_rounded,
+                    color: TenantAdminColors.posNewSaleAccent,
+                    size: 27,
+                  ),
+                ),
+                const SizedBox(width: TenantAdminSpacing.xs),
+              ],
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: TenantAdminSpacing.md,
+              vertical: TenantAdminSpacing.sm,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              borderSide: const BorderSide(color: TenantAdminColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              borderSide: const BorderSide(color: TenantAdminColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              borderSide: const BorderSide(
+                color: TenantAdminColors.posNewSaleAccent,
+                width: 1.5,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -327,7 +480,9 @@ class _ScannerButton extends ConsumerWidget {
 }
 
 class _NotificationButton extends ConsumerWidget {
-  const _NotificationButton();
+  const _NotificationButton({this.dark = false});
+
+  final bool dark;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -341,33 +496,18 @@ class _NotificationButton extends ConsumerWidget {
       child: SizedBox.square(
         dimension: 44,
         child: Material(
-          color: TenantAdminColors.background,
+          color: dark
+              ? TenantAdminColors.posHomeDarkSurface
+              : TenantAdminColors.background,
           borderRadius: BorderRadius.circular(TenantAdminRadius.md),
           child: InkWell(
             onTap: () {},
             borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            child: Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(
-                  Icons.notifications_none_rounded,
-                  color: TenantAdminColors.bodyText,
-                  size: 23,
-                ),
-                Positioned(
-                  top: 9,
-                  right: 9,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: TenantAdminColors.danger,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
+            child: Icon(
+              Icons.notifications_none_rounded,
+              color:
+                  dark ? TenantAdminColors.surface : TenantAdminColors.bodyText,
+              size: 23,
             ),
           ),
         ),
@@ -427,6 +567,53 @@ class _TillStatusChip extends ConsumerWidget {
                   color: statusColor,
                   fontWeight: FontWeight.w800,
                 ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TerminalOnlineChip extends ConsumerWidget {
+  const _TerminalOnlineChip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final device = ref.watch(deviceActivationProvider).deviceContext;
+    final connected =
+        device != null && device.isTrusted && device.deviceId.trim().isNotEmpty;
+    final color = connected
+        ? TenantAdminColors.posNewSaleOnline
+        : TenantAdminColors.offline;
+
+    return Container(
+      height: 42,
+      padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md),
+      decoration: BoxDecoration(
+        color: TenantAdminColors.posHomeDarkBackground,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        border: Border.all(
+          color: connected
+              ? TenantAdminColors.posNewSaleOnlineBorder
+              : TenantAdminColors.posHomeDarkBorder,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: TenantAdminSpacing.sm),
+          Text(
+            connected ? 'ONLINE' : 'OFFLINE',
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.3,
+            ),
           ),
         ],
       ),
