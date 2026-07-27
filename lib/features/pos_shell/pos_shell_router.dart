@@ -51,6 +51,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
             state.uri.path,
             ref.read(authSessionProvider),
           ),
+          isNewSale: state.uri.path == '/pos/new-sale',
           child: child,
         );
       },

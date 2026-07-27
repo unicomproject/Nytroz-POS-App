@@ -17,6 +17,7 @@ class PosShellScaffold extends StatelessWidget {
     this.showTopBarSearch = true,
     this.showSidebar = true,
     this.showBottomNavigation = false,
+    this.isNewSale = false,
   });
 
   final String title;
@@ -26,6 +27,7 @@ class PosShellScaffold extends StatelessWidget {
   final bool showTopBarSearch;
   final bool showSidebar;
   final bool showBottomNavigation;
+  final bool isNewSale;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +52,7 @@ class PosShellScaffold extends StatelessWidget {
                       showTopBar: showTopBar,
                       showTopBarSearch: showTopBarSearch,
                       showBottomNavigation: showBottomNavigation,
+                      isNewSale: isNewSale,
                       child: child,
                     ),
                   ),
@@ -67,6 +70,7 @@ class PosShellScaffold extends StatelessWidget {
             showTopBar: false,
             showTopBarSearch: showTopBarSearch,
             showBottomNavigation: showBottomNavigation,
+            isNewSale: isNewSale,
             applyTopSafeArea: !showTopBar,
             child: child,
           ),
@@ -83,6 +87,7 @@ class _PosShellContent extends StatelessWidget {
     required this.showTopBar,
     required this.showTopBarSearch,
     required this.showBottomNavigation,
+    required this.isNewSale,
     required this.child,
     this.applyTopSafeArea = false,
   });
@@ -92,6 +97,7 @@ class _PosShellContent extends StatelessWidget {
   final bool showTopBar;
   final bool showTopBarSearch;
   final bool showBottomNavigation;
+  final bool isNewSale;
   final Widget child;
   final bool applyTopSafeArea;
 
@@ -104,6 +110,7 @@ class _PosShellContent extends StatelessWidget {
             title: title,
             subtitle: subtitle,
             showSearch: showTopBarSearch,
+            isNewSale: isNewSale,
           ),
         Expanded(
           child: SafeArea(

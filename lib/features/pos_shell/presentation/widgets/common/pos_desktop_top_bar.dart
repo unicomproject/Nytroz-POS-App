@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
@@ -18,11 +17,13 @@ class PosDesktopTopBar extends StatefulWidget {
     required this.title,
     required this.subtitle,
     this.showSearch = true,
+    this.isNewSale = false,
   });
 
   final String title;
   final String subtitle;
   final bool showSearch;
+  final bool isNewSale;
 
   @override
   State<PosDesktopTopBar> createState() => _PosDesktopTopBarState();
@@ -53,7 +54,7 @@ class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
 
   @override
   Widget build(BuildContext context) {
-    final isNewSale = GoRouterState.of(context).uri.path == '/pos/new-sale';
+    final isNewSale = widget.isNewSale;
     return Container(
       height: 72,
       decoration: BoxDecoration(
@@ -72,8 +73,7 @@ class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 1040;
           final veryCompact = constraints.maxWidth < 760;
-          final showScanner = widget.showSearch &&
-              GoRouterState.of(context).uri.path == '/pos/new-sale';
+          final showScanner = widget.showSearch && isNewSale;
 
           return Padding(
             padding: EdgeInsets.symmetric(
@@ -104,7 +104,10 @@ class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
                   Expanded(
                     child: showScanner
                         ? _NewSaleSearchField(focusNode: _searchFocusNode)
-                        : _TopBarSearchField(focusNode: _searchFocusNode),
+                        : _TopBarSearchField(
+                            focusNode: _searchFocusNode,
+                            isNewSaleBrowseRoute: isNewSale,
+                          ),
                   ),
                   SizedBox(
                     width: veryCompact
@@ -223,9 +226,13 @@ class _TitleBlock extends StatelessWidget {
 }
 
 class _TopBarSearchField extends ConsumerStatefulWidget {
-  const _TopBarSearchField({required this.focusNode});
+  const _TopBarSearchField({
+    required this.focusNode,
+    required this.isNewSaleBrowseRoute,
+  });
 
   final FocusNode focusNode;
+  final bool isNewSaleBrowseRoute;
 
   @override
   ConsumerState<_TopBarSearchField> createState() => _TopBarSearchFieldState();
@@ -259,12 +266,10 @@ class _TopBarSearchFieldState extends ConsumerState<_TopBarSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    final isNewSaleBrowseRoute =
-        GoRouterState.of(context).uri.path == '/pos/new-sale';
     final session = ref.watch(authSessionProvider);
     final canSearchProducts =
         session?.hasPermission(PosPermissionCodes.searchProducts) == true;
-    final isSearchEnabled = isNewSaleBrowseRoute && canSearchProducts;
+    final isSearchEnabled = widget.isNewSaleBrowseRoute && canSearchProducts;
     final searchQuery =
         isSearchEnabled ? ref.watch(posNewSaleSearchQueryProvider) : '';
     _syncControllerText(searchQuery);
