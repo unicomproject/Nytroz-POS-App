@@ -30,9 +30,9 @@ void main() {
       expect(PosPermissionAccess.canAccessNewSale(granted), isTrue);
     });
 
-    test('legacy pos.sale.create alone does not directly grant New Sale', () {
+    test('legacy pos.sale.create grants New Sale', () {
       const granted = {'pos.sale.create'};
-      expect(PosPermissionAccess.canAccessNewSale(granted), isFalse);
+      expect(PosPermissionAccess.canAccessNewSale(granted), isTrue);
     });
 
     test('pos.home.view and pos.dashboard.view grant home access', () {
@@ -74,6 +74,17 @@ void main() {
       );
 
       expect(session.canAccessTenantAdminDashboard, isTrue);
+    });
+
+    test('tenant.context.view alone does not select dashboard access', () {
+      const session = AuthSession(
+        accessToken: 'token',
+        userId: 'tenant-admin-context-1',
+        userDisplayName: 'Tenant Admin',
+        permissionCodes: ['tenant.context.view'],
+      );
+
+      expect(session.canAccessTenantAdminDashboard, isFalse);
     });
   });
 

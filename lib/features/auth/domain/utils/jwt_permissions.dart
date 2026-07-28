@@ -48,3 +48,12 @@ List<String> readJwtPermissionCodes(String token) {
       .where((item) => item.isNotEmpty)
       .toList(growable: false);
 }
+
+String readJwtStringClaim(String token, String claimName) {
+  final payload = readJwtPayload(token);
+  if (payload == null) {
+    return '';
+  }
+
+  return payload[claimName]?.toString().trim() ?? '';
+}

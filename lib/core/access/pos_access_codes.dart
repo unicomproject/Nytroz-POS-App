@@ -15,6 +15,7 @@ class PosPermissionCodes {
   const PosPermissionCodes._();
 
   static const startSale = 'pos.sale.start';
+  static const legacyCreateSale = 'pos.sale.create';
   static const viewDashboard = 'pos.dashboard.view';
   static const viewNewSale = 'pos.new_sale.view';
   static const createSale = 'sales.create';
@@ -57,11 +58,14 @@ class PosPermissionCodes {
   static const viewParkedSales = 'pos.sale.park.view';
   static const viewCustomers = 'pos.customers.view';
   static const createCustomer = 'pos.customers.create';
+
   /// Legacy alias — prefer [updateNewSaleCustomer].
   static const updateCustomer = 'pos.customers.update';
   static const applyDiscount = 'pos.discount.apply';
+
   /// Legacy alias — prefer [createRefund] / [approveRefund].
   static const processRefund = 'pos.refund.process';
+
   /// Legacy alias — prefer [createExchange].
   static const processExchange = 'pos.exchange.process';
   static const manageOnlineOrders = 'pos.online_orders.manage';

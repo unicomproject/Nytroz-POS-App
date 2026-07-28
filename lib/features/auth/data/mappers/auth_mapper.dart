@@ -104,6 +104,13 @@ AuthSession authSessionFromJson(Map<String, dynamic> json) {
         payload['userDisplayName'] as String? ??
         payload['UserDisplayName'] as String? ??
         '',
+    userType: user['userType']?.toString() ??
+        user['UserType']?.toString() ??
+        user['user_type']?.toString() ??
+        payload['userType']?.toString() ??
+        payload['UserType']?.toString() ??
+        payload['user_type']?.toString() ??
+        readJwtStringClaim(accessToken, 'user_type'),
     permissionCodes: _resolvePermissionCodes(
       accessToken: accessToken,
       payload: payload,

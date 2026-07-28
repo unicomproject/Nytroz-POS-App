@@ -12,6 +12,7 @@ void main() {
           'user': {
             'id': 'cashier-001',
             'fullName': 'Cashier 001',
+            'userType': 'cashier',
           },
           'permissionCodes': const [
             PosPermissionCodes.viewNewSale,
@@ -22,6 +23,7 @@ void main() {
       });
 
       expect(session.permissionCodes, contains(PosPermissionCodes.viewNewSale));
+      expect(session.userType, 'cashier');
       expect(session.permissionCodes, contains(PosPermissionCodes.viewOrders));
       expect(
         session.permissionCodes,
@@ -36,6 +38,7 @@ void main() {
           'User': {
             'Id': 'cashier-001',
             'FullName': 'Cashier 001',
+            'UserType': 'pos_user',
           },
           'Permissions': const [
             {'PermissionCode': PosPermissionCodes.viewNewSale},
@@ -47,6 +50,7 @@ void main() {
 
       expect(session.userId, 'cashier-001');
       expect(session.userDisplayName, 'Cashier 001');
+      expect(session.userType, 'pos_user');
       expect(
         session.permissionCodes,
         containsAll(

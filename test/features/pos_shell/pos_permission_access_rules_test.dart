@@ -5,7 +5,7 @@ import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
 
 void main() {
   group('POS new sale access', () {
-    test('accepts canonical and sales.create alias only', () {
+    test('accepts canonical, sales.create, and legacy sale aliases', () {
       expect(
         PosPermissionAccess.canAccessNewSale({PosPermissionCodes.viewNewSale}),
         isTrue,
@@ -16,11 +16,11 @@ void main() {
       );
       expect(
         PosPermissionAccess.canAccessNewSale({'pos.sale.create'}),
-        isFalse,
+        isTrue,
       );
       expect(
         PosPermissionAccess.canAccessNewSale({PosPermissionCodes.startSale}),
-        isFalse,
+        isTrue,
       );
     });
   });

@@ -9,6 +9,7 @@ class AuthSession {
     required this.userId,
     required this.userDisplayName,
     this.permissionCodes = const [],
+    this.userType = '',
     this.refreshToken,
     this.refreshTokenExpiresAt,
     this.expiresAt,
@@ -20,7 +21,20 @@ class AuthSession {
   final String userId;
   final String userDisplayName;
   final List<String> permissionCodes;
+  final String userType;
   final DateTime? expiresAt;
+
+  String get normalizedUserType => userType.trim().toLowerCase();
+
+  bool get isPosUser {
+    final type = normalizedUserType;
+    return type == 'cashier' || type == 'pos_user' || type == 'pos';
+  }
+
+  bool get isTenantAdminUser {
+    final type = normalizedUserType;
+    return type == 'admin' || type == 'tenant_admin';
+  }
 
   DateTime? get effectiveExpiresAt => expiresAt ?? readJwtExpiry(accessToken);
 
@@ -56,7 +70,6 @@ class AuthSession {
 
   bool get canAccessTenantAdminDashboard {
     const dashboardCodes = [
-      TenantAdminPermissionCodes.tenantContextView,
       TenantAdminPermissionCodes.dashboardView,
       TenantAdminPermissionCodes.tenantDashboardView,
       'dashboard.view',
@@ -75,6 +88,7 @@ class AuthSession {
       'refreshTokenExpiresAt': refreshTokenExpiresAt?.toIso8601String(),
       'userId': userId,
       'userDisplayName': userDisplayName,
+      'userType': userType,
       'permissionCodes': permissionCodes,
       'expiresAt': expiresAt?.toIso8601String(),
     };
@@ -89,6 +103,10 @@ class AuthSession {
       ),
       userId: json['userId'] as String? ?? '',
       userDisplayName: json['userDisplayName'] as String? ?? '',
+      userType: _resolveStoredUserType(
+        accessToken: json['accessToken'] as String? ?? '',
+        storedUserType: json['userType']?.toString() ?? '',
+      ),
       permissionCodes: _resolveStoredPermissionCodes(
         accessToken: json['accessToken'] as String? ?? '',
         storedCodes: _stringList(json['permissionCodes']),
@@ -96,6 +114,22 @@ class AuthSession {
       expiresAt: DateTime.tryParse(json['expiresAt']?.toString() ?? ''),
     );
   }
+}
+
+String _resolveStoredUserType({
+  required String accessToken,
+  required String storedUserType,
+}) {
+  final trimmed = storedUserType.trim();
+  if (trimmed.isNotEmpty) {
+    return trimmed;
+  }
+
+  if (accessToken.isEmpty) {
+    return '';
+  }
+
+  return readJwtStringClaim(accessToken, 'user_type');
 }
 
 List<String> _resolveStoredPermissionCodes({

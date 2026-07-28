@@ -75,6 +75,52 @@ void main() {
       expect(route, PostLoginRoute.tenantAdminDashboard);
     });
 
+    test('routes tenant admin with role permissions to tenant admin shell', () {
+      final container = _createContainer(session: _tenantAdminRoleSession);
+      addTearDown(container.dispose);
+
+      final route = container.read(postLoginRouteProvider);
+
+      expect(route, PostLoginRoute.tenantAdminRoot);
+    });
+
+    test('routes tenant context only sessions to tenant admin shell', () {
+      final container = _createContainer(session: _tenantAdminContextSession);
+      addTearDown(container.dispose);
+
+      final route = container.read(postLoginRouteProvider);
+
+      expect(route, PostLoginRoute.tenantAdminNoAccess);
+    });
+
+    test('routes cashier sale permission to POS new sale, not tenant admin',
+        () {
+      final container = _createContainer(session: _cashierSaleSession);
+      addTearDown(container.dispose);
+
+      final route = container.read(postLoginRouteProvider);
+
+      expect(route, PostLoginRoute.posNewSale);
+    });
+
+    test('routes POS identity with no usable route to POS no-access', () {
+      final container = _createContainer(session: _posNoUsableRouteSession);
+      addTearDown(container.dispose);
+
+      final route = container.read(postLoginRouteProvider);
+
+      expect(route, PostLoginRoute.posNoAccess);
+    });
+
+    test('routes sessions with no usable app route to tenant no-access', () {
+      final container = _createContainer(session: _noUsableRouteSession);
+      addTearDown(container.dispose);
+
+      final route = container.read(postLoginRouteProvider);
+
+      expect(route, PostLoginRoute.tenantAdminNoAccess);
+    });
+
     test('bootstrap exposes device API failures instead of becoming ready',
         () async {
       final container = _createContainer(
@@ -297,6 +343,7 @@ const _posOperatorSession = AuthSession(
   accessToken: 'token',
   userId: 'cashier-1',
   userDisplayName: 'Cashier',
+  userType: 'cashier',
   permissionCodes: [
     'tenant.till.manage',
     'pos.till.open',
@@ -308,6 +355,7 @@ const _cashierSession = AuthSession(
   accessToken: 'token',
   userId: 'cashier-1',
   userDisplayName: 'Cashier',
+  userType: 'cashier',
   permissionCodes: [
     'pos.till.open',
     'pos.home.view',
@@ -318,10 +366,60 @@ const _tenantAdminSession = AuthSession(
   accessToken: 'token',
   userId: 'tenant-admin-1',
   userDisplayName: 'Tenant Admin',
+  userType: 'admin',
   permissionCodes: [
     'tenant.context.view',
     'dashboard.view',
     'tills.view',
+  ],
+);
+
+const _tenantAdminRoleSession = AuthSession(
+  accessToken: 'token',
+  userId: 'tenant-admin-role-1',
+  userDisplayName: 'Tenant Admin',
+  userType: 'admin',
+  permissionCodes: [
+    'tenant.role.manage',
+  ],
+);
+
+const _tenantAdminContextSession = AuthSession(
+  accessToken: 'token',
+  userId: 'tenant-admin-context-1',
+  userDisplayName: 'Tenant Admin',
+  userType: 'admin',
+  permissionCodes: [
+    'tenant.context.view',
+  ],
+);
+
+const _cashierSaleSession = AuthSession(
+  accessToken: 'token',
+  userId: 'cashier-sale-1',
+  userDisplayName: 'Cashier',
+  userType: 'cashier',
+  permissionCodes: [
+    'pos.sale.create',
+  ],
+);
+
+const _posNoUsableRouteSession = AuthSession(
+  accessToken: 'token',
+  userId: 'cashier-orders-1',
+  userDisplayName: 'Cashier',
+  userType: 'cashier',
+  permissionCodes: [
+    'pos.orders.manage',
+  ],
+);
+
+const _noUsableRouteSession = AuthSession(
+  accessToken: 'token',
+  userId: 'limited-1',
+  userDisplayName: 'Limited User',
+  permissionCodes: [
+    'audit.read',
   ],
 );
 

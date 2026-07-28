@@ -56,6 +56,57 @@ void main() {
       );
     });
 
+    test('preserves tenant admin deep links for tenant admin sessions', () {
+      expect(
+        _redirect(
+          path: '/tenant-admin/roles-permissions',
+          authenticatedRoute: PostLoginRoute.tenantAdminRoot.path,
+        ),
+        isNull,
+      );
+    });
+
+    test('routes POS paths back to tenant admin shell for tenant sessions', () {
+      expect(
+        _redirect(
+          path: '/pos/home',
+          authenticatedRoute: PostLoginRoute.tenantAdminRoot.path,
+        ),
+        PostLoginRoute.tenantAdminRoot.path,
+      );
+    });
+
+    test('routes users without an app route to tenant no-access', () {
+      expect(
+        _redirect(
+          path: posSessionBootRoute,
+          authenticatedRoute: PostLoginRoute.tenantAdminNoAccess.path,
+        ),
+        PostLoginRoute.tenantAdminNoAccess.path,
+      );
+    });
+
+    test('routes POS users without an app route to POS no-access', () {
+      expect(
+        _redirect(
+          path: posSessionBootRoute,
+          authenticatedRoute: PostLoginRoute.posNoAccess.path,
+        ),
+        PostLoginRoute.posNoAccess.path,
+      );
+    });
+
+    test('routes tenant-admin paths back to POS no-access for POS sessions',
+        () {
+      expect(
+        _redirect(
+          path: '/tenant-admin/no-access',
+          authenticatedRoute: PostLoginRoute.posNoAccess.path,
+        ),
+        PostLoginRoute.posNoAccess.path,
+      );
+    });
+
     test('ignores Returns and Payment locations during cold start', () {
       for (final nestedRoute in [
         '/pos/returns-refunds/settlement',

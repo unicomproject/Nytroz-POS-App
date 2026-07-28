@@ -10,6 +10,8 @@ class PosPermissionAccess {
 
   /// Canonical New Sale screen access. Legacy `pos.sale.start` is still accepted.
   static const newSaleAccessCodes = [
+    PosPermissionCodes.startSale,
+    PosPermissionCodes.legacyCreateSale,
     PosPermissionCodes.viewNewSale,
     PosPermissionCodes.createSale,
   ];
