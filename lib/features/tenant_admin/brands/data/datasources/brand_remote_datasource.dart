@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 
 import '../../domain/entities/brand_list_query.dart';
@@ -57,6 +59,25 @@ class BrandRemoteDatasource {
 
   Future<void> deleteBrand(String id) async {
     await _dio.delete<dynamic>('$_brandsPath/$id');
+  }
+
+  Future<BrandDto> uploadBrandLogo(
+    String id,
+    Uint8List bytes,
+    String fileName,
+  ) async {
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromBytes(bytes, filename: fileName),
+    });
+
+    final response = await _dio.post<dynamic>(
+      '$_brandsPath/$id/logo',
+      data: formData,
+    );
+
+    return BrandDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
   }
 
   Map<String, dynamic> _unwrapApiPayload(

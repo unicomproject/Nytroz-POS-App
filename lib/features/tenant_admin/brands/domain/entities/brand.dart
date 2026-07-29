@@ -5,6 +5,10 @@ class Brand {
     required this.name,
     required this.status,
     this.description,
+    this.logoUrl,
+    this.logoMediaAssetId,
+    this.sortOrder = 0,
+    this.productCount = 0,
     this.createdAt,
     this.updatedAt,
   });
@@ -14,10 +18,16 @@ class Brand {
   final String name;
   final String status;
   final String? description;
+  final String? logoUrl;
+  final String? logoMediaAssetId;
+  final int sortOrder;
+  final int productCount;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
   bool get isActive => status.toUpperCase() == 'ACTIVE';
+
+  bool get hasLogo => logoUrl != null && logoUrl!.trim().isNotEmpty;
 }
 
 class BrandListResult {
@@ -40,10 +50,14 @@ class BrandUpsertInput {
     required this.name,
     required this.status,
     this.description,
+    this.sortOrder = 0,
+    this.logoUrl,
   });
 
   final String code;
   final String name;
   final String status;
   final String? description;
+  final int sortOrder;
+  final String? logoUrl;
 }

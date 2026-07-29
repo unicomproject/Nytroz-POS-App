@@ -8,6 +8,8 @@ class TenantAdminMenuItem {
     required this.permissionCode,
     required this.visible,
     required this.order,
+    this.isRouteAvailable = true,
+    this.unavailableMessage = 'This module is not available yet.',
   });
 
   final String key;
@@ -18,4 +20,8 @@ class TenantAdminMenuItem {
   final String permissionCode;
   final bool visible;
   final int order;
+
+  /// When false, the item is shown disabled and must not navigate.
+  final bool isRouteAvailable;
+  final String unavailableMessage;
 }

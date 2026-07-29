@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../../domain/entities/brand.dart';
 import '../../domain/entities/brand_list_query.dart';
 import '../../domain/repositories/brand_repository.dart';
@@ -41,5 +43,15 @@ class BrandRepositoryImpl implements BrandRepository {
   @override
   Future<void> deleteBrand(String id) async {
     await _remoteDatasource.deleteBrand(id);
+  }
+
+  @override
+  Future<Brand> uploadBrandLogo(
+    String id,
+    Uint8List bytes,
+    String fileName,
+  ) async {
+    final dto = await _remoteDatasource.uploadBrandLogo(id, bytes, fileName);
+    return BrandMapper.toEntity(dto);
   }
 }

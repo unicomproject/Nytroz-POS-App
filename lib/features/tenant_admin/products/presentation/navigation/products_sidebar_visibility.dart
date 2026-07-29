@@ -9,6 +9,8 @@ class ProductsSidebarChildVisibility {
     required this.route,
     required this.permissionCode,
     required this.isVisible,
+    this.isRouteAvailable = true,
+    this.unavailableMessage = 'This screen is not available yet.',
   });
 
   final String key;
@@ -16,6 +18,8 @@ class ProductsSidebarChildVisibility {
   final String route;
   final String permissionCode;
   final bool isVisible;
+  final bool isRouteAvailable;
+  final String unavailableMessage;
 }
 
 class ProductsSidebarVisibility {
@@ -32,17 +36,12 @@ class ProductsSidebarVisibility {
 
   bool get hasVisibleChildren => visibleChildren.isNotEmpty;
 
+  /// Approved Products children order:
+  /// Product List, Add Product, Categories, Brands, Inventory, Import.
   static ProductsSidebarVisibility resolve({
     required TenantAdminAccessChecker access,
   }) {
     final children = <ProductsSidebarChildVisibility>[
-      ProductsSidebarChildVisibility(
-        key: 'product-dashboard',
-        label: 'Product Dashboard',
-        route: ProductsSidebarRoutes.dashboard,
-        permissionCode: TenantAdminPermissionCodes.tenantProductsDashboardView,
-        isVisible: access.canViewProductDashboard(),
-      ),
       ProductsSidebarChildVisibility(
         key: 'product-list',
         label: 'Product List',
@@ -72,11 +71,21 @@ class ProductsSidebarVisibility {
         isVisible: access.canViewBrandsNav(),
       ),
       ProductsSidebarChildVisibility(
-        key: 'variant-templates',
-        label: 'Variant Templates',
-        route: ProductsSidebarRoutes.variantTemplates,
-        permissionCode: TenantAdminPermissionCodes.tenantVariantTemplatesView,
-        isVisible: access.canViewVariantTemplatesNav(),
+        key: 'product-inventory',
+        label: 'Inventory',
+        route: ProductsSidebarRoutes.productInventory,
+        permissionCode: TenantAdminPermissionCodes.tenantStockView,
+        isVisible: access.canViewProductInventoryNav(),
+        isRouteAvailable: false,
+        unavailableMessage:
+            'Product inventory setup is not available yet. Use top-level Inventory for stock operations.',
+      ),
+      ProductsSidebarChildVisibility(
+        key: 'import',
+        label: 'Import',
+        route: ProductsSidebarRoutes.import,
+        permissionCode: TenantAdminPermissionCodes.tenantProductImport,
+        isVisible: access.canImportProductsNav(),
       ),
     ];
 

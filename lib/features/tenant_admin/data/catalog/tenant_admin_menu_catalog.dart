@@ -1,6 +1,9 @@
 import '../../../../core/access/tenant_admin_access_codes.dart';
 import '../../domain/entities/tenant_admin_menu_item.dart';
 
+/// Approved Tenant Admin top-level sidebar order.
+///
+/// Do not reorder without product approval.
 const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
   TenantAdminMenuItem(
     key: 'dashboard',
@@ -43,6 +46,18 @@ const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
     order: 4,
   ),
   TenantAdminMenuItem(
+    key: 'online-store',
+    label: 'Online Store',
+    route: '',
+    iconKey: 'online-store',
+    featureCode: TenantAdminFeatureCodes.dashboard,
+    permissionCode: TenantAdminPermissionCodes.tenantDashboardView,
+    visible: true,
+    order: 5,
+    isRouteAvailable: false,
+    unavailableMessage: 'Online Store is not available yet.',
+  ),
+  TenantAdminMenuItem(
     key: 'roles-access',
     label: 'Roles & Access',
     route: '/tenant-admin/roles-permissions',
@@ -50,7 +65,29 @@ const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
     featureCode: TenantAdminFeatureCodes.rolePermission,
     permissionCode: TenantAdminPermissionCodes.rolesPermissionsView,
     visible: true,
-    order: 5,
+    order: 6,
+  ),
+  TenantAdminMenuItem(
+    key: 'hardware',
+    label: 'Hardware',
+    route: '',
+    iconKey: 'hardware',
+    featureCode: TenantAdminFeatureCodes.tillManagement,
+    permissionCode: TenantAdminPermissionCodes.tenantHardwareView,
+    visible: true,
+    order: 7,
+    isRouteAvailable: false,
+    unavailableMessage: 'Hardware module is not available yet.',
+  ),
+  TenantAdminMenuItem(
+    key: 'inventory',
+    label: 'Inventory',
+    route: '/tenant-admin/stock/current',
+    iconKey: 'inventory',
+    featureCode: TenantAdminFeatureCodes.inventoryManagement,
+    permissionCode: TenantAdminPermissionCodes.tenantStockView,
+    visible: true,
+    order: 8,
   ),
   TenantAdminMenuItem(
     key: 'products',
@@ -59,36 +96,6 @@ const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
     iconKey: 'products',
     featureCode: TenantAdminFeatureCodes.productManagement,
     permissionCode: TenantAdminPermissionCodes.tenantProductsView,
-    visible: true,
-    order: 6,
-  ),
-  TenantAdminMenuItem(
-    key: 'stock',
-    label: 'Stock',
-    route: '/tenant-admin/stock/current',
-    iconKey: 'inventory',
-    featureCode: TenantAdminFeatureCodes.inventoryManagement,
-    permissionCode: TenantAdminPermissionCodes.tenantStockView,
-    visible: true,
-    order: 7,
-  ),
-  TenantAdminMenuItem(
-    key: 'reports',
-    label: 'Reports',
-    route: '/tenant-admin/reports',
-    iconKey: 'reports',
-    featureCode: TenantAdminFeatureCodes.reportsAnalytics,
-    permissionCode: TenantAdminPermissionCodes.reportView,
-    visible: true,
-    order: 8,
-  ),
-  TenantAdminMenuItem(
-    key: 'billing',
-    label: 'Billing',
-    route: '/tenant-admin/billing',
-    iconKey: 'billing',
-    featureCode: TenantAdminFeatureCodes.billingSubscription,
-    permissionCode: TenantAdminPermissionCodes.billingView,
     visible: true,
     order: 9,
   ),
@@ -101,15 +108,5 @@ const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
     permissionCode: TenantAdminPermissionCodes.tenantSettingsView,
     visible: true,
     order: 10,
-  ),
-  TenantAdminMenuItem(
-    key: 'activity',
-    label: 'Activity',
-    route: '/tenant-admin/activity',
-    iconKey: 'activity',
-    featureCode: TenantAdminFeatureCodes.activityAudit,
-    permissionCode: TenantAdminPermissionCodes.activityLogView,
-    visible: true,
-    order: 11,
   ),
 ];
