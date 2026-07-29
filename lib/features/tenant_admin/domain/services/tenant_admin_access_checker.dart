@@ -277,6 +277,24 @@ class TenantAdminAccessChecker {
         return canAccessUserModule();
       case 'products':
         return canAccessProductsSidebar();
+      case 'inventory':
+      case 'stock':
+        return canShowAction(
+          menuItem.featureCode,
+          menuItem.permissionCode,
+        );
+      case 'online-store':
+        // No dedicated Online Store permission/route yet — show disabled
+        // only to users who already have Tenant Admin dashboard access.
+        return canShowAction(
+          menuItem.featureCode,
+          menuItem.permissionCode,
+        );
+      case 'hardware':
+        return canAny([
+          TenantAdminPermissionCodes.tenantHardwareView,
+          TenantAdminPermissionCodes.tenantHardwareManage,
+        ]);
       default:
         return canShowAction(menuItem.featureCode, menuItem.permissionCode);
     }
@@ -891,7 +909,19 @@ class TenantAdminAccessChecker {
       TenantAdminPermissionCodes.tenantCategoriesView,
       TenantAdminPermissionCodes.tenantBrandsView,
       TenantAdminPermissionCodes.tenantVariantTemplatesView,
+      TenantAdminPermissionCodes.tenantProductImport,
+      TenantAdminPermissionCodes.tenantStockView,
     ]);
+  }
+
+  bool canImportProductsNav() {
+    return can(TenantAdminPermissionCodes.tenantProductImport);
+  }
+
+  /// Products → Inventory child visibility (product stock setup).
+  /// Distinct from top-level Inventory module navigation.
+  bool canViewProductInventoryNav() {
+    return can(TenantAdminPermissionCodes.tenantStockView);
   }
 
   bool canAccessProductModule() {

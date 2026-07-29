@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/network/dio_provider.dart';
@@ -40,36 +42,43 @@ class BrandSaveController extends AutoDisposeAsyncNotifier<void> {
   @override
   Future<void> build() async {}
 
+  /// Creates or updates a brand and, when [logoBytes] is provided, uploads
+  /// the logo for the resulting brand id afterwards. Returns the final
+  /// brand entity (including the uploaded logo URL, if any).
   Future<Brand> save({
     String? brandId,
     required BrandUpsertInput input,
+    Uint8List? logoBytes,
+    String? logoFileName,
   }) async {
     state = const AsyncLoading();
 
-    state = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard<Brand>(() async {
       final repository = ref.read(brandRepositoryProvider);
-      if (brandId == null || brandId.isEmpty) {
-        await repository.createBrand(input);
-      } else {
-        await repository.updateBrand(brandId, input);
+      final isCreate = brandId == null || brandId.isEmpty;
+      var brand = isCreate
+          ? await repository.createBrand(input)
+          : await repository.updateBrand(brandId, input);
+
+      if (logoBytes != null && logoBytes.isNotEmpty) {
+        brand = await repository.uploadBrandLogo(
+          brand.id,
+          logoBytes,
+          logoFileName ?? 'logo.jpg',
+        );
       }
 
-      ref.invalidate(brandListProvider);
+      return brand;
     });
 
-    if (state.hasError) {
-      throw state.error!;
+    if (result.hasError) {
+      state = AsyncError(result.error!, result.stackTrace!);
+      throw result.error!;
     }
 
-    final repository = ref.read(brandRepositoryProvider);
-    if (brandId == null || brandId.isEmpty) {
-      final result = await repository.listBrands(
-        query: const BrandListQuery(pageSize: 1),
-      );
-      return result.items.first;
-    }
-
-    return repository.getBrandById(brandId);
+    state = const AsyncData(null);
+    ref.invalidate(brandListProvider);
+    return result.requireValue;
   }
 
   Future<void> delete(String brandId) async {

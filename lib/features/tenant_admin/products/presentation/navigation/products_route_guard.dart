@@ -22,6 +22,8 @@ class ProductsRouteGuard {
         return access.canViewBrandsNav();
       case ProductsSidebarRoutes.variantTemplates:
         return access.canViewVariantTemplatesNav();
+      case ProductsSidebarRoutes.import:
+        return access.canImportProductsNav();
       default:
         return false;
     }

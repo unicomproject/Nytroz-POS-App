@@ -96,7 +96,18 @@ class TenantAdminBreakpoints {
   const TenantAdminBreakpoints._();
 
   static const mobile = 600.0;
+  static const smallTablet = 700.0;
   static const tablet = 900.0;
+  static const desktop = 1280.0;
+
+  static bool isDesktop(double width) => width >= desktop;
+
+  static bool isTablet(double width) => width >= tablet && width < desktop;
+
+  static bool isSmallTablet(double width) =>
+      width >= smallTablet && width < tablet;
+
+  static bool isMobile(double width) => width < smallTablet;
 }
 
 class TenantAdminInsets {
@@ -113,6 +124,54 @@ class TenantAdminInsets {
 
     return const EdgeInsets.fromLTRB(24, 22, 24, 24);
   }
+}
+
+class TenantAdminFooterNav {
+  const TenantAdminFooterNav._();
+
+  /// Height of the fixed bottom footer navigation shown on all Tenant Admin
+  /// routes (matches [PosCashierBottomNavigation]'s height).
+  static const height = 68.0;
+
+  /// Extra bottom inset to reserve for scrollable content so the fixed
+  /// footer never overlaps the last visible row.
+  static const contentInset = EdgeInsets.only(bottom: height);
+}
+
+class TenantAdminAppHeaderTokens {
+  const TenantAdminAppHeaderTokens._();
+
+  /// Height of the shared black Tenant Admin application header.
+  static const height = 64.0;
+}
+
+class TenantAdminSidebarTokens {
+  const TenantAdminSidebarTokens._();
+
+  static const width = 248.0;
+  static const compactWidth = 78.0;
+  static const tabletWidth = 220.0;
+  static const childIndent = 28.0;
+  static const compactChildIndent = 18.0;
+
+  static const background = TenantAdminColors.surface;
+  static const border = TenantAdminColors.border;
+  static const foreground = TenantAdminColors.bodyText;
+  static const mutedForeground = TenantAdminColors.mutedText;
+  static const icon = Color(0xFF94A3B8);
+  static const activeBackground = Color(0xFFF3E8FF);
+  static const activeForeground = Color(0xFF7C3AED);
+  static const disabledForeground = Color(0xFFB6C0D1);
+}
+
+class TenantAdminContentTokens {
+  const TenantAdminContentTokens._();
+
+  static const sidePanelWidth = 420.0;
+  static const formFieldHeight = 48.0;
+  static const buttonHeight = 44.0;
+  static const tableHeaderHeight = 48.0;
+  static const contentGap = TenantAdminSpacing.lg;
 }
 
 class TenantAdminTextStyles {

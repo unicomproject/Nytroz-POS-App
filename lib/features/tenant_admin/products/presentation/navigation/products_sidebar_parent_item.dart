@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../presentation/theme/tenant_admin_theme.dart';
+
 class ProductsSidebarParentItem extends StatelessWidget {
   const ProductsSidebarParentItem({
     super.key,
@@ -22,13 +24,18 @@ class ProductsSidebarParentItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final itemColor = selected ? Colors.white : const Color(0xFFD8E0EE);
-    final iconColor = selected ? Colors.white : const Color(0xFFB8C4D8);
+    final active = selected || expanded;
+    final itemColor = active
+        ? TenantAdminSidebarTokens.activeForeground
+        : TenantAdminSidebarTokens.foreground;
+    final iconColor = active
+        ? TenantAdminSidebarTokens.activeForeground
+        : TenantAdminSidebarTokens.icon;
 
     final content = Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(compact ? 12 : 16),
+        borderRadius: BorderRadius.circular(12),
         onTap: onToggle,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
@@ -37,17 +44,10 @@ class ProductsSidebarParentItem extends StatelessWidget {
             vertical: compact ? 10 : 11,
           ),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFF3F2BFF) : Colors.transparent,
+            color: active
+                ? TenantAdminSidebarTokens.activeBackground
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF3F2BFF).withValues(alpha: 0.30),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                : null,
           ),
           child: Row(
             children: [
@@ -62,7 +62,7 @@ class ProductsSidebarParentItem extends StatelessWidget {
                     style: TextStyle(
                       color: itemColor,
                       fontSize: 13,
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                      fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                     ),
                   ),
                 ),

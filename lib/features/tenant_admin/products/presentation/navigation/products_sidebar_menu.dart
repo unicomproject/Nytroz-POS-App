@@ -75,9 +75,11 @@ class ProductsSidebarMenu extends ConsumerWidget {
                                   currentPath: currentPath,
                                   route: child.route,
                                 ),
+                                enabled: true,
+                                visuallyDisabled: !child.isRouteAvailable,
                                 compact: compact,
                                 dense: compact,
-                                onTap: () => _navigate(context, child.route),
+                                onTap: () => _handleChildTap(context, child),
                               ),
                             ),
                         ],
@@ -90,8 +92,18 @@ class ProductsSidebarMenu extends ConsumerWidget {
     );
   }
 
-  void _navigate(BuildContext context, String route) {
-    context.go(route);
+  void _handleChildTap(
+    BuildContext context,
+    ProductsSidebarChildVisibility child,
+  ) {
+    if (!child.isRouteAvailable || child.route.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(child.unavailableMessage)),
+      );
+      return;
+    }
+
+    context.go(child.route);
     onNavigate?.call();
   }
 
@@ -125,7 +137,8 @@ class ProductsSidebarMenu extends ConsumerWidget {
       items: [
         for (final child in visibility.visibleChildren)
           PopupMenuItem<String>(
-            value: child.route,
+            value: child.isRouteAvailable ? child.route : '',
+            enabled: child.isRouteAvailable,
             child: Text(
               child.label,
               maxLines: 2,
@@ -135,10 +148,11 @@ class ProductsSidebarMenu extends ConsumerWidget {
       ],
     );
 
-    if (!context.mounted || selectedRoute == null) {
+    if (!context.mounted || selectedRoute == null || selectedRoute.isEmpty) {
       return;
     }
 
-    _navigate(context, selectedRoute);
+    context.go(selectedRoute);
+    onNavigate?.call();
   }
 }

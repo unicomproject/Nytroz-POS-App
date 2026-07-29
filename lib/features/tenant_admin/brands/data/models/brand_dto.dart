@@ -5,6 +5,10 @@ class BrandDto {
     required this.brandName,
     required this.status,
     this.description,
+    this.logoUrl,
+    this.logoMediaAssetId,
+    this.sortOrder = 0,
+    this.productCount = 0,
     this.createdAt,
     this.updatedAt,
   });
@@ -17,6 +21,10 @@ class BrandDto {
           json['brandName']?.toString() ?? json['name']?.toString() ?? '',
       status: json['status']?.toString() ?? 'ACTIVE',
       description: json['description']?.toString(),
+      logoUrl: json['logoUrl']?.toString(),
+      logoMediaAssetId: json['logoMediaAssetId']?.toString(),
+      sortOrder: _readInt(json['sortOrder'], fallback: 0),
+      productCount: _readInt(json['productCount'], fallback: 0),
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
     );
@@ -27,6 +35,10 @@ class BrandDto {
   final String brandName;
   final String status;
   final String? description;
+  final String? logoUrl;
+  final String? logoMediaAssetId;
+  final int sortOrder;
+  final int productCount;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -36,6 +48,18 @@ class BrandDto {
     }
 
     return DateTime.tryParse(value.toString());
+  }
+
+  static int _readInt(dynamic value, {required int fallback}) {
+    if (value is int) {
+      return value;
+    }
+
+    if (value is num) {
+      return value.toInt();
+    }
+
+    return int.tryParse(value?.toString() ?? '') ?? fallback;
   }
 }
 
@@ -86,6 +110,7 @@ class BrandUpsertRequestDto {
     this.description,
     this.brandSlug,
     this.logoUrl,
+    this.sortOrder = 0,
   });
 
   final String brandCode;
@@ -94,12 +119,14 @@ class BrandUpsertRequestDto {
   final String? description;
   final String? brandSlug;
   final String? logoUrl;
+  final int sortOrder;
 
   Map<String, dynamic> toJson() {
     return {
       'brandCode': brandCode,
       'name': name,
       'status': status,
+      'sortOrder': sortOrder,
       if (description != null && description!.trim().isNotEmpty)
         'description': description!.trim(),
       if (brandSlug != null && brandSlug!.trim().isNotEmpty)

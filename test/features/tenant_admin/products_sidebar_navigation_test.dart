@@ -46,18 +46,6 @@ void main() {
       expect(visibility.hasVisibleChildren, isFalse);
     });
 
-    test('shows only Product Dashboard with dashboard permission', () {
-      final visibility = ProductsSidebarVisibility.resolve(
-        access: _accessFor(
-          [TenantAdminPermissionCodes.tenantProductsDashboardView],
-        ),
-      );
-
-      expect(visibility.visibleChildren.map((item) => item.label), [
-        'Product Dashboard',
-      ]);
-    });
-
     test('shows only Product List with view permission', () {
       final visibility = ProductsSidebarVisibility.resolve(
         access: _accessFor([TenantAdminPermissionCodes.tenantProductsView]),
@@ -96,16 +84,48 @@ void main() {
       expect(visibility.visibleChildren.map((item) => item.label), ['Brands']);
     });
 
-    test('shows only Variant Templates with variant permission', () {
+    test('shows Inventory child as unavailable with stock permission', () {
       final visibility = ProductsSidebarVisibility.resolve(
-        access: _accessFor(
-          [TenantAdminPermissionCodes.tenantVariantTemplatesView],
-        ),
+        access: _accessFor([TenantAdminPermissionCodes.tenantStockView]),
       );
 
       expect(visibility.visibleChildren.map((item) => item.label), [
-        'Variant Templates',
+        'Inventory',
       ]);
+      expect(visibility.visibleChildren.single.isRouteAvailable, isFalse);
+    });
+
+    test('shows Import with import permission', () {
+      final visibility = ProductsSidebarVisibility.resolve(
+        access: _accessFor([TenantAdminPermissionCodes.tenantProductImport]),
+      );
+
+      expect(visibility.visibleChildren.map((item) => item.label), ['Import']);
+    });
+
+    test('approved child order when all visible', () {
+      final visibility = ProductsSidebarVisibility.resolve(
+        access: _accessFor([
+          TenantAdminPermissionCodes.tenantProductsView,
+          TenantAdminPermissionCodes.tenantProductsCreate,
+          TenantAdminPermissionCodes.tenantCategoriesView,
+          TenantAdminPermissionCodes.tenantBrandsView,
+          TenantAdminPermissionCodes.tenantStockView,
+          TenantAdminPermissionCodes.tenantProductImport,
+        ]),
+      );
+
+      expect(
+        visibility.visibleChildren.map((item) => item.label).toList(),
+        [
+          'Product List',
+          'Add Product',
+          'Categories',
+          'Brands',
+          'Inventory',
+          'Import',
+        ],
+      );
     });
   });
 
@@ -168,43 +188,75 @@ void main() {
   });
 
   group('ProductsSidebarRoutes', () {
-    test('detects active products area routes', () {
-      expect(ProductsSidebarRoutes.isProductsArea('/tenant-admin/products'),
-          isTrue);
-      expect(
-        ProductsSidebarRoutes.isProductsArea(
-            '/tenant-admin/products/dashboard'),
-        isTrue,
-      );
-      expect(ProductsSidebarRoutes.isProductsArea('/tenant-admin/categories'),
-          isTrue);
-      expect(
-          ProductsSidebarRoutes.isProductsArea('/tenant-admin/brands'), isTrue);
-      expect(
-        ProductsSidebarRoutes.isProductsArea('/tenant-admin/variant-templates'),
-        isTrue,
-      );
-      expect(ProductsSidebarRoutes.isProductsArea('/tenant-admin/dashboard'),
-          isFalse);
-    });
+  test('detects active products area routes', () {
+    expect(
+      ProductsSidebarRoutes.isProductsArea('/tenant-admin/products'),
+      isTrue,
+    );
 
-    test('highlights product list for detail routes', () {
-      expect(
-        ProductsSidebarRoutes.isChildActive(
-          currentPath: '/tenant-admin/products/prod-1',
-          route: ProductsSidebarRoutes.list,
-        ),
-        isTrue,
-      );
-      expect(
-        ProductsSidebarRoutes.isChildActive(
-          currentPath: '/tenant-admin/products/add',
-          route: ProductsSidebarRoutes.list,
-        ),
-        isFalse,
-      );
-    });
+    expect(
+      ProductsSidebarRoutes.isProductsArea(
+        '/tenant-admin/products/dashboard',
+      ),
+      isTrue,
+    );
+
+    expect(
+      ProductsSidebarRoutes.isProductsArea(
+        '/tenant-admin/products/import',
+      ),
+      isTrue,
+    );
+
+    expect(
+      ProductsSidebarRoutes.isProductsArea('/tenant-admin/categories'),
+      isTrue,
+    );
+
+    expect(
+      ProductsSidebarRoutes.isProductsArea('/tenant-admin/brands'),
+      isTrue,
+    );
+
+    expect(
+      ProductsSidebarRoutes.isProductsArea(
+        '/tenant-admin/variant-templates',
+      ),
+      isTrue,
+    );
+
+    expect(
+      ProductsSidebarRoutes.isProductsArea('/tenant-admin/dashboard'),
+      isFalse,
+    );
   });
+
+  test('highlights product list for detail routes', () {
+    expect(
+      ProductsSidebarRoutes.isChildActive(
+        currentPath: '/tenant-admin/products/prod-1',
+        route: ProductsSidebarRoutes.list,
+      ),
+      isTrue,
+    );
+
+    expect(
+      ProductsSidebarRoutes.isChildActive(
+        currentPath: '/tenant-admin/products/add',
+        route: ProductsSidebarRoutes.list,
+      ),
+      isFalse,
+    );
+
+    expect(
+      ProductsSidebarRoutes.isChildActive(
+        currentPath: '/tenant-admin/products/import',
+        route: ProductsSidebarRoutes.list,
+      ),
+      isFalse,
+    );
+  });
+});
 
   group('ProductsSidebarMenu widget', () {
     testWidgets('expands and collapses submenu on parent tap', (tester) async {
@@ -252,7 +304,7 @@ void main() {
     testWidgets('renders without overflow on narrow width', (tester) async {
       final access = _accessFor([
         TenantAdminPermissionCodes.tenantProductsView,
-        TenantAdminPermissionCodes.tenantVariantTemplatesView,
+        TenantAdminPermissionCodes.tenantProductImport,
       ]);
 
       tester.view.physicalSize = const Size(360, 800);
@@ -285,38 +337,4 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
-
-  group('Products sidebar expanded state', () {
-    test('auto-expands inside products area', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      syncProductsSidebarPath(container, '/tenant-admin/categories');
-
-      expect(container.read(productsSidebarExpandedProvider), isTrue);
-    });
-
-    test('manual toggle overrides auto state', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      syncProductsSidebarPath(container, '/tenant-admin/categories');
-      toggleProductsSidebarExpanded(container);
-      expect(container.read(productsSidebarExpandedProvider), isFalse);
-    });
-  });
-}
-
-void syncProductsSidebarPath(ProviderContainer container, String path) {
-  container.read(tenantAdminCurrentPathProvider.notifier).state = path;
-
-  if (!ProductsSidebarRoutes.isProductsArea(path)) {
-    container.read(productsSidebarManualExpandedProvider.notifier).state = null;
-  }
-}
-
-void toggleProductsSidebarExpanded(ProviderContainer container) {
-  final current = container.read(productsSidebarExpandedProvider);
-  container.read(productsSidebarManualExpandedProvider.notifier).state =
-      !current;
 }
