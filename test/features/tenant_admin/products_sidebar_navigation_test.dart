@@ -131,7 +131,8 @@ void main() {
 
   group('ProductsRouteGuard', () {
     test('allows only matching route permissions', () {
-      final access = _accessFor([TenantAdminPermissionCodes.tenantProductsView]);
+      final access =
+          _accessFor([TenantAdminPermissionCodes.tenantProductsView]);
 
       expect(
         ProductsRouteGuard.canAccessPath(
@@ -175,7 +176,8 @@ void main() {
     });
 
     test('products menu visible with any child permission', () {
-      final access = _accessFor([TenantAdminPermissionCodes.tenantProductsView]);
+      final access =
+          _accessFor([TenantAdminPermissionCodes.tenantProductsView]);
       final productsMenu = tenantAdminMenuCatalog.firstWhere(
         (item) => item.key == 'products',
       );
@@ -186,41 +188,75 @@ void main() {
   });
 
   group('ProductsSidebarRoutes', () {
-    test('detects active products area routes', () {
-      expect(ProductsSidebarRoutes.isProductsArea('/tenant-admin/products'), isTrue);
-      expect(
-        ProductsSidebarRoutes.isProductsArea('/tenant-admin/products/import'),
-        isTrue,
-      );
-      expect(ProductsSidebarRoutes.isProductsArea('/tenant-admin/categories'), isTrue);
-      expect(ProductsSidebarRoutes.isProductsArea('/tenant-admin/brands'), isTrue);
-      expect(ProductsSidebarRoutes.isProductsArea('/tenant-admin/dashboard'), isFalse);
-    });
+  test('detects active products area routes', () {
+    expect(
+      ProductsSidebarRoutes.isProductsArea('/tenant-admin/products'),
+      isTrue,
+    );
 
-    test('highlights product list for detail routes', () {
-      expect(
-        ProductsSidebarRoutes.isChildActive(
-          currentPath: '/tenant-admin/products/prod-1',
-          route: ProductsSidebarRoutes.list,
-        ),
-        isTrue,
-      );
-      expect(
-        ProductsSidebarRoutes.isChildActive(
-          currentPath: '/tenant-admin/products/add',
-          route: ProductsSidebarRoutes.list,
-        ),
-        isFalse,
-      );
-      expect(
-        ProductsSidebarRoutes.isChildActive(
-          currentPath: '/tenant-admin/products/import',
-          route: ProductsSidebarRoutes.list,
-        ),
-        isFalse,
-      );
-    });
+    expect(
+      ProductsSidebarRoutes.isProductsArea(
+        '/tenant-admin/products/dashboard',
+      ),
+      isTrue,
+    );
+
+    expect(
+      ProductsSidebarRoutes.isProductsArea(
+        '/tenant-admin/products/import',
+      ),
+      isTrue,
+    );
+
+    expect(
+      ProductsSidebarRoutes.isProductsArea('/tenant-admin/categories'),
+      isTrue,
+    );
+
+    expect(
+      ProductsSidebarRoutes.isProductsArea('/tenant-admin/brands'),
+      isTrue,
+    );
+
+    expect(
+      ProductsSidebarRoutes.isProductsArea(
+        '/tenant-admin/variant-templates',
+      ),
+      isTrue,
+    );
+
+    expect(
+      ProductsSidebarRoutes.isProductsArea('/tenant-admin/dashboard'),
+      isFalse,
+    );
   });
+
+  test('highlights product list for detail routes', () {
+    expect(
+      ProductsSidebarRoutes.isChildActive(
+        currentPath: '/tenant-admin/products/prod-1',
+        route: ProductsSidebarRoutes.list,
+      ),
+      isTrue,
+    );
+
+    expect(
+      ProductsSidebarRoutes.isChildActive(
+        currentPath: '/tenant-admin/products/add',
+        route: ProductsSidebarRoutes.list,
+      ),
+      isFalse,
+    );
+
+    expect(
+      ProductsSidebarRoutes.isChildActive(
+        currentPath: '/tenant-admin/products/import',
+        route: ProductsSidebarRoutes.list,
+      ),
+      isFalse,
+    );
+  });
+});
 
   group('ProductsSidebarMenu widget', () {
     testWidgets('expands and collapses submenu on parent tap', (tester) async {

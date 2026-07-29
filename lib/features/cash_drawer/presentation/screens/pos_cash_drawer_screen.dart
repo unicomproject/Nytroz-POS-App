@@ -168,7 +168,8 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
-            content: Text('An open till session is required to close the till.'),
+            content:
+                Text('An open till session is required to close the till.'),
           ),
         );
       return;

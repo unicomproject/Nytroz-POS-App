@@ -8,6 +8,7 @@ import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../providers/pos_cash_payment_success_provider.dart';
+import '../providers/completed_sale_print_provider.dart';
 import '../providers/pos_email_receipt_form_provider.dart';
 import '../widgets/cash_payment/cash_sale_summary_card.dart';
 import '../widgets/cash_payment_success/cash_payment_success_header.dart';
@@ -24,6 +25,7 @@ class PosCashPaymentSuccessScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authSessionProvider);
     final successData = ref.watch(posCashPaymentSuccessProvider);
+    final printState = ref.watch(completedSalePrintProvider);
 
     if (!PosPermissionAccess.canViewPaymentSuccessSession(session)) {
       return const TenantAdminForbiddenScreen();
@@ -151,6 +153,16 @@ class PosCashPaymentSuccessScreen extends ConsumerWidget {
                       ),
               ),
               const SizedBox(height: TenantAdminSpacing.lg),
+              _CompletedSalePrintStatusCard(
+                state: printState,
+                canRetryPrint: canPrintReceipt,
+                onRetryPrint: () =>
+                    ref.read(completedSalePrintProvider.notifier).retryPrint(),
+                onRetryAudit: () => ref
+                    .read(completedSalePrintProvider.notifier)
+                    .retryAuditOnly(),
+              ),
+              const SizedBox(height: TenantAdminSpacing.sm),
               ReceiptActionBar(
                 onViewReceiptPreview: canViewReceipts && !canPrintReceipt
                     ? () => showPrintReceiptDialog(context, ref)
@@ -184,6 +196,78 @@ class PosCashPaymentSuccessScreen extends ConsumerWidget {
 
   void _viewSales(BuildContext context) {
     _showActionMessage(context, 'Orders screen is not available yet.');
+  }
+}
+
+class _CompletedSalePrintStatusCard extends StatelessWidget {
+  const _CompletedSalePrintStatusCard({
+    required this.state,
+    required this.canRetryPrint,
+    required this.onRetryPrint,
+    required this.onRetryAudit,
+  });
+
+  final CompletedSalePrintState state;
+  final bool canRetryPrint;
+  final VoidCallback onRetryPrint;
+  final VoidCallback onRetryAudit;
+
+  @override
+  Widget build(BuildContext context) {
+    if (state.status == CompletedSalePrintStatus.idle) {
+      return const SizedBox.shrink();
+    }
+    final isSuccess = state.status == CompletedSalePrintStatus.printed;
+    final isBusy = state.status == CompletedSalePrintStatus.printing;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: TenantAdminSpacing.md,
+        vertical: TenantAdminSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color:
+            (isSuccess ? TenantAdminColors.success : TenantAdminColors.warning)
+                .withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          if (isBusy)
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            Icon(
+              isSuccess ? Icons.print_rounded : Icons.print_disabled_rounded,
+              color: isSuccess
+                  ? TenantAdminColors.success
+                  : TenantAdminColors.warning,
+            ),
+          const SizedBox(width: TenantAdminSpacing.sm),
+          Expanded(
+            child: Text(
+              [
+                state.message,
+                if (state.auditPending) state.auditMessage,
+              ].whereType<String>().where((v) => v.isNotEmpty).join(' · '),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          if (canRetryPrint && state.canRetryPrint)
+            TextButton(
+              onPressed: onRetryPrint,
+              child: const Text('Retry print'),
+            ),
+          if (state.auditPending)
+            TextButton(
+              onPressed: onRetryAudit,
+              child: const Text('Retry audit only'),
+            ),
+        ],
+      ),
+    );
   }
 }
 

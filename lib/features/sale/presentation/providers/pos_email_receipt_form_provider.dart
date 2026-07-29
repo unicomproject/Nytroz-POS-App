@@ -54,7 +54,8 @@ class PosEmailReceiptFormState {
   }
 }
 
-class PosEmailReceiptFormNotifier extends StateNotifier<PosEmailReceiptFormState> {
+class PosEmailReceiptFormNotifier
+    extends StateNotifier<PosEmailReceiptFormState> {
   PosEmailReceiptFormNotifier() : super(const PosEmailReceiptFormState());
 
   void setEmail(String value) {
@@ -83,7 +84,7 @@ class PosEmailReceiptFormNotifier extends StateNotifier<PosEmailReceiptFormState
   }
 }
 
-final posEmailReceiptFormProvider =
-    StateNotifierProvider<PosEmailReceiptFormNotifier, PosEmailReceiptFormState>(
+final posEmailReceiptFormProvider = StateNotifierProvider<
+    PosEmailReceiptFormNotifier, PosEmailReceiptFormState>(
   (ref) => PosEmailReceiptFormNotifier(),
 );

@@ -22,8 +22,10 @@ final tenantProductRemoteDatasourceProvider =
   return TenantProductRemoteDatasource(ref.watch(appDioProvider));
 });
 
-final tenantProductRepositoryProvider = Provider<TenantProductRepository>((ref) {
-  return TenantProductRepositoryImpl(ref.watch(tenantProductRemoteDatasourceProvider));
+final tenantProductRepositoryProvider =
+    Provider<TenantProductRepository>((ref) {
+  return TenantProductRepositoryImpl(
+      ref.watch(tenantProductRemoteDatasourceProvider));
 });
 
 final getProductsProvider = Provider<GetProducts>((ref) {
@@ -34,7 +36,8 @@ final getProductSummaryProvider = Provider<GetProductSummary>((ref) {
   return GetProductSummary(ref.watch(tenantProductRepositoryProvider));
 });
 
-final getProductCreateOptionsProvider = Provider<GetProductCreateOptions>((ref) {
+final getProductCreateOptionsProvider =
+    Provider<GetProductCreateOptions>((ref) {
   return GetProductCreateOptions(ref.watch(tenantProductRepositoryProvider));
 });
 
@@ -79,7 +82,8 @@ final productListQueryProvider = Provider<TenantProductListQuery>((ref) {
   );
 });
 
-final productListProvider = FutureProvider.autoDispose<TenantProductListResult?>((
+final productListProvider =
+    FutureProvider.autoDispose<TenantProductListResult?>((
   ref,
 ) async {
   final accessChecker =

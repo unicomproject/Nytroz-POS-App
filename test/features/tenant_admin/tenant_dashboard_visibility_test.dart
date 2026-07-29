@@ -5,7 +5,8 @@ import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_co
 import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_access_checker.dart';
 
 void main() {
-  test('tenant.dashboard.view shows dashboard widgets from catalog fallback', () {
+  test('tenant.dashboard.view shows dashboard widgets from catalog fallback',
+      () {
     const context = TenantAdminContext(
       tenantId: 'tenant-1',
       tenantName: 'SCS-TIX',

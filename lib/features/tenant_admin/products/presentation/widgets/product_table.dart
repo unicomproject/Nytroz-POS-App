@@ -64,13 +64,13 @@ class ProductTable extends StatelessWidget {
                     product: product,
                     canView: visibility.showViewAction,
                   ),
-                  onTap: visibility.showViewAction
-                      ? () => onView(product)
-                      : null,
+                  onTap:
+                      visibility.showViewAction ? () => onView(product) : null,
                 ),
                 DataCell(_PlainCell(_emptyDash(product.sku))),
                 DataCell(
-                  _PlainCell(_emptyDash(product.categoryName ?? 'Uncategorised')),
+                  _PlainCell(
+                      _emptyDash(product.categoryName ?? 'Uncategorised')),
                 ),
                 DataCell(_PlainCell(_formatPrice(product))),
                 DataCell(_PlainCell('${product.stockQuantity}')),
@@ -130,10 +130,10 @@ class ProductTable extends StatelessWidget {
       return '-';
     }
 
-    final currency = (product.currencyCode == null ||
-            product.currencyCode!.trim().isEmpty)
-        ? 'LKR'
-        : product.currencyCode!.toUpperCase();
+    final currency =
+        (product.currencyCode == null || product.currencyCode!.trim().isEmpty)
+            ? 'LKR'
+            : product.currencyCode!.toUpperCase();
     return '$currency ${product.sellingPrice!.toStringAsFixed(2)}';
   }
 }

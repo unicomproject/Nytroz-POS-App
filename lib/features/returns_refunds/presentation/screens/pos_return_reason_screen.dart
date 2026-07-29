@@ -346,7 +346,8 @@ class _Body extends StatelessWidget {
   final ValueChanged<String> onReasonSelected;
   final ValueChanged<String> onNotesChanged;
   final ValueChanged<bool> onApplySameReasonChanged;
-  final void Function(String saleLineId, String reasonCode) onLineReasonSelected;
+  final void Function(String saleLineId, String reasonCode)
+      onLineReasonSelected;
   final void Function(String saleLineId, String notes) onLineNotesChanged;
 
   @override

@@ -70,8 +70,7 @@ class CustomersState {
 
   PosCustomer? get selectedCustomer {
     final detail = selectedCustomerDetail;
-    if (detail != null &&
-        detail.customerId == selectedCustomerId) {
+    if (detail != null && detail.customerId == selectedCustomerId) {
       return detail;
     }
     final id = selectedCustomerId?.trim();
@@ -226,14 +225,13 @@ class CustomersSummaryState {
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
       customersWithOrdersAvailable:
           customersWithOrdersAvailable ?? this.customersWithOrdersAvailable,
-      newCustomersThisMonthAvailable: newCustomersThisMonthAvailable ??
-          this.newCustomersThisMonthAvailable,
+      newCustomersThisMonthAvailable:
+          newCustomersThisMonthAvailable ?? this.newCustomersThisMonthAvailable,
     );
   }
 }
 
-final customersProvider =
-    NotifierProvider<CustomersController, CustomersState>(
+final customersProvider = NotifierProvider<CustomersController, CustomersState>(
   CustomersController.new,
 );
 
@@ -307,15 +305,16 @@ class CustomersController extends Notifier<CustomersState> {
     }
 
     try {
-      final page = await ref.read(posCustomerRemoteDatasourceProvider).listCustomers(
-            deviceId: deviceContext.deviceId,
-            search: state.query,
-            status: state.apiStatus,
-            source: state.apiSource,
-            page: nextPage,
-            pageSize: state.pageSize,
-            cancelToken: cancelToken,
-          );
+      final page =
+          await ref.read(posCustomerRemoteDatasourceProvider).listCustomers(
+                deviceId: deviceContext.deviceId,
+                search: state.query,
+                status: state.apiStatus,
+                source: state.apiSource,
+                page: nextPage,
+                pageSize: state.pageSize,
+                cancelToken: cancelToken,
+              );
 
       if (requestId != _requestSeq) {
         return;
@@ -347,9 +346,7 @@ class CustomersController extends Notifier<CustomersState> {
         totalCount: 0,
         totalPages: 0,
         isForbidden: forbidden,
-        errorMessage: forbidden
-            ? 'Permission Denied'
-            : _mapError(error),
+        errorMessage: forbidden ? 'Permission Denied' : _mapError(error),
       );
     } catch (_) {
       if (requestId != _requestSeq) {
@@ -524,14 +521,15 @@ class CustomersController extends Notifier<CustomersState> {
       return null;
     }
 
-    final updated = await ref.read(posCustomerRemoteDatasourceProvider).updateCustomer(
-          deviceId: deviceContext.deviceId,
-          customerId: customerId,
-          fullName: fullName,
-          phone: phone,
-          email: email,
-          status: status,
-        );
+    final updated =
+        await ref.read(posCustomerRemoteDatasourceProvider).updateCustomer(
+              deviceId: deviceContext.deviceId,
+              customerId: customerId,
+              fullName: fullName,
+              phone: phone,
+              email: email,
+              status: status,
+            );
 
     final items = state.items
         .map(
@@ -598,12 +596,11 @@ class CustomersController extends Notifier<CustomersState> {
 
     state = state.copyWith(isAttaching: true, clearAttachMessage: true);
     try {
-      final result = await ref
-          .read(posCustomerRemoteDatasourceProvider)
-          .attachToSale(
-            deviceId: deviceContext.deviceId,
-            customerId: selected.customerId,
-          );
+      final result =
+          await ref.read(posCustomerRemoteDatasourceProvider).attachToSale(
+                deviceId: deviceContext.deviceId,
+                customerId: selected.customerId,
+              );
       state = state.copyWith(
         isAttaching: false,
         attachMessage: 'Customer attached to the active sale.',

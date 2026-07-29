@@ -66,7 +66,8 @@ class ReturnReceiptController extends StateNotifier<ReturnReceiptState> {
       state = state.copyWith(
         isLoading: false,
         clearReceipt: true,
-        errorMessage: 'Complete earlier return steps before viewing the receipt.',
+        errorMessage:
+            'Complete earlier return steps before viewing the receipt.',
       );
       return;
     }
@@ -84,29 +85,29 @@ class ReturnReceiptController extends StateNotifier<ReturnReceiptState> {
     }
 
     _ensureAuthorizationHeader(_ref.read(appDioProvider), session);
-    state = state.copyWith(isLoading: true, clearError: true, clearReceipt: true);
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearReceipt: true);
 
     try {
-      final receipt = await _ref
-          .read(returnsRefundRemoteDatasourceProvider)
-          .completeReturn(
-            deviceId: deviceContext.deviceId,
-            saleId: sale.saleId,
-            reasonCode: reasonCode,
-            settlementMethodCode: settlementCode,
-            notes: flowState.returnNotes,
-            lines: lines
-                .map(
-                  (line) => {
-                    'saleLineId': line.saleLineId,
-                    'returnQty': line.returnQty,
-                  },
-                )
-                .toList(growable: false),
-            expectedVersion: resolution.version,
-            idempotencyKey:
-                '${sale.saleId}:${resolution.draftId}:${resolution.version}:complete',
-          );
+      final receipt =
+          await _ref.read(returnsRefundRemoteDatasourceProvider).completeReturn(
+                deviceId: deviceContext.deviceId,
+                saleId: sale.saleId,
+                reasonCode: reasonCode,
+                settlementMethodCode: settlementCode,
+                notes: flowState.returnNotes,
+                lines: lines
+                    .map(
+                      (line) => {
+                        'saleLineId': line.saleLineId,
+                        'returnQty': line.returnQty,
+                      },
+                    )
+                    .toList(growable: false),
+                expectedVersion: resolution.version,
+                idempotencyKey:
+                    '${sale.saleId}:${resolution.draftId}:${resolution.version}:complete',
+              );
 
       _ref.read(returnFlowProvider.notifier).setCompletedReceipt(receipt);
       state = state.copyWith(isLoading: false, receipt: receipt);
@@ -147,8 +148,8 @@ String? _readApiError(DioException error) {
   return null;
 }
 
-final returnReceiptProvider =
-    StateNotifierProvider.autoDispose<ReturnReceiptController, ReturnReceiptState>(
+final returnReceiptProvider = StateNotifierProvider.autoDispose<
+    ReturnReceiptController, ReturnReceiptState>(
   (ref) => ReturnReceiptController(ref),
 );
 

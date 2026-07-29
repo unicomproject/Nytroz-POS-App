@@ -21,7 +21,9 @@ void main() {
         overrides: [
           tenantAdminAccessCheckerProvider.overrideWith(
             (ref) async => _checker(
-              permissions: [TenantAdminPermissionCodes.tenantAdminDashboardView],
+              permissions: [
+                TenantAdminPermissionCodes.tenantAdminDashboardView
+              ],
               features: [TenantAdminFeatureCodes.dashboard],
             ),
           ),

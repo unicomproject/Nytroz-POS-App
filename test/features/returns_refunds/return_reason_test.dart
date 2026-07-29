@@ -312,7 +312,8 @@ void main() {
       expect(find.textContaining('packaging'), findsNothing);
     });
 
-    testWidgets('tablet layout keeps selected items and reason cards side by side',
+    testWidgets(
+        'tablet layout keeps selected items and reason cards side by side',
         (tester) async {
       await _pumpAtSize(
         tester,

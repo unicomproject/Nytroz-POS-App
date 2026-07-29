@@ -11,8 +11,7 @@ class PosDevicePrinterConfigStore {
 
   final AppSecureStorage _storage;
 
-  static String _key(String deviceId) =>
-      'pos.device.$deviceId.printerConfig';
+  static String _key(String deviceId) => 'pos.device.$deviceId.printerConfig';
 
   Future<PosDevicePrinterConfig?> load(String deviceId) async {
     final id = deviceId.trim();
@@ -29,8 +28,7 @@ class PosDevicePrinterConfigStore {
         return null;
       }
       final config = PosDevicePrinterConfig.fromJson(decoded);
-      if (config.deviceId.trim().isNotEmpty &&
-          config.deviceId.trim() != id) {
+      if (config.deviceId.trim().isNotEmpty && config.deviceId.trim() != id) {
         // Never load another device's hardware identifiers.
         return null;
       }

@@ -7,8 +7,8 @@ class DashboardDotPattern extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const SizedBox(
-        width: 34,
-        height: 34,
+        width: 38,
+        height: 38,
         child: CustomPaint(painter: _DotPainter()),
       );
 }
@@ -19,14 +19,23 @@ class _DotPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = TenantAdminColors.posHomeDot;
-    for (var row = 0; row < 4; row++) {
-      for (var column = 0; column < 4; column++) {
-        canvas.drawCircle(
-          Offset(column * 9 + 3, row * 9 + 3),
-          1.8,
-          paint,
-        );
-      }
+    const positions = <Offset>[
+      Offset(4, 4),
+      Offset(14, 4),
+      Offset(24, 4),
+      Offset(34, 4),
+      Offset(4, 14),
+      Offset(14, 14),
+      Offset(24, 14),
+      Offset(34, 14),
+      Offset(4, 24),
+      Offset(14, 24),
+      Offset(24, 24),
+      Offset(34, 24),
+      Offset(4, 34),
+    ];
+    for (final position in positions) {
+      canvas.drawCircle(position, 2.25, paint);
     }
   }
 

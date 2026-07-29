@@ -29,10 +29,8 @@ class ProductSubCategoryOptionDto {
   factory ProductSubCategoryOptionDto.fromJson(Map<String, dynamic> json) {
     return ProductSubCategoryOptionDto(
       id: json['subCategoryId']?.toString() ?? json['id']?.toString() ?? '',
-      name:
-          json['subCategoryName'] as String? ?? json['name'] as String? ?? '',
-      code:
-          json['subCategoryCode'] as String? ?? json['code'] as String? ?? '',
+      name: json['subCategoryName'] as String? ?? json['name'] as String? ?? '',
+      code: json['subCategoryCode'] as String? ?? json['code'] as String? ?? '',
       parentCategoryId: json['parentCategoryId']?.toString() ?? '',
     );
   }
@@ -159,7 +157,8 @@ class TenantProductCreateOptionsDto {
 
   factory TenantProductCreateOptionsDto.fromJson(Map<String, dynamic> json) {
     return TenantProductCreateOptionsDto(
-      categories: _mapList(json['categories'], ProductCategoryOptionDto.fromJson),
+      categories:
+          _mapList(json['categories'], ProductCategoryOptionDto.fromJson),
       subCategories:
           _mapList(json['subCategories'], ProductSubCategoryOptionDto.fromJson),
       brands: _mapList(json['brands'], ProductBrandOptionDto.fromJson),

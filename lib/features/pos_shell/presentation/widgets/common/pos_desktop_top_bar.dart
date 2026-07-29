@@ -10,6 +10,8 @@ import 'package:nytroz_pos/features/sale/presentation/providers/pos_camera_scann
 import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../providers/pos_home_dashboard_provider.dart';
+import '../home/pos_branding.dart';
 
 class PosDesktopTopBar extends StatefulWidget {
   const PosDesktopTopBar({
@@ -137,18 +139,33 @@ class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
   }
 }
 
-class _NewSaleBrand extends StatelessWidget {
+class _NewSaleBrand extends ConsumerWidget {
   const _NewSaleBrand();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dashboard = ref.watch(posHomeDashboardProvider);
+    return dashboard.maybeWhen(
+      data: (state) => PosBranding(dashboard: state),
+      orElse: () => const _NewSaleBrandFallback(),
+    );
+  }
+}
+
+class _NewSaleBrandFallback extends StatelessWidget {
+  const _NewSaleBrandFallback();
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Image.asset(
-          'assets/images/logo.png',
-          width: 38,
-          height: 38,
-          fit: BoxFit.contain,
+        const SizedBox.square(
+          dimension: 42,
+          child: Icon(
+            Icons.shopping_bag_rounded,
+            color: TenantAdminColors.posHomeAccentOrange,
+            size: 34,
+          ),
         ),
         const SizedBox(width: TenantAdminSpacing.sm),
         Flexible(
@@ -401,29 +418,11 @@ class _NewSaleSearchFieldState extends ConsumerState<_NewSaleSearchField> {
               ),
             ),
             prefixIconConstraints: const BoxConstraints(minWidth: 58),
-            hint: const Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Scan barcode or search products',
-                  style: TextStyle(
-                    color: TenantAdminColors.posNewSaleSearchText,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Use scanner or type product name',
-                  style: TextStyle(
-                    color: TenantAdminColors.posNewSaleSearchHint,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+            hintText: 'Scan barcode or search products',
+            hintStyle: const TextStyle(
+              color: TenantAdminColors.posNewSaleSearchHint,
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
             ),
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
@@ -458,9 +457,9 @@ class _NewSaleSearchFieldState extends ConsumerState<_NewSaleSearchField> {
                 const SizedBox(width: TenantAdminSpacing.xs),
               ],
             ),
+            isDense: true,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: TenantAdminSpacing.md,
-              vertical: TenantAdminSpacing.sm,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(TenantAdminRadius.md),
@@ -478,6 +477,8 @@ class _NewSaleSearchFieldState extends ConsumerState<_NewSaleSearchField> {
               ),
             ),
           ),
+          textAlignVertical: TextAlignVertical.center,
+          maxLines: 1,
         ),
       ),
     );

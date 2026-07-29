@@ -85,7 +85,8 @@ class _PanelTitle extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Product List', style: TenantAdminTextStyles.sectionTitle(context)),
+        Text('Product List',
+            style: TenantAdminTextStyles.sectionTitle(context)),
         const SizedBox(width: TenantAdminSpacing.sm),
         Container(
           padding: const EdgeInsets.symmetric(
@@ -153,8 +154,7 @@ class _PaginationFooter extends StatelessWidget {
           ),
           Text('$page / $totalPages'),
           IconButton(
-            onPressed:
-                page < totalPages ? () => onPageChanged(page + 1) : null,
+            onPressed: page < totalPages ? () => onPageChanged(page + 1) : null,
             icon: const Icon(Icons.chevron_right, size: 18),
           ),
         ],

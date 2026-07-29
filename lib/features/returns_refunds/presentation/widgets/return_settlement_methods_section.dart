@@ -38,7 +38,8 @@ class ReturnSettlementMethodsSection extends StatelessWidget {
                   for (var index = 0;
                       index < ReturnSettlementMethodOption.options.length;
                       index += 1) ...[
-                    if (index > 0) const SizedBox(height: TenantAdminSpacing.md),
+                    if (index > 0)
+                      const SizedBox(height: TenantAdminSpacing.md),
                     ReturnSettlementMethodTile(
                       option: ReturnSettlementMethodOption.options[index],
                       selected: selectedMethodCode ==
@@ -84,15 +85,13 @@ class ReturnSettlementMethodsSection extends StatelessWidget {
                                 ReturnSettlementMethodOption.options[row + 1],
                             selected: selectedMethodCode ==
                                 ReturnSettlementMethodOption
-                                    .options[row + 1]
-                                    .code,
+                                    .options[row + 1].code,
                             enabled: ReturnSettlementMethodOption
                                 .options[row + 1]
                                 .isAvailableFor(preview),
                             onSelected: () => onMethodSelected(
                               ReturnSettlementMethodOption
-                                  .options[row + 1]
-                                  .code,
+                                  .options[row + 1].code,
                             ),
                           ),
                         ),

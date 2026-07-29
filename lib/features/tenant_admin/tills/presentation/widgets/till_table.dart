@@ -101,7 +101,8 @@ class TillTable extends StatelessWidget {
                           ),
                         )
                         .toList(growable: false),
-                    onSelected: (action) => _handleAction(context, action, till),
+                    onSelected: (action) =>
+                        _handleAction(context, action, till),
                     child: const Padding(
                       padding: EdgeInsets.all(8),
                       child: Icon(Icons.more_vert),

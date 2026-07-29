@@ -53,7 +53,8 @@ void main() {
         ),
       );
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'cashier@test.local');
+      await tester.enterText(
+          find.byType(TextFormField).at(0), 'cashier@test.local');
       await tester.enterText(
           find.byType(TextFormField).at(1), 'wrong-password');
       await tester.ensureVisible(find.text('Sign In'));
@@ -85,7 +86,8 @@ void main() {
         },
       );
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'cashier@test.local');
+      await tester.enterText(
+          find.byType(TextFormField).at(0), 'cashier@test.local');
       await tester.enterText(find.byType(TextFormField).at(1), 'password');
       await tester.ensureVisible(find.text('Sign In'));
       await tester.tap(find.text('Sign In'));
@@ -190,7 +192,8 @@ class _FailingLogin extends Login {
 }
 
 class _TestAuthSessionStorage extends AuthSessionStorage {
-  _TestAuthSessionStorage() : super(const AppSecureStorage(FlutterSecureStorage()));
+  _TestAuthSessionStorage()
+      : super(const AppSecureStorage(FlutterSecureStorage()));
 
   @override
   Future<AuthSession?> read() async => null;

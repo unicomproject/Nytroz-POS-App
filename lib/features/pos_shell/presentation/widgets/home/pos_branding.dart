@@ -29,14 +29,50 @@ class PosBranding extends StatelessWidget {
         ),
         if (name.isNotEmpty) ...[
           const SizedBox(width: TenantAdminSpacing.sm),
-          Text(
-            name,
-            style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+          _BrandName(name: name),
+        ],
+      ],
+    );
+  }
+}
+
+class _BrandName extends StatelessWidget {
+  const _BrandName({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final baseStyle = Theme.of(context).textTheme.titleLarge?.copyWith(
               color: TenantAdminColors.surface,
+              fontWeight: FontWeight.w800,
+            ) ??
+        const TextStyle(
+          fontSize: 22,
+          color: TenantAdminColors.surface,
+          fontWeight: FontWeight.w800,
+        );
+    final match = RegExp(r'^(.*?)(\s+POS)$', caseSensitive: false)
+        .firstMatch(name.trim());
+    if (match == null) {
+      return Text(name, style: baseStyle);
+    }
+
+    return Text.rich(
+      TextSpan(
+        style: baseStyle,
+        children: [
+          TextSpan(text: match.group(1)),
+          TextSpan(
+            text: match.group(2),
+            style: baseStyle.copyWith(
+              color: TenantAdminColors.posHomeAccentOrange,
             ),
           ),
         ],
-      ],
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }
@@ -49,7 +85,7 @@ class _LogoFallback extends StatelessWidget {
         color: TenantAdminColors.posHomeDarkBackground,
         child: Icon(
           Icons.shopping_bag_rounded,
-          color: TenantAdminColors.posHomeOrangeStart,
+          color: TenantAdminColors.posHomeAccentOrange,
         ),
       );
 }

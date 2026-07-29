@@ -50,7 +50,9 @@ class ReturnCreditSaleSummaryPanel extends StatelessWidget {
               const SizedBox(height: TenantAdminSpacing.md),
               _SummaryField(
                 label: 'Payment Method',
-                value: preview.paymentDisplay.isEmpty ? '-' : preview.paymentDisplay,
+                value: preview.paymentDisplay.isEmpty
+                    ? '-'
+                    : preview.paymentDisplay,
               ),
               const SizedBox(height: TenantAdminSpacing.md),
               _SummaryField(

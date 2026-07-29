@@ -44,7 +44,9 @@ class SuccessPageActions extends StatelessWidget {
 
         final printButton = OutlinedButton.icon(
           onPressed: printEnabled && !isPrinting && !isNavigating
-              ? (auditPending ? (onRetryAudit ?? onPrintReceipt) : onPrintReceipt)
+              ? (auditPending
+                  ? (onRetryAudit ?? onPrintReceipt)
+                  : onPrintReceipt)
               : null,
           icon: isPrinting
               ? const SizedBox(
@@ -70,9 +72,8 @@ class SuccessPageActions extends StatelessWidget {
         );
 
         final newReturnButton = OutlinedButton.icon(
-          onPressed: startNewReturnEnabled && !isNavigating
-              ? onStartNewReturn
-              : null,
+          onPressed:
+              startNewReturnEnabled && !isNavigating ? onStartNewReturn : null,
           icon: const Icon(Icons.refresh_rounded, size: 18),
           label: const Text('Start New Return'),
           style: OutlinedButton.styleFrom(
@@ -87,8 +88,7 @@ class SuccessPageActions extends StatelessWidget {
 
         final homeButton = PosPrimaryActionButton(
           label: 'Back to POS Home',
-          onPressed:
-              backToHomeEnabled && !isNavigating ? onBackToHome : null,
+          onPressed: backToHomeEnabled && !isNavigating ? onBackToHome : null,
           leadingIcon: Icons.home_outlined,
           isLoading: isNavigating,
           compact: true,

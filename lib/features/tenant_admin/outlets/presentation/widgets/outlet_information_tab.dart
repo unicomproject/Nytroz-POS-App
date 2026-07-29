@@ -22,17 +22,23 @@ class OutletInformationTab extends StatelessWidget {
     final columns = width >= TenantAdminBreakpoints.tablet ? 2 : 1;
 
     final items = <_InfoItem>[
-      _InfoItem(Icons.location_on_outlined, 'Address', _join([outlet.addressLine1, outlet.addressLine2])),
+      _InfoItem(Icons.location_on_outlined, 'Address',
+          _join([outlet.addressLine1, outlet.addressLine2])),
       _InfoItem(Icons.location_city_outlined, 'City', outlet.city),
-      _InfoItem(Icons.map_outlined, 'District / Province', outlet.districtOrProvince),
-      _InfoItem(Icons.local_post_office_outlined, 'Postal Code', outlet.postalCode),
+      _InfoItem(
+          Icons.map_outlined, 'District / Province', outlet.districtOrProvince),
+      _InfoItem(
+          Icons.local_post_office_outlined, 'Postal Code', outlet.postalCode),
       _InfoItem(Icons.phone_outlined, 'Phone Number', outlet.phoneNumber),
       _InfoItem(Icons.email_outlined, 'Email Address', outlet.emailAddress),
-      _InfoItem(Icons.storefront_outlined, 'Outlet Type', outlet.displayOutletType),
+      _InfoItem(
+          Icons.storefront_outlined, 'Outlet Type', outlet.displayOutletType),
       _InfoItem(Icons.access_time, 'Operating Hours', outlet.operatingHours),
       _InfoItem(Icons.person_outline, 'Manager Name', outlet.managerName),
-      _InfoItem(Icons.event_outlined, 'Opening Date', _formatDate(outlet.openingDate)),
-      _InfoItem(Icons.receipt_long_outlined, 'Tax / Registration ID', outlet.taxRegistrationId),
+      _InfoItem(Icons.event_outlined, 'Opening Date',
+          _formatDate(outlet.openingDate)),
+      _InfoItem(Icons.receipt_long_outlined, 'Tax / Registration ID',
+          outlet.taxRegistrationId),
       _InfoItem(Icons.notes_outlined, 'Notes', outlet.notes),
     ];
 

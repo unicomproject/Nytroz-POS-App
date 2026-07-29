@@ -31,10 +31,13 @@ class PosDiscountCatalogQuery {
   final double? quantity;
   final double? cartSubtotal;
   @override
-  bool operator ==(Object other) => other is PosDiscountCatalogQuery &&
-      scope == other.scope && variantId == other.variantId &&
+  bool operator ==(Object other) =>
+      other is PosDiscountCatalogQuery &&
+      scope == other.scope &&
+      variantId == other.variantId &&
       _listEquals(variantIds, other.variantIds) &&
-      customerId == other.customerId && quantity == other.quantity &&
+      customerId == other.customerId &&
+      quantity == other.quantity &&
       cartSubtotal == other.cartSubtotal;
   @override
   int get hashCode => Object.hash(
@@ -51,9 +54,7 @@ final posDiscountCatalogProvider = FutureProvider.autoDispose
     .family<PosDiscountCatalog, PosDiscountCatalogQuery>((ref, query) async {
   final device = ref.watch(deviceActivationProvider).deviceContext;
   if (device == null) throw StateError('POS device context is not ready.');
-  return ref
-      .watch(posDiscountRemoteDatasourceProvider)
-      .getDiscounts(
+  return ref.watch(posDiscountRemoteDatasourceProvider).getDiscounts(
         deviceId: device.deviceId,
         scope: query.scope,
         variantId: query.variantId,
@@ -126,10 +127,10 @@ Future<void> cancelPosDiscount({
   final device = ref.read(deviceActivationProvider).deviceContext;
   if (device == null) throw StateError('POS device context is not ready.');
   await ref.read(posDiscountRemoteDatasourceProvider).cancel(
-    applicationId: applicationId,
-    deviceId: device.deviceId,
-    reason: 'Removed from POS cart',
-  );
+        applicationId: applicationId,
+        deviceId: device.deviceId,
+        reason: 'Removed from POS cart',
+      );
 }
 
 String _idempotencyKey(String deviceId) {

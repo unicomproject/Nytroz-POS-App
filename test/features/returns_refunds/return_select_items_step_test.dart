@@ -48,18 +48,23 @@ void main() {
 
     test('matches product name and SKU', () {
       expect(
-        filterReturnEligibilityItems(items, query: 'shorts', returnableOnly: false),
+        filterReturnEligibilityItems(items,
+            query: 'shorts', returnableOnly: false),
         hasLength(1),
       );
       expect(
-        filterReturnEligibilityItems(items, query: 'mer-001', returnableOnly: false).single.sku,
+        filterReturnEligibilityItems(items,
+                query: 'mer-001', returnableOnly: false)
+            .single
+            .sku,
         'MER-001',
       );
     });
 
     test('matches barcode and never treats variantId as barcode', () {
       expect(
-        filterReturnEligibilityItems(items, query: '8901001', returnableOnly: false),
+        filterReturnEligibilityItems(items,
+            query: '8901001', returnableOnly: false),
         hasLength(1),
       );
       expect(
@@ -101,8 +106,10 @@ void main() {
   });
 
   group('ReturnEligibilityState selection math', () {
-    test('excludes non-returnable and zero-qty lines from count and estimate', () {
-      final eligible = _line(id: '1', name: 'A', sku: 'A', available: 2, unitPrice: 50);
+    test('excludes non-returnable and zero-qty lines from count and estimate',
+        () {
+      final eligible =
+          _line(id: '1', name: 'A', sku: 'A', available: 2, unitPrice: 50);
       final blocked = _line(
         id: '2',
         name: 'B',
@@ -141,7 +148,9 @@ void main() {
       expect(state.selectedItems.single.saleLineId, '1');
     });
 
-    test('header selection state covers none/partial/all for visible eligible lines', () {
+    test(
+        'header selection state covers none/partial/all for visible eligible lines',
+        () {
       final a = _line(id: '1', name: 'A', sku: 'A');
       final b = _line(id: '2', name: 'B', sku: 'B');
       final blocked = _line(id: '3', name: 'C', sku: 'C', isReturnable: false);

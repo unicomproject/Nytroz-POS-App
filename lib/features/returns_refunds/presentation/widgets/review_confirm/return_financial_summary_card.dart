@@ -97,9 +97,10 @@ class ReturnFinancialSummaryCard extends StatelessWidget {
                 label: 'Difference',
                 value: formatReturnCreditAmount(
                   currency: currency,
-                  amount: difference!.type == ExchangeDifferenceType.customerRefund
-                      ? -difference!.amount
-                      : difference!.amount,
+                  amount:
+                      difference!.type == ExchangeDifferenceType.customerRefund
+                          ? -difference!.amount
+                          : difference!.amount,
                 ),
                 valueColor: TenantAdminColors.primary,
               ),

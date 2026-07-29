@@ -103,12 +103,15 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
                   query: customersState.query,
                   statusFilter: customersState.statusFilter,
                   sourceFilter: customersState.sourceFilter,
-                  onSearchChanged: (value) =>
-                      ref.read(customersProvider.notifier).setSearchQuery(value),
-                  onStatusChanged: (value) =>
-                      ref.read(customersProvider.notifier).setStatusFilter(value),
-                  onSourceChanged: (value) =>
-                      ref.read(customersProvider.notifier).setSourceFilter(value),
+                  onSearchChanged: (value) => ref
+                      .read(customersProvider.notifier)
+                      .setSearchQuery(value),
+                  onStatusChanged: (value) => ref
+                      .read(customersProvider.notifier)
+                      .setStatusFilter(value),
+                  onSourceChanged: (value) => ref
+                      .read(customersProvider.notifier)
+                      .setSourceFilter(value),
                   onClear: () =>
                       ref.read(customersProvider.notifier).clearFilters(),
                 ),
@@ -137,9 +140,8 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
                                 onSelect: (id) => ref
                                     .read(customersProvider.notifier)
                                     .selectCustomer(id),
-                                onRetry: () => ref
-                                    .read(customersProvider.notifier)
-                                    .load(),
+                                onRetry: () =>
+                                    ref.read(customersProvider.notifier).load(),
                                 onPageChanged: (page) => ref
                                     .read(customersProvider.notifier)
                                     .goToPage(page),
@@ -260,7 +262,8 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
       return;
     }
     if (!PosPermissionAccess.canAttachCustomerToSale(granted)) {
-      _showMessage('You do not have permission to attach a customer to a sale.');
+      _showMessage(
+          'You do not have permission to attach a customer to a sale.');
       return;
     }
 
@@ -277,7 +280,8 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
     ref.read(posNewSaleCartProvider.notifier).setCustomer(result.customer);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${result.customer.displayName} attached to the active sale.'),
+        content:
+            Text('${result.customer.displayName} attached to the active sale.'),
       ),
     );
     context.go('/pos/new-sale');

@@ -85,16 +85,16 @@ class _PosReturnCheckEligibilityScreenState
     final selectedLines = flowState.selectedReturnLines;
 
     await ref.read(returnEligibilityProvider.notifier).validateSelectedLines(
-          saleId: sale.saleId,
-          lines: [
-            for (final line in selectedLines)
-              ReturnLineSelection(
-                saleLineId: line.saleLineId,
-                isSelected: true,
-                returnQty: line.returnQty,
-              ),
-          ],
-        );
+      saleId: sale.saleId,
+      lines: [
+        for (final line in selectedLines)
+          ReturnLineSelection(
+            saleLineId: line.saleLineId,
+            isSelected: true,
+            returnQty: line.returnQty,
+          ),
+      ],
+    );
   }
 
   @override

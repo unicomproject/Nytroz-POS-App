@@ -45,9 +45,12 @@ class PosCustomerRemoteDatasource {
           'deviceId': deviceId,
           'page': page < 1 ? 1 : page,
           'pageSize': pageSize < 1 ? 20 : pageSize,
-          if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-          if (status != null && status.trim().isNotEmpty) 'status': status.trim(),
-          if (source != null && source.trim().isNotEmpty) 'source': source.trim(),
+          if (search != null && search.trim().isNotEmpty)
+            'search': search.trim(),
+          if (status != null && status.trim().isNotEmpty)
+            'status': status.trim(),
+          if (source != null && source.trim().isNotEmpty)
+            'source': source.trim(),
         },
         cancelToken: cancelToken,
       );
@@ -216,7 +219,8 @@ class PosCustomerRemoteDatasource {
         ApiEndpoints.posCustomerAttachToSale(customerId),
         queryParameters: {'deviceId': deviceId},
         data: {
-          if (saleId != null && saleId.trim().isNotEmpty) 'saleId': saleId.trim(),
+          if (saleId != null && saleId.trim().isNotEmpty)
+            'saleId': saleId.trim(),
         },
       );
       final data = _unwrapApiData(response.data ?? const {});

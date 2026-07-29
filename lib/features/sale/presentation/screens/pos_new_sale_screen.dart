@@ -14,6 +14,7 @@ import '../widgets/new_sale/pos_product_grid.dart';
 import '../providers/pos_barcode_scan_controller.dart';
 import '../providers/pos_barcode_scan_feedback.dart';
 import '../providers/pos_camera_scanner_provider.dart';
+import '../../../hardware/barcode_scanner/presentation/providers/barcode_scanner_configuration_provider.dart';
 import '../widgets/new_sale/pos_camera_barcode_scanner.dart';
 import '../../../cart/presentation/providers/pos_new_sale_search_coordinator.dart';
 
@@ -63,6 +64,25 @@ class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen> {
   }
 
   Future<void> _openCameraScanner() async {
+    final scannerConfiguration =
+        ref.read(barcodeScannerConfigurationProvider).asData?.value;
+    if (scannerConfiguration == null ||
+        !scannerConfiguration.enabled ||
+        !scannerConfiguration.cameraEnabled ||
+        scannerConfiguration.mode != 'camera') {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Camera scanning is not configured for this POS device.',
+              ),
+            ),
+          );
+      }
+      return;
+    }
     if (_cameraScannerOpening ||
         !mounted ||
         ModalRoute.of(context)?.isCurrent != true) {
@@ -104,6 +124,8 @@ class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scannerConfiguration =
+        ref.watch(barcodeScannerConfigurationProvider).asData?.value;
     ref.watch(posBarcodeScanControllerProvider);
     ref.listen(
       posBarcodeScanControllerProvider.select((state) => state.feedbackEvent),
@@ -131,9 +153,17 @@ class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen> {
         _openCameraScanner();
       }
     });
-    final scannerEnabled = ModalRoute.of(context)?.isCurrent ?? true;
+    final scannerEnabled = (ModalRoute.of(context)?.isCurrent ?? true) &&
+        scannerConfiguration != null &&
+        scannerConfiguration.enabled &&
+        scannerConfiguration.mode == 'usbHid';
     return PosBarcodeScannerListener(
       enabled: scannerEnabled,
+      minimumBarcodeLength: scannerConfiguration?.minimumBarcodeLength ?? 4,
+      maximumBarcodeLength: scannerConfiguration?.maximumBarcodeLength ?? 128,
+      maximumInterKeyDelay: Duration(
+        milliseconds: scannerConfiguration?.scanTimeout ?? 120,
+      ),
       onBarcodeScanned: (barcode) {
         ref.read(posNewSaleSearchCoordinatorProvider).clearForScanner();
         widget.onBarcodeCaptured?.call(barcode);
@@ -247,12 +277,6 @@ class _QuickProductsTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(
-          Icons.grid_view_rounded,
-          color: TenantAdminColors.danger,
-          size: 24,
-        ),
-        const SizedBox(width: TenantAdminSpacing.sm),
         Text(
           'Quick Products',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(

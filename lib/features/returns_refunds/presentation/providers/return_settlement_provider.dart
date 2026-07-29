@@ -103,7 +103,8 @@ class ReturnSettlementController extends StateNotifier<ReturnSettlementState> {
     }
 
     _ensureAuthorizationHeader(_ref.read(appDioProvider), session);
-    state = state.copyWith(isLoading: true, clearError: true, clearPreview: true);
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearPreview: true);
 
     try {
       final preview = await _ref

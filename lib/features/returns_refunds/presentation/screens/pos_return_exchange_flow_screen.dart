@@ -46,23 +46,21 @@ class _PosReturnExchangeFlowScreenState
   }
 
   Future<void> _guardAndLoad() async {
-      final loaded = await ref
-          .read(returnResolutionProvider.notifier)
-          .loadSavedResolution();
-      final authoritative =
-          ref.read(returnResolutionProvider).savedResolution;
-      if (!loaded ||
-          authoritative == null ||
-          !authoritative.isValidated ||
-          !authoritative.exchangeAllowed ||
-          authoritative.resolutionType != ReturnResolutionType.exchange) {
-        if (mounted) context.go('/pos/returns-refunds/choose-option');
-        return;
-      }
-      if (mounted) setState(() => _isGuarding = false);
-      ref.read(returnFlowProvider.notifier).setStep(ReturnFlowSteps.branchAction);
-      ref.read(exchangeReplacementSearchProvider.notifier).loadProducts();
-      ref.read(returnExchangeFlowProvider.notifier).hydrate();
+    final loaded =
+        await ref.read(returnResolutionProvider.notifier).loadSavedResolution();
+    final authoritative = ref.read(returnResolutionProvider).savedResolution;
+    if (!loaded ||
+        authoritative == null ||
+        !authoritative.isValidated ||
+        !authoritative.exchangeAllowed ||
+        authoritative.resolutionType != ReturnResolutionType.exchange) {
+      if (mounted) context.go('/pos/returns-refunds/choose-option');
+      return;
+    }
+    if (mounted) setState(() => _isGuarding = false);
+    ref.read(returnFlowProvider.notifier).setStep(ReturnFlowSteps.branchAction);
+    ref.read(exchangeReplacementSearchProvider.notifier).loadProducts();
+    ref.read(returnExchangeFlowProvider.notifier).hydrate();
   }
 
   @override
@@ -92,8 +90,7 @@ class _PosReturnExchangeFlowScreenState
       return const TenantAdminForbiddenScreen();
     }
 
-    final currencyCode = preview?.currencyCode ??
-        searchState.currencyCode;
+    final currencyCode = preview?.currencyCode ?? searchState.currencyCode;
     final returnItemValue = preview?.returnItemValue ?? 0;
     final newItemValue = preview?.replacementItemValue ?? 0;
     final difference = preview == null
@@ -156,10 +153,12 @@ class _PosReturnExchangeFlowScreenState
                                         searchState: searchState,
                                         currencyCode: currencyCode,
                                         selectedKey: selectedKey,
-                                        onProductSelected: _handleProductSelected,
+                                        onProductSelected:
+                                            _handleProductSelected,
                                       ),
                                     ),
-                                    const SizedBox(width: TenantAdminSpacing.xl),
+                                    const SizedBox(
+                                        width: TenantAdminSpacing.xl),
                                     Expanded(
                                       flex: 3,
                                       child: ExchangeSummaryCard(
@@ -167,12 +166,14 @@ class _PosReturnExchangeFlowScreenState
                                         returnItemValue: returnItemValue,
                                         newItemValue: newItemValue,
                                         difference: difference,
-                                        selection: flowState.selectedReplacement,
+                                        selection:
+                                            flowState.selectedReplacement,
                                         isUpdatingQuantity:
                                             exchangeState.isSavingReplacement,
                                         onQuantityChanged: (qty) {
                                           ref
-                                              .read(returnExchangeFlowProvider.notifier)
+                                              .read(returnExchangeFlowProvider
+                                                  .notifier)
                                               .updateReplacementQuantity(
                                                 qty.toDouble(),
                                               );
@@ -181,7 +182,8 @@ class _PosReturnExchangeFlowScreenState
                                             preview?.policyMessages ?? const [],
                                         canProceed:
                                             preview?.canProceed ?? false,
-                                        draftExpired: exchangeState.draftExpired,
+                                        draftExpired:
+                                            exchangeState.draftExpired,
                                         replacementTax:
                                             preview?.replacementTax ?? 0,
                                         replacementDiscount:
@@ -200,7 +202,8 @@ class _PosReturnExchangeFlowScreenState
                                       selectedKey: selectedKey,
                                       onProductSelected: _handleProductSelected,
                                     ),
-                                    const SizedBox(height: TenantAdminSpacing.lg),
+                                    const SizedBox(
+                                        height: TenantAdminSpacing.lg),
                                     ExchangeSummaryCard(
                                       currencyCode: currencyCode,
                                       returnItemValue: returnItemValue,
@@ -211,7 +214,8 @@ class _PosReturnExchangeFlowScreenState
                                           exchangeState.isSavingReplacement,
                                       onQuantityChanged: (qty) {
                                         ref
-                                            .read(returnExchangeFlowProvider.notifier)
+                                            .read(returnExchangeFlowProvider
+                                                .notifier)
                                             .updateReplacementQuantity(
                                               qty.toDouble(),
                                             );
@@ -258,7 +262,8 @@ class _PosReturnExchangeFlowScreenState
       return;
     }
 
-    final returnedSaleLineId = _primaryReturnedSaleLineId(ref.read(returnFlowProvider));
+    final returnedSaleLineId =
+        _primaryReturnedSaleLineId(ref.read(returnFlowProvider));
     if (returnedSaleLineId == null) {
       return;
     }
@@ -443,7 +448,8 @@ class _TopStatus extends ConsumerWidget {
                 size: 22,
               ),
               const SizedBox(width: TenantAdminSpacing.sm),
-              Text(tillLabel, style: const TextStyle(fontWeight: FontWeight.w800)),
+              Text(tillLabel,
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
             ],
           ),
         ),

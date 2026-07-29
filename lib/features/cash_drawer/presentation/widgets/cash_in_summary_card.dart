@@ -95,7 +95,9 @@ class _SummaryRow extends StatelessWidget {
           child: Icon(
             icon,
             size: 20,
-            color: emphasize ? TenantAdminColors.info : TenantAdminColors.mutedText,
+            color: emphasize
+                ? TenantAdminColors.info
+                : TenantAdminColors.mutedText,
           ),
         ),
         const SizedBox(width: TenantAdminSpacing.md),

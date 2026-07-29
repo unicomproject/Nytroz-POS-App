@@ -41,7 +41,8 @@ class ReturnReceiptAuditCard extends StatelessWidget {
                 _AuditItem(
                   icon: Icons.person_outline_rounded,
                   label: 'Cashier',
-                  value: receipt.cashierName.isEmpty ? '-' : receipt.cashierName,
+                  value:
+                      receipt.cashierName.isEmpty ? '-' : receipt.cashierName,
                 ),
                 _AuditItem(
                   icon: Icons.point_of_sale_outlined,
@@ -66,7 +67,8 @@ class ReturnReceiptAuditCard extends StatelessWidget {
                 return Row(
                   children: [
                     for (var index = 0; index < items.length; index += 1) ...[
-                      if (index > 0) const SizedBox(width: TenantAdminSpacing.lg),
+                      if (index > 0)
+                        const SizedBox(width: TenantAdminSpacing.lg),
                       Expanded(child: items[index]),
                     ],
                   ],
@@ -76,7 +78,8 @@ class ReturnReceiptAuditCard extends StatelessWidget {
               return Column(
                 children: [
                   for (var index = 0; index < items.length; index += 1) ...[
-                    if (index > 0) const SizedBox(height: TenantAdminSpacing.lg),
+                    if (index > 0)
+                      const SizedBox(height: TenantAdminSpacing.lg),
                     items[index],
                   ],
                 ],

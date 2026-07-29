@@ -149,8 +149,7 @@ class ReturnReasonState {
           ? null
           : selectedReasonCode ?? this.selectedReasonCode,
       notes: notes ?? this.notes,
-      applySameReasonToAll:
-          applySameReasonToAll ?? this.applySameReasonToAll,
+      applySameReasonToAll: applySameReasonToAll ?? this.applySameReasonToAll,
       isLoading: isLoading ?? this.isLoading,
       isSaving: isSaving ?? this.isSaving,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
@@ -562,11 +561,9 @@ class ReturnReasonController extends StateNotifier<ReturnReasonState> {
     }
   }
 
-  bool _canApplyLoad(int requestId) =>
-      !_disposed && requestId == _loadSequence;
+  bool _canApplyLoad(int requestId) => !_disposed && requestId == _loadSequence;
 
-  bool _canApplySave(int requestId) =>
-      !_disposed && requestId == _saveSequence;
+  bool _canApplySave(int requestId) => !_disposed && requestId == _saveSequence;
 
   ReturnReasonOption? _findReason(String code) {
     for (final reason in state.reasons) {
@@ -652,8 +649,8 @@ class ReturnReasonController extends StateNotifier<ReturnReasonState> {
   }
 }
 
-final returnReasonProvider =
-    StateNotifierProvider.autoDispose<ReturnReasonController, ReturnReasonState>(
+final returnReasonProvider = StateNotifierProvider.autoDispose<
+    ReturnReasonController, ReturnReasonState>(
   (ref) => ReturnReasonController(ref),
 );
 

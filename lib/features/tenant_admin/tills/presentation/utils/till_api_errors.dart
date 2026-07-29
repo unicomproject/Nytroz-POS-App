@@ -52,7 +52,8 @@ Map<String, String> tillValidationErrors(DioException error) {
   return const {};
 }
 
-String tillErrorMessage(DioException error, {String fallback = 'Request failed'}) {
+String tillErrorMessage(DioException error,
+    {String fallback = 'Request failed'}) {
   final data = error.response?.data;
   if (data is Map && data['message'] != null) {
     return data['message'].toString();
@@ -61,9 +62,11 @@ String tillErrorMessage(DioException error, {String fallback = 'Request failed'}
   return error.message ?? fallback;
 }
 
-String tillUnexpectedErrorMessage(Object error, {String fallback = 'Failed to save till'}) {
+String tillUnexpectedErrorMessage(Object error,
+    {String fallback = 'Failed to save till'}) {
   if (error is DioException) {
-    return tillSubmitErrorMessage(error, tillValidationErrors(error), fallback: fallback);
+    return tillSubmitErrorMessage(error, tillValidationErrors(error),
+        fallback: fallback);
   }
 
   return fallback;

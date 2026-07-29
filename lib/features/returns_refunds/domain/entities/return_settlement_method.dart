@@ -95,9 +95,8 @@ class ReturnSettlementMethodOption {
           previewTitle: 'Card Refund Preview',
           refundAmount: netCredit,
           customerCreditAmount: netCredit,
-          refundMethodLabel: preview.paymentDisplay.isEmpty
-              ? 'Card'
-              : preview.paymentDisplay,
+          refundMethodLabel:
+              preview.paymentDisplay.isEmpty ? 'Card' : preview.paymentDisplay,
           settlementTypeLabel: title,
         );
       case 'STORE_CREDIT':

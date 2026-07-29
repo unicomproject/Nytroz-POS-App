@@ -79,11 +79,13 @@ class _ReplacementItemsSearchToolbarState
                   fillColor: TenantAdminColors.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-                    borderSide: const BorderSide(color: TenantAdminColors.border),
+                    borderSide:
+                        const BorderSide(color: TenantAdminColors.border),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-                    borderSide: const BorderSide(color: TenantAdminColors.border),
+                    borderSide:
+                        const BorderSide(color: TenantAdminColors.border),
                   ),
                 ),
                 onChanged: (value) {

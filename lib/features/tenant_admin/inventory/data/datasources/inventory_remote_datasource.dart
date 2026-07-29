@@ -8,7 +8,8 @@ class InventoryRemoteDatasource {
 
   final Dio _dio;
 
-  Future<CurrentStockPageDto> getCurrentStock(CurrentStockQueryDto query) async {
+  Future<CurrentStockPageDto> getCurrentStock(
+      CurrentStockQueryDto query) async {
     final response = await _dio.get<dynamic>(
       InventoryApiPaths.currentStock,
       queryParameters: query.toQueryParameters(),
@@ -35,7 +36,8 @@ class InventoryRemoteDatasource {
     );
   }
 
-  Future<StockInResponseDto> receiveStock(CreateStockInRequestDto request) async {
+  Future<StockInResponseDto> receiveStock(
+      CreateStockInRequestDto request) async {
     final response = await _dio.post<dynamic>(
       InventoryApiPaths.stockIn,
       data: request.toJson(),

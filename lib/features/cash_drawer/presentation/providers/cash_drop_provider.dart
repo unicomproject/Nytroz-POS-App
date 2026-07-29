@@ -73,8 +73,8 @@ class CashDropFormController extends StateNotifier<CashDropFormState> {
   }
 }
 
-final cashDropFormProvider =
-    StateNotifierProvider.autoDispose<CashDropFormController, CashDropFormState>(
+final cashDropFormProvider = StateNotifierProvider.autoDispose<
+    CashDropFormController, CashDropFormState>(
   (ref) => CashDropFormController(),
 );
 

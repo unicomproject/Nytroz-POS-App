@@ -38,8 +38,11 @@ class CashDrawerMovementsSection extends StatelessWidget {
 
                 return Column(
                   children: [
-                    for (var index = 0; index < movements.length; index += 1) ...[
-                      if (index > 0) const SizedBox(height: TenantAdminSpacing.sm),
+                    for (var index = 0;
+                        index < movements.length;
+                        index += 1) ...[
+                      if (index > 0)
+                        const SizedBox(height: TenantAdminSpacing.sm),
                       _MovementListCard(movement: movements[index]),
                     ],
                   ],
@@ -263,8 +266,12 @@ class _TableDataCell extends StatelessWidget {
 
 Color _amountColor(CashMovementType type) {
   return switch (type) {
-    CashMovementType.cashSale || CashMovementType.cashIn => TenantAdminColors.success,
-    CashMovementType.cashRefund || CashMovementType.cashOut => TenantAdminColors.danger,
+    CashMovementType.cashSale ||
+    CashMovementType.cashIn =>
+      TenantAdminColors.success,
+    CashMovementType.cashRefund ||
+    CashMovementType.cashOut =>
+      TenantAdminColors.danger,
     CashMovementType.cashDrop => TenantAdminColors.info,
   };
 }

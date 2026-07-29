@@ -192,10 +192,10 @@ class OutletDetailsDto {
       status: json['status'] as String? ?? '',
       outletType: json['outletType'] as String?,
       isDefaultOutlet: json['isDefaultOutlet'] == true,
-      addressLine1:
-          addressJson['addressLine1'] as String? ?? json['addressLine1'] as String?,
-      addressLine2:
-          addressJson['addressLine2'] as String? ?? json['addressLine2'] as String?,
+      addressLine1: addressJson['addressLine1'] as String? ??
+          json['addressLine1'] as String?,
+      addressLine2: addressJson['addressLine2'] as String? ??
+          json['addressLine2'] as String?,
       city: addressJson['city'] as String? ?? json['city'] as String?,
       state: addressJson['stateOrProvince'] as String? ??
           addressJson['state'] as String? ??

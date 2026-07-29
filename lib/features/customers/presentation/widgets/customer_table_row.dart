@@ -38,15 +38,18 @@ class CustomerTableRow extends StatelessWidget {
             border: Border(
               bottom: const BorderSide(color: TenantAdminColors.border),
               left: BorderSide(
-                color: selected ? TenantAdminColors.primary : Colors.transparent,
+                color:
+                    selected ? TenantAdminColors.primary : Colors.transparent,
                 width: 3,
               ),
               right: BorderSide(
-                color: selected ? TenantAdminColors.primary : Colors.transparent,
+                color:
+                    selected ? TenantAdminColors.primary : Colors.transparent,
                 width: 1,
               ),
               top: BorderSide(
-                color: selected ? TenantAdminColors.primary : Colors.transparent,
+                color:
+                    selected ? TenantAdminColors.primary : Colors.transparent,
                 width: 1,
               ),
             ),
@@ -55,9 +58,12 @@ class CustomerTableRow extends StatelessWidget {
             children: [
               _Cell(customer.shortCustomerId, flex: 14, style: textStyle),
               _Cell(customer.displayName, flex: 18, style: textStyle),
-              _Cell(customer.phone?.trim().isNotEmpty == true
-                  ? customer.phone!.trim()
-                  : '—', flex: 12, style: textStyle),
+              _Cell(
+                  customer.phone?.trim().isNotEmpty == true
+                      ? customer.phone!.trim()
+                      : '—',
+                  flex: 12,
+                  style: textStyle),
               if (showSecondaryColumns)
                 _Cell(
                   customer.email?.trim().isNotEmpty == true

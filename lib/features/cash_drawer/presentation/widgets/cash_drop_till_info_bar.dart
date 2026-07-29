@@ -48,8 +48,7 @@ class CashDropTillInfoBar extends StatelessWidget {
             return Row(
               children: [
                 for (var index = 0; index < items.length; index += 1) ...[
-                  if (index > 0)
-                    const SizedBox(width: TenantAdminSpacing.lg),
+                  if (index > 0) const SizedBox(width: TenantAdminSpacing.lg),
                   Expanded(child: items[index]),
                 ],
               ],

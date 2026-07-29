@@ -73,8 +73,7 @@ class PosDeviceContext {
       tillName: json['tillName'] as String? ?? '',
       pairedAt: DateTime.tryParse(json['pairedAt']?.toString() ?? '') ??
           DateTime.now(),
-      defaultOpeningFloatAmount:
-          _double(json['defaultOpeningFloatAmount']),
+      defaultOpeningFloatAmount: _double(json['defaultOpeningFloatAmount']),
       currencyCode: json['currencyCode'] as String? ?? 'LKR',
     );
   }

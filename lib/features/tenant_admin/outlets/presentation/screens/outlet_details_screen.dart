@@ -68,98 +68,100 @@ class _OutletDetailsScreenState extends ConsumerState<OutletDetailsScreen> {
         }
 
         return detailState.when(
-      loading: () => const TenantAdminPageScaffold(
-        title: 'Outlet details',
-        subtitle: 'View and manage this outlet in one place.',
-        child: TenantAdminLoadingSkeleton(rowCount: 8),
-      ),
-      error: (error, stackTrace) => TenantAdminPageScaffold(
-        title: 'Outlet details',
-        subtitle: 'View and manage this outlet in one place.',
-        child: TenantAdminErrorState(
-          title: 'Unable to load outlet',
-          message: 'Please try again.',
-          onRetry: () => ref.refresh(outletDetailProvider(widget.outletId)),
-        ),
-      ),
-      data: (outlet) => visibilityState.when(
-        loading: () => const TenantAdminPageScaffold(
-          title: 'Outlet details',
-          subtitle: 'View and manage this outlet in one place.',
-          child: TenantAdminLoadingSkeleton(rowCount: 8),
-        ),
-        error: (error, stackTrace) => TenantAdminPageScaffold(
-          title: 'Outlet details',
-          subtitle: 'View and manage this outlet in one place.',
-          child: TenantAdminErrorState(
-            title: 'Unable to load permissions',
-            message: 'Please try again.',
-            onRetry: () => ref.refresh(outletDetailsVisibilityProvider),
-          ),
-        ),
-        data: (visibility) {
-          final tabs = visibility.visibleTabs;
-          if (tabs.isEmpty) {
-            return TenantAdminPageScaffold(
-              title: outlet.outletName,
-              subtitle: 'View and manage this outlet in one place.',
-              child: const TenantAdminErrorState(
-                title: 'No tabs available',
-                message: 'You do not have permission to view outlet detail sections.',
-              ),
-            );
-          }
-
-          final selectedTab =
-              _selectedTab.clamp(0, tabs.length - 1);
-          final outletOptions = outletsState.maybeWhen(
-            data: (result) => result?.items
-                    .map(
-                      (item) => OutletDetail(
-                        outletId: item.id,
-                        outletName: item.name,
-                        outletCode: item.code,
-                        outletType: item.outletType ?? 'STORE',
-                        status: item.status,
-                      ),
-                    )
-                    .toList(growable: false) ??
-                [outlet],
-            orElse: () => [outlet],
-          );
-
-          return TenantAdminPageScaffold(
-            title: outlet.outletName,
+          loading: () => const TenantAdminPageScaffold(
+            title: 'Outlet details',
             subtitle: 'View and manage this outlet in one place.',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                OutletDetailHeader(
-                  outlet: outlet,
-                  canEdit: access.canEditOutlet(),
-                  outletOptions: outletOptions,
-                  onOutletSelected: (id) =>
-                      context.go('/tenant-admin/outlets/$id'),
-                ),
-                const SizedBox(height: TenantAdminSpacing.lg),
-                OutletTabs(
-                  tabs: tabs,
-                  selectedIndex: selectedTab,
-                  onChanged: (index) => setState(() => _selectedTab = index),
-                ),
-                const SizedBox(height: TenantAdminSpacing.lg),
-                _TabContent(
-                  tabId: tabs[selectedTab].id,
-                  outletId: widget.outletId,
-                  outlet: outlet,
-                  canEdit: access.canEditOutlet(),
-                ),
-              ],
+            child: TenantAdminLoadingSkeleton(rowCount: 8),
+          ),
+          error: (error, stackTrace) => TenantAdminPageScaffold(
+            title: 'Outlet details',
+            subtitle: 'View and manage this outlet in one place.',
+            child: TenantAdminErrorState(
+              title: 'Unable to load outlet',
+              message: 'Please try again.',
+              onRetry: () => ref.refresh(outletDetailProvider(widget.outletId)),
             ),
-          );
-        },
-      ),
-    );
+          ),
+          data: (outlet) => visibilityState.when(
+            loading: () => const TenantAdminPageScaffold(
+              title: 'Outlet details',
+              subtitle: 'View and manage this outlet in one place.',
+              child: TenantAdminLoadingSkeleton(rowCount: 8),
+            ),
+            error: (error, stackTrace) => TenantAdminPageScaffold(
+              title: 'Outlet details',
+              subtitle: 'View and manage this outlet in one place.',
+              child: TenantAdminErrorState(
+                title: 'Unable to load permissions',
+                message: 'Please try again.',
+                onRetry: () => ref.refresh(outletDetailsVisibilityProvider),
+              ),
+            ),
+            data: (visibility) {
+              final tabs = visibility.visibleTabs;
+              if (tabs.isEmpty) {
+                return TenantAdminPageScaffold(
+                  title: outlet.outletName,
+                  subtitle: 'View and manage this outlet in one place.',
+                  child: const TenantAdminErrorState(
+                    title: 'No tabs available',
+                    message:
+                        'You do not have permission to view outlet detail sections.',
+                  ),
+                );
+              }
+
+              final selectedTab = _selectedTab.clamp(0, tabs.length - 1);
+              final outletOptions = outletsState.maybeWhen(
+                data: (result) =>
+                    result?.items
+                        .map(
+                          (item) => OutletDetail(
+                            outletId: item.id,
+                            outletName: item.name,
+                            outletCode: item.code,
+                            outletType: item.outletType ?? 'STORE',
+                            status: item.status,
+                          ),
+                        )
+                        .toList(growable: false) ??
+                    [outlet],
+                orElse: () => [outlet],
+              );
+
+              return TenantAdminPageScaffold(
+                title: outlet.outletName,
+                subtitle: 'View and manage this outlet in one place.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    OutletDetailHeader(
+                      outlet: outlet,
+                      canEdit: access.canEditOutlet(),
+                      outletOptions: outletOptions,
+                      onOutletSelected: (id) =>
+                          context.go('/tenant-admin/outlets/$id'),
+                    ),
+                    const SizedBox(height: TenantAdminSpacing.lg),
+                    OutletTabs(
+                      tabs: tabs,
+                      selectedIndex: selectedTab,
+                      onChanged: (index) =>
+                          setState(() => _selectedTab = index),
+                    ),
+                    const SizedBox(height: TenantAdminSpacing.lg),
+                    _TabContent(
+                      tabId: tabs[selectedTab].id,
+                      outletId: widget.outletId,
+                      outlet: outlet,
+                      canEdit: access.canEditOutlet(),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
       },
     );
   }

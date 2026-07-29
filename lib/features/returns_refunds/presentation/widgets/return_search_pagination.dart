@@ -42,9 +42,8 @@ class ReturnSearchPagination extends StatelessWidget {
           children: [
             IconButton(
               tooltip: 'Previous page',
-              onPressed: !isLoading && page > 1
-                  ? () => onPageChanged(page - 1)
-                  : null,
+              onPressed:
+                  !isLoading && page > 1 ? () => onPageChanged(page - 1) : null,
               icon: const Icon(Icons.chevron_left_rounded),
             ),
             Text(

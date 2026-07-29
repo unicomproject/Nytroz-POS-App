@@ -93,10 +93,10 @@ class ReturnRefundDetailsState {
       methods: clearMethods ? const [] : methods ?? this.methods,
       defaultMethodCode:
           clearMethods ? null : defaultMethodCode ?? this.defaultMethodCode,
-      selectedMethodCode: clearSelection
-          ? null
-          : selectedMethodCode ?? this.selectedMethodCode,
-      methodPersisted: clearSelection ? false : methodPersisted ?? this.methodPersisted,
+      selectedMethodCode:
+          clearSelection ? null : selectedMethodCode ?? this.selectedMethodCode,
+      methodPersisted:
+          clearSelection ? false : methodPersisted ?? this.methodPersisted,
       isLoadingPreview: isLoadingPreview ?? this.isLoadingPreview,
       isLoadingMethods: isLoadingMethods ?? this.isLoadingMethods,
       isSavingMethod: isSavingMethod ?? this.isSavingMethod,
@@ -224,9 +224,7 @@ class ReturnRefundDetailsController
         selectedMethodCode: saved.methodCode,
         methodPersisted: true,
       );
-      await _ref
-          .read(returnResolutionProvider.notifier)
-          .loadSavedResolution();
+      await _ref.read(returnResolutionProvider.notifier).loadSavedResolution();
       return true;
     } on DioException catch (error) {
       if (!_acceptSave(sequence) || CancelToken.isCancel(error)) return false;
@@ -269,7 +267,8 @@ class ReturnRefundDetailsController
       state = state.copyWith(
         isLoadingPreview: false,
         clearPreview: true,
-        errorMessage: 'Complete earlier return steps before loading refund details.',
+        errorMessage:
+            'Complete earlier return steps before loading refund details.',
       );
       return;
     }
@@ -350,7 +349,8 @@ class ReturnRefundDetailsController
       state = state.copyWith(
         isLoadingMethods: false,
         clearMethods: true,
-        errorMessage: 'Complete earlier return steps before loading refund methods.',
+        errorMessage:
+            'Complete earlier return steps before loading refund methods.',
       );
       return;
     }
@@ -428,7 +428,9 @@ class ReturnRefundDetailsController
           }
         }
         if (methodType != null) {
-          _ref.read(returnFlowProvider.notifier).setSelectedRefundMethod(methodType);
+          _ref
+              .read(returnFlowProvider.notifier)
+              .setSelectedRefundMethod(methodType);
         }
       }
     } on DioException catch (error) {

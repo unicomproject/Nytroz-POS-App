@@ -360,8 +360,7 @@ class _MobileSelectableItemCard extends ConsumerWidget {
                         fontWeight: FontWeight.w700,
                       ),
                 ),
-                if (!item.isSelectable &&
-                    item.ineligibilityReason != null) ...[
+                if (!item.isSelectable && item.ineligibilityReason != null) ...[
                   const SizedBox(height: 3),
                   Text(
                     item.ineligibilityReason!,

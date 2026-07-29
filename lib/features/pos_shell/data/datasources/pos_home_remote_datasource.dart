@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_error_message.dart';
+import '../../../../core/network/media_url_resolver.dart';
 
 class PosHomeRemoteDatasource {
   const PosHomeRemoteDatasource(this._dio);
@@ -48,9 +51,37 @@ class PosHomeRemoteDatasource {
         name: 'pos.home',
       );
 
-      return PosHomeDashboardPayload.fromJson(
-        _unwrapApiData(response.data ?? const {}),
+      final responseData = _unwrapApiData(response.data ?? const {});
+      final payload = PosHomeDashboardPayload.fromJson(
+        responseData,
+        apiBaseUrl: _dio.options.baseUrl,
+        replaceLoopbackHost:
+            !kIsWeb && defaultTargetPlatform == TargetPlatform.android,
       );
+      if (kDebugMode) {
+        final rawCashierValue = responseData['cashier'];
+        final rawCashier = rawCashierValue is Map
+            ? Map<String, dynamic>.from(rawCashierValue)
+            : const <String, dynamic>{};
+        final rawProfileImageUrl =
+            rawCashier['profileImageUrl']?.toString().trim();
+        developer.log(
+          'Cashier profile image. '
+          'raw=${rawProfileImageUrl?.isNotEmpty == true ? rawProfileImageUrl : 'null'} '
+          'resolved=${payload.cashierProfileImageUrl ?? 'null'}',
+          name: 'pos.home.profile-image',
+        );
+        debugPrint(
+          '[pos.home.profile-image] '
+          'raw=${rawProfileImageUrl?.isNotEmpty == true ? rawProfileImageUrl : 'null'} '
+          'resolved=${payload.cashierProfileImageUrl ?? 'null'}',
+        );
+        final resolvedProfileImageUrl = payload.cashierProfileImageUrl;
+        if (resolvedProfileImageUrl != null) {
+          unawaited(_verifyProfileImageInDebug(resolvedProfileImageUrl));
+        }
+      }
+      return payload;
     } on DioException catch (error) {
       stopwatch.stop();
       developer.log(
@@ -87,6 +118,42 @@ class PosHomeRemoteDatasource {
     final value = _dio.options.headers['Authorization'];
     return value is String && value.trim().isNotEmpty;
   }
+
+  Future<void> _verifyProfileImageInDebug(String url) async {
+    final verificationClient = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 5),
+        followRedirects: true,
+        maxRedirects: 5,
+        validateStatus: (_) => true,
+      ),
+    );
+    try {
+      final response = await verificationClient.head<void>(url);
+      developer.log(
+        'Cashier profile image HTTP status=${response.statusCode} url=$url',
+        name: 'pos.home.profile-image',
+      );
+      debugPrint(
+        '[pos.home.profile-image] HTTP status=${response.statusCode} url=$url',
+      );
+    } on DioException catch (error, stackTrace) {
+      developer.log(
+        'Cashier profile image HTTP verification failed. '
+        'url=$url status=${error.response?.statusCode} error=${error.message}',
+        name: 'pos.home.profile-image',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      debugPrint(
+        '[pos.home.profile-image] HTTP verification failed '
+        'status=${error.response?.statusCode} url=$url',
+      );
+    } finally {
+      verificationClient.close(force: true);
+    }
+  }
 }
 
 class PosHomeDashboardPayload {
@@ -96,6 +163,7 @@ class PosHomeDashboardPayload {
     this.resolutionMessage,
     this.requiredAction,
     required this.userDisplayName,
+    this.cashierProfileImageUrl,
     required this.outletName,
     required this.tillName,
     required this.tillAreaName,
@@ -123,6 +191,7 @@ class PosHomeDashboardPayload {
   final String? resolutionMessage;
   final String? requiredAction;
   final String userDisplayName;
+  final String? cashierProfileImageUrl;
   final String outletName;
   final String tillName;
   final String tillAreaName;
@@ -144,7 +213,11 @@ class PosHomeDashboardPayload {
   final String deviceStatus;
   final PosHomeSummaryPayload? summary;
 
-  factory PosHomeDashboardPayload.fromJson(Map<String, dynamic> json) {
+  factory PosHomeDashboardPayload.fromJson(
+    Map<String, dynamic> json, {
+    String apiBaseUrl = '',
+    bool replaceLoopbackHost = false,
+  }) {
     final contextResolved = json['contextResolved'] == true;
     final reasonCode = _nullableString(json['reasonCode']);
     final resolutionMessage = _nullableString(json['message']);
@@ -203,10 +276,21 @@ class PosHomeDashboardPayload {
       cashier['displayName'],
       fallback: _string(user['fullName'], fallback: 'Cashier'),
     );
+    final cashierProfileImageUrl = MediaUrlResolver.resolve(
+      _nullableString(cashier['profileImageUrl']),
+      apiBaseUrl: apiBaseUrl,
+      replaceLoopbackHost: replaceLoopbackHost,
+    );
+    final businessLogoUrl = MediaUrlResolver.resolve(
+      _nullableString(branding['logoUrl']),
+      apiBaseUrl: apiBaseUrl,
+      replaceLoopbackHost: replaceLoopbackHost,
+    );
 
     return PosHomeDashboardPayload(
       contextResolved: true,
       userDisplayName: userDisplayName,
+      cashierProfileImageUrl: cashierProfileImageUrl,
       outletName: _string(context['outletName'], fallback: 'Outlet'),
       tillName: tillName,
       tillAreaName: areaName,
@@ -230,7 +314,7 @@ class PosHomeDashboardPayload {
           _parseDateOnly(time['businessDate'] ?? till['businessDate']),
       cashierRoleLabel: _string(cashier['roleLabel']),
       businessDisplayName: _string(branding['displayName']),
-      businessLogoUrl: _nullableString(branding['logoUrl']),
+      businessLogoUrl: businessLogoUrl,
       deviceName: _string(device['name']),
       deviceStatus: _string(device['status']),
       summary: summary.isEmpty

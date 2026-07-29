@@ -19,7 +19,8 @@ final tenantUserRemoteDatasourceProvider =
 });
 
 final tenantUserRepositoryProvider = Provider<TenantUserRepository>((ref) {
-  return TenantUserRepositoryImpl(ref.watch(tenantUserRemoteDatasourceProvider));
+  return TenantUserRepositoryImpl(
+      ref.watch(tenantUserRemoteDatasourceProvider));
 });
 
 final getUsersProvider = Provider<GetUsers>((ref) {

@@ -126,7 +126,8 @@ class ReturnResolutionController extends StateNotifier<ReturnResolutionState> {
         state = state.copyWith(
           isLoading: false,
           isForbidden: true,
-          errorMessage: 'You do not have permission to view the saved resolution.',
+          errorMessage:
+              'You do not have permission to view the saved resolution.',
         );
         return false;
       }
@@ -152,10 +153,12 @@ class ReturnResolutionController extends StateNotifier<ReturnResolutionState> {
   Future<bool> saveResolution(ReturnResolutionType resolution) async {
     if (state.isSaving) return false;
 
-    final saleId = _ref.read(returnFlowProvider).selectedSale?.saleId.trim() ?? '';
+    final saleId =
+        _ref.read(returnFlowProvider).selectedSale?.saleId.trim() ?? '';
     if (saleId.isEmpty) {
       state = state.copyWith(
-        errorMessage: 'Complete earlier return steps before choosing an option.',
+        errorMessage:
+            'Complete earlier return steps before choosing an option.',
       );
       return false;
     }
@@ -194,13 +197,14 @@ class ReturnResolutionController extends StateNotifier<ReturnResolutionState> {
         resolution == ReturnResolutionType.exchange ? 'EXCHANGE' : 'REFUND';
 
     try {
-      final saved = await _ref.read(returnsRefundRemoteDatasourceProvider).saveResolution(
-            deviceId: deviceContext.deviceId,
-            saleId: saleId,
-            resolution: apiValue,
-            expectedVersion: authoritative.version,
-            cancelToken: cancelToken,
-          );
+      final saved =
+          await _ref.read(returnsRefundRemoteDatasourceProvider).saveResolution(
+                deviceId: deviceContext.deviceId,
+                saleId: saleId,
+                resolution: apiValue,
+                expectedVersion: authoritative.version,
+                cancelToken: cancelToken,
+              );
 
       if (!_accept(sequence)) return false;
       state = state.copyWith(isSaving: false, savedResolution: saved);
@@ -234,7 +238,8 @@ class ReturnResolutionController extends StateNotifier<ReturnResolutionState> {
         state = state.copyWith(
           isSaving: false,
           isForbidden: true,
-          errorMessage: 'You do not have permission to save the selected option.',
+          errorMessage:
+              'You do not have permission to save the selected option.',
         );
         return false;
       }

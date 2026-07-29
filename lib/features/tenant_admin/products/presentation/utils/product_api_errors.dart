@@ -29,7 +29,8 @@ String? _errorCode(DioException error) {
   return null;
 }
 
-String productErrorMessage(DioException error, {String fallback = 'Request failed'}) {
+String productErrorMessage(DioException error,
+    {String fallback = 'Request failed'}) {
   final data = error.response?.data;
   if (data is Map && data['message'] != null) {
     return data['message'].toString();

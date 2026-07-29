@@ -49,8 +49,10 @@ class ReturnCreditItemsSummaryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     for (var index = 0; index < items.length; index += 1) ...[
-                      if (index > 0) const SizedBox(width: TenantAdminSpacing.md),
-                      Expanded(child: _CreditItemTile(
+                      if (index > 0)
+                        const SizedBox(width: TenantAdminSpacing.md),
+                      Expanded(
+                          child: _CreditItemTile(
                         item: items[index],
                         currency: currency,
                       )),
@@ -62,7 +64,8 @@ class ReturnCreditItemsSummaryCard extends StatelessWidget {
               return Column(
                 children: [
                   for (var index = 0; index < items.length; index += 1) ...[
-                    if (index > 0) const SizedBox(height: TenantAdminSpacing.md),
+                    if (index > 0)
+                      const SizedBox(height: TenantAdminSpacing.md),
                     _CreditItemTile(item: items[index], currency: currency),
                   ],
                 ],
@@ -124,7 +127,8 @@ class _CreditItemTile extends StatelessWidget {
             ),
           ),
           Text(
-            formatReturnCreditAmount(currency: currency, amount: item.lineAmount),
+            formatReturnCreditAmount(
+                currency: currency, amount: item.lineAmount),
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),

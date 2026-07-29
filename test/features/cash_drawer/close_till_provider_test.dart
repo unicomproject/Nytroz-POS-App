@@ -23,7 +23,8 @@ void main() {
       expect(controller.state.countedCashText, '200.00');
     });
 
-    test('matching counted and expected cash is balanced without mismatch reason',
+    test(
+        'matching counted and expected cash is balanced without mismatch reason',
         () {
       final controller = CloseTillFormController();
       controller.setCountedCashText('150.00');

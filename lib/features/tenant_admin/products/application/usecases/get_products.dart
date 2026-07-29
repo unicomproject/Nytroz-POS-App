@@ -6,7 +6,8 @@ class GetProducts {
 
   final TenantProductRepository _repository;
 
-  Future<TenantProductListResult> call({required TenantProductListQuery query}) {
+  Future<TenantProductListResult> call(
+      {required TenantProductListQuery query}) {
     return _repository.getProducts(query: query);
   }
 }

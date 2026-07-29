@@ -70,7 +70,8 @@ class _DetailRow extends StatelessWidget {
         Expanded(child: Text(label, style: style)),
         Text(
           value,
-          style: style?.copyWith(color: valueColor ?? TenantAdminColors.bodyText),
+          style:
+              style?.copyWith(color: valueColor ?? TenantAdminColors.bodyText),
         ),
       ],
     );

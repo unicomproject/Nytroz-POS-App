@@ -5,6 +5,7 @@ class PosHomeDashboardState {
   const PosHomeDashboardState({
     required this.actions,
     required this.fallbackUserDisplayName,
+    this.cashierProfileImageUrl,
     this.cashierRoleLabel = '',
     this.businessDisplayName = '',
     this.businessLogoUrl,
@@ -37,6 +38,7 @@ class PosHomeDashboardState {
 
   // Mock/view-only fallback until a POS operator session is available.
   final String fallbackUserDisplayName;
+  final String? cashierProfileImageUrl;
   final String cashierRoleLabel;
   final String businessDisplayName;
   final String? businessLogoUrl;

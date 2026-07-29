@@ -6,7 +6,6 @@ import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_car
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_parked_sale_provider.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_discount_dialog.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_parked_sale_dialog.dart';
-import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_new_sale_customer_dialog.dart';
 import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../../../core/access/pos_access_codes.dart';
@@ -21,14 +20,10 @@ class PosNewSaleActionBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authSessionProvider);
     final cart = ref.watch(posNewSaleCartProvider);
-    final selectedCustomer = cart.selectedCustomer;
     final parkedSaleCount = ref.watch(posParkedSaleProvider).maybeWhen(
           data: (sales) => sales.length,
           orElse: () => 0,
         );
-    final canCreateCustomer =
-        session?.hasPermission(PosPermissionCodes.createNewSaleCustomer) ==
-            true;
     final canApplyDiscount =
         session?.hasPermission(PosPermissionCodes.applySaleDiscount) == true;
     final canClearCart = PosPermissionAccess.canClearCart(
@@ -46,8 +41,6 @@ class PosNewSaleActionBar extends ConsumerWidget {
         : canViewParkedSales
             ? () => _recallParkedSale(context, ref)
             : null;
-    final customerLabel =
-        selectedCustomer == null ? 'Add Customer' : 'Change customer';
     final actions = <_ActionButton>[
       if (canCreateParkedSale || canViewParkedSales)
         _ActionButton(
@@ -91,22 +84,6 @@ class PosNewSaleActionBar extends ConsumerWidget {
         tooltip: 'Custom items are not available in the current POS contract',
         onPressed: null,
       ),
-      if (canCreateCustomer)
-        _ActionButton(
-          icon: Icons.person_add_alt_1_outlined,
-          label: customerLabel,
-          backgroundColor: TenantAdminColors.posNewSaleCustomerAction,
-          onPressed: () async {
-            final customer = await showPosNewSaleCustomerDialog(
-              context: context,
-              ref: ref,
-              canCreateCustomer: canCreateCustomer,
-            );
-            if (customer != null) {
-              ref.read(posNewSaleCartProvider.notifier).setCustomer(customer);
-            }
-          },
-        ),
     ];
 
     if (actions.isEmpty) {
@@ -345,10 +322,10 @@ class _ActionButton extends StatelessWidget {
     return Tooltip(
       message: tooltip ?? label,
       child: SizedBox(
-        height: 42,
+        height: 50,
         child: FilledButton.icon(
           onPressed: onPressed,
-          icon: Icon(icon, size: 18),
+          icon: Icon(icon, size: 22),
           label: Text(
             label,
             maxLines: 1,
@@ -364,6 +341,7 @@ class _ActionButton extends StatelessWidget {
             ),
             textStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w800,
+                  fontSize: 14,
                 ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(TenantAdminRadius.md),

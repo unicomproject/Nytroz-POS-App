@@ -32,8 +32,7 @@ List<Widget> buildPosHomeActionCards({
             ? _endShiftAccess(dashboard)
             : const PosHomeActionAccess(
                 isVisible: true,
-                isEnabled: false,
-                disabledMessage: 'Online Orders is not available yet.',
+                isEnabled: true,
               )
         : dashboard.accessFor(action);
     if (!access.isVisible) return;
@@ -98,8 +97,7 @@ List<Widget> buildPosHomeActionCards({
       TenantAdminColors.posHomeBlueEnd,
     ],
     accent: TenantAdminColors.pending,
-    route: null,
-    unavailableReason: 'Online Orders is not available yet.',
+    route: '/pos/online-orders',
   );
   add(
     key: 'parked-sales',
@@ -111,8 +109,7 @@ List<Widget> buildPosHomeActionCards({
       TenantAdminColors.posHomePurpleEnd,
     ],
     accent: TenantAdminColors.warning,
-    route: null,
-    unavailableReason: 'Held-sale recall screen is not available yet.',
+    route: '/pos/parked-sales',
   );
   add(
     key: 'end-shift',
