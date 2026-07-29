@@ -7,7 +7,11 @@ import '../../domain/entities/tenant_admin_context.dart';
 import '../../domain/entities/tenant_admin_menu_item.dart';
 import '../../domain/services/tenant_admin_access_checker.dart';
 import '../../products/presentation/navigation/products_sidebar_menu.dart';
+import '../theme/tenant_admin_theme.dart';
+import 'tenant_admin_sidebar.dart';
+import 'tenant_admin_sidebar_items.dart';
 
+/// Mobile drawer that mirrors the white sidebar menu order.
 class TenantAdminNavigationDrawer extends ConsumerWidget {
   const TenantAdminNavigationDrawer({
     super.key,
@@ -15,17 +19,19 @@ class TenantAdminNavigationDrawer extends ConsumerWidget {
     required this.currentPath,
     this.tenantContext,
     this.accessChecker,
+    this.selectedSidebarKey,
   });
 
   final List<TenantAdminMenuItem> items;
   final String currentPath;
   final TenantAdminContext? tenantContext;
   final TenantAdminAccessChecker? accessChecker;
+  final String? selectedSidebarKey;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Drawer(
-      backgroundColor: const Color(0xFF06162D),
+      backgroundColor: TenantAdminSidebarTokens.background,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,9 +39,9 @@ class TenantAdminNavigationDrawer extends ConsumerWidget {
             const Padding(
               padding: EdgeInsets.fromLTRB(20, 18, 18, 12),
               child: Text(
-                'Nytroz POS',
+                'Tenant Admin',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: TenantAdminSidebarTokens.foreground,
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
                 ),
@@ -43,7 +49,7 @@ class TenantAdminNavigationDrawer extends ConsumerWidget {
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(14, 2, 14, 14),
+                padding: const EdgeInsets.fromLTRB(12, 2, 12, 14),
                 children: [
                   for (final item in items)
                     if (item.key == 'products')
@@ -53,12 +59,20 @@ class TenantAdminNavigationDrawer extends ConsumerWidget {
                         onNavigate: () => Navigator.of(context).pop(),
                       )
                     else
-                      _DrawerNavItem(
-                        icon: _iconFor(item.iconKey),
+                      TenantAdminSidebarItem(
+                        icon: tenantAdminSidebarIconFor(item.iconKey),
                         label: item.label,
-                        selected: currentPath == item.route ||
-                            currentPath.startsWith('${item.route}/'),
+                        selected: _isSelected(item),
+                        enabled: true,
+                        visuallyDisabled: !item.isRouteAvailable,
+                        compact: true,
                         onTap: () {
+                          if (!item.isRouteAvailable || item.route.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(item.unavailableMessage)),
+                            );
+                            return;
+                          }
                           Navigator.of(context).pop();
                           context.go(item.route);
                         },
@@ -82,47 +96,25 @@ class TenantAdminNavigationDrawer extends ConsumerWidget {
       ),
     );
   }
-}
 
-class _DrawerNavItem extends StatelessWidget {
-  const _DrawerNavItem({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color: selected ? Colors.white : const Color(0xFFB8C4D8),
-        ),
-        title: Text(
-          label,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: selected ? Colors.white : const Color(0xFFD8E0EE),
-            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-          ),
-        ),
-        selected: selected,
-        selectedTileColor: const Color(0xFF3F2BFF),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        onTap: onTap,
-      ),
-    );
+  bool _isSelected(TenantAdminMenuItem item) {
+    if (selectedSidebarKey != null && selectedSidebarKey == item.key) {
+      return true;
+    }
+    if (!item.isRouteAvailable || item.route.isEmpty) {
+      return false;
+    }
+    if (item.key == 'inventory') {
+      return currentPath == '/tenant-admin/stock' ||
+          currentPath.startsWith('/tenant-admin/stock/');
+    }
+    return currentPath == item.route ||
+        currentPath.startsWith('${item.route}/');
   }
 }
+
+/// Alias for catalogue naming.
+typedef TenantAdminSidebarMobileDrawer = TenantAdminNavigationDrawer;
 
 class _DrawerFooter extends StatelessWidget {
   const _DrawerFooter({
@@ -148,58 +140,19 @@ class _DrawerFooter extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+                color: TenantAdminSidebarTokens.foreground,
+                fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              tenantContext!.userDisplayName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Color(0xFFB8C4D8), fontSize: 12),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
           ],
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.white70),
-            title: const Text(
-              'Sign out',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-            ),
-            onTap: onSignOut,
+          OutlinedButton.icon(
+            onPressed: onSignOut,
+            icon: const Icon(Icons.logout),
+            label: const Text('Sign out'),
           ),
         ],
       ),
     );
-  }
-}
-
-IconData _iconFor(String iconKey) {
-  switch (iconKey) {
-    case 'dashboard':
-      return Icons.dashboard;
-    case 'store':
-      return Icons.store;
-    case 'till':
-      return Icons.payment;
-    case 'users':
-      return Icons.people;
-    case 'shield':
-      return Icons.security;
-    case 'products':
-      return Icons.inventory_2_outlined;
-    case 'inventory':
-      return Icons.storage;
-    case 'reports':
-      return Icons.insert_chart;
-    case 'billing':
-      return Icons.receipt;
-    case 'settings':
-      return Icons.settings;
-    case 'activity':
-      return Icons.history;
-    default:
-      return Icons.fiber_manual_record;
   }
 }

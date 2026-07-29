@@ -1,28 +1,41 @@
 import 'package:flutter/material.dart';
 
+import '../../../presentation/theme/tenant_admin_theme.dart';
+
 class ProductsSidebarChildItem extends StatelessWidget {
   const ProductsSidebarChildItem({
     super.key,
     required this.label,
     required this.selected,
     required this.onTap,
+    this.enabled = true,
+    this.visuallyDisabled = false,
     this.compact = false,
     this.dense = false,
   });
 
   final String label;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool enabled;
+  final bool visuallyDisabled;
   final bool compact;
   final bool dense;
 
   @override
   Widget build(BuildContext context) {
-    final itemColor = selected ? Colors.white : const Color(0xFFD8E0EE);
+    final muted = visuallyDisabled || !enabled;
+    final itemColor = muted
+        ? TenantAdminSidebarTokens.disabledForeground
+        : selected
+            ? TenantAdminSidebarTokens.activeForeground
+            : TenantAdminSidebarTokens.foreground;
 
     return Padding(
       padding: EdgeInsets.only(
-        left: compact ? 8 : 12,
+        left: compact
+            ? TenantAdminSidebarTokens.compactChildIndent
+            : TenantAdminSidebarTokens.childIndent / 2,
         right: compact ? 4 : 0,
         top: dense ? 2 : 4,
         bottom: dense ? 2 : 4,
@@ -31,7 +44,7 @@ class ProductsSidebarChildItem extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
+          onTap: enabled ? onTap : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
             padding: EdgeInsets.symmetric(
@@ -39,12 +52,18 @@ class ProductsSidebarChildItem extends StatelessWidget {
               vertical: dense ? 9 : 10,
             ),
             decoration: BoxDecoration(
-              color: selected ? const Color(0xFF3F2BFF) : Colors.transparent,
+              color: selected
+                  ? TenantAdminSidebarTokens.activeBackground
+                  : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
-                const SizedBox(width: 28),
+                SizedBox(
+                  width: compact
+                      ? TenantAdminSidebarTokens.compactChildIndent
+                      : TenantAdminSidebarTokens.childIndent,
+                ),
                 Expanded(
                   child: Text(
                     label,
@@ -60,6 +79,12 @@ class ProductsSidebarChildItem extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (muted)
+                  const Icon(
+                    Icons.lock_outline,
+                    size: 14,
+                    color: TenantAdminSidebarTokens.disabledForeground,
+                  ),
               ],
             ),
           ),

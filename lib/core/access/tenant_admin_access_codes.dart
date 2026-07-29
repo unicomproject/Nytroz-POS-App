@@ -183,4 +183,5 @@ class TenantAdminPermissionCodes {
   static const tenantSettingsManage = 'tenant.settings.manage';
   static const tenantActivityView = 'tenant.activity.view';
   static const tenantDashboardView = 'tenant.dashboard.view';
+  static const tenantProductImport = 'tenant.product.import';
 }

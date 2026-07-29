@@ -9,7 +9,7 @@ import '../../../presentation/widgets/tenant_admin_search_field.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../providers/brand_providers.dart';
 import '../providers/brand_visibility_provider.dart';
-import '../widgets/brand_form_dialog.dart';
+import '../widgets/brand_details_side_panel.dart';
 import '../widgets/brand_table.dart';
 
 class BrandListScreen extends ConsumerWidget {
@@ -21,12 +21,12 @@ class BrandListScreen extends ConsumerWidget {
 
     return visibilityState.when(
       loading: () => const TenantAdminPageScaffold(
-        title: 'Brands',
+        title: 'Brands Management',
         subtitle: 'Manage product brands for your catalog.',
         child: TenantAdminLoadingSkeleton(rowCount: 6),
       ),
       error: (error, stackTrace) => TenantAdminPageScaffold(
-        title: 'Brands',
+        title: 'Brands Management',
         subtitle: 'Manage product brands for your catalog.',
         child: TenantAdminErrorState(
           title: 'Unable to load brands',
@@ -47,7 +47,7 @@ class BrandListScreen extends ConsumerWidget {
         }
 
         return TenantAdminPageScaffold(
-          title: visibility.showTitle ? 'Brands' : '',
+          title: visibility.showTitle ? 'Brands Management' : '',
           subtitle: visibility.showSubtitle
               ? 'Manage product brands for your catalog.'
               : null,
@@ -75,7 +75,8 @@ class _BrandToolbar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 700;
+        final isMobile =
+            constraints.maxWidth < TenantAdminBreakpoints.smallTablet;
 
         if (isMobile) {
           return Column(
@@ -83,7 +84,7 @@ class _BrandToolbar extends ConsumerWidget {
             children: [
               if (visibility.showSearch)
                 TenantAdminSearchField(
-                  hint: 'Search brands',
+                  hint: 'Search brands...',
                   onChanged: (value) =>
                       ref.read(brandSearchProvider.notifier).state = value,
                 ),
@@ -91,9 +92,12 @@ class _BrandToolbar extends ConsumerWidget {
                 const SizedBox(height: TenantAdminSpacing.md),
               if (visibility.showAddBrand)
                 TenantAdminPrimaryButton(
-                  label: 'Add brand',
+                  label: 'Add Brand',
                   icon: Icons.add,
-                  onPressed: () => _addBrand(context, ref),
+                  onPressed: () => openBrandDetailsPanel(
+                    context: context,
+                    canSave: true,
+                  ),
                 ),
             ],
           );
@@ -104,7 +108,7 @@ class _BrandToolbar extends ConsumerWidget {
             if (visibility.showSearch)
               Expanded(
                 child: TenantAdminSearchField(
-                  hint: 'Search brands',
+                  hint: 'Search brands...',
                   onChanged: (value) =>
                       ref.read(brandSearchProvider.notifier).state = value,
                 ),
@@ -113,36 +117,17 @@ class _BrandToolbar extends ConsumerWidget {
               const SizedBox(width: TenantAdminSpacing.lg),
             if (visibility.showAddBrand)
               TenantAdminPrimaryButton(
-                label: 'Add brand',
+                label: 'Add Brand',
                 icon: Icons.add,
-                onPressed: () => _addBrand(context, ref),
+                onPressed: () => openBrandDetailsPanel(
+                  context: context,
+                  canSave: true,
+                ),
               ),
           ],
         );
       },
     );
-  }
-
-  Future<void> _addBrand(BuildContext context, WidgetRef ref) async {
-    final input = await showBrandFormDialog(context: context);
-    if (input == null || !context.mounted) {
-      return;
-    }
-
-    try {
-      await ref.read(brandSaveControllerProvider.notifier).save(input: input);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Brand created successfully.')),
-        );
-      }
-    } catch (error) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(brandApiErrorMessage(error))),
-        );
-      }
-    }
   }
 }
 
@@ -170,6 +155,17 @@ class _BrandListBody extends ConsumerWidget {
           return const TenantAdminEmptyState(
             title: 'No access',
             message: 'You do not have permission to view brands.',
+            icon: Icons.sell_outlined,
+          );
+        }
+
+        final search = ref.watch(brandSearchProvider).trim();
+        if (result.items.isEmpty) {
+          return TenantAdminEmptyState(
+            title: search.isEmpty ? 'No brands yet' : 'No search results',
+            message: search.isEmpty
+                ? 'Add a brand to use it when creating products.'
+                : 'No brands match "$search".',
             icon: Icons.sell_outlined,
           );
         }

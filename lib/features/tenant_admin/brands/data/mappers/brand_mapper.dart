@@ -11,6 +11,10 @@ class BrandMapper {
       name: dto.brandName,
       status: dto.status,
       description: dto.description,
+      logoUrl: dto.logoUrl,
+      logoMediaAssetId: dto.logoMediaAssetId,
+      sortOrder: dto.sortOrder,
+      productCount: dto.productCount,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     );
@@ -33,6 +37,8 @@ class BrandMapper {
       status: input.status.trim().toUpperCase(),
       description: input.description,
       brandSlug: code.toLowerCase(),
+      logoUrl: input.logoUrl,
+      sortOrder: input.sortOrder,
     );
   }
 }
