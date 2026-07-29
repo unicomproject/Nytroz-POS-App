@@ -9,7 +9,7 @@ void main() {
   group('BrandMapper', () {
     test('maps logo, sortOrder and productCount from dto', () {
       final entity = BrandMapper.toEntity(
-        BrandDto(
+        const BrandDto(
           id: '1',
           brandCode: 'ACME',
           brandName: 'Acme',

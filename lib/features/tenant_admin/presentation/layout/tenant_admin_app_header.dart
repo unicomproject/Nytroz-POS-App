@@ -210,7 +210,8 @@ class _TillSessionChip extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: TenantAdminColors.posHomeDarkBackground,
-        border: Border.all(color: TenantAdminColors.surface.withValues(alpha: 0.55)),
+        border: Border.all(
+            color: TenantAdminColors.surface.withValues(alpha: 0.55)),
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
       ),
       child: Row(
@@ -219,7 +220,8 @@ class _TillSessionChip extends StatelessWidget {
           Icon(
             Icons.circle,
             size: 10,
-            color: isOpen ? TenantAdminColors.success : TenantAdminColors.danger,
+            color:
+                isOpen ? TenantAdminColors.success : TenantAdminColors.danger,
           ),
           const SizedBox(width: TenantAdminSpacing.sm),
           Column(
@@ -277,7 +279,8 @@ class _ContextChip extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: TenantAdminColors.posHomeDarkBackground,
-        border: Border.all(color: TenantAdminColors.surface.withValues(alpha: 0.55)),
+        border: Border.all(
+            color: TenantAdminColors.surface.withValues(alpha: 0.55)),
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
       ),
       child: Row(
@@ -333,10 +336,10 @@ class _NotificationBell extends StatelessWidget {
     return IconButton(
       tooltip: 'Notifications',
       onPressed: () {},
-      icon: Badge(
+      icon: const Badge(
         isLabelVisible: count > 0,
         label: Text('$count'),
-        child: const Icon(
+        child: Icon(
           Icons.notifications_none_rounded,
           color: TenantAdminColors.surface,
         ),
