@@ -265,15 +265,13 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
       openingStockQuantity: _trackStock
           ? double.tryParse(_openingStockController.text.trim())
           : null,
-      minimumStockAlertQuantity: _trackStock
-          ? double.tryParse(_lowStockController.text.trim())
-          : null,
+      minimumStockAlertQuantity:
+          _trackStock ? double.tryParse(_lowStockController.text.trim()) : null,
       maximumStockQuantity:
           _trackStock ? detail.stock?.maximumStockQuantity : null,
       stockUnit: _trackStock ? unitCode : null,
-      outletIds: _trackStock
-          ? _selectedOutletIds.toList(growable: false)
-          : const [],
+      outletIds:
+          _trackStock ? _selectedOutletIds.toList(growable: false) : const [],
       hasVariants: hasVariants,
       variants: hasVariants
           ? detail.variants
@@ -384,7 +382,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
       children: [
         Text(
           title,
-          style: TenantAdminTextStyles.sectionTitle(context).copyWith(fontSize: 16),
+          style: TenantAdminTextStyles.sectionTitle(context)
+              .copyWith(fontSize: 16),
         ),
         const SizedBox(height: TenantAdminSpacing.lg),
         if (!twoColumns)
@@ -659,7 +658,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
       const SizedBox(height: TenantAdminSpacing.md),
       Text(
         'Assigned outlets',
-        style: TenantAdminTextStyles.sectionTitle(context).copyWith(fontSize: 16),
+        style:
+            TenantAdminTextStyles.sectionTitle(context).copyWith(fontSize: 16),
       ),
       const SizedBox(height: TenantAdminSpacing.md),
       if (_fieldErrors['outletIds'] != null)
@@ -726,7 +726,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
       children: [
         Text(
           'Variants',
-          style: TenantAdminTextStyles.sectionTitle(context).copyWith(fontSize: 16),
+          style: TenantAdminTextStyles.sectionTitle(context)
+              .copyWith(fontSize: 16),
         ),
         const SizedBox(height: TenantAdminSpacing.md),
         for (final variant in widget.detail.variants) ...[

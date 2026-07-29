@@ -10,6 +10,7 @@ class PosResolvedSaleItem {
     this.variantId,
     this.variantName,
     this.sku,
+    this.imageUrl,
     this.availableQuantity,
     this.selectedAttributes = const {},
     this.hasVariants = false,
@@ -27,6 +28,7 @@ class PosResolvedSaleItem {
       category: summary.categoryName,
       unitPrice: variant?.price ?? summary.basePrice,
       sku: variant?.sku ?? summary.sku,
+      imageUrl: summary.imageUrl,
       stockStatus: variant?.stockStatus ?? summary.stockStatus,
       availableQuantity: variant?.stockQty ?? summary.availableQty,
       selectedAttributes: variant?.attributes ?? const {},
@@ -41,6 +43,7 @@ class PosResolvedSaleItem {
   final String category;
   final int unitPrice;
   final String? sku;
+  final String? imageUrl;
   final String stockStatus;
   final double? availableQuantity;
   final Map<String, String> selectedAttributes;

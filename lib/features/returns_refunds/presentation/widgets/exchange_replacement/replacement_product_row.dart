@@ -43,9 +43,7 @@ class ReplacementProductRow extends StatelessWidget {
                 ? TenantAdminColors.primary.withValues(alpha: 0.04)
                 : Colors.transparent,
             border: Border.all(
-              color: selected
-                  ? TenantAdminColors.primary
-                  : Colors.transparent,
+              color: selected ? TenantAdminColors.primary : Colors.transparent,
               width: selected ? 1.5 : 0,
             ),
           ),
@@ -80,7 +78,8 @@ class ReplacementProductRow extends StatelessWidget {
                   child: ReplacementProductStockStatus(
                     stockStatus: product.stockStatus,
                     availableQty: product.availableQuantity,
-                    stockLabel: product.isOutOfStock ? 'Out of Stock' : 'In Stock',
+                    stockLabel:
+                        product.isOutOfStock ? 'Out of Stock' : 'In Stock',
                   ),
                 ),
                 Expanded(
@@ -122,7 +121,8 @@ class _SelectionIndicator extends StatelessWidget {
         shape: BoxShape.circle,
         color: selected ? TenantAdminColors.primary : Colors.transparent,
         border: Border.all(
-          color: selected ? TenantAdminColors.primary : TenantAdminColors.border,
+          color:
+              selected ? TenantAdminColors.primary : TenantAdminColors.border,
           width: 2,
         ),
       ),

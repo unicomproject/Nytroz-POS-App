@@ -52,8 +52,10 @@ class ReturnCreateCreditState {
   }
 }
 
-class ReturnCreateCreditController extends StateNotifier<ReturnCreateCreditState> {
-  ReturnCreateCreditController(this._ref) : super(const ReturnCreateCreditState());
+class ReturnCreateCreditController
+    extends StateNotifier<ReturnCreateCreditState> {
+  ReturnCreateCreditController(this._ref)
+      : super(const ReturnCreateCreditState());
 
   final Ref _ref;
 
@@ -85,7 +87,8 @@ class ReturnCreateCreditController extends StateNotifier<ReturnCreateCreditState
     }
 
     _ensureAuthorizationHeader(_ref.read(appDioProvider), session);
-    state = state.copyWith(isLoading: true, clearError: true, clearPreview: true);
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearPreview: true);
 
     try {
       final preview = await _ref
@@ -180,7 +183,8 @@ String formatReturnCreditAdjustment({
   required String currency,
   required double amount,
 }) {
-  final formatted = formatReturnCreditAmount(currency: currency, amount: amount);
+  final formatted =
+      formatReturnCreditAmount(currency: currency, amount: amount);
   if (amount == 0) {
     return formatted;
   }

@@ -118,12 +118,14 @@ class ExchangeReplacementSearchController
       return;
     }
 
-    final saleId = _ref.read(returnFlowProvider).selectedSale?.saleId.trim() ?? '';
+    final saleId =
+        _ref.read(returnFlowProvider).selectedSale?.saleId.trim() ?? '';
     if (saleId.isEmpty) {
       state = state.copyWith(
         isLoading: false,
         products: const [],
-        errorMessage: 'Complete earlier return steps before searching products.',
+        errorMessage:
+            'Complete earlier return steps before searching products.',
       );
       return;
     }
@@ -185,7 +187,8 @@ class ExchangeReplacementSearchController
           isLoading: false,
           products: const [],
           isForbidden: true,
-          errorMessage: 'You do not have permission to search exchange products.',
+          errorMessage:
+              'You do not have permission to search exchange products.',
         );
         return;
       }
@@ -246,12 +249,11 @@ class ExchangeReplacementSearchController
 
     _ensureAuthorizationHeader(_ref.read(appDioProvider), session);
 
-    final detail = await _ref
-        .read(posCatalogRemoteDatasourceProvider)
-        .getProductDetail(
-          deviceId: deviceContext.deviceId,
-          productId: product.productId,
-        );
+    final detail =
+        await _ref.read(posCatalogRemoteDatasourceProvider).getProductDetail(
+              deviceId: deviceContext.deviceId,
+              productId: product.productId,
+            );
 
     final selectable = detail.variants
         .where((variant) => !variant.isOutOfStock)

@@ -139,8 +139,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
     _selectedRoleId = detail?.roleId;
     _selectedOutletIds = detail?.outlets.map((o) => o.id).toSet() ?? {};
     _permissionOverrideEnabled = detail?.permissionOverrideEnabled ?? false;
-    _overriddenPermissionIds =
-        detail?.overriddenPermissionIds.toSet() ?? {};
+    _overriddenPermissionIds = detail?.overriddenPermissionIds.toSet() ?? {};
     final rawStatus = detail?.status.trim().toUpperCase();
     _status = (rawStatus == null || rawStatus.isEmpty) ? 'ACTIVE' : rawStatus;
   }
@@ -182,8 +181,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
               phoneController: _phoneController,
               roles: widget.options.roles,
               selectedRoleId: _selectedRoleId,
-              onRoleChanged: (value) =>
-                  setState(() => _selectedRoleId = value),
+              onRoleChanged: (value) => setState(() => _selectedRoleId = value),
               enabled: !_submitting,
               backendErrors: _fieldErrors,
             ),
@@ -219,8 +217,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
                     'Generate an invite link for this user instead of creating an inactive account.',
                 value: _sendInviteEmail,
                 enabled: !_submitting,
-                onChanged: (value) =>
-                    setState(() => _sendInviteEmail = value),
+                onChanged: (value) => setState(() => _sendInviteEmail = value),
               ),
               const SizedBox(height: TenantAdminSpacing.lg),
             ],
@@ -353,8 +350,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
       roleId: _selectedRoleId!,
       outletIds: _selectedOutletIds.toList(growable: false),
       permissionOverrideEnabled: _permissionOverrideEnabled,
-      overriddenPermissionIds:
-          _overriddenPermissionIds.toList(growable: false),
+      overriddenPermissionIds: _overriddenPermissionIds.toList(growable: false),
       sendInviteEmail: _sendInviteEmail,
       status: widget.isEdit ? _status : null,
       profileImageFileName: _profileImageFileName,
@@ -389,8 +385,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content:
-                  Text('Your session has expired. Please sign in again.'),
+              content: Text('Your session has expired. Please sign in again.'),
             ),
           );
           context.go('/tenant-login');

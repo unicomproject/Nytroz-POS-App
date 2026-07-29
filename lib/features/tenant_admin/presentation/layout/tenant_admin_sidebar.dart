@@ -107,13 +107,13 @@ class TenantAdminSidebar extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Align(
-                alignment:
-                    collapsed ? Alignment.center : Alignment.centerRight,
+                alignment: collapsed ? Alignment.center : Alignment.centerRight,
                 child: IconButton(
                   tooltip: collapsed ? 'Expand sidebar' : 'Collapse sidebar',
                   onPressed: () {
-                    ref.read(tenantAdminSidebarCollapsedProvider.notifier).state =
-                        !collapsed;
+                    ref
+                        .read(tenantAdminSidebarCollapsedProvider.notifier)
+                        .state = !collapsed;
                   },
                   icon: Icon(
                     collapsed ? Icons.last_page : Icons.first_page,

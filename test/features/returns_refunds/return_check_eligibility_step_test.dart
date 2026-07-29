@@ -60,7 +60,8 @@ void main() {
         (tester) async {
       final result = _result(
         checks: [
-          _check(code: 'RETURN_WINDOW', label: 'Return Window', status: 'PASSED'),
+          _check(
+              code: 'RETURN_WINDOW', label: 'Return Window', status: 'PASSED'),
           _check(
             code: 'ORIGINAL_RECEIPT',
             label: 'Original Receipt',
@@ -119,7 +120,8 @@ void main() {
     testWidgets('hides policy note when backend omits it', (tester) async {
       final result = _result(
         checks: [
-          _check(code: 'RETURN_WINDOW', label: 'Return Window', status: 'PASSED'),
+          _check(
+              code: 'RETURN_WINDOW', label: 'Return Window', status: 'PASSED'),
         ],
         policyNote: null,
       );

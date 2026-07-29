@@ -69,7 +69,8 @@ void main() {
   });
 
   group('Add/Edit user screen', () {
-    testWidgets('CreateUser_DoesNotRenderForm_WhenCreateAndInvitePermissionMissing',
+    testWidgets(
+        'CreateUser_DoesNotRenderForm_WhenCreateAndInvitePermissionMissing',
         (tester) async {
       await tester.pumpWidget(
         ProviderScope(

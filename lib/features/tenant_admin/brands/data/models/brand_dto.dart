@@ -13,7 +13,8 @@ class BrandDto {
     return BrandDto(
       id: json['id']?.toString() ?? '',
       brandCode: json['brandCode']?.toString() ?? '',
-      brandName: json['brandName']?.toString() ?? json['name']?.toString() ?? '',
+      brandName:
+          json['brandName']?.toString() ?? json['name']?.toString() ?? '',
       status: json['status']?.toString() ?? 'ACTIVE',
       description: json['description']?.toString(),
       createdAt: _parseDate(json['createdAt']),
@@ -103,7 +104,8 @@ class BrandUpsertRequestDto {
         'description': description!.trim(),
       if (brandSlug != null && brandSlug!.trim().isNotEmpty)
         'brandSlug': brandSlug!.trim(),
-      if (logoUrl != null && logoUrl!.trim().isNotEmpty) 'logoUrl': logoUrl!.trim(),
+      if (logoUrl != null && logoUrl!.trim().isNotEmpty)
+        'logoUrl': logoUrl!.trim(),
     };
   }
 }

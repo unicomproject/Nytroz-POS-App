@@ -28,8 +28,7 @@ class ReturnResolutionOptions extends StatelessWidget {
     _ResolutionOptionData(
       type: ReturnResolutionType.exchange,
       title: 'Exchange',
-      description:
-          'Exchange the item for a different product or variation.',
+      description: 'Exchange the item for a different product or variation.',
       icon: Icons.sync_alt_rounded,
     ),
   ];

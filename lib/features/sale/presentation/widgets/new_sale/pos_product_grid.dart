@@ -37,7 +37,11 @@ class PosProductGrid extends ConsumerWidget {
 
         return LayoutBuilder(
           builder: (context, constraints) {
-            final crossAxisCount = constraints.maxWidth < 600 ? 2 : 3;
+            final crossAxisCount = constraints.maxWidth < 420
+                ? 2
+                : constraints.maxWidth < 540
+                    ? 3
+                    : 4;
 
             if (products.isEmpty) {
               return const _NoProductsFound();
@@ -51,7 +55,7 @@ class PosProductGrid extends ConsumerWidget {
                 crossAxisCount: crossAxisCount,
                 crossAxisSpacing: TenantAdminSpacing.sm,
                 mainAxisSpacing: TenantAdminSpacing.sm,
-                mainAxisExtent: 280,
+                mainAxisExtent: constraints.maxWidth < 540 ? 238 : 248,
               ),
               itemBuilder: (context, index) {
                 final product = products[index];
@@ -148,13 +152,14 @@ class _ProductTile extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(TenantAdminSpacing.sm),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 _ProductImage(product: product, visual: visual),
                 const SizedBox(height: TenantAdminSpacing.sm),
                 Text(
                   product.name,
-                  maxLines: 2,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: TenantAdminColors.bodyText,
@@ -165,9 +170,10 @@ class _ProductTile extends StatelessWidget {
                 Text(
                   formatLkr(product.basePrice),
                   maxLines: 1,
+                  textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: TenantAdminColors.bodyText,
+                        color: TenantAdminColors.danger,
                         fontWeight: FontWeight.w800,
                       ),
                 ),

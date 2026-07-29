@@ -24,9 +24,8 @@ class CloseTillTillInfoBar extends StatelessWidget {
         builder: (context, constraints) {
           final useFourColumns =
               constraints.maxWidth >= TenantAdminBreakpoints.tablet;
-          final useTwoColumns =
-              !useFourColumns &&
-                  constraints.maxWidth >= TenantAdminBreakpoints.mobile;
+          final useTwoColumns = !useFourColumns &&
+              constraints.maxWidth >= TenantAdminBreakpoints.mobile;
 
           final items = [
             _TillInfoItem(

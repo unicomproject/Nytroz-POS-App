@@ -65,10 +65,12 @@ class ReturnSettlementMethodTile extends StatelessWidget {
                         children: [
                           Text(
                             option.title,
-                            style:
-                                Theme.of(context).textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.w800,
-                                    ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
                           ),
                           const SizedBox(height: TenantAdminSpacing.xs),
                           Text(

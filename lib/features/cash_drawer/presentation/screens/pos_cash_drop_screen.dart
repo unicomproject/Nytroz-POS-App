@@ -134,8 +134,7 @@ class _PosCashDropScreenState extends ConsumerState<PosCashDropScreen> {
                                     formKey: _formKey,
                                     amountController: _amountController,
                                     noteController: _noteController,
-                                    managerPinController:
-                                        _managerPinController,
+                                    managerPinController: _managerPinController,
                                     availableCash: availableCash,
                                   ),
                                 ),

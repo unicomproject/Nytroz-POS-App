@@ -23,9 +23,7 @@ class ProductsSidebarParentItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final itemColor = selected ? Colors.white : const Color(0xFFD8E0EE);
-    final iconColor = selected
-        ? Colors.white
-        : const Color(0xFFB8C4D8);
+    final iconColor = selected ? Colors.white : const Color(0xFFB8C4D8);
 
     final content = Material(
       color: Colors.transparent,
@@ -64,8 +62,7 @@ class ProductsSidebarParentItem extends StatelessWidget {
                     style: TextStyle(
                       color: itemColor,
                       fontSize: 13,
-                      fontWeight:
-                          selected ? FontWeight.w800 : FontWeight.w600,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                     ),
                   ),
                 ),

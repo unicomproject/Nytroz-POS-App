@@ -135,7 +135,8 @@ class _TenantAdminMobileShell extends StatefulWidget {
   final TenantAdminAccessChecker? accessChecker;
 
   @override
-  State<_TenantAdminMobileShell> createState() => _TenantAdminMobileShellState();
+  State<_TenantAdminMobileShell> createState() =>
+      _TenantAdminMobileShellState();
 }
 
 class _TenantAdminMobileShellState extends State<_TenantAdminMobileShell> {

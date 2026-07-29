@@ -12,7 +12,8 @@ import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_a
 
 void main() {
   group('Current stock screen', () {
-    testWidgets('shows unauthorized state without tenant.stock.view', (tester) async {
+    testWidgets('shows unauthorized state without tenant.stock.view',
+        (tester) async {
       await _pumpCurrentStock(
         tester,
         permissions: [TenantAdminPermissionCodes.tenantAdminDashboardView],
@@ -38,7 +39,8 @@ void main() {
       expect(find.text('Stock In'), findsWidgets);
     });
 
-    testWidgets('hides stock in button without tenant.stock.in', (tester) async {
+    testWidgets('hides stock in button without tenant.stock.in',
+        (tester) async {
       await _pumpCurrentStock(
         tester,
         permissions: [TenantAdminPermissionCodes.tenantStockView],
@@ -143,8 +145,10 @@ Future<void> _pumpCurrentStock(
             expiringSoonCount: 0,
           ),
         ),
-        currentStockSearchProvider.overrideWith((ref) => hasFilters ? 'none' : ''),
-        currentStockStatusFilterProvider.overrideWith((ref) => hasFilters ? 'LOW_STOCK' : null),
+        currentStockSearchProvider
+            .overrideWith((ref) => hasFilters ? 'none' : ''),
+        currentStockStatusFilterProvider
+            .overrideWith((ref) => hasFilters ? 'LOW_STOCK' : null),
       ],
       child: MaterialApp(
         home: Scaffold(

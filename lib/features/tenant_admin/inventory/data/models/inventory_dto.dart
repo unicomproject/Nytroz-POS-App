@@ -118,10 +118,10 @@ class CurrentStockItemDto {
       damagedQuantity: _decimalValue(json['damagedQuantity']),
       quarantineQuantity: _decimalValue(json['quarantineQuantity']),
       availableQuantity: _decimalValue(json['availableQuantity']),
-      stockStatus: json['stockStatus'] as String? ??
-          InventoryStockStatus.unknown,
-      expiryStatus: json['expiryStatus'] as String? ??
-          InventoryExpiryStatus.unknown,
+      stockStatus:
+          json['stockStatus'] as String? ?? InventoryStockStatus.unknown,
+      expiryStatus:
+          json['expiryStatus'] as String? ?? InventoryExpiryStatus.unknown,
       lastMovementAt: _nullableString(json['lastMovementAt']),
       rowVersion: _intValue(json['rowVersion']),
     );
@@ -380,7 +380,8 @@ class VariantLookupItemDto {
       status: json['status'] as String? ?? '',
       isBatchTracked: json['isBatchTracked'] as bool? ?? false,
       isExpiryTracked: json['isExpiryTracked'] as bool? ?? false,
-      optionValues: _mapList(json['optionValues'], VariantOptionValueDto.fromJson),
+      optionValues:
+          _mapList(json['optionValues'], VariantOptionValueDto.fromJson),
     );
   }
 

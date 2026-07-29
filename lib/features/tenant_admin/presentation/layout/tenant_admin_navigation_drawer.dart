@@ -165,7 +165,8 @@ class _DrawerFooter extends StatelessWidget {
             leading: const Icon(Icons.logout, color: Colors.white70),
             title: const Text(
               'Sign out',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
             ),
             onTap: onSignOut,
           ),

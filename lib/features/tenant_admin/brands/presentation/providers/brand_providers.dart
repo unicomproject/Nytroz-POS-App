@@ -25,7 +25,8 @@ final brandListQueryProvider = Provider<BrandListQuery>((ref) {
   );
 });
 
-final brandListProvider = FutureProvider.autoDispose<BrandListResult?>((ref) async {
+final brandListProvider =
+    FutureProvider.autoDispose<BrandListResult?>((ref) async {
   final query = ref.watch(brandListQueryProvider);
   return ref.watch(brandRepositoryProvider).listBrands(query: query);
 });

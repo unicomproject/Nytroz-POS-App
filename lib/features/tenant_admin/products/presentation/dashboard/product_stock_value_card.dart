@@ -89,8 +89,7 @@ class ProductStockValueCard extends StatelessWidget {
           if (stockValue.trend.isEmpty)
             const TenantAdminEmptyState(
               title: 'No stock value data',
-              message:
-                  'No stock value data is available for this period.',
+              message: 'No stock value data is available for this period.',
             )
           else
             _StockValueLineChart(
@@ -123,7 +122,8 @@ class _StockValueLineChart extends StatelessWidget {
               children: [
                 SizedBox(
                   width: 42,
-                  child: _YAxisLabels(points: points, currencyCode: currencyCode),
+                  child:
+                      _YAxisLabels(points: points, currencyCode: currencyCode),
                 ),
                 Expanded(
                   child: CustomPaint(

@@ -129,7 +129,11 @@ class _OpenTillFormState extends State<OpenTillForm> {
                 )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [content, const SizedBox(height: 16), _bottomAction()],
+                  children: [
+                    content,
+                    const SizedBox(height: 16),
+                    _bottomAction()
+                  ],
                 ),
         );
 
@@ -148,106 +152,108 @@ class _OpenTillFormState extends State<OpenTillForm> {
     return _SurfaceCard(
       child: SingleChildScrollView(
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Open Till',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: TenantAdminColors.navy,
-                  fontWeight: FontWeight.w900,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Enter the starting cash amount to open ${widget.tillName}.',
-            style: const TextStyle(
-              color: TenantAdminColors.mutedText,
-              fontWeight: FontWeight.w600,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Open Till',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: TenantAdminColors.navy,
+                    fontWeight: FontWeight.w900,
+                  ),
             ),
-          ),
-          const SizedBox(height: 20),
-          const _FieldHeading(
-            title: 'Starting Cash Amount',
-            description: 'Enter the cash amount you have in the drawer to start.',
-          ),
-          const SizedBox(height: 10),
-          TextFormField(
-            key: const Key('opening-cash-field'),
-            controller: widget.openingFloatController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-            ],
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Opening cash is required.';
-              }
-              final amount = double.tryParse(value);
-              if (amount == null || amount < 0) {
-                return 'Enter a valid non-negative amount.';
-              }
-              return null;
-            },
-            style: const TextStyle(
-              color: TenantAdminColors.navy,
-              fontSize: 34,
-              fontWeight: FontWeight.w900,
-            ),
-            decoration: InputDecoration(
-              prefixText: '${widget.currencyCode}  ',
-              prefixStyle: const TextStyle(
+            const SizedBox(height: 4),
+            Text(
+              'Enter the starting cash amount to open ${widget.tillName}.',
+              style: const TextStyle(
                 color: TenantAdminColors.mutedText,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
               ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
-              enabledBorder: _border(TenantAdminColors.primary, 2),
-              focusedBorder: _border(TenantAdminColors.primary, 2),
-              errorBorder: _border(Colors.red, 1.5),
-              focusedErrorBorder: _border(Colors.red, 2),
             ),
-          ),
-          const SizedBox(height: 8),
-          if (widget.errorMessage != null) ...[
-            _StatusMessage(
-              icon: Icons.error_outline,
-              color: Colors.red,
-              message: widget.errorMessage!,
+            const SizedBox(height: 20),
+            const _FieldHeading(
+              title: 'Starting Cash Amount',
+              description:
+                  'Enter the cash amount you have in the drawer to start.',
             ),
-          ] else if (_hasValidAmount) ...[
-            const _StatusMessage(
-              icon: Icons.check_circle_outline,
-              color: Color(0xff16a34a),
-              message: 'Amount is valid',
+            const SizedBox(height: 10),
+            TextFormField(
+              key: const Key('opening-cash-field'),
+              controller: widget.openingFloatController,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+              ],
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Opening cash is required.';
+                }
+                final amount = double.tryParse(value);
+                if (amount == null || amount < 0) {
+                  return 'Enter a valid non-negative amount.';
+                }
+                return null;
+              },
+              style: const TextStyle(
+                color: TenantAdminColors.navy,
+                fontSize: 34,
+                fontWeight: FontWeight.w900,
+              ),
+              decoration: InputDecoration(
+                prefixText: '${widget.currencyCode}  ',
+                prefixStyle: const TextStyle(
+                  color: TenantAdminColors.mutedText,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
+                enabledBorder: _border(TenantAdminColors.primary, 2),
+                focusedBorder: _border(TenantAdminColors.primary, 2),
+                errorBorder: _border(Colors.red, 1.5),
+                focusedErrorBorder: _border(Colors.red, 2),
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (widget.errorMessage != null) ...[
+              _StatusMessage(
+                icon: Icons.error_outline,
+                color: Colors.red,
+                message: widget.errorMessage!,
+              ),
+            ] else if (_hasValidAmount) ...[
+              const _StatusMessage(
+                icon: Icons.check_circle_outline,
+                color: Color(0xff16a34a),
+                message: 'Amount is valid',
+              ),
+            ],
+            const SizedBox(height: 18),
+            const _FieldHeading(
+              title: 'Till Note (Optional)',
+              description: 'Add a note for this till opening.',
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: widget.openingNoteController,
+              maxLength: 100,
+              minLines: 2,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Enter note (optional)...',
+                alignLabelWithHint: true,
+                enabledBorder: _border(TenantAdminColors.border, 1),
+                focusedBorder: _border(TenantAdminColors.primary, 1.5),
+              ),
+            ),
+            const SizedBox(height: 8),
+            _TillSummaryCard(
+              outletName: widget.outletName,
+              tillName: widget.tillName,
+              deviceName: widget.deviceName,
+              openingBy: widget.openingBy,
             ),
           ],
-          const SizedBox(height: 18),
-          const _FieldHeading(
-            title: 'Till Note (Optional)',
-            description: 'Add a note for this till opening.',
-          ),
-          const SizedBox(height: 10),
-          TextFormField(
-            controller: widget.openingNoteController,
-            maxLength: 100,
-            minLines: 2,
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText: 'Enter note (optional)...',
-              alignLabelWithHint: true,
-              enabledBorder: _border(TenantAdminColors.border, 1),
-              focusedBorder: _border(TenantAdminColors.primary, 1.5),
-            ),
-          ),
-          const SizedBox(height: 8),
-          _TillSummaryCard(
-            outletName: widget.outletName,
-            tillName: widget.tillName,
-            deviceName: widget.deviceName,
-            openingBy: widget.openingBy,
-          ),
-        ],
         ),
       ),
     );
@@ -290,8 +296,7 @@ class _OpenTillFormState extends State<OpenTillForm> {
                     Expanded(
                       child: _KeypadButton(
                         label: keys[(row * 3) + column],
-                        onPressed: () =>
-                            _enterDigit(keys[(row * 3) + column]),
+                        onPressed: () => _enterDigit(keys[(row * 3) + column]),
                       ),
                     ),
                     if (column != 2) const SizedBox(width: 10),
@@ -354,9 +359,8 @@ class _OpenTillFormState extends State<OpenTillForm> {
       padding: const EdgeInsets.all(14),
       child: PosPrimaryActionButton(
         key: const Key('open-till-button'),
-        onPressed: _hasValidAmount && !widget.isSubmitting
-            ? widget.onSubmit
-            : null,
+        onPressed:
+            _hasValidAmount && !widget.isSubmitting ? widget.onSubmit : null,
         isLoading: widget.isSubmitting,
         fullWidth: true,
         minimumHeight: 64,
@@ -369,7 +373,8 @@ class _OpenTillFormState extends State<OpenTillForm> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Open Till', style: TextStyle(fontWeight: FontWeight.w900)),
+                Text('Open Till',
+                    style: TextStyle(fontWeight: FontWeight.w900)),
                 Text(
                   'The till will be opened and ready for transactions.',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
@@ -453,7 +458,8 @@ class _StatusMessage extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                  color: color, fontSize: 12, fontWeight: FontWeight.w800),
             ),
           ),
         ],
@@ -486,20 +492,32 @@ class _TillSummaryCard extends StatelessWidget {
           children: [
             const Text(
               'Till Summary',
-              style: TextStyle(color: TenantAdminColors.navy, fontWeight: FontWeight.w900),
+              style: TextStyle(
+                  color: TenantAdminColors.navy, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 8),
-            _SummaryRow(icon: Icons.store_outlined, label: 'Outlet', value: outletName),
-            _SummaryRow(icon: Icons.point_of_sale_outlined, label: 'Till', value: tillName),
-            _SummaryRow(icon: Icons.developer_board_outlined, label: 'Device', value: deviceName),
-            _SummaryRow(icon: Icons.person_outline, label: 'Opening By', value: openingBy),
+            _SummaryRow(
+                icon: Icons.store_outlined, label: 'Outlet', value: outletName),
+            _SummaryRow(
+                icon: Icons.point_of_sale_outlined,
+                label: 'Till',
+                value: tillName),
+            _SummaryRow(
+                icon: Icons.developer_board_outlined,
+                label: 'Device',
+                value: deviceName),
+            _SummaryRow(
+                icon: Icons.person_outline,
+                label: 'Opening By',
+                value: openingBy),
           ],
         ),
       );
 }
 
 class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.icon, required this.label, required this.value});
+  const _SummaryRow(
+      {required this.icon, required this.label, required this.value});
   final IconData icon;
   final String label;
   final String value;
@@ -513,14 +531,19 @@ class _SummaryRow extends StatelessWidget {
             const SizedBox(width: 9),
             SizedBox(
               width: 88,
-              child: Text(label, style: const TextStyle(color: TenantAdminColors.mutedText, fontSize: 12)),
+              child: Text(label,
+                  style: const TextStyle(
+                      color: TenantAdminColors.mutedText, fontSize: 12)),
             ),
             Expanded(
               child: Text(
                 value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: TenantAdminColors.navy, fontSize: 12, fontWeight: FontWeight.w900),
+                style: const TextStyle(
+                    color: TenantAdminColors.navy,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900),
               ),
             ),
           ],
@@ -571,13 +594,17 @@ class _KeypadButton extends StatelessWidget {
             minimumSize: const Size(60, 58),
             foregroundColor: labelColor,
             side: const BorderSide(color: TenantAdminColors.border),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
           child: icon != null
               ? Icon(icon, size: 24)
               : Text(
                   label!,
-                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900, color: labelColor),
+                  style: TextStyle(
+                      fontSize: 25,
+                      fontWeight: FontWeight.w900,
+                      color: labelColor),
                 ),
         ),
       );

@@ -29,11 +29,12 @@ class PosCashierBottomNavigation extends ConsumerWidget {
         route: '/pos/new-sale',
         enabled: PosPermissionAccess.canAccessNewSale(permissions),
       ),
-      const _CashierDestination(
+      _CashierDestination(
         label: 'Orders',
         icon: Icons.receipt_long_outlined,
         selectedIcon: Icons.receipt_long_rounded,
-        unavailableMessage: 'Orders screen is not available yet.',
+        route: '/pos/orders',
+        enabled: permissions.contains('receipts.view'),
       ),
       _CashierDestination(
         label: 'Customers',
@@ -46,7 +47,8 @@ class PosCashierBottomNavigation extends ConsumerWidget {
         label: 'Settings',
         icon: Icons.settings_outlined,
         selectedIcon: Icons.settings_rounded,
-        unavailableMessage: 'Settings screen is not available yet.',
+        route: '/pos/settings',
+        enabled: true,
       ),
     ];
 
@@ -79,14 +81,6 @@ class PosCashierBottomNavigation extends ConsumerWidget {
   ) {
     if (destination.enabled && destination.route != null) {
       context.go(destination.route!);
-      return;
-    }
-
-    final message = destination.unavailableMessage;
-    if (message != null) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(message)));
     }
   }
 }
@@ -104,10 +98,9 @@ class _DestinationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabled =
-        destination.enabled || destination.unavailableMessage != null;
+    final enabled = destination.enabled;
     final color = selected
-        ? TenantAdminColors.posHomeOrangeStart
+        ? TenantAdminColors.posHomeAccentOrange
         : enabled
             ? TenantAdminColors.surface
             : TenantAdminColors.offline;
@@ -153,7 +146,7 @@ class _DestinationButton extends StatelessWidget {
                 bottom: 0,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: TenantAdminColors.posHomeOrangeStart,
+                    color: TenantAdminColors.posHomeAccentOrange,
                     borderRadius: BorderRadius.vertical(
                       top: Radius.circular(3),
                     ),
@@ -175,7 +168,6 @@ class _CashierDestination {
     required this.selectedIcon,
     this.route,
     this.enabled = false,
-    this.unavailableMessage,
   });
 
   final String label;
@@ -183,7 +175,6 @@ class _CashierDestination {
   final IconData selectedIcon;
   final String? route;
   final bool enabled;
-  final String? unavailableMessage;
 
   bool matches(String currentPath) {
     final destinationRoute = route;

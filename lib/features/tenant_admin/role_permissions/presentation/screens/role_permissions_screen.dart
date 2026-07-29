@@ -24,10 +24,12 @@ class RolePermissionsScreen extends ConsumerWidget {
     if (!canView) {
       return const TenantAdminPageScaffold(
         title: 'Roles & Permissions',
-        subtitle: 'Manage role permission assignments from the backend catalog.',
+        subtitle:
+            'Manage role permission assignments from the backend catalog.',
         child: TenantAdminEmptyState(
           title: 'No access',
-          message: 'You need roles.permissions.view to manage role permissions.',
+          message:
+              'You need roles.permissions.view to manage role permissions.',
         ),
       );
     }
@@ -40,7 +42,8 @@ class RolePermissionsScreen extends ConsumerWidget {
     if (selectedRoleId == null || selectedRoleId.isEmpty) {
       return const TenantAdminPageScaffold(
         title: 'Roles & Permissions',
-        subtitle: 'Manage role permission assignments from the backend catalog.',
+        subtitle:
+            'Manage role permission assignments from the backend catalog.',
         child: TenantAdminEmptyState(
           title: 'No roles available',
           message:
@@ -50,7 +53,8 @@ class RolePermissionsScreen extends ConsumerWidget {
     }
 
     final dataState = ref.watch(rolePermissionsDataProvider(selectedRoleId));
-    final uiState = ref.watch(rolePermissionsUiControllerProvider(selectedRoleId));
+    final uiState =
+        ref.watch(rolePermissionsUiControllerProvider(selectedRoleId));
     final canUpdate = ref.watch(rolePermissionsCanUpdateProvider);
 
     ref.listen(
@@ -215,24 +219,24 @@ class _RoleSelector extends StatelessWidget {
       child: DropdownButtonFormField<String>(
         isExpanded: true,
         initialValue: selectedRoleId,
-      decoration: InputDecoration(
-        labelText: 'Role',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        ),
-      ),
-      items: [
-        for (final role in roles)
-          DropdownMenuItem<String>(
-            value: role.id,
-            child: Text(role.name),
+        decoration: InputDecoration(
+          labelText: 'Role',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
           ),
-      ],
+        ),
+        items: [
+          for (final role in roles)
+            DropdownMenuItem<String>(
+              value: role.id,
+              child: Text(role.name),
+            ),
+        ],
         onChanged: (value) {
-        if (value != null) {
-          onChanged(value);
-        }
-      },
+          if (value != null) {
+            onChanged(value);
+          }
+        },
       ),
     );
   }
@@ -371,9 +375,8 @@ class _ModuleSection extends StatelessWidget {
                   for (final permission in feature.permissions)
                     CheckboxListTile(
                       value: selectedCodes.contains(permission.code),
-                      onChanged: canUpdate
-                          ? (_) => onToggle(permission.code)
-                          : null,
+                      onChanged:
+                          canUpdate ? (_) => onToggle(permission.code) : null,
                       title: Text(permission.name),
                       subtitle: Text(permission.code),
                       controlAffinity: ListTileControlAffinity.leading,

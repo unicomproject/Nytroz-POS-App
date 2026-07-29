@@ -97,13 +97,15 @@ class PosHomeActionCard extends StatelessWidget {
                             action.label,
                             maxLines: isTiny ? 1 : 2,
                             overflow: TextOverflow.ellipsis,
-                            style:
-                                Theme.of(context).textTheme.titleSmall?.copyWith(
-                                      color: TenantAdminColors.bodyText,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: isTiny ? 11 : null,
-                                      height: 1.2,
-                                    ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  color: TenantAdminColors.bodyText,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: isTiny ? 11 : null,
+                                  height: 1.2,
+                                ),
                           ),
                           if (!isTiny) ...[
                             const SizedBox(height: TenantAdminSpacing.xs),

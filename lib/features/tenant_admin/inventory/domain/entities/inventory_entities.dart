@@ -187,7 +187,8 @@ class StockInLineInput {
     return StockInLineInput(
       productId: clearProduct ? null : productId ?? this.productId,
       productName: clearProduct ? null : productName ?? this.productName,
-      productVariantId: clearVariant ? null : productVariantId ?? this.productVariantId,
+      productVariantId:
+          clearVariant ? null : productVariantId ?? this.productVariantId,
       variantName: clearVariant ? null : variantName ?? this.variantName,
       isBatchTracked: isBatchTracked ?? this.isBatchTracked,
       isExpiryTracked: isExpiryTracked ?? this.isExpiryTracked,

@@ -54,8 +54,7 @@ class ProductsSidebarChildItem extends StatelessWidget {
                     style: TextStyle(
                       color: itemColor,
                       fontSize: compact ? 12.5 : 13,
-                      fontWeight:
-                          selected ? FontWeight.w800 : FontWeight.w600,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                       height: 1.2,
                     ),
                   ),

@@ -78,7 +78,8 @@ class _PosCashInScreenState extends ConsumerState<PosCashInScreen> {
       return ColoredBox(
         color: TenantAdminColors.background,
         child: Padding(
-          padding: TenantAdminInsets.pageForWidth(MediaQuery.sizeOf(context).width),
+          padding:
+              TenantAdminInsets.pageForWidth(MediaQuery.sizeOf(context).width),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -131,8 +132,7 @@ class _PosCashInScreenState extends ConsumerState<PosCashInScreen> {
                                     formKey: _formKey,
                                     amountController: _amountController,
                                     noteController: _noteController,
-                                    managerPinController:
-                                        _managerPinController,
+                                    managerPinController: _managerPinController,
                                   ),
                                 ),
                                 const SizedBox(width: TenantAdminSpacing.lg),

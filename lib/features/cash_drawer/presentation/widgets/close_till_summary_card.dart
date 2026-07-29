@@ -35,9 +35,8 @@ class CloseTillSummaryCard extends ConsumerWidget {
             builder: (context, constraints) {
               final useFourColumns =
                   constraints.maxWidth >= TenantAdminBreakpoints.tablet;
-              final useTwoColumns =
-                  !useFourColumns &&
-                      constraints.maxWidth >= TenantAdminBreakpoints.mobile;
+              final useTwoColumns = !useFourColumns &&
+                  constraints.maxWidth >= TenantAdminBreakpoints.mobile;
 
               final expectedItem = _SummaryColumn(
                 label: 'Expected Cash',
@@ -45,9 +44,7 @@ class CloseTillSummaryCard extends ConsumerWidget {
               );
               final countedItem = _SummaryColumn(
                 label: 'Counted Cash',
-                value: counted == null
-                    ? '-'
-                    : formatCashDrawerAmount(counted),
+                value: counted == null ? '-' : formatCashDrawerAmount(counted),
               );
               final differenceItem = _SummaryColumn(
                 label: 'Difference',
@@ -122,7 +119,8 @@ class CloseTillSummaryCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (var index = 0; index < items.length; index += 1) ...[
-                    if (index > 0) const SizedBox(height: TenantAdminSpacing.md),
+                    if (index > 0)
+                      const SizedBox(height: TenantAdminSpacing.md),
                     items[index],
                   ],
                 ],

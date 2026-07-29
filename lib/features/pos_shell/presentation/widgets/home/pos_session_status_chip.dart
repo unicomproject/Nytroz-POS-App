@@ -10,8 +10,11 @@ class PosSessionStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        constraints: const BoxConstraints(minHeight: 52),
-        padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md),
+        constraints: const BoxConstraints(minHeight: 58),
+        padding: const EdgeInsets.symmetric(
+          horizontal: TenantAdminSpacing.lg,
+          vertical: TenantAdminSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: TenantAdminColors.posHomeDarkSurface,
           border: Border.all(color: TenantAdminColors.posHomeDarkBorder),
@@ -28,12 +31,26 @@ class PosSessionStatusChip extends StatelessWidget {
               size: 16,
             ),
             const SizedBox(width: TenantAdminSpacing.sm),
-            Text(
-              dashboard.tillStatusLabel.toUpperCase(),
-              style: const TextStyle(
-                color: TenantAdminColors.surface,
-                fontWeight: FontWeight.w800,
-              ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  dashboard.tillStatusLabel.toUpperCase(),
+                  style: const TextStyle(
+                    color: TenantAdminColors.surface,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  dashboard.isTillOpen ? 'Till Session' : 'Session Closed',
+                  style: TextStyle(
+                    color: TenantAdminColors.surface.withValues(alpha: 0.72),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

@@ -21,13 +21,14 @@ void main() {
         'page': 1,
         'pageSize': 10,
         'totalCount': 1,
-      }, summary: const TillListSummaryDto(
-        totalTills: 28,
-        onlineCount: 18,
-        offlineCount: 6,
-        inactiveCount: 2,
-        needsAttentionCount: 4,
-      ));
+      },
+          summary: const TillListSummaryDto(
+            totalTills: 28,
+            onlineCount: 18,
+            offlineCount: 6,
+            inactiveCount: 2,
+            needsAttentionCount: 4,
+          ));
 
       expect(dto.summary.totalTills, 28);
       expect(dto.summary.inactiveCount, 2);

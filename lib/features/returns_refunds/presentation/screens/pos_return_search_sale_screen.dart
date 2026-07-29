@@ -402,8 +402,7 @@ class _SearchResults extends ConsumerWidget {
       return TenantAdminErrorState(
         title: forbidden ? 'Permission Denied' : 'Search failed',
         message: searchState.errorMessage!,
-        onRetry: () =>
-            ref.read(returnSearchProvider.notifier).search(page: 1),
+        onRetry: () => ref.read(returnSearchProvider.notifier).search(page: 1),
       );
     }
 

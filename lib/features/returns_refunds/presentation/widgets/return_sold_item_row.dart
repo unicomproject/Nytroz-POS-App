@@ -31,7 +31,8 @@ class ReturnSoldItemRow extends ConsumerWidget {
         color: TenantAdminColors.surface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
         border: Border.all(
-          color: isSelected ? TenantAdminColors.primary : TenantAdminColors.border,
+          color:
+              isSelected ? TenantAdminColors.primary : TenantAdminColors.border,
           width: isSelected ? 2 : 1,
         ),
       ),

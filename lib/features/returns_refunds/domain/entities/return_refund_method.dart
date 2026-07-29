@@ -46,7 +46,8 @@ class ReturnRefundMethodOption {
       }
       return maskedReference!.trim();
     }
-    if (originalPaymentMethod != null && originalPaymentMethod!.trim().isNotEmpty) {
+    if (originalPaymentMethod != null &&
+        originalPaymentMethod!.trim().isNotEmpty) {
       return originalPaymentMethod!.trim();
     }
     return disabledReason?.trim() ?? '';

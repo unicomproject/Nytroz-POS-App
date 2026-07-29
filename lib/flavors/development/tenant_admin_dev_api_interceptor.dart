@@ -704,8 +704,10 @@ const _outletOptions = {
 
 Map<String, Object?> _createdTill(Object? data, {String id = 'till-new'}) {
   final body = data is Map ? Map<String, dynamic>.from(data) : const {};
-  final tillName = body['tillName']?.toString() ?? body['name']?.toString() ?? 'New Till';
-  final tillCode = body['tillCode']?.toString() ?? body['code']?.toString() ?? 'TILL-NEW';
+  final tillName =
+      body['tillName']?.toString() ?? body['name']?.toString() ?? 'New Till';
+  final tillCode =
+      body['tillCode']?.toString() ?? body['code']?.toString() ?? 'TILL-NEW';
   final status = body['status']?.toString() ?? 'Active';
 
   return {

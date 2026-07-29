@@ -28,7 +28,8 @@ class OutletRevenueTab extends ConsumerWidget {
         if (summary.totalOrders == 0 && summary.totalRevenue == 0) {
           return const TenantAdminEmptyState(
             title: 'No revenue data',
-            message: 'Revenue will appear when sales are recorded for this outlet.',
+            message:
+                'Revenue will appear when sales are recorded for this outlet.',
           );
         }
 
@@ -47,7 +48,8 @@ class OutletRevenueTab extends ConsumerWidget {
                   title: 'Average Order Value',
                   value: formatCurrency(summary.averageOrderValue),
                   icon: Icons.receipt_long_outlined,
-                  trend: formatPercentChange(summary.averageOrderValueChangePercent),
+                  trend: formatPercentChange(
+                      summary.averageOrderValueChangePercent),
                 ),
                 OutletDetailKpiCardData(
                   title: 'Total Orders',
@@ -74,7 +76,8 @@ class OutletRevenueTab extends ConsumerWidget {
                 );
                 final paymentSection = OutletDetailsSectionCard(
                   title: 'Revenue by Payment Method',
-                  child: _PaymentMethodChart(items: summary.revenueByPaymentMethod),
+                  child: _PaymentMethodChart(
+                      items: summary.revenueByPaymentMethod),
                 );
                 final summarySection = OutletDetailsSectionCard(
                   title: 'Revenue Summary',
@@ -127,7 +130,9 @@ class _RevenueLineChart extends StatelessWidget {
       return const Text('No revenue trend available yet.');
     }
 
-    final maxValue = points.map((point) => point.amount).fold<double>(0, (a, b) => a > b ? a : b);
+    final maxValue = points
+        .map((point) => point.amount)
+        .fold<double>(0, (a, b) => a > b ? a : b);
 
     return SizedBox(
       height: 220,
@@ -145,11 +150,13 @@ class _RevenueLineChart extends StatelessWidget {
                       child: Align(
                         alignment: Alignment.bottomCenter,
                         child: FractionallySizedBox(
-                          heightFactor: maxValue <= 0 ? 0.04 : point.amount / maxValue,
+                          heightFactor:
+                              maxValue <= 0 ? 0.04 : point.amount / maxValue,
                           child: Container(
                             decoration: BoxDecoration(
                               color: TenantAdminColors.primary,
-                              borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+                              borderRadius:
+                                  BorderRadius.circular(TenantAdminRadius.sm),
                             ),
                           ),
                         ),
@@ -192,7 +199,8 @@ class _PaymentMethodChart extends StatelessWidget {
             children: [
               Expanded(
                 flex: 3,
-                child: Text(item.method, style: const TextStyle(fontWeight: FontWeight.w600)),
+                child: Text(item.method,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
               Expanded(
                 flex: 5,
@@ -249,7 +257,9 @@ class _RevenueSummaryList extends StatelessWidget {
               label,
               style: TextStyle(
                 fontWeight: emphasized ? FontWeight.w800 : FontWeight.w600,
-                color: emphasized ? TenantAdminColors.primary : TenantAdminColors.bodyText,
+                color: emphasized
+                    ? TenantAdminColors.primary
+                    : TenantAdminColors.bodyText,
               ),
             ),
           ),
@@ -257,7 +267,9 @@ class _RevenueSummaryList extends StatelessWidget {
             value,
             style: TextStyle(
               fontWeight: emphasized ? FontWeight.w800 : FontWeight.w700,
-              color: emphasized ? TenantAdminColors.primary : TenantAdminColors.bodyText,
+              color: emphasized
+                  ? TenantAdminColors.primary
+                  : TenantAdminColors.bodyText,
             ),
           ),
         ],

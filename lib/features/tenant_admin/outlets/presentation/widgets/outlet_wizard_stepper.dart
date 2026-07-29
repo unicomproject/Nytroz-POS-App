@@ -31,7 +31,8 @@ class OutletWizardStepper extends StatelessWidget {
                 active: index == currentStep,
                 complete: index < currentStep,
                 compact: compact,
-                onTap: index <= currentStep ? () => onStepSelected(index) : null,
+                onTap:
+                    index <= currentStep ? () => onStepSelected(index) : null,
               ),
           ],
         );
@@ -82,7 +83,8 @@ class _StepPill extends StatelessWidget {
           decoration: BoxDecoration(
             color: background,
             border: Border.all(
-              color: active ? TenantAdminColors.primary : TenantAdminColors.border,
+              color:
+                  active ? TenantAdminColors.primary : TenantAdminColors.border,
             ),
             borderRadius: BorderRadius.circular(999),
           ),

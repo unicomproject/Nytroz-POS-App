@@ -59,8 +59,7 @@ class CashDropFormCard extends ConsumerWidget {
                     labelText: 'Drop Amount *',
                     prefixText: '${formatLkrInputPrefix()} ',
                     border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.md),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                     ),
                   ),
                   validator: (value) => validateCashDropAmount(
@@ -75,8 +74,7 @@ class CashDropFormCard extends ConsumerWidget {
                   decoration: InputDecoration(
                     labelText: 'Reason *',
                     border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.md),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                     ),
                   ),
                   items: [

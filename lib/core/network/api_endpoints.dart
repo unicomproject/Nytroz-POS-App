@@ -22,6 +22,11 @@ class ApiEndpoints {
 
   static const currentTillSession = '/api/v1/tills/current-session';
   static const posHome = '/api/v1/pos/home';
+  static const posHardwareConfigurations =
+      '/api/v1/pos/hardware/configurations';
+  static const posHardwareTests = '/api/v1/pos/hardware/tests';
+  static String posHardwareTestResult(String testId) =>
+      '/api/v1/pos/hardware/tests/$testId/result';
   static const posProducts = '/api/v1/pos/products';
   static const posCatalogCategories = '/api/v1/pos/catalog/categories';
   static const posCheckoutSummary = '/api/v1/pos/checkout/summary';
@@ -93,6 +98,11 @@ class ApiEndpoints {
       '/api/v1/pos/returns/sales/$saleId/exchange-preview';
 
   static String posReceipt(String saleId) => '/api/v1/pos/receipts/$saleId';
+  static const posReceipts = '/api/v1/pos/receipts';
+  static String posReceiptDetail(String receiptId) =>
+      '/api/v1/pos/receipts/$receiptId';
+  static String posReceiptReprintAuthorize(String receiptId) =>
+      '/api/v1/pos/receipts/$receiptId/reprint/authorize';
 
   static String posReceiptPrint(String saleId) =>
       '/api/v1/pos/receipts/$saleId/print';

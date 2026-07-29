@@ -18,7 +18,8 @@ final brandListVisibilityProvider =
   );
 });
 
-final brandListScreenProvider = FutureProvider.autoDispose<BrandListResult?>((ref) async {
+final brandListScreenProvider =
+    FutureProvider.autoDispose<BrandListResult?>((ref) async {
   final accessChecker =
       await ref.watch(tenantAdminAccessCheckerProvider.future);
 

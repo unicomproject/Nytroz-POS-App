@@ -130,7 +130,8 @@ void main() {
         PosPermissionCodes.createRefund,
       ]);
       expect(
-        ReturnsRouteGuard.canAccessPath(session, '/pos/returns-refunds/receipt'),
+        ReturnsRouteGuard.canAccessPath(
+            session, '/pos/returns-refunds/receipt'),
         isFalse,
       );
     });
@@ -173,10 +174,12 @@ void main() {
       );
     });
 
-    test('local completion alone does not unlock route without permissions', () {
+    test('local completion alone does not unlock route without permissions',
+        () {
       final session = _session([PosPermissionCodes.viewHome]);
       expect(
-        ReturnsRouteGuard.canAccessPath(session, '/pos/returns-refunds/receipt'),
+        ReturnsRouteGuard.canAccessPath(
+            session, '/pos/returns-refunds/receipt'),
         isFalse,
       );
     });

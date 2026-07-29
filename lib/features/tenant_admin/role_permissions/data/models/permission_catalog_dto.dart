@@ -33,7 +33,8 @@ class PermissionCatalogModuleDto {
       scope: json['scope'] as String? ?? '',
       sortOrder: json['sortOrder'] as int? ?? 0,
       isActive: json['isActive'] as bool? ?? true,
-      features: _mapList(json['features'], PermissionCatalogFeatureDto.fromJson),
+      features:
+          _mapList(json['features'], PermissionCatalogFeatureDto.fromJson),
     );
   }
 

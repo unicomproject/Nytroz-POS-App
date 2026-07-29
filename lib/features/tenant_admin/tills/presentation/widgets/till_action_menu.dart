@@ -37,7 +37,8 @@ class TillActionMenu extends ConsumerWidget {
                 value: action,
                 child: Row(
                   children: [
-                    Icon(action.icon, size: 18, color: TenantAdminColors.bodyText),
+                    Icon(action.icon,
+                        size: 18, color: TenantAdminColors.bodyText),
                     const SizedBox(width: TenantAdminSpacing.sm),
                     Text(action.label),
                   ],

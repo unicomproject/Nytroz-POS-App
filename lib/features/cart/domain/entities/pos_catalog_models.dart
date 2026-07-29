@@ -156,6 +156,7 @@ PosNewSaleProduct toCartProduct({
     stockStatus: variant?.stockStatus ?? summary.stockStatus,
     hasVariants: summary.hasVariants,
     sku: variant?.sku ?? summary.sku,
+    imageUrl: summary.imageUrl,
     selectedAttributes: attributes,
     maxQuantity: variant?.stockQty?.floor() ?? summary.availableQty?.floor(),
   );

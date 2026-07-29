@@ -36,7 +36,8 @@ class CashDrawerActionsSection extends StatelessWidget {
           const SizedBox(height: TenantAdminSpacing.lg),
           LayoutBuilder(
             builder: (context, constraints) {
-              final useRow = constraints.maxWidth >= TenantAdminBreakpoints.tablet;
+              final useRow =
+                  constraints.maxWidth >= TenantAdminBreakpoints.tablet;
 
               final cards = [
                 _DrawerActionCard(
@@ -66,7 +67,8 @@ class CashDrawerActionsSection extends StatelessWidget {
                 return Row(
                   children: [
                     for (var index = 0; index < cards.length; index += 1) ...[
-                      if (index > 0) const SizedBox(width: TenantAdminSpacing.md),
+                      if (index > 0)
+                        const SizedBox(width: TenantAdminSpacing.md),
                       Expanded(child: cards[index]),
                     ],
                   ],
@@ -76,7 +78,8 @@ class CashDrawerActionsSection extends StatelessWidget {
               return Column(
                 children: [
                   for (var index = 0; index < cards.length; index += 1) ...[
-                    if (index > 0) const SizedBox(height: TenantAdminSpacing.md),
+                    if (index > 0)
+                      const SizedBox(height: TenantAdminSpacing.md),
                     cards[index],
                   ],
                 ],
@@ -149,12 +152,13 @@ class _DrawerActionCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: enabled
-                                  ? TenantAdminColors.bodyText
-                                  : TenantAdminColors.mutedText,
-                              fontWeight: FontWeight.w900,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: enabled
+                                      ? TenantAdminColors.bodyText
+                                      : TenantAdminColors.mutedText,
+                                  fontWeight: FontWeight.w900,
+                                ),
                       ),
                       const SizedBox(height: TenantAdminSpacing.xs),
                       Text(
