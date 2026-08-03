@@ -9,11 +9,17 @@ class PaymentMethodCard extends StatelessWidget {
     required this.method,
     required this.onTap,
     this.enabled = true,
+    this.selected = false,
+    this.unavailableReason,
+    this.onUnavailableTap,
   });
 
   final PosPaymentMethodType method;
   final VoidCallback onTap;
   final bool enabled;
+  final bool selected;
+  final String? unavailableReason;
+  final VoidCallback? onUnavailableTap;
 
   @override
   Widget build(BuildContext context) {
@@ -23,73 +29,58 @@ class PaymentMethodCard extends StatelessWidget {
     final subtitleColor =
         enabled ? TenantAdminColors.mutedText : TenantAdminColors.mutedText;
 
-    return Material(
-      color: enabled ? method.tintColor : TenantAdminColors.background,
-      borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-      child: InkWell(
-        onTap: enabled ? onTap : null,
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      selected: selected,
+      label: method.title,
+      hint: enabled ? method.description : unavailableReason,
+      child: Material(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-            border: Border.all(color: TenantAdminColors.border),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(method.icon, color: accent, size: 28),
-                    const Spacer(),
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.84),
-                        border: Border.all(color: TenantAdminColors.border),
-                      ),
-                      child: Icon(
-                        Icons.chevron_right_rounded,
-                        color: accent,
-                        size: 20,
-                      ),
+        child: InkWell(
+          onTap: enabled ? onTap : onUnavailableTap,
+          borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+              border: Border.all(
+                color: selected ? method.accentColor : TenantAdminColors.border,
+                width: selected ? 2 : 1,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: enabled
+                          ? method.tintColor
+                          : TenantAdminColors.background,
                     ),
-                  ],
-                ),
-                const Spacer(),
-                Text(
-                  method.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: titleColor,
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-                const SizedBox(height: TenantAdminSpacing.sm),
-                Text(
-                  method.description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: subtitleColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-                if (!enabled) ...[
-                  const SizedBox(height: TenantAdminSpacing.sm),
-                  Text(
-                    'Unavailable',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: TenantAdminColors.danger,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    child: Icon(method.icon, color: accent, size: 27),
                   ),
+                  const SizedBox(height: 6),
+                  Text(method.title,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: titleColor, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: TenantAdminSpacing.xs),
+                  Text(method.description,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: subtitleColor, fontWeight: FontWeight.w600)),
                 ],
-              ],
+              ),
             ),
           ),
         ),

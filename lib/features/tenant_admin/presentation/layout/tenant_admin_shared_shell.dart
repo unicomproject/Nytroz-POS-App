@@ -178,8 +178,7 @@ class TenantAdminSharedShell extends ConsumerWidget {
         !access.can(requiredPermission!)) {
       return TenantAdminPermissionDeniedCard(
         title: 'Permission required',
-        message:
-            'You need `$requiredPermission` to view this page.',
+        message: 'You need `$requiredPermission` to view this page.',
       );
     }
 

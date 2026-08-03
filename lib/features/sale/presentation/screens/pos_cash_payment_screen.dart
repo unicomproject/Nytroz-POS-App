@@ -19,6 +19,7 @@ import '../providers/completed_sale_print_provider.dart';
 import '../providers/pos_cash_payment_provider.dart';
 import '../providers/pos_cash_payment_success_provider.dart';
 import '../providers/pos_checkout_summary_provider.dart';
+import '../../../hardware/receipt_printer/presentation/providers/cash_drawer_controller.dart';
 import '../widgets/cash_payment/cash_payment_bottom_actions.dart';
 import '../widgets/cash_payment/cash_payment_header.dart';
 import '../widgets/cash_payment/cash_payment_right_panel.dart';
@@ -245,6 +246,20 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
       ref
           .read(posCashPaymentSuccessProvider.notifier)
           .recordCheckoutPayment(payload);
+
+      if (payload.drawerOperationId != null &&
+          payload.cashDrawerSettings != null) {
+        unawaited(
+          ref
+              .read(cashDrawerControllerProvider.notifier)
+              .triggerAutoOpenForCheckout(
+                drawerOperationId: payload.drawerOperationId!,
+                purposeStr: 'cashSale',
+                drawerSettingsJson: payload.cashDrawerSettings!,
+                businessReferenceId: payload.saleId,
+              ),
+        );
+      }
 
       final activeSession = ref.read(authSessionProvider);
       if (activeSession != null) {

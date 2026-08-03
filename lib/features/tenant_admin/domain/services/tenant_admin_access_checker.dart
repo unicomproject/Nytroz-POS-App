@@ -911,11 +911,23 @@ class TenantAdminAccessChecker {
       TenantAdminPermissionCodes.tenantVariantTemplatesView,
       TenantAdminPermissionCodes.tenantProductImport,
       TenantAdminPermissionCodes.tenantStockView,
+      TenantAdminPermissionCodes.catalogCollectionsView,
+      TenantAdminPermissionCodes.catalogCollectionsManage,
     ]);
   }
 
   bool canImportProductsNav() {
     return can(TenantAdminPermissionCodes.tenantProductImport);
+  }
+
+  bool canViewPopularProductsNav() {
+    return can(TenantAdminPermissionCodes.catalogCollectionsView) ||
+        can(TenantAdminPermissionCodes.catalogCollectionsManage);
+  }
+
+  bool canManagePopularProducts() {
+    return can(TenantAdminPermissionCodes.catalogCollectionsUpdate) ||
+        can(TenantAdminPermissionCodes.catalogCollectionsManage);
   }
 
   /// Products → Inventory child visibility (product stock setup).

@@ -22,6 +22,8 @@ class ProductsRouteGuard {
         return access.canViewBrandsNav();
       case ProductsSidebarRoutes.variantTemplates:
         return access.canViewVariantTemplatesNav();
+      case ProductsSidebarRoutes.popular:
+        return access.canViewPopularProductsNav();
       case ProductsSidebarRoutes.import:
         return access.canImportProductsNav();
       default:
@@ -55,6 +57,8 @@ class ProductsRouteGuard {
         return 'tenant.brands.view';
       case TenantAdminPermissionCodes.tenantVariantTemplatesView:
         return 'tenant.variant.templates.view';
+      case 'catalog.collections.view':
+        return 'catalog.collections.view';
       default:
         return permissionCode;
     }

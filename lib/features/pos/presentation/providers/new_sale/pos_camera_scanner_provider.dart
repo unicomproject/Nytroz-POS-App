@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../widgets/new_sale/pos_camera_barcode_scanner.dart';
+import '../../../../sale/presentation/widgets/new_sale/pos_camera_barcode_scanner.dart';
 
 final posCameraScannerRequestProvider =
     StateProvider.autoDispose<int>((ref) => 0);

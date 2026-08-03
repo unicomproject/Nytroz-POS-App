@@ -346,6 +346,13 @@ Map<String, dynamic> _cartItemToJson(PosNewSaleCartItem item) {
       'hasVariants': product.hasVariants,
       'selectedAttributes': product.selectedAttributes,
       'maxQuantity': product.maxQuantity,
+      'clientLineId': product.clientLineId,
+      'uomId': product.uomId,
+      'lineNote': product.lineNote,
+      'source': product.source,
+      'recommendationParentProductId': product.recommendationParentProductId,
+      'recommendationRelationshipId': product.recommendationRelationshipId,
+      'authoritativePrice': product.authoritativePrice,
     },
   };
 }
@@ -378,6 +385,15 @@ PosNewSaleCartItem? _cartItemFromJson(Map<String, dynamic> json) {
       hasVariants: product['hasVariants'] == true,
       selectedAttributes: _stringMap(product['selectedAttributes']),
       maxQuantity: _nullableInt(product['maxQuantity']),
+      clientLineId: product['clientLineId']?.toString(),
+      uomId: product['uomId']?.toString(),
+      lineNote: product['lineNote']?.toString(),
+      source: product['source']?.toString() ?? 'direct',
+      recommendationParentProductId:
+          product['recommendationParentProductId']?.toString(),
+      recommendationRelationshipId:
+          product['recommendationRelationshipId']?.toString(),
+      authoritativePrice: (product['authoritativePrice'] as num?)?.toDouble(),
     ),
     quantity: _positiveInt(json['quantity']),
     discount: _discountFromJson(json['discount']),

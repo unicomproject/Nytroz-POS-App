@@ -197,8 +197,9 @@ void main() {
 
   group('tenantAdminMenuCatalog approved order', () {
     test('matches locked sidebar order and settings last', () {
-      final labels =
-          tenantAdminMenuCatalog.map((item) => item.label).toList(growable: false);
+      final labels = tenantAdminMenuCatalog
+          .map((item) => item.label)
+          .toList(growable: false);
 
       expect(labels, [
         'Dashboard',

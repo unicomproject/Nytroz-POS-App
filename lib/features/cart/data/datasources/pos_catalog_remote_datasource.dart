@@ -14,6 +14,7 @@ class PosCatalogRemoteDatasource {
     required String deviceId,
     String? categoryId,
     String? search,
+    String? segment,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       ApiEndpoints.posProducts,
@@ -22,6 +23,7 @@ class PosCatalogRemoteDatasource {
         if (categoryId != null && categoryId.isNotEmpty)
           'categoryId': categoryId,
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (segment != null && segment.isNotEmpty) 'segment': segment,
       },
     );
 
@@ -45,6 +47,28 @@ class PosCatalogRemoteDatasource {
     );
 
     return _mapDetail(_unwrapMap(response.data ?? const {}));
+  }
+
+  Future<List<PosProductRecommendation>> getRecommendations({
+    required String deviceId,
+    required String productId,
+    String? sourceVariantId,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiEndpoints.posProductRecommendations(productId),
+      queryParameters: {
+        'deviceId': deviceId,
+        'type': 'frequently-bought-together',
+        'limit': 3,
+        if (sourceVariantId?.isNotEmpty == true)
+          'sourceVariantId': sourceVariantId,
+      },
+    );
+    return _unwrapList(response.data ?? const {})
+        .whereType<Map>()
+        .take(3)
+        .map((item) => _mapRecommendation(Map<String, dynamic>.from(item)))
+        .toList(growable: false);
   }
 
   Future<List<PosCatalogCategory>> getCategories(
@@ -101,17 +125,33 @@ class PosCatalogRemoteDatasource {
       sku: json['sku']?.toString(),
       barcode: json['barcode']?.toString(),
       variantName: json['variantName']?.toString(),
-      name: json['name']?.toString() ?? 'Product',
+      name: json['name']?.toString() ?? '',
       description: json['description']?.toString(),
       imageUrl: _resolveImageUrl(json),
       categoryId: json['categoryId']?.toString(),
-      categoryName: json['categoryName']?.toString() ?? 'General',
+      categoryName: json['categoryName']?.toString() ?? '',
       basePrice: parsePriceToInt(json['basePrice']),
       hasVariants: json['hasVariants'] == true,
       stockStatus: stockStatus,
       availableQty: availableQty,
       stockLabel:
           stockLabelFromApi(json['stockStatus']?.toString(), availableQty),
+      hasOffer: json['hasOffer'] == true,
+      offerType: json['offerType']?.toString(),
+      offerPolicyId: json['offerPolicyId']?.toString(),
+      offerName: json['offerName']?.toString(),
+      originalPrice: json['originalPrice'] != null
+          ? parsePriceToInt(json['originalPrice'])
+          : null,
+      sellingPrice: json['sellingPrice'] != null
+          ? parsePriceToInt(json['sellingPrice'])
+          : null,
+      offerPrice: json['offerPrice'] != null
+          ? parsePriceToInt(json['offerPrice'])
+          : null,
+      discountLabel: json['discountLabel']?.toString(),
+      requiresCartValidation: json['requiresCartValidation'] == true,
+      requiresManagerApproval: json['requiresManagerApproval'] == true,
     );
   }
 
@@ -122,10 +162,10 @@ class PosCatalogRemoteDatasource {
       productId: json['id']?.toString() ?? '',
       sku: json['sku']?.toString(),
       barcode: json['barcode']?.toString(),
-      name: json['name']?.toString() ?? 'Product',
+      name: json['name']?.toString() ?? '',
       description: json['description']?.toString(),
       imageUrl: _resolveImageUrl(json),
-      categoryName: json['categoryName']?.toString() ?? 'General',
+      categoryName: json['categoryName']?.toString() ?? '',
       basePrice: parsePriceToInt(json['basePrice']),
       hasVariants: json['hasVariants'] == true,
       stockStatus: stockStatus,
@@ -144,6 +184,21 @@ class PosCatalogRemoteDatasource {
             options: (item['options'] as List? ?? const [])
                 .map((option) => option.toString())
                 .toList(growable: false),
+            optionId: item['optionId']?.toString() ?? '',
+            code: item['optionCode']?.toString() ?? '',
+            inputType: item['inputType']?.toString() ?? 'CHIP',
+            isRequired: item['isRequired'] != false,
+            sortOrder: (item['sortOrder'] as num?)?.toInt() ?? 0,
+            values: (item['values'] as List? ?? const [])
+                .whereType<Map>()
+                .map((value) => PosCatalogOptionValue(
+                      optionValueId: value['optionValueId']?.toString() ?? '',
+                      code: value['valueCode']?.toString() ?? '',
+                      displayName: value['displayName']?.toString() ?? '',
+                      colorHex: value['colorHex']?.toString(),
+                      sortOrder: (value['sortOrder'] as num?)?.toInt() ?? 0,
+                    ))
+                .toList(growable: false),
           ),
         )
         .where((group) => group.name.isNotEmpty)
@@ -158,6 +213,9 @@ class PosCatalogRemoteDatasource {
       summary: summary,
       variantGroups: variantGroups,
       variants: variants,
+      productCode: json['productCode']?.toString() ?? '',
+      currency: json['currency']?.toString() ?? '',
+      requiresConfiguration: json['requiresConfiguration'] == true,
     );
   }
 
@@ -183,8 +241,47 @@ class PosCatalogRemoteDatasource {
       stockQty: (json['stockQty'] as num?)?.toDouble(),
       stockStatus: stockStatusFromApi(json['stockStatus']?.toString()),
       attributes: attributes,
+      variantCode: json['variantCode']?.toString() ?? '',
+      variantName: json['variantName']?.toString() ?? '',
+      selectedOptionValueIds:
+          (json['selectedOptionValueIds'] as List? ?? const [])
+              .map((value) => value.toString())
+              .toList(growable: false),
+      isDefault: json['isDefault'] == true,
+      isSelectable: json['isSelectable'] != false,
+      unavailableReason: json['unavailableReason']?.toString(),
+      salesUomId: json['salesUomId']?.toString() ?? '',
+      salesUomCode: json['salesUomCode']?.toString() ?? '',
+      allowFractionalQuantity: json['allowFractionalQuantity'] == true,
+      authoritativePrice: json['authoritativePrice'] == null
+          ? null
+          : parseDecimal(json['authoritativePrice']),
+      currency: json['currency']?.toString() ?? '',
+      isStockTracked: json['isStockTracked'] != false,
+      imageUrl: _resolveImageUrl(Map<String, dynamic>.from(json)),
     );
   }
+
+  PosProductRecommendation _mapRecommendation(Map<String, dynamic> json) =>
+      PosProductRecommendation(
+        relationshipId: json['relationshipId']?.toString() ?? '',
+        productId: json['productId']?.toString() ?? '',
+        variantId: json['variantId']?.toString(),
+        productName: json['productName']?.toString() ?? '',
+        categoryName: json['categoryName']?.toString(),
+        variantName: json['variantName']?.toString(),
+        imageUrl: _resolveImageUrl(json),
+        hasVariants: json['hasVariants'] == true,
+        requiresConfiguration: json['requiresConfiguration'] == true,
+        price: json['price'] == null ? null : parseDecimal(json['price']),
+        currency: json['currency']?.toString() ?? '',
+        availableQuantity: json['availableQuantity'] == null
+            ? null
+            : parseDecimal(json['availableQuantity']),
+        stockStatus: stockStatusFromApi(json['stockStatus']?.toString()),
+        isSelectable: json['isSelectable'] == true,
+        unavailableReason: json['unavailableReason']?.toString(),
+      );
 }
 
 String formatLkr(int value) {

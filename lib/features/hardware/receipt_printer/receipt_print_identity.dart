@@ -11,14 +11,27 @@ abstract final class ReceiptPrintIdentity {
       copyType.trim().toUpperCase(),
       copyIndex,
     ].join('|');
-    var first = 0xcbf29ce484222325;
-    var second = 0x84222325cbf29ce4;
+    return generate(source);
+  }
+
+  static String generate(String source) {
+    const prime = 16777619;
+    final bases = [
+      2166136261,
+      3582496829,
+      1128362489,
+      4019283741,
+    ];
+
+    final hashes = List<int>.from(bases);
+
     for (final unit in source.codeUnits) {
-      first = ((first ^ unit) * 0x100000001b3) & 0x7fffffffffffffff;
-      second = ((second ^ (unit + 31)) * 0x100000001b3) & 0x7fffffffffffffff;
+      for (var i = 0; i < 4; i++) {
+        hashes[i] = ((hashes[i] ^ (unit + i * 31)) * prime) & 0xffffffff;
+      }
     }
-    final hex =
-        '${first.toRadixString(16).padLeft(16, '0')}${second.toRadixString(16).padLeft(16, '0')}';
+
+    final hex = hashes.map((h) => h.toRadixString(16).padLeft(8, '0')).join();
     return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
         '4${hex.substring(13, 16)}-a${hex.substring(17, 20)}-'
         '${hex.substring(20, 32)}';

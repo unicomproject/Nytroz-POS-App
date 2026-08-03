@@ -38,6 +38,16 @@ class PosHidScannerInputService {
   Timer? _timeout;
   DateTime? _lastCharacterAt;
   bool _attached = false;
+  bool isConnected = true;
+
+  void simulateDisconnect() {
+    isConnected = false;
+    reset();
+  }
+
+  void simulateReconnect() {
+    isConnected = true;
+  }
 
   void attach() {
     if (_attached) return;
@@ -54,6 +64,10 @@ class PosHidScannerInputService {
   }
 
   bool handleKeyEvent(KeyEvent event) {
+    if (!isConnected) {
+      reset();
+      return false;
+    }
     if (event is! KeyDownEvent) return false;
     if (_isTerminator(event)) {
       _complete();

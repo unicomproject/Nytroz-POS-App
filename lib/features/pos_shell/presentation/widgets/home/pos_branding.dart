@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../application/state/pos_home_dashboard_state.dart';
+import '../../providers/pos_home_dashboard_provider.dart';
 
-class PosBranding extends StatelessWidget {
-  const PosBranding({super.key, required this.dashboard});
+class PosBranding extends ConsumerWidget {
+  const PosBranding({super.key, this.dashboard});
 
-  final PosHomeDashboardState dashboard;
+  final PosHomeDashboardState? dashboard;
 
   @override
-  Widget build(BuildContext context) {
-    final name = dashboard.businessDisplayName.trim();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state =
+        dashboard ?? ref.watch(posHomeDashboardProvider).asData?.value;
+    final name = state?.businessDisplayName.trim() ?? 'OneVerz POS';
+    final logoUrl = state?.businessLogoUrl;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -18,9 +23,9 @@ class PosBranding extends StatelessWidget {
           borderRadius: BorderRadius.circular(TenantAdminRadius.md),
           child: SizedBox.square(
             dimension: 52,
-            child: dashboard.businessLogoUrl?.isNotEmpty == true
+            child: logoUrl?.isNotEmpty == true
                 ? Image.network(
-                    dashboard.businessLogoUrl!,
+                    logoUrl!,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => const _LogoFallback(),
                   )
@@ -29,7 +34,9 @@ class PosBranding extends StatelessWidget {
         ),
         if (name.isNotEmpty) ...[
           const SizedBox(width: TenantAdminSpacing.sm),
-          _BrandName(name: name),
+          Flexible(
+            child: _BrandName(name: name),
+          ),
         ],
       ],
     );

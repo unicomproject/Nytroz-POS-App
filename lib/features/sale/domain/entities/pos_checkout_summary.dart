@@ -109,15 +109,31 @@ class PosCheckoutLineRequest {
   const PosCheckoutLineRequest({
     required this.variantId,
     required this.quantity,
+    this.clientLineId,
+    this.uomId,
+    this.lineNote,
+    this.source,
+    this.recommendationParentProductId,
+    this.recommendationRelationshipId,
   });
 
   final String variantId;
   final int quantity;
+  final String? clientLineId, uomId, lineNote, source;
+  final String? recommendationParentProductId, recommendationRelationshipId;
 
   Map<String, dynamic> toJson() {
     return {
       'variantId': variantId,
       'qty': quantity,
+      if (clientLineId?.isNotEmpty == true) 'clientLineId': clientLineId,
+      if (uomId?.isNotEmpty == true) 'uomId': uomId,
+      if (lineNote?.trim().isNotEmpty == true) 'lineNote': lineNote!.trim(),
+      if (source?.isNotEmpty == true) 'source': source,
+      if (recommendationParentProductId?.isNotEmpty == true)
+        'recommendationParentProductId': recommendationParentProductId,
+      if (recommendationRelationshipId?.isNotEmpty == true)
+        'recommendationRelationshipId': recommendationRelationshipId,
     };
   }
 }
@@ -155,6 +171,8 @@ class PosCheckoutStartPaymentPayload {
     this.copyPolicy = const PosReceiptCopyPolicyPayload(),
     this.taxRegistrationNumber,
     this.taxInvoiceLabel,
+    this.drawerOperationId,
+    this.cashDrawerSettings,
   });
 
   final String checkoutSessionId;
@@ -188,6 +206,8 @@ class PosCheckoutStartPaymentPayload {
   final PosReceiptCopyPolicyPayload copyPolicy;
   final String? taxRegistrationNumber;
   final String? taxInvoiceLabel;
+  final String? drawerOperationId;
+  final Map<String, dynamic>? cashDrawerSettings;
 
   factory PosCheckoutStartPaymentPayload.fromJson(Map<String, dynamic> json) {
     return PosCheckoutStartPaymentPayload(
@@ -257,6 +277,13 @@ class PosCheckoutStartPaymentPayload {
           json['TaxRegistrationNumber']?.toString(),
       taxInvoiceLabel: json['taxInvoiceLabel']?.toString() ??
           json['TaxInvoiceLabel']?.toString(),
+      drawerOperationId: json['drawerOperationId']?.toString() ??
+          json['DrawerOperationId']?.toString(),
+      cashDrawerSettings: json['cashDrawerSettings'] is Map
+          ? Map<String, dynamic>.from(json['cashDrawerSettings'] as Map)
+          : (json['CashDrawerSettings'] is Map
+              ? Map<String, dynamic>.from(json['CashDrawerSettings'] as Map)
+              : null),
     );
   }
 }
@@ -393,6 +420,7 @@ class PosCheckoutCompletedLinePayload {
     this.variantSummary,
     this.saleLineId,
     this.discountAmount = 0,
+    this.lineNote,
   });
 
   final String name;
@@ -402,6 +430,7 @@ class PosCheckoutCompletedLinePayload {
   final String? variantSummary;
   final String? saleLineId;
   final int discountAmount;
+  final String? lineNote;
 
   factory PosCheckoutCompletedLinePayload.fromJson(Map<String, dynamic> json) {
     return PosCheckoutCompletedLinePayload(
@@ -414,6 +443,7 @@ class PosCheckoutCompletedLinePayload {
           json['saleLineId']?.toString() ?? json['SaleLineId']?.toString(),
       discountAmount:
           _toMoney(json['discountAmount'] ?? json['DiscountAmount']),
+      lineNote: json['lineNote']?.toString() ?? json['LineNote']?.toString(),
     );
   }
 }

@@ -4,19 +4,19 @@ import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
-import 'package:nytroz_pos/features/cart/presentation/widgets/pos_empty_cart_panel.dart';
 
-import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../widgets/new_sale/pos_new_sale_action_bar.dart';
-import '../widgets/new_sale/pos_barcode_scanner_listener.dart';
-import '../widgets/new_sale/pos_product_category_chips.dart';
-import '../widgets/new_sale/pos_product_grid.dart';
-import '../providers/pos_barcode_scan_controller.dart';
-import '../providers/pos_barcode_scan_feedback.dart';
-import '../providers/pos_camera_scanner_provider.dart';
-import '../../../hardware/barcode_scanner/presentation/providers/barcode_scanner_configuration_provider.dart';
-import '../widgets/new_sale/pos_camera_barcode_scanner.dart';
-import '../../../cart/presentation/providers/pos_new_sale_search_coordinator.dart';
+import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../widgets/new_sale/actions/pos_new_sale_action_bar.dart';
+import '../../../../sale/presentation/widgets/new_sale/pos_barcode_scanner_listener.dart';
+import '../../widgets/new_sale/catalogue/pos_product_category_chips.dart';
+import '../../widgets/new_sale/product_card/pos_product_grid.dart';
+import '../../providers/new_sale/pos_barcode_scan_controller.dart';
+import '../../providers/new_sale/pos_barcode_scan_feedback.dart';
+import '../../providers/new_sale/pos_camera_scanner_provider.dart';
+import '../../../../hardware/barcode_scanner/presentation/providers/barcode_scanner_configuration_provider.dart';
+import '../../../../sale/presentation/widgets/new_sale/pos_camera_barcode_scanner.dart';
+import '../../../../cart/presentation/providers/pos_new_sale_search_coordinator.dart';
+import '../../widgets/new_sale/cart/pos_new_sale_cart_panel.dart';
 
 class PosNewSaleScreen extends ConsumerStatefulWidget {
   const PosNewSaleScreen({
@@ -60,6 +60,7 @@ class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen> {
 
       ref.read(posNewSaleSearchQueryProvider.notifier).state = '';
       ref.read(posNewSaleSelectedCategoryIdProvider.notifier).state = null;
+      ref.read(posNewSaleSelectedSegmentProvider.notifier).state = 'popular';
     });
   }
 
@@ -199,7 +200,7 @@ class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen> {
                       SizedBox(height: TenantAdminSpacing.md),
                       SizedBox(
                         height: 500,
-                        child: PosEmptyCartPanel(),
+                        child: PosNewSaleCartPanel(),
                       ),
                     ],
                   ),
@@ -224,7 +225,7 @@ class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen> {
                     flex: 2,
                     child: KeyedSubtree(
                       key: Key('new-sale-cart-panel'),
-                      child: PosEmptyCartPanel(),
+                      child: PosNewSaleCartPanel(),
                     ),
                   ),
                 ],
@@ -296,6 +297,7 @@ class _ProductSectionHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final query = ref.watch(posNewSaleSearchQueryProvider).trim();
     final selectedCategoryId = ref.watch(posNewSaleSelectedCategoryIdProvider);
+    final selectedSegment = ref.watch(posNewSaleSelectedSegmentProvider);
     final categoriesAsync = ref.watch(posNewSaleCategoriesProvider);
     final catalogAsync = ref.watch(posNewSaleCatalogProvider);
     final productCount = catalogAsync.maybeWhen(
@@ -312,11 +314,16 @@ class _ProductSectionHeader extends ConsumerWidget {
       orElse: () => 'All',
     );
     final hasSearch = query.isNotEmpty;
+    final String segmentPrefix = selectedSegment == 'popular'
+        ? 'Popular '
+        : selectedSegment == 'frequently-sold'
+            ? 'Frequently Sold '
+            : '';
     final sectionTitle = hasSearch
         ? 'Search results for "$query"'
         : selectedCategoryId == null
-            ? 'All Products ($productCount)'
-            : '$selectedCategoryName Products';
+            ? '${segmentPrefix}Products ($productCount)'
+            : '$segmentPrefix$selectedCategoryName Products';
 
     return Row(
       children: [

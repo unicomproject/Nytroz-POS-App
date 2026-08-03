@@ -3,13 +3,13 @@ import 'dart:collection';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/dio_provider.dart';
-import '../../../auth/presentation/providers/session_provider.dart';
-import '../../../cart/data/datasources/pos_barcode_remote_datasource.dart';
-import '../../../cart/domain/entities/pos_resolved_sale_item.dart';
-import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
-import '../../../cart/presentation/providers/pos_resolved_variant_cart_action.dart';
-import '../../../device_activation/presentation/providers/device_activation_provider.dart';
+import '../../../../../core/network/dio_provider.dart';
+import '../../../../auth/presentation/providers/session_provider.dart';
+import '../../../../cart/data/datasources/pos_barcode_remote_datasource.dart';
+import '../../../../cart/domain/entities/pos_resolved_sale_item.dart';
+import '../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import '../../../../cart/presentation/providers/pos_resolved_variant_cart_action.dart';
+import '../../../../device_activation/presentation/providers/device_activation_provider.dart';
 
 final posBarcodeLookupGatewayProvider = Provider<PosBarcodeLookupGateway>(
   (ref) => PosBarcodeRemoteDatasource(ref.watch(appDioProvider)),

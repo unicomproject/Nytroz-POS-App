@@ -229,3 +229,50 @@ int _int(Object? value) =>
 
 double? _double(Object? value) =>
     value is num ? value.toDouble() : double.tryParse('$value');
+
+class PosCashDrawerConfiguration {
+  const PosCashDrawerConfiguration({
+    required this.enabled,
+    required this.linkedReceiptPrinterId,
+    required this.drawerPort,
+    required this.pulseOnMilliseconds,
+    required this.pulseOffMilliseconds,
+    required this.policy,
+    required this.openOnCashSale,
+    required this.openOnCashRefund,
+    required this.openOnCashSplit,
+    required this.manualOpenEnabled,
+  });
+
+  final bool enabled;
+  final String? linkedReceiptPrinterId;
+  final String drawerPort;
+  final int pulseOnMilliseconds;
+  final int pulseOffMilliseconds;
+  final String policy;
+  final bool openOnCashSale;
+  final bool openOnCashRefund;
+  final bool openOnCashSplit;
+  final bool manualOpenEnabled;
+
+  factory PosCashDrawerConfiguration.fromHardware(
+      PosHardwareConfiguration config) {
+    final s = config.settings;
+    return PosCashDrawerConfiguration(
+      enabled: config.enabled,
+      linkedReceiptPrinterId: s['linkedReceiptPrinterId']?.toString(),
+      drawerPort: s['drawerPort']?.toString() ?? 'drawerPin2',
+      pulseOnMilliseconds: s['pulseOnMilliseconds'] is num
+          ? (s['pulseOnMilliseconds'] as num).toInt()
+          : 100,
+      pulseOffMilliseconds: s['pulseOffMilliseconds'] is num
+          ? (s['pulseOffMilliseconds'] as num).toInt()
+          : 200,
+      policy: s['policy']?.toString() ?? 'never',
+      openOnCashSale: s['openOnCashSale'] != false,
+      openOnCashRefund: s['openOnCashRefund'] != false,
+      openOnCashSplit: s['openOnCashSplit'] != false,
+      manualOpenEnabled: s['manualOpenEnabled'] == true,
+    );
+  }
+}

@@ -39,6 +39,16 @@ class PosCatalogProductSummary {
     this.stockStatus = 'Unknown',
     this.availableQty,
     this.stockLabel = 'Unavailable',
+    this.hasOffer = false,
+    this.offerType,
+    this.offerPolicyId,
+    this.offerName,
+    this.originalPrice,
+    this.sellingPrice,
+    this.offerPrice,
+    this.discountLabel,
+    this.requiresCartValidation = false,
+    this.requiresManagerApproval = false,
   });
 
   final String productId;
@@ -56,6 +66,16 @@ class PosCatalogProductSummary {
   final String stockStatus;
   final double? availableQty;
   final String stockLabel;
+  final bool hasOffer;
+  final String? offerType;
+  final String? offerPolicyId;
+  final String? offerName;
+  final int? originalPrice;
+  final int? sellingPrice;
+  final int? offerPrice;
+  final String? discountLabel;
+  final bool requiresCartValidation;
+  final bool requiresManagerApproval;
 
   bool get isOutOfStock =>
       stockStatus != 'InStock' && stockStatus != 'LowStock';
@@ -73,10 +93,38 @@ class PosCatalogVariantGroup {
   const PosCatalogVariantGroup({
     required this.name,
     required this.options,
+    this.optionId = '',
+    this.code = '',
+    this.inputType = 'CHIP',
+    this.isRequired = true,
+    this.sortOrder = 0,
+    this.values = const [],
   });
 
   final String name;
   final List<String> options;
+  final String optionId;
+  final String code;
+  final String inputType;
+  final bool isRequired;
+  final int sortOrder;
+  final List<PosCatalogOptionValue> values;
+}
+
+class PosCatalogOptionValue {
+  const PosCatalogOptionValue({
+    required this.optionValueId,
+    required this.code,
+    required this.displayName,
+    this.colorHex,
+    this.sortOrder = 0,
+  });
+
+  final String optionValueId;
+  final String code;
+  final String displayName;
+  final String? colorHex;
+  final int sortOrder;
 }
 
 class PosCatalogVariant {
@@ -87,6 +135,19 @@ class PosCatalogVariant {
     required this.stockStatus,
     required this.attributes,
     this.stockQty,
+    this.variantCode = '',
+    this.variantName = '',
+    this.selectedOptionValueIds = const [],
+    this.isDefault = false,
+    this.isSelectable = true,
+    this.unavailableReason,
+    this.salesUomId = '',
+    this.salesUomCode = '',
+    this.allowFractionalQuantity = false,
+    this.authoritativePrice,
+    this.currency = 'LKR',
+    this.isStockTracked = true,
+    this.imageUrl,
   });
 
   final String variantId;
@@ -95,6 +156,19 @@ class PosCatalogVariant {
   final double? stockQty;
   final String stockStatus;
   final Map<String, String> attributes;
+  final String variantCode;
+  final String variantName;
+  final List<String> selectedOptionValueIds;
+  final bool isDefault;
+  final bool isSelectable;
+  final String? unavailableReason;
+  final String salesUomId;
+  final String salesUomCode;
+  final bool allowFractionalQuantity;
+  final double? authoritativePrice;
+  final String currency;
+  final bool isStockTracked;
+  final String? imageUrl;
 
   bool get isOutOfStock =>
       stockStatus != 'InStock' && stockStatus != 'LowStock';
@@ -107,11 +181,32 @@ class PosCatalogProductDetail {
     required this.summary,
     required this.variantGroups,
     required this.variants,
+    this.productCode = '',
+    this.currency = 'LKR',
+    this.requiresConfiguration = false,
   });
 
   final PosCatalogProductSummary summary;
   final List<PosCatalogVariantGroup> variantGroups;
   final List<PosCatalogVariant> variants;
+  final String productCode;
+  final String currency;
+  final bool requiresConfiguration;
+
+  PosCatalogVariant? matchVariantIds(Set<String> selectedValueIds) {
+    final requiredCount =
+        variantGroups.where((group) => group.isRequired).length;
+    if (selectedValueIds.length < requiredCount) return null;
+    final matches = variants
+        .where((variant) =>
+            variant.isSelectable &&
+            variant.selectedOptionValueIds.length == selectedValueIds.length &&
+            variant.selectedOptionValueIds
+                .toSet()
+                .containsAll(selectedValueIds))
+        .toList();
+    return matches.length == 1 ? matches.single : null;
+  }
 
   PosCatalogVariant? matchVariant(Map<String, String> selectedAttributes) {
     if (selectedAttributes.length != variantGroups.length) {
@@ -135,10 +230,42 @@ class PosCatalogProductDetail {
   }
 }
 
+class PosProductRecommendation {
+  const PosProductRecommendation({
+    required this.relationshipId,
+    required this.productId,
+    required this.productName,
+    this.categoryName,
+    required this.hasVariants,
+    required this.requiresConfiguration,
+    required this.stockStatus,
+    required this.isSelectable,
+    this.variantId,
+    this.variantName,
+    this.imageUrl,
+    this.price,
+    this.currency = '',
+    this.availableQuantity,
+    this.unavailableReason,
+  });
+  final String relationshipId, productId, productName, stockStatus, currency;
+  final String? categoryName,
+      variantId,
+      variantName,
+      imageUrl,
+      unavailableReason;
+  final bool hasVariants, requiresConfiguration, isSelectable;
+  final double? price, availableQuantity;
+}
+
 PosNewSaleProduct toCartProduct({
   required PosCatalogProductSummary summary,
   required PosCatalogVariant? variant,
   required int quantity,
+  String? lineNote,
+  String source = 'product_popup',
+  String? recommendationParentProductId,
+  String? recommendationRelationshipId,
 }) {
   final unitPrice = variant?.price ?? summary.basePrice;
   final attributes = variant?.attributes ?? const <String, String>{};
@@ -159,8 +286,18 @@ PosNewSaleProduct toCartProduct({
     imageUrl: summary.imageUrl,
     selectedAttributes: attributes,
     maxQuantity: variant?.stockQty?.floor() ?? summary.availableQty?.floor(),
+    uomId: variant?.salesUomId,
+    lineNote: lineNote,
+    source: source,
+    recommendationParentProductId: recommendationParentProductId,
+    recommendationRelationshipId: recommendationRelationshipId,
+    authoritativePrice: variant?.authoritativePrice,
   );
 }
+
+double parseDecimal(dynamic value) => value is num
+    ? value.toDouble()
+    : double.tryParse(value?.toString() ?? '') ?? 0;
 
 String _stockLabelForVariant(PosCatalogVariant? variant, String fallback) {
   if (variant == null) {

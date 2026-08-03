@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/access/pos_permission_access.dart';
-import '../../../../auth/presentation/providers/session_provider.dart';
-import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../../../../core/access/pos_permission_access.dart';
+import '../../../../../auth/presentation/providers/session_provider.dart';
+import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
 class PosCashierBottomNavigation extends ConsumerWidget {
   const PosCashierBottomNavigation({super.key});
@@ -116,33 +116,33 @@ class _DestinationButton extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 7),
+              padding: const EdgeInsets.symmetric(vertical: 6),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     selected ? destination.selectedIcon : destination.icon,
-                    size: 24,
+                    size: 26,
                     color: color,
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 4),
                   Text(
                     destination.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: color,
-                          fontWeight:
-                              selected ? FontWeight.w800 : FontWeight.w600,
-                        ),
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 14,
+                      fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
             ),
             if (selected)
               const Positioned(
-                left: 22,
-                right: 22,
+                left: 28,
+                right: 28,
                 bottom: 0,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -151,7 +151,7 @@ class _DestinationButton extends StatelessWidget {
                       top: Radius.circular(3),
                     ),
                   ),
-                  child: SizedBox(height: 4),
+                  child: SizedBox(height: 5),
                 ),
               ),
           ],

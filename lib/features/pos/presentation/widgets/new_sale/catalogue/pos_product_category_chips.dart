@@ -5,7 +5,7 @@ import 'package:nytroz_pos/features/auth/presentation/providers/session_provider
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
 
-import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
 class PosProductCategoryChips extends ConsumerWidget {
   const PosProductCategoryChips({super.key});
@@ -19,59 +19,77 @@ class PosProductCategoryChips extends ConsumerWidget {
 
     final categoriesAsync = ref.watch(posNewSaleCategoriesProvider);
     final selectedCategoryId = ref.watch(posNewSaleSelectedCategoryIdProvider);
+    final selectedSegment = ref.watch(posNewSaleSelectedSegmentProvider);
 
     return categoriesAsync.when(
       loading: () => const SizedBox(
-        height: 34,
+        height: 56,
         child: Center(
           child: SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2.5),
           ),
         ),
       ),
       error: (_, __) => const SizedBox.shrink(),
       data: (categories) {
         final allSelected = selectedCategoryId == null;
+        final popularSelected = selectedSegment == 'popular' && allSelected;
+
         return SizedBox(
-          height: 48,
+          height: 56,
           child: Row(
             children: [
               Expanded(
                 child: _QuickFilterButton(
                   icon: Icons.star_rounded,
                   label: 'Popular',
-                  selected: allSelected,
-                  onPressed: () => ref
-                      .read(posNewSaleSelectedCategoryIdProvider.notifier)
-                      .state = null,
+                  selected: popularSelected,
+                  activeColor: TenantAdminColors.posNewSaleAccent,
+                  inactiveColor: TenantAdminColors.posNewSaleAccent,
+                  onPressed: () {
+                    ref.read(posNewSaleSelectedSegmentProvider.notifier).state = 'popular';
+                    ref.read(posNewSaleSelectedCategoryIdProvider.notifier).state = null;
+                  },
                 ),
               ),
-              const SizedBox(width: TenantAdminSpacing.sm),
-              const Expanded(
+              const SizedBox(width: TenantAdminSpacing.md),
+              Expanded(
                 child: _QuickFilterButton(
                   icon: Icons.history_rounded,
                   label: 'Frequently Sold',
-                  tooltip:
-                      'Frequently sold ranking is not available from the catalog API yet.',
+                  selected: selectedSegment == 'frequently-sold' && allSelected,
+                  activeColor: const Color(0xFF2563EB),
+                  inactiveColor: const Color(0xFF2563EB),
+                  onPressed: () {
+                    ref.read(posNewSaleSelectedSegmentProvider.notifier).state = 'frequently-sold';
+                    ref.read(posNewSaleSelectedCategoryIdProvider.notifier).state = null;
+                  },
                 ),
               ),
-              const SizedBox(width: TenantAdminSpacing.sm),
-              const Expanded(
+              const SizedBox(width: TenantAdminSpacing.md),
+              Expanded(
                 child: _QuickFilterButton(
                   icon: Icons.local_offer_outlined,
                   label: 'Offers',
-                  tooltip:
-                      'Offer-based product filtering is not available from the catalog API yet.',
+                  selected: selectedSegment == 'offers' && allSelected,
+                  activeColor: const Color(0xFF16A34A),
+                  inactiveColor: const Color(0xFF16A34A),
+                  onPressed: () {
+                    ref.read(posNewSaleSelectedSegmentProvider.notifier).state = 'offers';
+                    ref.read(posNewSaleSelectedCategoryIdProvider.notifier).state = null;
+                  },
                 ),
               ),
-              const SizedBox(width: TenantAdminSpacing.sm),
+              const SizedBox(width: TenantAdminSpacing.md),
               Expanded(
                 child: _QuickFilterButton(
                   icon: Icons.grid_view_rounded,
                   label: 'More Categories',
                   selected: !allSelected,
+                  activeColor: const Color(0xFF7C3AED),
+                  inactiveColor: const Color(0xFF7C3AED),
                   onPressed: categories.length > 1
                       ? () => _showCategories(context, ref, categories)
                       : null,
@@ -99,6 +117,17 @@ class PosProductCategoryChips extends ConsumerWidget {
             spacing: TenantAdminSpacing.sm,
             runSpacing: TenantAdminSpacing.sm,
             children: [
+              ChoiceChip(
+                label: const Text('All'),
+                selected:
+                    ref.read(posNewSaleSelectedCategoryIdProvider) == null,
+                onSelected: (_) {
+                  ref
+                      .read(posNewSaleSelectedCategoryIdProvider.notifier)
+                      .state = null;
+                  Navigator.of(sheetContext).pop();
+                },
+              ),
               for (final category in categories)
                 ChoiceChip(
                   label: Text(category.name),
@@ -123,44 +152,49 @@ class _QuickFilterButton extends StatelessWidget {
   const _QuickFilterButton({
     required this.icon,
     required this.label,
+    required this.activeColor,
+    required this.inactiveColor,
     this.selected = false,
     this.onPressed,
-    this.tooltip,
   });
 
   final IconData icon;
   final String label;
   final bool selected;
+  final Color activeColor;
+  final Color inactiveColor;
   final VoidCallback? onPressed;
-  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
-    final enabled = onPressed != null;
     return Tooltip(
-      message: tooltip ?? label,
+      message: label,
       child: OutlinedButton.icon(
         onPressed: onPressed,
-        icon: Icon(icon, size: 21),
-        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        icon: Icon(icon, size: 24),
+        label: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
         style: OutlinedButton.styleFrom(
-          backgroundColor:
-              selected ? TenantAdminColors.posNewSaleAccent : Colors.white,
-          foregroundColor: selected
-              ? Colors.white
-              : enabled
-                  ? TenantAdminColors.primary
-                  : TenantAdminColors.mutedText,
-          disabledForegroundColor: TenantAdminColors.mutedText,
+          backgroundColor: selected ? activeColor : Colors.white,
+          foregroundColor: selected ? Colors.white : inactiveColor,
+          disabledForegroundColor: inactiveColor,
           side: BorderSide(
-            color: selected
-                ? TenantAdminColors.posNewSaleAccent
-                : TenantAdminColors.border,
+            color:
+                selected ? activeColor : inactiveColor.withValues(alpha: 0.2),
+            width: 1.5,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(TenantAdminRadius.md),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w800),
+          padding:
+              const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.sm),
         ),
       ),
     );
