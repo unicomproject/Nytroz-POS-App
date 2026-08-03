@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
+import 'package:nytroz_pos/core/network/dio_provider.dart';
 import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
 import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.dart';
 import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
@@ -90,8 +92,7 @@ void main() {
 
       // Verify PosBranding is rendered
       expect(find.byType(PosBranding), findsOneWidget);
-      expect(find.text('OneVerz'), findsOneWidget);
-      expect(find.text('POS'), findsOneWidget);
+      expect(find.text('OneVerz POS', findRichText: true), findsOneWidget);
 
       // Verify dynamic content slot is populated
       expect(find.text('Dashboard Custom Content'), findsOneWidget);
@@ -117,6 +118,7 @@ void main() {
             posHomeDashboardProvider.overrideWith(
               (ref) => _testDashboardState,
             ),
+            appDioProvider.overrideWithValue(Dio()),
           ],
           child: const MaterialApp(
             home: Scaffold(

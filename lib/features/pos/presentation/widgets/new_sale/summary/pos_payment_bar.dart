@@ -44,7 +44,7 @@ class PosPaymentBar extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 360;
+        final isNarrow = constraints.maxWidth < 420;
         final totalTextSize = isNarrow ? 16.0 : 20.0;
         final amountTextSize = isNarrow ? 18.0 : 24.0;
 

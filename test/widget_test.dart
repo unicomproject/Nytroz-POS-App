@@ -30,7 +30,10 @@ import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_shell_n
 import 'package:nytroz_pos/features/pos_shell/presentation/screens/pos_home_screen.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_desktop_top_bar.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_mobile_top_bar.dart';
+import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_top_bar.dart';
 import 'package:nytroz_pos/features/pos/presentation/widgets/new_sale/navigation/pos_cashier_bottom_navigation.dart';
+import 'package:nytroz_pos/features/pos/presentation/widgets/new_sale/pos_new_sale_top_bar_content.dart';
+import 'package:nytroz_pos/features/pos/presentation/widgets/new_sale/product_card/pos_product_card.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/dashboard_action_card.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/sidebar/pos_sidebar.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
@@ -263,7 +266,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(PosNewSaleScreen), findsOneWidget);
-      expect(find.text('Popular Products (13)'), findsOneWidget);
+      expect(find.text('Quick Products'), findsOneWidget);
       expect(find.text('No items added'), findsOneWidget);
       expect(find.byType(PosHomeScreen), findsNothing);
     });
@@ -305,7 +308,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(PosNewSaleScreen), findsOneWidget);
-      expect(find.byType(PosDesktopTopBar), findsOneWidget);
+      expect(find.byType(PosTopBar), findsOneWidget);
+      expect(find.byType(PosNewSaleTopBarContent), findsOneWidget);
       expect(find.text('New Sale'), findsWidgets);
       expect(find.text('Proceed to Payment'), findsOneWidget);
     });
@@ -398,7 +402,12 @@ void main() {
       expect(tester.widget<FilledButton>(paymentButton).onPressed, isNull);
       expect(find.text('No items added'), findsOneWidget);
 
-      await tester.tap(find.bySemanticsLabel('Add product to cart').first);
+      await tester.tap(find.text('More Categories'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Tickets'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(PosProductCard).first);
       await tester.pumpAndSettle();
 
       expect(find.text('No items added'), findsNothing);
@@ -414,13 +423,13 @@ void main() {
       expect(find.text('Qty 2'), findsOneWidget);
       expect(find.text('LKR 3,000.00'), findsNWidgets(3));
 
-      await tester.tap(find.byIcon(Icons.remove_rounded));
+      await tester.tap(find.byIcon(Icons.remove));
       await tester.pumpAndSettle();
 
       expect(find.text('Qty 1'), findsOneWidget);
       expect(find.text('LKR 1,500.00'), findsNWidgets(5));
 
-      await tester.tap(find.byIcon(Icons.delete_outline_rounded));
+      await tester.tap(find.byTooltip('Remove item'));
       await tester.pumpAndSettle();
 
       expect(find.text('No items added'), findsOneWidget);
@@ -461,7 +470,7 @@ void main() {
       await tester.enterText(find.byType(TextField), '');
       await tester.pumpAndSettle();
 
-      expect(find.text('All Products (13)'), findsOneWidget);
+      expect(find.text('Popular Products (13)'), findsOneWidget);
       expect(find.text('General Admission'), findsOneWidget);
       expect(find.text('Snack Combo'), findsOneWidget);
     });
@@ -958,12 +967,12 @@ void main() {
       expect(action.onPressed, isNull);
     });
 
-    testWidgets('phone width POS Home does not show the shared top bar', (
+    testWidgets('phone width POS Home shows the shared mobile top bar', (
       tester,
     ) async {
       await _pumpPosHome(tester, size: const Size(390, 844));
 
-      expect(find.byType(PosMobileTopBar), findsNothing);
+      expect(find.byType(PosMobileTopBar), findsOneWidget);
       expect(find.byType(PosDesktopTopBar), findsNothing);
       expect(find.byType(PosSidebar), findsNothing);
     });

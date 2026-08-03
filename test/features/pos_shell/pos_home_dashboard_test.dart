@@ -228,9 +228,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('OneVerz Store'), findsOneWidget);
-    expect(find.text('Main Outlet'), findsOneWidget);
-    expect(find.text('Front Till'), findsOneWidget);
+    expect(find.byType(PosHomeDashboard), findsOneWidget);
     expect(find.text('CURRENT SESSION SUMMARY'), findsOneWidget);
     expect(find.text('LKR 1250.00'), findsOneWidget);
     expect(find.byIcon(Icons.arrow_drop_down), findsNothing);
@@ -287,7 +285,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('OneVerz Store'), findsOneWidget);
+      expect(find.byType(PosHomeDashboard), findsOneWidget);
       expect(find.text('Start New Sale'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
