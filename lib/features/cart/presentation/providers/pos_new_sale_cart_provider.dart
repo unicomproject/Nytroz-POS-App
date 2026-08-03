@@ -351,11 +351,19 @@ class PosNewSaleProduct {
     required this.price,
     this.variantId,
     this.sku,
+    this.imageUrl,
     this.stockLabel = 'In Stock',
     this.stockStatus = 'InStock',
     this.hasVariants = false,
     this.selectedAttributes = const {},
     this.maxQuantity,
+    this.clientLineId,
+    this.uomId,
+    this.lineNote,
+    this.source = 'direct',
+    this.recommendationParentProductId,
+    this.recommendationRelationshipId,
+    this.authoritativePrice,
   });
 
   final String id;
@@ -365,13 +373,31 @@ class PosNewSaleProduct {
   final String category;
   final int price;
   final String? sku;
+  final String? imageUrl;
   final String stockLabel;
   final String stockStatus;
   final bool hasVariants;
   final Map<String, String> selectedAttributes;
   final int? maxQuantity;
+  final String? clientLineId;
+  final String? uomId;
+  final String? lineNote;
+  final String source;
+  final String? recommendationParentProductId;
+  final String? recommendationRelationshipId;
+  final double? authoritativePrice;
 
-  String get cartLineKey => variantId ?? id;
+  String get normalizedLineNote {
+    final value = lineNote?.trim() ?? '';
+    return value;
+  }
+
+  String get cartLineKey => [
+        variantId ?? id,
+        uomId ?? '',
+        normalizedLineNote,
+        recommendationRelationshipId ?? '',
+      ].join('|');
 
   String get variantSummary => formatVariantSummary(selectedAttributes);
 

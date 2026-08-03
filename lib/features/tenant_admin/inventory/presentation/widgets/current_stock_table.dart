@@ -136,7 +136,8 @@ class CurrentStockMobileCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: TenantAdminSpacing.md),
-          _InfoRow(label: 'SKU / barcode', value: item.sku ?? item.barcode ?? '—'),
+          _InfoRow(
+              label: 'SKU / barcode', value: item.sku ?? item.barcode ?? '—'),
           _InfoRow(label: 'Outlet', value: item.outletName),
           _InfoRow(label: 'Batch', value: item.batchNumber ?? '—'),
           _InfoRow(label: 'Expiry', value: item.expiryDate ?? '—'),
@@ -256,8 +257,9 @@ class InventoryQuantityText extends StatelessWidget {
       formatInventoryQuantity(value),
       textAlign: TextAlign.right,
       style: TextStyle(
-        color:
-            emphasize ? TenantAdminColors.bodyText : TenantAdminColors.mutedText,
+        color: emphasize
+            ? TenantAdminColors.bodyText
+            : TenantAdminColors.mutedText,
         fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
         fontSize: emphasize ? 16 : 13,
       ),

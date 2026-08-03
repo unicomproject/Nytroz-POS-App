@@ -1,0 +1,91 @@
+import 'package:flutter/material.dart';
+
+import '../../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import '../../../../../pos/presentation/widgets/new_sale/navigation/pos_cashier_bottom_navigation.dart';
+import '../../../../../pos_shell/presentation/widgets/common/pos_top_bar.dart';
+import '../../../../../pos_shell/presentation/widgets/common/pos_top_bar_notification_button.dart';
+import '../../../../domain/entities/pos_payment_method_type.dart';
+import '../../../providers/pos_checkout_summary_provider.dart';
+import '../payment_method_style.dart';
+import '../widgets/payment_top_bar_content.dart';
+import '../widgets/right_payment_column.dart';
+import '../widgets/sale_summary/left_payment_summary_column.dart';
+
+class PaymentMethodPage extends StatelessWidget {
+  const PaymentMethodPage(
+      {super.key,
+      required this.summary,
+      required this.cart,
+      required this.allowedMethods,
+      required this.selectedMethod,
+      required this.isNavigating,
+      required this.onSelectMethod,
+      required this.onContinue,
+      this.showChrome = true});
+  final PosCheckoutSummaryViewData summary;
+  final PosNewSaleCartState cart;
+  final Set<PosPaymentMethodType> allowedMethods;
+  final PosPaymentMethodType? selectedMethod;
+  final bool isNavigating;
+  final ValueChanged<PosPaymentMethodType> onSelectMethod;
+  final VoidCallback? onContinue;
+  final bool showChrome;
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+        key: const ValueKey('payment-method-page'),
+        color: PaymentMethodStyle.background,
+        child: Column(children: [
+          if (showChrome)
+            const PosTopBar(
+              content: PaymentTopBarContent(),
+              trailing: PosTopBarNotificationButton(dark: true),
+            ),
+          Expanded(
+            child: LayoutBuilder(builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 900;
+              final padding = constraints.maxWidth >= 1200 ? 14.0 : 10.0;
+              if (wide) {
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(padding, 7, padding, 7),
+                  child: Row(children: [
+                    Expanded(
+                        flex: 49, child: LeftPaymentSummaryColumn(cart: cart)),
+                    const SizedBox(width: PaymentMethodStyle.gap),
+                    Expanded(
+                        flex: 51,
+                        child: RightPaymentColumn(
+                          summary: summary,
+                          allowedMethods: allowedMethods,
+                          selectedMethod: selectedMethod,
+                          isNavigating: isNavigating,
+                          onSelectMethod: onSelectMethod,
+                          onContinue: onContinue,
+                        )),
+                  ]),
+                );
+              }
+              return SingleChildScrollView(
+                padding: EdgeInsets.all(padding),
+                child: Column(children: [
+                  SizedBox(
+                      height: 570, child: LeftPaymentSummaryColumn(cart: cart)),
+                  const SizedBox(height: PaymentMethodStyle.gap),
+                  SizedBox(
+                      height: 590,
+                      child: RightPaymentColumn(
+                        summary: summary,
+                        allowedMethods: allowedMethods,
+                        selectedMethod: selectedMethod,
+                        isNavigating: isNavigating,
+                        onSelectMethod: onSelectMethod,
+                        onContinue: onContinue,
+                      )),
+                ]),
+              );
+            }),
+          ),
+          if (showChrome) const PosCashierBottomNavigation(),
+        ]),
+      );
+}

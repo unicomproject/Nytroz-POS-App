@@ -63,9 +63,8 @@ class TenantUserMapper {
     return TenantUserCreateOptions(
       roles: dto.roles.map(toRoleOption).toList(growable: false),
       outlets: dto.outlets.map(toOutletOption).toList(growable: false),
-      permissionGroups: dto.permissionGroups
-          .map(toPermissionGroup)
-          .toList(growable: false),
+      permissionGroups:
+          dto.permissionGroups.map(toPermissionGroup).toList(growable: false),
     );
   }
 

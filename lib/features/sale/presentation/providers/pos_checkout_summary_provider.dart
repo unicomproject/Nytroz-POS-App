@@ -169,6 +169,16 @@ List<PosCheckoutLineRequest> checkoutLinesFromCart(PosNewSaleCartState cart) {
         (item) => PosCheckoutLineRequest(
           variantId: item.product.variantId ?? '',
           quantity: item.quantity,
+          clientLineId: item.product.clientLineId,
+          uomId: item.product.uomId,
+          lineNote: item.product.normalizedLineNote.isEmpty
+              ? null
+              : item.product.normalizedLineNote,
+          source: item.product.source,
+          recommendationParentProductId:
+              item.product.recommendationParentProductId,
+          recommendationRelationshipId:
+              item.product.recommendationRelationshipId,
         ),
       )
       .toList(growable: false);

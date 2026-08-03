@@ -7,6 +7,7 @@ import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../hardware/receipt_printer/models/printer_exception.dart';
+import '../../../hardware/receipt_printer/non_sale_receipt_print_orchestrator.dart';
 import '../../../hardware/receipt_printer/pos_receipt_printer_service.dart';
 import '../../domain/entities/return_receipt.dart';
 import 'return_flow_reset_coordinator.dart';
@@ -33,6 +34,8 @@ class ReturnSuccessState {
     this.isNavigating = false,
     this.receipt,
     this.auditPendingAfterPrint = false,
+    this.pendingPrintAudit,
+    this.pendingPrintAudits = const [],
   });
 
   final ReturnSuccessLoadStatus loadStatus;
@@ -42,6 +45,8 @@ class ReturnSuccessState {
   final bool isNavigating;
   final ReturnReceipt? receipt;
   final bool auditPendingAfterPrint;
+  final Map<String, dynamic>? pendingPrintAudit;
+  final List<Map<String, dynamic>> pendingPrintAudits;
 
   ReturnSuccessState copyWith({
     ReturnSuccessLoadStatus? loadStatus,
@@ -51,14 +56,16 @@ class ReturnSuccessState {
     bool? isNavigating,
     ReturnReceipt? receipt,
     bool? auditPendingAfterPrint,
+    Map<String, dynamic>? pendingPrintAudit,
+    List<Map<String, dynamic>>? pendingPrintAudits,
+    bool clearPendingPrintAudit = false,
     bool clearLoadMessage = false,
     bool clearPrintMessage = false,
     bool clearReceipt = false,
   }) {
     return ReturnSuccessState(
       loadStatus: loadStatus ?? this.loadStatus,
-      loadMessage:
-          clearLoadMessage ? null : loadMessage ?? this.loadMessage,
+      loadMessage: clearLoadMessage ? null : loadMessage ?? this.loadMessage,
       printStatus: printStatus ?? this.printStatus,
       printMessage:
           clearPrintMessage ? null : printMessage ?? this.printMessage,
@@ -66,6 +73,12 @@ class ReturnSuccessState {
       receipt: clearReceipt ? null : receipt ?? this.receipt,
       auditPendingAfterPrint:
           auditPendingAfterPrint ?? this.auditPendingAfterPrint,
+      pendingPrintAudit: clearPendingPrintAudit
+          ? null
+          : pendingPrintAudit ?? this.pendingPrintAudit,
+      pendingPrintAudits: clearPendingPrintAudit
+          ? const []
+          : pendingPrintAudits ?? this.pendingPrintAudits,
     );
   }
 }
@@ -96,8 +109,7 @@ class ReturnSuccessController extends StateNotifier<ReturnSuccessState> {
     if (resolvedReturnId.isEmpty) {
       state = state.copyWith(
         loadStatus: ReturnSuccessLoadStatus.notFound,
-        loadMessage:
-            'A confirmed return completion identifier is required.',
+        loadMessage: 'A confirmed return completion identifier is required.',
         clearReceipt: true,
       );
       return;
@@ -127,16 +139,16 @@ class ReturnSuccessController extends StateNotifier<ReturnSuccessState> {
       printStatus: ReturnSuccessPrintStatus.idle,
       clearPrintMessage: true,
       auditPendingAfterPrint: false,
+      clearPendingPrintAudit: true,
     );
 
     try {
-      final receipt = await _ref
-          .read(returnsRefundRemoteDatasourceProvider)
-          .getCompletion(
-            deviceId: deviceContext.deviceId,
-            returnId: resolvedReturnId,
-            cancelToken: cancelToken,
-          );
+      final receipt =
+          await _ref.read(returnsRefundRemoteDatasourceProvider).getCompletion(
+                deviceId: deviceContext.deviceId,
+                returnId: resolvedReturnId,
+                cancelToken: cancelToken,
+              );
 
       if (!_isCurrentLoad(sequence, resolvedReturnId)) {
         return;
@@ -220,9 +232,7 @@ class ReturnSuccessController extends StateNotifier<ReturnSuccessState> {
     }
 
     final deviceContext = _ref.read(deviceActivationProvider).deviceContext;
-    if (session == null ||
-        !session.isAuthenticated ||
-        deviceContext == null) {
+    if (session == null || !session.isAuthenticated || deviceContext == null) {
       state = state.copyWith(
         printStatus: ReturnSuccessPrintStatus.failed,
         printMessage: 'Device context is required for printing.',
@@ -230,38 +240,62 @@ class ReturnSuccessController extends StateNotifier<ReturnSuccessState> {
       return;
     }
 
-    final skipPhysical = auditOnly || state.auditPendingAfterPrint;
     _ensureAuthorizationHeader(_ref.read(appDioProvider), session);
     state = state.copyWith(
       printStatus: ReturnSuccessPrintStatus.inProgress,
       clearPrintMessage: true,
     );
 
-    var physicallyPrinted = skipPhysical;
-    try {
-      if (!skipPhysical) {
-        final printer = _ref.read(posReceiptPrinterServiceProvider);
-        await printer.printCompletionReceipt(
-          deviceId: deviceContext.deviceId,
-          receipt: receipt,
-        );
-        physicallyPrinted = true;
-      }
+    if (auditOnly || state.auditPendingAfterPrint) {
+      await _retryPendingAudits(saleId);
+      return;
+    }
 
-      await _ref.read(returnsRefundRemoteDatasourceProvider).recordReceiptPrint(
-            saleId: saleId,
-          );
+    try {
+      final batch = await NonSaleReceiptPrintOrchestrator(
+        printer: _ref.read(posReceiptPrinterServiceProvider),
+        submitAudit: (saleId, audit) => _ref
+            .read(returnsRefundRemoteDatasourceProvider)
+            .recordReceiptPrint(saleId: saleId, audit: audit),
+      ).print(
+        deviceId: deviceContext.deviceId,
+        receipt: receipt,
+        isReprint: false,
+      );
+      final pending = batch.outcomes
+          .map((item) => item.pendingAudit)
+          .whereType<Map<String, dynamic>>()
+          .toList(growable: false);
+      final printedCount = batch.outcomes.where((item) {
+        if (item.status == ReceiptCopyOutcomeStatus.printed) return true;
+        return item.status == ReceiptCopyOutcomeStatus.auditPending &&
+            item.pendingAudit?['status'] == 'success';
+      }).length;
+      final status = batch.hasUnknown
+          ? ReturnSuccessPrintStatus.unknown
+          : batch.hasFailures
+              ? ReturnSuccessPrintStatus.partial
+              : batch.hasAuditPending
+                  ? ReturnSuccessPrintStatus.auditFailed
+                  : ReturnSuccessPrintStatus.succeeded;
+      final message = batch.hasUnknown
+          ? 'A receipt copy has an unknown outcome. Check the printer before any controlled reprint.'
+          : batch.hasFailures
+              ? 'Some receipt copies failed. Copies already printed were not repeated.'
+              : batch.hasAuditPending
+                  ? 'Receipt copies printed, but one or more audits are pending.'
+                  : 'All configured receipt copies printed.';
 
       state = state.copyWith(
-        printStatus: ReturnSuccessPrintStatus.succeeded,
-        printMessage: skipPhysical && auditOnly
-            ? 'Print audit recorded.'
-            : 'Receipt printed.',
+        printStatus: status,
+        printMessage: message,
         receipt: receipt.copyWith(
-          printCount: skipPhysical ? receipt.printCount : receipt.printCount + 1,
-          hasBeenPrinted: true,
+          printCount: receipt.printCount + printedCount,
+          hasBeenPrinted: receipt.hasBeenPrinted || printedCount > 0,
         ),
-        auditPendingAfterPrint: false,
+        auditPendingAfterPrint: pending.isNotEmpty,
+        pendingPrintAudits: pending,
+        clearPendingPrintAudit: pending.isEmpty,
       );
     } on PrinterException catch (error) {
       state = state.copyWith(
@@ -270,17 +304,6 @@ class ReturnSuccessController extends StateNotifier<ReturnSuccessState> {
         auditPendingAfterPrint: false,
       );
     } on DioException catch (error) {
-      if (physicallyPrinted) {
-        state = state.copyWith(
-          printStatus: ReturnSuccessPrintStatus.auditFailed,
-          printMessage:
-              'Receipt printed, but print audit could not be recorded.',
-          auditPendingAfterPrint: true,
-          receipt: receipt.copyWith(hasBeenPrinted: true),
-        );
-        return;
-      }
-
       final status = error.response?.statusCode;
       if (status == 503) {
         state = state.copyWith(
@@ -303,16 +326,6 @@ class ReturnSuccessController extends StateNotifier<ReturnSuccessState> {
             'Unable to print the receipt. Please try again.',
       );
     } catch (_) {
-      if (physicallyPrinted) {
-        state = state.copyWith(
-          printStatus: ReturnSuccessPrintStatus.auditFailed,
-          printMessage:
-              'Receipt printed, but print audit could not be recorded.',
-          auditPendingAfterPrint: true,
-          receipt: receipt.copyWith(hasBeenPrinted: true),
-        );
-        return;
-      }
       state = state.copyWith(
         printStatus: ReturnSuccessPrintStatus.failed,
         printMessage: 'Unable to print the receipt. Please try again.',
@@ -321,6 +334,45 @@ class ReturnSuccessController extends StateNotifier<ReturnSuccessState> {
   }
 
   Future<void> retryAuditOnly() => requestPrint(auditOnly: true);
+
+  Future<void> _retryPendingAudits(String saleId) async {
+    final pending = state.pendingPrintAudits.isNotEmpty
+        ? state.pendingPrintAudits
+        : [
+            if (state.pendingPrintAudit != null) state.pendingPrintAudit!,
+          ];
+    if (pending.isEmpty) {
+      state = state.copyWith(
+        printStatus: ReturnSuccessPrintStatus.failed,
+        printMessage: 'No pending print audit was found.',
+      );
+      return;
+    }
+    final failed = <Map<String, dynamic>>[];
+    for (final audit in pending) {
+      try {
+        await _ref
+            .read(returnsRefundRemoteDatasourceProvider)
+            .recordReceiptPrint(
+          saleId: saleId,
+          audit: {...audit, 'isRetry': true},
+        );
+      } catch (_) {
+        failed.add(audit);
+      }
+    }
+    state = state.copyWith(
+      printStatus: failed.isEmpty
+          ? ReturnSuccessPrintStatus.succeeded
+          : ReturnSuccessPrintStatus.auditFailed,
+      printMessage: failed.isEmpty
+          ? 'All pending print audits were recorded. No receipt was reprinted.'
+          : 'One or more print audits are still pending.',
+      auditPendingAfterPrint: failed.isNotEmpty,
+      pendingPrintAudits: failed,
+      clearPendingPrintAudit: failed.isEmpty,
+    );
+  }
 
   void resetReturnExchangeDraft() {
     _loadCancelToken?.cancel('reset');
@@ -393,8 +445,8 @@ class ReturnSuccessController extends StateNotifier<ReturnSuccessState> {
     }
     return state.copyWith(
       loadStatus: ReturnSuccessLoadStatus.failed,
-      loadMessage: _readApiError(error) ??
-          'Unable to load the completed receipt.',
+      loadMessage:
+          _readApiError(error) ?? 'Unable to load the completed receipt.',
       clearReceipt: true,
     );
   }
@@ -437,7 +489,7 @@ String? _readApiCode(DioException error) {
   return null;
 }
 
-final returnSuccessProvider =
-    StateNotifierProvider.autoDispose<ReturnSuccessController, ReturnSuccessState>(
+final returnSuccessProvider = StateNotifierProvider.autoDispose<
+    ReturnSuccessController, ReturnSuccessState>(
   (ref) => ReturnSuccessController(ref),
 );

@@ -92,7 +92,8 @@ class OutletTillsTab extends ConsumerWidget {
                       )),
                       DataCell(Text(_formatDate(till.lastOpenedAt))),
                       DataCell(Text(_formatDate(till.lastClosedAt))),
-                      DataCell(Text(till.assignedCashierName ?? 'Not Assigned')),
+                      DataCell(
+                          Text(till.assignedCashierName ?? 'Not Assigned')),
                       DataCell(
                         TenantAdminStatusBadge(
                           label: till.deviceStatus,

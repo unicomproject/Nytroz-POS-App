@@ -1,0 +1,362 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
+import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
+import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+
+import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../widgets/new_sale/actions/pos_new_sale_action_bar.dart';
+import '../../../../sale/presentation/widgets/new_sale/pos_barcode_scanner_listener.dart';
+import '../../widgets/new_sale/catalogue/pos_product_category_chips.dart';
+import '../../widgets/new_sale/product_card/pos_product_grid.dart';
+import '../../providers/new_sale/pos_barcode_scan_controller.dart';
+import '../../providers/new_sale/pos_barcode_scan_feedback.dart';
+import '../../providers/new_sale/pos_camera_scanner_provider.dart';
+import '../../../../hardware/barcode_scanner/presentation/providers/barcode_scanner_configuration_provider.dart';
+import '../../../../sale/presentation/widgets/new_sale/pos_camera_barcode_scanner.dart';
+import '../../../../cart/presentation/providers/pos_new_sale_search_coordinator.dart';
+import '../../widgets/new_sale/cart/pos_new_sale_cart_panel.dart';
+
+class PosNewSaleScreen extends ConsumerStatefulWidget {
+  const PosNewSaleScreen({
+    this.onBarcodeCaptured,
+    super.key,
+  });
+
+  final ValueChanged<String>? onBarcodeCaptured;
+
+  @override
+  ConsumerState<PosNewSaleScreen> createState() => _PosNewSaleScreenState();
+}
+
+class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen> {
+  String? _lastRoutePath;
+  int _lastFeedbackEventId = 0;
+  bool _cameraScannerOpening = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final routePath = GoRouterState.of(context).uri.path;
+    if (routePath == _lastRoutePath) {
+      return;
+    }
+
+    final enteredNewSale =
+        routePath == '/pos/new-sale' && _lastRoutePath != '/pos/new-sale';
+    _lastRoutePath = routePath;
+
+    if (enteredNewSale) {
+      _resetSearchAfterRouteEntry();
+    }
+  }
+
+  void _resetSearchAfterRouteEntry() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || GoRouterState.of(context).uri.path != '/pos/new-sale') {
+        return;
+      }
+
+      ref.read(posNewSaleSearchQueryProvider.notifier).state = '';
+      ref.read(posNewSaleSelectedCategoryIdProvider.notifier).state = null;
+      ref.read(posNewSaleSelectedSegmentProvider.notifier).state = 'popular';
+    });
+  }
+
+  Future<void> _openCameraScanner() async {
+    final scannerConfiguration =
+        ref.read(barcodeScannerConfigurationProvider).asData?.value;
+    if (scannerConfiguration == null ||
+        !scannerConfiguration.enabled ||
+        !scannerConfiguration.cameraEnabled ||
+        scannerConfiguration.mode != 'camera') {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Camera scanning is not configured for this POS device.',
+              ),
+            ),
+          );
+      }
+      return;
+    }
+    if (_cameraScannerOpening ||
+        !mounted ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    _cameraScannerOpening = true;
+    try {
+      final result = ref.read(posCameraScannerSupportedProvider)
+          ? await ref.read(posCameraScannerLauncherProvider)(context)
+          : const PosCameraScanResult.unsupported();
+      if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+      final barcode = result.barcode?.trim();
+      if (result.type == PosCameraScanResultType.barcode &&
+          barcode != null &&
+          barcode.isNotEmpty) {
+        ref.read(posNewSaleSearchCoordinatorProvider).clearForScanner();
+        ref.read(posBarcodeScanControllerProvider.notifier).enqueue(barcode);
+        return;
+      }
+      final message = switch (result.type) {
+        PosCameraScanResultType.permissionDenied =>
+          'Camera access is disabled. Enable it in system settings.',
+        PosCameraScanResultType.unavailable =>
+          'No camera is available on this device.',
+        PosCameraScanResultType.failed => 'Unable to start the camera scanner.',
+        PosCameraScanResultType.unsupported =>
+          'Camera scanning is unavailable on this device. Use the connected barcode scanner.',
+        _ => null,
+      };
+      if (message != null) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(message)));
+      }
+    } finally {
+      _cameraScannerOpening = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scannerConfiguration =
+        ref.watch(barcodeScannerConfigurationProvider).asData?.value;
+    ref.watch(posBarcodeScanControllerProvider);
+    ref.listen(
+      posBarcodeScanControllerProvider.select((state) => state.feedbackEvent),
+      (_, event) {
+        if (event == null || event.id <= _lastFeedbackEventId || !mounted) {
+          return;
+        }
+        _lastFeedbackEventId = event.id;
+        if (ModalRoute.of(context)?.isCurrent != true) {
+          return;
+        }
+        final feedback = barcodeFeedbackPresentation(event);
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(
+            content: Text(feedback.message),
+            backgroundColor: feedback.isSuccess
+                ? TenantAdminColors.success
+                : TenantAdminColors.danger,
+          ));
+      },
+    );
+    ref.listen<int>(posCameraScannerRequestProvider, (_, requestId) {
+      if (requestId > 0) {
+        _openCameraScanner();
+      }
+    });
+    final scannerEnabled = (ModalRoute.of(context)?.isCurrent ?? true) &&
+        scannerConfiguration != null &&
+        scannerConfiguration.enabled &&
+        scannerConfiguration.mode == 'usbHid';
+    return PosBarcodeScannerListener(
+      enabled: scannerEnabled,
+      minimumBarcodeLength: scannerConfiguration?.minimumBarcodeLength ?? 4,
+      maximumBarcodeLength: scannerConfiguration?.maximumBarcodeLength ?? 128,
+      maximumInterKeyDelay: Duration(
+        milliseconds: scannerConfiguration?.scanTimeout ?? 120,
+      ),
+      onBarcodeScanned: (barcode) {
+        ref.read(posNewSaleSearchCoordinatorProvider).clearForScanner();
+        widget.onBarcodeCaptured?.call(barcode);
+        ref.read(posBarcodeScanControllerProvider.notifier).enqueue(barcode);
+      },
+      child: ColoredBox(
+        color: TenantAdminColors.posHomeDarkBackground,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final useSideBySide =
+                constraints.maxWidth >= TenantAdminBreakpoints.tablet;
+            final padding = EdgeInsets.fromLTRB(
+              constraints.maxWidth >= TenantAdminBreakpoints.tablet
+                  ? TenantAdminSpacing.md
+                  : TenantAdminSpacing.md,
+              TenantAdminSpacing.md,
+              constraints.maxWidth >= TenantAdminBreakpoints.tablet
+                  ? TenantAdminSpacing.md
+                  : TenantAdminSpacing.md,
+              TenantAdminSpacing.md,
+            );
+
+            if (!useSideBySide) {
+              return SingleChildScrollView(
+                padding: padding,
+                child: SizedBox(
+                  height: constraints.maxHeight < 760 ? 1060 : 1180,
+                  child: const Column(
+                    children: [
+                      Expanded(
+                        child: _ProductPanel(),
+                      ),
+                      SizedBox(height: TenantAdminSpacing.md),
+                      SizedBox(
+                        height: 500,
+                        child: PosNewSaleCartPanel(),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            return Padding(
+              padding: padding,
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: KeyedSubtree(
+                      key: Key('new-sale-products-panel'),
+                      child: _ProductPanel(),
+                    ),
+                  ),
+                  SizedBox(width: TenantAdminSpacing.md),
+                  Expanded(
+                    flex: 2,
+                    child: KeyedSubtree(
+                      key: Key('new-sale-cart-panel'),
+                      child: PosNewSaleCartPanel(),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductPanel extends StatelessWidget {
+  const _ProductPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: TenantAdminColors.surface,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        border: Border.all(color: TenantAdminColors.border),
+        boxShadow: TenantAdminShadows.card,
+      ),
+      child: const Padding(
+        padding: EdgeInsets.all(TenantAdminSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _QuickProductsTitle(),
+            SizedBox(height: TenantAdminSpacing.md),
+            PosProductCategoryChips(),
+            SizedBox(height: TenantAdminSpacing.md),
+            _ProductSectionHeader(),
+            SizedBox(height: TenantAdminSpacing.sm),
+            Expanded(child: PosProductGrid()),
+            SizedBox(height: TenantAdminSpacing.md),
+            PosNewSaleActionBar(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickProductsTitle extends StatelessWidget {
+  const _QuickProductsTitle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          'Quick Products',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: TenantAdminColors.bodyText,
+                fontWeight: FontWeight.w900,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProductSectionHeader extends ConsumerWidget {
+  const _ProductSectionHeader();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final query = ref.watch(posNewSaleSearchQueryProvider).trim();
+    final selectedCategoryId = ref.watch(posNewSaleSelectedCategoryIdProvider);
+    final selectedSegment = ref.watch(posNewSaleSelectedSegmentProvider);
+    final categoriesAsync = ref.watch(posNewSaleCategoriesProvider);
+    final catalogAsync = ref.watch(posNewSaleCatalogProvider);
+    final productCount = catalogAsync.maybeWhen(
+      data: (catalog) => catalog.products.length,
+      orElse: () => 0,
+    );
+    final selectedCategoryName = categoriesAsync.maybeWhen(
+      data: (categories) => categories
+          .firstWhere(
+            (category) => category.id == selectedCategoryId,
+            orElse: () => const PosCatalogCategoryOption(name: 'All'),
+          )
+          .name,
+      orElse: () => 'All',
+    );
+    final hasSearch = query.isNotEmpty;
+    final String segmentPrefix = selectedSegment == 'popular'
+        ? 'Popular '
+        : selectedSegment == 'frequently-sold'
+            ? 'Frequently Sold '
+            : '';
+    final sectionTitle = hasSearch
+        ? 'Search results for "$query"'
+        : selectedCategoryId == null
+            ? '${segmentPrefix}Products ($productCount)'
+            : '$segmentPrefix$selectedCategoryName Products';
+
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            sectionTitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: TenantAdminColors.bodyText,
+                      fontWeight: FontWeight.w900,
+                    ) ??
+                const TextStyle(
+                  color: TenantAdminColors.bodyText,
+                  fontWeight: FontWeight.w900,
+                ),
+          ),
+        ),
+        const SizedBox(width: TenantAdminSpacing.md),
+        Text(
+          'Sort by: Popular',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: TenantAdminColors.mutedText,
+                    fontWeight: FontWeight.w700,
+                  ) ??
+              const TextStyle(
+                color: TenantAdminColors.mutedText,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      ],
+    );
+  }
+}

@@ -21,7 +21,8 @@ final productsSidebarVisibilityProvider =
   );
 });
 
-final productsSidebarManualExpandedProvider = StateProvider<bool?>((ref) => null);
+final productsSidebarManualExpandedProvider =
+    StateProvider<bool?>((ref) => null);
 
 final productsSidebarExpandedProvider = Provider<bool>((ref) {
   final currentPath = ref.watch(tenantAdminCurrentPathProvider);

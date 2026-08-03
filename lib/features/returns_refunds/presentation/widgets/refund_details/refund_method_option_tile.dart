@@ -76,13 +76,11 @@ class RefundMethodOptionTile extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             subtitle,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(
-                                  color: TenantAdminColors.mutedText,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: TenantAdminColors.mutedText,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                           ),
                         ],
                       ],
@@ -113,7 +111,8 @@ class _SelectionIndicator extends StatelessWidget {
         shape: BoxShape.circle,
         color: selected ? TenantAdminColors.primary : Colors.transparent,
         border: Border.all(
-          color: selected ? TenantAdminColors.primary : TenantAdminColors.border,
+          color:
+              selected ? TenantAdminColors.primary : TenantAdminColors.border,
           width: 2,
         ),
       ),

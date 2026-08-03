@@ -71,8 +71,7 @@ class CustomerSummaryCards extends StatelessWidget {
           spacing: gap,
           runSpacing: gap,
           children: [
-            for (final card in cards)
-              SizedBox(width: itemWidth, child: card),
+            for (final card in cards) SizedBox(width: itemWidth, child: card),
           ],
         );
       },

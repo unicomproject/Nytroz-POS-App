@@ -68,8 +68,7 @@ class ProductStockMovementCard extends StatelessWidget {
                           index++)
                         SimpleDonutSegment(
                           value: stockMovement.items[index].percentage,
-                          color:
-                              _segmentColors[index % _segmentColors.length],
+                          color: _segmentColors[index % _segmentColors.length],
                           label: stockMovement.items[index].label,
                         ),
                     ],
@@ -91,7 +90,8 @@ class ProductStockMovementCard extends StatelessWidget {
                               stockMovement.items[index].type,
                             ),
                         onTap: () {
-                          final route = ProductDashboardNavigation.movementRouteFor(
+                          final route =
+                              ProductDashboardNavigation.movementRouteFor(
                             stockMovement.items[index].type,
                           );
                           if (route != null) {

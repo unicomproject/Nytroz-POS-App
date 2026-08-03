@@ -28,8 +28,7 @@ class TenantProductDetailDto {
 
   factory TenantProductDetailDto.fromJson(Map<String, dynamic> json) {
     return TenantProductDetailDto(
-      productId:
-          json['productId']?.toString() ?? json['id']?.toString() ?? '',
+      productId: json['productId']?.toString() ?? json['id']?.toString() ?? '',
       productName:
           json['productName'] as String? ?? json['name'] as String? ?? '',
       sku: json['sku'] as String? ?? '',
@@ -66,8 +65,10 @@ class TenantProductDetailDto {
               Map<String, dynamic>.from(json['batchDetails'] as Map),
             )
           : null,
-      createdAt: _dateTimeValue(json['createdAt']) ?? DateTime.fromMillisecondsSinceEpoch(0),
-      updatedAt: _dateTimeValue(json['updatedAt']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      createdAt: _dateTimeValue(json['createdAt']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      updatedAt: _dateTimeValue(json['updatedAt']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 

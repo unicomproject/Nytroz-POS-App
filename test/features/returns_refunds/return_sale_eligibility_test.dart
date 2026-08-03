@@ -53,7 +53,8 @@ void main() {
             'description': 'Preliminary policy flag only',
             'status': 'REQUIRES_REVIEW',
             'severity': 'WARNING',
-            'reason': 'Manager approval will be required before return completion.',
+            'reason':
+                'Manager approval will be required before return completion.',
             'requiresReview': true,
           },
         ],
@@ -72,7 +73,8 @@ void main() {
       expect(result.hasWarnings, isTrue);
     });
 
-    test('paymentDisplay uses backend maskedCard without fabricating digits', () {
+    test('paymentDisplay uses backend maskedCard without fabricating digits',
+        () {
       final withMask = ReturnSaleEligibility.fromJson({
         'saleId': 'e06a0d4b-8e7a-4f50-a026-da0e6fea6441',
         'invoiceNo': 'RCP-000036',

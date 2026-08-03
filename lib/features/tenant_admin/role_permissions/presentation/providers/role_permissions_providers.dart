@@ -19,7 +19,8 @@ final rolePermissionRemoteDatasourceProvider =
   return RolePermissionRemoteDatasource(ref.watch(appDioProvider));
 });
 
-final rolePermissionRepositoryProvider = Provider<RolePermissionRepository>((ref) {
+final rolePermissionRepositoryProvider =
+    Provider<RolePermissionRepository>((ref) {
   return RolePermissionRepositoryImpl(
     ref.watch(rolePermissionRemoteDatasourceProvider),
   );
@@ -47,13 +48,12 @@ class RolePermissionsData {
   final RolePermissions rolePermissions;
 }
 
-final rolePermissionsDataProvider =
-    FutureProvider.autoDispose.family<RolePermissionsData, String>((ref, roleId) async {
+final rolePermissionsDataProvider = FutureProvider.autoDispose
+    .family<RolePermissionsData, String>((ref, roleId) async {
   ref.watch(authHeaderSyncProvider);
 
   final catalog = await ref.watch(getPermissionCatalogProvider)();
-  final rolePermissions =
-      await ref.watch(getRolePermissionsProvider)(roleId);
+  final rolePermissions = await ref.watch(getRolePermissionsProvider)(roleId);
 
   return RolePermissionsData(
     catalog: catalog,
@@ -121,8 +121,8 @@ class RolePermissionsUiState {
   }
 }
 
-class RolePermissionsUiController extends AutoDisposeFamilyNotifier<
-    RolePermissionsUiState, String> {
+class RolePermissionsUiController
+    extends AutoDisposeFamilyNotifier<RolePermissionsUiState, String> {
   @override
   RolePermissionsUiState build(String roleId) {
     return const RolePermissionsUiState.initial();
@@ -252,5 +252,6 @@ final rolePermissionsCanViewProvider = Provider<bool>((ref) {
 
 final rolePermissionsCanUpdateProvider = Provider<bool>((ref) {
   final access = ref.watch(tenantAdminAccessCheckerProvider).valueOrNull;
-  return access?.can(TenantAdminPermissionCodes.rolesPermissionsUpdate) ?? false;
+  return access?.can(TenantAdminPermissionCodes.rolesPermissionsUpdate) ??
+      false;
 });

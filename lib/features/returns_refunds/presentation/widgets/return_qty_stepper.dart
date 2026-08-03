@@ -32,7 +32,8 @@ class ReturnQtyStepper extends StatelessWidget {
           ),
           Container(
             constraints: const BoxConstraints(minWidth: 36),
-            padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.sm),
+            padding:
+                const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.sm),
             child: Text(
               '$value',
               textAlign: TextAlign.center,

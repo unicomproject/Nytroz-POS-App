@@ -29,6 +29,7 @@ class PosResolvedVariantCartAction {
       category: item.category,
       price: item.unitPrice,
       sku: item.sku,
+      imageUrl: item.imageUrl,
       stockLabel: _stockLabel(item.stockStatus),
       stockStatus: item.stockStatus,
       hasVariants: item.hasVariants,

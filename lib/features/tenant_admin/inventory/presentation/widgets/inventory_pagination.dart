@@ -51,8 +51,7 @@ class InventoryPagination extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           IconButton(
-            onPressed:
-                page < totalPages ? () => onPageChanged(page + 1) : null,
+            onPressed: page < totalPages ? () => onPageChanged(page + 1) : null,
             icon: const Icon(Icons.chevron_right),
           ),
         ],

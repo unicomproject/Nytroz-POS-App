@@ -179,6 +179,13 @@ const tenantAdminRouteDefinitions = [
     permissionCode: 'tenant.product.import',
   ),
   TenantAdminRouteDefinition(
+    path: '/tenant-admin/products/popular',
+    menuKey: 'products',
+    title: 'Popular Products',
+    featureCode: 'catalog.product',
+    permissionCode: 'catalog.collections.view',
+  ),
+  TenantAdminRouteDefinition(
     path: '/tenant-admin/products/:id',
     menuKey: 'products',
     title: 'Product Details',

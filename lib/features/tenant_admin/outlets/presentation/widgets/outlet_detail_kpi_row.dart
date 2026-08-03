@@ -69,7 +69,8 @@ class OutletDetailKpiCardData {
 
 String formatCurrency(num amount) {
   final value = amount is int ? amount.toDouble() : amount as double;
-  final formatted = value.toStringAsFixed(value == value.roundToDouble() ? 0 : 2);
+  final formatted =
+      value.toStringAsFixed(value == value.roundToDouble() ? 0 : 2);
   return 'Rs $formatted';
 }
 

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../../returns_refunds/domain/entities/return_receipt.dart';
+import '../models/completed_sale_receipt.dart';
 import '../models/pos_device_printer_config.dart';
 
 /// Formats authoritative Completion GET values into ESC/POS bytes.
@@ -15,6 +16,9 @@ class EscPosReceiptGenerator {
   static final List<int> _boldOff = [0x1B, 0x45, 0x00];
   static final List<int> _cut = [0x1D, 0x56, 0x00];
   static final List<int> _feed = [0x0A];
+  static final List<int> _barcodeHriBelow = [0x1D, 0x48, 0x02];
+  static final List<int> _barcodeHeight = [0x1D, 0x68, 0x50];
+  static final List<int> _barcodeWidth = [0x1D, 0x77, 0x02];
 
   List<int> generate({
     required ReturnReceipt receipt,
@@ -22,13 +26,17 @@ class EscPosReceiptGenerator {
   }) {
     final width = config.paperWidth == PrinterPaperWidth.mm58 ? 32 : 48;
     final out = <int>[..._init, ..._alignCenter, ..._boldOn];
-    _writeLine(out, receipt.outletName?.trim().isNotEmpty == true
-        ? receipt.outletName!.trim()
-        : 'Store');
+    _writeLine(
+        out,
+        receipt.outletName?.trim().isNotEmpty == true
+            ? receipt.outletName!.trim()
+            : 'Store');
     out.addAll(_boldOff);
-    _writeLine(out, receipt.receiptType?.trim().isNotEmpty == true
-        ? receipt.receiptType!.trim()
-        : (receipt.isExchange ? 'EXCHANGE' : 'REFUND'));
+    _writeLine(
+        out,
+        receipt.receiptType?.trim().isNotEmpty == true
+            ? receipt.receiptType!.trim()
+            : (receipt.isExchange ? 'EXCHANGE' : 'REFUND'));
     out.addAll(_alignLeft);
     _writeLine(out, _divider(width));
     _writeLine(out, 'Receipt: ${receipt.receiptNumber}');
@@ -47,8 +55,7 @@ class EscPosReceiptGenerator {
     if (receipt.completedAt != null) {
       _writeLine(out, 'Completed: ${receipt.completedAt}');
     }
-    final cashier =
-        (receipt.processedByName ?? receipt.cashierName).trim();
+    final cashier = (receipt.processedByName ?? receipt.cashierName).trim();
     if (cashier.isNotEmpty) {
       _writeLine(out, 'Cashier: $cashier');
     }
@@ -268,12 +275,102 @@ class EscPosReceiptGenerator {
     out.addAll(_feed);
     out.addAll(_alignCenter);
     _writeLine(out, 'Thank you');
+    _finishReceipt(out, config);
+    return out;
+  }
+
+  List<int> generateCompletedSale({
+    required CompletedSaleReceipt receipt,
+    required PosDevicePrinterConfig config,
+  }) {
+    final width = config.paperWidth == PrinterPaperWidth.mm58 ? 32 : 48;
+    final out = <int>[..._init, ..._alignCenter, ..._boldOn];
+    _writeLine(out, receipt.merchantName);
+    out.addAll(_boldOff);
+    if (receipt.outletName.isNotEmpty) _writeLine(out, receipt.outletName);
+    _writeLine(out, 'SALE RECEIPT');
+    out.addAll(_alignLeft);
+    _writeLine(out, _divider(width));
+    _writeLine(out, 'Receipt: ${receipt.receiptNumber}');
+    _writeLine(out, 'Completed: ${receipt.completedAt.toLocal()}');
+    if (receipt.cashierName.isNotEmpty) {
+      _writeLine(out, 'Cashier: ${receipt.cashierName}');
+    }
+    if (receipt.tillName.isNotEmpty) {
+      _writeLine(out, 'Till: ${receipt.tillName}');
+    }
+    _writeLine(out, _divider(width));
+    for (final item in receipt.items) {
+      _writeWrapped(out, item.name, width);
+      if (item.variantOrSku?.trim().isNotEmpty == true) {
+        _writeWrapped(out, '  ${item.variantOrSku!.trim()}', width);
+      }
+      _writeColumns(
+        out,
+        '${item.quantity} x ${_money(receipt.currency, item.unitPrice.toDouble())}',
+        _money(receipt.currency, item.lineTotal.toDouble()),
+        width,
+      );
+    }
+    _writeLine(out, _divider(width));
+    _writeColumns(out, 'Subtotal',
+        _money(receipt.currency, receipt.subtotal.toDouble()), width);
+    _writeColumns(out, 'Discount',
+        _money(receipt.currency, receipt.discountTotal.toDouble()), width);
+    _writeColumns(out, 'Tax',
+        _money(receipt.currency, receipt.taxTotal.toDouble()), width);
+    out.addAll(_boldOn);
+    _writeColumns(out, 'TOTAL',
+        _money(receipt.currency, receipt.total.toDouble()), width);
+    out.addAll(_boldOff);
+    _writeLine(out, 'Payment: ${receipt.paymentSummary}');
+    _writeColumns(out, 'Tendered',
+        _money(receipt.currency, receipt.amountTendered.toDouble()), width);
+    _writeColumns(out, 'Change',
+        _money(receipt.currency, receipt.change.toDouble()), width);
+    _writeCode39Barcode(out, receipt.barcodeValue);
+    for (final line in receipt.footerLines.where((line) => line.isNotEmpty)) {
+      out.addAll(_alignCenter);
+      _writeWrapped(out, line, width);
+      out.addAll(_alignLeft);
+    }
+    _finishReceipt(out, config);
+    return out;
+  }
+
+  void _writeCode39Barcode(List<int> out, String value) {
+    final normalized = _normalizeCode39(value);
+    if (normalized.isEmpty) return;
+
+    out.addAll(_alignCenter);
+    out.addAll(_barcodeHriBelow);
+    out.addAll(_barcodeHeight);
+    out.addAll(_barcodeWidth);
+    out.addAll([0x1D, 0x6B, 0x04]);
+    out.addAll(latin1.encode(normalized));
+    out.add(0x00);
     out.addAll(_feed);
-    out.addAll(_feed);
+    out.addAll(_alignLeft);
+  }
+
+  String _normalizeCode39(String value) {
+    const supported = r'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%';
+    return value
+        .trim()
+        .toUpperCase()
+        .split('')
+        .where(supported.contains)
+        .join();
+  }
+
+  void _finishReceipt(List<int> out, PosDevicePrinterConfig config) {
+    final feedLines = config.feedLinesBeforeCut.clamp(0, 20);
+    if (feedLines > 0) {
+      out.addAll([0x1B, 0x64, feedLines]);
+    }
     if (config.autoCutEnabled) {
       out.addAll(_cut);
     }
-    return out;
   }
 
   void _writeLine(List<int> out, String text) {

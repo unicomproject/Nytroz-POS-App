@@ -18,39 +18,35 @@ class PosOperationalContextCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (value.trim().isEmpty) return const SizedBox.shrink();
     return Container(
-      constraints: const BoxConstraints(minHeight: 56),
-      padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.lg),
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md),
       decoration: BoxDecoration(
-        color: TenantAdminColors.posHomeDarkSurface,
-        border: Border.all(color: TenantAdminColors.posHomeDarkBorder),
+        color: Colors.black,
+        border: Border.all(
+          color: const Color(0xFF2E3138),
+          width: 1,
+        ),
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 22, color: TenantAdminColors.surface),
-          const SizedBox(width: TenantAdminSpacing.md),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: TenantAdminColors.offline,
-                      ),
-                ),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: TenantAdminColors.surface,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-              ],
+          Icon(
+            icon,
+            size: 20,
+            color: const Color(0xFF94A3B8),
+          ),
+          const SizedBox(width: TenantAdminSpacing.sm),
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
             ),
           ),
         ],

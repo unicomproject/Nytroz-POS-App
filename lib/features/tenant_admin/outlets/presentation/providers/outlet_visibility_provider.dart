@@ -61,7 +61,8 @@ List<Outlet> _filterAndSortItems(
           )
           .toList();
 
-  int compareText(String a, String b) => a.toLowerCase().compareTo(b.toLowerCase());
+  int compareText(String a, String b) =>
+      a.toLowerCase().compareTo(b.toLowerCase());
 
   filtered.sort((a, b) {
     final comparison = switch (sortBy) {

@@ -23,12 +23,14 @@ class PosCustomerPage {
     final items = rawItems is List
         ? rawItems
             .whereType<Map>()
-            .map((item) => PosCustomer.fromJson(Map<String, dynamic>.from(item)))
+            .map(
+                (item) => PosCustomer.fromJson(Map<String, dynamic>.from(item)))
             .toList(growable: false)
         : const <PosCustomer>[];
 
     final page = _intValue(json['page'] ?? json['Page'], fallback: 1);
-    final pageSize = _intValue(json['pageSize'] ?? json['PageSize'], fallback: 20);
+    final pageSize =
+        _intValue(json['pageSize'] ?? json['PageSize'], fallback: 20);
     final totalCount = _intValue(
       json['totalCount'] ?? json['TotalCount'],
       fallback: items.length,
@@ -82,7 +84,8 @@ class PosCustomerOrderPage {
   bool get hasNext => totalPages > 0 && page < totalPages;
 
   factory PosCustomerOrderPage.fromJson(Map<String, dynamic> json) {
-    final rawItems = json['items'] ?? json['Items'] ?? json['data'] ?? json['Data'];
+    final rawItems =
+        json['items'] ?? json['Items'] ?? json['data'] ?? json['Data'];
     final items = rawItems is List
         ? rawItems
             .whereType<Map>()
@@ -91,9 +94,11 @@ class PosCustomerOrderPage {
             .toList(growable: false)
         : const <PosCustomerOrder>[];
 
-    final page = PosCustomerPage._intValue(json['page'] ?? json['Page'], fallback: 1);
-    final pageSize =
-        PosCustomerPage._intValue(json['pageSize'] ?? json['PageSize'], fallback: 20);
+    final page =
+        PosCustomerPage._intValue(json['page'] ?? json['Page'], fallback: 1);
+    final pageSize = PosCustomerPage._intValue(
+        json['pageSize'] ?? json['PageSize'],
+        fallback: 20);
     final totalCount = PosCustomerPage._intValue(
       json['totalCount'] ?? json['TotalCount'],
       fallback: items.length,

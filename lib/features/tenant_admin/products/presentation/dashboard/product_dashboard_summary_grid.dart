@@ -152,7 +152,8 @@ class ProductDashboardSummaryGrid extends StatelessWidget {
     return _SummaryCardConfig(
       metricKey: key,
       title: title,
-      value: formatProductDashboardMetricValue(metric, currencyCode: currencyCode),
+      value:
+          formatProductDashboardMetricValue(metric, currencyCode: currencyCode),
       trend: ProductDashboardSummaryCardTrend(
         label: trendDisplay.label,
         icon: trendDisplay.icon,

@@ -32,6 +32,7 @@ class TenantAdminColors {
   static const posHomeDarkBackground = Color(0xFF030303);
   static const posHomeDarkSurface = Color(0xFF101010);
   static const posHomeDarkBorder = Color(0xFF555555);
+  static const posHomeAccentOrange = Color(0xFFFF6A00);
   static const posHomeOrangeStart = Color(0xFFFFC400);
   static const posHomeOrangeEnd = Color(0xFFFF6A00);
   static const posHomeTealStart = Color(0xFF13DCC7);

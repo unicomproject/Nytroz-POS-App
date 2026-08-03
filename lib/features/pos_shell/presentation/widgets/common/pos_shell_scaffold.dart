@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
-import 'pos_cashier_bottom_navigation.dart';
+import '../../../../pos/presentation/widgets/new_sale/navigation/pos_cashier_bottom_navigation.dart';
 import 'pos_desktop_top_bar.dart';
 import 'pos_mobile_top_bar.dart';
+import 'pos_top_bar.dart';
 import '../sidebar/pos_sidebar.dart';
+import '../home/pos_dashboard_top_bar_content.dart';
+import 'package:nytroz_pos/features/pos/presentation/widgets/new_sale/pos_new_sale_top_bar_content.dart';
 
 const double _posShellMobileBreakpoint = 900;
 
@@ -18,6 +21,7 @@ class PosShellScaffold extends StatelessWidget {
     this.showSidebar = true,
     this.showBottomNavigation = false,
     this.isNewSale = false,
+    this.isDashboard = false,
   });
 
   final String title;
@@ -28,6 +32,7 @@ class PosShellScaffold extends StatelessWidget {
   final bool showSidebar;
   final bool showBottomNavigation;
   final bool isNewSale;
+  final bool isDashboard;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +58,7 @@ class PosShellScaffold extends StatelessWidget {
                       showTopBarSearch: showTopBarSearch,
                       showBottomNavigation: showBottomNavigation,
                       isNewSale: isNewSale,
+                      isDashboard: isDashboard,
                       child: child,
                     ),
                   ),
@@ -71,6 +77,7 @@ class PosShellScaffold extends StatelessWidget {
             showTopBarSearch: showTopBarSearch,
             showBottomNavigation: showBottomNavigation,
             isNewSale: isNewSale,
+            isDashboard: isDashboard,
             applyTopSafeArea: !showTopBar,
             child: child,
           ),
@@ -88,6 +95,7 @@ class _PosShellContent extends StatelessWidget {
     required this.showTopBarSearch,
     required this.showBottomNavigation,
     required this.isNewSale,
+    required this.isDashboard,
     required this.child,
     this.applyTopSafeArea = false,
   });
@@ -98,6 +106,7 @@ class _PosShellContent extends StatelessWidget {
   final bool showTopBarSearch;
   final bool showBottomNavigation;
   final bool isNewSale;
+  final bool isDashboard;
   final Widget child;
   final bool applyTopSafeArea;
 
@@ -106,12 +115,20 @@ class _PosShellContent extends StatelessWidget {
     return Column(
       children: [
         if (showTopBar)
-          PosDesktopTopBar(
-            title: title,
-            subtitle: subtitle,
-            showSearch: showTopBarSearch,
-            isNewSale: isNewSale,
-          ),
+          isNewSale
+              ? const PosTopBar(
+                  content: PosNewSaleTopBarContent(),
+                )
+              : isDashboard
+                  ? const PosTopBar(
+                      content: PosDashboardTopBarContent(),
+                    )
+                  : PosDesktopTopBar(
+                      title: title,
+                      subtitle: subtitle,
+                      showSearch: showTopBarSearch,
+                      isNewSale: isNewSale,
+                    ),
         Expanded(
           child: SafeArea(
             top: applyTopSafeArea,

@@ -146,10 +146,14 @@ class _DrawerFooter extends StatelessWidget {
             ),
             const SizedBox(height: 8),
           ],
-          OutlinedButton.icon(
-            onPressed: onSignOut,
-            icon: const Icon(Icons.logout),
-            label: const Text('Sign out'),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.white70),
+            title: const Text(
+              'Sign out',
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            ),
+            onTap: onSignOut,
           ),
         ],
       ),

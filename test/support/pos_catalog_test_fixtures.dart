@@ -25,10 +25,30 @@ const testVariableProductDetail = PosCatalogProductDetail(
     PosCatalogVariantGroup(
       name: 'Size',
       options: ['Small', 'Medium'],
+      optionId: 'option-size',
+      values: [
+        PosCatalogOptionValue(
+            optionValueId: 'size-small', code: 'S', displayName: 'Small'),
+        PosCatalogOptionValue(
+            optionValueId: 'size-medium', code: 'M', displayName: 'Medium'),
+      ],
     ),
     PosCatalogVariantGroup(
       name: 'Color',
       options: ['Blue', 'Red'],
+      optionId: 'option-color',
+      values: [
+        PosCatalogOptionValue(
+            optionValueId: 'color-blue',
+            code: 'BLU',
+            displayName: 'Blue',
+            colorHex: '#2563EB'),
+        PosCatalogOptionValue(
+            optionValueId: 'color-red',
+            code: 'RED',
+            displayName: 'Red',
+            colorHex: '#DC2626'),
+      ],
     ),
   ],
   variants: [
@@ -39,6 +59,10 @@ const testVariableProductDetail = PosCatalogProductDetail(
       stockStatus: 'InStock',
       stockQty: 20,
       attributes: {'Size': 'Small', 'Color': 'Blue'},
+      selectedOptionValueIds: ['size-small', 'color-blue'],
+      salesUomId: 'uom-each',
+      authoritativePrice: 10000,
+      currency: 'LKR',
     ),
     PosCatalogVariant(
       variantId: 'variant-medium-blue',
@@ -47,6 +71,10 @@ const testVariableProductDetail = PosCatalogProductDetail(
       stockStatus: 'InStock',
       stockQty: 15,
       attributes: {'Size': 'Medium', 'Color': 'Blue'},
+      selectedOptionValueIds: ['size-medium', 'color-blue'],
+      salesUomId: 'uom-each',
+      authoritativePrice: 12000,
+      currency: 'LKR',
     ),
     PosCatalogVariant(
       variantId: 'variant-small-red',
@@ -55,6 +83,10 @@ const testVariableProductDetail = PosCatalogProductDetail(
       stockStatus: 'OutOfStock',
       stockQty: 0,
       attributes: {'Size': 'Small', 'Color': 'Red'},
+      selectedOptionValueIds: ['size-small', 'color-red'],
+      salesUomId: 'uom-each',
+      authoritativePrice: 10000,
+      currency: 'LKR',
     ),
   ],
 );

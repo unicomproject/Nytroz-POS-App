@@ -215,7 +215,8 @@ void main() {
     test('search requires module view permission', () {
       expect(
         ReturnsRouteGuard.canAccessPath(
-          _session([PosPermissionCodes.viewHome, PosPermissionCodes.viewReturns]),
+          _session(
+              [PosPermissionCodes.viewHome, PosPermissionCodes.viewReturns]),
           '/pos/returns-refunds',
         ),
         isTrue,

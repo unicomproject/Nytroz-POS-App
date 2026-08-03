@@ -11,10 +11,12 @@ class PosPaymentPlaceholderScreen extends ConsumerWidget {
     super.key,
     required this.title,
     required this.subtitle,
+    this.unavailableMessage,
   });
 
   final String title;
   final String subtitle;
+  final String? unavailableMessage;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,7 +44,8 @@ class PosPaymentPlaceholderScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: TenantAdminTextStyles.pageTitle(context)),
+                    Text(title,
+                        style: TenantAdminTextStyles.pageTitle(context)),
                     const SizedBox(height: TenantAdminSpacing.xs),
                     Text(subtitle, style: TenantAdminTextStyles.muted(context)),
                   ],
@@ -69,9 +72,10 @@ class PosPaymentPlaceholderScreen extends ConsumerWidget {
                       totalPayable: summary.totalPayable,
                     ),
                     const SizedBox(height: TenantAdminSpacing.lg),
-                    const _PlaceholderMessage(
-                      message:
+                    _PlaceholderMessage(
+                      message: unavailableMessage ??
                           'This payment method is not implemented yet on this device.',
+                      providerUnavailable: unavailableMessage != null,
                     ),
                   ],
                 ),
@@ -89,9 +93,13 @@ class PosPaymentPlaceholderScreen extends ConsumerWidget {
 }
 
 class _PlaceholderMessage extends StatelessWidget {
-  const _PlaceholderMessage({required this.message});
+  const _PlaceholderMessage({
+    required this.message,
+    this.providerUnavailable = false,
+  });
 
   final String message;
+  final bool providerUnavailable;
 
   @override
   Widget build(BuildContext context) {
@@ -107,14 +115,16 @@ class _PlaceholderMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.construction_outlined,
+            Icon(
+              providerUnavailable
+                  ? Icons.credit_card_off_outlined
+                  : Icons.construction_outlined,
               size: 48,
               color: TenantAdminColors.mutedText,
             ),
             const SizedBox(height: TenantAdminSpacing.md),
             Text(
-              'Coming Soon',
+              providerUnavailable ? 'Card terminal unavailable' : 'Coming Soon',
               style: TenantAdminTextStyles.sectionTitle(context),
             ),
             const SizedBox(height: TenantAdminSpacing.sm),

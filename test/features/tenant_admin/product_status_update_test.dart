@@ -32,8 +32,8 @@ void main() {
     });
 
     test('shows activate action for inactive product', () {
-      final actions =
-          ProductStatusAction.availableForStatus('INACTIVE').map((a) => a.label);
+      final actions = ProductStatusAction.availableForStatus('INACTIVE')
+          .map((a) => a.label);
 
       expect(actions, ['Active']);
     });

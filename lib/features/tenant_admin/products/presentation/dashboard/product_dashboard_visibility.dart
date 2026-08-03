@@ -45,9 +45,11 @@ class ProductDashboardVisibility {
       showTitle: showPage,
       showSubtitle: showPage,
       showDateFilter: showPage && access.canViewProductDashboardDateFilter(),
-      showOutletFilter: showPage && access.canViewProductDashboardOutletFilter(),
+      showOutletFilter:
+          showPage && access.canViewProductDashboardOutletFilter(),
       showSummarySection: summaryMetrics.isNotEmpty,
-      showStockValueCard: showPage && access.canViewProductDashboardStockValue(),
+      showStockValueCard:
+          showPage && access.canViewProductDashboardStockValue(),
       showStockMovementCard:
           showPage && access.canViewProductDashboardStockMovement(),
       visibleSummaryMetrics: summaryMetrics,

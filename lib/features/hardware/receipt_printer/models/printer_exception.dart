@@ -10,8 +10,7 @@ class PrinterException implements Exception {
 
 class PrinterNotConfiguredException extends PrinterException {
   const PrinterNotConfiguredException([
-    String message =
-        'No receipt printer is configured for this POS device.',
+    String message = 'No receipt printer is configured for this POS device.',
   ]) : super('printer_not_configured', message);
 }
 
@@ -20,6 +19,16 @@ class PrinterUnsupportedException extends PrinterException {
     String message =
         'This printer connection type is not supported on this platform.',
   ]) : super('printer_unsupported', message);
+}
+
+class PrinterConfigurationException extends PrinterException {
+  const PrinterConfigurationException(String message)
+      : super('configuration_invalid', message);
+}
+
+class PrinterOutcomeUnknownException extends PrinterException {
+  const PrinterOutcomeUnknownException(String message)
+      : super('partial_or_unknown_output', message);
 }
 
 class PrinterConnectionException extends PrinterException {

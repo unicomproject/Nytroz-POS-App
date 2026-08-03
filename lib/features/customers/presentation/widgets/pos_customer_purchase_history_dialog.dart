@@ -75,7 +75,10 @@ class _PosCustomerPurchaseHistoryDialogState
                         children: [
                           Text(
                             'Purchase History',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
                                   color: TenantAdminColors.bodyText,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -215,11 +218,12 @@ class _PosCustomerPurchaseHistoryDialogState
     });
 
     try {
-      final page = await ref.read(customersProvider.notifier).loadPurchaseHistory(
-            customerId: widget.customer.customerId,
-            page: 1,
-            pageSize: _pageSize,
-          );
+      final page =
+          await ref.read(customersProvider.notifier).loadPurchaseHistory(
+                customerId: widget.customer.customerId,
+                page: 1,
+                pageSize: _pageSize,
+              );
 
       if (!mounted) {
         return;
@@ -271,11 +275,12 @@ class _PosCustomerPurchaseHistoryDialogState
 
     try {
       final nextPage = _page + 1;
-      final page = await ref.read(customersProvider.notifier).loadPurchaseHistory(
-            customerId: widget.customer.customerId,
-            page: nextPage,
-            pageSize: _pageSize,
-          );
+      final page =
+          await ref.read(customersProvider.notifier).loadPurchaseHistory(
+                customerId: widget.customer.customerId,
+                page: nextPage,
+                pageSize: _pageSize,
+              );
 
       if (!mounted || page == null) {
         return;

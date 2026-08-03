@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 
 import '../../../../core/storage/app_secure_storage.dart';
 import '../../domain/entities/auth_session.dart';
+
 class AuthSessionStorage {
   const AuthSessionStorage(this._storage);
 

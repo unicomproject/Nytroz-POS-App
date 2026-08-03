@@ -21,7 +21,9 @@ void main() {
       scope: 'ORDER',
       calculationMethod: 'PERCENTAGE',
       requestedValue: 10,
-      lines: const [PosCheckoutLineRequest(variantId: 'variant-1', quantity: 1)],
+      lines: const [
+        PosCheckoutLineRequest(variantId: 'variant-1', quantity: 1)
+      ],
       idempotencyKey: 'idem-1',
     );
 

@@ -34,7 +34,8 @@ class _PosEditCustomerDialog extends ConsumerStatefulWidget {
       _PosEditCustomerDialogState();
 }
 
-class _PosEditCustomerDialogState extends ConsumerState<_PosEditCustomerDialog> {
+class _PosEditCustomerDialogState
+    extends ConsumerState<_PosEditCustomerDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _fullNameController;
   late final TextEditingController _phoneController;
@@ -86,10 +87,11 @@ class _PosEditCustomerDialogState extends ConsumerState<_PosEditCustomerDialog> 
                       Expanded(
                         child: Text(
                           'Edit Customer',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                color: TenantAdminColors.bodyText,
-                                fontWeight: FontWeight.w900,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: TenantAdminColors.bodyText,
+                                    fontWeight: FontWeight.w900,
+                                  ),
                         ),
                       ),
                       IconButton(
@@ -126,7 +128,8 @@ class _PosEditCustomerDialogState extends ConsumerState<_PosEditCustomerDialog> 
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(labelText: 'Phone number'),
+                    decoration:
+                        const InputDecoration(labelText: 'Phone number'),
                   ),
                   const SizedBox(height: TenantAdminSpacing.md),
                   TextFormField(

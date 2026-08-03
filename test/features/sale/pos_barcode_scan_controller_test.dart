@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/cart/data/datasources/pos_barcode_remote_datasource.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_barcode_lookup_result.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
-import 'package:nytroz_pos/features/sale/presentation/providers/pos_barcode_scan_controller.dart';
+import 'package:nytroz_pos/features/pos/presentation/providers/new_sale/pos_barcode_scan_controller.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_barcode_scanner_listener.dart';
 
 void main() {

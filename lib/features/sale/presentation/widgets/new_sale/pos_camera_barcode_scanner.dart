@@ -66,13 +66,14 @@ class PosCameraBarcodeScannerDialog extends StatefulWidget {
 }
 
 class _PosCameraBarcodeScannerDialogState
-    extends State<PosCameraBarcodeScannerDialog> {
+    extends State<PosCameraBarcodeScannerDialog> with WidgetsBindingObserver {
   late final MobileScannerController _controller;
   final PosCameraDetectionGate _detectionGate = PosCameraDetectionGate();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controller = MobileScannerController(
       facing: CameraFacing.back,
       detectionSpeed: DetectionSpeed.noDuplicates,
@@ -118,8 +119,23 @@ class _PosCameraBarcodeScannerDialogState
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_detectionGate.isLocked) return;
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _controller.start();
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.detached:
+        _controller.stop();
+    }
   }
 
   @override

@@ -13,13 +13,22 @@ import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/post_login_navigation_provider.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
+import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/device_activation/application/usecases/activate_device.dart';
+import 'package:nytroz_pos/features/device_activation/data/datasources/device_context_storage.dart';
+import 'package:nytroz_pos/features/device_activation/domain/entities/pos_device_context.dart';
+import 'package:nytroz_pos/features/device_activation/domain/repositories/device_activation_repository.dart';
+import 'package:nytroz_pos/features/device_activation/presentation/providers/device_activation_provider.dart';
 import 'package:nytroz_pos/features/pos_shell/application/state/pos_home_dashboard_state.dart';
 import 'package:nytroz_pos/features/pos_shell/domain/entities/pos_home_action.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_home_dashboard_provider.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/screens/pos_home_screen.dart';
-import 'package:nytroz_pos/features/sale/presentation/screens/pos_new_sale_screen.dart';
+import 'package:nytroz_pos/features/pos/presentation/screens/new_sale/pos_new_sale_screen.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_product_variant_sheet.dart';
+import 'package:nytroz_pos/features/sale/data/datasources/pos_checkout_remote_datasource.dart';
+import 'package:nytroz_pos/features/sale/domain/entities/pos_checkout_summary.dart';
+import 'package:nytroz_pos/features/sale/presentation/providers/pos_checkout_summary_provider.dart';
 import 'package:nytroz_pos/shared/pos_session/pos_session_bootstrap_provider.dart';
 
 import '../../support/pos_catalog_test_fixtures.dart';
@@ -72,6 +81,19 @@ void main() {
         ),
         findsOneWidget,
       );
+      expect(find.byKey(const Key('recommendation-panel')), findsOneWidget);
+      expect(find.byKey(const Key('compact-quantity-stepper')), findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, 'Cancel'), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_back), findsNothing);
+      expect(find.byIcon(Icons.arrow_forward), findsNothing);
+      expect(find.byType(ChoiceChip), findsNWidgets(4));
+      final addButton = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Add to Cart'),
+      );
+      expect(
+        addButton.style?.backgroundColor?.resolve(<WidgetState>{}),
+        const Color(0xFFFF3B0A),
+      );
       expect(tester.takeException(), isNull);
     });
 
@@ -94,6 +116,26 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('variant selector stacks safely at mobile portrait width', (
+      tester,
+    ) async {
+      await _pumpNewSaleWithVariantCatalog(
+        tester,
+        size: const Size(390, 844),
+        catalog: const PosNewSaleCatalogState(
+          products: [testVariableProductSummary],
+        ),
+      );
+      await _tapProduct(tester, 'Pro Team Jersey');
+
+      expect(find.byType(PosProductVariantSheet), findsOneWidget);
+      expect(find.byKey(const Key('recommendation-panel')), findsOneWidget);
+      final addButton = find.widgetWithText(FilledButton, 'Add to Cart');
+      await tester.ensureVisible(addButton);
+      expect(addButton, findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('selected variant price updates and adds separate cart line', (
       tester,
     ) async {
@@ -112,7 +154,10 @@ void main() {
 
       expect(find.text('LKR 12,000.00'), findsWidgets);
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Add to Cart'));
+      final addButton = find.widgetWithText(FilledButton, 'Add to Cart');
+      await tester.ensureVisible(addButton);
+      expect(tester.widget<FilledButton>(addButton).onPressed, isNotNull);
+      await tester.tap(addButton);
       await tester.pumpAndSettle();
 
       expect(find.text('Qty 1'), findsOneWidget);
@@ -125,6 +170,15 @@ void main() {
       expect(cartItems, hasLength(1));
       expect(cartItems.single.product.variantId, 'variant-medium-blue');
       expect(cartItems.single.product.price, 12000);
+      expect(_lastCheckoutLines, isNotEmpty);
+      expect(
+        _lastCheckoutLines.every(
+          (line) => RegExp(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+          ).hasMatch(line.clientLineId ?? ''),
+        ),
+        isTrue,
+      );
     });
 
     testWidgets('out-of-stock variant cannot be added', (tester) async {
@@ -151,14 +205,93 @@ void main() {
         isNull,
       );
     });
+
+    testWidgets('local cart rejection keeps popup open and reports failure', (
+      tester,
+    ) async {
+      const unavailableDetail = PosCatalogProductDetail(
+        summary: testVariableProductSummary,
+        currency: 'LKR',
+        variantGroups: [
+          PosCatalogVariantGroup(
+            name: 'Size',
+            options: ['Small'],
+            optionId: 'option-size',
+            values: [
+              PosCatalogOptionValue(
+                optionValueId: 'size-small',
+                code: 'S',
+                displayName: 'Small',
+              ),
+            ],
+          ),
+        ],
+        variants: [
+          PosCatalogVariant(
+            variantId: 'variant-unavailable',
+            sku: 'JER-S',
+            price: 10000,
+            stockStatus: 'InStock',
+            stockQty: 1,
+            attributes: {'Size': 'Small'},
+            selectedOptionValueIds: ['size-small'],
+            salesUomId: 'uom-each',
+            authoritativePrice: 10000,
+            currency: 'LKR',
+            isDefault: true,
+          ),
+        ],
+      );
+      await _pumpNewSaleWithVariantCatalog(
+        tester,
+        catalog: const PosNewSaleCatalogState(
+          products: [testVariableProductSummary],
+        ),
+        productDetail: unavailableDetail,
+      );
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(PosNewSaleScreen)),
+      );
+      container.read(posNewSaleCartProvider.notifier).addToCart(
+            const PosNewSaleProduct(
+              id: 'variant-unavailable',
+              productId: testVariableProductId,
+              variantId: 'variant-unavailable',
+              name: 'Pro Team Jersey',
+              category: 'Retail',
+              price: 10000,
+              stockStatus: 'InStock',
+              maxQuantity: 1,
+              uomId: 'uom-each',
+            ),
+          );
+      await _tapProduct(tester, 'Pro Team Jersey');
+
+      final addButton = find.widgetWithText(FilledButton, 'Add to Cart');
+      await tester.ensureVisible(addButton);
+      expect(tester.widget<FilledButton>(addButton).onPressed, isNotNull);
+      await tester.tap(addButton);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PosProductVariantSheet), findsOneWidget);
+      expect(
+        find.text('The requested quantity is no longer available.'),
+        findsOneWidget,
+      );
+      expect(container.read(posNewSaleCartProvider).items, hasLength(1));
+      expect(
+          container.read(posNewSaleCartProvider).itemList.single.quantity, 1);
+    });
   });
 }
 
 Future<void> _pumpNewSaleWithVariantCatalog(
   WidgetTester tester, {
   PosNewSaleCatalogState? catalog,
+  PosCatalogProductDetail productDetail = testVariableProductDetail,
   Size size = const Size(1280, 900),
 }) async {
+  _lastCheckoutLines = const [];
   const permissionCodes = [
     PosPermissionCodes.viewHome,
     PosPermissionCodes.viewNewSale,
@@ -188,6 +321,16 @@ Future<void> _pumpNewSaleWithVariantCatalog(
       overrides: [
         appDioProvider.overrideWithValue(
           Dio(BaseOptions(baseUrl: 'https://test.local')),
+        ),
+        deviceContextStorageProvider.overrideWithValue(_TestDeviceStorage()),
+        activateDeviceProvider.overrideWithValue(
+          ActivateDevice(_TestDeviceRepository()),
+        ),
+        deviceActivationProvider.overrideWith(
+          (ref) => _TestDeviceController(
+            ref.watch(activateDeviceProvider),
+            ref.watch(deviceContextStorageProvider),
+          ),
         ),
         authSessionStorageProvider.overrideWithValue(
           _VariantFlowAuthSessionStorage(testSession),
@@ -289,10 +432,13 @@ Future<void> _pumpNewSaleWithVariantCatalog(
         }),
         posProductDetailProvider.overrideWith((ref, productId) async {
           if (productId == testVariableProductId) {
-            return testVariableProductDetail;
+            return productDetail;
           }
           throw StateError('Unexpected product detail request: $productId');
         }),
+        posCheckoutRemoteDatasourceProvider.overrideWithValue(
+          _SuccessfulCheckoutDatasource(),
+        ),
       ],
       child: const NytrozPosApp(),
     ),
@@ -302,6 +448,73 @@ Future<void> _pumpNewSaleWithVariantCatalog(
   final context = tester.element(find.byType(PosHomeScreen));
   context.go('/pos/new-sale');
   await tester.pumpAndSettle();
+}
+
+class _SuccessfulCheckoutDatasource extends PosCheckoutRemoteDatasource {
+  _SuccessfulCheckoutDatasource() : super(Dio());
+
+  @override
+  Future<PosCheckoutSummaryPayload> getCheckoutSummary({
+    required String deviceId,
+    required List<PosCheckoutLineRequest> lines,
+    String saleType = 'NewSale',
+    String? customerId,
+    String? discountApplicationId,
+  }) async {
+    _lastCheckoutLines = List.unmodifiable(lines);
+    return PosCheckoutSummaryPayload.fromJson(const {});
+  }
+}
+
+List<PosCheckoutLineRequest> _lastCheckoutLines = const [];
+
+final _testDeviceContext = PosDeviceContext(
+  deviceId: '00000000-0000-0000-0000-000000000001',
+  deviceCode: 'DEV-001',
+  deviceName: 'Test POS',
+  deviceType: 'fixed_pos_tablet',
+  platform: 'test',
+  deviceFingerprint: 'variant-popup-test-device',
+  isTrusted: true,
+  tenantId: 'tenant-1',
+  outletId: 'outlet-1',
+  outletName: 'Test Outlet',
+  tillId: 'till-1',
+  tillCode: 'TILL-1',
+  tillName: 'Test Till',
+  pairedAt: DateTime.utc(2026, 1, 1),
+);
+
+class _TestDeviceController extends DeviceActivationController {
+  _TestDeviceController(super.activateDevice, super.storage) : super() {
+    state = DeviceActivationState(deviceContext: _testDeviceContext);
+  }
+}
+
+class _TestDeviceRepository implements DeviceActivationRepository {
+  @override
+  Future<PosDeviceContext> activateDevice(DeviceActivationForm form) async =>
+      _testDeviceContext;
+
+  @override
+  Future<PosDeviceContext?> getCurrentDevice(DeviceActivationForm form) async =>
+      _testDeviceContext;
+}
+
+class _TestDeviceStorage extends DeviceContextStorage {
+  _TestDeviceStorage() : super(const AppSecureStorage(FlutterSecureStorage()));
+  @override
+  Future<PosDeviceContext?> read() async => _testDeviceContext;
+  @override
+  Future<String> readOrCreateDeviceFingerprint() async =>
+      _testDeviceContext.deviceFingerprint;
+  @override
+  Future<List<String>> readDeviceFingerprintCandidates() async =>
+      [_testDeviceContext.deviceFingerprint];
+  @override
+  Future<void> save(PosDeviceContext context) async {}
+  @override
+  Future<void> clear() async {}
 }
 
 class _VariantFlowAuthSessionStorage extends AuthSessionStorage {

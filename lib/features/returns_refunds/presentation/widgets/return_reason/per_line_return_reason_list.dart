@@ -81,7 +81,8 @@ class _PerLineReasonCardState extends State<_PerLineReasonCard> {
   @override
   void initState() {
     super.initState();
-    _notesController = TextEditingController(text: widget.selection?.notes ?? '');
+    _notesController =
+        TextEditingController(text: widget.selection?.notes ?? '');
   }
 
   @override

@@ -66,7 +66,11 @@ class InventorySummarySection extends StatelessWidget {
       ),
     ];
 
-    final crossAxisCount = compact ? 2 : cards.length <= 3 ? cards.length : 3;
+    final crossAxisCount = compact
+        ? 2
+        : cards.length <= 3
+            ? cards.length
+            : 3;
 
     return GridView.builder(
       shrinkWrap: true,

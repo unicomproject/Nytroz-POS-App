@@ -241,7 +241,8 @@ class _FakeDeviceActivationRepository implements DeviceActivationRepository {
 }
 
 class _TestDeviceContextStorage extends DeviceContextStorage {
-  _TestDeviceContextStorage() : super(const AppSecureStorage(FlutterSecureStorage()));
+  _TestDeviceContextStorage()
+      : super(const AppSecureStorage(FlutterSecureStorage()));
 
   @override
   Future<PosDeviceContext?> read() async => _deviceContext;

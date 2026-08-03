@@ -70,8 +70,9 @@ class ReturnExchangeFlowState {
       preview: clearPreview ? null : preview ?? this.preview,
       savedReplacement:
           clearReplacement ? null : savedReplacement ?? this.savedReplacement,
-      replacementPersisted:
-          clearReplacement ? false : replacementPersisted ?? this.replacementPersisted,
+      replacementPersisted: clearReplacement
+          ? false
+          : replacementPersisted ?? this.replacementPersisted,
       isLoadingPreview: isLoadingPreview ?? this.isLoadingPreview,
       isSavingReplacement: isSavingReplacement ?? this.isSavingReplacement,
       isLoadingSavedReplacement:
@@ -83,8 +84,10 @@ class ReturnExchangeFlowState {
   }
 }
 
-class ReturnExchangeFlowController extends StateNotifier<ReturnExchangeFlowState> {
-  ReturnExchangeFlowController(this._ref) : super(const ReturnExchangeFlowState()) {
+class ReturnExchangeFlowController
+    extends StateNotifier<ReturnExchangeFlowState> {
+  ReturnExchangeFlowController(this._ref)
+      : super(const ReturnExchangeFlowState()) {
     _ref.onDispose(() {
       _disposed = true;
       _requestToken?.cancel('Exchange provider disposed.');
@@ -128,10 +131,12 @@ class ReturnExchangeFlowController extends StateNotifier<ReturnExchangeFlowState
       return false;
     }
 
-    final saleId = _ref.read(returnFlowProvider).selectedSale?.saleId.trim() ?? '';
+    final saleId =
+        _ref.read(returnFlowProvider).selectedSale?.saleId.trim() ?? '';
     if (saleId.isEmpty) {
       state = state.copyWith(
-        errorMessage: 'Complete earlier return steps before selecting a replacement.',
+        errorMessage:
+            'Complete earlier return steps before selecting a replacement.',
       );
       return false;
     }
@@ -149,7 +154,8 @@ class ReturnExchangeFlowController extends StateNotifier<ReturnExchangeFlowState
     final deviceContext = _ref.read(deviceActivationProvider).deviceContext;
     if (session == null || !session.isAuthenticated || deviceContext == null) {
       state = state.copyWith(
-        errorMessage: 'Device context is required to save the replacement item.',
+        errorMessage:
+            'Device context is required to save the replacement item.',
       );
       return false;
     }
@@ -210,7 +216,8 @@ class ReturnExchangeFlowController extends StateNotifier<ReturnExchangeFlowState
           isSavingReplacement: false,
           isForbidden: true,
           replacementPersisted: false,
-          errorMessage: 'You do not have permission to save the replacement item.',
+          errorMessage:
+              'You do not have permission to save the replacement item.',
         );
         return false;
       }
@@ -228,7 +235,9 @@ class ReturnExchangeFlowController extends StateNotifier<ReturnExchangeFlowState
           return false;
         }
         if (code == 'pos_returns.inspection_draft_conflict') {
-          await _ref.read(returnResolutionProvider.notifier).loadSavedResolution();
+          await _ref
+              .read(returnResolutionProvider.notifier)
+              .loadSavedResolution();
           await _loadSavedReplacement();
           state = state.copyWith(
             isSavingReplacement: false,
@@ -288,7 +297,8 @@ class ReturnExchangeFlowController extends StateNotifier<ReturnExchangeFlowState
   Future<bool> refreshPreview() => _loadPreview();
 
   Future<void> _loadSavedReplacement() async {
-    final saleId = _ref.read(returnFlowProvider).selectedSale?.saleId.trim() ?? '';
+    final saleId =
+        _ref.read(returnFlowProvider).selectedSale?.saleId.trim() ?? '';
     if (saleId.isEmpty) {
       return;
     }
@@ -492,8 +502,11 @@ class ReturnExchangeFlowController extends StateNotifier<ReturnExchangeFlowState
 
   void _alignSettlementToDirection(String differenceDirection) {
     final mapped = settlementCodeForExchangeDirection(differenceDirection);
-    final current =
-        _ref.read(returnFlowProvider).selectedSettlementMethodCode?.trim().toUpperCase();
+    final current = _ref
+        .read(returnFlowProvider)
+        .selectedSettlementMethodCode
+        ?.trim()
+        .toUpperCase();
     if (mapped == null) {
       return;
     }

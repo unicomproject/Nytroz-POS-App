@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/access/pos_access_codes.dart';
 import '../../core/access/pos_permission_access.dart';
 import '../auth/domain/entities/auth_session.dart';
 import '../auth/presentation/providers/session_provider.dart';
@@ -9,7 +10,9 @@ import '../cash_drawer/presentation/screens/pos_cash_drop_screen.dart';
 import '../cash_drawer/presentation/screens/pos_cash_in_screen.dart';
 import '../cash_drawer/presentation/screens/pos_close_till_screen.dart';
 import '../customers/presentation/screens/pos_customers_screen.dart';
+import '../hardware/receipt_printer/presentation/screens/pos_hardware_testing_screen.dart';
 import '../returns_refunds/presentation/navigation/returns_route_guard.dart';
+import '../receipts/presentation/screens/pos_receipt_history_screen.dart';
 import '../returns_refunds/presentation/screens/pos_return_create_credit_screen.dart';
 import '../returns_refunds/presentation/screens/pos_return_receipt_screen.dart';
 import '../returns_refunds/presentation/screens/pos_return_sale_summary_screen.dart';
@@ -26,7 +29,7 @@ import '../sale/presentation/screens/pos_cash_payment_success_screen.dart';
 import '../sale/presentation/screens/pos_cash_payment_screen.dart';
 import '../sale/presentation/screens/pos_email_receipt_screen.dart';
 import '../sale/presentation/screens/pos_print_receipt_screen.dart';
-import '../sale/presentation/screens/pos_new_sale_screen.dart';
+import '../pos/presentation/screens/new_sale/pos_new_sale_screen.dart';
 import '../sale/presentation/screens/pos_payment_method_screen.dart';
 import '../sale/presentation/screens/pos_payment_placeholder_screen.dart';
 import '../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
@@ -46,12 +49,14 @@ List<RouteBase> posShellRoutes(Ref ref) {
           showTopBarSearch: shouldShowPosTopBarSearch(state.uri.path),
           showSidebar: state.uri.path != '/pos/home' &&
               state.uri.path != '/pos/new-sale' &&
+              state.uri.path != '/pos/new-sale/payment' &&
               !state.uri.path.startsWith('/pos/home/'),
           showBottomNavigation: shouldShowPosCashierBottomNavigation(
             state.uri.path,
             ref.read(authSessionProvider),
           ),
           isNewSale: state.uri.path == '/pos/new-sale',
+          isDashboard: state.uri.path == '/pos/home',
           child: child,
         );
       },
@@ -116,6 +121,10 @@ List<RouteBase> posShellRoutes(Ref ref) {
                           ? const PosPaymentPlaceholderScreen(
                               title: 'Card Payment',
                               subtitle: 'Accept card payment from customer',
+                              unavailableMessage:
+                                  'No supported card provider or terminal is configured. '
+                                  'No charge was initiated. Choose another payment method '
+                                  'or contact a manager.',
                             )
                           : const TenantAdminForbiddenScreen(),
                 ),
@@ -267,6 +276,32 @@ List<RouteBase> posShellRoutes(Ref ref) {
                   : const TenantAdminForbiddenScreen(),
         ),
         GoRoute(
+          path: '/pos/online-orders',
+          builder: (context, state) =>
+              _isAuthenticated(ref.read(authSessionProvider))
+                  ? const PosPlaceholderScreen(title: 'Online Orders')
+                  : const TenantAdminForbiddenScreen(),
+        ),
+        GoRoute(
+          path: '/pos/orders',
+          builder: (context, state) =>
+              ref.read(authSessionProvider)?.hasPermission(
+                            PosPermissionCodes.viewReceipts,
+                          ) ==
+                      true
+                  ? const PosReceiptHistoryScreen()
+                  : const TenantAdminForbiddenScreen(),
+        ),
+        GoRoute(
+          path: '/pos/settings',
+          builder: (context, state) => ref
+                      .read(authSessionProvider)
+                      ?.hasPermission(PosPermissionCodes.hardwareSettings) ==
+                  true
+              ? const PosHardwareTestingScreen()
+              : const TenantAdminForbiddenScreen(),
+        ),
+        GoRoute(
           path: '/pos/cash-drawer',
           builder: (context, state) =>
               _canViewCashDrawer(ref.read(authSessionProvider))
@@ -309,7 +344,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
 }
 
 bool shouldShowPosTopBar(String path) {
-  if (path == '/pos/home' || path.startsWith('/pos/home/')) {
+  if (path.startsWith('/pos/home/')) {
     return false;
   }
 
@@ -330,6 +365,9 @@ bool shouldShowPosTopBar(String path) {
 }
 
 bool shouldShowPosTopBarSearch(String path) {
+  if (path == '/pos/home' || path.startsWith('/pos/home/')) {
+    return false;
+  }
   return !path.startsWith('/pos/returns-refunds');
 }
 
@@ -341,6 +379,8 @@ bool shouldShowPosCashierBottomNavigation(
     '/pos/home' => _canViewPosHome(session),
     '/pos/new-sale' => _canStartNewSale(session),
     '/pos/customers' => _canViewCustomers(session),
+    '/pos/orders' =>
+      session?.hasPermission(PosPermissionCodes.viewReceipts) == true,
     _ => false,
   };
 }

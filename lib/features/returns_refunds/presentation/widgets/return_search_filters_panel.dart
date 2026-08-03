@@ -109,8 +109,7 @@ class _ReturnSearchFiltersPanelState extends State<ReturnSearchFiltersPanel> {
                     ],
                     onChanged: widget.isLoading
                         ? null
-                        : (value) =>
-                            setState(() => _paymentMethodCode = value),
+                        : (value) => setState(() => _paymentMethodCode = value),
                   ),
                   TextFormField(
                     controller: _minAmountController,
@@ -196,9 +195,7 @@ class _ReturnSearchFiltersPanelState extends State<ReturnSearchFiltersPanel> {
     }
     final minAmount = _parseAmount(_minAmountController.text);
     final maxAmount = _parseAmount(_maxAmountController.text);
-    if (_fromDate != null &&
-        _toDate != null &&
-        _fromDate!.isAfter(_toDate!)) {
+    if (_fromDate != null && _toDate != null && _fromDate!.isAfter(_toDate!)) {
       _showValidationMessage('Date From cannot be later than Date To.');
       return;
     }

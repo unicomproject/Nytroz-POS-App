@@ -119,7 +119,9 @@ class ProductCreateRequestDto {
       if (hasVariants && variants.isNotEmpty)
         'variants': variants.map((item) => item.toJson()).toList(),
       'hasExpiryDate': hasExpiryDate,
-      if (hasExpiryDate && batchNumber != null && batchNumber!.trim().isNotEmpty)
+      if (hasExpiryDate &&
+          batchNumber != null &&
+          batchNumber!.trim().isNotEmpty)
         'batchNumber': batchNumber!.trim(),
       if (hasExpiryDate && manufactureDate != null)
         'manufactureDate': manufactureDate,

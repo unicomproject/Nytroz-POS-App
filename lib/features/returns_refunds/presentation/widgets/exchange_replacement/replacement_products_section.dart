@@ -68,7 +68,8 @@ class ReplacementProductsSection extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: TenantAdminSpacing.md),
-                  OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+                  OutlinedButton(
+                      onPressed: onRetry, child: const Text('Retry')),
                 ],
               ),
             )

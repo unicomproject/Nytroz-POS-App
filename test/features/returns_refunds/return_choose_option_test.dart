@@ -152,7 +152,8 @@ void main() {
         resolutionPersisted: true,
       );
 
-      expect(ReturnsRouteGuard.hasRefundBranchContext(withoutPersisted), isFalse);
+      expect(
+          ReturnsRouteGuard.hasRefundBranchContext(withoutPersisted), isFalse);
       expect(ReturnsRouteGuard.hasRefundBranchContext(withPersisted), isTrue);
     });
 

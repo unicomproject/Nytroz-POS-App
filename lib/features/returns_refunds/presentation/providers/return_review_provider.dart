@@ -127,8 +127,7 @@ class ReturnReviewController extends StateNotifier<ReturnReviewState> {
       state = state.copyWith(
         isLoadingPreview: false,
         clearPreview: true,
-        previewErrorMessage:
-            'Complete earlier return steps before reviewing.',
+        previewErrorMessage: 'Complete earlier return steps before reviewing.',
       );
       return;
     }
@@ -384,8 +383,8 @@ class ReturnReviewController extends StateNotifier<ReturnReviewState> {
           settlement == 'STORE_CREDIT') {
         return false;
       }
-      final required =
-          settlementCodeForExchangeDirection(exchangePreview.differenceDirection);
+      final required = settlementCodeForExchangeDirection(
+          exchangePreview.differenceDirection);
       if (required != null && settlement != required) {
         return false;
       }
@@ -453,26 +452,25 @@ class ReturnReviewController extends StateNotifier<ReturnReviewState> {
     );
 
     try {
-      final receipt = await _ref
-          .read(returnsRefundRemoteDatasourceProvider)
-          .completeReturn(
-            deviceId: deviceContext.deviceId,
-            saleId: sale.saleId,
-            reasonCode: reasonCode,
-            settlementMethodCode: settlementCode,
-            notes: flowState.returnNotes,
-            lines: lines
-                .map(
-                  (line) => {
-                    'saleLineId': line.saleLineId,
-                    'returnQty': line.returnQty,
-                  },
-                )
-                .toList(growable: false),
-            expectedVersion: resolution.version,
-            idempotencyKey: idempotencyKey,
-            cancelToken: cancelToken,
-          );
+      final receipt =
+          await _ref.read(returnsRefundRemoteDatasourceProvider).completeReturn(
+                deviceId: deviceContext.deviceId,
+                saleId: sale.saleId,
+                reasonCode: reasonCode,
+                settlementMethodCode: settlementCode,
+                notes: flowState.returnNotes,
+                lines: lines
+                    .map(
+                      (line) => {
+                        'saleLineId': line.saleLineId,
+                        'returnQty': line.returnQty,
+                      },
+                    )
+                    .toList(growable: false),
+                expectedVersion: resolution.version,
+                idempotencyKey: idempotencyKey,
+                cancelToken: cancelToken,
+              );
 
       if (_disposed || sequence != _completionSequence) return null;
       _ref.read(returnFlowProvider.notifier).setCompletedReceipt(receipt);
@@ -632,7 +630,7 @@ void _ensureAuthorizationHeader(Dio dio, AuthSession session) {
   dio.options.headers['Authorization'] = 'Bearer ${session.accessToken}';
 }
 
-final returnReviewProvider =
-    StateNotifierProvider.autoDispose<ReturnReviewController, ReturnReviewState>(
+final returnReviewProvider = StateNotifierProvider.autoDispose<
+    ReturnReviewController, ReturnReviewState>(
   (ref) => ReturnReviewController(ref),
 );

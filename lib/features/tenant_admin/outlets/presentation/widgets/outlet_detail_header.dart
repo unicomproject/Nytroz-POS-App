@@ -37,12 +37,14 @@ class OutletDetailHeader extends StatelessWidget {
               label: 'Dashboard',
               onTap: () => context.go('/tenant-admin/dashboard'),
             ),
-            const Icon(Icons.chevron_right, size: 16, color: TenantAdminColors.mutedText),
+            const Icon(Icons.chevron_right,
+                size: 16, color: TenantAdminColors.mutedText),
             _BreadcrumbLink(
               label: 'Outlets',
               onTap: () => context.go('/tenant-admin/outlets'),
             ),
-            const Icon(Icons.chevron_right, size: 16, color: TenantAdminColors.mutedText),
+            const Icon(Icons.chevron_right,
+                size: 16, color: TenantAdminColors.mutedText),
             Text(
               outlet.outletName,
               style: TenantAdminTextStyles.muted(context).copyWith(

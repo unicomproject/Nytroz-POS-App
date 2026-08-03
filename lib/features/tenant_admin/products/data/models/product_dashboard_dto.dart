@@ -119,7 +119,8 @@ class ProductDashboardStockMovementDto {
     this.items = const [],
   });
 
-  factory ProductDashboardStockMovementDto.fromJson(Map<String, dynamic>? json) {
+  factory ProductDashboardStockMovementDto.fromJson(
+      Map<String, dynamic>? json) {
     if (json == null) {
       return const ProductDashboardStockMovementDto(totalCount: 0);
     }

@@ -33,9 +33,7 @@ class ReturnSearchFilters {
   int get activeCount => [
         fromDate,
         toDate,
-        paymentMethodCode?.trim().isNotEmpty == true
-            ? paymentMethodCode
-            : null,
+        paymentMethodCode?.trim().isNotEmpty == true ? paymentMethodCode : null,
         minAmount,
         maxAmount,
       ].where((value) => value != null).length;
@@ -108,8 +106,7 @@ class ReturnSearchState {
 
   bool get hasValidSelection =>
       selectedSale != null && selectedSale!.saleId.trim().isNotEmpty;
-  int get totalPages =>
-      totalCount == 0 ? 0 : (totalCount / pageSize).ceil();
+  int get totalPages => totalCount == 0 ? 0 : (totalCount / pageSize).ceil();
   bool get hasPreviousPage => page > 1;
   bool get hasNextPage => page < totalPages;
   int get rangeStart =>
@@ -327,7 +324,9 @@ class ReturnSearchController extends StateNotifier<ReturnSearchState> {
     );
 
     try {
-      final responsePage = await _ref.read(returnsRefundRemoteDatasourceProvider).searchOriginalSales(
+      final responsePage = await _ref
+          .read(returnsRefundRemoteDatasourceProvider)
+          .searchOriginalSales(
             deviceId: deviceContext.deviceId,
             search: tab == ReturnSearchTab.recent ? null : query,
             searchType: tab.apiValue,
@@ -403,8 +402,7 @@ class ReturnSearchController extends StateNotifier<ReturnSearchState> {
     );
   }
 
-  bool _canApply(int requestId) =>
-      !_disposed && requestId == _requestSequence;
+  bool _canApply(int requestId) => !_disposed && requestId == _requestSequence;
 
   @override
   void dispose() {
@@ -415,8 +413,8 @@ class ReturnSearchController extends StateNotifier<ReturnSearchState> {
   }
 }
 
-final returnSearchProvider =
-    StateNotifierProvider.autoDispose<ReturnSearchController, ReturnSearchState>(
+final returnSearchProvider = StateNotifierProvider.autoDispose<
+    ReturnSearchController, ReturnSearchState>(
   (ref) => ReturnSearchController(ref),
 );
 

@@ -208,6 +208,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
 
   return PosHomeDashboardState(
     fallbackUserDisplayName: payload.userDisplayName,
+    cashierProfileImageUrl: payload.cashierProfileImageUrl,
     cashierRoleLabel: payload.cashierRoleLabel,
     businessDisplayName: payload.businessDisplayName,
     businessLogoUrl: payload.businessLogoUrl,

@@ -151,8 +151,9 @@ class TenantProductMapper {
       stock: dto.stock == null ? null : toStockDetailEntity(dto.stock!),
       outlets: dto.outlets.map(toOutletDetailEntity).toList(),
       variants: dto.variants.map(toVariantDetailEntity).toList(),
-      batchDetails:
-          dto.batchDetails == null ? null : toBatchDetailEntity(dto.batchDetails!),
+      batchDetails: dto.batchDetails == null
+          ? null
+          : toBatchDetailEntity(dto.batchDetails!),
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     );

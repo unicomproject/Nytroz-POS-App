@@ -129,8 +129,8 @@ class CloseTillFormController extends StateNotifier<CloseTillFormState> {
   }
 }
 
-final closeTillFormProvider =
-    StateNotifierProvider.autoDispose<CloseTillFormController, CloseTillFormState>(
+final closeTillFormProvider = StateNotifierProvider.autoDispose<
+    CloseTillFormController, CloseTillFormState>(
   (ref) => CloseTillFormController(),
 );
 
@@ -228,7 +228,8 @@ String? validateCloseTillCountedCash(String? value) {
   return null;
 }
 
-String? validateCloseTillMismatchReason(String? value, {required bool required}) {
+String? validateCloseTillMismatchReason(String? value,
+    {required bool required}) {
   if (!required) {
     return null;
   }

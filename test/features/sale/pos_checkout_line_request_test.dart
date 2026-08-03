@@ -34,7 +34,11 @@ void main() {
 
       expect(lines, hasLength(1));
       expect(lines.single.variantId, 'variant-id');
-      expect(lines.single.toJson(), {'variantId': 'variant-id', 'qty': 2});
+      expect(lines.single.toJson(), {
+        'variantId': 'variant-id',
+        'qty': 2,
+        'source': 'product_popup',
+      });
     });
 
     test('preserves an invalid missing variant for backend rejection', () {

@@ -34,7 +34,9 @@ class _PosReturnCreateCreditScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(returnFlowProvider.notifier).setStep(ReturnFlowSteps.createCredit);
+      ref
+          .read(returnFlowProvider.notifier)
+          .setStep(ReturnFlowSteps.createCredit);
 
       final flowState = ref.read(returnFlowProvider);
       ref.read(returnCreateCreditProvider.notifier).hydrateConfirmation(
@@ -65,8 +67,7 @@ class _PosReturnCreateCreditScreenState
       child: LayoutBuilder(
         builder: (context, constraints) {
           final padding = TenantAdminInsets.pageForWidth(constraints.maxWidth);
-          final useThreeColumns =
-              constraints.maxWidth >= 1200;
+          final useThreeColumns = constraints.maxWidth >= 1200;
 
           return Padding(
             padding: padding,
@@ -100,8 +101,8 @@ class _PosReturnCreateCreditScreenState
                         title: 'Unable to load credit preview',
                         message: creditState.errorMessage!,
                         onRetry: _isRetryableCreditPreviewError(
-                              creditState.errorMessage!,
-                            )
+                          creditState.errorMessage!,
+                        )
                             ? () => ref
                                 .read(returnCreateCreditProvider.notifier)
                                 .load()
@@ -146,7 +147,8 @@ class _PosReturnCreateCreditScreenState
                                             .setConfirmed(confirmed);
                                         ref
                                             .read(returnFlowProvider.notifier)
-                                            .setCreditPreviewConfirmed(confirmed);
+                                            .setCreditPreviewConfirmed(
+                                                confirmed);
                                       },
                                     ),
                                   ),
@@ -184,7 +186,8 @@ class _PosReturnCreateCreditScreenState
                                     },
                                   ),
                                   const SizedBox(height: TenantAdminSpacing.lg),
-                                  ReturnCreditSaleSummaryPanel(preview: preview),
+                                  ReturnCreditSaleSummaryPanel(
+                                      preview: preview),
                                 ],
                               ),
                       ),

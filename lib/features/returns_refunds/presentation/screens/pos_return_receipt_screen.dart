@@ -80,9 +80,8 @@ class _PosReturnReceiptScreenState
     final receipt = successState.loadStatus == ReturnSuccessLoadStatus.loaded
         ? successState.receipt
         : null;
-    final display = receipt == null
-        ? null
-        : buildReturnSuccessDisplayFromReceipt(receipt);
+    final display =
+        receipt == null ? null : buildReturnSuccessDisplayFromReceipt(receipt);
 
     if (successState.loadStatus == ReturnSuccessLoadStatus.permissionDenied ||
         (receipt != null && !_canViewBranch(granted, receipt.isExchange))) {
@@ -109,9 +108,10 @@ class _PosReturnReceiptScreenState
         color: TenantAdminColors.background,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final padding = constraints.maxWidth >= TenantAdminBreakpoints.tablet
-                ? const EdgeInsets.fromLTRB(22, 20, 22, 22)
-                : TenantAdminInsets.pageForWidth(constraints.maxWidth);
+            final padding =
+                constraints.maxWidth >= TenantAdminBreakpoints.tablet
+                    ? const EdgeInsets.fromLTRB(22, 20, 22, 22)
+                    : TenantAdminInsets.pageForWidth(constraints.maxWidth);
             final twoColumn = constraints.maxWidth >= 760;
 
             return Padding(

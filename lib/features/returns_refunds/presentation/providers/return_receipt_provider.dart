@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../hardware/receipt_printer/presentation/providers/cash_drawer_controller.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/domain/entities/auth_session.dart';
@@ -66,7 +68,8 @@ class ReturnReceiptController extends StateNotifier<ReturnReceiptState> {
       state = state.copyWith(
         isLoading: false,
         clearReceipt: true,
-        errorMessage: 'Complete earlier return steps before viewing the receipt.',
+        errorMessage:
+            'Complete earlier return steps before viewing the receipt.',
       );
       return;
     }
@@ -84,31 +87,46 @@ class ReturnReceiptController extends StateNotifier<ReturnReceiptState> {
     }
 
     _ensureAuthorizationHeader(_ref.read(appDioProvider), session);
-    state = state.copyWith(isLoading: true, clearError: true, clearReceipt: true);
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearReceipt: true);
 
     try {
-      final receipt = await _ref
-          .read(returnsRefundRemoteDatasourceProvider)
-          .completeReturn(
-            deviceId: deviceContext.deviceId,
-            saleId: sale.saleId,
-            reasonCode: reasonCode,
-            settlementMethodCode: settlementCode,
-            notes: flowState.returnNotes,
-            lines: lines
-                .map(
-                  (line) => {
-                    'saleLineId': line.saleLineId,
-                    'returnQty': line.returnQty,
-                  },
-                )
-                .toList(growable: false),
-            expectedVersion: resolution.version,
-            idempotencyKey:
-                '${sale.saleId}:${resolution.draftId}:${resolution.version}:complete',
-          );
+      final receipt =
+          await _ref.read(returnsRefundRemoteDatasourceProvider).completeReturn(
+                deviceId: deviceContext.deviceId,
+                saleId: sale.saleId,
+                reasonCode: reasonCode,
+                settlementMethodCode: settlementCode,
+                notes: flowState.returnNotes,
+                lines: lines
+                    .map(
+                      (line) => {
+                        'saleLineId': line.saleLineId,
+                        'returnQty': line.returnQty,
+                      },
+                    )
+                    .toList(growable: false),
+                expectedVersion: resolution.version,
+                idempotencyKey:
+                    '${sale.saleId}:${resolution.draftId}:${resolution.version}:complete',
+              );
 
       _ref.read(returnFlowProvider.notifier).setCompletedReceipt(receipt);
+
+      if (receipt.drawerOperationId != null &&
+          receipt.cashDrawerSettings != null) {
+        unawaited(
+          _ref
+              .read(cashDrawerControllerProvider.notifier)
+              .triggerAutoOpenForCheckout(
+                drawerOperationId: receipt.drawerOperationId!,
+                purposeStr: 'cashRefund',
+                drawerSettingsJson: receipt.cashDrawerSettings!,
+                businessReferenceId: receipt.returnId,
+              ),
+        );
+      }
+
       state = state.copyWith(isLoading: false, receipt: receipt);
     } on DioException catch (error) {
       state = state.copyWith(
@@ -147,8 +165,8 @@ String? _readApiError(DioException error) {
   return null;
 }
 
-final returnReceiptProvider =
-    StateNotifierProvider.autoDispose<ReturnReceiptController, ReturnReceiptState>(
+final returnReceiptProvider = StateNotifierProvider.autoDispose<
+    ReturnReceiptController, ReturnReceiptState>(
   (ref) => ReturnReceiptController(ref),
 );
 

@@ -110,10 +110,14 @@ class _SummaryTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(TenantAdminSpacing.lg),
       decoration: BoxDecoration(
-        color: emphasize ? TenantAdminColors.secondary : TenantAdminColors.background,
+        color: emphasize
+            ? TenantAdminColors.secondary
+            : TenantAdminColors.background,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         border: Border.all(
-          color: emphasize ? TenantAdminColors.info.withValues(alpha: .25) : TenantAdminColors.border,
+          color: emphasize
+              ? TenantAdminColors.info.withValues(alpha: .25)
+              : TenantAdminColors.border,
         ),
       ),
       child: Column(
