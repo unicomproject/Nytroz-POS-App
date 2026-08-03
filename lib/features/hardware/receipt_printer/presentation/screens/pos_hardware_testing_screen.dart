@@ -6,6 +6,8 @@ import '../../config/local_print_agent_config.dart';
 import '../../models/pos_device_printer_config.dart';
 import '../../recovery/print_operation.dart';
 import '../../recovery/print_operation_store.dart';
+import '../../recovery/drawer_operation.dart';
+import '../providers/cash_drawer_controller.dart';
 import '../../../../sale/presentation/providers/completed_sale_print_provider.dart';
 import '../../../../sale/presentation/widgets/new_sale/pos_barcode_scanner_listener.dart';
 import '../../../../sale/application/services/pos_hid_scanner_input_service.dart';
@@ -13,6 +15,7 @@ import '../../../barcode_scanner/presentation/providers/barcode_scanner_test_con
 import '../../../barcode_scanner/presentation/widgets/barcode_scanner_test_card.dart';
 import '../providers/local_print_agent_controller.dart';
 import '../widgets/hardware_capability_card.dart';
+import '../widgets/cash_drawer_test_card.dart';
 
 class PosHardwareTestingScreen extends ConsumerStatefulWidget {
   const PosHardwareTestingScreen({super.key});
@@ -573,12 +576,7 @@ class _PosHardwareTestingScreenState
                   const SizedBox(height: TenantAdminSpacing.md),
                   const BarcodeScannerTestCard(),
                   const SizedBox(height: TenantAdminSpacing.sm),
-                  const HardwareCapabilityCard(
-                    title: 'Cash drawer',
-                    message:
-                        'Not Implemented — no ESC/POS drawer pulse is sent.',
-                    icon: Icons.point_of_sale_outlined,
-                  ),
+                  const CashDrawerTestCard(),
                   const SizedBox(height: TenantAdminSpacing.sm),
                   const HardwareCapabilityCard(
                     title: 'Card terminal',
@@ -609,8 +607,9 @@ class _PosHardwareTestingScreenState
                           ),
                         ),
                   ],
-                  const SizedBox(height: TenantAdminSpacing.lg),
                   const _PrintRecoveryCard(),
+                  const SizedBox(height: TenantAdminSpacing.lg),
+                  const _DrawerRecoveryCard(),
                 ],
               ),
             ),
@@ -856,6 +855,101 @@ class LocalPrintAgentStatusCard extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _DrawerRecoveryCard extends ConsumerStatefulWidget {
+  const _DrawerRecoveryCard();
+
+  @override
+  ConsumerState<_DrawerRecoveryCard> createState() =>
+      _DrawerRecoveryCardState();
+}
+
+class _DrawerRecoveryCardState extends ConsumerState<_DrawerRecoveryCard> {
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(cashDrawerControllerProvider);
+    final operations = state.recoveryOperations
+        .where((item) =>
+            item.state != DrawerOperationState.opened &&
+            item.state != DrawerOperationState.failed &&
+            item.state != DrawerOperationState.cancelled)
+        .toList()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Cash drawer recovery',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Refresh operations',
+                  onPressed: () async {
+                    await ref
+                        .read(cashDrawerControllerProvider.notifier)
+                        .load();
+                  },
+                  icon: const Icon(Icons.refresh_rounded),
+                ),
+              ],
+            ),
+            if (operations.isEmpty)
+              const Text('No unresolved cash drawer operations.')
+            else
+              ...operations.map(
+                (operation) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.sensor_door_outlined),
+                  title: Text('Operation: ${operation.drawerPurpose}'),
+                  subtitle: Text(
+                    '${operation.state.name} · request ${operation.requestId}',
+                  ),
+                  trailing: Wrap(
+                    spacing: TenantAdminSpacing.xs,
+                    children: [
+                      TextButton(
+                        onPressed: () async {
+                          await ref
+                              .read(cashDrawerControllerProvider.notifier)
+                              .confirmRecoveryOpen(
+                                  operation.operationId, false);
+                          if (mounted) setState(() {});
+                        },
+                        child: const Text('Did not open'),
+                      ),
+                      FilledButton.tonal(
+                        onPressed: () async {
+                          await ref
+                              .read(cashDrawerControllerProvider.notifier)
+                              .confirmRecoveryOpen(operation.operationId, true);
+                          if (mounted) setState(() {});
+                        },
+                        child: const Text('Opened'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: TenantAdminSpacing.sm),
+            const Text(
+              'Unknown outcomes never auto-pulse again. Confirm the physical '
+              'result here.',
+            ),
+          ],
+        ),
       ),
     );
   }

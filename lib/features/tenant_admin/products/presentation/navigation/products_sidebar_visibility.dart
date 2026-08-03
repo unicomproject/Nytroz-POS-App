@@ -71,6 +71,13 @@ class ProductsSidebarVisibility {
         isVisible: access.canViewBrandsNav(),
       ),
       ProductsSidebarChildVisibility(
+        key: 'popular-products',
+        label: 'Popular Products',
+        route: ProductsSidebarRoutes.popular,
+        permissionCode: 'catalog.collections.view',
+        isVisible: access.canViewPopularProductsNav(),
+      ),
+      ProductsSidebarChildVisibility(
         key: 'product-inventory',
         label: 'Inventory',
         route: ProductsSidebarRoutes.productInventory,

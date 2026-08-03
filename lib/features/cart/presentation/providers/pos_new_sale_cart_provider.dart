@@ -357,6 +357,13 @@ class PosNewSaleProduct {
     this.hasVariants = false,
     this.selectedAttributes = const {},
     this.maxQuantity,
+    this.clientLineId,
+    this.uomId,
+    this.lineNote,
+    this.source = 'direct',
+    this.recommendationParentProductId,
+    this.recommendationRelationshipId,
+    this.authoritativePrice,
   });
 
   final String id;
@@ -372,8 +379,25 @@ class PosNewSaleProduct {
   final bool hasVariants;
   final Map<String, String> selectedAttributes;
   final int? maxQuantity;
+  final String? clientLineId;
+  final String? uomId;
+  final String? lineNote;
+  final String source;
+  final String? recommendationParentProductId;
+  final String? recommendationRelationshipId;
+  final double? authoritativePrice;
 
-  String get cartLineKey => variantId ?? id;
+  String get normalizedLineNote {
+    final value = lineNote?.trim() ?? '';
+    return value;
+  }
+
+  String get cartLineKey => [
+        variantId ?? id,
+        uomId ?? '',
+        normalizedLineNote,
+        recommendationRelationshipId ?? '',
+      ].join('|');
 
   String get variantSummary => formatVariantSummary(selectedAttributes);
 

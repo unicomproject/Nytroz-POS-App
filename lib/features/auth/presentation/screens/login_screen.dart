@@ -110,7 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
           const SizedBox(height: TenantAdminSpacing.sm),
           Text(
-            'Sign in to continue to Nytroz POS',
+            'Sign in to continue to OneVerz POS',
             style: TextStyle(
               color: TenantAdminColors.mutedText,
               fontSize: isWide ? 18 : 16,
@@ -185,7 +185,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           SizedBox(height: isWide ? 28 : TenantAdminSpacing.lg),
           PosPrimaryActionButton(
             label: 'Sign In',
-            semanticLabel: 'Sign in to Nytroz POS',
+            semanticLabel: 'Sign in to OneVerz POS',
             onPressed: _submitting ? null : _login,
             isLoading: _submitting,
             fullWidth: true,

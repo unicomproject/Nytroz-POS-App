@@ -30,6 +30,9 @@ class PosNewSaleCatalogState {
 final posNewSaleSelectedCategoryIdProvider =
     StateProvider.autoDispose<String?>((ref) => null);
 
+final posNewSaleSelectedSegmentProvider =
+    StateProvider.autoDispose<String>((ref) => 'popular');
+
 final posNewSaleCategoriesProvider =
     FutureProvider.autoDispose<List<PosCatalogCategoryOption>>((ref) async {
   final session = ref.watch(authSessionProvider);
@@ -76,6 +79,7 @@ final posNewSaleCatalogProvider =
   final session = ref.watch(authSessionProvider);
   ref.watch(deviceActivationProvider);
   final selectedCategoryId = ref.watch(posNewSaleSelectedCategoryIdProvider);
+  final selectedSegment = ref.watch(posNewSaleSelectedSegmentProvider);
   ref.watch(posNewSaleSearchCancellationProvider);
   final searchQuery = ref.watch(posNewSaleSearchQueryProvider).trim();
 
@@ -112,6 +116,7 @@ final posNewSaleCatalogProvider =
               deviceId: deviceContext.deviceId,
               categoryId: selectedCategoryId,
               search: searchQuery,
+              segment: selectedSegment,
             );
 
     return PosNewSaleCatalogState(products: products);
@@ -149,6 +154,35 @@ final posProductDetailProvider = FutureProvider.autoDispose
   return ref.watch(posCatalogRemoteDatasourceProvider).getProductDetail(
         deviceId: deviceContext.deviceId,
         productId: productId,
+      );
+});
+
+class PosRecommendationQuery {
+  const PosRecommendationQuery(this.productId, [this.sourceVariantId]);
+  final String productId;
+  final String? sourceVariantId;
+  @override
+  bool operator ==(Object other) =>
+      other is PosRecommendationQuery &&
+      other.productId == productId &&
+      other.sourceVariantId == sourceVariantId;
+  @override
+  int get hashCode => Object.hash(productId, sourceVariantId);
+}
+
+final posProductRecommendationsProvider = FutureProvider.autoDispose
+    .family<List<PosProductRecommendation>, PosRecommendationQuery>(
+        (ref, query) async {
+  final session = ref.watch(authSessionProvider);
+  final deviceContext = ref.watch(deviceActivationProvider).deviceContext;
+  if (session == null || !session.isAuthenticated || deviceContext == null) {
+    throw StateError('Recommendations require an active session and device.');
+  }
+  _ensureAuthorizationHeader(ref.read(appDioProvider), session);
+  return ref.watch(posCatalogRemoteDatasourceProvider).getRecommendations(
+        deviceId: deviceContext.deviceId,
+        productId: query.productId,
+        sourceVariantId: query.sourceVariantId,
       );
 });
 

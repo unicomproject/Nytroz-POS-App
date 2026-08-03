@@ -59,9 +59,7 @@ class _Crumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = TextStyle(
-      color: isLast
-          ? TenantAdminColors.bodyText
-          : TenantAdminColors.mutedText,
+      color: isLast ? TenantAdminColors.bodyText : TenantAdminColors.mutedText,
       fontWeight: isLast ? FontWeight.w800 : FontWeight.w600,
       fontSize: 13,
     );

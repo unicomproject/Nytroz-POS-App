@@ -29,7 +29,7 @@ import '../sale/presentation/screens/pos_cash_payment_success_screen.dart';
 import '../sale/presentation/screens/pos_cash_payment_screen.dart';
 import '../sale/presentation/screens/pos_email_receipt_screen.dart';
 import '../sale/presentation/screens/pos_print_receipt_screen.dart';
-import '../sale/presentation/screens/pos_new_sale_screen.dart';
+import '../pos/presentation/screens/new_sale/pos_new_sale_screen.dart';
 import '../sale/presentation/screens/pos_payment_method_screen.dart';
 import '../sale/presentation/screens/pos_payment_placeholder_screen.dart';
 import '../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
@@ -49,12 +49,14 @@ List<RouteBase> posShellRoutes(Ref ref) {
           showTopBarSearch: shouldShowPosTopBarSearch(state.uri.path),
           showSidebar: state.uri.path != '/pos/home' &&
               state.uri.path != '/pos/new-sale' &&
+              state.uri.path != '/pos/new-sale/payment' &&
               !state.uri.path.startsWith('/pos/home/'),
           showBottomNavigation: shouldShowPosCashierBottomNavigation(
             state.uri.path,
             ref.read(authSessionProvider),
           ),
           isNewSale: state.uri.path == '/pos/new-sale',
+          isDashboard: state.uri.path == '/pos/home',
           child: child,
         );
       },
@@ -342,7 +344,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
 }
 
 bool shouldShowPosTopBar(String path) {
-  if (path == '/pos/home' || path.startsWith('/pos/home/')) {
+  if (path.startsWith('/pos/home/')) {
     return false;
   }
 
@@ -363,6 +365,9 @@ bool shouldShowPosTopBar(String path) {
 }
 
 bool shouldShowPosTopBarSearch(String path) {
+  if (path == '/pos/home' || path.startsWith('/pos/home/')) {
+    return false;
+  }
   return !path.startsWith('/pos/returns-refunds');
 }
 

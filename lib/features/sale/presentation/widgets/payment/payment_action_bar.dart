@@ -19,10 +19,6 @@ class PaymentActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (onContinue == null) {
-      return _PrimaryBackButton(onPressed: onBackToCart);
-    }
-
     return Row(
       children: [
         Expanded(
@@ -31,33 +27,16 @@ class PaymentActionBar extends StatelessWidget {
             onPressed: onBackToCart,
           ),
         ),
-        if (onContinue != null) ...[
-          const SizedBox(width: TenantAdminSpacing.md),
-          Expanded(
-            flex: 2,
-            child: PosBottomFilledButton(
-              label: continueLabel,
-              onPressed: onContinue,
-              isLoading: isLoading,
-            ),
+        const SizedBox(width: TenantAdminSpacing.md),
+        Expanded(
+          flex: 2,
+          child: PosBottomFilledButton(
+            label: continueLabel,
+            onPressed: onContinue,
+            isLoading: isLoading,
           ),
-        ],
+        ),
       ],
-    );
-  }
-}
-
-class _PrimaryBackButton extends StatelessWidget {
-  const _PrimaryBackButton({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return PosPrimaryActionButton(
-      label: 'Back to Cart',
-      icon: Icons.shopping_cart_checkout_rounded,
-      onPressed: onPressed,
     );
   }
 }

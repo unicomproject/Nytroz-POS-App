@@ -70,6 +70,21 @@ void main() {
     expect(products.single.matches('mer-001-s'), isTrue);
     expect(products.single.matches('2000000000114'), isTrue);
   });
+
+  test('product catalog sends segment=frequently-sold query parameter', () async {
+    final adapter = _CapturingCatalogAdapter();
+    final dio = Dio(BaseOptions(baseUrl: 'http://localhost'))
+      ..httpClientAdapter = adapter;
+
+    await PosCatalogRemoteDatasource(dio).getProducts(
+      deviceId: 'device-1',
+      segment: 'frequently-sold',
+    );
+
+    expect(adapter.lastPath, ApiEndpoints.posProducts);
+    expect(adapter.lastQuery['deviceId'], 'device-1');
+    expect(adapter.lastQuery['segment'], 'frequently-sold');
+  });
 }
 
 class _CapturingCatalogAdapter implements HttpClientAdapter {

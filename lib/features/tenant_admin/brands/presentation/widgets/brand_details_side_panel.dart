@@ -303,7 +303,8 @@ class _BrandDetailsSidePanelState extends ConsumerState<BrandDetailsSidePanel> {
                     },
                   ),
                   const SizedBox(height: TenantAdminSpacing.md),
-                  Text('Brand Image', style: Theme.of(context).textTheme.titleSmall),
+                  Text('Brand Image',
+                      style: Theme.of(context).textTheme.titleSmall),
                   const SizedBox(height: TenantAdminSpacing.sm),
                   Row(
                     children: [

@@ -143,6 +143,8 @@ class ReturnReceipt {
     this.replacementTotal,
     this.printCount = 0,
     this.hasBeenPrinted = false,
+    this.drawerOperationId,
+    this.cashDrawerSettings,
   });
 
   final String returnId;
@@ -207,6 +209,8 @@ class ReturnReceipt {
   final double? replacementTotal;
   final int printCount;
   final bool hasBeenPrinted;
+  final String? drawerOperationId;
+  final Map<String, dynamic>? cashDrawerSettings;
 
   bool get isExchange => resolution.trim().toUpperCase() == 'EXCHANGE';
 
@@ -311,6 +315,13 @@ class ReturnReceipt {
       printCount: _readInt(json, 'printCount'),
       hasBeenPrinted:
           json['hasBeenPrinted'] == true || _readInt(json, 'printCount') > 0,
+      drawerOperationId: json['drawerOperationId']?.toString() ??
+          json['DrawerOperationId']?.toString(),
+      cashDrawerSettings: json['cashDrawerSettings'] is Map
+          ? Map<String, dynamic>.from(json['cashDrawerSettings'] as Map)
+          : (json['CashDrawerSettings'] is Map
+              ? Map<String, dynamic>.from(json['CashDrawerSettings'] as Map)
+              : null),
     );
   }
 
@@ -381,6 +392,8 @@ class ReturnReceipt {
       replacementTotal: replacementTotal,
       printCount: printCount ?? this.printCount,
       hasBeenPrinted: hasBeenPrinted ?? this.hasBeenPrinted,
+      drawerOperationId: drawerOperationId,
+      cashDrawerSettings: cashDrawerSettings,
     );
   }
 }

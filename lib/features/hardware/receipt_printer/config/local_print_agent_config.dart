@@ -38,6 +38,19 @@ String normalizeLocalPrintAgentUrl(String value) {
   while (normalized.endsWith('/')) {
     normalized = normalized.substring(0, normalized.length - 1);
   }
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    final uri = Uri.tryParse(normalized);
+    if (uri != null) {
+      final host = uri.host.toLowerCase();
+      if (host == 'localhost' || host == '127.0.0.1' || host == '::1') {
+        final port = uri.hasPort ? ':${uri.port}' : '';
+        normalized = '${uri.scheme}://10.0.2.2$port${uri.path}';
+        while (normalized.endsWith('/')) {
+          normalized = normalized.substring(0, normalized.length - 1);
+        }
+      }
+    }
+  }
   return normalized;
 }
 

@@ -14,6 +14,7 @@ class PosBarcodeLookupResult {
     required this.price,
     required this.availableQuantity,
     required this.stockStatus,
+    this.imageUrl,
   });
 
   factory PosBarcodeLookupResult.fromJson(Map<String, dynamic> json) {
@@ -34,6 +35,7 @@ class PosBarcodeLookupResult {
       price: parsePriceToInt(json['price']),
       availableQuantity: (json['availableQuantity'] as num?)?.toDouble(),
       stockStatus: stockStatusFromApi(json['stockStatus']?.toString()),
+      imageUrl: (json['imageUrl'] ?? json['imageStorageKey'])?.toString().trim(),
     );
     if (result.productId.isEmpty ||
         result.variantId.isEmpty ||
@@ -54,6 +56,7 @@ class PosBarcodeLookupResult {
   final int price;
   final double? availableQuantity;
   final String stockStatus;
+  final String? imageUrl;
 
   PosResolvedSaleItem toResolvedSaleItem() => PosResolvedSaleItem(
         productId: productId,
@@ -63,6 +66,7 @@ class PosBarcodeLookupResult {
         category: 'General',
         unitPrice: price,
         sku: sku,
+        imageUrl: imageUrl,
         stockStatus: stockStatus,
         availableQuantity: availableQuantity,
         hasVariants: true,

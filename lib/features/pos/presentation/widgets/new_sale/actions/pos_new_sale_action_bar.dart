@@ -8,10 +8,10 @@ import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_disco
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_parked_sale_dialog.dart';
 import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
-import '../../../../../core/access/pos_access_codes.dart';
-import '../../../../../core/access/pos_permission_access.dart';
-import '../../../../auth/presentation/providers/session_provider.dart';
-import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../../../../core/access/pos_access_codes.dart';
+import '../../../../../../core/access/pos_permission_access.dart';
+import '../../../../../auth/presentation/providers/session_provider.dart';
+import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
 class PosNewSaleActionBar extends ConsumerWidget {
   const PosNewSaleActionBar({super.key});
@@ -98,8 +98,8 @@ class PosNewSaleActionBar extends ConsumerWidget {
             child: Row(
               children: [
                 for (var index = 0; index < actions.length; index += 1) ...[
-                  if (index > 0) const SizedBox(width: TenantAdminSpacing.sm),
-                  SizedBox(width: 150, child: actions[index]),
+                  if (index > 0) const SizedBox(width: TenantAdminSpacing.md),
+                  SizedBox(width: 160, child: actions[index]),
                 ],
               ],
             ),
@@ -109,7 +109,7 @@ class PosNewSaleActionBar extends ConsumerWidget {
         return Row(
           children: [
             for (var index = 0; index < actions.length; index += 1) ...[
-              if (index > 0) const SizedBox(width: TenantAdminSpacing.sm),
+              if (index > 0) const SizedBox(width: TenantAdminSpacing.md),
               Expanded(child: actions[index]),
             ],
           ],
@@ -322,10 +322,10 @@ class _ActionButton extends StatelessWidget {
     return Tooltip(
       message: tooltip ?? label,
       child: SizedBox(
-        height: 50,
+        height: 58,
         child: FilledButton.icon(
           onPressed: onPressed,
-          icon: Icon(icon, size: 22),
+          icon: Icon(icon, size: 24),
           label: Text(
             label,
             maxLines: 1,
@@ -340,7 +340,7 @@ class _ActionButton extends StatelessWidget {
               horizontal: TenantAdminSpacing.sm,
             ),
             textStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w900,
                   fontSize: 14,
                 ),
             shape: RoundedRectangleBorder(

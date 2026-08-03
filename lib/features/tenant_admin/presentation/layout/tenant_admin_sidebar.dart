@@ -118,7 +118,7 @@ class TenantAdminSidebar extends ConsumerWidget {
                     color: const Color(0xFFB8C4D8),
                     size: 18,
                   ),
-                ],
+                ),
               ),
             ),
             Expanded(

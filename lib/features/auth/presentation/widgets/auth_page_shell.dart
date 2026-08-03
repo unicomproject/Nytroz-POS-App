@@ -230,7 +230,7 @@ class _BrandPanel extends StatelessWidget {
           ),
           const Spacer(),
           Text(
-            '© 2026 Nytroz POS. All rights reserved.',
+            '© 2026 OneVerz POS. All rights reserved.',
             style: TextStyle(color: Colors.white.withValues(alpha: 0.62)),
           ),
         ],
@@ -281,7 +281,7 @@ class _BrandLockup extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Nytroz POS',
+                'OneVerz POS',
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.white,

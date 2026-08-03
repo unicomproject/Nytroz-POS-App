@@ -30,7 +30,7 @@ import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_shell_n
 import 'package:nytroz_pos/features/pos_shell/presentation/screens/pos_home_screen.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_desktop_top_bar.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_mobile_top_bar.dart';
-import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_cashier_bottom_navigation.dart';
+import 'package:nytroz_pos/features/pos/presentation/widgets/new_sale/navigation/pos_cashier_bottom_navigation.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/dashboard_action_card.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/sidebar/pos_sidebar.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
@@ -40,15 +40,17 @@ import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_prov
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_search_coordinator.dart';
 import 'package:nytroz_pos/features/cash_drawer/presentation/screens/pos_close_till_screen.dart';
-import 'package:nytroz_pos/features/sale/presentation/providers/pos_barcode_scan_controller.dart';
-import 'package:nytroz_pos/features/sale/presentation/providers/pos_camera_scanner_provider.dart';
+import 'package:nytroz_pos/features/pos/presentation/providers/new_sale/pos_barcode_scan_controller.dart';
+import 'package:nytroz_pos/features/pos/presentation/providers/new_sale/pos_camera_scanner_provider.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_camera_barcode_scanner.dart';
-import 'package:nytroz_pos/features/sale/presentation/screens/pos_new_sale_screen.dart';
+import 'package:nytroz_pos/features/pos/presentation/screens/new_sale/pos_new_sale_screen.dart';
 import 'package:nytroz_pos/features/till/application/usecases/open_till.dart';
 import 'package:nytroz_pos/features/till/data/datasources/till_session_storage.dart';
 import 'package:nytroz_pos/features/till/domain/entities/open_till.dart';
 import 'package:nytroz_pos/features/till/domain/repositories/till_repository.dart';
 import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
+import 'package:nytroz_pos/features/hardware/barcode_scanner/presentation/providers/barcode_scanner_configuration_provider.dart';
+import 'package:nytroz_pos/features/hardware/device_configuration/models/pos_hardware_models.dart';
 
 import 'support/pos_catalog_test_fixtures.dart';
 
@@ -261,7 +263,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(PosNewSaleScreen), findsOneWidget);
-      expect(find.text('All Products (13)'), findsOneWidget);
+      expect(find.text('Popular Products (13)'), findsOneWidget);
       expect(find.text('No items added'), findsOneWidget);
       expect(find.byType(PosHomeScreen), findsNothing);
     });
@@ -346,7 +348,7 @@ void main() {
       expect(find.widgetWithText(OutlinedButton, 'Add Customer'), findsNothing);
     });
 
-    testWidgets('Add Customer action shows with customers.create',
+    testWidgets('Add Customer action does not show even with customers.create',
         (tester) async {
       await _pumpPosHome(
         tester,
@@ -364,7 +366,7 @@ void main() {
 
       expect(
         find.widgetWithText(FilledButton, 'Add Customer'),
-        findsOneWidget,
+        findsNothing,
       );
     });
 
@@ -727,7 +729,7 @@ void main() {
 
       expect(tester.widget<TextField>(find.byType(TextField)).controller?.text,
           isEmpty);
-      expect(find.text('All Products (13)'), findsOneWidget);
+      expect(find.text('Popular Products (13)'), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(GridView),
@@ -756,20 +758,24 @@ void main() {
       expect(find.text('General Admission'), findsOneWidget);
       expect(find.text('Snack Combo'), findsOneWidget);
 
+      await tester.tap(find.widgetWithText(OutlinedButton, 'More Categories'));
+      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(ChoiceChip, 'Tickets'));
       await tester.pumpAndSettle();
 
       expect(find.text('General Admission'), findsOneWidget);
       expect(find.text('VIP Entry'), findsOneWidget);
       expect(find.text('Snack Combo'), findsNothing);
-      expect(find.text('Tickets Products'), findsOneWidget);
+      expect(find.text('Popular Tickets Products'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(ChoiceChip, 'All'));
+      await tester.tap(find.widgetWithText(OutlinedButton, 'More Categories'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ChoiceChip, 'All').last);
       await tester.pumpAndSettle();
 
       expect(find.text('General Admission'), findsOneWidget);
       expect(find.text('Snack Combo'), findsOneWidget);
-      expect(find.text('All Products (13)'), findsOneWidget);
+      expect(find.text('Popular Products (13)'), findsOneWidget);
     });
 
     test('stockLabelFromApi maps API stock status to labels', () {
@@ -1060,9 +1066,9 @@ void main() {
 
         final productGrid = find.byType(GridView);
         final cartList = find.byType(ListView).last;
-        final addCustomerButton = find.widgetWithText(
+        final customItemButton = find.widgetWithText(
           FilledButton,
-          'Add Customer',
+          'Custom Item',
         );
         final paymentButton = find.widgetWithText(
           FilledButton,
@@ -1072,7 +1078,7 @@ void main() {
         expect(productGrid, findsOneWidget);
         expect(paymentButton, findsOneWidget);
         expect(tester.getBottomLeft(productGrid).dy,
-            lessThanOrEqualTo(tester.getTopLeft(addCustomerButton).dy));
+            lessThanOrEqualTo(tester.getTopLeft(customItemButton).dy));
         expect(
           tester.getBottomLeft(cartList).dy,
           lessThanOrEqualTo(tester.getTopLeft(paymentButton).dy),
@@ -1083,7 +1089,6 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(paymentButton, findsOneWidget);
-        expect(addCustomerButton, findsOneWidget);
       }
     });
   });
@@ -1206,6 +1211,16 @@ Future<void> _pumpPosHome(
           posCameraScannerSupportedProvider.overrideWithValue(cameraSupported),
         if (cameraLauncher != null)
           posCameraScannerLauncherProvider.overrideWithValue(cameraLauncher),
+        barcodeScannerConfigurationProvider.overrideWith((ref) async {
+          return PosBarcodeScannerConfiguration(
+            enabled: true,
+            cameraEnabled: cameraSupported != null,
+            mode: cameraSupported != null ? 'camera' : 'usbHid',
+            minimumBarcodeLength: 4,
+            maximumBarcodeLength: 128,
+            scanTimeout: 120,
+          );
+        }),
       ],
       child: const NytrozPosApp(),
     ),

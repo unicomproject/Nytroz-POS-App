@@ -7,7 +7,7 @@ import '../../../../core/access/tenant_admin_access_codes.dart';
 import 'domain/entities/tenant_admin_menu_item.dart';
 import 'domain/services/tenant_admin_access_checker.dart';
 import 'role_permissions/presentation/screens/role_permissions_screen.dart';
-import 'presentation/layout/tenant_admin_layout.dart';
+import 'presentation/layout/tenant_admin_shared_shell.dart';
 import 'dashboard/presentation/screens/tenant_dashboard_screen.dart';
 import 'outlets/presentation/screens/add_outlet_screen.dart';
 import 'outlets/presentation/screens/edit_outlet_screen.dart';
@@ -26,6 +26,7 @@ import 'products/presentation/navigation/products_sidebar_routes.dart';
 import 'products/presentation/screens/add_product_screen.dart';
 import 'products/presentation/screens/product_detail_screen.dart';
 import 'products/presentation/screens/product_list_screen.dart';
+import 'products/presentation/screens/popular_products_curation_screen.dart';
 import 'brands/presentation/screens/brand_list_screen.dart';
 import 'inventory/presentation/navigation/inventory_routes.dart';
 import 'inventory/presentation/screens/current_stock_screen.dart';
@@ -266,6 +267,10 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     );
   }
 
+  if (definition.path == ProductsSidebarRoutes.popular) {
+    return const PopularProductsCurationScreen();
+  }
+
   if (definition.path == InventoryRoutes.currentStock) {
     return const CurrentStockScreen();
   }
@@ -428,7 +433,8 @@ bool _canAccessRoute(
       definition.path == ProductsSidebarRoutes.add ||
       definition.path == ProductsSidebarRoutes.categories ||
       definition.path == ProductsSidebarRoutes.brands ||
-      definition.path == ProductsSidebarRoutes.variantTemplates) {
+      definition.path == ProductsSidebarRoutes.variantTemplates ||
+      definition.path == ProductsSidebarRoutes.popular) {
     return ProductsRouteGuard.canAccessPath(accessChecker, definition.path);
   }
 

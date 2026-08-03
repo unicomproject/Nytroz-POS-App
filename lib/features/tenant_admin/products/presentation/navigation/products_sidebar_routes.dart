@@ -7,6 +7,7 @@ class ProductsSidebarRoutes {
   static const categories = '/tenant-admin/categories';
   static const brands = '/tenant-admin/brands';
   static const variantTemplates = '/tenant-admin/variant-templates';
+  static const popular = '/tenant-admin/products/popular';
   static const import = '/tenant-admin/products/import';
 
   /// Product-specific inventory setup — route not available yet.
@@ -17,6 +18,7 @@ class ProductsSidebarRoutes {
     if (path == categories ||
         path == brands ||
         path == variantTemplates ||
+        path == popular ||
         path == import) {
       return true;
     }

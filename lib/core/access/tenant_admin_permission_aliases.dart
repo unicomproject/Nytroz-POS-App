@@ -852,6 +852,17 @@ class TenantAdminPermissionAliases {
       'product.create',
       'tenant.product.import',
     ],
+    'catalog.collections.view': [
+      'catalog.collections.view',
+      'catalog.collections.manage',
+    ],
+    'catalog.collections.update': [
+      'catalog.collections.update',
+      'catalog.collections.manage',
+    ],
+    'catalog.collections.manage': [
+      'catalog.collections.manage',
+    ],
   };
 
   static Iterable<String> expand(String permissionCode) {
