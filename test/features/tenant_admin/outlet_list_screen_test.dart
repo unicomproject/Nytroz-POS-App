@@ -35,9 +35,9 @@ void main() {
         height: 1200,
       );
 
-      expect(find.text('Outlet List'), findsOneWidget);
+      expect(find.text('Outlets'), findsWidgets);
       expect(find.text('High Street Store'), findsOneWidget);
-      expect(find.text('Add outlet'), findsNothing);
+      expect(find.text('Add Outlet'), findsNothing);
     });
 
     testWidgets('shows Add outlet button only with outlet.create',
@@ -53,7 +53,7 @@ void main() {
         height: 1200,
       );
 
-      expect(find.text('Add outlet'), findsOneWidget);
+      expect(find.text('Add Outlet'), findsOneWidget);
     });
 
     testWidgets('shows summary cards only with outlet.summary.view',

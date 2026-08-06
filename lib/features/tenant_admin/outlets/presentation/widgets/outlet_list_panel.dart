@@ -51,21 +51,23 @@ class OutletListPanel extends ConsumerWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            visibility.showTitle ? 'Outlets' : 'Outlet List',
-                            style: TenantAdminTextStyles.pageTitle(context),
-                          ),
-                          if (visibility.showSubtitle) ...[
-                            const SizedBox(height: TenantAdminSpacing.xs),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text(
-                              'Manage all business outlets and sales locations.',
-                              style: TenantAdminTextStyles.muted(context),
+                              visibility.showTitle ? 'Outlets' : 'Outlet List',
+                              style: TenantAdminTextStyles.pageTitle(context),
                             ),
+                            if (visibility.showSubtitle) ...[
+                              const SizedBox(height: TenantAdminSpacing.xs),
+                              Text(
+                                'Manage all business outlets and sales locations.',
+                                style: TenantAdminTextStyles.muted(context),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                       if (visibility.showAddOutlet)
                         ElevatedButton.icon(
