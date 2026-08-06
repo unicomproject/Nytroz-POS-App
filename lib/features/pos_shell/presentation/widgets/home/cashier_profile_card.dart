@@ -1,16 +1,36 @@
+import 'dart:developer' as developer;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../application/state/pos_home_dashboard_state.dart';
 import 'cashier_profile_status.dart';
 
-class CashierProfileCard extends StatelessWidget {
+class CashierProfileCard extends StatefulWidget {
   const CashierProfileCard({super.key, required this.dashboard});
 
   final PosHomeDashboardState dashboard;
 
   @override
+  State<CashierProfileCard> createState() => _CashierProfileCardState();
+}
+
+class _CashierProfileCardState extends State<CashierProfileCard> {
+  String? _failedImageUrl;
+
+  @override
+  void didUpdateWidget(CashierProfileCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.dashboard.cashierProfileImageUrl !=
+        widget.dashboard.cashierProfileImageUrl) {
+      _failedImageUrl = null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final dashboard = widget.dashboard;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: TenantAdminSpacing.xl,
@@ -31,6 +51,10 @@ class CashierProfileCard extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final avatarRadius = (constraints.maxHeight * 0.15).clamp(42.0, 64.0);
+          final profileImageUrl = dashboard.cashierProfileImageUrl?.trim();
+          final hasProfileImage = profileImageUrl != null &&
+              profileImageUrl.isNotEmpty &&
+              _failedImageUrl != profileImageUrl;
           return Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -44,8 +68,27 @@ class CashierProfileCard extends StatelessWidget {
                   ),
                 ),
                 child: CircleAvatar(
+                  key: const Key('cashier-profile-avatar'),
                   radius: avatarRadius,
                   backgroundColor: TenantAdminColors.surface,
+                  foregroundImage:
+                      hasProfileImage ? NetworkImage(profileImageUrl) : null,
+                  onForegroundImageError: hasProfileImage
+                      ? (exception, stackTrace) {
+                          if (kDebugMode) {
+                            developer.log(
+                              'Cashier profile image load failed. '
+                              'url=$profileImageUrl error=$exception',
+                              name: 'pos.home.profile-image',
+                              error: exception,
+                              stackTrace: stackTrace,
+                            );
+                          }
+                          if (mounted && _failedImageUrl != profileImageUrl) {
+                            setState(() => _failedImageUrl = profileImageUrl);
+                          }
+                        }
+                      : null,
                   child: Text(
                     _initials(dashboard.fallbackUserDisplayName),
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(

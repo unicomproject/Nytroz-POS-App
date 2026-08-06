@@ -8,6 +8,8 @@ enum ReturnSuccessPrintStatus {
   failed,
   succeeded,
   auditFailed,
+  unknown,
+  partial,
 }
 
 class CompletedItemDisplay {

@@ -39,6 +39,7 @@ class PosPermissionCodes {
   static const acceptSplitPayment = 'payments.split.accept';
   static const viewReceipts = 'receipts.view';
   static const printReceipts = 'receipts.print';
+  static const reprintReceipts = 'receipts.reprint';
   static const viewOrders = 'orders.view';
   static const viewReturns = 'returns.view';
   static const createReturn = 'returns.create';

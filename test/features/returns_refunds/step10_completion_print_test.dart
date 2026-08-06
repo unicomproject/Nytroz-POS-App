@@ -5,6 +5,7 @@ import 'package:nytroz_pos/features/hardware/receipt_printer/adapters/receipt_pr
 import 'package:nytroz_pos/features/hardware/receipt_printer/adapters/usb_receipt_printer_adapter.dart';
 import 'package:nytroz_pos/features/hardware/receipt_printer/esc_pos/esc_pos_receipt_generator.dart';
 import 'package:nytroz_pos/features/hardware/receipt_printer/models/pos_device_printer_config.dart';
+import 'package:nytroz_pos/features/hardware/receipt_printer/models/local_print_agent_models.dart';
 import 'package:nytroz_pos/features/hardware/receipt_printer/models/printer_exception.dart';
 import 'package:nytroz_pos/features/hardware/receipt_printer/pos_receipt_printer_service.dart';
 import 'package:nytroz_pos/features/returns_refunds/domain/entities/return_receipt.dart';
@@ -128,6 +129,30 @@ class _FakeAdapter implements ReceiptPrinterAdapter {
   Future<void> disconnect() async {}
 }
 
+class _FakeStructuredAdapter extends _FakeAdapter
+    implements StructuredReceiptPrinterAdapter {
+  _FakeStructuredAdapter() : super(PrinterConnectionType.localPrintAgent);
+
+  LocalPrintAgentReceiptRequest? request;
+
+  @override
+  Future<LocalPrintAgentPrintResult> printStructuredReceipt(
+    PosDevicePrinterConfig config,
+    LocalPrintAgentReceiptRequest request,
+  ) async {
+    printCalls++;
+    this.request = request;
+    return LocalPrintAgentPrintResult(
+      success: true,
+      code: 'printed',
+      message: 'accepted',
+      requestId: request.requestId,
+      duplicate: false,
+      printerName: config.displayName,
+    );
+  }
+}
+
 void main() {
   group('Step 10 completion display authority', () {
     test('builds display from Completion GET fields', () {
@@ -184,6 +209,39 @@ void main() {
   });
 
   group('Printer facade adapter selection', () {
+    test('Local Agent exchange uses the structured completion contract',
+        () async {
+      final adapter = _FakeStructuredAdapter();
+      final service = PosReceiptPrinterService(
+        loadConfiguration: (_) async => const PosDevicePrinterConfig(
+          deviceId: 'dev-1',
+          enabled: true,
+          connectionType: PrinterConnectionType.localPrintAgent,
+          displayName: 'Configured receipt printer',
+          paperWidth: PrinterPaperWidth.mm80,
+          agentBaseUrl: 'http://192.168.1.20:9101',
+          localApiKey: 'test-key-with-at-least-24-chars',
+          configurationId: 'config-1',
+          configurationVersion: 4,
+        ),
+        localPrintAgentAdapter: adapter,
+      );
+
+      final result = await service.printCompletionReceipt(
+        deviceId: 'dev-1',
+        receipt: _completionReceipt(resolution: 'EXCHANGE'),
+        printRequestId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
+      );
+
+      expect(adapter.printCalls, 1);
+      expect(adapter.request!.receiptPurpose, 'exchange');
+      expect(adapter.request!.originalReceiptReference, 'INV-1');
+      expect(adapter.request!.items.first.itemGroup, 'Returned items');
+      expect(adapter.request!.items.last.itemGroup, 'Replacement items');
+      expect(adapter.request!.printerConfigurationVersion, 4);
+      expect(result.routingPurpose, 'exchangeReceipt');
+    });
+
     test('USB config selects only USB adapter', () async {
       final usb = _FakeAdapter(PrinterConnectionType.usb);
       final bt = _FakeAdapter(PrinterConnectionType.bluetooth);
@@ -206,6 +264,7 @@ void main() {
       await service.printCompletionReceipt(
         deviceId: 'dev-1',
         receipt: _completionReceipt(),
+        printRequestId: '11111111-1111-4111-a111-111111111111',
       );
       expect(usb.printCalls, 1);
       expect(bt.printCalls, 0);
@@ -233,6 +292,7 @@ void main() {
       await service.printCompletionReceipt(
         deviceId: 'dev-1',
         receipt: _completionReceipt(),
+        printRequestId: '22222222-2222-4222-a222-222222222222',
       );
       expect(bt.printCalls, 1);
       expect(usb.printCalls, 0);
@@ -260,6 +320,7 @@ void main() {
       await service.printCompletionReceipt(
         deviceId: 'dev-1',
         receipt: _completionReceipt(),
+        printRequestId: '33333333-3333-4333-a333-333333333333',
       );
       expect(net.printCalls, 1);
       expect(usb.printCalls, 0);
@@ -279,6 +340,7 @@ void main() {
         () => service.printCompletionReceipt(
           deviceId: 'dev-1',
           receipt: _completionReceipt(),
+          printRequestId: '44444444-4444-4444-a444-444444444444',
         ),
         throwsA(isA<PrinterNotConfiguredException>()),
       );
@@ -304,6 +366,7 @@ void main() {
         () => service.printCompletionReceipt(
           deviceId: 'dev-1',
           receipt: _completionReceipt(),
+          printRequestId: '55555555-5555-4555-a555-555555555555',
         ),
         throwsA(isA<PrinterSendException>()),
       );

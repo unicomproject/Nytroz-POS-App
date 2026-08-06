@@ -24,7 +24,7 @@ void main() {
       await _pumpLoginScreen(tester);
 
       expect(find.text('Welcome Back!'), findsOneWidget);
-      expect(find.text('Sign in to continue to Nytroz POS'), findsOneWidget);
+      expect(find.text('Sign in to continue to OneVerz POS'), findsOneWidget);
       expect(find.text('Email'), findsOneWidget);
       expect(find.text('Password'), findsOneWidget);
       expect(find.text('Sign In'), findsOneWidget);

@@ -25,6 +25,7 @@ void main() {
     ValueChanged<String>? onRejected,
     bool enabled = true,
     int minimumLength = 4,
+    int maximumLength = 128,
     Duration delay = const Duration(milliseconds: 120),
     Widget child = const SizedBox(),
   }) {
@@ -32,6 +33,7 @@ void main() {
       home: PosBarcodeScannerListener(
         enabled: enabled,
         minimumBarcodeLength: minimumLength,
+        maximumBarcodeLength: maximumLength,
         maximumInterKeyDelay: delay,
         onBarcodeScanned: onScanned,
         onRejectedBarcode: onRejected,
@@ -70,6 +72,37 @@ void main() {
     await simulateKeyDownEvent(LogicalKeyboardKey.enter);
 
     expect(scanned, ['001234']);
+  });
+
+  testWidgets('50 intentional rapid repeated scans remain separate events',
+      (tester) async {
+    final scanned = <String>[];
+    await tester.pumpWidget(listener(onScanned: scanned.add));
+
+    for (var index = 0; index < 50; index++) {
+      await sendCharacters(tester, '001234');
+      await simulateKeyDownEvent(LogicalKeyboardKey.enter);
+      await simulateKeyUpEvent(LogicalKeyboardKey.enter);
+    }
+
+    expect(scanned, List<String>.filled(50, '001234'));
+  });
+
+  testWidgets('input longer than configured maximum is rejected once',
+      (tester) async {
+    final scanned = <String>[];
+    final rejected = <String>[];
+    await tester.pumpWidget(listener(
+      onScanned: scanned.add,
+      onRejected: rejected.add,
+      maximumLength: 5,
+    ));
+
+    await sendCharacters(tester, '123456');
+    await simulateKeyDownEvent(LogicalKeyboardKey.enter);
+
+    expect(scanned, isEmpty);
+    expect(rejected, ['123456']);
   });
 
   testWidgets('empty Enter is ignored and short barcode is rejected',

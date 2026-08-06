@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../hardware/receipt_printer/presentation/providers/cash_drawer_controller.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../auth/domain/entities/auth_session.dart';
@@ -110,6 +112,21 @@ class ReturnReceiptController extends StateNotifier<ReturnReceiptState> {
               );
 
       _ref.read(returnFlowProvider.notifier).setCompletedReceipt(receipt);
+
+      if (receipt.drawerOperationId != null &&
+          receipt.cashDrawerSettings != null) {
+        unawaited(
+          _ref
+              .read(cashDrawerControllerProvider.notifier)
+              .triggerAutoOpenForCheckout(
+                drawerOperationId: receipt.drawerOperationId!,
+                purposeStr: 'cashRefund',
+                drawerSettingsJson: receipt.cashDrawerSettings!,
+                businessReferenceId: receipt.returnId,
+              ),
+        );
+      }
+
       state = state.copyWith(isLoading: false, receipt: receipt);
     } on DioException catch (error) {
       state = state.copyWith(

@@ -21,6 +21,16 @@ class PrinterUnsupportedException extends PrinterException {
   ]) : super('printer_unsupported', message);
 }
 
+class PrinterConfigurationException extends PrinterException {
+  const PrinterConfigurationException(String message)
+      : super('configuration_invalid', message);
+}
+
+class PrinterOutcomeUnknownException extends PrinterException {
+  const PrinterOutcomeUnknownException(String message)
+      : super('partial_or_unknown_output', message);
+}
+
 class PrinterConnectionException extends PrinterException {
   const PrinterConnectionException(String message)
       : super('printer_connection_failed', message);

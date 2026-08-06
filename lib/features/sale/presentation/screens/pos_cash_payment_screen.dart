@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,9 +14,12 @@ import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/pos_checkout_api_exception.dart';
 import '../../domain/entities/pos_payment_method_type.dart';
+import '../../data/mappers/completed_sale_receipt_mapper.dart';
+import '../providers/completed_sale_print_provider.dart';
 import '../providers/pos_cash_payment_provider.dart';
 import '../providers/pos_cash_payment_success_provider.dart';
 import '../providers/pos_checkout_summary_provider.dart';
+import '../../../hardware/receipt_printer/presentation/providers/cash_drawer_controller.dart';
 import '../widgets/cash_payment/cash_payment_bottom_actions.dart';
 import '../widgets/cash_payment/cash_payment_header.dart';
 import '../widgets/cash_payment/cash_payment_right_panel.dart';
@@ -241,6 +246,34 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
       ref
           .read(posCashPaymentSuccessProvider.notifier)
           .recordCheckoutPayment(payload);
+
+      if (payload.drawerOperationId != null &&
+          payload.cashDrawerSettings != null) {
+        unawaited(
+          ref
+              .read(cashDrawerControllerProvider.notifier)
+              .triggerAutoOpenForCheckout(
+                drawerOperationId: payload.drawerOperationId!,
+                purposeStr: 'cashSale',
+                drawerSettingsJson: payload.cashDrawerSettings!,
+                businessReferenceId: payload.saleId,
+              ),
+        );
+      }
+
+      final activeSession = ref.read(authSessionProvider);
+      if (activeSession != null) {
+        final receipt = const CompletedSaleReceiptMapper().fromCompletedPayment(
+          payment: payload,
+          device: deviceContext,
+          session: activeSession,
+        );
+        unawaited(
+          ref
+              .read(completedSalePrintProvider.notifier)
+              .printAutomatically(receipt),
+        );
+      }
     } on PosCheckoutApiException catch (error) {
       if (!context.mounted) {
         return;

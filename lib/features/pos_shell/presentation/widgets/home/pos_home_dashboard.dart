@@ -5,7 +5,6 @@ import '../../../application/state/pos_home_dashboard_state.dart';
 import 'cashier_profile_card.dart';
 import 'dashboard_action_builder.dart';
 import 'dashboard_action_grid.dart';
-import 'pos_dashboard_header.dart';
 import 'session_summary_panel.dart';
 
 export 'dashboard_action_card.dart' show PosHomeActionTile;
@@ -61,7 +60,6 @@ class PosHomeDashboard extends StatelessWidget {
       dashboard: dashboard,
     );
     return [
-      PosDashboardHeader(dashboard: dashboard),
       if (status != null) ...[
         const SizedBox(height: TenantAdminSpacing.sm),
         status!,

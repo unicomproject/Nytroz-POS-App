@@ -308,14 +308,14 @@ class ReturnsRefundRemoteDatasource {
     }
   }
 
-  Future<void> recordReceiptPrint({required String saleId}) async {
+  Future<void> recordReceiptPrint({
+    required String saleId,
+    required Map<String, dynamic> audit,
+  }) async {
     try {
       await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.posReceiptPrint(saleId),
-        data: const {
-          'status': 'success',
-          'copies': 1,
-        },
+        data: audit,
       );
     } on DioException catch (error) {
       developer.log(

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/sale/presentation/providers/pos_barcode_scan_controller.dart';
-import 'package:nytroz_pos/features/sale/presentation/providers/pos_barcode_scan_feedback.dart';
+import 'package:nytroz_pos/features/pos/presentation/providers/new_sale/pos_barcode_scan_controller.dart';
+import 'package:nytroz_pos/features/pos/presentation/providers/new_sale/pos_barcode_scan_feedback.dart';
 
 void main() {
   test('success feedback includes item metadata and quantity per scan', () {

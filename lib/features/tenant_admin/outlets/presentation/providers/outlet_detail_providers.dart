@@ -8,7 +8,6 @@ final tenantAdminOutletOverviewProvider =
     FutureProvider.family<TenantAdminOutletOverview, String>((ref, id) {
   return ref.watch(outletRepositoryProvider).getTenantAdminOverview(id);
 });
-
 final outletDetailProvider =
     FutureProvider.family<OutletDetail, String>((ref, id) {
   return ref.watch(outletRepositoryProvider).getOutletDetail(id);
