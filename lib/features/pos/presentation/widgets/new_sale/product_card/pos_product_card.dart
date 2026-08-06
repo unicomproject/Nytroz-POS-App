@@ -74,7 +74,9 @@ class _PriceDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!product.hasOffer || product.requiresCartValidation || product.offerPrice == null) {
+    if (!product.hasOffer ||
+        product.requiresCartValidation ||
+        product.offerPrice == null) {
       return Text(
         formatLkr(product.basePrice),
         maxLines: 1,
@@ -127,7 +129,8 @@ class _OfferBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isConditional ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+        color:
+            isConditional ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
         borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
         boxShadow: [
           BoxShadow(

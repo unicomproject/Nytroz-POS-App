@@ -88,6 +88,24 @@ void main() {
   });
 
   group('PaymentMethodCard interaction', () {
+    testWidgets('card content fits the minimum responsive grid height',
+        (tester) async {
+      await tester.pumpWidget(const MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 300,
+            height: 116,
+            child: PaymentMethodCard(
+              method: PosPaymentMethodType.cash,
+              onTap: _noop,
+            ),
+          ),
+        ),
+      ));
+
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('executable Cash invokes only its supplied action',
         (tester) async {
       var taps = 0;
@@ -132,3 +150,5 @@ void main() {
     }
   });
 }
+
+void _noop() {}

@@ -1,21 +1,29 @@
+import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class PosCashPaymentState {
   const PosCashPaymentState({
     required this.cashReceived,
     required this.inputBuffer,
+    this.selectedQuickAmount,
   });
 
   final int cashReceived;
   final String inputBuffer;
+  final int? selectedQuickAmount;
 
   PosCashPaymentState copyWith({
     int? cashReceived,
     String? inputBuffer,
+    int? selectedQuickAmount,
+    bool clearSelectedQuickAmount = false,
   }) {
     return PosCashPaymentState(
       cashReceived: cashReceived ?? this.cashReceived,
       inputBuffer: inputBuffer ?? this.inputBuffer,
+      selectedQuickAmount: clearSelectedQuickAmount
+          ? null
+          : (selectedQuickAmount ?? this.selectedQuickAmount),
     );
   }
 }
@@ -35,30 +43,25 @@ class PosCashPaymentNotifier extends StateNotifier<PosCashPaymentState> {
     state = const PosCashPaymentState(
       cashReceived: 0,
       inputBuffer: '',
+      selectedQuickAmount: null,
+    );
+  }
+
+  void setAmount(int amount, {int? selectedQuickAmount}) {
+    state = PosCashPaymentState(
+      cashReceived: amount,
+      inputBuffer: amount == 0 ? '' : amount.toString(),
+      selectedQuickAmount: selectedQuickAmount,
     );
   }
 
   void appendKey(String key) {
-    if (key == 'ok') {
+    if (key == 'ok' || key == '.' || key == '+' || key == '-') {
       return;
     }
 
     if (key == 'clear') {
       clearAmount();
-      return;
-    }
-
-    if (key == '.') {
-      if (state.inputBuffer.contains('.')) {
-        return;
-      }
-
-      final nextBuffer =
-          state.inputBuffer.isEmpty ? '0.' : '${state.inputBuffer}.';
-      state = state.copyWith(
-        inputBuffer: nextBuffer,
-        cashReceived: _parseAmount(nextBuffer),
-      );
       return;
     }
 
@@ -69,44 +72,47 @@ class PosCashPaymentNotifier extends StateNotifier<PosCashPaymentState> {
 
       final nextBuffer =
           state.inputBuffer.substring(0, state.inputBuffer.length - 1);
+      final nextCash = _parseAmount(nextBuffer);
       state = PosCashPaymentState(
         inputBuffer: nextBuffer,
-        cashReceived: _parseAmount(nextBuffer),
+        cashReceived: nextCash,
+        selectedQuickAmount: nextCash == state.selectedQuickAmount
+            ? state.selectedQuickAmount
+            : null,
       );
       return;
     }
 
-    final digitCount = state.inputBuffer.replaceAll('.', '').length;
-    final nextDigitCount = digitCount + key.replaceAll('.', '').length;
-    if (nextDigitCount > _maxDigitCount) {
+    if (key == '00') {
+      if (state.inputBuffer.isEmpty || state.inputBuffer == '0') {
+        return;
+      }
+    }
+
+    final nextBuffer = (state.inputBuffer.isEmpty || state.inputBuffer == '0')
+        ? key
+        : '${state.inputBuffer}$key';
+
+    if (nextBuffer.length > _maxDigitCount) {
       return;
     }
 
-    final nextBuffer =
-        state.inputBuffer == '0' ? key : '${state.inputBuffer}$key';
+    final nextCash = _parseAmount(nextBuffer);
+
     state = PosCashPaymentState(
       inputBuffer: nextBuffer,
-      cashReceived: _parseAmount(nextBuffer),
+      cashReceived: nextCash,
+      selectedQuickAmount: nextCash == state.selectedQuickAmount
+          ? state.selectedQuickAmount
+          : null,
     );
   }
 
   int _parseAmount(String buffer) {
-    if (buffer.isEmpty || buffer == '.') {
+    if (buffer.isEmpty) {
       return 0;
     }
-
-    final normalized =
-        buffer.endsWith('.') ? buffer.substring(0, buffer.length - 1) : buffer;
-    if (normalized.isEmpty) {
-      return 0;
-    }
-
-    final parsed = double.tryParse(normalized);
-    if (parsed == null) {
-      return 0;
-    }
-
-    return parsed.round();
+    return int.tryParse(buffer) ?? 0;
   }
 }
 
@@ -116,9 +122,30 @@ final posCashPaymentProvider = StateNotifierProvider.autoDispose<
 );
 
 int cashPaymentChangeDue(int cashReceived, int total) {
-  return cashReceived - total;
+  return math.max(cashReceived - total, 0);
 }
 
 bool canConfirmCashPayment(int cashReceived, int total) {
   return cashReceived >= total && total > 0;
+}
+
+List<int> generateCashQuickAmounts(int totalDue) {
+  if (totalDue <= 0) {
+    return [];
+  }
+
+  final exactAmount = totalDue;
+  int nextRoundedAmount;
+
+  if (totalDue % 1000 == 0) {
+    nextRoundedAmount = totalDue + 1000;
+  } else {
+    nextRoundedAmount = (totalDue / 1000).ceil() * 1000;
+  }
+
+  if (exactAmount == nextRoundedAmount) {
+    return [exactAmount];
+  }
+
+  return [exactAmount, nextRoundedAmount];
 }

@@ -3,7 +3,9 @@ import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
+import '../../../../core/network/auth_unauthorized_interceptor.dart';
 import '../../domain/entities/pos_checkout_api_exception.dart';
+import '../../domain/entities/pos_cash_payment_observability.dart';
 import '../../domain/entities/pos_checkout_summary.dart';
 
 class PosCheckoutRemoteDatasource {
@@ -60,9 +62,19 @@ class PosCheckoutRemoteDatasource {
     String? discountApplicationId,
     required String idempotencyKey,
   }) async {
+    final correlation = cashPaymentCorrelation(idempotencyKey);
+    final stopwatch = Stopwatch()..start();
+    CashPaymentTrace.emit('pos_cash_payment_request_dispatched', {
+      'correlation': correlation,
+      'endpoint': ApiEndpoints.posCheckoutStartPayment,
+      'timestamp': DateTime.now().toUtc().toIso8601String(),
+    });
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.posCheckoutStartPayment,
+        options: Options(extra: const {
+          AuthUnauthorizedInterceptor.disableAutomaticRetry: true,
+        }),
         data: {
           ..._buildRequestBody(
             deviceId: deviceId,
@@ -77,16 +89,49 @@ class PosCheckoutRemoteDatasource {
         },
       );
 
-      return PosCheckoutStartPaymentPayload.fromJson(
+      final payload = PosCheckoutStartPaymentPayload.fromJson(
         _unwrapApiData(response.data ?? const {}),
       );
+      CashPaymentTrace.emit('pos_cash_payment_response_received', {
+        'correlation': correlation,
+        'httpStatus': response.statusCode,
+        'outcome': 'success',
+        'elapsedMs': stopwatch.elapsedMilliseconds,
+        'timestamp': DateTime.now().toUtc().toIso8601String(),
+      });
+      return payload;
     } on DioException catch (error) {
+      final mapped = checkoutApiExceptionFromDio(error);
+      CashPaymentTrace.emit('pos_cash_payment_request_failed', {
+        'correlation': correlation,
+        'category': error.type.name,
+        'httpStatus': mapped.statusCode,
+        'backendErrorCode': mapped.code,
+        'message': mapped.message,
+        'timeoutOrCancellation':
+            error.type == DioExceptionType.connectionTimeout ||
+                error.type == DioExceptionType.sendTimeout ||
+                error.type == DioExceptionType.receiveTimeout ||
+                error.type == DioExceptionType.cancel,
+        'elapsedMs': stopwatch.elapsedMilliseconds,
+        'timestamp': DateTime.now().toUtc().toIso8601String(),
+      });
       developer.log(
         'Checkout start-payment API failed. endpoint=${ApiEndpoints.posCheckoutStartPayment}, '
         'status=${error.response?.statusCode ?? 'none'}',
         name: 'pos.checkout',
       );
-      throw checkoutApiExceptionFromDio(error);
+      throw mapped;
+    } on Object catch (error) {
+      CashPaymentTrace.emit('pos_cash_payment_request_failed', {
+        'correlation': correlation,
+        'category': 'response_parsing',
+        'message': 'Checkout response could not be processed.',
+        'timeoutOrCancellation': false,
+        'elapsedMs': stopwatch.elapsedMilliseconds,
+        'timestamp': DateTime.now().toUtc().toIso8601String(),
+      });
+      Error.throwWithStackTrace(error, StackTrace.current);
     }
   }
 

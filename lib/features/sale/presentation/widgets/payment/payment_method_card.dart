@@ -65,7 +65,7 @@ class PaymentMethodCard extends StatelessWidget {
                     ),
                     child: Icon(method.icon, color: accent, size: 27),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(method.title,
                       textAlign: TextAlign.center,
                       maxLines: 1,

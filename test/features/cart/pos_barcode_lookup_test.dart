@@ -3,7 +3,9 @@ import 'package:nytroz_pos/features/cart/domain/entities/pos_barcode_lookup_resu
 
 void main() {
   group('PosBarcodeLookupResult parsing & mapping tests', () {
-    test('successfully parses imageUrl from json and maps to resolved sale item', () {
+    test(
+        'successfully parses imageUrl from json and maps to resolved sale item',
+        () {
       final json = {
         'productId': 'prod-123',
         'variantId': 'var-456',
@@ -29,7 +31,9 @@ void main() {
       expect(saleItem.imageUrl, 'https://example.com/shoes.png');
     });
 
-    test('successfully parses imageStorageKey as fallback from json and maps to resolved sale item', () {
+    test(
+        'successfully parses imageStorageKey as fallback from json and maps to resolved sale item',
+        () {
       final json = {
         'productId': 'prod-123',
         'variantId': 'var-456',

@@ -155,13 +155,13 @@ class _NewSaleSearchFieldState extends ConsumerState<_NewSaleSearchField> {
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                borderSide:
-                    const BorderSide(color: TenantAdminColors.border, width: 1.5),
+                borderSide: const BorderSide(
+                    color: TenantAdminColors.border, width: 1.5),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                borderSide:
-                    const BorderSide(color: TenantAdminColors.border, width: 1.5),
+                borderSide: const BorderSide(
+                    color: TenantAdminColors.border, width: 1.5),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(TenantAdminRadius.md),
