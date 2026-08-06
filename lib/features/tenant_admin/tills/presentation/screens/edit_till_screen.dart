@@ -121,7 +121,7 @@ class _EditTillScreenState extends ConsumerState<EditTillScreen> {
           );
 
       ref
-        ..invalidate(tillListProvider)
+        ..invalidate(tillListResultFutureProvider)
         ..invalidate(tillDetailProvider(widget.tillId));
 
       if (!mounted) {

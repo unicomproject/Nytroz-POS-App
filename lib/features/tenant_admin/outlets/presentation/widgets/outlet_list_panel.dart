@@ -12,7 +12,7 @@ import '../../domain/entities/outlet.dart';
 import '../providers/outlet_providers.dart';
 import '../utils/outlet_list_filters.dart';
 import 'outlet_mobile_list.dart';
-import 'outlet_table.dart';
+import 'outlet_card_list.dart';
 
 class OutletListPanel extends ConsumerWidget {
   const OutletListPanel({
@@ -34,20 +34,11 @@ class OutletListPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sortBy = ref.watch(outletSortByProvider);
-    final sortDirection = ref.watch(outletSortDirectionProvider);
     final page = ref.watch(outletPageProvider);
-    final outletCountLabel =
-        '${result.totalCount > 0 ? result.totalCount : result.items.length} '
-        '${result.totalCount == 1 ? 'Outlet' : 'Outlets'}';
 
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        border: Border.all(color: TenantAdminColors.border),
-      ),
+      color: TenantAdminColors.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -57,15 +48,60 @@ class OutletListPanel extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (showPanelTitle) ...[
-                  _PanelTitle(countLabel: outletCountLabel),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              visibility.showTitle ? 'Outlets' : 'Outlet List',
+                              style: TenantAdminTextStyles.pageTitle(context),
+                            ),
+                            if (visibility.showSubtitle) ...[
+                              const SizedBox(height: TenantAdminSpacing.xs),
+                              Text(
+                                'Manage all business outlets and sales locations.',
+                                style: TenantAdminTextStyles.muted(context),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (visibility.showAddOutlet)
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: TenantAdminColors.posHomeOrangeEnd,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(11),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          icon: const Icon(Icons.add, size: 18),
+                          label: Text(isMobile ? 'Add' : 'Add Outlet'),
+                          onPressed: () =>
+                              context.go('/tenant-admin/outlets/add'),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: TenantAdminSpacing.lg),
                 ],
                 _Toolbar(
                   visibility: visibility,
                   statusFilter: statusFilter,
+                  typeFilter: ref.watch(outletTypeFilterProvider),
                   summary: result.summary,
                   isMobile: isMobile,
-                  showAddButton: showAddButton,
                 ),
               ],
             ),
@@ -110,20 +146,16 @@ class OutletListPanel extends ConsumerWidget {
               ),
             )
           else
-            OutletTable(
+            OutletCardList(
               outlets: result.items,
-              columns: visibility.visibleColumns,
-              rowActions: visibility.visibleRowActions,
-              sortBy: sortBy,
-              sortDirection: sortDirection,
-              onSort: (sortKey) => _toggleSort(ref, sortKey),
-              page: visibility.showPagination ? page : null,
-              pageSize: visibility.showPagination ? result.pageSize : null,
-              totalCount: visibility.showPagination ? result.totalCount : null,
-              onPageChanged: visibility.showPagination
-                  ? (nextPage) =>
-                      ref.read(outletPageProvider.notifier).state = nextPage
-                  : null,
+              onView: (outlet) {
+                // Implement view action if needed, or it's handled by selection
+              },
+              onEdit: (outlet) =>
+                  context.go('/tenant-admin/outlets/${outlet.id}/edit'),
+              onDisable: (outlet) {
+                // Implement disable action
+              },
             ),
           if (isMobile && result.items.isNotEmpty && visibility.showPagination)
             _MobilePagination(
@@ -138,22 +170,9 @@ class OutletListPanel extends ConsumerWidget {
     );
   }
 
-  void _toggleSort(WidgetRef ref, String sortKey) {
-    final currentSortBy = ref.read(outletSortByProvider);
-    final currentDirection = ref.read(outletSortDirectionProvider);
-
-    if (currentSortBy == sortKey) {
-      ref.read(outletSortDirectionProvider.notifier).state =
-          currentDirection == 'asc' ? 'desc' : 'asc';
-    } else {
-      ref.read(outletSortByProvider.notifier).state = sortKey;
-      ref.read(outletSortDirectionProvider.notifier).state = 'asc';
-    }
-
-    ref.read(outletPageProvider.notifier).state = 1;
-  }
 
   void _resetFilters(WidgetRef ref) {
+    ref.read(outletTypeFilterProvider.notifier).state = OutletTypeFilter.all;
     ref.read(outletStatusFilterProvider.notifier).state =
         OutletStatusFilter.all;
     ref.read(outletSearchProvider.notifier).state = '';
@@ -161,204 +180,183 @@ class OutletListPanel extends ConsumerWidget {
   }
 }
 
-class _PanelTitle extends StatelessWidget {
-  const _PanelTitle({required this.countLabel});
-
-  final String countLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          'Outlet List',
-          style: TenantAdminTextStyles.sectionTitle(context),
-        ),
-        const SizedBox(width: TenantAdminSpacing.sm),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: TenantAdminSpacing.md,
-            vertical: TenantAdminSpacing.xs,
-          ),
-          decoration: BoxDecoration(
-            color: TenantAdminColors.secondary,
-            borderRadius: BorderRadius.circular(TenantAdminRadius.xl),
-          ),
-          child: Text(
-            countLabel,
-            style: const TextStyle(
-              color: TenantAdminColors.mutedText,
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 class _Toolbar extends ConsumerWidget {
   const _Toolbar({
     required this.visibility,
     required this.statusFilter,
+    required this.typeFilter,
     required this.summary,
     required this.isMobile,
-    required this.showAddButton,
   });
 
   final OutletListVisibility visibility;
   final OutletStatusFilter statusFilter;
+  final OutletTypeFilter typeFilter;
   final OutletListSummary summary;
   final bool isMobile;
-  final bool showAddButton;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final children = <Widget>[
-      if (visibility.showSearch)
-        Expanded(
-          child: TenantAdminSearchField(
-            hint: 'Search outlets...',
-            value: ref.watch(outletSearchProvider),
-            onChanged: (value) {
-              ref.read(outletSearchProvider.notifier).state = value;
-              ref.read(outletPageProvider.notifier).state = 1;
-            },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (visibility.showSearch)
+          Row(
+            children: [
+              Expanded(
+                child: TenantAdminSearchField(
+                  hint: 'Search outlets by name, code, manager, or location...',
+                  value: ref.watch(outletSearchProvider),
+                  onChanged: (value) {
+                    ref.read(outletSearchProvider.notifier).state = value;
+                    ref.read(outletPageProvider.notifier).state = 1;
+                  },
+                ),
+              ),
+              const SizedBox(width: TenantAdminSpacing.md),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: TenantAdminColors.border),
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.filter_list),
+                  onPressed: () =>
+                      _showFilterSheet(context, ref, statusFilter, summary),
+                ),
+              ),
+            ],
           ),
-        ),
-      if (visibility.showFilter) ...[
-        if (visibility.showSearch) const SizedBox(width: TenantAdminSpacing.sm),
-        SizedBox(
-          width: isMobile ? double.infinity : 142,
-          child: const _OutletTypeFilter(),
-        ),
-        const SizedBox(width: TenantAdminSpacing.sm),
-        SizedBox(
-          width: isMobile ? double.infinity : 142,
-          child: _OutletStatusDropdown(
-            value: statusFilter,
-            onChanged: (value) {
-              ref.read(outletStatusFilterProvider.notifier).state =
-                  value ?? OutletStatusFilter.all;
-              ref.read(outletPageProvider.notifier).state = 1;
-            },
-          ),
-        ),
-        const SizedBox(width: TenantAdminSpacing.sm),
-        TenantAdminSecondaryButton(
-          label: 'Filters',
-          icon: Icons.filter_alt_outlined,
-          onPressed: () =>
-              _showFilterSheet(context, ref, statusFilter, summary),
-        ),
-      ],
-      const SizedBox(width: TenantAdminSpacing.sm),
-      TenantAdminSecondaryButton(
-        label: 'Clear',
-        icon: Icons.refresh,
-        onPressed: () {
-          ref.read(outletSearchProvider.notifier).state = '';
-          ref.read(outletStatusFilterProvider.notifier).state =
-              OutletStatusFilter.all;
-          ref.read(outletPageProvider.notifier).state = 1;
-        },
-      ),
-      if (visibility.showAddOutlet && showAddButton) ...[
-        const SizedBox(width: TenantAdminSpacing.sm),
-        TenantAdminPrimaryButton(
-          label: isMobile ? 'Add' : 'Add outlet',
-          icon: Icons.add,
-          onPressed: () => context.go('/tenant-admin/outlets/add'),
-        ),
-      ],
-    ];
-
-    if (isMobile) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (visibility.showSearch) children.first,
-          const SizedBox(height: TenantAdminSpacing.sm),
-          Wrap(
-            spacing: TenantAdminSpacing.sm,
-            runSpacing: TenantAdminSpacing.sm,
-            children: children.skip(visibility.showSearch ? 1 : 0).toList(),
+        if (visibility.showFilter) ...[
+          const SizedBox(height: TenantAdminSpacing.md),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _FilterPill(
+                  label: 'All',
+                  isSelected: typeFilter == OutletTypeFilter.all &&
+                      statusFilter == OutletStatusFilter.all,
+                  onTap: () {
+                    ref.read(outletTypeFilterProvider.notifier).state =
+                        OutletTypeFilter.all;
+                    ref.read(outletStatusFilterProvider.notifier).state =
+                        OutletStatusFilter.all;
+                    ref.read(outletPageProvider.notifier).state = 1;
+                  },
+                ),
+                const SizedBox(width: TenantAdminSpacing.sm),
+                _FilterPill(
+                  label: 'Store',
+                  isSelected: typeFilter == OutletTypeFilter.store,
+                  onTap: () {
+                    ref.read(outletTypeFilterProvider.notifier).state =
+                        OutletTypeFilter.store;
+                    ref.read(outletPageProvider.notifier).state = 1;
+                  },
+                ),
+                const SizedBox(width: TenantAdminSpacing.sm),
+                _FilterPill(
+                  label: 'Warehouse',
+                  isSelected: typeFilter == OutletTypeFilter.warehouse,
+                  onTap: () {
+                    ref.read(outletTypeFilterProvider.notifier).state =
+                        OutletTypeFilter.warehouse;
+                    ref.read(outletPageProvider.notifier).state = 1;
+                  },
+                ),
+                const SizedBox(width: TenantAdminSpacing.sm),
+                _FilterPill(
+                  label: 'Active',
+                  isSelected: statusFilter == OutletStatusFilter.active,
+                  dotColor: Colors.green,
+                  onTap: () {
+                    ref.read(outletStatusFilterProvider.notifier).state =
+                        OutletStatusFilter.active;
+                    ref.read(outletPageProvider.notifier).state = 1;
+                  },
+                ),
+                const SizedBox(width: TenantAdminSpacing.sm),
+                _FilterPill(
+                  label: 'Needs Attention',
+                  isSelected: statusFilter == OutletStatusFilter.inactive,
+                  dotColor: Colors.orange,
+                  onTap: () {
+                    ref.read(outletStatusFilterProvider.notifier).state =
+                        OutletStatusFilter.inactive;
+                    ref.read(outletPageProvider.notifier).state = 1;
+                  },
+                ),
+              ],
+            ),
           ),
         ],
-      );
-    }
-
-    return Row(children: children);
-  }
-}
-
-class _OutletTypeFilter extends StatelessWidget {
-  const _OutletTypeFilter();
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      initialValue: 'all',
-      isExpanded: true,
-      decoration: _dropdownDecoration(),
-      items: const [
-        DropdownMenuItem(value: 'all', child: Text('All Types')),
       ],
-      onChanged: (_) {},
     );
   }
 }
 
-class _OutletStatusDropdown extends StatelessWidget {
-  const _OutletStatusDropdown({
-    required this.value,
-    required this.onChanged,
+class _FilterPill extends StatelessWidget {
+  const _FilterPill({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    this.dotColor,
   });
 
-  final OutletStatusFilter value;
-  final ValueChanged<OutletStatusFilter?> onChanged;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color? dotColor;
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<OutletStatusFilter>(
-      initialValue: value,
-      isExpanded: true,
-      decoration: _dropdownDecoration(),
-      items: OutletStatusFilter.values
-          .map(
-            (filter) => DropdownMenuItem(
-              value: filter,
-              child: Text(filter == OutletStatusFilter.all
-                  ? 'All Status'
-                  : filter.label),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? TenantAdminColors.posHomeOrangeEnd
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? TenantAdminColors.posHomeOrangeEnd
+                : TenantAdminColors.border,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (dotColor != null) ...[
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : TenantAdminColors.bodyText,
+              ),
             ),
-          )
-          .toList(),
-      onChanged: onChanged,
+          ],
+        ),
+      ),
     );
   }
 }
 
-InputDecoration _dropdownDecoration() {
-  return InputDecoration(
-    filled: true,
-    fillColor: TenantAdminColors.surface,
-    contentPadding: const EdgeInsets.symmetric(
-      horizontal: TenantAdminSpacing.md,
-      vertical: TenantAdminSpacing.sm,
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      borderSide: const BorderSide(color: TenantAdminColors.border),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      borderSide: const BorderSide(color: TenantAdminColors.primary),
-    ),
-  );
-}
 
 class _MobilePagination extends StatelessWidget {
   const _MobilePagination({

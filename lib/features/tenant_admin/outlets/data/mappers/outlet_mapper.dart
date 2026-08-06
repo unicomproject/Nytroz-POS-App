@@ -1,6 +1,8 @@
 import '../../domain/entities/outlet.dart';
 import '../../domain/entities/outlet_details.dart';
 import '../models/outlet_dto.dart';
+import '../models/tenant_admin_outlet_list_dto.dart';
+import '../models/tenant_admin_outlet_overview_dto.dart';
 
 extension OutletMapper on OutletDto {
   Outlet toEntity() {
@@ -15,8 +17,107 @@ extension OutletMapper on OutletDto {
       staffCount: staffCount,
       todaysSales: todaysSales,
       outletType: outletType,
-      contactNumber: contactNumber,
       city: city,
+    );
+  }
+}
+
+extension TenantAdminOutletListItemMapper on TenantAdminOutletListItemDto {
+  Outlet toEntity() {
+    return Outlet(
+      id: id,
+      name: name,
+      code: code,
+      status: status,
+      imageUrl: imageUrl,
+      location: location?.displayLocation ?? location?.addressLine ?? '',
+      city: location?.city,
+      managerName: manager?.displayName,
+      managerAvatarUrl: manager?.avatarUrl,
+      tillCount: tills?.totalCount ?? 0,
+      activeTillCount: tills?.activeCount ?? 0,
+      onlineTillCount: tills?.onlineCount ?? 0,
+      operationalHealthStatus: operationalHealth?.status ?? 'UNKNOWN',
+      activeAlertCount: operationalHealth?.activeAlertCount ?? 0,
+      canViewTillsAndHealth: access.canViewTillsAndHealth,
+      staffCount: 0,
+      todaysSales: '',
+      outletType: type,
+    );
+  }
+}
+
+extension TenantAdminOutletListResponseMapper
+    on TenantAdminOutletListResponseDto {
+  OutletListResult toEntity() {
+    final mappedItems =
+        items.map((item) => item.toEntity()).toList(growable: false);
+    final active = mappedItems
+        .where((outlet) => outlet.status.toLowerCase() == 'active')
+        .length;
+
+    return OutletListResult(
+      summary: OutletListSummary(
+        totalOutlets: totalCount,
+        activeOutlets: active,
+        inactiveOutlets: mappedItems.length - active,
+        totalLocations: totalCount,
+      ),
+      items: mappedItems,
+      page: pageNumber,
+      pageSize: pageSize,
+      totalCount: totalCount,
+    );
+  }
+}
+
+extension TenantAdminOutletOverviewMapper on TenantAdminOutletOverviewDto {
+  TenantAdminOutletOverview toEntity() {
+    return TenantAdminOutletOverview(
+      id: outlet.id,
+      name: outlet.name,
+      code: outlet.code,
+      type: outlet.type,
+      status: outlet.status,
+      imageUrl: outlet.imageUrl,
+      addressLine1: outlet.addressLine1,
+      city: outlet.city,
+      managerName: manager?.name,
+      managerEmail: manager?.email,
+      managerPhone: manager?.phone,
+      managerAvatarUrl: manager?.avatarUrl,
+      totalTills: tills?.totalCount ?? 0,
+      activeTills: tills?.activeCount ?? 0,
+      onlineTills: tills?.onlineCount ?? 0,
+      attentionTills: tills?.attentionCount ?? 0,
+      todayNetSales: sales?.todayNetSales ?? 0.0,
+      salesCurrency: sales?.currencyCode ?? 'USD',
+      stockValue: inventory?.stockValue ?? 0.0,
+      inventoryCurrency: inventory?.currencyCode ?? 'USD',
+      openOrderCount: orders?.openOrderCount ?? 0,
+      healthStatus: health.status,
+      lastActivityAt: health.lastActivityAt,
+      lastSyncAt: health.lastSyncAt,
+      alerts:
+          alerts?.map((e) => e.toEntity()).toList(growable: false) ?? const [],
+      totalActiveAlertCount: totalActiveAlertCount,
+      canViewTills: access.canViewTills,
+      canViewSales: access.canViewSales,
+      canViewInventory: access.canViewInventory,
+      canViewOrders: access.canViewOrders,
+      canViewAlerts: access.canViewAlerts,
+    );
+  }
+}
+
+extension TenantAdminOutletOverviewAlertMapper on OutletOverviewAlertDto {
+  TenantAdminOutletOverviewAlert toEntity() {
+    return TenantAdminOutletOverviewAlert(
+      alertId: alertId,
+      title: title,
+      severity: severity,
+      description: description,
+      occurredAt: occurredAt,
     );
   }
 }
@@ -40,6 +141,17 @@ extension OutletListSummaryMapper on OutletListSummaryDto {
       activeOutlets: activeOutlets,
       inactiveOutlets: inactiveOutlets,
       totalLocations: totalLocations,
+    );
+  }
+}
+
+extension OutletSummaryDashboardMapper on OutletSummaryDashboardDto {
+  OutletSummaryDashboard toEntity() {
+    return OutletSummaryDashboard(
+      totalOutlets: totalOutlets,
+      activeOutlets: activeOutlets,
+      warehouseOutlets: warehouseOutlets,
+      needsAttention: needsAttention,
     );
   }
 }

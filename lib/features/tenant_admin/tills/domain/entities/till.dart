@@ -1,83 +1,3 @@
-class Till {
-  const Till({
-    required this.id,
-    required this.outletId,
-    required this.outletName,
-    required this.name,
-    required this.code,
-    required this.status,
-    required this.operationalStatus,
-    this.attentionLabel,
-    this.lastActiveAt,
-  });
-
-  final String id;
-  final String outletId;
-  final String outletName;
-  final String name;
-  final String code;
-  final String status;
-  final String operationalStatus;
-  final String? attentionLabel;
-  final DateTime? lastActiveAt;
-}
-
-class TillListSummary {
-  const TillListSummary({
-    required this.totalTills,
-    required this.onlineCount,
-    required this.offlineCount,
-    required this.inactiveCount,
-    required this.needsAttentionCount,
-  });
-
-  final int totalTills;
-  final int onlineCount;
-  final int offlineCount;
-  final int inactiveCount;
-  final int needsAttentionCount;
-}
-
-class TillListResult {
-  const TillListResult({
-    required this.summary,
-    required this.items,
-    this.page = 1,
-    this.pageSize = 10,
-    this.totalCount = 0,
-  });
-
-  final TillListSummary summary;
-  final List<Till> items;
-  final int page;
-  final int pageSize;
-  final int totalCount;
-
-  int get totalPages {
-    if (pageSize <= 0 || totalCount <= 0) {
-      return totalCount > 0 ? 1 : 0;
-    }
-
-    return (totalCount / pageSize).ceil();
-  }
-
-  int get rangeStart {
-    if (totalCount == 0) {
-      return 0;
-    }
-
-    return ((page - 1) * pageSize) + 1;
-  }
-
-  int get rangeEnd {
-    if (totalCount == 0) {
-      return 0;
-    }
-
-    return (page * pageSize).clamp(0, totalCount);
-  }
-}
-
 class TillListQuery {
   const TillListQuery({
     this.search,
@@ -122,6 +42,38 @@ class TillFormData {
   final String? internalNote;
 }
 
+class AddTillFormData {
+  const AddTillFormData({
+    required this.name,
+    required this.code,
+    required this.outletId,
+    required this.status,
+    required this.defaultCashierTenantUserId,
+    required this.defaultOpeningFloatAmount,
+    this.posDeviceId,
+    this.hardwareAssignments = const [],
+  });
+
+  final String name;
+  final String code;
+  final String outletId;
+  final String status;
+  final String defaultCashierTenantUserId;
+  final String defaultOpeningFloatAmount;
+  final String? posDeviceId;
+  final List<TillHardwareSelection> hardwareAssignments;
+}
+
+class TillHardwareSelection {
+  const TillHardwareSelection({
+    required this.hardwareDeviceId,
+    this.isPrimary = false,
+  });
+
+  final String hardwareDeviceId;
+  final bool isPrimary;
+}
+
 class CreatedTill {
   const CreatedTill({
     required this.id,
@@ -129,6 +81,14 @@ class CreatedTill {
     required this.name,
     required this.code,
     required this.status,
+    this.outletName,
+    this.defaultOpeningFloatAmount,
+    this.currencyCode,
+    this.defaultCashier,
+    this.posDevice,
+    this.hardwareAssignments = const [],
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -136,6 +96,52 @@ class CreatedTill {
   final String name;
   final String code;
   final String status;
+  final String? outletName;
+  final double? defaultOpeningFloatAmount;
+  final String? currencyCode;
+  final CreatedTillCashier? defaultCashier;
+  final CreatedTillPosDevice? posDevice;
+  final List<CreatedTillHardwareAssignment> hardwareAssignments;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+}
+
+class CreatedTillCashier {
+  const CreatedTillCashier({
+    required this.tenantUserId,
+    required this.displayName,
+  });
+
+  final String tenantUserId;
+  final String displayName;
+}
+
+class CreatedTillPosDevice {
+  const CreatedTillPosDevice({
+    required this.posDeviceId,
+    required this.deviceName,
+    required this.deviceCode,
+  });
+
+  final String posDeviceId;
+  final String deviceName;
+  final String deviceCode;
+}
+
+class CreatedTillHardwareAssignment {
+  const CreatedTillHardwareAssignment({
+    required this.hardwareDeviceId,
+    required this.hardwareDeviceName,
+    required this.hardwareDeviceCode,
+    required this.hardwareDeviceType,
+    required this.isPrimary,
+  });
+
+  final String hardwareDeviceId;
+  final String hardwareDeviceName;
+  final String hardwareDeviceCode;
+  final String hardwareDeviceType;
+  final bool isPrimary;
 }
 
 class OutletOption {

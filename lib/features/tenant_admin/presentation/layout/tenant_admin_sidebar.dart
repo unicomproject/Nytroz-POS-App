@@ -123,7 +123,7 @@ class TenantAdminSidebar extends ConsumerWidget {
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(10, 4, 10, 14),
+                padding: const EdgeInsets.fromLTRB(0, 4, 0, 14),
                 children: [
                   for (final item in items)
                     if (item.key == 'products')
@@ -311,6 +311,8 @@ IconData tenantAdminSidebarIconFor(String iconKey) {
       return Icons.inventory_2_outlined;
     case 'inventory':
       return Icons.warehouse_outlined;
+    case 'reports':
+      return Icons.bar_chart_outlined;
     case 'settings':
       return Icons.settings_outlined;
     default:

@@ -70,14 +70,12 @@ const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
   TenantAdminMenuItem(
     key: 'hardware',
     label: 'Hardware',
-    route: '',
+    route: '/tenant-admin/hardware',
     iconKey: 'hardware',
     featureCode: TenantAdminFeatureCodes.tillManagement,
     permissionCode: TenantAdminPermissionCodes.tenantHardwareView,
     visible: true,
     order: 7,
-    isRouteAvailable: false,
-    unavailableMessage: 'Hardware module is not available yet.',
   ),
   TenantAdminMenuItem(
     key: 'inventory',
@@ -100,6 +98,18 @@ const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
     order: 9,
   ),
   TenantAdminMenuItem(
+    key: 'reports',
+    label: 'Reports',
+    route: '/tenant-admin/reports',
+    iconKey: 'reports',
+    featureCode: TenantAdminFeatureCodes.reportsAnalytics,
+    permissionCode: TenantAdminPermissionCodes.reportView,
+    visible: true,
+    order: 10,
+    isRouteAvailable: false,
+    unavailableMessage: 'Reports module is not available yet.',
+  ),
+  TenantAdminMenuItem(
     key: 'settings',
     label: 'Settings',
     route: '/tenant-admin/settings',
@@ -107,6 +117,6 @@ const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
     featureCode: TenantAdminFeatureCodes.tenantSettings,
     permissionCode: TenantAdminPermissionCodes.tenantSettingsView,
     visible: true,
-    order: 10,
+    order: 11,
   ),
 ];

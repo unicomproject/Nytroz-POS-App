@@ -5,13 +5,10 @@ enum OutletTableColumnId {
   name,
   code,
   type,
+  manager,
   city,
-  location,
-  contactNumber,
   status,
   tills,
-  staff,
-  sales,
   actions,
 }
 
@@ -50,24 +47,26 @@ const outletTableColumnConfigs = <OutletTableColumnConfig>[
     columnId: OutletTableColumnId.type,
     label: 'Type',
     permission: TenantAdminPermissionCodes.outletView,
+    sortKey: 'type',
+  ),
+  OutletTableColumnConfig(
+    id: 'manager',
+    columnId: OutletTableColumnId.manager,
+    label: 'Manager',
+    permission: TenantAdminPermissionCodes.outletView,
   ),
   OutletTableColumnConfig(
     id: 'city',
     columnId: OutletTableColumnId.city,
     label: 'City',
     permission: TenantAdminPermissionCodes.outletLocationView,
-  ),
-  OutletTableColumnConfig(
-    id: 'contact',
-    columnId: OutletTableColumnId.contactNumber,
-    label: 'Contact Number',
-    permission: TenantAdminPermissionCodes.outletLocationView,
+    sortKey: 'city',
   ),
   OutletTableColumnConfig(
     id: 'status',
     columnId: OutletTableColumnId.status,
     label: 'Status',
-    permission: TenantAdminPermissionCodes.outletStatusView,
+    permission: TenantAdminPermissionCodes.outletView,
     sortKey: 'status',
   ),
   OutletTableColumnConfig(

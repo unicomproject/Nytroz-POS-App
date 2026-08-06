@@ -6,6 +6,7 @@ import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
+import '../../domain/entities/till_monitoring.dart';
 import '../../domain/entities/till.dart';
 import '../providers/till_providers.dart';
 import '../providers/till_visibility_provider.dart';
@@ -96,16 +97,22 @@ class TillDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Till _tillFromDetail(TillDetail detail) {
-    return Till(
+  TillMonitoringItem _tillFromDetail(TillDetail detail) {
+    return TillMonitoringItem(
       id: detail.id,
       outletId: detail.outletId,
       outletName: detail.outletName,
       name: detail.name,
       code: detail.code,
-      status: detail.status,
-      operationalStatus: detail.deviceStatus.toLowerCase(),
-      attentionLabel: detail.needsAttention ? 'Needs attention' : null,
+      lifecycleStatus: TillLifecycleStatus.active,
+      operationalStatus: TillOperationalStatus.unknown,
+      displayStatus: detail.status == 'Active'
+          ? TillDisplayStatus.online
+          : TillDisplayStatus
+              .offline, // Basic mapping since we don't have full info here
+      needsAttention: detail.needsAttention,
+      attentionReasonCount: detail.needsAttention ? 1 : 0,
+      currentCashierName: null, // Basic mapping
       lastActiveAt: detail.lastActiveAt,
     );
   }

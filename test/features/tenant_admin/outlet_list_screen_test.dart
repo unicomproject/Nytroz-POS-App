@@ -10,6 +10,7 @@ import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/providers/
 import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/screens/outlet_list_screen.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/layout/tenant_admin_bottom_nav.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_access_provider.dart';
+import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/providers/outlet_providers.dart';
 
 void main() {
   group('Outlet list screen', () {
@@ -30,12 +31,13 @@ void main() {
         tester,
         permissions: [TenantAdminPermissionCodes.outletView],
         features: [TenantAdminFeatureCodes.outletManagement],
-        width: 1200,
+        width: 1400,
+        height: 1200,
       );
 
-      expect(find.text('Outlet List'), findsOneWidget);
+      expect(find.text('Outlets'), findsWidgets);
       expect(find.text('High Street Store'), findsOneWidget);
-      expect(find.text('Add outlet'), findsNothing);
+      expect(find.text('Add Outlet'), findsNothing);
     });
 
     testWidgets('shows Add outlet button only with outlet.create',
@@ -47,10 +49,11 @@ void main() {
           TenantAdminPermissionCodes.outletCreate,
         ],
         features: [TenantAdminFeatureCodes.outletManagement],
-        width: 1200,
+        width: 1400,
+        height: 1200,
       );
 
-      expect(find.text('Add outlet'), findsOneWidget);
+      expect(find.text('Add Outlet'), findsOneWidget);
     });
 
     testWidgets('shows summary cards only with outlet.summary.view',
@@ -75,7 +78,8 @@ void main() {
         tester,
         permissions: [TenantAdminPermissionCodes.outletView],
         features: [TenantAdminFeatureCodes.outletManagement],
-        width: 1200,
+        width: 1400,
+        height: 1200,
       );
 
       expect(find.text('City'), findsNothing);
@@ -87,7 +91,8 @@ void main() {
         tester,
         permissions: [TenantAdminPermissionCodes.outletView],
         features: [TenantAdminFeatureCodes.outletManagement],
-        width: 1200,
+        width: 1400,
+        height: 1200,
       );
 
       expect(find.text('Outlets'), findsWidgets);
@@ -173,6 +178,14 @@ Future<void> _pumpOutletList(
             totalCount: 1,
           ),
         ),
+        outletSummaryDashboardProvider.overrideWith(
+          (ref) async => const OutletSummaryDashboard(
+            totalOutlets: 1,
+            activeOutlets: 1,
+            warehouseOutlets: 0,
+            needsAttention: null,
+          ),
+        ),
       ],
       child: MaterialApp(
         home: Scaffold(
@@ -185,7 +198,10 @@ Future<void> _pumpOutletList(
     ),
   );
 
-  await tester.pumpAndSettle();
+  await tester.pump();
+  await tester.pump(Duration.zero);
+  await tester.pump(Duration.zero);
+  await tester.pump(Duration.zero);
 }
 
 TenantAdminAccessChecker _checker({

@@ -101,6 +101,31 @@ class OutletListResultDto {
   final int totalCount;
 }
 
+class OutletSummaryDashboardDto {
+  const OutletSummaryDashboardDto({
+    required this.totalOutlets,
+    required this.activeOutlets,
+    required this.warehouseOutlets,
+    this.needsAttention,
+  });
+
+  factory OutletSummaryDashboardDto.fromJson(Map<String, dynamic> json) {
+    return OutletSummaryDashboardDto(
+      totalOutlets: _intValue(json['totalOutlets']),
+      activeOutlets: _intValue(json['activeOutlets']),
+      warehouseOutlets: _intValue(json['warehouseOutlets']),
+      needsAttention: json['needsAttention'] != null
+          ? _intValue(json['needsAttention'])
+          : null,
+    );
+  }
+
+  final int totalOutlets;
+  final int activeOutlets;
+  final int warehouseOutlets;
+  final int? needsAttention;
+}
+
 class OutletListSummaryDto {
   const OutletListSummaryDto({
     required this.totalOutlets,

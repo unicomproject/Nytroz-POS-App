@@ -11,6 +11,7 @@ import '../config/outlet_row_action_configs.dart';
 import '../config/outlet_table_column_configs.dart';
 import '../providers/outlet_providers.dart';
 import '../providers/outlet_visibility_provider.dart';
+import '../providers/selected_outlet_provider.dart';
 import '../utils/outlet_list_filters.dart';
 
 class OutletTable extends ConsumerWidget {
@@ -69,6 +70,8 @@ class OutletTable extends ConsumerWidget {
       rows: [
         for (final outlet in outlets)
           DataRow(
+            selected: ref.watch(selectedOutletIdProvider) == outlet.id,
+            onSelectChanged: (_) => _handleRowTap(context, ref, outlet.id),
             cells: [
               for (final column in columns)
                 _buildCell(context, ref, column, outlet, canEdit, canDelete),
@@ -156,7 +159,7 @@ class OutletTable extends ConsumerWidget {
       case OutletTableColumnId.name:
         return DataCell(
           InkWell(
-            onTap: () => context.go('/tenant-admin/outlets/${outlet.id}'),
+            onTap: () => _handleRowTap(context, ref, outlet.id),
             child: Row(
               children: [
                 Container(
@@ -190,26 +193,22 @@ class OutletTable extends ConsumerWidget {
         return DataCell(_PlainCell(outlet.code));
       case OutletTableColumnId.type:
         return DataCell(_PlainCell(_outletType(outlet)));
+      case OutletTableColumnId.manager:
+        return DataCell(_PlainCell(_mockManager(outlet.code)));
       case OutletTableColumnId.city:
         return DataCell(_PlainCell(_cityLabel(outlet)));
-      case OutletTableColumnId.location:
-        return DataCell(_PlainCell(_emptyDash(outlet.location)));
-      case OutletTableColumnId.contactNumber:
-        return DataCell(_PlainCell(_emptyDash(outlet.contactNumber)));
       case OutletTableColumnId.status:
         final statusLabel = displayOutletStatus(outlet.status);
+        final statusType = _statusType(outlet.status);
+
         return DataCell(
           TenantAdminStatusBadge(
             label: statusLabel,
-            status: _statusType(statusLabel),
+            status: statusType,
           ),
         );
       case OutletTableColumnId.tills:
         return DataCell(_PlainCell('${outlet.tillCount}'));
-      case OutletTableColumnId.staff:
-        return DataCell(_PlainCell('${outlet.staffCount}'));
-      case OutletTableColumnId.sales:
-        return DataCell(_PlainCell(_emptyDash(outlet.todaysSales)));
       case OutletTableColumnId.actions:
         return DataCell(
           Align(
@@ -220,8 +219,7 @@ class OutletTable extends ConsumerWidget {
                 _ActionIconButton(
                   icon: Icons.visibility_outlined,
                   tooltip: 'View outlet',
-                  onPressed: () =>
-                      context.go('/tenant-admin/outlets/${outlet.id}'),
+                  onPressed: () => _handleRowTap(context, ref, outlet.id),
                 ),
                 if (canEdit) const SizedBox(width: TenantAdminSpacing.sm),
                 if (canEdit)
@@ -245,6 +243,15 @@ class OutletTable extends ConsumerWidget {
             ),
           ),
         );
+    }
+  }
+
+  void _handleRowTap(BuildContext context, WidgetRef ref, String id) {
+    final isDesktop = MediaQuery.of(context).size.width >= 1000;
+    if (isDesktop) {
+      ref.read(selectedOutletIdProvider.notifier).state = id;
+    } else {
+      context.go('/tenant-admin/outlets/$id');
     }
   }
 
@@ -409,11 +416,6 @@ class _PlainCell extends StatelessWidget {
   }
 }
 
-String _emptyDash(String? value) {
-  final trimmed = value?.trim() ?? '';
-  return trimmed.isEmpty ? '—' : trimmed;
-}
-
 String _outletType(Outlet outlet) {
   final value = outlet.outletType?.trim();
   return value == null || value.isEmpty ? 'Company Owned' : value;
@@ -449,4 +451,13 @@ TenantAdminStatusType _statusType(String status) {
     default:
       return TenantAdminStatusType.warning;
   }
+}
+
+String _mockManager(String code) {
+  if (code.contains('DEV')) return 'Kavindu Silva';
+  if (code.contains('CITY')) return 'Nadeesha Perera';
+  if (code.contains('WH')) return 'Admin Team';
+  if (code.contains('FEST')) return 'Tharushi';
+  if (code.contains('MALL')) return 'Isuru Fernando';
+  return 'Unassigned';
 }

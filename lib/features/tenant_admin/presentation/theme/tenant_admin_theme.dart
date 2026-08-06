@@ -6,7 +6,7 @@ class TenantAdminColors {
   static const navy = Color(0xFF071A33);
   static const navySoft = Color(0xFF0E2748);
   static const startSaleHero = Color(0xFF001C38);
-  static const background = Color(0xFFF8FAFF);
+  static const background = Color(0xFF030303);
   static const surface = Colors.white;
   static const border = Color(0xFFE5EAF4);
   static const mutedText = Color(0xFF64748B);
@@ -115,14 +115,14 @@ class TenantAdminInsets {
 
   static EdgeInsets pageForWidth(double width) {
     if (width < TenantAdminBreakpoints.mobile) {
-      return const EdgeInsets.all(TenantAdminSpacing.lg);
+      return const EdgeInsets.all(TenantAdminSpacing.sm);
     }
 
     if (width < TenantAdminBreakpoints.tablet) {
-      return const EdgeInsets.all(TenantAdminSpacing.xl);
+      return const EdgeInsets.all(TenantAdminSpacing.md);
     }
 
-    return const EdgeInsets.fromLTRB(24, 22, 24, 24);
+    return const EdgeInsets.fromLTRB(12, 8, 12, 12);
   }
 }
 
@@ -131,7 +131,7 @@ class TenantAdminFooterNav {
 
   /// Height of the fixed bottom footer navigation shown on all Tenant Admin
   /// routes (matches [PosCashierBottomNavigation]'s height).
-  static const height = 68.0;
+  static const height = 48.0;
 
   /// Extra bottom inset to reserve for scrollable content so the fixed
   /// footer never overlaps the last visible row.
@@ -142,7 +142,7 @@ class TenantAdminAppHeaderTokens {
   const TenantAdminAppHeaderTokens._();
 
   /// Height of the shared black Tenant Admin application header.
-  static const height = 64.0;
+  static const height = 38.0;
 }
 
 class TenantAdminSidebarTokens {
@@ -154,13 +154,13 @@ class TenantAdminSidebarTokens {
   static const childIndent = 28.0;
   static const compactChildIndent = 18.0;
 
-  static const background = TenantAdminColors.surface;
-  static const border = TenantAdminColors.border;
-  static const foreground = TenantAdminColors.bodyText;
+  static const background = TenantAdminColors.posHomeDarkBackground;
+  static const border = Colors.transparent;
+  static const foreground = TenantAdminColors.surface;
   static const mutedForeground = TenantAdminColors.mutedText;
   static const icon = Color(0xFF94A3B8);
-  static const activeBackground = Color(0xFFF3E8FF);
-  static const activeForeground = Color(0xFF7C3AED);
+  static const activeBackground = TenantAdminColors.posHomeOrangeEnd;
+  static const activeForeground = TenantAdminColors.surface;
   static const disabledForeground = Color(0xFFB6C0D1);
 }
 

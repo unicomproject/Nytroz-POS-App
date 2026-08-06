@@ -7,6 +7,7 @@ import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../till/presentation/providers/till_provider.dart';
 import '../../application/state/pos_home_dashboard_state.dart';
 import '../../data/datasources/pos_home_remote_datasource.dart';
+import '../providers/hardware_telemetry_provider.dart';
 import '../providers/pos_home_dashboard_provider.dart';
 import '../widgets/home/pos_home_dashboard.dart';
 
@@ -17,6 +18,7 @@ class PosHomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboardAsync = ref.watch(posHomeDashboardProvider);
     final shellDashboard = _shellDashboard(ref);
+    ref.watch(hardwareTelemetryProvider);
 
     return dashboardAsync.when(
       data: (dashboard) => PosHomeDashboard(dashboard: dashboard),

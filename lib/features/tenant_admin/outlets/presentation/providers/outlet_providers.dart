@@ -48,6 +48,9 @@ final outletSearchProvider = StateProvider<String>((ref) => '');
 final outletStatusFilterProvider =
     StateProvider<OutletStatusFilter>((ref) => OutletStatusFilter.all);
 
+final outletTypeFilterProvider =
+    StateProvider<OutletTypeFilter>((ref) => OutletTypeFilter.all);
+
 final outletPageProvider = StateProvider<int>((ref) => 1);
 
 final outletPageSizeProvider = StateProvider<int>((ref) => 10);
@@ -59,6 +62,11 @@ final outletSortDirectionProvider = StateProvider<String>((ref) => 'asc');
 final outletDetailsProvider =
     FutureProvider.family<OutletDetails, String>((ref, id) {
   return ref.watch(getOutletDetailsProvider).call(id);
+});
+
+final outletSummaryDashboardProvider =
+    FutureProvider<OutletSummaryDashboard>((ref) async {
+  return ref.watch(outletRepositoryProvider).getSummary();
 });
 
 final outletManagersProvider =
@@ -73,6 +81,7 @@ final outletCreateOptionsProvider = FutureProvider<OutletCreateOptions>((ref) {
 final outletListQueryProvider = Provider<OutletListQuery>((ref) {
   final search = ref.watch(outletSearchProvider);
   final statusFilter = ref.watch(outletStatusFilterProvider);
+  final typeFilter = ref.watch(outletTypeFilterProvider);
   final page = ref.watch(outletPageProvider);
   final pageSize = ref.watch(outletPageSizeProvider);
   final sortBy = ref.watch(outletSortByProvider);
@@ -83,6 +92,7 @@ final outletListQueryProvider = Provider<OutletListQuery>((ref) {
     page: page,
     pageSize: pageSize,
     status: statusFilter.apiStatus,
+    outletType: typeFilter.apiType,
     sortBy: sortBy,
     sortDirection: sortDirection,
   );

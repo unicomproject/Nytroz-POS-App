@@ -28,31 +28,41 @@ class TenantAdminPageScaffold extends StatelessWidget {
         builder: (context, constraints) {
           final basePadding =
               padding ?? TenantAdminInsets.pageForWidth(constraints.maxWidth);
-          final resolvedPadding = constraints.maxWidth < 760
-              ? const EdgeInsets.fromLTRB(20, 20, 20, 24)
-              : basePadding;
           final isNarrow = constraints.maxWidth < TenantAdminBreakpoints.mobile;
 
-          return SingleChildScrollView(
-            padding: resolvedPadding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (isNarrow)
-                  _VerticalHeader(
-                    title: title,
-                    subtitle: subtitle,
-                    actions: actions,
-                  )
-                else
-                  _HorizontalHeader(
-                    title: title,
-                    subtitle: subtitle,
-                    actions: actions,
-                  ),
-                const SizedBox(height: 20),
-                child,
-              ],
+          return Padding(
+            padding: EdgeInsets.zero,
+            child: Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: TenantAdminColors.surface,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: isNarrow ? null : TenantAdminShadows.card,
+              ),
+              child: SingleChildScrollView(
+                padding: basePadding,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (title.isNotEmpty) ...[
+                      if (isNarrow)
+                        _VerticalHeader(
+                          title: title,
+                          subtitle: subtitle,
+                          actions: actions,
+                        )
+                      else
+                        _HorizontalHeader(
+                          title: title,
+                          subtitle: subtitle,
+                          actions: actions,
+                        ),
+                      const SizedBox(height: 20),
+                    ],
+                    child,
+                  ],
+                ),
+              ),
             ),
           );
         },

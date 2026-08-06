@@ -5,21 +5,31 @@ import '../models/create_outlet_request_dto.dart';
 import '../models/outlet_detail_dtos.dart';
 import '../models/outlet_create_options_dto.dart';
 import '../models/outlet_dto.dart';
+import '../models/tenant_admin_outlet_list_dto.dart';
+import '../models/tenant_admin_outlet_overview_dto.dart';
 
 class OutletRemoteDatasource {
   const OutletRemoteDatasource(this._dio);
 
   final Dio _dio;
 
-  static const _outletBase = '/api/v1/outlets';
+  static const _outletBase = '/api/v1/tenant-admin/outlets';
 
-  Future<OutletListResultDto> getOutlets(OutletListQuery query) async {
+  Future<TenantAdminOutletListResponseDto> getOutlets(
+      OutletListQuery query) async {
     final response = await _dio.get<dynamic>(
       _outletBase,
       queryParameters: _listQueryParameters(query),
     );
 
     return _parseListResponse(response.data, response.requestOptions);
+  }
+
+  Future<OutletSummaryDashboardDto> getSummary() async {
+    final response = await _dio.get<dynamic>('$_outletBase/summary');
+    return OutletSummaryDashboardDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
   }
 
   Future<OutletCreateOptionsDto> getCreateOptions() async {
@@ -32,6 +42,13 @@ class OutletRemoteDatasource {
   Future<OutletDetailsDto> getOutletDetails(String id) async {
     final response = await _dio.get<dynamic>('$_outletBase/$id');
     return OutletDetailsDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<TenantAdminOutletOverviewDto> getTenantAdminOverview(String id) async {
+    final response = await _dio.get<dynamic>('$_outletBase/$id/overview');
+    return TenantAdminOutletOverviewDto.fromJson(
       _unwrapApiPayload(response.data, response.requestOptions),
     );
   }
@@ -64,11 +81,19 @@ class OutletRemoteDatasource {
   }
 
   Future<void> updateOutletStatus(String id, String status) async {
-    final _ = (id, status);
-    throw UnsupportedError(
-      'Outlet status PATCH is not supported by the current backend contract. '
-      'Use the outlet edit flow, which sends PUT /api/v1/outlets/{id}.',
+    // PUT request to update lifecycle status (ACTIVE / INACTIVE)
+    final response = await _dio.put<void>(
+      '$_outletBase/$id/status',
+      data: {"status": status},
     );
+    // No content expected; throw on error via DioException handling
+    if (response.statusCode != null && response.statusCode! >= 400) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        type: DioExceptionType.badResponse,
+        message: 'Failed to update outlet status',
+      );
+    }
   }
 
   Future<List<OutletManagerOptionDto>> getManagerOptions() async {
@@ -82,10 +107,14 @@ class OutletRemoteDatasource {
       'pageSize': query.pageSize,
       if (query.search != null && query.search!.trim().isNotEmpty)
         'search': query.search!.trim(),
+      if (query.status != null) 'status': query.status,
+      if (query.outletType != null) 'outletType': query.outletType,
+      if (query.sortBy.isNotEmpty) 'sortBy': query.sortBy,
+      if (query.sortDirection.isNotEmpty) 'sortDirection': query.sortDirection,
     };
   }
 
-  OutletListResultDto _parseListResponse(
+  TenantAdminOutletListResponseDto _parseListResponse(
     dynamic data,
     RequestOptions requestOptions,
   ) {
@@ -97,20 +126,21 @@ class OutletRemoteDatasource {
       );
     }
 
-    if (data is List) {
-      return OutletListResultDto.fromArray(data);
-    }
-
     if (data is Map) {
       final root = Map<String, dynamic>.from(data);
       final payload = root['data'] is Map
           ? Map<String, dynamic>.from(root['data'] as Map)
           : root;
 
-      return OutletListResultDto.fromJson(payload);
+      return TenantAdminOutletListResponseDto.fromJson(payload);
     }
 
-    return OutletListResultDto.fromArray(const []);
+    return const TenantAdminOutletListResponseDto(
+      items: [],
+      pageNumber: 1,
+      pageSize: 20,
+      totalCount: 0,
+    );
   }
 
   Map<String, dynamic> _unwrapApiPayload(

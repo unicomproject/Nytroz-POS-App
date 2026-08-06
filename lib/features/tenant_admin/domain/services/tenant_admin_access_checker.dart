@@ -99,11 +99,6 @@ class TenantAdminAccessChecker {
           TenantAdminPermissionCodes.tenantOutletsView,
           TenantAdminPermissionCodes.tenantOutletsManage,
         ]);
-      case TenantAdminFeatureCodes.tillManagement:
-        return canAny([
-          TenantAdminPermissionCodes.tillView,
-          TenantAdminPermissionCodes.tenantTillManage,
-        ]);
       case TenantAdminFeatureCodes.staffManagement:
         return canAny([
           TenantAdminPermissionCodes.userView,
@@ -147,6 +142,17 @@ class TenantAdminAccessChecker {
         ]);
       case TenantAdminFeatureCodes.support:
         return can(TenantAdminPermissionCodes.supportView);
+      case TenantAdminFeatureCodes.tillManagement:
+        return canAny([
+          TenantAdminPermissionCodes.tillView,
+          TenantAdminPermissionCodes.tenantTillsView,
+          TenantAdminPermissionCodes.tillCreate,
+          TenantAdminPermissionCodes.tenantTillsCreate,
+          TenantAdminPermissionCodes.tillUpdate,
+          TenantAdminPermissionCodes.tenantTillsUpdate,
+          TenantAdminPermissionCodes.tillDelete,
+          TenantAdminPermissionCodes.tenantTillsDelete,
+        ]);
       default:
         return false;
     }

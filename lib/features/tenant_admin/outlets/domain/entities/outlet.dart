@@ -3,29 +3,57 @@ class Outlet {
     required this.id,
     required this.name,
     required this.code,
-    required this.location,
     required this.status,
-    required this.tillCount,
-    required this.onlineTillCount,
-    required this.staffCount,
-    required this.todaysSales,
     this.outletType,
-    this.contactNumber,
+    this.imageUrl,
+    this.location = '',
     this.city,
+    this.managerName,
+    this.managerAvatarUrl,
+    this.tillCount = 0,
+    this.onlineTillCount = 0,
+    this.activeTillCount = 0,
+    this.operationalHealthStatus = 'UNKNOWN',
+    this.activeAlertCount = 0,
+    this.canViewTillsAndHealth = false,
+    this.staffCount = 0,
+    this.todaysSales = '',
   });
 
   final String id;
   final String name;
   final String code;
-  final String location;
   final String status;
+  final String? outletType;
+  final String? imageUrl;
+  final String location;
+  final String? city;
+  final String? managerName;
+  final String? managerAvatarUrl;
   final int tillCount;
   final int onlineTillCount;
+  final int activeTillCount;
+  final String operationalHealthStatus;
+  final int activeAlertCount;
+  final bool canViewTillsAndHealth;
+
+  // Legacy fields
   final int staffCount;
   final String todaysSales;
-  final String? outletType;
-  final String? contactNumber;
-  final String? city;
+}
+
+class OutletSummaryDashboard {
+  const OutletSummaryDashboard({
+    required this.totalOutlets,
+    required this.activeOutlets,
+    required this.warehouseOutlets,
+    this.needsAttention,
+  });
+
+  final int totalOutlets;
+  final int activeOutlets;
+  final int warehouseOutlets;
+  final int? needsAttention;
 }
 
 class OutletListSummary {
@@ -90,4 +118,96 @@ class OutletManagerOption {
 
   final String id;
   final String displayName;
+}
+
+class TenantAdminOutletOverview {
+  const TenantAdminOutletOverview({
+    required this.id,
+    required this.name,
+    required this.code,
+    required this.type,
+    required this.status,
+    this.imageUrl,
+    this.addressLine1,
+    this.city,
+    this.managerName,
+    this.managerEmail,
+    this.managerPhone,
+    this.managerAvatarUrl,
+    required this.totalTills,
+    required this.activeTills,
+    required this.onlineTills,
+    required this.attentionTills,
+    required this.todayNetSales,
+    required this.salesCurrency,
+    required this.stockValue,
+    required this.inventoryCurrency,
+    required this.openOrderCount,
+    required this.healthStatus,
+    this.lastActivityAt,
+    this.lastSyncAt,
+    this.alerts = const [],
+    required this.totalActiveAlertCount,
+    required this.canViewTills,
+    required this.canViewSales,
+    required this.canViewInventory,
+    required this.canViewOrders,
+    required this.canViewAlerts,
+  });
+
+  final String id;
+  final String name;
+  final String code;
+  final String type;
+  final String status;
+  final String? imageUrl;
+  final String? addressLine1;
+  final String? city;
+
+  final String? managerName;
+  final String? managerEmail;
+  final String? managerPhone;
+  final String? managerAvatarUrl;
+
+  final int totalTills;
+  final int activeTills;
+  final int onlineTills;
+  final int attentionTills;
+
+  final double todayNetSales;
+  final String salesCurrency;
+
+  final double stockValue;
+  final String inventoryCurrency;
+
+  final int openOrderCount;
+
+  final String healthStatus;
+  final DateTime? lastActivityAt;
+  final DateTime? lastSyncAt;
+
+  final List<TenantAdminOutletOverviewAlert> alerts;
+  final int totalActiveAlertCount;
+
+  final bool canViewTills;
+  final bool canViewSales;
+  final bool canViewInventory;
+  final bool canViewOrders;
+  final bool canViewAlerts;
+}
+
+class TenantAdminOutletOverviewAlert {
+  const TenantAdminOutletOverviewAlert({
+    required this.alertId,
+    required this.title,
+    required this.severity,
+    required this.description,
+    required this.occurredAt,
+  });
+
+  final String alertId;
+  final String title;
+  final String severity;
+  final String description;
+  final DateTime occurredAt;
 }

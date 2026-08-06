@@ -20,8 +20,8 @@ class OutletSummaryCardConfig extends OutletWidgetPermissionConfig {
   final String title;
   final IconData icon;
   final TenantAdminStatusType? status;
-  final String Function(OutletListSummary summary) valueBuilder;
-  final String Function(OutletListSummary summary) subtitleBuilder;
+  final String Function(OutletSummaryDashboard summary) valueBuilder;
+  final String Function(OutletSummaryDashboard summary) subtitleBuilder;
 }
 
 const outletSummaryCardConfigs = <OutletSummaryCardConfig>[
@@ -43,53 +43,52 @@ const outletSummaryCardConfigs = <OutletSummaryCardConfig>[
     subtitleBuilder: _activeOutletsSubtitle,
   ),
   OutletSummaryCardConfig(
-    id: 'inactive_outlets',
+    id: 'warehouse_outlets',
     permission: TenantAdminPermissionCodes.outletSummaryView,
-    title: 'Inactive Outlets',
-    icon: Icons.pause_circle_filled,
-    status: TenantAdminStatusType.inactive,
-    valueBuilder: _inactiveOutletsValue,
-    subtitleBuilder: _inactiveOutletsSubtitle,
+    title: 'Warehouses',
+    icon: Icons.warehouse,
+    valueBuilder: _warehouseOutletsValue,
+    subtitleBuilder: _warehouseOutletsSubtitle,
   ),
   OutletSummaryCardConfig(
-    id: 'total_locations',
-    permissionsAny: [
-      TenantAdminPermissionCodes.outletLocationSummaryView,
-      TenantAdminPermissionCodes.outletSummaryView,
-    ],
-    title: 'Total Locations',
-    icon: Icons.location_on,
-    valueBuilder: _totalLocationsValue,
-    subtitleBuilder: _totalLocationsSubtitle,
+    id: 'needs_attention',
+    permission: TenantAdminPermissionCodes.outletSummaryView,
+    title: 'Needs Attention',
+    icon: Icons.warning_amber,
+    status: TenantAdminStatusType.warning,
+    valueBuilder: _needsAttentionValue,
+    subtitleBuilder: _needsAttentionSubtitle,
   ),
 ];
 
-String _totalOutletsValue(OutletListSummary summary) =>
+String _totalOutletsValue(OutletSummaryDashboard summary) =>
     '${summary.totalOutlets}';
 
-String _totalOutletsSubtitle(OutletListSummary summary) {
-  return '${summary.activeOutlets} Active • ${summary.inactiveOutlets} Inactive';
+String _totalOutletsSubtitle(OutletSummaryDashboard summary) {
+  return '${summary.activeOutlets} Active';
 }
 
-String _activeOutletsValue(OutletListSummary summary) =>
+String _activeOutletsValue(OutletSummaryDashboard summary) =>
     '${summary.activeOutlets}';
 
-String _activeOutletsSubtitle(OutletListSummary summary) {
+String _activeOutletsSubtitle(OutletSummaryDashboard summary) {
   return '${_percent(summary.activeOutlets, summary.totalOutlets)}% of total';
 }
 
-String _inactiveOutletsValue(OutletListSummary summary) =>
-    '${summary.inactiveOutlets}';
+String _warehouseOutletsValue(OutletSummaryDashboard summary) =>
+    '${summary.warehouseOutlets}';
 
-String _inactiveOutletsSubtitle(OutletListSummary summary) {
-  return '${_percent(summary.inactiveOutlets, summary.totalOutlets)}% of total';
+String _warehouseOutletsSubtitle(OutletSummaryDashboard summary) {
+  return '${_percent(summary.warehouseOutlets, summary.totalOutlets)}% of total';
 }
 
-String _totalLocationsValue(OutletListSummary summary) =>
-    '${summary.totalLocations}';
+String _needsAttentionValue(OutletSummaryDashboard summary) =>
+    summary.needsAttention != null ? '${summary.needsAttention}' : '—';
 
-String _totalLocationsSubtitle(OutletListSummary summary) {
-  return 'Across all outlets';
+String _needsAttentionSubtitle(OutletSummaryDashboard summary) {
+  return summary.needsAttention != null
+      ? 'Requires review'
+      : 'Not supported by backend';
 }
 
 int _percent(int value, int total) {

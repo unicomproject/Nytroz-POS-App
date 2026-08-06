@@ -7,9 +7,13 @@ import '../entities/outlet_list_query.dart';
 abstract class OutletRepository {
   Future<OutletListResult> getOutlets({required OutletListQuery query});
 
+  Future<OutletSummaryDashboard> getSummary();
+
   Future<OutletCreateOptions> getCreateOptions();
 
   Future<OutletDetails> getOutletDetails(String id);
+
+  Future<TenantAdminOutletOverview> getTenantAdminOverview(String id);
 
   Future<OutletDetail> getOutletDetail(String id);
 

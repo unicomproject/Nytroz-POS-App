@@ -48,15 +48,20 @@ class TenantAdminSidebarItem extends StatelessWidget {
           onTap: enabled ? onTap : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
-            padding: EdgeInsets.symmetric(
-              horizontal: compact ? 10 : 12,
-              vertical: compact ? 10 : 11,
+            margin: const EdgeInsets.only(right: 16),
+            padding: EdgeInsets.only(
+              left: compact ? 16 : 24,
+              right: compact ? 10 : 12,
+              top: compact ? 10 : 11,
+              bottom: compact ? 10 : 11,
             ),
             decoration: BoxDecoration(
               color: selected
                   ? TenantAdminSidebarTokens.activeBackground
                   : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: const BorderRadius.horizontal(
+                right: Radius.circular(24),
+              ),
             ),
             child: Row(
               children: [
@@ -208,15 +213,20 @@ class ProductsSidebarParentAlias extends StatelessWidget {
         onTap: onToggle,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 10 : 12,
-            vertical: compact ? 10 : 11,
+          margin: const EdgeInsets.only(right: 16),
+          padding: EdgeInsets.only(
+            left: compact ? 16 : 24,
+            right: compact ? 10 : 12,
+            top: compact ? 10 : 11,
+            bottom: compact ? 10 : 11,
           ),
           decoration: BoxDecoration(
             color: active
                 ? TenantAdminSidebarTokens.activeBackground
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: const BorderRadius.horizontal(
+              right: Radius.circular(24),
+            ),
           ),
           child: Row(
             children: [
@@ -298,15 +308,20 @@ class _ChildProxy extends StatelessWidget {
           onTap: enabled ? onTap : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
-            padding: EdgeInsets.symmetric(
-              horizontal: compact ? 10 : 12,
-              vertical: dense ? 9 : 10,
+            margin: const EdgeInsets.only(right: 16),
+            padding: EdgeInsets.only(
+              left: compact ? 16 : 24,
+              right: compact ? 10 : 12,
+              top: dense ? 9 : 10,
+              bottom: dense ? 9 : 10,
             ),
             decoration: BoxDecoration(
               color: selected
                   ? TenantAdminSidebarTokens.activeBackground
                   : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: const BorderRadius.horizontal(
+                right: Radius.circular(24),
+              ),
             ),
             child: Text(
               label,

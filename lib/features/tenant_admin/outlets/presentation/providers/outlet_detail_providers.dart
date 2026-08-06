@@ -1,8 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/entities/outlet.dart';
 import '../../domain/entities/outlet_detail_entities.dart';
 import 'outlet_providers.dart';
 
+final tenantAdminOutletOverviewProvider =
+    FutureProvider.family<TenantAdminOutletOverview, String>((ref, id) {
+  return ref.watch(outletRepositoryProvider).getTenantAdminOverview(id);
+});
 final outletDetailProvider =
     FutureProvider.family<OutletDetail, String>((ref, id) {
   return ref.watch(outletRepositoryProvider).getOutletDetail(id);

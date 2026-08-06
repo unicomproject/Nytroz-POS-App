@@ -476,7 +476,6 @@ class CompletedSalePrintResult {
   final int? printerConfigurationVersion;
   final String? routingPurpose;
 }
-
 final posReceiptPrinterServiceProvider =
     Provider<PosReceiptPrinterService>((ref) {
   final store = ref.watch(posDevicePrinterConfigStoreProvider);

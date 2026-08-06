@@ -20,6 +20,12 @@ class OutletRepositoryImpl implements OutletRepository {
   }
 
   @override
+  Future<OutletSummaryDashboard> getSummary() async {
+    final dto = await _remoteDatasource.getSummary();
+    return dto.toEntity();
+  }
+
+  @override
   Future<OutletCreateOptions> getCreateOptions() async {
     final dto = await _remoteDatasource.getCreateOptions();
     return dto.toEntity();
@@ -28,6 +34,12 @@ class OutletRepositoryImpl implements OutletRepository {
   @override
   Future<OutletDetails> getOutletDetails(String id) async {
     final dto = await _remoteDatasource.getOutletDetails(id);
+    return dto.toEntity();
+  }
+
+  @override
+  Future<TenantAdminOutletOverview> getTenantAdminOverview(String id) async {
+    final dto = await _remoteDatasource.getTenantAdminOverview(id);
     return dto.toEntity();
   }
 

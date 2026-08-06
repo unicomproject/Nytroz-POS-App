@@ -16,7 +16,10 @@ import 'outlets/presentation/screens/outlet_list_screen.dart';
 import 'tills/presentation/screens/add_till_screen.dart';
 import 'tills/presentation/screens/edit_till_screen.dart';
 import 'tills/presentation/screens/till_details_screen.dart';
-import 'tills/presentation/screens/till_list_screen.dart';
+import 'tills/presentation/screens/till_monitoring_screen.dart';
+import 'hardware/presentation/screens/hardware_list_screen.dart';
+import 'hardware/presentation/screens/add_hardware_screen.dart';
+import 'hardware/presentation/screens/hardware_detail_screen.dart';
 import 'users/presentation/screens/add_edit_user_screen.dart';
 import 'users/presentation/screens/user_list_screen.dart';
 import 'products/presentation/dashboard/product_dashboard_page.dart';
@@ -195,7 +198,7 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
   }
 
   if (definition.path == '/tenant-admin/tills') {
-    return const TillListScreen();
+    return const TillMonitoringScreen();
   }
 
   if (definition.path == '/tenant-admin/tills/add') {
@@ -205,7 +208,7 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
   if (definition.path == '/tenant-admin/tills/:id/edit') {
     final tillId = state.pathParameters['id'];
     if (tillId == null || tillId.isEmpty) {
-      return const TillListScreen();
+      return const TillMonitoringScreen();
     }
 
     return EditTillScreen(tillId: tillId);
@@ -214,10 +217,34 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
   if (definition.path == '/tenant-admin/tills/:id') {
     final tillId = state.pathParameters['id'];
     if (tillId == null || tillId.isEmpty) {
-      return const TillListScreen();
+      return const TillMonitoringScreen();
     }
 
     return TillDetailsScreen(tillId: tillId);
+  }
+
+  if (definition.path == '/tenant-admin/hardware') {
+    return const HardwareListScreen();
+  }
+
+  if (definition.path == '/tenant-admin/hardware/add') {
+    return const AddHardwareScreen();
+  }
+
+  if (definition.path == '/tenant-admin/hardware/:id/edit') {
+    final hardwareId = state.pathParameters['id'];
+    if (hardwareId == null || hardwareId.isEmpty) {
+      return const HardwareListScreen();
+    }
+    return AddHardwareScreen(hardwareId: hardwareId);
+  }
+
+  if (definition.path == '/tenant-admin/hardware/:id') {
+    final hardwareId = state.pathParameters['id'];
+    if (hardwareId == null || hardwareId.isEmpty) {
+      return const HardwareListScreen();
+    }
+    return HardwareDetailScreen(hardwareId: hardwareId);
   }
 
   if (definition.path == '/tenant-admin/staff') {
@@ -410,6 +437,22 @@ bool _canAccessRoute(
   if (definition.path == '/tenant-admin/tills' ||
       definition.path == '/tenant-admin/tills/:id') {
     return accessChecker.canAccessTillModule();
+  }
+
+  if (definition.path == '/tenant-admin/hardware') {
+    return accessChecker.can(TenantAdminPermissionCodes.tenantHardwareView);
+  }
+
+  if (definition.path == '/tenant-admin/hardware/add') {
+    return accessChecker.can(TenantAdminPermissionCodes.tenantHardwareManage);
+  }
+
+  if (definition.path == '/tenant-admin/hardware/:id/edit') {
+    return accessChecker.can(TenantAdminPermissionCodes.tenantHardwareManage);
+  }
+
+  if (definition.path == '/tenant-admin/hardware/:id') {
+    return accessChecker.can(TenantAdminPermissionCodes.tenantHardwareView);
   }
 
   if (definition.path == '/tenant-admin/staff/add') {
@@ -672,7 +715,7 @@ TenantAdminMenuItem? _findMenuItem(
 //       initialRoleId: state.pathParameters['roleId'],
 //     );
 //   if (definition.path == '/tenant-admin/tills') {
-//     return const TillListScreen();
+//     return const TillMonitoringScreen();
 //   }
 
 //   if (definition.path == '/tenant-admin/tills/add') {

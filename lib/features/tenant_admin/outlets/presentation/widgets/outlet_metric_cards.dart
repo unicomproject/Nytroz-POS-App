@@ -13,7 +13,7 @@ class OutletMetricCards extends StatelessWidget {
     required this.cards,
   });
 
-  final OutletListSummary summary;
+  final OutletSummaryDashboard summary;
   final bool compact;
   final List<OutletSummaryCardConfig> cards;
 

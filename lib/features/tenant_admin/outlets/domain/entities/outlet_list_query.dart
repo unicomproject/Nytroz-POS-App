@@ -4,6 +4,7 @@ class OutletListQuery {
     this.page = 1,
     this.pageSize = 10,
     this.status,
+    this.outletType,
     this.sortBy = 'name',
     this.sortDirection = 'asc',
   });
@@ -12,6 +13,7 @@ class OutletListQuery {
   final int page;
   final int pageSize;
   final String? status;
+  final String? outletType;
   final String sortBy;
   final String sortDirection;
 
@@ -20,15 +22,18 @@ class OutletListQuery {
     int? page,
     int? pageSize,
     String? status,
+    String? outletType,
     String? sortBy,
     String? sortDirection,
     bool clearStatus = false,
+    bool clearOutletType = false,
   }) {
     return OutletListQuery(
       search: search ?? this.search,
       page: page ?? this.page,
       pageSize: pageSize ?? this.pageSize,
       status: clearStatus ? null : status ?? this.status,
+      outletType: clearOutletType ? null : outletType ?? this.outletType,
       sortBy: sortBy ?? this.sortBy,
       sortDirection: sortDirection ?? this.sortDirection,
     );
