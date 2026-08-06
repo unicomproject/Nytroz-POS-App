@@ -226,12 +226,12 @@ class AddTillDetailsSection extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: TenantAdminSpacing.xs),
-                  Row(
+                  const Row(
                     children: [
-                      const Icon(Icons.info_outline,
+                      Icon(Icons.info_outline,
                           size: 14, color: TenantAdminColors.mutedText),
-                      const SizedBox(width: 4),
-                      const Expanded(
+                      SizedBox(width: 4),
+                      Expanded(
                         child: Text(
                           'Opening float is the starting cash amount in this till.',
                           style: TextStyle(

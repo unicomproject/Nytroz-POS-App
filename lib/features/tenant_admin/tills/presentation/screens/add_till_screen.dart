@@ -2,14 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nytroz_pos/shared/presentation/app_modal.dart';
-
 import '../../../../auth/presentation/providers/session_provider.dart';
-import '../../../presentation/theme/tenant_admin_theme.dart';
-import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
-import '../../domain/entities/till.dart';
 import '../providers/till_providers.dart';
 import '../providers/till_visibility_provider.dart';
 import '../widgets/add_till_single_page_form.dart';

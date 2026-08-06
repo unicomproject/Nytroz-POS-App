@@ -104,7 +104,7 @@ class AddTillHardwareSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: TenantAdminSpacing.xs),
-        Text(
+        const Text(
           'Select or pair your hardware devices.',
           style: TextStyle(color: TenantAdminColors.mutedText),
         ),
@@ -125,7 +125,7 @@ class AddTillHardwareSection extends StatelessWidget {
                     icon: Icons.computer,
                   ),
                   const SizedBox(height: TenantAdminSpacing.xs),
-                  Text('A friendly name to identify this till device.',
+                  const Text('A friendly name to identify this till device.',
                       style: TextStyle(
                           fontSize: 12, color: TenantAdminColors.mutedText)),
                   const SizedBox(height: TenantAdminSpacing.lg),

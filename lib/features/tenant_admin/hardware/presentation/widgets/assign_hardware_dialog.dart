@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../tills/presentation/providers/till_providers.dart';
 import '../providers/hardware_providers.dart';
@@ -47,7 +46,7 @@ class _AssignHardwareDialogState extends ConsumerState<AssignHardwareDialog> {
                 }
                 final tills = result.items;
                 return DropdownButtonFormField<String>(
-                  value: _selectedTillId,
+                  initialValue: _selectedTillId,
                   decoration: const InputDecoration(labelText: 'Select Till'),
                   items: tills.map((till) {
                     return DropdownMenuItem(

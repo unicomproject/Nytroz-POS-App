@@ -116,7 +116,7 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
         hardwareAssignments: hardwareAssignments,
       );
       final createTillSetup = ref.read(createTillSetupProvider);
-      final createdTill = await createTillSetup(formData);
+      await createTillSetup(formData);
 
       if (mounted) {
         ref.invalidate(tillListResultFutureProvider);
@@ -346,7 +346,7 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
   }
 
   Widget _buildHardwareStatusCards() {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AddTillHardwareStatusCard(
@@ -358,7 +358,7 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
           actionLabel: 'Test Scan',
           onAction: null,
         ),
-        const SizedBox(height: TenantAdminSpacing.md),
+        SizedBox(height: TenantAdminSpacing.md),
         AddTillHardwareStatusCard(
           deviceName: 'Printer',
           deviceCode: 'Select printer (optional)',
@@ -368,7 +368,7 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
           actionLabel: 'Print Test',
           onAction: null,
         ),
-        const SizedBox(height: TenantAdminSpacing.md),
+        SizedBox(height: TenantAdminSpacing.md),
         AddTillHardwareStatusCard(
           deviceName: 'Cash Drawer',
           deviceCode: 'Select cash drawer (optional)',
@@ -378,8 +378,8 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
           actionLabel: 'Open Drawer',
           onAction: null,
         ),
-        const SizedBox(height: TenantAdminSpacing.sm),
-        const Row(
+        SizedBox(height: TenantAdminSpacing.sm),
+        Row(
           children: [
             Icon(Icons.info_outline,
                 size: 14, color: TenantAdminColors.mutedText),

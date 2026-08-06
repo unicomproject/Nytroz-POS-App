@@ -1,10 +1,7 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
-import '../../../../auth/presentation/providers/session_provider.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
@@ -86,7 +83,7 @@ class _AddHardwareScreenState extends ConsumerState<AddHardwareScreen> {
               padding: const EdgeInsets.all(TenantAdminSpacing.lg),
               children: [
                 DropdownButtonFormField<String>(
-                  value: _selectedOutletId,
+                  initialValue: _selectedOutletId,
                   decoration: const InputDecoration(labelText: 'Outlet'),
                   items: outlets.map((outlet) {
                     return DropdownMenuItem(
@@ -114,7 +111,7 @@ class _AddHardwareScreenState extends ConsumerState<AddHardwareScreen> {
                 ),
                 const SizedBox(height: TenantAdminSpacing.md),
                 DropdownButtonFormField<String>(
-                  value: _selectedType,
+                  initialValue: _selectedType,
                   decoration: const InputDecoration(labelText: 'Device Type'),
                   items: _deviceTypes.map((type) {
                     return DropdownMenuItem(value: type, child: Text(type));
@@ -123,7 +120,7 @@ class _AddHardwareScreenState extends ConsumerState<AddHardwareScreen> {
                 ),
                 const SizedBox(height: TenantAdminSpacing.md),
                 DropdownButtonFormField<String>(
-                  value: _selectedConnectionType,
+                  initialValue: _selectedConnectionType,
                   decoration:
                       const InputDecoration(labelText: 'Connection Type'),
                   items: _connectionTypes.map((type) {
