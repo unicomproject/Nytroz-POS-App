@@ -25,7 +25,7 @@ import '../returns_refunds/presentation/screens/pos_return_exchange_flow_screen.
 import '../returns_refunds/presentation/screens/pos_return_inspect_items_screen.dart';
 import '../returns_refunds/presentation/screens/pos_return_reason_screen.dart';
 import '../returns_refunds/presentation/screens/pos_return_search_sale_screen.dart';
-import '../sale/presentation/screens/pos_cash_payment_success_screen.dart';
+import '../sale/presentation/screens/pos_payment_success_screen.dart';
 import '../sale/presentation/screens/pos_cash_payment_screen.dart';
 import '../sale/presentation/screens/pos_email_receipt_screen.dart';
 import '../sale/presentation/screens/pos_print_receipt_screen.dart';
@@ -50,13 +50,16 @@ List<RouteBase> posShellRoutes(Ref ref) {
           showSidebar: state.uri.path != '/pos/home' &&
               state.uri.path != '/pos/new-sale' &&
               state.uri.path != '/pos/new-sale/payment' &&
+              !state.uri.path.startsWith('/pos/new-sale/payment/') &&
               !state.uri.path.startsWith('/pos/home/'),
           showBottomNavigation: shouldShowPosCashierBottomNavigation(
             state.uri.path,
             ref.read(authSessionProvider),
           ),
           isNewSale: state.uri.path == '/pos/new-sale',
-          isDashboard: state.uri.path == '/pos/home',
+          isDashboard: state.uri.path == '/pos/home' ||
+              state.uri.path == '/pos/new-sale/payment/cash' ||
+              state.uri.path == '/pos/new-sale/payment/cash/success',
           child: child,
         );
       },
@@ -93,7 +96,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
                       path: 'success',
                       builder: (context, state) =>
                           _canViewPaymentSuccess(ref.read(authSessionProvider))
-                              ? const PosCashPaymentSuccessScreen()
+                              ? const PosPaymentSuccessScreen()
                               : const TenantAdminForbiddenScreen(),
                       routes: [
                         GoRoute(
@@ -356,8 +359,7 @@ bool shouldShowPosTopBar(String path) {
     return false;
   }
 
-  if (path == '/pos/new-sale/payment' ||
-      path.startsWith('/pos/new-sale/payment/')) {
+  if (path == '/pos/new-sale/payment') {
     return false;
   }
 
@@ -378,6 +380,8 @@ bool shouldShowPosCashierBottomNavigation(
   return switch (path) {
     '/pos/home' => _canViewPosHome(session),
     '/pos/new-sale' => _canStartNewSale(session),
+    '/pos/new-sale/payment/cash' => _canAcceptCashPayment(session),
+    '/pos/new-sale/payment/cash/success' => _canViewPaymentSuccess(session),
     '/pos/customers' => _canViewCustomers(session),
     '/pos/orders' =>
       session?.hasPermission(PosPermissionCodes.viewReceipts) == true,

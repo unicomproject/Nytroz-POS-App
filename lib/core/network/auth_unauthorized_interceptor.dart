@@ -10,6 +10,7 @@ class AuthUnauthorizedInterceptor extends Interceptor {
         _onRefreshRejected = onRefreshRejected;
 
   static const _retryMarker = 'tenantAuthRefreshRetried';
+  static const disableAutomaticRetry = 'disableAutomaticAuthRetry';
   final Dio _dio;
   final Future<String?> Function() _refreshAccessToken;
   final Future<void> Function() _onRefreshRejected;
@@ -31,6 +32,7 @@ class AuthUnauthorizedInterceptor extends Interceptor {
     final request = err.requestOptions;
     if (err.response?.statusCode != 401 ||
         isAuthRequest(request) ||
+        request.extra[disableAutomaticRetry] == true ||
         request.extra[_retryMarker] == true) {
       handler.next(err);
       return;

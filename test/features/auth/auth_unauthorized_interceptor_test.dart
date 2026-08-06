@@ -62,6 +62,35 @@ void main() {
     expect(rejectedCalls, 1);
     expect(adapter.calls, 2);
   });
+
+  test('payment request marked no-retry is dispatched exactly once', () async {
+    final adapter = _AlwaysUnauthorizedAdapter();
+    final dio = Dio(BaseOptions(baseUrl: 'https://pos.test'))
+      ..httpClientAdapter = adapter;
+    var refreshCalls = 0;
+
+    dio.interceptors.add(AuthUnauthorizedInterceptor(
+      dio: dio,
+      refreshAccessToken: () async {
+        refreshCalls++;
+        return 'rotated-access-token';
+      },
+      onRefreshRejected: () async {},
+    ));
+
+    await expectLater(
+      dio.post<Map<String, dynamic>>(
+        '/api/v1/pos/checkout/start-payment',
+        options: Options(extra: const {
+          AuthUnauthorizedInterceptor.disableAutomaticRetry: true,
+        }),
+      ),
+      throwsA(isA<DioException>()),
+    );
+
+    expect(refreshCalls, 0);
+    expect(adapter.calls, 1);
+  });
 }
 
 class _ProtectedResourceAdapter implements HttpClientAdapter {

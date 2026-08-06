@@ -173,6 +173,7 @@ class PosCheckoutStartPaymentPayload {
     this.taxInvoiceLabel,
     this.drawerOperationId,
     this.cashDrawerSettings,
+    this.receiptDataJson,
   });
 
   final String checkoutSessionId;
@@ -208,6 +209,7 @@ class PosCheckoutStartPaymentPayload {
   final String? taxInvoiceLabel;
   final String? drawerOperationId;
   final Map<String, dynamic>? cashDrawerSettings;
+  final String? receiptDataJson;
 
   factory PosCheckoutStartPaymentPayload.fromJson(Map<String, dynamic> json) {
     return PosCheckoutStartPaymentPayload(
@@ -284,6 +286,8 @@ class PosCheckoutStartPaymentPayload {
           : (json['CashDrawerSettings'] is Map
               ? Map<String, dynamic>.from(json['CashDrawerSettings'] as Map)
               : null),
+      receiptDataJson: json['receiptDataJson']?.toString() ??
+          json['ReceiptDataJson']?.toString(),
     );
   }
 }

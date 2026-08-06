@@ -32,6 +32,7 @@ class PosCashPaymentSuccessData {
     required this.cashReceived,
     required this.changeDue,
     required this.items,
+    this.receiptDataJson,
   });
 
   final String receiptNumber;
@@ -46,6 +47,7 @@ class PosCashPaymentSuccessData {
   final int cashReceived;
   final int changeDue;
   final List<PosCashPaymentSuccessLineItem> items;
+  final String? receiptDataJson;
 }
 
 class PosCashPaymentSuccessNotifier
@@ -81,6 +83,7 @@ class PosCashPaymentSuccessNotifier
             ),
           )
           .toList(growable: false),
+      receiptDataJson: payload.receiptDataJson,
     );
   }
 

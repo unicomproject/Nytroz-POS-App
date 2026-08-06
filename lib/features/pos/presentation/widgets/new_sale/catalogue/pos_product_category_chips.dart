@@ -49,8 +49,11 @@ class PosProductCategoryChips extends ConsumerWidget {
                   activeColor: TenantAdminColors.posNewSaleAccent,
                   inactiveColor: TenantAdminColors.posNewSaleAccent,
                   onPressed: () {
-                    ref.read(posNewSaleSelectedSegmentProvider.notifier).state = 'popular';
-                    ref.read(posNewSaleSelectedCategoryIdProvider.notifier).state = null;
+                    ref.read(posNewSaleSelectedSegmentProvider.notifier).state =
+                        'popular';
+                    ref
+                        .read(posNewSaleSelectedCategoryIdProvider.notifier)
+                        .state = null;
                   },
                 ),
               ),
@@ -63,8 +66,11 @@ class PosProductCategoryChips extends ConsumerWidget {
                   activeColor: const Color(0xFF2563EB),
                   inactiveColor: const Color(0xFF2563EB),
                   onPressed: () {
-                    ref.read(posNewSaleSelectedSegmentProvider.notifier).state = 'frequently-sold';
-                    ref.read(posNewSaleSelectedCategoryIdProvider.notifier).state = null;
+                    ref.read(posNewSaleSelectedSegmentProvider.notifier).state =
+                        'frequently-sold';
+                    ref
+                        .read(posNewSaleSelectedCategoryIdProvider.notifier)
+                        .state = null;
                   },
                 ),
               ),
@@ -77,8 +83,11 @@ class PosProductCategoryChips extends ConsumerWidget {
                   activeColor: const Color(0xFF16A34A),
                   inactiveColor: const Color(0xFF16A34A),
                   onPressed: () {
-                    ref.read(posNewSaleSelectedSegmentProvider.notifier).state = 'offers';
-                    ref.read(posNewSaleSelectedCategoryIdProvider.notifier).state = null;
+                    ref.read(posNewSaleSelectedSegmentProvider.notifier).state =
+                        'offers';
+                    ref
+                        .read(posNewSaleSelectedCategoryIdProvider.notifier)
+                        .state = null;
                   },
                 ),
               ),

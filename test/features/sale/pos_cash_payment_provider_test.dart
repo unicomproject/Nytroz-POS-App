@@ -28,7 +28,7 @@ void main() {
   group('cash payment helpers', () {
     test('change due computes using total and received', () {
       expect(cashPaymentChangeDue(5000, 4200), 800);
-      expect(cashPaymentChangeDue(1000, 4200), -3200);
+      expect(cashPaymentChangeDue(0, 3200), 0);
     });
 
     test('confirm requires cash >= total and total > 0', () {

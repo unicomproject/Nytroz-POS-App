@@ -6,17 +6,21 @@ import '../../domain/entities/curated_popular_product.dart';
 import '../../domain/entities/tenant_product.dart';
 import 'tenant_product_providers.dart';
 
-class PopularProductsCurationNotifier extends AutoDisposeAsyncNotifier<List<CuratedPopularProduct>> {
+class PopularProductsCurationNotifier
+    extends AutoDisposeAsyncNotifier<List<CuratedPopularProduct>> {
   @override
   Future<List<CuratedPopularProduct>> build() async {
-    final accessChecker = await ref.watch(tenantAdminAccessCheckerProvider.future);
+    final accessChecker =
+        await ref.watch(tenantAdminAccessCheckerProvider.future);
     if (!accessChecker.can(TenantAdminPermissionCodes.catalogCollectionsView) &&
-        !accessChecker.can(TenantAdminPermissionCodes.catalogCollectionsManage)) {
+        !accessChecker
+            .can(TenantAdminPermissionCodes.catalogCollectionsManage)) {
       return const [];
     }
 
     final dio = ref.watch(appDioProvider);
-    final response = await dio.get<dynamic>('/api/v1/collections/pos-popular/products');
+    final response =
+        await dio.get<dynamic>('/api/v1/collections/pos-popular/products');
     final data = response.data;
     List<dynamic> list = [];
     if (data is Map && data['data'] is List) {
@@ -24,7 +28,10 @@ class PopularProductsCurationNotifier extends AutoDisposeAsyncNotifier<List<Cura
     } else if (data is List) {
       list = data;
     }
-    return list.map((item) => CuratedPopularProduct.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+    return list
+        .map((item) => CuratedPopularProduct.fromJson(
+            Map<String, dynamic>.from(item as Map)))
+        .toList();
   }
 
   void reorder(int oldIndex, int newIndex) {
@@ -50,7 +57,8 @@ class PopularProductsCurationNotifier extends AutoDisposeAsyncNotifier<List<Cura
     state = AsyncData(updated);
   }
 
-  void addProduct(String productId, String productName, String? sku, String status) {
+  void addProduct(
+      String productId, String productName, String? sku, String status) {
     final currentList = state.valueOrNull ?? [];
     if (currentList.any((p) => p.productId == productId)) return;
 
@@ -101,7 +109,10 @@ class PopularProductsCurationNotifier extends AutoDisposeAsyncNotifier<List<Cura
       } else if (data is List) {
         list = data;
       }
-      final updated = list.map((item) => CuratedPopularProduct.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+      final updated = list
+          .map((item) => CuratedPopularProduct.fromJson(
+              Map<String, dynamic>.from(item as Map)))
+          .toList();
       state = AsyncData(updated);
     } catch (e, stack) {
       state = AsyncError(e, stack);
@@ -115,11 +126,14 @@ final popularProductsCurationProvider = AsyncNotifierProvider.autoDispose<
   return PopularProductsCurationNotifier();
 });
 
-final popularSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
+final popularSearchQueryProvider =
+    StateProvider.autoDispose<String>((ref) => '');
 final popularSearchPageProvider = StateProvider.autoDispose<int>((ref) => 1);
 
-final popularSearchProductsProvider = FutureProvider.autoDispose<TenantProductListResult?>((ref) async {
-  final accessChecker = await ref.watch(tenantAdminAccessCheckerProvider.future);
+final popularSearchProductsProvider =
+    FutureProvider.autoDispose<TenantProductListResult?>((ref) async {
+  final accessChecker =
+      await ref.watch(tenantAdminAccessCheckerProvider.future);
   if (!accessChecker.can(TenantAdminPermissionCodes.catalogCollectionsView) &&
       !accessChecker.can(TenantAdminPermissionCodes.catalogCollectionsManage)) {
     return null;

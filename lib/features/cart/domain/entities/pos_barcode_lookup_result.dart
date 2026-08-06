@@ -35,7 +35,8 @@ class PosBarcodeLookupResult {
       price: parsePriceToInt(json['price']),
       availableQuantity: (json['availableQuantity'] as num?)?.toDouble(),
       stockStatus: stockStatusFromApi(json['stockStatus']?.toString()),
-      imageUrl: (json['imageUrl'] ?? json['imageStorageKey'])?.toString().trim(),
+      imageUrl:
+          (json['imageUrl'] ?? json['imageStorageKey'])?.toString().trim(),
     );
     if (result.productId.isEmpty ||
         result.variantId.isEmpty ||

@@ -467,31 +467,36 @@ class _DashedDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const dashWidth = 5.0;
-        const dashSpace = 3.0;
-        final dashCount =
-            (constraints.maxWidth / (dashWidth + dashSpace)).floor();
-
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(dashCount, (index) {
-            return Padding(
-              padding: EdgeInsets.only(
-                right: index == dashCount - 1 ? 0 : dashSpace,
-              ),
-              child: Container(
-                width: dashWidth,
-                height: 1,
-                color: TenantAdminColors.mutedText.withValues(alpha: 0.45),
-              ),
-            );
-          }),
-        );
-      },
+    return const SizedBox(
+      height: 1,
+      child: CustomPaint(painter: _ThermalDashedDividerPainter()),
     );
   }
+}
+
+class _ThermalDashedDividerPainter extends CustomPainter {
+  const _ThermalDashedDividerPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = TenantAdminColors.mutedText.withValues(alpha: 0.45)
+      ..strokeWidth = 1;
+    const dashWidth = 5.0;
+    const dashSpace = 3.0;
+
+    for (double x = 0; x < size.width; x += dashWidth + dashSpace) {
+      canvas.drawLine(
+        Offset(x, 0.5),
+        Offset((x + dashWidth).clamp(0, size.width), 0.5),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ThermalDashedDividerPainter oldDelegate) =>
+      false;
 }
 
 class _Code39BarcodePainter extends CustomPainter {
