@@ -178,8 +178,7 @@ class _PageNumberButton extends StatelessWidget {
           minimumSize: const Size(36, 36),
           backgroundColor:
               selected ? TenantAdminColors.primary : Colors.transparent,
-          foregroundColor:
-              selected ? Colors.white : TenantAdminColors.bodyText,
+          foregroundColor: selected ? Colors.white : TenantAdminColors.bodyText,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
           ),

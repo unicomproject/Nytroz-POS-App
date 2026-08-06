@@ -226,7 +226,8 @@ String _emptyDash(String value) {
 }
 
 String _initials(String fullName) {
-  final parts = fullName.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+  final parts =
+      fullName.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
   if (parts.isEmpty) {
     return '?';
   }
@@ -235,5 +236,6 @@ String _initials(String fullName) {
     return parts.first.substring(0, 1).toUpperCase();
   }
 
-  return (parts.first.substring(0, 1) + parts.last.substring(0, 1)).toUpperCase();
+  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+      .toUpperCase();
 }

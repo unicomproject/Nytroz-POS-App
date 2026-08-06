@@ -10,7 +10,8 @@ import '../utils/inventory_api_errors.dart';
 import '../../../presentation/providers/tenant_admin_access_provider.dart';
 import '../../../presentation/providers/tenant_admin_context_provider.dart';
 
-final inventoryRemoteDatasourceProvider = Provider<InventoryRemoteDatasource>((ref) {
+final inventoryRemoteDatasourceProvider =
+    Provider<InventoryRemoteDatasource>((ref) {
   return InventoryRemoteDatasource(ref.watch(appDioProvider));
 });
 
@@ -40,11 +41,9 @@ final currentStockSearchProvider = StateProvider<String>((ref) => '');
 
 final currentStockOutletFilterProvider = StateProvider<String?>((ref) => null);
 
-final currentStockStatusFilterProvider =
-    StateProvider<String?>((ref) => null);
+final currentStockStatusFilterProvider = StateProvider<String?>((ref) => null);
 
-final currentStockExpiryFilterProvider =
-    StateProvider<String?>((ref) => null);
+final currentStockExpiryFilterProvider = StateProvider<String?>((ref) => null);
 
 final currentStockBatchFilterProvider = StateProvider<String>((ref) => '');
 
@@ -54,8 +53,7 @@ final currentStockPageSizeProvider = StateProvider<int>((ref) => 50);
 
 final currentStockSortByProvider = StateProvider<String?>((ref) => null);
 
-final currentStockSortDirectionProvider =
-    StateProvider<String?>((ref) => null);
+final currentStockSortDirectionProvider = StateProvider<String?>((ref) => null);
 
 final currentStockQueryProvider = Provider<CurrentStockQuery>((ref) {
   final search = ref.watch(currentStockSearchProvider);
@@ -109,8 +107,8 @@ final currentStockSummaryProvider =
       );
 });
 
-final variantLookupProvider =
-    FutureProvider.autoDispose.family<VariantLookup?, String>((ref, productId) async {
+final variantLookupProvider = FutureProvider.autoDispose
+    .family<VariantLookup?, String>((ref, productId) async {
   if (productId.isEmpty) {
     return null;
   }

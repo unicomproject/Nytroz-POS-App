@@ -42,22 +42,20 @@ class _PosReturnRefundDetailsScreenState
   }
 
   Future<void> _guardAndLoad() async {
-      final loaded = await ref
-          .read(returnResolutionProvider.notifier)
-          .loadSavedResolution();
-      final authoritative =
-          ref.read(returnResolutionProvider).savedResolution;
-      if (!loaded ||
-          authoritative == null ||
-          !authoritative.isValidated ||
-          !authoritative.refundAllowed ||
-          authoritative.resolutionType != ReturnResolutionType.refund) {
-        if (mounted) context.go('/pos/returns-refunds/choose-option');
-        return;
-      }
-      if (mounted) setState(() => _isGuarding = false);
-      ref.read(returnFlowProvider.notifier).setStep(ReturnFlowSteps.branchAction);
-      ref.read(returnRefundDetailsProvider.notifier).load();
+    final loaded =
+        await ref.read(returnResolutionProvider.notifier).loadSavedResolution();
+    final authoritative = ref.read(returnResolutionProvider).savedResolution;
+    if (!loaded ||
+        authoritative == null ||
+        !authoritative.isValidated ||
+        !authoritative.refundAllowed ||
+        authoritative.resolutionType != ReturnResolutionType.refund) {
+      if (mounted) context.go('/pos/returns-refunds/choose-option');
+      return;
+    }
+    if (mounted) setState(() => _isGuarding = false);
+    ref.read(returnFlowProvider.notifier).setStep(ReturnFlowSteps.branchAction);
+    ref.read(returnRefundDetailsProvider.notifier).load();
   }
 
   @override
@@ -242,7 +240,8 @@ class _PosReturnRefundDetailsScreenState
 
   Future<void> _confirmRefund() async {
     final detailsState = ref.read(returnRefundDetailsProvider);
-    final preview = detailsState.preview ?? ref.read(returnFlowProvider).refundPreview;
+    final preview =
+        detailsState.preview ?? ref.read(returnFlowProvider).refundPreview;
     if (preview == null || !_canConfirm(detailsState, preview)) {
       return;
     }
@@ -352,7 +351,8 @@ class _TopStatus extends ConsumerWidget {
                 size: 22,
               ),
               const SizedBox(width: TenantAdminSpacing.sm),
-              Text(tillLabel, style: const TextStyle(fontWeight: FontWeight.w800)),
+              Text(tillLabel,
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
             ],
           ),
         ),

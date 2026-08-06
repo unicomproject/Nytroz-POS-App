@@ -36,7 +36,8 @@ extension PermissionCatalogFeatureMapper on PermissionCatalogFeatureDto {
       entitlementKey: entitlementKey,
       sortOrder: sortOrder,
       isActive: isActive,
-      permissions: permissions.map((permission) => permission.toEntity()).toList(),
+      permissions:
+          permissions.map((permission) => permission.toEntity()).toList(),
     );
   }
 }
@@ -71,6 +72,7 @@ extension RolePermissionsMapper on RolePermissionsDto {
   }
 }
 
-extension UpdateRolePermissionsRequestEntityMapper on UpdateRolePermissionsRequest {
+extension UpdateRolePermissionsRequestEntityMapper
+    on UpdateRolePermissionsRequest {
   List<String> toPermissionCodes() => permissionCodes;
 }

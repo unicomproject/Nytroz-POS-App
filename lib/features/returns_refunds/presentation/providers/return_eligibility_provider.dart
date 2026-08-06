@@ -32,7 +32,8 @@ class ReturnEligibilityState {
   final String? checkErrorMessage;
   final bool checkPermissionDenied;
 
-  ReturnLineSelection? selectionFor(String saleLineId) => selections[saleLineId];
+  ReturnLineSelection? selectionFor(String saleLineId) =>
+      selections[saleLineId];
 
   List<ReturnSaleLineEligibility> get selectedItems {
     final data = eligibility;
@@ -139,8 +140,10 @@ class ReturnEligibilityState {
   }
 }
 
-class ReturnEligibilityController extends StateNotifier<ReturnEligibilityState> {
-  ReturnEligibilityController(this._ref) : super(const ReturnEligibilityState());
+class ReturnEligibilityController
+    extends StateNotifier<ReturnEligibilityState> {
+  ReturnEligibilityController(this._ref)
+      : super(const ReturnEligibilityState());
 
   final Ref _ref;
   int _loadSequence = 0;
@@ -193,12 +196,13 @@ class ReturnEligibilityController extends StateNotifier<ReturnEligibilityState> 
     );
 
     try {
-      final eligibility =
-          await _ref.read(returnsRefundRemoteDatasourceProvider).getSaleEligibility(
-                deviceId: deviceContext.deviceId,
-                saleId: saleId,
-                cancelToken: cancelToken,
-              );
+      final eligibility = await _ref
+          .read(returnsRefundRemoteDatasourceProvider)
+          .getSaleEligibility(
+            deviceId: deviceContext.deviceId,
+            saleId: saleId,
+            cancelToken: cancelToken,
+          );
 
       if (!_canApplyLoad(requestId)) {
         return;
@@ -356,7 +360,8 @@ class ReturnEligibilityController extends StateNotifier<ReturnEligibilityState> 
     final updated = Map<String, ReturnLineSelection>.from(state.selections);
     updated[saleLineId] = current.copyWith(
       isSelected: nextSelected,
-      returnQty: nextSelected ? (current.returnQty > 0 ? current.returnQty : 1) : 0,
+      returnQty:
+          nextSelected ? (current.returnQty > 0 ? current.returnQty : 1) : 0,
     );
 
     state = state.copyWith(selections: updated);
@@ -387,9 +392,8 @@ class ReturnEligibilityController extends StateNotifier<ReturnEligibilityState> 
           );
       updated[item.saleLineId] = current.copyWith(
         isSelected: shouldSelect,
-        returnQty: shouldSelect
-            ? (current.returnQty > 0 ? current.returnQty : 1)
-            : 0,
+        returnQty:
+            shouldSelect ? (current.returnQty > 0 ? current.returnQty : 1) : 0,
       );
     }
 
@@ -455,8 +459,7 @@ class ReturnEligibilityController extends StateNotifier<ReturnEligibilityState> 
     return null;
   }
 
-  bool _canApplyLoad(int requestId) =>
-      !_disposed && requestId == _loadSequence;
+  bool _canApplyLoad(int requestId) => !_disposed && requestId == _loadSequence;
 
   bool _canApplyCheck(int requestId) =>
       !_disposed && requestId == _checkSequence;

@@ -131,7 +131,8 @@ void main() {
 
   group('ProductsRouteGuard', () {
     test('allows only matching route permissions', () {
-      final access = _accessFor([TenantAdminPermissionCodes.tenantProductsView]);
+      final access =
+          _accessFor([TenantAdminPermissionCodes.tenantProductsView]);
 
       expect(
         ProductsRouteGuard.canAccessPath(
@@ -175,7 +176,8 @@ void main() {
     });
 
     test('products menu visible with any child permission', () {
-      final access = _accessFor([TenantAdminPermissionCodes.tenantProductsView]);
+      final access =
+          _accessFor([TenantAdminPermissionCodes.tenantProductsView]);
       final productsMenu = tenantAdminMenuCatalog.firstWhere(
         (item) => item.key == 'products',
       );
@@ -187,14 +189,18 @@ void main() {
 
   group('ProductsSidebarRoutes', () {
     test('detects active products area routes', () {
-      expect(ProductsSidebarRoutes.isProductsArea('/tenant-admin/products'), isTrue);
+      expect(ProductsSidebarRoutes.isProductsArea('/tenant-admin/products'),
+          isTrue);
       expect(
         ProductsSidebarRoutes.isProductsArea('/tenant-admin/products/import'),
         isTrue,
       );
-      expect(ProductsSidebarRoutes.isProductsArea('/tenant-admin/categories'), isTrue);
-      expect(ProductsSidebarRoutes.isProductsArea('/tenant-admin/brands'), isTrue);
-      expect(ProductsSidebarRoutes.isProductsArea('/tenant-admin/dashboard'), isFalse);
+      expect(ProductsSidebarRoutes.isProductsArea('/tenant-admin/categories'),
+          isTrue);
+      expect(
+          ProductsSidebarRoutes.isProductsArea('/tenant-admin/brands'), isTrue);
+      expect(ProductsSidebarRoutes.isProductsArea('/tenant-admin/dashboard'),
+          isFalse);
     });
 
     test('highlights product list for detail routes', () {

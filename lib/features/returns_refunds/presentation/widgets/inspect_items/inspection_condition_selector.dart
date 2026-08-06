@@ -77,7 +77,9 @@ class _ConditionPill extends StatelessWidget {
           vertical: TenantAdminSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.12) : TenantAdminColors.surface,
+          color: selected
+              ? color.withValues(alpha: 0.12)
+              : TenantAdminColors.surface,
           borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
           border: Border.all(
             color: selected ? color : TenantAdminColors.border,

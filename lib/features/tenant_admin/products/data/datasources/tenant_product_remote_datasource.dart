@@ -15,7 +15,8 @@ class TenantProductRemoteDatasource {
 
   static const _productsPath = '/api/v1/tenant-admin/products';
   static const _summaryPath = '/api/v1/tenant-admin/products/summary';
-  static const _createOptionsPath = '/api/v1/tenant-admin/products/create-options';
+  static const _createOptionsPath =
+      '/api/v1/tenant-admin/products/create-options';
 
   Future<TenantProductCreateOptionsDto> getCreateOptions() async {
     final response = await _dio.get<dynamic>(_createOptionsPath);

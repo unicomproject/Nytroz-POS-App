@@ -71,8 +71,7 @@ class PosPrimaryActionButton extends StatefulWidget {
   final double borderRadius;
 
   @override
-  State<PosPrimaryActionButton> createState() =>
-      _PosPrimaryActionButtonState();
+  State<PosPrimaryActionButton> createState() => _PosPrimaryActionButtonState();
 }
 
 class _PosPrimaryActionButtonState extends State<PosPrimaryActionButton> {
@@ -105,9 +104,7 @@ class _PosPrimaryActionButtonState extends State<PosPrimaryActionButton> {
               ? PosPrimaryActionTokens.gradient
               : null,
           borderRadius: radius,
-          border: _focused
-              ? Border.all(color: Colors.white, width: 2)
-              : null,
+          border: _focused ? Border.all(color: Colors.white, width: 2) : null,
           boxShadow: showActiveTheme ? TenantAdminShadows.card : null,
         ),
         child: Semantics(
@@ -152,7 +149,9 @@ class _PosPrimaryActionButtonState extends State<PosPrimaryActionButton> {
       onPointerDown: enabled ? (_) => setState(() => _pressed = true) : null,
       onPointerUp: enabled ? (_) => setState(() => _pressed = false) : null,
       onPointerCancel: enabled ? (_) => setState(() => _pressed = false) : null,
-      child: widget.fullWidth ? SizedBox(width: double.infinity, child: button) : button,
+      child: widget.fullWidth
+          ? SizedBox(width: double.infinity, child: button)
+          : button,
     );
   }
 

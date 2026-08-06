@@ -165,12 +165,14 @@ class PosCustomerOrder {
   factory PosCustomerOrder.fromJson(Map<String, dynamic> json) {
     return PosCustomerOrder(
       orderId: json['orderId']?.toString() ?? json['OrderId']?.toString() ?? '',
-      orderNumber:
-          json['orderNumber']?.toString() ?? json['OrderNumber']?.toString() ?? '',
+      orderNumber: json['orderNumber']?.toString() ??
+          json['OrderNumber']?.toString() ??
+          '',
       orderDate: _readDate(json['orderDate'] ?? json['OrderDate']),
       totalAmount: _readDouble(json['totalAmount'] ?? json['TotalAmount']),
-      currencyCode:
-          json['currencyCode']?.toString() ?? json['CurrencyCode']?.toString() ?? '',
+      currencyCode: json['currencyCode']?.toString() ??
+          json['CurrencyCode']?.toString() ??
+          '',
       status: json['status']?.toString() ?? json['Status']?.toString() ?? '',
       outletDisplayName: json['outletDisplayName']?.toString() ??
           json['OutletDisplayName']?.toString(),
@@ -195,7 +197,8 @@ class PosCustomerSummary {
 
   factory PosCustomerSummary.fromJson(Map<String, dynamic> json) {
     return PosCustomerSummary(
-      totalCustomers: _readInt(json['totalCustomers'] ?? json['TotalCustomers']),
+      totalCustomers:
+          _readInt(json['totalCustomers'] ?? json['TotalCustomers']),
       activeCustomers:
           _readInt(json['activeCustomers'] ?? json['ActiveCustomers']),
       customersWithOrders: _readInt(
@@ -204,8 +207,9 @@ class PosCustomerSummary {
       newCustomersThisMonth: _readInt(
         json['newCustomersThisMonth'] ?? json['NewCustomersThisMonth'],
       ),
-      timeZoneId:
-          json['timeZoneId']?.toString() ?? json['TimeZoneId']?.toString() ?? 'UTC',
+      timeZoneId: json['timeZoneId']?.toString() ??
+          json['TimeZoneId']?.toString() ??
+          'UTC',
     );
   }
 }

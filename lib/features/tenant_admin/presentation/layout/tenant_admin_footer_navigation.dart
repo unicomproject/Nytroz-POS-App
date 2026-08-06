@@ -164,21 +164,22 @@ class _FooterDestinationButton extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 7),
+              padding: const EdgeInsets.symmetric(vertical: 4),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     selected ? destination.selectedIcon : destination.icon,
-                    size: 24,
+                    size: 20,
                     color: color,
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   Text(
                     destination.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          fontSize: 10,
                           color: color,
                           fontWeight:
                               selected ? FontWeight.w800 : FontWeight.w600,

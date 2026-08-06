@@ -57,8 +57,7 @@ class ReturnSuccessState {
   }) {
     return ReturnSuccessState(
       loadStatus: loadStatus ?? this.loadStatus,
-      loadMessage:
-          clearLoadMessage ? null : loadMessage ?? this.loadMessage,
+      loadMessage: clearLoadMessage ? null : loadMessage ?? this.loadMessage,
       printStatus: printStatus ?? this.printStatus,
       printMessage:
           clearPrintMessage ? null : printMessage ?? this.printMessage,
@@ -96,8 +95,7 @@ class ReturnSuccessController extends StateNotifier<ReturnSuccessState> {
     if (resolvedReturnId.isEmpty) {
       state = state.copyWith(
         loadStatus: ReturnSuccessLoadStatus.notFound,
-        loadMessage:
-            'A confirmed return completion identifier is required.',
+        loadMessage: 'A confirmed return completion identifier is required.',
         clearReceipt: true,
       );
       return;
@@ -130,13 +128,12 @@ class ReturnSuccessController extends StateNotifier<ReturnSuccessState> {
     );
 
     try {
-      final receipt = await _ref
-          .read(returnsRefundRemoteDatasourceProvider)
-          .getCompletion(
-            deviceId: deviceContext.deviceId,
-            returnId: resolvedReturnId,
-            cancelToken: cancelToken,
-          );
+      final receipt =
+          await _ref.read(returnsRefundRemoteDatasourceProvider).getCompletion(
+                deviceId: deviceContext.deviceId,
+                returnId: resolvedReturnId,
+                cancelToken: cancelToken,
+              );
 
       if (!_isCurrentLoad(sequence, resolvedReturnId)) {
         return;
@@ -220,9 +217,7 @@ class ReturnSuccessController extends StateNotifier<ReturnSuccessState> {
     }
 
     final deviceContext = _ref.read(deviceActivationProvider).deviceContext;
-    if (session == null ||
-        !session.isAuthenticated ||
-        deviceContext == null) {
+    if (session == null || !session.isAuthenticated || deviceContext == null) {
       state = state.copyWith(
         printStatus: ReturnSuccessPrintStatus.failed,
         printMessage: 'Device context is required for printing.',
@@ -258,7 +253,8 @@ class ReturnSuccessController extends StateNotifier<ReturnSuccessState> {
             ? 'Print audit recorded.'
             : 'Receipt printed.',
         receipt: receipt.copyWith(
-          printCount: skipPhysical ? receipt.printCount : receipt.printCount + 1,
+          printCount:
+              skipPhysical ? receipt.printCount : receipt.printCount + 1,
           hasBeenPrinted: true,
         ),
         auditPendingAfterPrint: false,
@@ -393,8 +389,8 @@ class ReturnSuccessController extends StateNotifier<ReturnSuccessState> {
     }
     return state.copyWith(
       loadStatus: ReturnSuccessLoadStatus.failed,
-      loadMessage: _readApiError(error) ??
-          'Unable to load the completed receipt.',
+      loadMessage:
+          _readApiError(error) ?? 'Unable to load the completed receipt.',
       clearReceipt: true,
     );
   }
@@ -437,7 +433,7 @@ String? _readApiCode(DioException error) {
   return null;
 }
 
-final returnSuccessProvider =
-    StateNotifierProvider.autoDispose<ReturnSuccessController, ReturnSuccessState>(
+final returnSuccessProvider = StateNotifierProvider.autoDispose<
+    ReturnSuccessController, ReturnSuccessState>(
   (ref) => ReturnSuccessController(ref),
 );

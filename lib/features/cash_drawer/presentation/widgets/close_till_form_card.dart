@@ -55,14 +55,14 @@ class CloseTillFormCard extends ConsumerWidget {
                       RegExp(r'^\d*\.?\d{0,2}'),
                     ),
                   ],
-                  onChanged:
-                      ref.read(closeTillFormProvider.notifier).setCountedCashText,
+                  onChanged: ref
+                      .read(closeTillFormProvider.notifier)
+                      .setCountedCashText,
                   decoration: InputDecoration(
                     labelText: 'Counted Cash *',
                     prefixText: '${formatLkrInputPrefix()} ',
                     border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.md),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                     ),
                   ),
                   validator: validateCloseTillCountedCash,
@@ -74,8 +74,7 @@ class CloseTillFormCard extends ConsumerWidget {
                     filled: true,
                     fillColor: TenantAdminColors.background,
                     border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.md),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: TenantAdminSpacing.md,
@@ -119,7 +118,8 @@ class CloseTillFormCard extends ConsumerWidget {
               key: ValueKey(formState.mismatchReason),
               initialValue: formState.mismatchReason,
               decoration: InputDecoration(
-                labelText: 'Mismatch Reason${mismatchReasonRequired ? ' *' : ''}',
+                labelText:
+                    'Mismatch Reason${mismatchReasonRequired ? ' *' : ''}',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                 ),

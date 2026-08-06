@@ -36,7 +36,8 @@ class ProductsSidebarMenu extends ConsumerWidget {
           return const SizedBox.shrink();
         }
 
-        final parentSelected = ProductsSidebarRoutes.isParentActive(currentPath);
+        final parentSelected =
+            ProductsSidebarRoutes.isParentActive(currentPath);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -111,7 +112,8 @@ class ProductsSidebarMenu extends ConsumerWidget {
     WidgetRef ref,
     ProductsSidebarVisibility visibility,
   ) async {
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+    final overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox?;
     final button = context.findRenderObject() as RenderBox?;
     if (overlay == null || button == null) {
       return;
@@ -119,7 +121,8 @@ class ProductsSidebarMenu extends ConsumerWidget {
 
     final position = RelativeRect.fromRect(
       Rect.fromPoints(
-        button.localToGlobal(Offset(button.size.width + 8, 0), ancestor: overlay),
+        button.localToGlobal(Offset(button.size.width + 8, 0),
+            ancestor: overlay),
         button.localToGlobal(
           Offset(button.size.width + 240, button.size.height),
           ancestor: overlay,

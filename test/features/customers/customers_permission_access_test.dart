@@ -105,7 +105,8 @@ void main() {
         'POS',
       );
       expect(
-        const CustomersState(sourceFilter: CustomerSourceFilter.manual).apiSource,
+        const CustomersState(sourceFilter: CustomerSourceFilter.manual)
+            .apiSource,
         'MANUAL',
       );
       expect(
@@ -114,7 +115,8 @@ void main() {
         'ECOMMERCE',
       );
       expect(
-        const CustomersState(sourceFilter: CustomerSourceFilter.import).apiSource,
+        const CustomersState(sourceFilter: CustomerSourceFilter.import)
+            .apiSource,
         'IMPORT',
       );
     });

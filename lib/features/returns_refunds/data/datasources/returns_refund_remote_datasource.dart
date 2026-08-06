@@ -41,8 +41,7 @@ class ReturnsRefundRemoteDatasource {
           'pageSize': pageSize,
           if (fromDate != null) 'fromDate': _formatDateOnly(fromDate),
           if (toDate != null) 'toDate': _formatDateOnly(toDate),
-          if (paymentMethodCode != null &&
-              paymentMethodCode.trim().isNotEmpty)
+          if (paymentMethodCode != null && paymentMethodCode.trim().isNotEmpty)
             'paymentMethodCode': paymentMethodCode.trim(),
           if (minAmount != null) 'minAmount': minAmount,
           if (maxAmount != null) 'maxAmount': maxAmount,
@@ -461,7 +460,8 @@ class ReturnsRefundRemoteDatasource {
         ApiEndpoints.posReturnSaleExchangeProducts(saleId),
         queryParameters: {
           'deviceId': deviceId,
-          if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+          if (search != null && search.trim().isNotEmpty)
+            'search': search.trim(),
           'page': page,
           'pageSize': pageSize,
         },

@@ -168,8 +168,37 @@ Object? _responseFor(RequestOptions options) {
     return _outletOptions;
   }
 
+  if (method == 'GET' &&
+      path.startsWith('/api/v1/tenant-admin/tills/') &&
+      path.endsWith('/hardware-readiness')) {
+    final tillId = path.split('/')[4];
+    return {
+      'tillId': tillId,
+      'tillName': 'Dev Till',
+      'tillCode': tillId,
+      'outletId': 'OUTLET-01',
+      'outletName': 'Dev Outlet',
+      'tillStatus': 'Active',
+      'operationalStatus': 'Online',
+      'cashier': null,
+      'lastActivityAt': null,
+      'posDevice': null,
+      'alertCount': 0,
+      'attentionReasons': const <Map<String, dynamic>>[],
+      'connections': const <Map<String, dynamic>>[],
+    };
+  }
+
   if (method == 'GET' && path == '/api/v1/tenant-admin/tills') {
     return _tills;
+  }
+
+  if (method == 'GET' && path == '/api/v1/tenant-admin/tills/summary') {
+    return {
+      'success': true,
+      'message': 'Tills summary loaded successfully.',
+      'data': (_tills['data'] as Map)['summary'],
+    };
   }
 
   if (method == 'POST' && path == '/api/v1/tenant-admin/tills') {
@@ -654,40 +683,72 @@ const _tills = {
   'message': 'Tills loaded successfully.',
   'data': {
     'summary': {
-      'totalTills': 2,
-      'onlineCount': 1,
+      'totalTills': 4,
+      'onlineCount': 3,
       'offlineCount': 1,
-      'needsAttentionCount': 0,
+      'needsAttentionCount': 1,
     },
     'items': [
       {
         'id': 'till-1',
         'outletId': 'outlet-1',
-        'outletName': 'High Street Store',
-        'name': 'Front Counter Till',
+        'outletName': 'Main Outlet',
+        'name': 'Till 01',
         'code': 'TILL-001',
         'status': 'active',
         'operationalStatus': 'online',
         'todaySalesAmount': 1245.60,
         'currency': 'GBP',
         'lastSyncAt': '2026-06-22T10:00:00Z',
+        'cashierName': 'Kavin',
+        'lastActivityAgo': '2 min ago',
       },
       {
         'id': 'till-2',
         'outletId': 'outlet-2',
-        'outletName': 'Central Store',
-        'name': 'Kiosk Till',
+        'outletName': 'Outlet City Center',
+        'name': 'Till 02',
         'code': 'TILL-002',
         'status': 'active',
-        'operationalStatus': 'offline',
+        'operationalStatus': 'online',
         'todaySalesAmount': 420.10,
         'currency': 'GBP',
-        'lastSyncAt': '2026-06-22T09:30:00Z',
+        'lastSyncAt': '2026-06-22T09:54:00Z',
+        'cashierName': 'Nimal',
+        'lastActivityAgo': '8 min ago',
+      },
+      {
+        'id': 'till-3',
+        'outletId': 'outlet-3',
+        'outletName': 'Outlet Nugegoda',
+        'name': 'Till 03',
+        'code': 'TILL-003',
+        'status': 'active',
+        'operationalStatus': 'offline',
+        'todaySalesAmount': 0.0,
+        'currency': 'GBP',
+        'lastSyncAt': '2026-06-22T09:50:00Z',
+        'cashierName': '-',
+        'lastActivityAgo': '12 min ago',
+      },
+      {
+        'id': 'till-4',
+        'outletId': 'outlet-4',
+        'outletName': 'Outlet Lake Road',
+        'name': 'Till 04',
+        'code': 'TILL-004',
+        'status': 'active',
+        'operationalStatus': 'needs_attention',
+        'todaySalesAmount': 150.0,
+        'currency': 'GBP',
+        'lastSyncAt': '2026-06-22T09:59:00Z',
+        'cashierName': 'Chamath',
+        'lastActivityAgo': '3 min ago',
       },
     ],
     'page': 1,
     'pageSize': 10,
-    'totalCount': 2,
+    'totalCount': 4,
   },
 };
 
@@ -704,8 +765,10 @@ const _outletOptions = {
 
 Map<String, Object?> _createdTill(Object? data, {String id = 'till-new'}) {
   final body = data is Map ? Map<String, dynamic>.from(data) : const {};
-  final tillName = body['tillName']?.toString() ?? body['name']?.toString() ?? 'New Till';
-  final tillCode = body['tillCode']?.toString() ?? body['code']?.toString() ?? 'TILL-NEW';
+  final tillName =
+      body['tillName']?.toString() ?? body['name']?.toString() ?? 'New Till';
+  final tillCode =
+      body['tillCode']?.toString() ?? body['code']?.toString() ?? 'TILL-NEW';
   final status = body['status']?.toString() ?? 'Active';
 
   return {

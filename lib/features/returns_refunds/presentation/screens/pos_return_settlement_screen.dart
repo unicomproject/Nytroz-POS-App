@@ -51,9 +51,8 @@ class _PosReturnSettlementScreenState
     final flow = ref.read(returnFlowProvider);
     final isExchange = flow.selectedResolution == ReturnResolutionType.exchange;
 
-    final loaded = await ref
-        .read(returnResolutionProvider.notifier)
-        .loadSavedResolution();
+    final loaded =
+        await ref.read(returnResolutionProvider.notifier).loadSavedResolution();
     final authoritative = ref.read(returnResolutionProvider).savedResolution;
     if (!loaded ||
         authoritative == null ||
@@ -70,7 +69,8 @@ class _PosReturnSettlementScreenState
     }
 
     if (isExchange) {
-      if (!ReturnsRouteGuard.hasExchangeBranchContext(ref.read(returnFlowProvider))) {
+      if (!ReturnsRouteGuard.hasExchangeBranchContext(
+          ref.read(returnFlowProvider))) {
         if (mounted) {
           context.go('/pos/returns-refunds/choose-option');
         }
@@ -93,7 +93,8 @@ class _PosReturnSettlementScreenState
       return;
     }
 
-    if (!ReturnsRouteGuard.hasRefundBranchContext(ref.read(returnFlowProvider))) {
+    if (!ReturnsRouteGuard.hasRefundBranchContext(
+        ref.read(returnFlowProvider))) {
       if (mounted) {
         context.go('/pos/returns-refunds/choose-option');
       }
@@ -117,8 +118,7 @@ class _PosReturnSettlementScreenState
       }
 
       final match = conditions.where((c) => c.code == code);
-      labels[entry.key] =
-          match.isEmpty ? code : match.first.displayName;
+      labels[entry.key] = match.isEmpty ? code : match.first.displayName;
     }
 
     return labels;
@@ -407,8 +407,8 @@ class _SummaryColumn extends StatelessWidget {
         if (isExchange)
           ExchangeSettlementDetailsCard(
             currencyCode: exchangePreview?.currencyCode ?? preview.currency,
-            returnItemValue:
-                exchangePreview?.returnItemValue ?? preview.calculation.netCreditAmount,
+            returnItemValue: exchangePreview?.returnItemValue ??
+                preview.calculation.netCreditAmount,
             replacementValue: exchangePreview?.replacementItemValue,
             difference: difference,
             replacement: flowState.selectedReplacement,

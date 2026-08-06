@@ -64,7 +64,8 @@ void main() {
 
       expect(controller.state.selectedRefundMethod, isNull);
       expect(controller.state.refundPreview, isNull);
-      expect(controller.state.selectedResolution, ReturnResolutionType.exchange);
+      expect(
+          controller.state.selectedResolution, ReturnResolutionType.exchange);
     });
   });
 
@@ -117,7 +118,8 @@ void main() {
 
       expect(methods[0].description, 'VISA •••• 4242');
       expect(
-        methods.any((method) => method.code == 'STORE_CREDIT' && method.enabled),
+        methods
+            .any((method) => method.code == 'STORE_CREDIT' && method.enabled),
         isFalse,
       );
     });

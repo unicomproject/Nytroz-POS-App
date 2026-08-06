@@ -30,7 +30,8 @@ class UserBasicInfoSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader(context, icon: Icons.badge_outlined, title: 'Basic Information'),
+        _sectionHeader(context,
+            icon: Icons.badge_outlined, title: 'Basic Information'),
         const SizedBox(height: TenantAdminSpacing.lg),
         _twoColumnRow(
           TextFormField(
@@ -66,8 +67,8 @@ class UserBasicInfoSection extends StatelessWidget {
               if (value == null || value.trim().isEmpty) {
                 return 'Email is required.';
               }
-              final valid = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                  .hasMatch(value.trim());
+              final valid =
+                  RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim());
               if (!valid) {
                 return 'Enter a valid email address.';
               }

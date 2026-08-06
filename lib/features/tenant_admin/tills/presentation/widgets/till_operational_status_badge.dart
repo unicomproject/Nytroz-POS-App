@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../presentation/theme/tenant_admin_theme.dart';
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
 class TillOperationalStatusBadge extends StatelessWidget {
   const TillOperationalStatusBadge({

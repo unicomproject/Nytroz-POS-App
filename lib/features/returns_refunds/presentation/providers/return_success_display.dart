@@ -160,7 +160,8 @@ bool isValidReturnCompletion(ReturnFlowState flowState) {
   return isValidCompletedReceipt(flowState.completedReceipt);
 }
 
-ReturnSuccessDisplay? buildReturnSuccessDisplayFromReceipt(ReturnReceipt receipt) {
+ReturnSuccessDisplay? buildReturnSuccessDisplayFromReceipt(
+    ReturnReceipt receipt) {
   if (!isValidCompletedReceipt(receipt)) {
     return null;
   }
@@ -195,8 +196,7 @@ ReturnSuccessDisplay? buildReturnSuccessDisplayFromReceipt(ReturnReceipt receipt
 
   final customerName =
       (receipt.customerDisplayName ?? receipt.customerName).trim();
-  final processedBy =
-      (receipt.processedByName ?? receipt.cashierName).trim();
+  final processedBy = (receipt.processedByName ?? receipt.cashierName).trim();
 
   final showCardDetails = !receipt.isCashSettlement &&
       !receipt.isEvenExchange &&

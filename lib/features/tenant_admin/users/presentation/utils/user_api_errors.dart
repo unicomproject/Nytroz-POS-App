@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
-String userErrorMessage(DioException error, {String fallback = 'Request failed'}) {
+String userErrorMessage(DioException error,
+    {String fallback = 'Request failed'}) {
   final data = error.response?.data;
   if (data is Map && data['message'] != null) {
     return data['message'].toString();

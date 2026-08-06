@@ -26,7 +26,8 @@ class ApplySameReasonControl extends StatelessWidget {
               value: value,
               onChanged: (next) => onChanged(next ?? false),
               activeColor: TenantAdminColors.primary,
-              side: const BorderSide(color: TenantAdminColors.border, width: 1.5),
+              side:
+                  const BorderSide(color: TenantAdminColors.border, width: 1.5),
             ),
           ),
           const SizedBox(width: TenantAdminSpacing.sm),

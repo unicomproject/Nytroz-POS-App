@@ -27,9 +27,8 @@ ReturnReceipt _completionReceipt({
     originalInvoiceNo: 'INV-1',
     returnedItemCount: 1,
     settlementMethodCode: settlementMethodCode,
-    settlementMethodLabel: settlementMethodCode == 'CASH_REFUND'
-        ? 'Cash Refund'
-        : 'Card Refund',
+    settlementMethodLabel:
+        settlementMethodCode == 'CASH_REFUND' ? 'Cash Refund' : 'Card Refund',
     settlementDisplay: settlementMethodCode == 'CASH_REFUND'
         ? 'Cash Refund'
         : 'Visa •••• 1111',
@@ -132,7 +131,8 @@ class _FakeAdapter implements ReceiptPrinterAdapter {
 void main() {
   group('Step 10 completion display authority', () {
     test('builds display from Completion GET fields', () {
-      final display = buildReturnSuccessDisplayFromReceipt(_completionReceipt());
+      final display =
+          buildReturnSuccessDisplayFromReceipt(_completionReceipt());
       expect(display, isNotNull);
       expect(display!.tillName, 'Till 01');
       expect(display.returnDiscount, 10);

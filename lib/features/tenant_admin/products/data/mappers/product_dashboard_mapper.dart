@@ -9,9 +9,11 @@ class ProductDashboardMapper {
       lastUpdatedAt: _parseDateTime(dto.lastUpdatedAt),
       currencyCode: dto.currencyCode,
       summary: dto.summary == null ? null : _toSummary(dto.summary!),
-      stockValue: dto.stockValue == null ? null : _toStockValue(dto.stockValue!),
-      stockMovement:
-          dto.stockMovement == null ? null : _toStockMovement(dto.stockMovement!),
+      stockValue:
+          dto.stockValue == null ? null : _toStockValue(dto.stockValue!),
+      stockMovement: dto.stockMovement == null
+          ? null
+          : _toStockMovement(dto.stockMovement!),
     );
   }
 

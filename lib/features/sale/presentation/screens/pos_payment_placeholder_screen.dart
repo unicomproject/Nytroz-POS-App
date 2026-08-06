@@ -42,7 +42,8 @@ class PosPaymentPlaceholderScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: TenantAdminTextStyles.pageTitle(context)),
+                    Text(title,
+                        style: TenantAdminTextStyles.pageTitle(context)),
                     const SizedBox(height: TenantAdminSpacing.xs),
                     Text(subtitle, style: TenantAdminTextStyles.muted(context)),
                   ],

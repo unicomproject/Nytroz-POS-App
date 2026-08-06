@@ -25,7 +25,8 @@ enum TillStatusFilter {
   }
 }
 
-int tillFilterCount(TillStatusFilter filter, {
+int tillFilterCount(
+  TillStatusFilter filter, {
   required int totalTills,
   required int onlineCount,
   required int offlineCount,

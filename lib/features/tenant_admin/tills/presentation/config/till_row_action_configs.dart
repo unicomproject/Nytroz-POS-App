@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/entities/till_monitoring.dart';
+
 import '../../../../../core/access/tenant_admin_access_codes.dart';
-import '../../domain/entities/till.dart';
 import '../../../presentation/widgets/tenant_admin_status_badge.dart';
 import 'till_permission_config.dart';
 
@@ -98,8 +99,8 @@ class TillSummaryCardConfig extends TillWidgetPermissionConfig {
   final String title;
   final IconData icon;
   final TenantAdminStatusType? status;
-  final String Function(TillListSummary summary) valueBuilder;
-  final String Function(TillListSummary summary) subtitleBuilder;
+  final String Function(TillMonitoringSummary summary) valueBuilder;
+  final String Function(TillMonitoringSummary summary) subtitleBuilder;
 }
 
 const tillSummaryCardConfigs = <TillSummaryCardConfig>[
@@ -140,26 +141,29 @@ const tillSummaryCardConfigs = <TillSummaryCardConfig>[
   ),
 ];
 
-String _totalTillsValue(TillListSummary summary) => '${summary.totalTills}';
+String _totalTillsValue(TillMonitoringSummary summary) =>
+    '${summary.totalTills}';
 
-String _totalTillsSubtitle(TillListSummary summary) => 'Across all outlets';
+String _totalTillsSubtitle(TillMonitoringSummary summary) =>
+    'Across all outlets';
 
-String _onlineValue(TillListSummary summary) => '${summary.onlineCount}';
+String _onlineValue(TillMonitoringSummary summary) => '${summary.onlineCount}';
 
-String _onlineSubtitle(TillListSummary summary) {
+String _onlineSubtitle(TillMonitoringSummary summary) {
   return '${_percent(summary.onlineCount, summary.totalTills)}% of total';
 }
 
-String _offlineValue(TillListSummary summary) => '${summary.offlineCount}';
+String _offlineValue(TillMonitoringSummary summary) =>
+    '${summary.offlineCount}';
 
-String _offlineSubtitle(TillListSummary summary) {
+String _offlineSubtitle(TillMonitoringSummary summary) {
   return '${_percent(summary.offlineCount, summary.totalTills)}% of total';
 }
 
-String _needsAttentionValue(TillListSummary summary) =>
+String _needsAttentionValue(TillMonitoringSummary summary) =>
     '${summary.needsAttentionCount}';
 
-String _needsAttentionSubtitle(TillListSummary summary) {
+String _needsAttentionSubtitle(TillMonitoringSummary summary) {
   return '${_percent(summary.needsAttentionCount, summary.totalTills)}% of total';
 }
 

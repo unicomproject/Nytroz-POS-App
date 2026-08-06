@@ -48,7 +48,8 @@ class CustomerDetailsActions extends StatelessWidget {
             icon: Icons.history_rounded,
             onPressed: onViewPurchaseHistory,
           ),
-        if (canViewPurchaseHistory) const SizedBox(height: TenantAdminSpacing.sm),
+        if (canViewPurchaseHistory)
+          const SizedBox(height: TenantAdminSpacing.sm),
         if (canEdit)
           _PanelButton(
             label: 'Edit Customer',

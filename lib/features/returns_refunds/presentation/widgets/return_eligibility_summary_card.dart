@@ -45,9 +45,10 @@ class ReturnEligibilitySummaryCard extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           item.name,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                         ),
                       ),
                       Text(

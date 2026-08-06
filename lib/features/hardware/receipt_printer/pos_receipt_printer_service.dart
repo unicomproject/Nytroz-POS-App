@@ -77,7 +77,8 @@ class PosReceiptPrinterService {
   }
 }
 
-final posReceiptPrinterServiceProvider = Provider<PosReceiptPrinterService>((ref) {
+final posReceiptPrinterServiceProvider =
+    Provider<PosReceiptPrinterService>((ref) {
   final store = ref.watch(posDevicePrinterConfigStoreProvider);
   return PosReceiptPrinterService(
     loadConfiguration: store.load,

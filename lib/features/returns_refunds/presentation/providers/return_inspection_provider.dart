@@ -213,9 +213,8 @@ class ReturnInspectionState {
       draftStatus: draftStatus ?? this.draftStatus,
       draftVersion:
           clearDraftVersion ? null : draftVersion ?? this.draftVersion,
-      draftExpiresAt: clearDraftExpiresAt
-          ? null
-          : draftExpiresAt ?? this.draftExpiresAt,
+      draftExpiresAt:
+          clearDraftExpiresAt ? null : draftExpiresAt ?? this.draftExpiresAt,
       showValidationMessage:
           showValidationMessage ?? this.showValidationMessage,
       notesMaxLength: notesMaxLength ?? this.notesMaxLength,
@@ -474,7 +473,8 @@ class ReturnInspectionController extends StateNotifier<ReturnInspectionState> {
       state = state.copyWith(lineInspections: updated);
       _syncFlowInspections(validated: false);
     } on DioException catch (error) {
-      if (CancelToken.isCancel(error) || !_canApplyUpload(saleLineId, requestId)) {
+      if (CancelToken.isCancel(error) ||
+          !_canApplyUpload(saleLineId, requestId)) {
         return;
       }
       _markUploadFailed(
@@ -752,7 +752,8 @@ class ReturnInspectionController extends StateNotifier<ReturnInspectionState> {
         draftStatus: draft.status,
         draftVersion: draft.version,
         draftExpiresAt: draft.expiresAt,
-        inspectionsValidated: forValidation ? state.inspectionsValidated : validated,
+        inspectionsValidated:
+            forValidation ? state.inspectionsValidated : validated,
         clearError: true,
       );
       if (!forValidation) {
@@ -1044,8 +1045,7 @@ class ReturnInspectionController extends StateNotifier<ReturnInspectionState> {
         );
   }
 
-  bool _canApplyLoad(int requestId) =>
-      !_disposed && requestId == _loadSequence;
+  bool _canApplyLoad(int requestId) => !_disposed && requestId == _loadSequence;
 
   bool _canApplyPersist(int requestId) =>
       !_disposed && requestId == _persistSequence;

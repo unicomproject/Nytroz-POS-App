@@ -14,8 +14,7 @@ class ProductStatusUpdateResponseDto {
 
   factory ProductStatusUpdateResponseDto.fromJson(Map<String, dynamic> json) {
     return ProductStatusUpdateResponseDto(
-      productId:
-          json['productId']?.toString() ?? json['id']?.toString() ?? '',
+      productId: json['productId']?.toString() ?? json['id']?.toString() ?? '',
       status: json['status'] as String? ?? '',
     );
   }

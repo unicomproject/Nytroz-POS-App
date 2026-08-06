@@ -70,7 +70,8 @@ class CreateOutletRequestDto {
       'status': _mapStatus(status),
       'outletType': _mapOutletType(outletType),
       'isDefaultOutlet': isDefaultOutlet,
-      if (_nullable(mainPhoneNumber) != null) 'phone': _nullable(mainPhoneNumber),
+      if (_nullable(mainPhoneNumber) != null)
+        'phone': _nullable(mainPhoneNumber),
       if (_nullable(emailAddress) != null) 'email': _nullable(emailAddress),
       'address': {
         'addressLine1': addressLine1,
@@ -81,7 +82,8 @@ class CreateOutletRequestDto {
           'stateOrProvince': state!.trim(),
         if (postalCode.trim().isNotEmpty) 'postalCode': postalCode.trim(),
         'countryCode': _normalizeCountryCode(country),
-        if (_nullable(contactName) != null) 'contactName': _nullable(contactName),
+        if (_nullable(contactName) != null)
+          'contactName': _nullable(contactName),
         if (_nullable(contactPhone) != null)
           'contactPhone': _nullable(contactPhone),
       },

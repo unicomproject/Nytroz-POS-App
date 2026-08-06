@@ -20,8 +20,14 @@ import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_a
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/navigation/products_sidebar_provider.dart';
 import 'package:nytroz_pos/features/till/application/usecases/open_till.dart';
 import 'package:nytroz_pos/features/till/data/datasources/till_session_storage.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till_hardware_readiness.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till_create_options.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/domain/repositories/till_repository.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till_monitoring.dart';
 import 'package:nytroz_pos/features/till/domain/entities/open_till.dart';
-import 'package:nytroz_pos/features/till/domain/repositories/till_repository.dart';
+import 'package:nytroz_pos/features/till/domain/repositories/till_repository.dart'
+    as till_repo;
 import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
 
 TenantAdminAccessChecker _fullAccess() {
@@ -149,7 +155,17 @@ class _TestTillSessionStorage extends TillSessionStorage {
   Future<void> clear() async {}
 }
 
-class _FakeTillRepository implements TillRepository {
+class _FakeTillRepository implements TillRepository, till_repo.TillRepository {
+  @override
+  Future<CreatedTill> createTill(TillFormData form) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<CreatedTill> createTillSetup(AddTillFormData form) async {
+    throw UnimplementedError();
+  }
+
   @override
   Future<TillSession> openTill(OpenTillForm form) {
     throw UnimplementedError();
@@ -160,6 +176,44 @@ class _FakeTillRepository implements TillRepository {
 
   @override
   Future<ClosedTillSession> closeTill(CloseTillForm form) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> deleteTill(String id) async {}
+
+  @override
+  Future<TillCreateOptions> getCreateOptions({String? outletId}) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<OutletOption>> getOutletOptions() async {
+    return const [];
+  }
+
+  @override
+  Future<TillDetail> getTillById(String id) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<TillDetail> updateTill(String id, TillFormData form) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<TillMonitoringResult> getTills({required TillListQuery query}) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<TillMonitoringSummary> getTillSummary() async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<TillHardwareReadiness> getTillHardwareReadiness(String id) async {
     throw UnimplementedError();
   }
 }
@@ -197,8 +251,9 @@ void main() {
 
   group('tenantAdminMenuCatalog approved order', () {
     test('matches locked sidebar order and settings last', () {
-      final labels =
-          tenantAdminMenuCatalog.map((item) => item.label).toList(growable: false);
+      final labels = tenantAdminMenuCatalog
+          .map((item) => item.label)
+          .toList(growable: false);
 
       expect(labels, [
         'Dashboard',
@@ -210,18 +265,13 @@ void main() {
         'Hardware',
         'Inventory',
         'Products',
+        'Reports',
         'Settings',
       ]);
       expect(tenantAdminMenuCatalog.last.key, 'settings');
       expect(
         tenantAdminMenuCatalog
             .firstWhere((item) => item.key == 'online-store')
-            .isRouteAvailable,
-        isFalse,
-      );
-      expect(
-        tenantAdminMenuCatalog
-            .firstWhere((item) => item.key == 'hardware')
             .isRouteAvailable,
         isFalse,
       );

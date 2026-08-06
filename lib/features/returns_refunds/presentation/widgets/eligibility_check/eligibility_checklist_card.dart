@@ -43,7 +43,8 @@ class EligibilityChecklistCard extends StatelessWidget {
             for (var index = 0; index < checks.length; index += 1) ...[
               if (index > 0)
                 const Padding(
-                  padding: EdgeInsets.symmetric(vertical: TenantAdminSpacing.md),
+                  padding:
+                      EdgeInsets.symmetric(vertical: TenantAdminSpacing.md),
                   child: Divider(color: TenantAdminColors.border, height: 1),
                 ),
               EligibilityCheckItem(check: checks[index]),

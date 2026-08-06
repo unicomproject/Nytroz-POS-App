@@ -5,6 +5,9 @@ import 'package:nytroz_pos/features/tenant_admin/tills/application/usecases/upda
 import 'package:nytroz_pos/features/tenant_admin/tills/data/models/create_till_request_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/data/models/till_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till_monitoring.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till_hardware_readiness.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till_create_options.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/domain/repositories/till_repository.dart';
 
 void main() {
@@ -94,6 +97,11 @@ class _FakeTillRepository implements TillRepository {
   }
 
   @override
+  Future<CreatedTill> createTillSetup(AddTillFormData form) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<void> deleteTill(String id) async {
     deleteTillCalled = true;
   }
@@ -115,12 +123,27 @@ class _FakeTillRepository implements TillRepository {
   }
 
   @override
-  Future<TillListResult> getTills({required TillListQuery query}) {
+  Future<TillMonitoringResult> getTills({required TillListQuery query}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<TillMonitoringSummary> getTillSummary() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<TillHardwareReadiness> getTillHardwareReadiness(String id) {
     throw UnimplementedError();
   }
 
   @override
   Future<List<OutletOption>> getOutletOptions() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<TillCreateOptions> getCreateOptions({String? outletId}) {
     throw UnimplementedError();
   }
 

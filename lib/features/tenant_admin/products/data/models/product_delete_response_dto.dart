@@ -7,8 +7,7 @@ class ProductDeleteResponseDto {
 
   factory ProductDeleteResponseDto.fromJson(Map<String, dynamic> json) {
     return ProductDeleteResponseDto(
-      productId:
-          json['productId']?.toString() ?? json['id']?.toString() ?? '',
+      productId: json['productId']?.toString() ?? json['id']?.toString() ?? '',
       outcome: json['outcome'] as String? ?? '',
       status: json['status'] as String? ?? '',
     );

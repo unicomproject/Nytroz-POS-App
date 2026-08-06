@@ -54,8 +54,8 @@ class _PosReturnChooseOptionScreenState
 
     final flow = ref.read(returnFlowProvider);
     final eligibility = ref.read(returnEligibilityProvider);
-    final reasonsValidated =
-        flow.reasonsValidated || ref.read(returnReasonProvider).reasonsValidated;
+    final reasonsValidated = flow.reasonsValidated ||
+        ref.read(returnReasonProvider).reasonsValidated;
     final inspectionsValidated = flow.inspectionsValidated ||
         ref.read(returnInspectionProvider).inspectionsValidated;
 
@@ -81,8 +81,8 @@ class _PosReturnChooseOptionScreenState
 
     final flow = ref.read(returnFlowProvider);
     final eligibility = ref.read(returnEligibilityProvider);
-    final reasonsValidated =
-        flow.reasonsValidated || ref.read(returnReasonProvider).reasonsValidated;
+    final reasonsValidated = flow.reasonsValidated ||
+        ref.read(returnReasonProvider).reasonsValidated;
 
     if (ReturnsRouteGuard.hasInspectItemsContext(
       flow: flow,
@@ -129,9 +129,8 @@ class _PosReturnChooseOptionScreenState
         return TenantAdminErrorState(
           title: 'Unable to load return options',
           message: resolutionState.errorMessage!,
-          onRetry: () => ref
-              .read(returnResolutionProvider.notifier)
-              .loadSavedResolution(),
+          onRetry: () =>
+              ref.read(returnResolutionProvider.notifier).loadSavedResolution(),
         );
       }
       return const ColoredBox(
@@ -166,7 +165,8 @@ class _PosReturnChooseOptionScreenState
     final canSelectRefund = authoritative.refundAllowed;
     final canSelectExchange = authoritative.exchangeAllowed;
     final hasAnyBranchPermission = canSelectRefund || canSelectExchange;
-    final selected = authoritative.resolutionType ?? flowState.selectedResolution;
+    final selected =
+        authoritative.resolutionType ?? flowState.selectedResolution;
     final canContinue = hasAnyBranchPermission &&
         selected != null &&
         ((selected == ReturnResolutionType.refund && canSelectRefund) ||
@@ -228,8 +228,7 @@ class _PosReturnChooseOptionScreenState
   }
 
   void _selectResolution(ReturnResolutionType resolution) {
-    final authoritative =
-        ref.read(returnResolutionProvider).savedResolution;
+    final authoritative = ref.read(returnResolutionProvider).savedResolution;
     if (authoritative == null) return;
     if (resolution == ReturnResolutionType.refund &&
         !authoritative.refundAllowed) {
@@ -266,8 +265,7 @@ class _PosReturnChooseOptionScreenState
 
     final flowState = ref.read(returnFlowProvider);
     final resolution = flowState.selectedResolution;
-    final authoritative =
-        ref.read(returnResolutionProvider).savedResolution;
+    final authoritative = ref.read(returnResolutionProvider).savedResolution;
     if (resolution == null) {
       return;
     }
@@ -316,8 +314,7 @@ class _PosReturnChooseOptionScreenState
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    error ??
-                        'Unable to load refund preview. Please try again.',
+                    error ?? 'Unable to load refund preview. Please try again.',
                   ),
                 ),
               );
@@ -400,9 +397,8 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxContentWidth = constraints.maxWidth >= 960
-            ? 760.0
-            : constraints.maxWidth;
+        final maxContentWidth =
+            constraints.maxWidth >= 960 ? 760.0 : constraints.maxWidth;
 
         return SingleChildScrollView(
           child: Align(
@@ -414,9 +410,10 @@ class _Body extends StatelessWidget {
                 children: [
                   const ChooseOptionHeader(),
                   SizedBox(
-                    height: constraints.maxWidth >= TenantAdminBreakpoints.tablet
-                        ? TenantAdminSpacing.xxl
-                        : TenantAdminSpacing.xl,
+                    height:
+                        constraints.maxWidth >= TenantAdminBreakpoints.tablet
+                            ? TenantAdminSpacing.xxl
+                            : TenantAdminSpacing.xl,
                   ),
                   ReturnResolutionOptions(
                     selectedResolution: selectedResolution,
@@ -484,7 +481,8 @@ class _TopStatus extends ConsumerWidget {
                 size: 22,
               ),
               const SizedBox(width: TenantAdminSpacing.sm),
-              Text(tillLabel, style: const TextStyle(fontWeight: FontWeight.w800)),
+              Text(tillLabel,
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
             ],
           ),
         ),

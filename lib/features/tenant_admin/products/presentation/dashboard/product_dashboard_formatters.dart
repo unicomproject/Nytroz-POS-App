@@ -66,8 +66,7 @@ ProductDashboardTrendDisplay formatProductDashboardTrend(double? value) {
 
   if (value > 0) {
     return ProductDashboardTrendDisplay(
-      label:
-          '${value.abs().toStringAsFixed(1)}% higher than previous period',
+      label: '${value.abs().toStringAsFixed(1)}% higher than previous period',
       icon: Icons.trending_up,
     );
   }

@@ -20,28 +20,44 @@ class OutletWizardStepper extends StatelessWidget {
       builder: (context, constraints) {
         final compact = constraints.maxWidth < TenantAdminBreakpoints.tablet;
 
-        return Wrap(
-          spacing: TenantAdminSpacing.sm,
-          runSpacing: TenantAdminSpacing.sm,
-          children: [
-            for (var index = 0; index < steps.length; index++)
-              _StepPill(
-                label: steps[index],
-                index: index,
-                active: index == currentStep,
-                complete: index < currentStep,
-                compact: compact,
-                onTap: index <= currentStep ? () => onStepSelected(index) : null,
+        final children = <Widget>[];
+        for (var index = 0; index < steps.length; index++) {
+          children.add(
+            _StepItem(
+              label: steps[index],
+              index: index,
+              active: index == currentStep,
+              complete: index < currentStep,
+              compact: compact,
+              onTap: index <= currentStep ? () => onStepSelected(index) : null,
+            ),
+          );
+          if (index < steps.length - 1) {
+            children.add(
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: TenantAdminSpacing.md),
+                  height: 1.5,
+                  color: index < currentStep
+                      ? TenantAdminColors.primary.withValues(alpha: 0.5)
+                      : TenantAdminColors.border,
+                ),
               ),
-          ],
+            );
+          }
+        }
+
+        return Row(
+          children: children,
         );
       },
     );
   }
 }
 
-class _StepPill extends StatelessWidget {
-  const _StepPill({
+class _StepItem extends StatelessWidget {
+  const _StepItem({
     required this.label,
     required this.index,
     required this.active,
@@ -62,9 +78,6 @@ class _StepPill extends StatelessWidget {
     final color = active || complete
         ? TenantAdminColors.primary
         : TenantAdminColors.mutedText;
-    final background = active
-        ? TenantAdminColors.primary.withValues(alpha: 0.10)
-        : TenantAdminColors.surface;
 
     return Semantics(
       button: onTap != null,
@@ -73,33 +86,22 @@ class _StepPill extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(999),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 44),
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
-            vertical: TenantAdminSpacing.sm,
-          ),
-          decoration: BoxDecoration(
-            color: background,
-            border: Border.all(
-              color: active ? TenantAdminColors.primary : TenantAdminColors.border,
-            ),
-            borderRadius: BorderRadius.circular(999),
-          ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: TenantAdminSpacing.sm),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               CircleAvatar(
-                radius: 12,
+                radius: 14,
                 backgroundColor: color,
                 child: complete
-                    ? const Icon(Icons.check, size: 14, color: Colors.white)
+                    ? const Icon(Icons.check, size: 16, color: Colors.white)
                     : Text(
                         '${index + 1}',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
               ),
@@ -107,7 +109,11 @@ class _StepPill extends StatelessWidget {
                 const SizedBox(width: TenantAdminSpacing.sm),
                 Text(
                   label,
-                  style: TextStyle(color: color, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ],

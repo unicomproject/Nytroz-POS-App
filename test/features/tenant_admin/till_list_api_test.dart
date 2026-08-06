@@ -3,13 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/core/access/tenant_admin_access_codes.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_context.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/application/usecases/get_tills.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/data/models/create_till_request_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till_hardware_readiness.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till_create_options.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till_monitoring.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/domain/repositories/till_repository.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/presentation/providers/till_providers.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/presentation/utils/till_list_filters.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_access_checker.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_access_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/application/usecases/create_till.dart';
-import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till.dart';
-import 'package:nytroz_pos/features/tenant_admin/tills/domain/repositories/till_repository.dart';
-import 'package:nytroz_pos/features/tenant_admin/tills/presentation/providers/till_providers.dart';
-import 'package:nytroz_pos/features/tenant_admin/tills/presentation/providers/till_visibility_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/presentation/utils/till_api_errors.dart';
 
 void main() {
@@ -21,7 +26,9 @@ void main() {
         overrides: [
           tenantAdminAccessCheckerProvider.overrideWith(
             (ref) async => _checker(
-              permissions: [TenantAdminPermissionCodes.tenantAdminDashboardView],
+              permissions: [
+                TenantAdminPermissionCodes.tenantAdminDashboardView
+              ],
               features: [TenantAdminFeatureCodes.dashboard],
             ),
           ),
@@ -30,7 +37,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final result = await container.read(tillListProvider.future);
+      final result = await container.read(tillListResultFutureProvider.future);
 
       expect(result, isNull);
       expect(repository.getTillsCalled, isFalse);
@@ -52,7 +59,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final result = await container.read(tillListProvider.future);
+      final result = await container.read(tillListResultFutureProvider.future);
 
       expect(repository.getTillsCalled, isTrue);
       expect(result, isNotNull);
@@ -134,7 +141,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      await container.read(tillListProvider.future);
+      await container.read(tillListResultFutureProvider.future);
       expect(repository.getTillsCallCount, 1);
 
       await container.read(createTillProvider).call(
@@ -146,9 +153,10 @@ void main() {
             ),
           );
 
-      container.invalidate(tillListProvider);
-      await container.read(tillListProvider.future);
+      container.invalidate(tillListResultFutureProvider);
+      await container.read(tillListResultFutureProvider.future);
 
+      expect(repository.createTillCalled, isTrue);
       expect(repository.createTillCalled, isTrue);
       expect(repository.getTillsCallCount, 2);
     });
@@ -173,32 +181,56 @@ class _TrackingTillRepository implements TillRepository {
   }
 
   @override
-  Future<TillListResult> getTills({required TillListQuery query}) async {
+  Future<CreatedTill> createTillSetup(AddTillFormData form) async {
+    createTillCalled = true;
+    return const CreatedTill(
+      id: 'till-created',
+      outletId: 'outlet-1',
+      name: 'Front Counter Till',
+      code: 'TILL-001',
+      status: 'active',
+    );
+  }
+
+  @override
+  Future<TillMonitoringResult> getTills({required TillListQuery query}) async {
     getTillsCalled = true;
     getTillsCallCount++;
-    return const TillListResult(
-      summary: TillListSummary(
-        totalTills: 1,
-        onlineCount: 1,
-        offlineCount: 0,
-        inactiveCount: 0,
-        needsAttentionCount: 0,
-      ),
+    return const TillMonitoringResult(
       items: [
-        Till(
+        TillMonitoringItem(
           id: 'till-1',
           outletId: 'outlet-1',
           outletName: 'High Street Store',
           name: 'Front Counter Till',
           code: 'TILL-001',
-          status: 'active',
-          operationalStatus: 'online',
+          lifecycleStatus: TillLifecycleStatus.active,
+          operationalStatus: TillOperationalStatus.online,
+          displayStatus: TillDisplayStatus.online,
+          needsAttention: false,
+          attentionReasonCount: 0,
         ),
       ],
       page: 1,
       pageSize: 10,
       totalCount: 1,
     );
+  }
+
+  @override
+  Future<TillMonitoringSummary> getTillSummary() async {
+    return const TillMonitoringSummary(
+      totalTills: 1,
+      onlineCount: 1,
+      offlineCount: 0,
+      inactiveCount: 0,
+      needsAttentionCount: 0,
+    );
+  }
+
+  @override
+  Future<TillHardwareReadiness> getTillHardwareReadiness(String id) async {
+    throw UnimplementedError();
   }
 
   @override
@@ -211,6 +243,11 @@ class _TrackingTillRepository implements TillRepository {
         status: 'active',
       ),
     ];
+  }
+
+  @override
+  Future<TillCreateOptions> getCreateOptions({String? outletId}) async {
+    throw UnimplementedError();
   }
 
   @override

@@ -35,7 +35,8 @@ class ProductDashboardSkeleton extends StatelessWidget {
             mainAxisExtent: compact ? 172 : 168,
           ),
           itemCount: compact ? 4 : 6,
-          itemBuilder: (context, index) => _SkeletonBox(height: compact ? 172 : 168),
+          itemBuilder: (context, index) =>
+              _SkeletonBox(height: compact ? 172 : 168),
         ),
         const SizedBox(height: TenantAdminSpacing.xl),
         LayoutBuilder(

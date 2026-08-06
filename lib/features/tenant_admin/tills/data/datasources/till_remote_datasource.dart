@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 
 import '../../domain/entities/till.dart';
 import '../models/create_till_request_dto.dart';
+import '../models/create_till_setup_request_dto.dart';
+import '../models/till_create_options_dto.dart';
 import '../models/till_dto.dart';
 
 class TillRemoteDatasource {
@@ -10,6 +12,7 @@ class TillRemoteDatasource {
   final Dio _dio;
 
   static const _tillPath = '/api/v1/tenant-admin/tills';
+  static const _createOptionsPath = '/api/v1/tenant-admin/tills/create-options';
   static const _outletOptionsPath = '/api/v1/tenant-admin/outlets/options';
 
   Future<TillListResultDto> getTills(TillListQuery query) async {
@@ -17,17 +20,39 @@ class TillRemoteDatasource {
       _tillPath,
       queryParameters: _listQueryParameters(query),
     );
-    final summaryResponse = await _dio.get<dynamic>('$_tillPath/summary');
 
-    final summary = _parseSummary(summaryResponse.data);
     return _parseListResponse(
       listResponse.data,
       listResponse.requestOptions,
-      summary: summary,
+    );
+  }
+
+  Future<TillListSummaryDto> getTillSummary() async {
+    final response = await _dio.get<dynamic>('$_tillPath/summary');
+    return _parseSummary(response.data)!;
+  }
+
+  Future<TillHardwareReadinessDto> getTillHardwareReadiness(String id) async {
+    final response =
+        await _dio.get<dynamic>('$_tillPath/$id/hardware-readiness');
+    return TillHardwareReadinessDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
     );
   }
 
   Future<CreatedTillDto> createTill(CreateTillRequestDto request) async {
+    final response = await _dio.post<dynamic>(
+      _tillPath,
+      data: request.toJson(),
+    );
+
+    return CreatedTillDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<CreatedTillDto> createTillSetup(
+      CreateTillSetupRequestDto request) async {
     final response = await _dio.post<dynamic>(
       _tillPath,
       data: request.toJson(),
@@ -84,6 +109,18 @@ class TillRemoteDatasource {
               Map<String, dynamic>.from(item),
             ))
         .toList(growable: false);
+  }
+
+  Future<TillCreateOptionsDto> getCreateOptions({String? outletId}) async {
+    final response = await _dio.get<dynamic>(
+      _createOptionsPath,
+      queryParameters: outletId != null && outletId.isNotEmpty
+          ? {'outletId': outletId}
+          : null,
+    );
+    return TillCreateOptionsDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
   }
 
   Map<String, dynamic> _listQueryParameters(TillListQuery query) {

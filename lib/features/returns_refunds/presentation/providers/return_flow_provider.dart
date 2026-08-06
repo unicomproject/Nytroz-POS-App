@@ -108,9 +108,8 @@ class ReturnFlowState {
       lineInspections: clearReturnReason
           ? const {}
           : lineInspections ?? this.lineInspections,
-      reasonsValidated: clearReturnReason
-          ? false
-          : reasonsValidated ?? this.reasonsValidated,
+      reasonsValidated:
+          clearReturnReason ? false : reasonsValidated ?? this.reasonsValidated,
       requiresInspection: clearReturnReason
           ? false
           : requiresInspection ?? this.requiresInspection,

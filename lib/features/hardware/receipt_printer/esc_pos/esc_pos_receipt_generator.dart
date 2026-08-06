@@ -22,13 +22,17 @@ class EscPosReceiptGenerator {
   }) {
     final width = config.paperWidth == PrinterPaperWidth.mm58 ? 32 : 48;
     final out = <int>[..._init, ..._alignCenter, ..._boldOn];
-    _writeLine(out, receipt.outletName?.trim().isNotEmpty == true
-        ? receipt.outletName!.trim()
-        : 'Store');
+    _writeLine(
+        out,
+        receipt.outletName?.trim().isNotEmpty == true
+            ? receipt.outletName!.trim()
+            : 'Store');
     out.addAll(_boldOff);
-    _writeLine(out, receipt.receiptType?.trim().isNotEmpty == true
-        ? receipt.receiptType!.trim()
-        : (receipt.isExchange ? 'EXCHANGE' : 'REFUND'));
+    _writeLine(
+        out,
+        receipt.receiptType?.trim().isNotEmpty == true
+            ? receipt.receiptType!.trim()
+            : (receipt.isExchange ? 'EXCHANGE' : 'REFUND'));
     out.addAll(_alignLeft);
     _writeLine(out, _divider(width));
     _writeLine(out, 'Receipt: ${receipt.receiptNumber}');
@@ -47,8 +51,7 @@ class EscPosReceiptGenerator {
     if (receipt.completedAt != null) {
       _writeLine(out, 'Completed: ${receipt.completedAt}');
     }
-    final cashier =
-        (receipt.processedByName ?? receipt.cashierName).trim();
+    final cashier = (receipt.processedByName ?? receipt.cashierName).trim();
     if (cashier.isNotEmpty) {
       _writeLine(out, 'Cashier: $cashier');
     }

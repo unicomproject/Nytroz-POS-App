@@ -32,9 +32,7 @@ class ReturnExchangeProduct {
   final String? disabledReason;
 
   String get selectionKey =>
-      variantId == null
-          ? productId
-          : '$productId::$variantId';
+      variantId == null ? productId : '$productId::$variantId';
 
   bool get isOutOfStock =>
       !enabled ||
@@ -189,7 +187,8 @@ class ReturnExchangeReplacementResponse {
   final int version;
   final DateTime? expiresAt;
 
-  factory ReturnExchangeReplacementResponse.fromJson(Map<String, dynamic> json) {
+  factory ReturnExchangeReplacementResponse.fromJson(
+      Map<String, dynamic> json) {
     final itemsJson = json['items'];
     return ReturnExchangeReplacementResponse(
       saleId: json['saleId']?.toString() ?? '',
@@ -268,7 +267,8 @@ class ReturnExchangePreview {
       taxAdjustment: _readDouble(json['taxAdjustment']) ?? 0,
       discountAdjustment: _readDouble(json['discountAdjustment']) ?? 0,
       differenceAmount: _readDouble(json['differenceAmount']) ?? 0,
-      differenceDirection: json['differenceDirection']?.toString() ?? 'EVEN_EXCHANGE',
+      differenceDirection:
+          json['differenceDirection']?.toString() ?? 'EVEN_EXCHANGE',
       canProceed: json['canProceed'] == true,
       requiresApproval: json['requiresApproval'] == true,
       policyMessages: messages is List

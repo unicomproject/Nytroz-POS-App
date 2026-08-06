@@ -242,7 +242,8 @@ void main() {
       );
     });
 
-    testWidgets('reference card renders provided metadata only', (tester) async {
+    testWidgets('reference card renders provided metadata only',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(

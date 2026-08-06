@@ -309,8 +309,8 @@ class ReturnReceipt {
       replacementTax: _readOptionalDouble(json, 'replacementTax'),
       replacementTotal: _readOptionalDouble(json, 'replacementTotal'),
       printCount: _readInt(json, 'printCount'),
-      hasBeenPrinted: json['hasBeenPrinted'] == true ||
-          _readInt(json, 'printCount') > 0,
+      hasBeenPrinted:
+          json['hasBeenPrinted'] == true || _readInt(json, 'printCount') > 0,
     );
   }
 

@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../presentation/theme/tenant_admin_theme.dart';
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
-import '../../domain/entities/till.dart';
+import '../../domain/entities/till_monitoring.dart';
 import '../providers/till_providers.dart';
-import '../providers/till_visibility_provider.dart';
 import 'till_action_menu.dart';
 
 class TillDeleteDialog extends StatefulWidget {
@@ -17,13 +16,13 @@ class TillDeleteDialog extends StatefulWidget {
     this.onDeleted,
   });
 
-  final Till till;
+  final TillMonitoringItem till;
   final VoidCallback? onDeleted;
 
   static Future<void> show({
     required BuildContext context,
     required WidgetRef ref,
-    required Till till,
+    required TillMonitoringItem till,
     VoidCallback? onDeleted,
   }) {
     return showDialog<void>(
@@ -73,7 +72,7 @@ class _TillDeleteDialogState extends State<TillDeleteDialog> {
       final container = ProviderScope.containerOf(context, listen: false);
       await container.read(deleteTillProvider).call(widget.till.id);
       container
-        ..invalidate(tillListProvider)
+        ..invalidate(tillListResultFutureProvider)
         ..invalidate(tillDetailProvider(widget.till.id));
 
       if (!mounted) {

@@ -74,3 +74,33 @@ String displayOutletStatus(String status) {
 String _normalizedOutletStatus(String status) {
   return status.trim().toLowerCase();
 }
+
+enum OutletTypeFilter {
+  all,
+  store,
+  warehouse,
+}
+
+extension OutletTypeFilterX on OutletTypeFilter {
+  String get label {
+    switch (this) {
+      case OutletTypeFilter.all:
+        return 'All Types';
+      case OutletTypeFilter.store:
+        return 'Store';
+      case OutletTypeFilter.warehouse:
+        return 'Warehouse';
+    }
+  }
+
+  String? get apiType {
+    switch (this) {
+      case OutletTypeFilter.all:
+        return null;
+      case OutletTypeFilter.store:
+        return 'store';
+      case OutletTypeFilter.warehouse:
+        return 'warehouse';
+    }
+  }
+}

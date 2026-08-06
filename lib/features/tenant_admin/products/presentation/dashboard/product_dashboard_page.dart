@@ -80,7 +80,8 @@ class _ProductDashboardBody extends ConsumerWidget {
     final isRefreshing = ref.watch(productDashboardRefreshingProvider);
     final access = ref.watch(tenantAdminAccessCheckerProvider).valueOrNull;
 
-    final isInitialLoading = dashboardState.isLoading && cachedDashboard == null;
+    final isInitialLoading =
+        dashboardState.isLoading && cachedDashboard == null;
     final isStaleLoading =
         dashboardState.isLoading && dashboardState.hasError == false;
 
@@ -128,8 +129,8 @@ class _ProductDashboardBody extends ConsumerWidget {
         visibility.visibleSummaryMetrics.isNotEmpty;
     final hasStockValue =
         visibility.showStockValueCard && dashboard.stockValue != null;
-    final hasStockMovement = visibility.showStockMovementCard &&
-        dashboard.stockMovement != null;
+    final hasStockMovement =
+        visibility.showStockMovementCard && dashboard.stockMovement != null;
 
     if (!hasSummary && !hasStockValue && !hasStockMovement) {
       return Column(

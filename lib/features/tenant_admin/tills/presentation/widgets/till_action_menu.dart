@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../presentation/theme/tenant_admin_theme.dart';
-import '../../domain/entities/till.dart';
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../domain/entities/till_monitoring.dart';
 import '../config/till_row_action_configs.dart';
 import '../utils/till_api_errors.dart';
 import 'till_delete_dialog.dart';
@@ -17,7 +17,7 @@ class TillActionMenu extends ConsumerWidget {
     this.onDeleted,
   });
 
-  final Till till;
+  final TillMonitoringItem till;
   final List<TillRowActionConfig> actions;
   final VoidCallback? onDeleted;
 
@@ -37,7 +37,8 @@ class TillActionMenu extends ConsumerWidget {
                 value: action,
                 child: Row(
                   children: [
-                    Icon(action.icon, size: 18, color: TenantAdminColors.bodyText),
+                    Icon(action.icon,
+                        size: 18, color: TenantAdminColors.bodyText),
                     const SizedBox(width: TenantAdminSpacing.sm),
                     Text(action.label),
                   ],

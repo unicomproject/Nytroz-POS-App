@@ -26,8 +26,10 @@ class OutletDetailDto {
 
     return OutletDetailDto(
       outletId: json['outletId']?.toString() ?? json['id']?.toString() ?? '',
-      outletName: json['outletName'] as String? ?? json['name'] as String? ?? '',
-      outletCode: json['outletCode'] as String? ?? json['code'] as String? ?? '',
+      outletName:
+          json['outletName'] as String? ?? json['name'] as String? ?? '',
+      outletCode:
+          json['outletCode'] as String? ?? json['code'] as String? ?? '',
       outletType: json['outletType'] as String? ?? '',
       status: json['status'] as String? ?? '',
       addressLine1:
