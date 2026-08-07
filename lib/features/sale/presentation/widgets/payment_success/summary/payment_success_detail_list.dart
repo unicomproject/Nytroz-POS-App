@@ -150,7 +150,7 @@ class _DetailRow extends StatelessWidget {
             decoration: BoxDecoration(
               color: isTotal
                   ? TenantAdminColors.success.withValues(alpha: 0.1)
-                  : TenantAdminColors.background,
+                  : TenantAdminColors.secondary,
               shape: BoxShape.circle,
             ),
             child: Icon(

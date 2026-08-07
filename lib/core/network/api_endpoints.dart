@@ -38,6 +38,10 @@ class ApiEndpoints {
   static const posCatalogCategories = '/api/v1/pos/catalog/categories';
   static const posCheckoutSummary = '/api/v1/pos/checkout/summary';
   static const posCheckoutStartPayment = '/api/v1/pos/checkout/start-payment';
+  static const posHolds = '/api/v1/pos/holds';
+  static String posHoldRecall(String holdId) =>
+      '/api/v1/pos/holds/$holdId/recall';
+  static String posHold(String holdId) => '/api/v1/pos/holds/$holdId';
   static const posCustomers = '/api/v1/customers';
   static const posCustomersSummary = '/api/v1/customers/summary';
   static String posCustomer(String customerId) =>
