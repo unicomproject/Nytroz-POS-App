@@ -47,16 +47,64 @@ class AuthRemoteDatasource {
   }
 
   Future<SetupTokenValidationDto> validateSetupToken(String setupToken) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      '/api/tenant-admin/onboarding/setup-token/$setupToken/validate',
-    );
-    return SetupTokenValidationDto.fromJson(response.data ?? const {});
+    final encoded = Uri.encodeComponent(setupToken);
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/api/tenant-admin/onboarding/setup-token/$encoded/validate',
+      );
+      return SetupTokenValidationDto.fromJson(response.data ?? const {});
+    } on DioException catch (error) {
+      throw AuthException(
+        errorCode: _errorCodeFromDio(error, fallback: 'INVITE_INVALID'),
+        message: _messageFromDio(
+          error,
+          fallback: 'Unable to validate this invitation link.',
+        ),
+      );
+    }
   }
 
   Future<void> setPassword(SetPasswordRequestDto request) async {
-    await _dio.post<void>(
-      '/api/tenant-admin/onboarding/setup-password',
-      data: request.toJson(),
+    try {
+      await _dio.post<void>(
+        '/api/tenant-admin/onboarding/setup-password',
+        data: request.toJson(),
+      );
+    } on DioException catch (error) {
+      throw AuthException(
+        errorCode: _errorCodeFromDio(error, fallback: 'SETUP_PASSWORD_FAILED'),
+        message: _messageFromDio(
+          error,
+          fallback: 'Unable to set password. Please try again.',
+        ),
+      );
+    }
+  }
+
+  String _errorCodeFromDio(DioException error, {required String fallback}) {
+    final data = error.response?.data;
+    if (data is Map) {
+      final code = data['code'] ?? data['errorCode'];
+      if (code != null && code.toString().isNotEmpty) {
+        return code.toString();
+      }
+    }
+    return fallback;
+  }
+
+  String _messageFromDio(DioException error, {required String fallback}) {
+    final data = error.response?.data;
+    if (data is Map && data['message'] != null) {
+      final message = data['message'].toString();
+      if (message.isNotEmpty) {
+        return message;
+      }
+    }
+    return messageFromDioException(
+      error,
+      contextPrefix: 'Setup failed',
+      fallback: fallback,
+      attemptedBaseUrl: _dio.options.baseUrl,
     );
   }
 
