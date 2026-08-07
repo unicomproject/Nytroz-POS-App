@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../tenant_admin/presentation/widgets/tenant_admin_buttons.dart';
+import '../../domain/entities/auth_exception.dart';
 import '../providers/set_password_provider.dart';
 import '../providers/setup_token_provider.dart';
 import '../widgets/auth_error_banner.dart';
@@ -168,12 +169,14 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
     if (password.length < 8) {
       return 'Password must be at least 8 characters';
     }
+    if (password.length > 128) {
+      return 'Password must be at most 128 characters';
+    }
     final hasUpper = RegExp('[A-Z]').hasMatch(password);
     final hasLower = RegExp('[a-z]').hasMatch(password);
     final hasNumber = RegExp('[0-9]').hasMatch(password);
-    final hasSpecial = RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password);
-    if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
-      return 'Use uppercase, lowercase, number, and special character';
+    if (!hasUpper || !hasLower || !hasNumber) {
+      return 'Use uppercase, lowercase, and numeric characters';
     }
     return null;
   }
@@ -198,12 +201,36 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
         return;
       }
       context.go('/tenant-admin/setup/success');
+    } on AuthException catch (error) {
+      setState(() => _error = _mapSetupPasswordError(error));
     } catch (_) {
       setState(() => _error = 'Unable to set password. Please try again.');
     } finally {
       if (mounted) {
         setState(() => _submitting = false);
       }
+    }
+  }
+
+  String _mapSetupPasswordError(AuthException error) {
+    switch (error.errorCode) {
+      case 'INVITE_EXPIRED':
+        return 'This invitation link has expired. Ask your administrator to resend it.';
+      case 'INVITE_USED':
+        return 'This invitation link has already been used. Try signing in.';
+      case 'INVITE_CANCELLED':
+        return 'This invitation link has been cancelled. Ask your administrator to resend it.';
+      case 'INVITE_INVALID':
+        return 'This invitation link is invalid or no longer available.';
+      case 'TENANT_NOT_OPERATIONAL':
+        return 'This tenant is not available for account setup.';
+      case 'PASSWORD_INVALID':
+      case 'PASSWORD_MISMATCH':
+        return error.message;
+      default:
+        return error.message.isNotEmpty
+            ? error.message
+            : 'Unable to set password. Please try again.';
     }
   }
 }
