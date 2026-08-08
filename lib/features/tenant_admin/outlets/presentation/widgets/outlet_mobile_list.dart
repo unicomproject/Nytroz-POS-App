@@ -245,6 +245,12 @@ Widget _outletImagePlaceholder(Outlet outlet) {
   return Image.network(
     dummyUrl,
     fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) => Container(
+      color: const Color(0xFFF1F5F9), // TenantAdminColors.background
+      child: const Center(
+        child: Icon(Icons.image_not_supported, color: Color(0xFF94A3B8)), // TenantAdminColors.mutedText
+      ),
+    ),
   );
 }
 
