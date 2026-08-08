@@ -430,114 +430,89 @@ class _OutletDetailsStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final form = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _field(
-                      'outletName',
-                      'Outlet Name',
-                      outletName,
-                      errors: errors,
-                      isRequired: true,
-                      maxLength: 200,
-                      icon: Icons.storefront_outlined,
-                    ),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: _buildOutletCode(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _outletTypeDropdown(),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: _statusSelector(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _buildManagerField(context),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: _field(
-                      'contactPhone',
-                      'Outlet Phone (optional)',
-                      outletPhone,
-                      errors: errors,
-                      icon: Icons.phone_outlined,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _field(
-                      'contactEmail',
-                      'Outlet Email (optional)',
-                      outletEmail,
-                      errors: errors,
-                      icon: Icons.mail_outline,
-                    ),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: _timezoneField(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _buildSwitchOption(
-                      title: 'Main / Central Outlet',
-                      subtitle: 'Designate this outlet as the main or central outlet. Only one central outlet is allowed per tenant.',
-                      value: false,
-                      onChanged: (v) {},
-                    ),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: _buildSwitchOption(
-                      title: 'Default for New Tills',
-                      subtitle: 'Newly created tills will be assigned to this outlet by default.',
-                      value: isDefaultOutlet,
-                      onChanged: onDefaultChanged,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+        _twoColumnRow(
+          _field(
+            'outletName',
+            'Outlet Name',
+            outletName,
+            errors: errors,
+            isRequired: true,
+            maxLength: 200,
+            icon: Icons.storefront_outlined,
+          ),
+          _buildOutletCode(context),
+        ),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        _twoColumnRow(
+          _outletTypeDropdown(),
+          _statusSelector(context),
+        ),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        _twoColumnRow(
+          _buildManagerField(context),
+          _field(
+            'contactPhone',
+            'Outlet Phone (optional)',
+            outletPhone,
+            errors: errors,
+            icon: Icons.phone_outlined,
           ),
         ),
-        const SizedBox(width: TenantAdminSpacing.xl),
-        _buildInfoSidePanel(context),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        _twoColumnRow(
+          _field(
+            'contactEmail',
+            'Outlet Email (optional)',
+            outletEmail,
+            errors: errors,
+            icon: Icons.mail_outline,
+          ),
+          _timezoneField(),
+        ),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        _twoColumnRow(
+          _buildSwitchOption(
+            title: 'Main / Central Outlet',
+            subtitle: 'Designate this outlet as the main or central outlet. Only one central outlet is allowed per tenant.',
+            value: false,
+            onChanged: (v) {},
+          ),
+          _buildSwitchOption(
+            title: 'Default for New Tills',
+            subtitle: 'Newly created tills will be assigned to this outlet by default.',
+            value: isDefaultOutlet,
+            onChanged: onDefaultChanged,
+          ),
+        ),
       ],
     );
+
+    return LayoutBuilder(builder: (context, constraints) {
+      if (constraints.maxWidth >= 950) {
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: form),
+            const SizedBox(width: TenantAdminSpacing.xl),
+            _buildInfoSidePanel(context),
+          ],
+        );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          form,
+          const SizedBox(height: TenantAdminSpacing.xl),
+          SizedBox(
+            width: double.infinity,
+            child: _buildInfoSidePanel(context),
+          ),
+        ],
+      );
+    });
   }
 
   Widget _buildSwitchOption({

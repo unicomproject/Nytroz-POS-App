@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/domain/entities/outlet_create_options.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/domain/entities/outlet_details.dart';
@@ -215,9 +216,7 @@ void main() {
 
 Future<void> _tapText(WidgetTester tester, String text) async {
   final finder = find.text(text);
-  await tester.ensureVisible(finder);
-  await tester.pump();
-  await tester.tap(finder, warnIfMissed: false);
+  await tester.tap(finder);
 }
 
 Future<void> _pumpForm(
@@ -228,19 +227,28 @@ Future<void> _pumpForm(
   bool useCreateOptions = true,
   Future<void> Function(OutletFormData form)? onSubmit,
 }) async {
+  tester.view.physicalSize = const Size(800, 1500);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+
   await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: OutletForm(
-              initialValue: initialValue,
-              submitting: submitting,
-              createOptions: useCreateOptions
-                  ? createOptions ?? _createOptions
-                  : createOptions,
-              onSubmit: onSubmit ?? (_) async {},
+    ProviderScope(
+      child: MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: OutletForm(
+                initialValue: initialValue,
+                submitting: submitting,
+                createOptions: useCreateOptions
+                    ? createOptions ?? _createOptions
+                    : createOptions,
+                onSubmit: onSubmit ?? (_) async {},
+              ),
             ),
           ),
         ),
