@@ -46,14 +46,13 @@ void main() {
       expect(visibility.hasVisibleChildren, isFalse);
     });
 
-    test('shows only Product List with view permission', () {
+    test('shows parent with list view permission but children is empty', () {
       final visibility = ProductsSidebarVisibility.resolve(
         access: _accessFor([TenantAdminPermissionCodes.tenantProductsView]),
       );
 
-      expect(visibility.visibleChildren.map((item) => item.label), [
-        'Product List',
-      ]);
+      expect(visibility.showParent, isTrue);
+      expect(visibility.visibleChildren, isEmpty);
     });
 
     test('shows only Add Product with create permission', () {
@@ -72,7 +71,7 @@ void main() {
       );
 
       expect(visibility.visibleChildren.map((item) => item.label), [
-        'Categories',
+        'Categories & Subcategories',
       ]);
     });
 
@@ -81,26 +80,7 @@ void main() {
         access: _accessFor([TenantAdminPermissionCodes.tenantBrandsView]),
       );
 
-      expect(visibility.visibleChildren.map((item) => item.label), ['Brands']);
-    });
-
-    test('shows Inventory child as unavailable with stock permission', () {
-      final visibility = ProductsSidebarVisibility.resolve(
-        access: _accessFor([TenantAdminPermissionCodes.tenantStockView]),
-      );
-
-      expect(visibility.visibleChildren.map((item) => item.label), [
-        'Inventory',
-      ]);
-      expect(visibility.visibleChildren.single.isRouteAvailable, isFalse);
-    });
-
-    test('shows Import with import permission', () {
-      final visibility = ProductsSidebarVisibility.resolve(
-        access: _accessFor([TenantAdminPermissionCodes.tenantProductImport]),
-      );
-
-      expect(visibility.visibleChildren.map((item) => item.label), ['Import']);
+      expect(visibility.visibleChildren.map((item) => item.label), ['Brand']);
     });
 
     test('approved child order when all visible', () {
@@ -118,12 +98,9 @@ void main() {
       expect(
         visibility.visibleChildren.map((item) => item.label).toList(),
         [
-          'Product List',
           'Add Product',
-          'Categories',
-          'Brands',
-          'Inventory',
-          'Import',
+          'Categories & Subcategories',
+          'Brand',
         ],
       );
     });
@@ -285,20 +262,19 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text('Product List'), findsNothing);
+      expect(find.text('Add Product'), findsNothing);
 
-      await tester.tap(find.text('Products'));
+      await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
       await tester.pumpAndSettle();
 
-      expect(find.text('Product List'), findsOneWidget);
       expect(find.text('Add Product'), findsOneWidget);
 
-      await tester.tap(find.text('Products'));
+      await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
       await tester.pumpAndSettle();
 
-      expect(find.text('Product List'), findsNothing);
+      expect(find.text('Add Product'), findsNothing);
       await tester.pump(const Duration(milliseconds: 250));
-      expect(find.text('Product List'), findsNothing);
+      expect(find.text('Add Product'), findsNothing);
     });
 
     testWidgets('renders without overflow on narrow width', (tester) async {

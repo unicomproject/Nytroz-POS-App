@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
-import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../providers/tenant_product_providers.dart';
 import 'product_summary_cards.dart';
 
@@ -25,11 +24,7 @@ class ProductSummarySection extends ConsumerWidget {
           borderRadius: BorderRadius.circular(TenantAdminRadius.md),
           border: Border.all(color: TenantAdminColors.border),
         ),
-        child: TenantAdminErrorState(
-          title: 'Unable to load summary',
-          message: 'Please try again.',
-          onRetry: () => ref.refresh(productSummaryProvider),
-        ),
+        
       ),
       data: (summary) {
         if (summary == null) {

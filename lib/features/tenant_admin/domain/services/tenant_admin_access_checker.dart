@@ -942,6 +942,10 @@ class TenantAdminAccessChecker {
     return can(TenantAdminPermissionCodes.tenantStockView);
   }
 
+  bool canViewStock() {
+    return can(TenantAdminPermissionCodes.tenantStockView);
+  }
+
   bool canAccessProductModule() {
     return hasProductManagementEntitlement() &&
         can(TenantAdminPermissionCodes.tenantProductsView);
@@ -1373,6 +1377,7 @@ class ProductListVisibility {
     required this.showEditAction,
     required this.showStatusAction,
     required this.showDeleteAction,
+    required this.showStockColumn,
   });
 
   final bool showPage;
@@ -1388,6 +1393,7 @@ class ProductListVisibility {
   final bool showEditAction;
   final bool showStatusAction;
   final bool showDeleteAction;
+  final bool showStockColumn;
 
   static ProductListVisibility resolve({
     required TenantAdminAccessChecker access,
@@ -1397,6 +1403,7 @@ class ProductListVisibility {
     final showEditAction = showPage && access.canUpdateProduct();
     final showStatusAction = showPage && access.canUpdateProduct();
     final showDeleteAction = showPage && access.canDeleteProduct();
+    final showStockColumn = showPage && access.canViewStock();
 
     return ProductListVisibility(
       showPage: showPage,
@@ -1415,6 +1422,7 @@ class ProductListVisibility {
       showEditAction: showEditAction,
       showStatusAction: showStatusAction,
       showDeleteAction: showDeleteAction,
+      showStockColumn: showStockColumn,
     );
   }
 }

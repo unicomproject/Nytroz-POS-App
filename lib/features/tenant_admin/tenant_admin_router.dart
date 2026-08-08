@@ -103,6 +103,10 @@ List<RouteBase> tenantAdminRoutes(Ref ref) {
           path: InventoryRoutes.stockRoot,
           redirect: (context, state) => InventoryRoutes.currentStock,
         ),
+        GoRoute(
+          path: '/tenant-admin/products/import',
+          redirect: (context, state) => '/tenant-admin/products',
+        ),
         ...tenantAdminRouteDefinitions.map(
           (definition) => _tenantAdminModuleRoute(ref, definition),
         ),

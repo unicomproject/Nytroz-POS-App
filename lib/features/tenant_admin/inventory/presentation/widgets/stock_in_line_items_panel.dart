@@ -21,7 +21,7 @@ final stockInProductSearchProvider =
   final result = await ref.read(tenantProductRepositoryProvider).getProducts(
         query: TenantProductListQuery(
           search: search.trim(),
-          page: 1,
+          pageNumber: 1,
           pageSize: 20,
         ),
       );
