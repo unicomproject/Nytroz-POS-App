@@ -40,6 +40,48 @@ class Outlet {
   // Legacy fields
   final int staffCount;
   final String todaysSales;
+
+  Outlet copyWith({
+    String? id,
+    String? name,
+    String? code,
+    String? status,
+    String? outletType,
+    String? imageUrl,
+    String? location,
+    String? city,
+    String? managerName,
+    String? managerAvatarUrl,
+    int? tillCount,
+    int? onlineTillCount,
+    int? activeTillCount,
+    String? operationalHealthStatus,
+    int? activeAlertCount,
+    bool? canViewTillsAndHealth,
+    int? staffCount,
+    String? todaysSales,
+  }) {
+    return Outlet(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      code: code ?? this.code,
+      status: status ?? this.status,
+      outletType: outletType ?? this.outletType,
+      imageUrl: imageUrl ?? this.imageUrl,
+      location: location ?? this.location,
+      city: city ?? this.city,
+      managerName: managerName ?? this.managerName,
+      managerAvatarUrl: managerAvatarUrl ?? this.managerAvatarUrl,
+      tillCount: tillCount ?? this.tillCount,
+      onlineTillCount: onlineTillCount ?? this.onlineTillCount,
+      activeTillCount: activeTillCount ?? this.activeTillCount,
+      operationalHealthStatus: operationalHealthStatus ?? this.operationalHealthStatus,
+      activeAlertCount: activeAlertCount ?? this.activeAlertCount,
+      canViewTillsAndHealth: canViewTillsAndHealth ?? this.canViewTillsAndHealth,
+      staffCount: staffCount ?? this.staffCount,
+      todaysSales: todaysSales ?? this.todaysSales,
+    );
+  }
 }
 
 class OutletSummaryDashboard {

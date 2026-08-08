@@ -1,10 +1,14 @@
 import 'package:dio/dio.dart';
 
 import '../../domain/entities/outlet_list_query.dart';
+import '../../domain/entities/outlet_image_upload.dart';
 import '../models/create_outlet_request_dto.dart';
 import '../models/outlet_detail_dtos.dart';
 import '../models/outlet_create_options_dto.dart';
 import '../models/outlet_dto.dart';
+import '../models/outlet_image_upload_dto.dart';
+import '../models/tenant_admin_outlet_list_dto.dart';
+import '../models/tenant_admin_outlet_overview_dto.dart';
 import '../models/tenant_admin_outlet_list_dto.dart';
 import '../models/tenant_admin_outlet_overview_dto.dart';
 
@@ -13,12 +17,13 @@ class OutletRemoteDatasource {
 
   final Dio _dio;
 
-  static const _outletBase = '/api/v1/tenant-admin/outlets';
+  static const _outletBase = '/api/v1/outlets';
+  static const _tenantAdminBase = '/api/v1/tenant-admin/outlets';
 
   Future<TenantAdminOutletListResponseDto> getOutlets(
       OutletListQuery query) async {
     final response = await _dio.get<dynamic>(
-      _outletBase,
+      _tenantAdminBase,
       queryParameters: _listQueryParameters(query),
     );
 
@@ -47,7 +52,7 @@ class OutletRemoteDatasource {
   }
 
   Future<TenantAdminOutletOverviewDto> getTenantAdminOverview(String id) async {
-    final response = await _dio.get<dynamic>('$_outletBase/$id/overview');
+    final response = await _dio.get<dynamic>('$_tenantAdminBase/$id/overview');
     return TenantAdminOutletOverviewDto.fromJson(
       _unwrapApiPayload(response.data, response.requestOptions),
     );
@@ -69,7 +74,7 @@ class OutletRemoteDatasource {
   ) async {
     final response = await _dio.put<dynamic>(
       '$_outletBase/$id',
-      data: request.toJson(),
+      data: request.toUpdateJson(),
     );
     return OutletDetailsDto.fromJson(
       _unwrapApiPayload(response.data, response.requestOptions),
@@ -80,10 +85,34 @@ class OutletRemoteDatasource {
     await _dio.delete<void>('$_outletBase/$id');
   }
 
+  Future<OutletImageUploadDto> uploadOutletImage(
+    OutletImageUploadInput input, {
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '$_outletBase/image-uploads',
+      data: FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          input.bytes,
+          filename: input.fileName,
+          contentType: DioMediaType.parse(input.mimeType),
+        ),
+      }),
+      onSendProgress: onProgress,
+    );
+    return OutletImageUploadDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<void> deleteStagedOutletImage(String mediaAssetId) {
+    return _dio.delete<void>('$_outletBase/image-uploads/$mediaAssetId');
+  }
+
   Future<void> updateOutletStatus(String id, String status) async {
     // PUT request to update lifecycle status (ACTIVE / INACTIVE)
     final response = await _dio.put<void>(
-      '$_outletBase/$id/status',
+      '$_tenantAdminBase/$id/status',
       data: {"status": status},
     );
     // No content expected; throw on error via DioException handling
@@ -99,7 +128,6 @@ class OutletRemoteDatasource {
   Future<List<OutletManagerOptionDto>> getManagerOptions() async {
     return const [];
   }
-
   Map<String, dynamic> _listQueryParameters(OutletListQuery query) {
     return {
       'page': query.page,

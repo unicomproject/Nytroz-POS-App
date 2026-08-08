@@ -10,6 +10,7 @@ import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/outlet_details.dart';
 import '../providers/outlet_providers.dart';
+import '../providers/outlet_image_upload_provider.dart';
 import '../providers/outlet_visibility_provider.dart';
 import '../utils/outlet_api_errors.dart';
 import '../widgets/outlet_form.dart';
@@ -73,9 +74,22 @@ class _AddOutletScreenState extends ConsumerState<AddOutletScreen> {
           backendErrors: _fieldErrors,
           submitting: _submitting,
           onSubmit: _submit,
+          onDiscard: _discard,
         ),
       ),
     );
+  }
+
+  Future<void> _discard(String? mediaAssetId) async {
+    if (mediaAssetId != null) {
+      try {
+        await ref.read(deleteStagedOutletImageProvider).call(mediaAssetId).timeout(const Duration(seconds: 5));
+      } catch (_) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image cleanup will be retried automatically.')));
+      }
+    }
+    ref.read(outletImageUploadControllerProvider.notifier).reset();
+    if (mounted) context.go('/tenant-admin/outlets');
   }
 
   Future<void> _submit(OutletFormData form) async {

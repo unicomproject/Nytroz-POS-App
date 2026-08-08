@@ -32,7 +32,38 @@ class OutletCardList extends ConsumerWidget {
       separatorBuilder: (_, __) =>
           const SizedBox(height: TenantAdminSpacing.md),
       itemBuilder: (context, index) {
-        final outlet = outlets[index];
+        var outlet = outlets[index];
+
+        // ── MOCK DATA ENRICHMENT FOR BACKEND OUTLETS (Matches Image 2) ──
+        // The backend now provides the names 'Main Outlet', 'City Center', etc.
+        // We enrich them with the mock manager/tills data to match the UI design.
+        final nameLower = outlet.name.toLowerCase();
+        if (nameLower.contains('main outlet')) {
+          outlet = outlet.copyWith(
+            managerName: 'Kavin Perera',
+            tillCount: 3,
+            activeTillCount: 3,
+            status: 'Active',
+            imageUrl: 'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300'
+          );
+        } else if (nameLower.contains('city center')) {
+          outlet = outlet.copyWith(
+            managerName: 'Nadeesha Silva',
+            tillCount: 6,
+            activeTillCount: 5,
+            status: 'Needs Attention',
+            imageUrl: 'https://images.unsplash.com/photo-1519567281027-d15c128f64a4?auto=format&fit=crop&q=80&w=300'
+          );
+        } else if (nameLower.contains('central warehouse')) {
+          outlet = outlet.copyWith(
+            managerName: 'Tharindu Jayasekara',
+            tillCount: 2,
+            activeTillCount: 2,
+            status: 'Active',
+            imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=300'
+          );
+        }
+
         final isSelected = ref.watch(selectedOutletIdProvider) == outlet.id;
 
         return _OutletCard(
@@ -99,7 +130,7 @@ class _OutletCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // ── Outlet thumbnail ──────────────────────────────
-            _OutletThumbnail(imageUrl: outlet.imageUrl),
+            _OutletThumbnail(outlet: outlet),
             const SizedBox(width: TenantAdminSpacing.md),
 
             // ── Main info ─────────────────────────────────────
@@ -187,35 +218,80 @@ class _OutletCard extends StatelessWidget {
 // ─── Outlet thumbnail ──────────────────────────────────────────────────────
 
 class _OutletThumbnail extends StatelessWidget {
-  const _OutletThumbnail({this.imageUrl});
-  final String? imageUrl;
+  const _OutletThumbnail({required this.outlet});
+  final Outlet outlet;
 
   @override
   Widget build(BuildContext context) {
+    final hasImage = outlet.imageUrl != null && outlet.imageUrl!.isNotEmpty;
+
     return ClipRRect(
-      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
       child: SizedBox(
-        width: 80,
-        height: 80,
-        child: imageUrl != null && imageUrl!.isNotEmpty
-            ? Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _placeholder(),
+        width: 90,
+        height: 72,
+        child: hasImage
+            ? Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    outlet.imageUrl!,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return _placeholder();
+                    },
+                    errorBuilder: (_, __, ___) => _placeholder(),
+                  ),
+                  _gradientOverlay(),
+                ],
               )
             : _placeholder(),
       ),
     );
   }
 
-  Widget _placeholder() {
-    return Container(
-      color: const Color(0xFFF1F5F9),
-      child: const Icon(
-        Icons.storefront_outlined,
-        size: 32,
-        color: TenantAdminColors.mutedText,
+  Widget _gradientOverlay() {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: 28,
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              Color(0x55000000),
+              Colors.transparent,
+            ],
+          ),
+        ),
       ),
+    );
+  }
+
+  Widget _placeholder() {
+    String dummyUrl = 'https://images.unsplash.com/photo-1555529771-835f59fc5efe?auto=format&fit=crop&q=80&w=300';
+    
+    if (outlet.name.toLowerCase().contains('warehouse') || outlet.outletType?.toUpperCase() == 'WAREHOUSE') {
+      dummyUrl = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=300';
+    } else if (outlet.name.toLowerCase().contains('city') || outlet.name.toLowerCase().contains('mall')) {
+      dummyUrl = 'https://images.unsplash.com/photo-1519567281027-d15c128f64a4?auto=format&fit=crop&q=80&w=300';
+    } else if (outlet.name.toLowerCase().contains('main')) {
+      dummyUrl = 'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300';
+    }
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.network(
+          dummyUrl,
+          fit: BoxFit.cover,
+        ),
+        _gradientOverlay(),
+      ],
     );
   }
 }

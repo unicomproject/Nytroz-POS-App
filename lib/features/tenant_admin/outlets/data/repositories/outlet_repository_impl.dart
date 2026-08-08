@@ -3,6 +3,7 @@ import '../../domain/entities/outlet_create_options.dart';
 import '../../domain/entities/outlet_detail_entities.dart';
 import '../../domain/entities/outlet_details.dart';
 import '../../domain/entities/outlet_list_query.dart';
+import '../../domain/entities/outlet_image_upload.dart';
 import '../../domain/repositories/outlet_repository.dart';
 import '../datasources/outlet_remote_datasource.dart';
 import '../mappers/outlet_mapper.dart';
@@ -98,5 +99,22 @@ class OutletRepositoryImpl implements OutletRepository {
   Future<List<OutletManagerOption>> getManagerOptions() async {
     final dtos = await _remoteDatasource.getManagerOptions();
     return dtos.map((manager) => manager.toEntity()).toList(growable: false);
+  }
+
+  @override
+  Future<OutletImageUpload> uploadOutletImage(
+    OutletImageUploadInput input, {
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    final dto = await _remoteDatasource.uploadOutletImage(
+      input,
+      onProgress: onProgress,
+    );
+    return dto.toEntity();
+  }
+
+  @override
+  Future<void> deleteStagedOutletImage(String mediaAssetId) {
+    return _remoteDatasource.deleteStagedOutletImage(mediaAssetId);
   }
 }

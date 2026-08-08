@@ -84,6 +84,7 @@ class _EditOutletScreenState extends ConsumerState<EditOutletScreen> {
           backendErrors: _fieldErrors,
           submitting: _submitting,
           onSubmit: _submit,
+          onDiscard: (_) async => context.go('/tenant-admin/outlets'),
         ),
       ),
     );
