@@ -1,27 +1,43 @@
 class TenantProduct {
   const TenantProduct({
     required this.id,
+    required this.productCode,
     required this.name,
     required this.sku,
     required this.status,
-    required this.stockQuantity,
+    this.stockQuantity,
+    this.stockStatus,
     this.categoryName,
-    this.barcode,
-    this.sellingPrice,
+    this.categoryId,
+    this.brandId,
+    this.brandName,
+    this.variantCount = 1,
+    this.priceFrom,
+    this.priceTo,
+    this.primaryBarcode,
     this.currencyCode,
     this.imageUrl,
+    this.rowVersion = 1,
   });
 
   final String id;
+  final String productCode;
   final String name;
   final String sku;
-  final String? barcode;
+  final String? primaryBarcode;
   final String? categoryName;
-  final double? sellingPrice;
+  final String? categoryId;
+  final String? brandId;
+  final String? brandName;
+  final int variantCount;
+  final double? priceFrom;
+  final double? priceTo;
   final String? currencyCode;
-  final int stockQuantity;
+  final int? stockQuantity;
+  final String? stockStatus;
   final String status;
   final String? imageUrl;
+  final int rowVersion;
 }
 
 class TenantProductListResult {
@@ -30,12 +46,14 @@ class TenantProductListResult {
     this.page = 1,
     this.pageSize = 10,
     this.totalCount = 0,
+    this.catalogTotalCount = 0,
   });
 
   final List<TenantProduct> items;
   final int page;
   final int pageSize;
   final int totalCount;
+  final int catalogTotalCount;
 
   int get totalPages {
     if (pageSize <= 0 || totalCount <= 0) {
@@ -65,21 +83,49 @@ class TenantProductListResult {
 class TenantProductListQuery {
   const TenantProductListQuery({
     this.search,
-    this.page = 1,
+    this.pageNumber = 1,
     this.pageSize = 10,
-    this.sortBy,
-    this.sortDirection,
+    this.sortBy = 'productName',
+    this.sortDirection = 'asc',
     this.categoryId,
-    this.status,
+    this.brandId,
+    this.productStatus,
+    this.stockStatus,
   });
 
   final String? search;
-  final int page;
+  final int pageNumber;
   final int pageSize;
-  final String? sortBy;
-  final String? sortDirection;
+  final String sortBy;
+  final String sortDirection;
   final String? categoryId;
-  final String? status;
+  final String? brandId;
+  final String? productStatus;
+  final String? stockStatus;
+
+  TenantProductListQuery copyWith({
+    String? search,
+    int? pageNumber,
+    int? pageSize,
+    String? sortBy,
+    String? sortDirection,
+    String? categoryId,
+    String? brandId,
+    String? productStatus,
+    String? stockStatus,
+  }) {
+    return TenantProductListQuery(
+      search: search ?? this.search,
+      pageNumber: pageNumber ?? this.pageNumber,
+      pageSize: pageSize ?? this.pageSize,
+      sortBy: sortBy ?? this.sortBy,
+      sortDirection: sortDirection ?? this.sortDirection,
+      categoryId: categoryId ?? this.categoryId,
+      brandId: brandId ?? this.brandId,
+      productStatus: productStatus ?? this.productStatus,
+      stockStatus: stockStatus ?? this.stockStatus,
+    );
+  }
 }
 
 class TenantProductSummary {

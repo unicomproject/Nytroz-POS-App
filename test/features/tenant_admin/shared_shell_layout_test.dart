@@ -331,11 +331,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Product List'), findsOneWidget);
       expect(find.text('Add Product'), findsOneWidget);
-      expect(find.text('Categories'), findsOneWidget);
-      expect(find.text('Import'), findsOneWidget);
-      expect(find.text('Inventory'), findsWidgets);
+      expect(find.text('Categories & Subcategories'), findsOneWidget);
+      expect(find.text('Brand'), findsOneWidget);
+      expect(find.text('Product List'), findsNothing);
+      expect(find.text('Import'), findsNothing);
 
       final menuLabels = tenantAdminMenuCatalog
           .where(access.canAccessMenuItem)
@@ -432,7 +432,7 @@ void main() {
     test('marks catalog routes as settings area', () {
       expect(isTenantAdminSettingsAreaPath('/tenant-admin/settings'), isTrue);
       expect(isTenantAdminSettingsAreaPath('/tenant-admin/brands'), isTrue);
-      expect(isTenantAdminSettingsAreaPath('/tenant-admin/products'), isTrue);
+      expect(isTenantAdminSettingsAreaPath('/tenant-admin/products'), isFalse);
       expect(isTenantAdminSettingsAreaPath('/tenant-admin/dashboard'), isFalse);
     });
   });

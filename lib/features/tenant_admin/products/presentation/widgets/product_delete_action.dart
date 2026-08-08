@@ -14,12 +14,16 @@ class ProductDeleteAction extends ConsumerWidget {
     super.key,
     required this.productId,
     required this.productName,
+    this.sku,
+    this.imageUrl,
     this.navigateToListOnSuccess = false,
     this.compact = true,
   });
 
   final String productId;
   final String productName;
+  final String? sku;
+  final String? imageUrl;
   final bool navigateToListOnSuccess;
   final bool compact;
 
@@ -28,23 +32,36 @@ class ProductDeleteAction extends ConsumerWidget {
     final deletingIds = ref.watch(productDeletingIdsProvider);
     final isDeleting = deletingIds.contains(productId);
 
-    return IconButton(
-      tooltip: isDeleting ? 'Deleting product...' : 'Delete product',
-      onPressed: isDeleting ? null : () => _confirmAndDelete(context, ref),
-      icon: isDeleting
-          ? const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : Icon(
-              Icons.delete_outline,
-              size: compact ? 18 : 20,
-              color: TenantAdminColors.danger,
-            ),
-      visualDensity: VisualDensity.compact,
-      style: IconButton.styleFrom(
-        foregroundColor: TenantAdminColors.danger,
+    const color = TenantAdminColors.danger;
+    final bg = TenantAdminColors.danger.withValues(alpha: 0.08);
+    final border = TenantAdminColors.danger.withValues(alpha: 0.3);
+
+    return Tooltip(
+      message: isDeleting ? 'Deleting product...' : 'Delete product',
+      child: InkWell(
+        onTap: isDeleting ? null : () => _confirmAndDelete(context, ref),
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: border, width: 1),
+          ),
+          child: isDeleting
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(
+                  Icons.delete_outline,
+                  size: 16,
+                  color: color,
+                ),
+        ),
       ),
     );
   }
@@ -53,22 +70,10 @@ class ProductDeleteAction extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Delete product'),
-          content: const Text('Are you sure you want to delete this product?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: TenantAdminColors.danger,
-              ),
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete'),
-            ),
-          ],
+        return _DeleteConfirmationDialog(
+          productName: productName,
+          sku: sku,
+          imageUrl: imageUrl,
         );
       },
     );
@@ -142,5 +147,258 @@ class ProductDeleteAction extends ConsumerWidget {
     }
 
     return '$name deleted successfully.';
+  }
+}
+
+class _DeleteConfirmationDialog extends StatelessWidget {
+  const _DeleteConfirmationDialog({
+    required this.productName,
+    this.sku,
+    this.imageUrl,
+  });
+
+  final String productName;
+  final String? sku;
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final titleName = productName.trim().isEmpty ? 'Product' : productName;
+    final displaySku = (sku != null && sku!.trim().isNotEmpty) ? sku! : 'N/A';
+
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      backgroundColor: TenantAdminColors.surface,
+      surfaceTintColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: Padding(
+          padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Row: Red Trash Icon + Title + Close Button
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFEE2E2),
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      size: 20,
+                      color: Color(0xFFEF4444),
+                    ),
+                  ),
+                  const SizedBox(width: TenantAdminSpacing.md),
+                  const Expanded(
+                    child: Text(
+                      'Delete Product',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: TenantAdminColors.bodyText,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    icon: const Icon(
+                      Icons.close,
+                      size: 20,
+                      color: TenantAdminColors.mutedText,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: TenantAdminSpacing.md),
+
+              // Message Subtitle
+              const Text(
+                'Are you sure you want to delete this product?',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w500,
+                  color: TenantAdminColors.mutedText,
+                ),
+              ),
+              const SizedBox(height: TenantAdminSpacing.md),
+
+              // Product Info Preview Card
+              Container(
+                padding: const EdgeInsets.all(TenantAdminSpacing.md),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                  border: Border.all(color: TenantAdminColors.border),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAFAFA),
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.sm),
+                        border: Border.all(color: TenantAdminColors.border),
+                      ),
+                      child: imageUrl != null && imageUrl!.trim().isNotEmpty
+                          ? ClipRRect(
+                              borderRadius:
+                                  BorderRadius.circular(TenantAdminRadius.sm),
+                              child: Image.network(
+                                imageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    _buildPlaceholderIcon(),
+                              ),
+                            )
+                          : _buildPlaceholderIcon(),
+                    ),
+                    const SizedBox(width: TenantAdminSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            titleName,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: TenantAdminColors.bodyText,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'SKU: $displaySku',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: TenantAdminColors.mutedText,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: TenantAdminSpacing.md),
+
+              // Warning Alert Box
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: TenantAdminSpacing.md,
+                  vertical: TenantAdminSpacing.sm + 2,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF7ED),
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                  border: Border.all(color: const Color(0xFFFFEDD5)),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      size: 18,
+                      color: Color(0xFFEA580C),
+                    ),
+                    SizedBox(width: TenantAdminSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'This action cannot be undone. The product will be permanently deleted.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFC2410C),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: TenantAdminSpacing.xl),
+
+              // Footer Action Buttons: Cancel + Delete Product
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
+                      side: const BorderSide(color: TenantAdminColors.border),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
+                      ),
+                    ),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: TenantAdminColors.bodyText,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: TenantAdminSpacing.md),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF2D1A),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Delete Product',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholderIcon() {
+    return const Center(
+      child: Icon(
+        Icons.checkroom_outlined,
+        size: 22,
+        color: TenantAdminColors.primary,
+      ),
+    );
   }
 }

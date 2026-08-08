@@ -127,9 +127,9 @@ final popularSearchProductsProvider = FutureProvider.autoDispose<TenantProductLi
 
   final query = TenantProductListQuery(
     search: ref.watch(popularSearchQueryProvider),
-    page: ref.watch(popularSearchPageProvider),
+    pageNumber: ref.watch(popularSearchPageProvider),
     pageSize: 15,
-    status: 'ACTIVE',
+    productStatus: 'ACTIVE',
   );
   return ref.watch(getProductsProvider).call(query: query);
 });

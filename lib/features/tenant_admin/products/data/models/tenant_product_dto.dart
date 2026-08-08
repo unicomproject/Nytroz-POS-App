@@ -1,42 +1,66 @@
 class TenantProductListItemDto {
   const TenantProductListItemDto({
     required this.id,
+    required this.productCode,
     required this.name,
     required this.sku,
     required this.status,
-    required this.stockQuantity,
     this.categoryName,
-    this.barcode,
-    this.sellingPrice,
+    this.categoryId,
+    this.brandId,
+    this.brandName,
+    this.variantCount = 1,
+    this.priceFrom,
+    this.priceTo,
+    this.primaryBarcode,
     this.currencyCode,
+    this.stockQuantity,
+    this.stockStatus,
     this.imageUrl,
+    this.rowVersion = 1,
   });
 
   factory TenantProductListItemDto.fromJson(Map<String, dynamic> json) {
     return TenantProductListItemDto(
-      id: json['productId']?.toString() ?? json['id']?.toString() ?? '',
-      name: json['productName'] as String? ?? json['name'] as String? ?? '',
+      id: json['id']?.toString() ?? '',
+      productCode: json['productCode']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      sku: json['sku']?.toString() ?? '',
+      status: json['productStatus']?.toString() ?? json['status']?.toString() ?? '',
       categoryName: _nullableString(json['categoryName']),
-      sku: json['sku'] as String? ?? '',
-      barcode: _nullableString(json['barcode']),
-      sellingPrice: _doubleValue(json['sellingPrice'] ?? json['price']),
+      categoryId: _nullableString(json['categoryId']),
+      brandId: _nullableString(json['brandId']),
+      brandName: _nullableString(json['brandName']),
+      variantCount: _intValue(json['variantCount'], fallback: 1),
+      priceFrom: _doubleValue(json['priceFrom']),
+      priceTo: _doubleValue(json['priceTo']),
+      primaryBarcode: _nullableString(json['primaryBarcode']),
       currencyCode: _nullableString(json['currencyCode']),
-      stockQuantity: _intValue(json['stockQuantity']),
-      status: json['status'] as String? ?? '',
+      stockQuantity: json['stockQuantity'] != null ? _intValue(json['stockQuantity']) : null,
+      stockStatus: _nullableString(json['stockStatus']),
       imageUrl: _nullableString(json['imageUrl']),
+      rowVersion: _intValue(json['rowVersion'], fallback: 1),
     );
   }
 
   final String id;
+  final String productCode;
   final String name;
   final String? categoryName;
+  final String? categoryId;
+  final String? brandId;
+  final String? brandName;
+  final int variantCount;
+  final double? priceFrom;
+  final double? priceTo;
   final String sku;
-  final String? barcode;
-  final double? sellingPrice;
+  final String? primaryBarcode;
   final String? currencyCode;
-  final int stockQuantity;
+  final int? stockQuantity;
   final String status;
+  final String? stockStatus;
   final String? imageUrl;
+  final int rowVersion;
 }
 
 class TenantProductListResultDto {
@@ -45,15 +69,20 @@ class TenantProductListResultDto {
     this.page = 1,
     this.pageSize = 10,
     this.totalCount = 0,
+    this.catalogTotalCount = 0,
   });
 
   factory TenantProductListResultDto.fromJson(Map<String, dynamic> json) {
     final items = _mapList(json['items'], TenantProductListItemDto.fromJson);
-    final page = _intValue(json['page'], fallback: 1);
+    final page = _intValue(json['pageNumber'] ?? json['page'], fallback: 1);
     final pageSize = _intValue(json['pageSize'], fallback: 10);
     final totalCount = _intValue(
-      json['totalItems'] ?? json['totalCount'],
+      json['totalCount'] ?? json['totalItems'],
       fallback: items.length,
+    );
+    final catalogTotalCount = _intValue(
+      json['catalogTotalCount'] ?? json['summary']?['catalogTotalCount'] ?? json['summary']?['totalProducts'] ?? totalCount,
+      fallback: totalCount,
     );
 
     return TenantProductListResultDto(
@@ -61,6 +90,7 @@ class TenantProductListResultDto {
       page: page,
       pageSize: pageSize,
       totalCount: totalCount,
+      catalogTotalCount: catalogTotalCount,
     );
   }
 
@@ -68,6 +98,7 @@ class TenantProductListResultDto {
   final int page;
   final int pageSize;
   final int totalCount;
+  final int catalogTotalCount;
 }
 
 class TenantProductSummaryDto {

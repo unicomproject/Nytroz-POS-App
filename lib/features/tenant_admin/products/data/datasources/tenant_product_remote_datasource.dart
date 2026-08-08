@@ -7,6 +7,7 @@ import '../models/product_status_update_dto.dart';
 import '../models/tenant_product_create_options_dto.dart';
 import '../models/tenant_product_detail_dto.dart';
 import '../models/tenant_product_dto.dart';
+import '../models/tenant_product_filter_options_dto.dart';
 
 class TenantProductRemoteDatasource {
   const TenantProductRemoteDatasource(this._dio);
@@ -17,6 +18,16 @@ class TenantProductRemoteDatasource {
   static const _summaryPath = '/api/v1/tenant-admin/products/summary';
   static const _createOptionsPath =
       '/api/v1/tenant-admin/products/create-options';
+  static const _filterOptionsPath =
+      '/api/v1/tenant-admin/products/filter-options';
+
+  Future<TenantProductFilterOptionsDto> getProductFilterOptions() async {
+    final response = await _dio.get<dynamic>(_filterOptionsPath);
+
+    return TenantProductFilterOptionsDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
 
   Future<TenantProductCreateOptionsDto> getCreateOptions() async {
     final response = await _dio.get<dynamic>(_createOptionsPath);
@@ -106,18 +117,22 @@ class TenantProductRemoteDatasource {
 
   Map<String, dynamic> _listQueryParameters(TenantProductListQuery query) {
     return {
-      'page': query.page,
+      'pageNumber': query.pageNumber,
       'pageSize': query.pageSize,
       if (query.search != null && query.search!.trim().isNotEmpty)
         'search': query.search!.trim(),
-      if (query.sortBy != null && query.sortBy!.trim().isNotEmpty)
-        'sortBy': query.sortBy!.trim(),
-      if (query.sortDirection != null && query.sortDirection!.trim().isNotEmpty)
-        'sortDirection': query.sortDirection!.trim(),
+      if (query.sortBy.trim().isNotEmpty)
+        'sortBy': query.sortBy.trim(),
+      if (query.sortDirection.trim().isNotEmpty)
+        'sortDirection': query.sortDirection.trim(),
       if (query.categoryId != null && query.categoryId!.trim().isNotEmpty)
         'categoryId': query.categoryId!.trim(),
-      if (query.status != null && query.status!.trim().isNotEmpty)
-        'status': query.status!.trim(),
+      if (query.brandId != null && query.brandId!.trim().isNotEmpty)
+        'brandId': query.brandId!.trim(),
+      if (query.productStatus != null && query.productStatus!.trim().isNotEmpty)
+        'productStatus': query.productStatus!.trim(),
+      if (query.stockStatus != null && query.stockStatus!.trim().isNotEmpty)
+        'stockStatus': query.stockStatus!.trim(),
     };
   }
 
