@@ -12,7 +12,6 @@ import '../theme/tenant_admin_theme.dart';
 const List<String> tenantAdminSettingsAreaSegments = [
   'settings',
   'brands',
-  'products',
   'categories',
   'stock',
   'staff',

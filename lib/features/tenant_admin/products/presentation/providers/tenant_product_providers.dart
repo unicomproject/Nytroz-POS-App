@@ -6,6 +6,7 @@ import '../../application/usecases/create_product.dart';
 import '../../application/usecases/delete_product.dart';
 import '../../application/usecases/get_product_by_id.dart';
 import '../../application/usecases/get_product_create_options.dart';
+import '../../application/usecases/get_product_filter_options.dart';
 import '../../application/usecases/get_product_summary.dart';
 import '../../application/usecases/get_products.dart';
 import '../../application/usecases/update_product.dart';
@@ -14,6 +15,7 @@ import '../../data/datasources/tenant_product_remote_datasource.dart';
 import '../../data/repositories/tenant_product_repository_impl.dart';
 import '../../domain/entities/tenant_product.dart';
 import '../../domain/entities/tenant_product_create_options.dart';
+import '../../domain/entities/tenant_product_filter_options.dart';
 import '../../domain/entities/tenant_product_detail.dart';
 import '../../domain/repositories/tenant_product_repository.dart';
 
@@ -41,6 +43,11 @@ final getProductCreateOptionsProvider =
   return GetProductCreateOptions(ref.watch(tenantProductRepositoryProvider));
 });
 
+final getProductFilterOptionsProvider =
+    Provider<GetProductFilterOptions>((ref) {
+  return GetProductFilterOptions(ref.watch(tenantProductRepositoryProvider));
+});
+
 final createProductProvider = Provider<CreateProduct>((ref) {
   return CreateProduct(ref.watch(tenantProductRepositoryProvider));
 });
@@ -64,22 +71,157 @@ final deleteProductProvider = Provider<DeleteProduct>((ref) {
 final productDeletingIdsProvider =
     StateProvider<Set<String>>((ref) => const {});
 
-final productSearchProvider = StateProvider<String>((ref) => '');
+class ProductListFilterState {
+  const ProductListFilterState({
+    this.search = '',
+    this.categoryId,
+    this.brandId,
+    this.productStatus,
+    this.stockStatus,
+    this.sortBy = 'productName',
+    this.sortDirection = 'asc',
+    this.pageNumber = 1,
+    this.pageSize = 6,
+  });
 
-final productPageProvider = StateProvider<int>((ref) => 1);
+  final String search;
+  final String? categoryId;
+  final String? brandId;
+  final String? productStatus;
+  final String? stockStatus;
+  final String sortBy;
+  final String sortDirection;
+  final int pageNumber;
+  final int pageSize;
 
-final productPageSizeProvider = StateProvider<int>((ref) => 10);
+  ProductListFilterState copyWith({
+    String? search,
+    String? categoryId,
+    bool clearCategory = false,
+    String? brandId,
+    bool clearBrand = false,
+    String? productStatus,
+    bool clearProductStatus = false,
+    String? stockStatus,
+    bool clearStockStatus = false,
+    String? sortBy,
+    String? sortDirection,
+    int? pageNumber,
+    int? pageSize,
+  }) {
+    return ProductListFilterState(
+      search: search ?? this.search,
+      categoryId: clearCategory ? null : (categoryId ?? this.categoryId),
+      brandId: clearBrand ? null : (brandId ?? this.brandId),
+      productStatus: clearProductStatus ? null : (productStatus ?? this.productStatus),
+      stockStatus: clearStockStatus ? null : (stockStatus ?? this.stockStatus),
+      sortBy: sortBy ?? this.sortBy,
+      sortDirection: sortDirection ?? this.sortDirection,
+      pageNumber: pageNumber ?? this.pageNumber,
+      pageSize: pageSize ?? this.pageSize,
+    );
+  }
+
+  TenantProductListQuery toQuery() {
+    return TenantProductListQuery(
+      search: search,
+      categoryId: categoryId,
+      brandId: brandId,
+      productStatus: productStatus,
+      stockStatus: stockStatus,
+      sortBy: sortBy,
+      sortDirection: sortDirection,
+      pageNumber: pageNumber,
+      pageSize: pageSize,
+    );
+  }
+}
+
+class ProductListFilterStateNotifier extends StateNotifier<ProductListFilterState> {
+  ProductListFilterStateNotifier() : super(const ProductListFilterState());
+
+  void setSearch(String value) {
+    state = state.copyWith(search: value, pageNumber: 1);
+  }
+
+  void setCategory(String? categoryId) {
+    if (categoryId == null || categoryId.trim().isEmpty) {
+      state = state.copyWith(clearCategory: true, pageNumber: 1);
+    } else {
+      state = state.copyWith(categoryId: categoryId, pageNumber: 1);
+    }
+  }
+
+  void setBrand(String? brandId) {
+    if (brandId == null || brandId.trim().isEmpty) {
+      state = state.copyWith(clearBrand: true, pageNumber: 1);
+    } else {
+      state = state.copyWith(brandId: brandId, pageNumber: 1);
+    }
+  }
+
+  void setProductStatus(String? productStatus) {
+    if (productStatus == null || productStatus.trim().isEmpty) {
+      state = state.copyWith(clearProductStatus: true, pageNumber: 1);
+    } else {
+      state = state.copyWith(productStatus: productStatus, pageNumber: 1);
+    }
+  }
+
+  void setStockStatus(String? stockStatus) {
+    if (stockStatus == null || stockStatus.trim().isEmpty) {
+      state = state.copyWith(clearStockStatus: true, pageNumber: 1);
+    } else {
+      state = state.copyWith(stockStatus: stockStatus, pageNumber: 1);
+    }
+  }
+
+  void setSort(String sortBy, String sortDirection) {
+    state = state.copyWith(sortBy: sortBy, sortDirection: sortDirection, pageNumber: 1);
+  }
+
+  void setPage(int pageNumber) {
+    state = state.copyWith(pageNumber: pageNumber);
+  }
+
+  void setPageSize(int pageSize) {
+    state = state.copyWith(pageSize: pageSize, pageNumber: 1);
+  }
+
+  void resetFilters() {
+    state = state.copyWith(
+      search: '',
+      clearCategory: true,
+      clearBrand: true,
+      clearProductStatus: true,
+      clearStockStatus: true,
+      sortBy: 'productName',
+      sortDirection: 'asc',
+      pageNumber: 1,
+    );
+  }
+}
+
+final productListFilterProvider =
+    StateNotifierProvider<ProductListFilterStateNotifier, ProductListFilterState>((ref) {
+  return ProductListFilterStateNotifier();
+});
 
 final productListQueryProvider = Provider<TenantProductListQuery>((ref) {
-  final search = ref.watch(productSearchProvider);
-  final page = ref.watch(productPageProvider);
-  final pageSize = ref.watch(productPageSizeProvider);
+  final filterState = ref.watch(productListFilterProvider);
+  return filterState.toQuery();
+});
 
-  return TenantProductListQuery(
-    search: search,
-    page: page,
-    pageSize: pageSize,
-  );
+final productFilterOptionsProvider =
+    FutureProvider.autoDispose<TenantProductFilterOptions?>((ref) async {
+  final accessChecker =
+      await ref.watch(tenantAdminAccessCheckerProvider.future);
+
+  if (!accessChecker.canFetchProductList()) {
+    return null;
+  }
+
+  return ref.watch(getProductFilterOptionsProvider).call();
 });
 
 final productListProvider =

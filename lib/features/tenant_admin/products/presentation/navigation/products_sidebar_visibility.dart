@@ -43,13 +43,6 @@ class ProductsSidebarVisibility {
   }) {
     final children = <ProductsSidebarChildVisibility>[
       ProductsSidebarChildVisibility(
-        key: 'product-list',
-        label: 'Product List',
-        route: ProductsSidebarRoutes.list,
-        permissionCode: TenantAdminPermissionCodes.tenantProductsView,
-        isVisible: access.canViewProductListNav(),
-      ),
-      ProductsSidebarChildVisibility(
         key: 'add-product',
         label: 'Add Product',
         route: ProductsSidebarRoutes.add,
@@ -58,41 +51,17 @@ class ProductsSidebarVisibility {
       ),
       ProductsSidebarChildVisibility(
         key: 'categories',
-        label: 'Categories',
+        label: 'Categories & Subcategories',
         route: ProductsSidebarRoutes.categories,
         permissionCode: TenantAdminPermissionCodes.tenantCategoriesView,
         isVisible: access.canViewCategoriesNav(),
       ),
       ProductsSidebarChildVisibility(
         key: 'brands',
-        label: 'Brands',
+        label: 'Brand',
         route: ProductsSidebarRoutes.brands,
         permissionCode: TenantAdminPermissionCodes.tenantBrandsView,
         isVisible: access.canViewBrandsNav(),
-      ),
-      ProductsSidebarChildVisibility(
-        key: 'popular-products',
-        label: 'Popular Products',
-        route: ProductsSidebarRoutes.popular,
-        permissionCode: 'catalog.collections.view',
-        isVisible: access.canViewPopularProductsNav(),
-      ),
-      ProductsSidebarChildVisibility(
-        key: 'product-inventory',
-        label: 'Inventory',
-        route: ProductsSidebarRoutes.productInventory,
-        permissionCode: TenantAdminPermissionCodes.tenantStockView,
-        isVisible: access.canViewProductInventoryNav(),
-        isRouteAvailable: false,
-        unavailableMessage:
-            'Product inventory setup is not available yet. Use top-level Inventory for stock operations.',
-      ),
-      ProductsSidebarChildVisibility(
-        key: 'import',
-        label: 'Import',
-        route: ProductsSidebarRoutes.import,
-        permissionCode: TenantAdminPermissionCodes.tenantProductImport,
-        isVisible: access.canImportProductsNav(),
       ),
     ];
 
@@ -100,7 +69,7 @@ class ProductsSidebarVisibility {
         children.where((child) => child.isVisible).toList(growable: false);
 
     return ProductsSidebarVisibility(
-      showParent: visibleChildren.isNotEmpty,
+      showParent: visibleChildren.isNotEmpty || access.canAccessProductListPage(),
       children: children,
     );
   }

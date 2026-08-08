@@ -3,11 +3,13 @@ import '../../domain/entities/product_delete_result.dart';
 import '../../domain/entities/product_status_update_result.dart';
 import '../../domain/entities/tenant_product.dart';
 import '../../domain/entities/tenant_product_create_options.dart';
+import '../../domain/entities/tenant_product_filter_options.dart';
 import '../../domain/entities/tenant_product_detail.dart';
 import '../models/product_create_request_dto.dart';
 import '../models/product_delete_response_dto.dart';
 import '../models/product_status_update_dto.dart';
 import '../models/tenant_product_create_options_dto.dart';
+import '../models/tenant_product_filter_options_dto.dart';
 import '../models/tenant_product_detail_dto.dart';
 import '../models/tenant_product_dto.dart';
 
@@ -20,21 +22,30 @@ class TenantProductMapper {
       page: dto.page,
       pageSize: dto.pageSize,
       totalCount: dto.totalCount,
+      catalogTotalCount: dto.catalogTotalCount,
     );
   }
 
   static TenantProduct toEntity(TenantProductListItemDto dto) {
     return TenantProduct(
       id: dto.id,
+      productCode: dto.productCode,
       name: dto.name,
       sku: dto.sku,
-      barcode: dto.barcode,
-      categoryName: dto.categoryName,
-      sellingPrice: dto.sellingPrice,
-      currencyCode: dto.currencyCode ?? 'LKR',
-      stockQuantity: dto.stockQuantity,
       status: dto.status,
+      stockQuantity: dto.stockQuantity,
+      stockStatus: dto.stockStatus,
+      categoryName: dto.categoryName,
+      categoryId: dto.categoryId,
+      brandId: dto.brandId,
+      brandName: dto.brandName,
+      variantCount: dto.variantCount,
+      priceFrom: dto.priceFrom,
+      priceTo: dto.priceTo,
+      primaryBarcode: dto.primaryBarcode,
+      currencyCode: dto.currencyCode ?? 'LKR',
       imageUrl: dto.imageUrl,
+      rowVersion: dto.rowVersion,
     );
   }
 
@@ -44,6 +55,33 @@ class TenantProductMapper {
       activeProducts: dto.activeProducts,
       inactiveProducts: dto.inactiveProducts,
       categoryCount: dto.categoryCount,
+    );
+  }
+
+  static TenantProductFilterOptions toFilterOptions(
+    TenantProductFilterOptionsDto dto,
+  ) {
+    return TenantProductFilterOptions(
+      categories: dto.categories
+          .map(
+            (item) => ProductCategoryOption(
+              id: item.id,
+              name: item.name,
+              code: item.code,
+            ),
+          )
+          .toList(),
+      brands: dto.brands
+          .map(
+            (item) => ProductBrandOption(
+              id: item.id,
+              name: item.name,
+              code: item.code,
+            ),
+          )
+          .toList(),
+      productStatuses: dto.productStatuses,
+      stockStatuses: dto.stockStatuses,
     );
   }
 
