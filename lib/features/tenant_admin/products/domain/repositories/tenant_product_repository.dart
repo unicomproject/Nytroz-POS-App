@@ -1,6 +1,7 @@
 import '../../domain/entities/product_form_data.dart';
 import '../../domain/entities/tenant_product.dart';
 import '../../domain/entities/tenant_product_create_options.dart';
+import '../../domain/entities/tenant_product_filter_options.dart';
 import '../../domain/entities/product_delete_result.dart';
 import '../../domain/entities/product_status_update_result.dart';
 import '../../domain/entities/tenant_product_detail.dart';
@@ -23,4 +24,5 @@ abstract class TenantProductRepository {
     String status,
   );
   Future<ProductDeleteResult> deleteProduct(String productId);
+  Future<TenantProductFilterOptions> getProductFilterOptions();
 }

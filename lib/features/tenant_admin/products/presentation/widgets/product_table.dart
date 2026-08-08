@@ -24,100 +24,107 @@ class ProductTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        headingRowHeight: 48,
-        dataRowMinHeight: 60,
-        dataRowMaxHeight: 72,
-        columnSpacing: TenantAdminSpacing.xl,
-        horizontalMargin: TenantAdminSpacing.lg,
-        headingTextStyle: const TextStyle(
-          color: TenantAdminColors.bodyText,
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
-        ),
-        dataTextStyle: const TextStyle(
-          color: TenantAdminColors.bodyText,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-        columns: const [
-          DataColumn(label: Text('Product')),
-          DataColumn(label: Text('SKU')),
-          DataColumn(label: Text('Category')),
-          DataColumn(label: Text('Price')),
-          DataColumn(label: Text('Stock')),
-          DataColumn(label: Text('Status')),
-          DataColumn(
-            label: Align(
-              alignment: Alignment.centerRight,
-              child: Text('Actions'),
-            ),
-          ),
-        ],
-        rows: [
-          for (final product in products)
-            DataRow(
-              cells: [
-                DataCell(
-                  _ProductIdentityCell(
-                    product: product,
-                    canView: visibility.showViewAction,
+    return SizedBox.expand(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: DataTable(
+                  headingRowHeight: 52,
+                  dataRowMinHeight: 72,
+                  dataRowMaxHeight: 84,
+                  columnSpacing: TenantAdminSpacing.xl,
+                  horizontalMargin: TenantAdminSpacing.lg,
+                  headingRowColor: WidgetStateProperty.all(const Color(0xFFF7F8FA)),
+                  headingTextStyle: const TextStyle(
+                    color: TenantAdgitminColors.bodyText,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
                   ),
-                  onTap:
-                      visibility.showViewAction ? () => onView(product) : null,
-                ),
-                DataCell(_PlainCell(_emptyDash(product.sku))),
-                DataCell(
-                  _PlainCell(
-                      _emptyDash(product.categoryName ?? 'Uncategorised')),
-                ),
-                DataCell(_PlainCell(_formatPrice(product))),
-                DataCell(_PlainCell('${product.stockQuantity}')),
-                DataCell(ProductStatusBadge(status: product.status)),
-                DataCell(
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (visibility.showViewAction)
-                          _ActionIconButton(
-                            icon: Icons.visibility_outlined,
-                            tooltip: 'View details',
-                            onPressed: () => onView(product),
-                          ),
-                        if (visibility.showEditAction) ...[
-                          const SizedBox(width: TenantAdminSpacing.sm),
-                          _ActionIconButton(
-                            icon: Icons.edit_outlined,
-                            tooltip: 'Edit product',
-                            onPressed: () => onEdit(product),
-                          ),
-                        ],
-                        if (visibility.showStatusAction) ...[
-                          const SizedBox(width: TenantAdminSpacing.sm),
-                          ProductStatusActionMenu(
-                            productId: product.id,
-                            productName: product.name,
-                            currentStatus: product.status,
-                          ),
-                        ],
-                        if (visibility.showDeleteAction) ...[
-                          const SizedBox(width: TenantAdminSpacing.sm),
-                          ProductDeleteAction(
-                            productId: product.id,
-                            productName: product.name,
-                          ),
-                        ],
-                      ],
-                    ),
+                  dataTextStyle: const TextStyle(
+                    color: TenantAdminColors.bodyText,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
                   ),
+                  columns: const [
+                    DataColumn(label: Text('Product')),
+                    DataColumn(label: Text('SKU')),
+                    DataColumn(label: Text('Category')),
+                    DataColumn(label: Text('Variants')),
+                    DataColumn(label: Text('Price')),
+                    DataColumn(label: Text('Stock')),
+                    DataColumn(label: Text('Product Status')),
+                    DataColumn(label: Text('Stock Status')),
+                    DataColumn(label: Text('Actions')),
+                  ],
+                  rows: [
+                    for (final product in products)
+                      DataRow(
+                        cells: [
+                          DataCell(
+                            _ProductIdentityCell(
+                              product: product,
+                              canView: visibility.showViewAction,
+                            ),
+                            onTap:
+                                visibility.showViewAction ? () => onView(product) : null,
+                          ),
+                          DataCell(_PlainCell(_emptyDash(product.sku))),
+                          DataCell(
+                            _PlainCell(
+                                _emptyDash(product.categoryName ?? 'Uncategorised')),
+                          ),
+                          DataCell(_PlainCell('${product.variantCount}')),
+                          DataCell(_PlainCell(_formatPrice(product))),
+                          DataCell(
+                            _PlainCell(
+                              product.stockQuantity == null ? '—' : '${product.stockQuantity}',
+                            ),
+                          ),
+                          DataCell(ProductStatusBadge(status: product.status)),
+                          DataCell(StockStatusBadge(status: product.stockStatus)),
+                          DataCell(
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (visibility.showViewAction)
+                                  _ActionIconButton(
+                                    icon: Icons.visibility_outlined,
+                                    tooltip: 'View details',
+                                    onPressed: () => onView(product),
+                                  ),
+                                if (visibility.showEditAction) ...[
+                                  const SizedBox(width: TenantAdminSpacing.sm),
+                                  _ActionIconButton(
+                                    icon: Icons.edit_outlined,
+                                    tooltip: 'Edit product',
+                                    onPressed: () => onEdit(product),
+                                  ),
+                                ],
+                                if (visibility.showDeleteAction || visibility.showEditAction || visibility.showViewAction) ...[
+                                  const SizedBox(width: TenantAdminSpacing.sm),
+                                  ProductDeleteAction(
+                                    productId: product.id,
+                                    productName: product.name,
+                                    sku: product.sku,
+                                    imageUrl: product.imageUrl,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
-              ],
+              ),
             ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -127,15 +134,19 @@ class ProductTable extends StatelessWidget {
   }
 
   static String _formatPrice(TenantProduct product) {
-    if (product.sellingPrice == null) {
-      return '-';
+    final currency = (product.currencyCode == null || product.currencyCode!.trim().isEmpty)
+        ? 'LKR'
+        : product.currencyCode!.toUpperCase();
+
+    if (product.priceFrom == null && product.priceTo == null) {
+      return '—';
     }
 
-    final currency =
-        (product.currencyCode == null || product.currencyCode!.trim().isEmpty)
-            ? 'LKR'
-            : product.currencyCode!.toUpperCase();
-    return '$currency ${product.sellingPrice!.toStringAsFixed(2)}';
+    if (product.priceFrom == product.priceTo || product.priceTo == null) {
+      return '$currency ${product.priceFrom!.toStringAsFixed(2)}';
+    }
+
+    return '$currency ${product.priceFrom!.toStringAsFixed(2)} - ${product.priceTo!.toStringAsFixed(2)}';
   }
 }
 
@@ -167,17 +178,18 @@ class _ProductIdentityCell extends StatelessWidget {
                   color: canView
                       ? TenantAdminColors.primary
                       : TenantAdminColors.bodyText,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              if (product.barcode != null && product.barcode!.isNotEmpty)
+              if (product.primaryBarcode != null && product.primaryBarcode!.isNotEmpty)
                 Text(
-                  product.barcode!,
+                  product.primaryBarcode!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: TenantAdminColors.mutedText,
-                    fontSize: 11,
+                    fontSize: 11.5,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -204,17 +216,21 @@ class _ProductAvatar extends StatelessWidget {
     final initials =
         trimmed.isEmpty ? '?' : trimmed.substring(0, 1).toUpperCase();
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-      child: AppCachedNetworkImage(
-        imageUrl: imageUrl,
-        width: 36,
-        height: 36,
-        fit: BoxFit.cover,
-        memCacheWidth: 72,
-        errorWidget: _FallbackAvatar(initials: initials),
-      ),
-    );
+    if (imageUrl != null && imageUrl!.trim().isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+        child: Image.network(
+          imageUrl!,
+          width: 36,
+          height: 36,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              _FallbackAvatar(initials: initials),
+        ),
+      );
+    }
+
+    return _FallbackAvatar(initials: initials);
   }
 }
 
@@ -226,19 +242,19 @@ class _FallbackAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 36,
-      height: 36,
+      width: 64,
+      height: 64,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: TenantAdminColors.secondary,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
       ),
       child: Text(
         initials,
         style: const TextStyle(
           color: TenantAdminColors.primary,
           fontWeight: FontWeight.w800,
-          fontSize: 13,
+          fontSize: 22,
         ),
       ),
     );
@@ -261,22 +277,42 @@ class _ActionIconButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onPressed,
+    this.isDanger = false,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
+  final bool isDanger;
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      icon: Icon(icon, size: 18),
-      visualDensity: VisualDensity.compact,
-      style: IconButton.styleFrom(
-        foregroundColor: TenantAdminColors.bodyText,
+    final color = isDanger ? TenantAdminColors.danger : const Color(0xFF1890FF);
+    final bg = isDanger
+        ? TenantAdminColors.danger.withValues(alpha: 0.08)
+        : const Color(0xFF1890FF).withValues(alpha: 0.08);
+    final border = isDanger
+        ? TenantAdminColors.danger.withValues(alpha: 0.3)
+        : const Color(0xFF1890FF).withValues(alpha: 0.3);
+
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: border, width: 1),
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
       ),
     );
   }
 }
+

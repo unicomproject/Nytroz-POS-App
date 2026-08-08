@@ -122,7 +122,7 @@ class TenantAdminInsets {
       return const EdgeInsets.all(TenantAdminSpacing.md);
     }
 
-    return const EdgeInsets.fromLTRB(12, 8, 12, 12);
+    return const EdgeInsets.fromLTRB(24, 24, 24, 20);
   }
 }
 
