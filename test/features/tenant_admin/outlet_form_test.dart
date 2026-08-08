@@ -6,6 +6,17 @@ import 'package:nytroz_pos/features/tenant_admin/outlets/domain/entities/outlet_
 import 'package:nytroz_pos/features/tenant_admin/outlets/domain/entities/outlet_details.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/utils/outlet_api_errors.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/widgets/outlet_form.dart';
+import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/providers/outlet_image_upload_provider.dart';
+
+class FakeOutletImageUploadController extends StateNotifier<OutletImageUploadState> implements OutletImageUploadController {
+  FakeOutletImageUploadController() : super(const OutletImageUploadState());
+  @override Future<void> chooseImage() async {}
+  @override Future<void> replaceImage() async {}
+  @override Future<void> retryUpload() async {}
+  @override Future<void> removeImage() async {}
+  @override void initializeExistingImage({required String mediaAssetId, String? imageUrl, String? fileName, String? mimeType, int? fileSizeBytes}) {}
+  @override void reset() {}
+}
 
 void main() {
   group('OutletForm create wizard', () {
@@ -49,7 +60,7 @@ void main() {
       await _tapText(tester, 'Next');
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Country Code must be 2'), findsOneWidget);
+      expect(find.textContaining('Country or Region must be 2'), findsOneWidget);
       expect(submitted, isFalse);
     });
 
@@ -227,7 +238,7 @@ Future<void> _pumpForm(
   bool useCreateOptions = true,
   Future<void> Function(OutletFormData form)? onSubmit,
 }) async {
-  tester.view.physicalSize = const Size(800, 1500);
+  tester.view.physicalSize = const Size(800, 2500);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(() {
     tester.view.resetPhysicalSize();
@@ -236,6 +247,9 @@ Future<void> _pumpForm(
 
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [
+        outletImageUploadControllerProvider.overrideWith((ref) => FakeOutletImageUploadController()),
+      ],
       child: MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(

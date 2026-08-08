@@ -793,6 +793,7 @@ class _OutletDetailsStep extends StatelessWidget {
         ),
         const SizedBox(height: TenantAdminSpacing.sm),
         DropdownButtonFormField<String>(
+          isExpanded: true,
           initialValue: value,
           icon: const Icon(Icons.keyboard_arrow_down,
               color: TenantAdminColors.mutedText),
@@ -853,6 +854,7 @@ class _OutletDetailsStep extends StatelessWidget {
         const SizedBox(height: TenantAdminSpacing.sm),
         if (timezones.isNotEmpty)
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: _matchingOptionValue(timezone.text, timezones),
             icon: const Icon(Icons.keyboard_arrow_down,
                 color: TenantAdminColors.mutedText),
@@ -1078,12 +1080,12 @@ class _OutletLocationContactStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _twoColumnRow(
-          _field('addressLine1', 'Address Line 1 *', addressLine1, errors: errors, isRequired: true, maxLength: 250, icon: Icons.location_on_outlined),
+          _field('addressLine1', 'Address Line 1', addressLine1, errors: errors, isRequired: true, maxLength: 250, icon: Icons.location_on_outlined),
           _field('addressLine2', 'Address Line 2 (optional)', addressLine2, errors: errors, maxLength: 250, icon: Icons.apartment_outlined),
         ),
         const SizedBox(height: TenantAdminSpacing.lg),
         _twoColumnRow(
-          _field('city', 'City *', city, errors: errors, isRequired: true, maxLength: 120, icon: Icons.location_city_outlined),
+          _field('city', 'City', city, errors: errors, isRequired: true, maxLength: 120, icon: Icons.location_city_outlined),
           _field('state', 'Province / State (optional)', state, errors: errors, maxLength: 120, icon: Icons.map_outlined),
         ),
         const SizedBox(height: TenantAdminSpacing.lg),
@@ -1157,7 +1159,7 @@ class _OutletLocationContactStep extends StatelessWidget {
     if (countries.isEmpty) {
       return _field(
         'country',
-        'Country or Region *',
+        'Country or Region',
         countryCode,
         errors: errors,
         isRequired: true,
@@ -1189,6 +1191,7 @@ class _OutletLocationContactStep extends StatelessWidget {
         ),
         const SizedBox(height: TenantAdminSpacing.sm),
         DropdownButtonFormField<String>(
+          isExpanded: true,
           initialValue: value,
           icon: const Icon(Icons.keyboard_arrow_down, color: TenantAdminColors.mutedText),
           decoration: InputDecoration(
@@ -1660,12 +1663,23 @@ Widget _field(
             Icon(icon, size: 16, color: TenantAdminColors.mutedText),
             const SizedBox(width: TenantAdminSpacing.sm),
           ],
-          Text(
-            label,
-            style: const TextStyle(
-              color: TenantAdminColors.bodyText,
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                text: label,
+                style: const TextStyle(
+                  color: TenantAdminColors.bodyText,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+                children: [
+                  if (isRequired)
+                    const TextSpan(
+                      text: ' *',
+                      style: TextStyle(color: TenantAdminColors.danger),
+                    ),
+                ],
+              ),
             ),
           ),
         ],
