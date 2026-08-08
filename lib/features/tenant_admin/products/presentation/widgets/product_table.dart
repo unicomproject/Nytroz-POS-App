@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../shared/widgets/app_cached_network_image.dart';
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/tenant_product.dart';
@@ -203,21 +204,17 @@ class _ProductAvatar extends StatelessWidget {
     final initials =
         trimmed.isEmpty ? '?' : trimmed.substring(0, 1).toUpperCase();
 
-    if (imageUrl != null && imageUrl!.trim().isNotEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-        child: Image.network(
-          imageUrl!,
-          width: 36,
-          height: 36,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) =>
-              _FallbackAvatar(initials: initials),
-        ),
-      );
-    }
-
-    return _FallbackAvatar(initials: initials);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+      child: AppCachedNetworkImage(
+        imageUrl: imageUrl,
+        width: 36,
+        height: 36,
+        fit: BoxFit.cover,
+        memCacheWidth: 72,
+        errorWidget: _FallbackAvatar(initials: initials),
+      ),
+    );
   }
 }
 

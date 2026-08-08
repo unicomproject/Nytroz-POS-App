@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:nytroz_pos/shared/widgets/pos_action_buttons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_parked_sale_provider.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_discount_dialog.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_parked_sale_dialog.dart';
+import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_park_sale_dialog.dart';
 import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../../../../core/access/pos_access_codes.dart';
@@ -20,10 +20,7 @@ class PosNewSaleActionBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authSessionProvider);
     final cart = ref.watch(posNewSaleCartProvider);
-    final parkedSaleCount = ref.watch(posParkedSaleProvider).maybeWhen(
-          data: (sales) => sales.length,
-          orElse: () => 0,
-        );
+    final parkedSaleCount = ref.watch(posParkedSaleCountProvider);
     final canApplyDiscount =
         session?.hasPermission(PosPermissionCodes.applySaleDiscount) == true;
     final canClearCart = PosPermissionAccess.canClearCart(
@@ -32,27 +29,32 @@ class PosNewSaleActionBar extends ConsumerWidget {
     final canCreateParkedSale =
         session?.hasPermission(PosPermissionCodes.createParkedSale) == true;
     final canViewParkedSales =
-        session?.hasPermission(PosPermissionCodes.viewParkedSales) == true ||
-            canCreateParkedSale;
-    final parkedSaleAction = cart.hasItems
-        ? canCreateParkedSale
-            ? () => _saveParkedSale(context, ref, cart)
-            : null
-        : canViewParkedSales
-            ? () => _recallParkedSale(context, ref)
-            : null;
+        session?.hasPermission(PosPermissionCodes.viewBackendParkedSales) ==
+            true;
+    // Park Sale and Recall Sale are mutually exclusive: an empty cart can
+    // only recall, a non-empty cart can only park. Each is gated on its own
+    // permission — never fall back to showing the other action's label on a
+    // disabled button when the applicable permission is missing.
+    final showParkAction = cart.hasItems && canCreateParkedSale;
+    final showRecallAction = !cart.hasItems && canViewParkedSales;
     final actions = <_ActionButton>[
-      if (canCreateParkedSale || canViewParkedSales)
+      if (showParkAction)
         _ActionButton(
           icon: Icons.pause_circle_outline_rounded,
-          label: cart.hasItems ? 'Hold Sale' : 'Recall Sale',
+          label: 'Park Sale',
           backgroundColor: TenantAdminColors.posNewSaleHoldAction,
-          tooltip: cart.hasItems
-              ? 'Save current cart as a parked sale'
-              : parkedSaleCount > 0
-                  ? 'Recall a parked sale'
-                  : 'No parked sales to recall',
-          onPressed: parkedSaleAction,
+          tooltip: 'Save current cart as a parked sale',
+          onPressed: () => _saveParkedSale(context, ref, cart),
+        )
+      else if (showRecallAction)
+        _ActionButton(
+          icon: Icons.pause_circle_outline_rounded,
+          label: 'Recall Sale',
+          backgroundColor: TenantAdminColors.posNewSaleHoldAction,
+          tooltip: parkedSaleCount > 0
+              ? 'Recall a parked sale'
+              : 'No parked sales to recall',
+          onPressed: () => _recallParkedSale(context, ref),
         ),
       if (canClearCart)
         _ActionButton(
@@ -125,18 +127,92 @@ class PosNewSaleActionBar extends ConsumerWidget {
     final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Clear current sale?'),
+        key: const ValueKey('clear-cart-dialog'),
+        backgroundColor: TenantAdminColors.surface,
+        surfaceTintColor: TenantAdminColors.surface,
+        insetPadding: const EdgeInsets.all(TenantAdminSpacing.xl),
+        titlePadding: const EdgeInsets.fromLTRB(
+          TenantAdminSpacing.xl,
+          TenantAdminSpacing.xl,
+          TenantAdminSpacing.xl,
+          TenantAdminSpacing.md,
+        ),
+        contentPadding: const EdgeInsets.fromLTRB(
+          TenantAdminSpacing.xl,
+          0,
+          TenantAdminSpacing.xl,
+          TenantAdminSpacing.xl,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(
+          TenantAdminSpacing.xl,
+          0,
+          TenantAdminSpacing.xl,
+          TenantAdminSpacing.xl,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        ),
+        title: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: TenantAdminColors.posHomeReturnsCard,
+                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              ),
+              child: const Icon(
+                Icons.delete_outline_rounded,
+                color: TenantAdminColors.posNewSaleClearAction,
+              ),
+            ),
+            const SizedBox(width: TenantAdminSpacing.md),
+            Expanded(
+              child: Text(
+                'Clear current sale?',
+                style: TenantAdminTextStyles.sectionTitle(dialogContext),
+              ),
+            ),
+          ],
+        ),
         content: const Text(
           'All items and the applied discount will be removed.',
+          style: TextStyle(
+            color: TenantAdminColors.mutedText,
+            fontSize: 15,
+            height: 1.4,
+          ),
         ),
+        actionsAlignment: MainAxisAlignment.end,
         actions: [
-          TextButton(
+          OutlinedButton(
+            key: const ValueKey('clear-cart-cancel'),
             onPressed: () => Navigator.of(dialogContext).pop(false),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(120, 48),
+              foregroundColor: TenantAdminColors.bodyText,
+              side: const BorderSide(color: TenantAdminColors.border),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              ),
+              textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            ),
             child: const Text('Cancel'),
           ),
-          FilledButton(
+          FilledButton.icon(
+            key: const ValueKey('clear-cart-confirm'),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Clear Cart'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(148, 48),
+              backgroundColor: TenantAdminColors.posNewSaleClearAction,
+              foregroundColor: TenantAdminColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              ),
+              textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            icon: const Icon(Icons.delete_outline_rounded, size: 20),
+            label: const Text('Clear Cart'),
           ),
         ],
       ),
@@ -151,27 +227,23 @@ class PosNewSaleActionBar extends ConsumerWidget {
     WidgetRef ref,
     PosNewSaleCartState cart,
   ) async {
-    PosParkedSaleReference? referenceDetails;
-    if (cart.selectedCustomer == null) {
-      referenceDetails = await _showParkedSaleReferenceDialog(context);
-      if (referenceDetails == null || !context.mounted) {
-        return;
-      }
-    }
-
-    final sale = await ref.read(posParkedSaleProvider.notifier).saveCurrentCart(
-          cart,
-          referenceDetails: referenceDetails,
-        );
-
-    if (sale == null || !context.mounted) {
+    if (!cart.hasItems) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Add at least one item before parking the sale.')),
+      );
       return;
     }
-
-    ref.read(posNewSaleCartProvider.notifier).clear();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${sale.reference} saved.')),
-    );
+    final access = ref.read(posParkedSaleAccessContextProvider);
+    if (!access.trustedDevice || (access.deviceId?.trim().isEmpty ?? true)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                'An activated trusted device is required to park this sale.')),
+      );
+      return;
+    }
+    await showPosParkSaleDialog(context: context, ref: ref, cart: cart);
   }
 
   Future<void> _recallParkedSale(BuildContext context, WidgetRef ref) async {
@@ -180,125 +252,9 @@ class PosNewSaleActionBar extends ConsumerWidget {
       return;
     }
 
-    ref.read(posNewSaleCartProvider.notifier).restore(sale.toCartState());
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${sale.reference} recalled.')),
     );
-  }
-}
-
-Future<PosParkedSaleReference?> _showParkedSaleReferenceDialog(
-  BuildContext context,
-) {
-  return showAppDialog<PosParkedSaleReference>(
-    context: context,
-    builder: (_) => const _ParkedSaleReferenceDialog(),
-  );
-}
-
-class _ParkedSaleReferenceDialog extends StatefulWidget {
-  const _ParkedSaleReferenceDialog();
-
-  @override
-  State<_ParkedSaleReferenceDialog> createState() =>
-      _ParkedSaleReferenceDialogState();
-}
-
-class _ParkedSaleReferenceDialogState
-    extends State<_ParkedSaleReferenceDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _reference = TextEditingController();
-  final _phone = TextEditingController();
-  final _note = TextEditingController();
-
-  @override
-  void dispose() {
-    _reference.dispose();
-    _phone.dispose();
-    _note.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Park Sale Reference'),
-      content: Form(
-        key: _formKey,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _reference,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Reference / Customer name / Token',
-                  hintText: 'Token 12, Table 4, Tom',
-                ),
-                textInputAction: TextInputAction.next,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Reference is required';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: TenantAdminSpacing.md),
-              TextFormField(
-                controller: _phone,
-                decoration: const InputDecoration(
-                  labelText: 'Phone number',
-                  hintText: 'Optional',
-                ),
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: TenantAdminSpacing.md),
-              TextFormField(
-                controller: _note,
-                decoration: const InputDecoration(
-                  labelText: 'Note',
-                  hintText: 'Optional',
-                ),
-                maxLines: 2,
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        PosPrimaryActionButton(
-          label: 'Save',
-          onPressed: _submit,
-          compact: true,
-        ),
-      ],
-    );
-  }
-
-  void _submit() {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    Navigator.of(context).pop(
-      PosParkedSaleReference(
-        referenceName: _reference.text.trim(),
-        referencePhone: _nullableText(_phone.text),
-        note: _nullableText(_note.text),
-      ),
-    );
-  }
-
-  String? _nullableText(String value) {
-    final trimmed = value.trim();
-    return trimmed.isEmpty ? null : trimmed;
   }
 }
 
@@ -319,6 +275,7 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final foreground = Theme.of(context).colorScheme.onPrimary;
     return Tooltip(
       message: tooltip ?? label,
       child: SizedBox(
@@ -333,9 +290,9 @@ class _ActionButton extends StatelessWidget {
           ),
           style: FilledButton.styleFrom(
             backgroundColor: backgroundColor,
-            foregroundColor: Colors.white,
+            foregroundColor: foreground,
             disabledBackgroundColor: backgroundColor.withValues(alpha: 0.42),
-            disabledForegroundColor: Colors.white.withValues(alpha: 0.82),
+            disabledForegroundColor: foreground.withValues(alpha: 0.82),
             padding: const EdgeInsets.symmetric(
               horizontal: TenantAdminSpacing.sm,
             ),

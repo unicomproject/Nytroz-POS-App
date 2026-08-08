@@ -32,6 +32,8 @@ class PosPermissionCodes {
   static const applySaleDiscount = 'sales.discount.apply';
   static const approveSaleDiscount = 'sales.discount.approve';
   static const createParkedSale = 'sales.park.create';
+  static const viewBackendParkedSales = 'sales.park.view';
+  static const recallBackendParkedSale = 'sales.park.recall';
   static const checkoutSale = 'sales.checkout';
   static const acceptCashPayment = 'payments.cash.accept';
   static const acceptCardPayment = 'payments.card.accept';
@@ -53,8 +55,13 @@ class PosPermissionCodes {
   static const createCashDrawerMovement = 'cash_drawer.movement.create';
   static const viewTillSession = 'till.session.view';
   static const viewNotifications = 'notifications.view';
+  /// Legacy alias — prefer [createParkedSale].
   static const parkSale = 'pos.sale.park';
+
+  /// Legacy alias — prefer [recallBackendParkedSale].
   static const recallSale = 'pos.sale.recall';
+
+  /// Legacy alias — prefer [viewBackendParkedSales].
   static const viewParkedSales = 'pos.sale.park.view';
   static const viewCustomers = 'pos.customers.view';
   static const createCustomer = 'pos.customers.create';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../shared/widgets/app_cached_network_image.dart';
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../domain/entities/return_exchange.dart';
 import '../../providers/return_create_credit_provider.dart';
@@ -146,19 +147,15 @@ class _ProductImage extends StatelessWidget {
         width: 44,
         height: 44,
         color: TenantAdminColors.secondary,
-        child: imageUrl != null && imageUrl!.isNotEmpty
-            ? Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.inventory_2_outlined,
-                  color: TenantAdminColors.mutedText,
-                ),
-              )
-            : const Icon(
-                Icons.inventory_2_outlined,
-                color: TenantAdminColors.mutedText,
-              ),
+        child: AppCachedNetworkImage(
+          imageUrl: imageUrl,
+          fit: BoxFit.cover,
+          memCacheWidth: 88,
+          errorWidget: const Icon(
+            Icons.inventory_2_outlined,
+            color: TenantAdminColors.mutedText,
+          ),
+        ),
       ),
     );
   }

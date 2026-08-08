@@ -4,6 +4,7 @@ import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 
+import '../../../../../../shared/widgets/app_cached_network_image.dart';
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'pos_quantity_stepper.dart';
 
@@ -156,13 +157,12 @@ class _CartProductThumbnail extends StatelessWidget {
         dimension: 52,
         child: ColoredBox(
           color: TenantAdminColors.background,
-          child: imageUrl != null && imageUrl.isNotEmpty
-              ? Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const _CartImageFallback(),
-                )
-              : const _CartImageFallback(),
+          child: AppCachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.contain,
+            memCacheWidth: 104,
+            errorWidget: const _CartImageFallback(),
+          ),
         ),
       ),
     );

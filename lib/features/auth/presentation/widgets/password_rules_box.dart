@@ -10,8 +10,8 @@ class PasswordRulesBox extends StatelessWidget {
     const rules = [
       'At least 8 characters',
       'One uppercase letter',
+      'One lowercase letter',
       'One number',
-      'One special character',
     ];
 
     return LayoutBuilder(

@@ -89,11 +89,27 @@ class PosPermissionAccess {
     PosPermissionCodes.viewCashDrawer,
   ];
 
-  static const parkedSaleAccessCodes = [
+  /// Canonical Parked Sales access: view, create, or recall a backend hold.
+  /// Prefer this list — and [canAccessParkedSalesCanonical] — for any new
+  /// checks (New Sale actions, Home Parked Sales route).
+  static const parkedSaleCanonicalAccessCodes = [
+    PosPermissionCodes.viewBackendParkedSales,
     PosPermissionCodes.createParkedSale,
+    PosPermissionCodes.recallBackendParkedSale,
+  ];
+
+  /// Legacy aliases retained only for backward compatibility with older
+  /// seeded permission sets. Obsolete — do not use as primary for New Sale
+  /// or the Home Parked Sales route; prefer [parkedSaleCanonicalAccessCodes].
+  static const parkedSaleLegacyAccessCodes = [
     PosPermissionCodes.parkSale,
     PosPermissionCodes.recallSale,
     PosPermissionCodes.viewParkedSales,
+  ];
+
+  static const parkedSaleAccessCodes = [
+    ...parkedSaleCanonicalAccessCodes,
+    ...parkedSaleLegacyAccessCodes,
   ];
 
   static bool hasAny(Set<String> granted, List<String> codes) {
@@ -302,6 +318,12 @@ class PosPermissionAccess {
 
   static bool canParkOrViewParkedSales(Set<String> granted) {
     return hasAny(granted, parkedSaleAccessCodes);
+  }
+
+  /// Canonical-only Parked Sales access (no legacy `pos.sale.park*`
+  /// fallback). Used by the Home Parked Sales route guard.
+  static bool canAccessParkedSalesCanonical(Set<String> granted) {
+    return hasAny(granted, parkedSaleCanonicalAccessCodes);
   }
 
   static bool canCheckout(Set<String> granted) {
