@@ -34,14 +34,20 @@ class ProductListScreen extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: TenantAdminColors.danger),
+              const Icon(Icons.error_outline,
+                  size: 48, color: TenantAdminColors.danger),
               const SizedBox(height: TenantAdminSpacing.md),
               Text(
                 'Failed to load products page',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: TenantAdminColors.bodyText),
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: TenantAdminColors.bodyText),
               ),
               const SizedBox(height: TenantAdminSpacing.xs),
-              Text(error.toString(), textAlign: TextAlign.center, style: const TextStyle(color: TenantAdminColors.mutedText)),
+              Text(error.toString(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: TenantAdminColors.mutedText)),
               const SizedBox(height: TenantAdminSpacing.lg),
               TextButton.icon(
                 onPressed: () => ref.invalidate(productListVisibilityProvider),
@@ -69,7 +75,10 @@ class ProductListScreen extends ConsumerWidget {
             final isMobile = constraints.maxWidth < 700;
             final productsState = ref.watch(productListProvider);
             final isFirstTimeEmpty = productsState.maybeWhen(
-              data: (result) => result != null && result.totalCount == 0 && result.catalogTotalCount == 0,
+              data: (result) =>
+                  result != null &&
+                  result.totalCount == 0 &&
+                  result.catalogTotalCount == 0,
               orElse: () => false,
             );
 
@@ -99,7 +108,8 @@ class ProductListScreen extends ConsumerWidget {
                     if (visibility.showSearch || visibility.showAddProduct)
                       const SizedBox(height: TenantAdminSpacing.lg),
                   ],
-                  if (visibility.showList) const Expanded(child: _ProductListBody()),
+                  if (visibility.showList)
+                    const Expanded(child: _ProductListBody()),
                 ],
               ),
             );
@@ -211,11 +221,13 @@ class _ProductListBody extends ConsumerWidget {
                   const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.info_outline, size: 16, color: TenantAdminColors.mutedText),
+                      Icon(Icons.info_outline,
+                          size: 16, color: TenantAdminColors.mutedText),
                       SizedBox(width: TenantAdminSpacing.xs),
                       Text(
                         'Products, variants, pricing, and stock will appear here once created.',
-                        style: TextStyle(color: TenantAdminColors.mutedText, fontSize: 12),
+                        style: TextStyle(
+                            color: TenantAdminColors.mutedText, fontSize: 12),
                       ),
                     ],
                   ),
@@ -252,7 +264,11 @@ class _ProductSearchToolbar extends ConsumerWidget {
     final filterState = ref.watch(productListFilterProvider);
     final filterNotifier = ref.read(productListFilterProvider.notifier);
 
-    final canViewStock = ref.watch(tenantAdminAccessCheckerProvider).valueOrNull?.canViewCurrentStock() ?? false;
+    final canViewStock = ref
+            .watch(tenantAdminAccessCheckerProvider)
+            .valueOrNull
+            ?.canViewCurrentStock() ??
+        false;
     final optionsAsync = ref.watch(productFilterOptionsProvider);
 
     final searchField = TenantAdminSearchField(
@@ -292,17 +308,21 @@ class _ProductSearchToolbar extends ConsumerWidget {
         Widget buildFilters(TenantProductFilterOptions? options, bool loading) {
           final categories = options?.categories ?? [];
           final brands = options?.brands ?? [];
-          final productStatuses = options?.productStatuses ?? ['DRAFT', 'ACTIVE', 'INACTIVE'];
-          final stockStatuses = options?.stockStatuses ?? ['NOT_TRACKED', 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK'];
+          final productStatuses =
+              options?.productStatuses ?? ['DRAFT', 'ACTIVE', 'INACTIVE'];
+          final stockStatuses = options?.stockStatuses ??
+              ['NOT_TRACKED', 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK'];
 
           final categoryDropdown = DropdownButtonFormField<String?>(
             key: ValueKey(filterState.categoryId),
             initialValue: filterState.categoryId,
-            icon: const Icon(Icons.keyboard_arrow_down, color: TenantAdminColors.mutedText),
+            icon: const Icon(Icons.keyboard_arrow_down,
+                color: TenantAdminColors.mutedText),
             decoration: InputDecoration(
               filled: true,
               fillColor: TenantAdminColors.surface,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                 borderSide: const BorderSide(color: TenantAdminColors.border),
@@ -335,11 +355,13 @@ class _ProductSearchToolbar extends ConsumerWidget {
           final brandDropdown = DropdownButtonFormField<String?>(
             key: ValueKey(filterState.brandId),
             initialValue: filterState.brandId,
-            icon: const Icon(Icons.keyboard_arrow_down, color: TenantAdminColors.mutedText),
+            icon: const Icon(Icons.keyboard_arrow_down,
+                color: TenantAdminColors.mutedText),
             decoration: InputDecoration(
               filled: true,
               fillColor: TenantAdminColors.surface,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                 borderSide: const BorderSide(color: TenantAdminColors.border),
@@ -372,11 +394,13 @@ class _ProductSearchToolbar extends ConsumerWidget {
           final statusDropdown = DropdownButtonFormField<String?>(
             key: ValueKey(filterState.productStatus),
             initialValue: filterState.productStatus,
-            icon: const Icon(Icons.keyboard_arrow_down, color: TenantAdminColors.mutedText),
+            icon: const Icon(Icons.keyboard_arrow_down,
+                color: TenantAdminColors.mutedText),
             decoration: InputDecoration(
               filled: true,
               fillColor: TenantAdminColors.surface,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                 borderSide: const BorderSide(color: TenantAdminColors.border),
@@ -409,11 +433,13 @@ class _ProductSearchToolbar extends ConsumerWidget {
           final stockStatusDropdown = DropdownButtonFormField<String?>(
             key: ValueKey(filterState.stockStatus),
             initialValue: filterState.stockStatus,
-            icon: const Icon(Icons.keyboard_arrow_down, color: TenantAdminColors.mutedText),
+            icon: const Icon(Icons.keyboard_arrow_down,
+                color: TenantAdminColors.mutedText),
             decoration: InputDecoration(
               filled: true,
               fillColor: TenantAdminColors.surface,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                 borderSide: const BorderSide(color: TenantAdminColors.border),
@@ -482,7 +508,8 @@ class _ProductSearchToolbar extends ConsumerWidget {
           final double dropdownWidth;
           final numItems = canViewStock ? 4.0 : 3.0;
           if (width >= 800) {
-            dropdownWidth = (width - (numItems * TenantAdminSpacing.md)) / (numItems + 1);
+            dropdownWidth =
+                (width - (numItems * TenantAdminSpacing.md)) / (numItems + 1);
           } else if (width >= 550) {
             dropdownWidth = (width - TenantAdminSpacing.md) / 2;
           } else {
@@ -502,7 +529,8 @@ class _ProductSearchToolbar extends ConsumerWidget {
                   SizedBox(width: dropdownWidth, child: categoryDropdown),
                   SizedBox(width: dropdownWidth, child: brandDropdown),
                   SizedBox(width: dropdownWidth, child: statusDropdown),
-                  if (canViewStock) SizedBox(width: dropdownWidth, child: stockStatusDropdown),
+                  if (canViewStock)
+                    SizedBox(width: dropdownWidth, child: stockStatusDropdown),
                   resetButton,
                 ],
               ),
@@ -522,11 +550,13 @@ class _ProductSearchToolbar extends ConsumerWidget {
                 children: [
                   const Icon(Icons.error_outline, color: Colors.red, size: 16),
                   const SizedBox(width: 8),
-                  const Text('Error loading filters', style: TextStyle(color: Colors.red)),
+                  const Text('Error loading filters',
+                      style: TextStyle(color: Colors.red)),
                   const SizedBox(width: 4),
                   IconButton(
                     icon: const Icon(Icons.refresh, size: 16),
-                    onPressed: () => ref.invalidate(productFilterOptionsProvider),
+                    onPressed: () =>
+                        ref.invalidate(productFilterOptionsProvider),
                   ),
                 ],
               ),

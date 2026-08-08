@@ -39,9 +39,10 @@ class ProductTable extends StatelessWidget {
                   dataRowMaxHeight: 84,
                   columnSpacing: TenantAdminSpacing.xl,
                   horizontalMargin: TenantAdminSpacing.lg,
-                  headingRowColor: WidgetStateProperty.all(const Color(0xFFF7F8FA)),
+                  headingRowColor:
+                      WidgetStateProperty.all(const Color(0xFFF7F8FA)),
                   headingTextStyle: const TextStyle(
-                    color: TenantAdgitminColors.bodyText,
+                    color: TenantAdminColors.bodyText,
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
                   ),
@@ -75,18 +76,21 @@ class ProductTable extends StatelessWidget {
                           ),
                           DataCell(_PlainCell(_emptyDash(product.sku))),
                           DataCell(
-                            _PlainCell(
-                                _emptyDash(product.categoryName ?? 'Uncategorised')),
+                            _PlainCell(_emptyDash(
+                                product.categoryName ?? 'Uncategorised')),
                           ),
                           DataCell(_PlainCell('${product.variantCount}')),
                           DataCell(_PlainCell(_formatPrice(product))),
                           DataCell(
                             _PlainCell(
-                              product.stockQuantity == null ? '—' : '${product.stockQuantity}',
+                              product.stockQuantity == null
+                                  ? '—'
+                                  : '${product.stockQuantity}',
                             ),
                           ),
                           DataCell(ProductStatusBadge(status: product.status)),
-                          DataCell(StockStatusBadge(status: product.stockStatus)),
+                          DataCell(
+                              StockStatusBadge(status: product.stockStatus)),
                           DataCell(
                             Row(
                               mainAxisSize: MainAxisSize.min,
@@ -105,7 +109,9 @@ class ProductTable extends StatelessWidget {
                                     onPressed: () => onEdit(product),
                                   ),
                                 ],
-                                if (visibility.showDeleteAction || visibility.showEditAction || visibility.showViewAction) ...[
+                                if (visibility.showDeleteAction ||
+                                    visibility.showEditAction ||
+                                    visibility.showViewAction) ...[
                                   const SizedBox(width: TenantAdminSpacing.sm),
                                   ProductDeleteAction(
                                     productId: product.id,
@@ -134,9 +140,10 @@ class ProductTable extends StatelessWidget {
   }
 
   static String _formatPrice(TenantProduct product) {
-    final currency = (product.currencyCode == null || product.currencyCode!.trim().isEmpty)
-        ? 'LKR'
-        : product.currencyCode!.toUpperCase();
+    final currency =
+        (product.currencyCode == null || product.currencyCode!.trim().isEmpty)
+            ? 'LKR'
+            : product.currencyCode!.toUpperCase();
 
     if (product.priceFrom == null && product.priceTo == null) {
       return '—';
@@ -182,7 +189,8 @@ class _ProductIdentityCell extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              if (product.primaryBarcode != null && product.primaryBarcode!.isNotEmpty)
+              if (product.primaryBarcode != null &&
+                  product.primaryBarcode!.isNotEmpty)
                 Text(
                   product.primaryBarcode!,
                   maxLines: 1,
@@ -315,4 +323,3 @@ class _ActionIconButton extends StatelessWidget {
     );
   }
 }
-

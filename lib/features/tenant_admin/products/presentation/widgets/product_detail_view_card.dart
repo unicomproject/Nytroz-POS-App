@@ -32,7 +32,8 @@ class ProductDetailViewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final isDesktop = width >= TenantAdminBreakpoints.desktop;
-    final isTablet = width >= TenantAdminBreakpoints.tablet && width < TenantAdminBreakpoints.desktop;
+    final isTablet = width >= TenantAdminBreakpoints.tablet &&
+        width < TenantAdminBreakpoints.desktop;
 
     return SingleChildScrollView(
       child: Column(
@@ -203,7 +204,8 @@ class _BasicDetailsCard extends StatelessWidget {
       _InfoItemData(
         icon: Icons.category_outlined,
         label: 'Category',
-        value: detail.categoryName.isNotEmpty == true ? detail.categoryName : '—',
+        value:
+            detail.categoryName.isNotEmpty == true ? detail.categoryName : '—',
       ),
       _InfoItemData(
         icon: Icons.sell_outlined,
@@ -314,7 +316,8 @@ class _ChannelVisibilityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.sizeOf(context).width >= TenantAdminBreakpoints.desktop;
+    final isDesktop =
+        MediaQuery.sizeOf(context).width >= TenantAdminBreakpoints.desktop;
 
     return _SectionCard(
       title: 'Channel Visibility',
@@ -401,7 +404,8 @@ class _ChannelItem extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: TenantAdminColors.success.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(999),
