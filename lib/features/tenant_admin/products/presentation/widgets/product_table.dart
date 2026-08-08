@@ -71,8 +71,9 @@ class ProductTable extends StatelessWidget {
                               product: product,
                               canView: visibility.showViewAction,
                             ),
-                            onTap:
-                                visibility.showViewAction ? () => onView(product) : null,
+                            onTap: visibility.showViewAction
+                                ? () => onView(product)
+                                : null,
                           ),
                           DataCell(_PlainCell(_emptyDash(product.sku))),
                           DataCell(
