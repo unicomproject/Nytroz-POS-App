@@ -37,9 +37,9 @@ class ProductListScreen extends ConsumerWidget {
               const Icon(Icons.error_outline,
                   size: 48, color: TenantAdminColors.danger),
               const SizedBox(height: TenantAdminSpacing.md),
-              Text(
+              const Text(
                 'Failed to load products page',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: TenantAdminColors.bodyText),

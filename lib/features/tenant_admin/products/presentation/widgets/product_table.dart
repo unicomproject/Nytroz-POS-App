@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../shared/widgets/app_cached_network_image.dart';
+//import '../../../../../shared/widgets/app_cached_network_image.dart';
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/tenant_product.dart';
 import 'product_delete_action.dart';
-import 'product_status_action_menu.dart';
+//import 'product_status_action_menu.dart';
 import 'product_status_badge.dart';
 
 class ProductTable extends StatelessWidget {
@@ -282,10 +282,11 @@ class _PlainCell extends StatelessWidget {
 }
 
 class _ActionIconButton extends StatelessWidget {
-  const _ActionIconButton({
+    const _ActionIconButton({
     required this.icon,
     required this.tooltip,
     required this.onPressed,
+    // ignore: unused_element_parameter
     this.isDanger = false,
   });
 

@@ -322,8 +322,8 @@ class _ChannelVisibilityCard extends StatelessWidget {
     return _SectionCard(
       title: 'Channel Visibility',
       child: isDesktop
-          ? Row(
-              children: const [
+          ? const Row(
+              children:  [
                 Expanded(
                   child: _ChannelItem(
                     icon: Icons.storefront_outlined,
@@ -343,8 +343,8 @@ class _ChannelVisibilityCard extends StatelessWidget {
                 ),
               ],
             )
-          : Column(
-              children: const [
+          : const Column(
+              children:  [
                 _ChannelItem(
                   icon: Icons.storefront_outlined,
                   title: 'In-Store POS',

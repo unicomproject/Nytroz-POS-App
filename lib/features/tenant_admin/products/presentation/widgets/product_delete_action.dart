@@ -312,8 +312,8 @@ class _DeleteConfirmationDialog extends StatelessWidget {
                   borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                   border: Border.all(color: const Color(0xFFFFEDD5)),
                 ),
-                child: Row(
-                  children: const [
+                child: const Row(
+                  children: [
                     Icon(
                       Icons.warning_amber_rounded,
                       size: 18,
