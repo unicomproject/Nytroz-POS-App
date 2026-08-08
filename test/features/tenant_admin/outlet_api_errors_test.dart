@@ -24,6 +24,22 @@ void main() {
       expect(fieldErrors['outletName'], 'Name is required.');
     });
 
+    test('maps location contact and image fields to Step 2', () {
+      final error = DioException(
+        requestOptions: RequestOptions(path: '/api/v1/outlets'),
+        response: Response(requestOptions: RequestOptions(path: '/api/v1/outlets'), data: const {
+          'details': [
+            {'field': 'address.contactEmail', 'message': 'Email is invalid.'},
+            {'field': 'imageMediaAssetId', 'message': 'Image is invalid.'},
+          ],
+        }),
+      );
+      final fields = outletValidationErrors(error);
+      expect(fields['contactEmail'], 'Email is invalid.');
+      expect(fields['outletImage'], 'Image is invalid.');
+      expect(outletErrorStep(fields), 1);
+    });
+
     test('maps timezone validation to location step', () {
       expect(
         outletErrorStep(const {

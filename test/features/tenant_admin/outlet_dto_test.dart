@@ -83,6 +83,7 @@ void main() {
       expect(json['address']['countryCode'], 'LK');
       expect(json['address']['contactName'], 'Ops Lead');
       expect(json['address']['contactPhone'], '+94770000000');
+      expect(json['address']['contactEmail'], isNull);
       expect(json['businessHours'], [
         {
           'dayOfWeek': 1,
@@ -97,6 +98,42 @@ void main() {
       ]);
       expect(json.containsKey('outletCode'), isFalse);
       expect(json.containsKey('code'), isFalse);
+    });
+
+    test('keeps operational contact email in address and image identity at root', () {
+      const dto = CreateOutletRequestDto(
+        outletName: 'New Outlet', outletType: 'STORE', status: 'ACTIVE',
+        mainPhoneNumber: '', emailAddress: 'general@example.com',
+        contactEmail: 'operations@example.com', imageMediaAssetId: 'media-1',
+        isDefaultOutlet: false, addressLine1: 'Line 1', city: 'Colombo',
+        country: 'lk', postalCode: '', timezone: 'Asia/Colombo', openingHours: [],
+      );
+      final json = dto.toJson();
+      expect(json['email'], 'general@example.com');
+      expect(json['address']['contactEmail'], 'operations@example.com');
+      expect(json['contactEmail'], isNull);
+      expect(json['imageMediaAssetId'], 'media-1');
+      expect(json['address']['countryCode'], 'LK');
+    });
+
+    test('serializes image operation only for update requests', () {
+      const base = CreateOutletRequestDto(
+        outletName: 'New Outlet', outletType: 'STORE', status: 'ACTIVE',
+        mainPhoneNumber: '', emailAddress: '', imageMediaAssetId: 'media-1',
+        imageOperation: OutletImageOperation.replace, isDefaultOutlet: false,
+        addressLine1: 'Line 1', city: 'Colombo', country: 'LK', postalCode: '',
+        timezone: 'Asia/Colombo', openingHours: [],
+      );
+      expect(base.toUpdateJson()['imageOperation'], 'REPLACE');
+      expect(base.toUpdateJson()['imageMediaAssetId'], 'media-1');
+      final remove = CreateOutletRequestDto.fromForm(const OutletFormData(
+        outletName: 'New Outlet', outletType: 'STORE', status: 'ACTIVE',
+        mainPhoneNumber: '', emailAddress: '', addressLine1: 'Line 1', city: 'Colombo',
+        country: 'LK', postalCode: '', timezone: 'Asia/Colombo', openingHours: [],
+        imageOperation: OutletImageOperation.remove,
+      ));
+      expect(remove.toUpdateJson()['imageOperation'], 'REMOVE');
+      expect(remove.toUpdateJson().containsKey('imageMediaAssetId'), isFalse);
     });
 
     test('does not silently replace unsupported country codes', () {

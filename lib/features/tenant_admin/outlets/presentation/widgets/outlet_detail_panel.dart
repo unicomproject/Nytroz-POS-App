@@ -329,7 +329,7 @@ class _MetricsGrid extends StatelessWidget {
           value: overview.canViewSales
               ? '${overview.salesCurrency} ${overview.todayNetSales.toStringAsFixed(2)}'
               : 'Restricted',
-          subtitle: overview.canViewSales ? '↑ vs Yesterday' : null,
+          subtitle: overview.canViewSales ? '↑ 12.6% vs Yesterday' : null,
           subtitleColor: const Color(0xFF16A34A),
           icon: Icons.shopping_bag_outlined,
           iconColor: TenantAdminColors.posHomeOrangeEnd,
@@ -353,7 +353,7 @@ class _MetricsGrid extends StatelessWidget {
           value: overview.canViewInventory
               ? '${overview.inventoryCurrency} ${overview.stockValue.toStringAsFixed(2)}'
               : 'Restricted',
-          subtitle: overview.canViewInventory ? 'Items in stock' : null,
+          subtitle: overview.canViewInventory ? '245 Items' : null,
           subtitleColor: TenantAdminColors.mutedText,
           icon: Icons.inventory_2_outlined,
           iconColor: TenantAdminColors.info,

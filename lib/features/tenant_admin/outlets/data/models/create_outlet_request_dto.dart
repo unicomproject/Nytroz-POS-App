@@ -9,6 +9,9 @@ class CreateOutletRequestDto {
     required this.emailAddress,
     this.contactName,
     this.contactPhone,
+    this.contactEmail,
+    this.imageMediaAssetId,
+    this.imageOperation = OutletImageOperation.keep,
     required this.isDefaultOutlet,
     this.managerId,
     required this.addressLine1,
@@ -30,6 +33,9 @@ class CreateOutletRequestDto {
       emailAddress: form.emailAddress.trim(),
       contactName: form.contactName,
       contactPhone: form.contactPhone,
+      contactEmail: form.contactEmail,
+      imageMediaAssetId: form.imageMediaAssetId,
+      imageOperation: form.imageOperation,
       isDefaultOutlet: form.isDefaultOutlet,
       managerId: form.managerId,
       addressLine1: form.addressLine1.trim(),
@@ -50,6 +56,9 @@ class CreateOutletRequestDto {
   final String emailAddress;
   final String? contactName;
   final String? contactPhone;
+  final String? contactEmail;
+  final String? imageMediaAssetId;
+  final OutletImageOperation imageOperation;
   final bool isDefaultOutlet;
   final String? managerId;
   final String addressLine1;
@@ -86,10 +95,27 @@ class CreateOutletRequestDto {
           'contactName': _nullable(contactName),
         if (_nullable(contactPhone) != null)
           'contactPhone': _nullable(contactPhone),
+        if (_nullable(contactEmail) != null)
+          'contactEmail': _nullable(contactEmail),
       },
+      if (_nullable(imageMediaAssetId) != null)
+        'imageMediaAssetId': _nullable(imageMediaAssetId),
       if (businessHours.isNotEmpty) 'businessHours': businessHours,
       'collectionEnabled': false,
     };
+  }
+
+  Map<String, dynamic> toUpdateJson() {
+    final json = toJson();
+    json['imageOperation'] = switch (imageOperation) {
+      OutletImageOperation.keep => 'KEEP',
+      OutletImageOperation.replace => 'REPLACE',
+      OutletImageOperation.remove => 'REMOVE',
+    };
+    if (imageOperation != OutletImageOperation.replace) {
+      json.remove('imageMediaAssetId');
+    }
+    return json;
   }
 
   static String _mapStatus(String status) {

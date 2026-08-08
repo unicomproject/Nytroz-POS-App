@@ -6,6 +6,8 @@ import '../../application/usecases/delete_outlet.dart';
 import '../../application/usecases/get_outlet_details.dart';
 import '../../application/usecases/get_outlets.dart';
 import '../../application/usecases/update_outlet.dart';
+import '../../application/usecases/upload_outlet_image.dart';
+import '../../application/usecases/delete_staged_outlet_image.dart';
 import '../../data/datasources/outlet_remote_datasource.dart';
 import '../../data/repositories/outlet_repository_impl.dart';
 import '../../domain/entities/outlet.dart';
@@ -41,6 +43,14 @@ final updateOutletProvider = Provider<UpdateOutlet>((ref) {
 
 final deleteOutletProvider = Provider<DeleteOutlet>((ref) {
   return DeleteOutlet(ref.watch(outletRepositoryProvider));
+});
+
+final uploadOutletImageProvider = Provider<UploadOutletImage>((ref) {
+  return UploadOutletImage(ref.watch(outletRepositoryProvider));
+});
+
+final deleteStagedOutletImageProvider = Provider<DeleteStagedOutletImage>((ref) {
+  return DeleteStagedOutletImage(ref.watch(outletRepositoryProvider));
 });
 
 final outletSearchProvider = StateProvider<String>((ref) => '');

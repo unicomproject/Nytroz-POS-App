@@ -1,4 +1,9 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
+
+void main() {
+  final file = File(r'c:\Users\User\Desktop\pos final wep\Tenantadmin\Nytroz-POS-App\lib\features\tenant_admin\outlets\presentation\widgets\business_hours_editor.dart');
+  
+  const newContent = '''import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
@@ -22,27 +27,13 @@ class BusinessHoursDraft {
 }
 
 class SpecialDayDraft {
-  DateTime? date;
-  TextEditingController name;
-  TextEditingController openTime;
-  TextEditingController closeTime;
-  bool open;
+  final String date;
+  final String name;
+  final String openTime;
+  final String closeTime;
+  final bool open;
   
-  SpecialDayDraft({
-    this.date,
-    String initialName = '',
-    String initialOpen = '09:00',
-    String initialClose = '17:00',
-    this.open = true,
-  }) : name = TextEditingController(text: initialName),
-       openTime = TextEditingController(text: initialOpen),
-       closeTime = TextEditingController(text: initialClose);
-       
-  void dispose() {
-    name.dispose();
-    openTime.dispose();
-    closeTime.dispose();
-  }
+  SpecialDayDraft(this.date, this.name, this.openTime, this.closeTime, this.open);
 }
 
 class BusinessHoursEditor extends StatefulWidget {
@@ -64,15 +55,10 @@ class BusinessHoursEditor extends StatefulWidget {
 }
 
 class _BusinessHoursEditorState extends State<BusinessHoursEditor> {
-  final List<SpecialDayDraft> _specialDays = [];
-  
-  @override
-  void dispose() {
-    for (final day in _specialDays) {
-      day.dispose();
-    }
-    super.dispose();
-  }
+  final List<SpecialDayDraft> _specialDays = [
+    SpecialDayDraft('25 Dec 2025', 'Christmas Day', '09:00 AM', '06:00 PM', true),
+    SpecialDayDraft('01 Jan 2026', 'New Year\\'s Day', '10:00 AM', '08:00 PM', true),
+  ];
 
   bool get _allSelected => widget.hours.every((h) => h.selected);
   bool get _anySelected => widget.hours.any((h) => h.selected);
@@ -263,12 +249,7 @@ class _BusinessHoursEditorState extends State<BusinessHoursEditor> {
               ),
             ),
             OutlinedButton.icon(
-              onPressed: () {
-                setState(() {
-                  _specialDays.add(SpecialDayDraft());
-                  widget.onChanged();
-                });
-              },
+              onPressed: () {},
               icon: const Icon(Icons.add, size: 16, color: TenantAdminColors.posHomeOrangeEnd),
               label: const Text('Add Special Day', style: TextStyle(fontSize: 13, color: TenantAdminColors.posHomeOrangeEnd)),
               style: OutlinedButton.styleFrom(
@@ -330,7 +311,7 @@ class _BusinessHoursEditorState extends State<BusinessHoursEditor> {
               setState(() => draft.closed = !v);
               widget.onChanged();
             },
-            activeThumbColor: Colors.white,
+            activeColor: Colors.white,
             activeTrackColor: TenantAdminColors.posHomeOrangeEnd,
             inactiveTrackColor: Colors.grey[300],
             inactiveThumbColor: Colors.white,
@@ -344,7 +325,7 @@ class _BusinessHoursEditorState extends State<BusinessHoursEditor> {
               setState(() => draft.overnight = v);
               widget.onChanged();
             } : null,
-            activeThumbColor: Colors.white,
+            activeColor: Colors.white,
             activeTrackColor: Colors.grey[400],
             inactiveTrackColor: Colors.grey[200],
             inactiveThumbColor: Colors.white,
@@ -356,7 +337,6 @@ class _BusinessHoursEditorState extends State<BusinessHoursEditor> {
   }
 
   Widget _buildSpecialDayRow(SpecialDayDraft draft, bool hasBorder) {
-    final dateFormat = DateFormat('dd MMM yyyy');
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -365,76 +345,45 @@ class _BusinessHoursEditorState extends State<BusinessHoursEditor> {
       child: Row(
         children: [
           const SizedBox(width: 32, child: Icon(Icons.calendar_today, size: 16, color: TenantAdminColors.mutedText)),
-          SizedBox(
-            width: 120, 
-            child: InkWell(
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context, 
-                  initialDate: draft.date ?? DateTime.now(), 
-                  firstDate: DateTime.now().subtract(const Duration(days: 365)), 
-                  lastDate: DateTime.now().add(const Duration(days: 365 * 5))
-                );
-                if (date != null) {
-                  setState(() => draft.date = date);
-                  widget.onChanged();
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                decoration: BoxDecoration(border: Border.all(color: TenantAdminColors.border), borderRadius: BorderRadius.circular(4)),
-                child: Text(draft.date == null ? 'Select Date' : dateFormat.format(draft.date!), style: const TextStyle(fontSize: 13, color: TenantAdminColors.bodyText)),
-              )
-            )
-          ),
-          const SizedBox(width: 16),
+          SizedBox(width: 120, child: Text(draft.date, style: const TextStyle(fontSize: 13))),
+          Expanded(child: Text(draft.name, style: const TextStyle(fontSize: 13))),
           Expanded(
-            child: SizedBox(
-              height: 34,
-              child: TextField(
-                controller: draft.name,
-                onChanged: (_) => widget.onChanged(),
-                style: const TextStyle(fontSize: 13),
-                decoration: InputDecoration(
-                  hintText: 'e.g. Christmas Day',
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  border: OutlineInputBorder(borderSide: const BorderSide(color: TenantAdminColors.border), borderRadius: BorderRadius.circular(4)),
-                ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(border: Border.all(color: TenantAdminColors.border), borderRadius: BorderRadius.circular(4)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(draft.openTime, style: const TextStyle(fontSize: 13)),
+                  const Icon(Icons.keyboard_arrow_down, size: 16, color: TenantAdminColors.mutedText),
+                ],
               ),
-            )
+            ),
           ),
-          const SizedBox(width: 16),
-          Expanded(child: _TimeField(controller: draft.openTime, enabled: draft.open, onChanged: widget.onChanged)),
-          const SizedBox(width: 16),
-          Expanded(child: _TimeField(controller: draft.closeTime, enabled: draft.open, onChanged: widget.onChanged)),
-          const SizedBox(width: 16),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(border: Border.all(color: TenantAdminColors.border), borderRadius: BorderRadius.circular(4)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(draft.closeTime, style: const TextStyle(fontSize: 13)),
+                  const Icon(Icons.keyboard_arrow_down, size: 16, color: TenantAdminColors.mutedText),
+                ],
+              ),
+            ),
+          ),
           SizedBox(
             width: 80, 
-            child: InkWell(
-              onTap: () {
-                setState(() => draft.open = !draft.open);
-                widget.onChanged();
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                decoration: BoxDecoration(color: draft.open ? Colors.green[50] : Colors.red[50], borderRadius: BorderRadius.circular(16)),
-                child: Text(draft.open ? 'Open' : 'Closed', textAlign: TextAlign.center, style: TextStyle(color: draft.open ? Colors.green : Colors.red, fontSize: 12, fontWeight: FontWeight.w600)),
-              ),
-            )
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(color: Colors.green[50], borderRadius: BorderRadius.circular(16)),
+              child: const Text('Open', textAlign: TextAlign.center, style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.w600)),
+            ),
           ),
-          SizedBox(
-            width: 64, 
-            child: IconButton(
-              icon: const Icon(Icons.delete_outline, size: 18, color: TenantAdminColors.danger),
-              onPressed: () {
-                setState(() {
-                  _specialDays.remove(draft);
-                  draft.dispose();
-                  widget.onChanged();
-                });
-              },
-            )
-          ),
+          const SizedBox(width: 64, child: Icon(Icons.more_vert, size: 18, color: TenantAdminColors.mutedText)),
         ],
       ),
     );
@@ -510,7 +459,7 @@ TimeOfDay? _parseTime(String value) {
 }
 
 String _formatTime(TimeOfDay value) {
-  return '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+  return '\${value.hour.toString().padLeft(2, '0')}:\${value.minute.toString().padLeft(2, '0')}';
 }
 
 String _formatTimeAmPm(String value) {
@@ -576,4 +525,10 @@ class _Guidance extends StatelessWidget {
       )
     ]
   ); 
+}
+''';
+
+  file.writeAsStringSync(newContent);
+  // ignore: avoid_print
+  print('Successfully updated business_hours_editor.dart');
 }

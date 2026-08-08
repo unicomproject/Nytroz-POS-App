@@ -172,6 +172,9 @@ class OutletFormData {
     required this.emailAddress,
     this.contactName,
     this.contactPhone,
+    this.contactEmail,
+    this.imageMediaAssetId,
+    this.imageOperation = OutletImageOperation.keep,
     this.isDefaultOutlet = false,
     this.managerId,
     required this.addressLine1,
@@ -192,6 +195,9 @@ class OutletFormData {
   final String emailAddress;
   final String? contactName;
   final String? contactPhone;
+  final String? contactEmail;
+  final String? imageMediaAssetId;
+  final OutletImageOperation imageOperation;
   final bool isDefaultOutlet;
   final String? managerId;
   final String addressLine1;
@@ -203,6 +209,8 @@ class OutletFormData {
   final List<OutletOpeningHour> openingHours;
   final String timezone;
 }
+
+enum OutletImageOperation { keep, replace, remove }
 
 class OutletOpeningHour {
   const OutletOpeningHour({
