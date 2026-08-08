@@ -71,7 +71,8 @@ void main() {
     expect(products.single.matches('2000000000114'), isTrue);
   });
 
-  test('product catalog sends segment=frequently-sold query parameter', () async {
+  test('product catalog sends segment=frequently-sold query parameter',
+      () async {
     final adapter = _CapturingCatalogAdapter();
     final dio = Dio(BaseOptions(baseUrl: 'http://localhost'))
       ..httpClientAdapter = adapter;

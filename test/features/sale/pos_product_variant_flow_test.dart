@@ -116,6 +116,38 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets(
+      'wide tablet popup shows actions without details scrolling',
+      (tester) async {
+        await _pumpNewSaleWithVariantCatalog(
+          tester,
+          size: const Size(1280, 800),
+          catalog: const PosNewSaleCatalogState(
+            products: [testVariableProductSummary],
+          ),
+        );
+        await _tapProduct(tester, 'Pro Team Jersey');
+
+        final detailsScroll = find
+            .descendant(
+              of: find.byKey(const Key('variant-details-scroll')),
+              matching: find.byType(Scrollable),
+            )
+            .first;
+        final scrollable = tester.state<ScrollableState>(detailsScroll);
+        expect(scrollable.position.maxScrollExtent, 0);
+        expect(
+          find.widgetWithText(FilledButton, 'Add to Cart').hitTestable(),
+          findsOneWidget,
+        );
+        expect(
+          find.widgetWithText(OutlinedButton, 'Cancel').hitTestable(),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+
     testWidgets('variant selector stacks safely at mobile portrait width', (
       tester,
     ) async {

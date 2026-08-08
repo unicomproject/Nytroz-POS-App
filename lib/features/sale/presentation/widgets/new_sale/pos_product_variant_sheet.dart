@@ -12,6 +12,7 @@ import 'package:nytroz_pos/features/device_activation/presentation/providers/dev
 import 'package:nytroz_pos/features/sale/domain/entities/pos_checkout_summary.dart';
 import 'package:nytroz_pos/features/sale/presentation/providers/pos_checkout_summary_provider.dart';
 import 'package:nytroz_pos/shared/presentation/app_modal.dart';
+import 'package:nytroz_pos/shared/widgets/app_cached_network_image.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
@@ -149,7 +150,7 @@ class _PosProductVariantSheetState
         : (screenSize.width * 0.72).clamp(820.0, 1040.0);
     final maxHeight = isMobile
         ? screenSize.height
-        : (screenSize.height * 0.80).clamp(560.0, 820.0);
+        : (screenSize.height * 0.96).clamp(680.0, 960.0);
 
     return Dialog(
       insetPadding: EdgeInsets.all(isMobile ? 0 : 24),
@@ -265,7 +266,11 @@ class _PosProductVariantSheetState
             : null;
     final useWideLayout = screenSize.width >= 1000;
     final useTwoColumns = screenSize.width >= 700;
-    final maxBodyHeight = (screenSize.height * 0.58).clamp(320.0, 680.0);
+    final desiredBodyHeight = screenSize.height * 0.78;
+    final availableBodyHeight = screenSize.width < 600
+        ? desiredBodyHeight
+        : min(desiredBodyHeight, screenSize.height - 158);
+    final maxBodyHeight = availableBodyHeight.clamp(320.0, 800.0);
 
     final detailsPane = _buildDetailsPane(
       context: context,
@@ -306,7 +311,10 @@ class _PosProductVariantSheetState
                 flex: 40,
                 child: ConstrainedBox(
                   constraints: BoxConstraints(maxHeight: maxBodyHeight),
-                  child: SingleChildScrollView(child: detailsPane),
+                  child: SingleChildScrollView(
+                    key: const Key('variant-details-scroll'),
+                    child: detailsPane,
+                  ),
                 ),
               ),
               const SizedBox(width: 28),
@@ -361,21 +369,23 @@ class _PosProductVariantSheetState
         ),
         child: ClipRRect(
           borderRadius: borderRadius,
-          child: imageUrl == null
-              ? const Icon(
-                  Icons.inventory_2_outlined,
-                  color: TenantAdminColors.mutedText,
-                  size: 72,
-                )
-              : Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.broken_image_outlined,
-                    color: TenantAdminColors.mutedText,
-                    size: 72,
-                  ),
-                ),
+          child: AppCachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.contain,
+            memCacheWidth: 400,
+            placeholder: const Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+            errorWidget: const Icon(
+              Icons.broken_image_outlined,
+              color: TenantAdminColors.mutedText,
+              size: 72,
+            ),
+          ),
         ),
       ),
     );
@@ -1031,14 +1041,15 @@ class _RecommendationRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           clipBehavior: Clip.antiAlias,
-          child: imageUrl?.isNotEmpty == true
-              ? Image.network(imageUrl!,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(
-                      Icons.inventory_2_outlined,
-                      color: _PopupTokens.secondaryText))
-              : const Icon(Icons.inventory_2_outlined,
-                  color: _PopupTokens.secondaryText),
+          child: AppCachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.contain,
+            memCacheWidth: 104,
+            errorWidget: const Icon(
+              Icons.inventory_2_outlined,
+              color: _PopupTokens.secondaryText,
+            ),
+          ),
         ),
         const SizedBox(width: 10),
         Expanded(

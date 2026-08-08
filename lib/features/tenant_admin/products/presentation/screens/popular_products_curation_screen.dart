@@ -18,12 +18,14 @@ class PopularProductsCurationScreen extends ConsumerWidget {
     return stateAsync.when(
       loading: () => const TenantAdminPageScaffold(
         title: 'Popular Products',
-        subtitle: 'Curate and reorder popular products displayed on the cashier screen.',
+        subtitle:
+            'Curate and reorder popular products displayed on the cashier screen.',
         child: TenantAdminLoadingSkeleton(rowCount: 8),
       ),
       error: (error, stackTrace) => TenantAdminPageScaffold(
         title: 'Popular Products',
-        subtitle: 'Curate and reorder popular products displayed on the cashier screen.',
+        subtitle:
+            'Curate and reorder popular products displayed on the cashier screen.',
         child: TenantAdminErrorState(
           title: 'Unable to load popular products',
           message: 'Please try again.',
@@ -33,7 +35,8 @@ class PopularProductsCurationScreen extends ConsumerWidget {
       data: (products) {
         return TenantAdminPageScaffold(
           title: 'Popular Products',
-          subtitle: 'Curate and reorder popular products displayed on the cashier screen.',
+          subtitle:
+              'Curate and reorder popular products displayed on the cashier screen.',
           actions: [
             TenantAdminPrimaryButton(
               label: 'Save Changes',
@@ -41,17 +44,22 @@ class PopularProductsCurationScreen extends ConsumerWidget {
               onPressed: products.isNotEmpty
                   ? () async {
                       try {
-                        await ref.read(popularProductsCurationProvider.notifier).save();
+                        await ref
+                            .read(popularProductsCurationProvider.notifier)
+                            .save();
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Popular products configuration saved successfully.')),
+                            const SnackBar(
+                                content: Text(
+                                    'Popular products configuration saved successfully.')),
                           );
                         }
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Failed to save changes: ${e.toString()}'),
+                              content: Text(
+                                  'Failed to save changes: ${e.toString()}'),
                               backgroundColor: TenantAdminColors.danger,
                             ),
                           );
@@ -78,7 +86,8 @@ class PopularProductsCurationScreen extends ConsumerWidget {
                   TenantAdminSecondaryButton(
                     label: 'Add Product',
                     icon: Icons.add,
-                    onPressed: () => _showAddProductDialog(context, ref, products),
+                    onPressed: () =>
+                        _showAddProductDialog(context, ref, products),
                   ),
                 ],
               ),
@@ -91,7 +100,8 @@ class PopularProductsCurationScreen extends ConsumerWidget {
                     child: Center(
                       child: TenantAdminEmptyState(
                         title: 'No products curated yet',
-                        message: 'Click "Add Product" to select popular items for the POS dashboard.',
+                        message:
+                            'Click "Add Product" to select popular items for the POS dashboard.',
                         icon: Icons.star_outline_rounded,
                       ),
                     ),
@@ -106,10 +116,12 @@ class PopularProductsCurationScreen extends ConsumerWidget {
                     final product = products[index];
                     return Card(
                       key: ValueKey(product.productId),
-                      margin: const EdgeInsets.only(bottom: TenantAdminSpacing.sm),
+                      margin:
+                          const EdgeInsets.only(bottom: TenantAdminSpacing.sm),
                       color: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
                         side: const BorderSide(color: TenantAdminColors.border),
                       ),
                       child: ListTile(
@@ -143,24 +155,36 @@ class PopularProductsCurationScreen extends ConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.arrow_upward_rounded, size: 20),
+                              icon: const Icon(Icons.arrow_upward_rounded,
+                                  size: 20),
                               tooltip: 'Move up',
                               onPressed: index > 0
-                                  ? () => ref.read(popularProductsCurationProvider.notifier).reorder(index, index - 1)
+                                  ? () => ref
+                                      .read(popularProductsCurationProvider
+                                          .notifier)
+                                      .reorder(index, index - 1)
                                   : null,
                             ),
                             IconButton(
-                              icon: const Icon(Icons.arrow_downward_rounded, size: 20),
+                              icon: const Icon(Icons.arrow_downward_rounded,
+                                  size: 20),
                               tooltip: 'Move down',
                               onPressed: index < products.length - 1
-                                  ? () => ref.read(popularProductsCurationProvider.notifier).reorder(index, index + 2)
+                                  ? () => ref
+                                      .read(popularProductsCurationProvider
+                                          .notifier)
+                                      .reorder(index, index + 2)
                                   : null,
                             ),
                             const SizedBox(width: TenantAdminSpacing.sm),
                             IconButton(
-                              icon: const Icon(Icons.delete_outline_rounded, color: TenantAdminColors.danger, size: 20),
+                              icon: const Icon(Icons.delete_outline_rounded,
+                                  color: TenantAdminColors.danger, size: 20),
                               tooltip: 'Remove',
-                              onPressed: () => ref.read(popularProductsCurationProvider.notifier).removeProduct(product.productId),
+                              onPressed: () => ref
+                                  .read(
+                                      popularProductsCurationProvider.notifier)
+                                  .removeProduct(product.productId),
                             ),
                           ],
                         ),
@@ -175,7 +199,8 @@ class PopularProductsCurationScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddProductDialog(BuildContext context, WidgetRef ref, List<CuratedPopularProduct> currentPopular) {
+  void _showAddProductDialog(BuildContext context, WidgetRef ref,
+      List<CuratedPopularProduct> currentPopular) {
     ref.invalidate(popularSearchQueryProvider);
     ref.invalidate(popularSearchPageProvider);
 
@@ -212,14 +237,17 @@ class PopularProductsCurationScreen extends ConsumerWidget {
                         hint: 'Search products by name or SKU',
                         value: query,
                         onChanged: (val) {
-                          ref.read(popularSearchQueryProvider.notifier).state = val;
-                          ref.read(popularSearchPageProvider.notifier).state = 1;
+                          ref.read(popularSearchQueryProvider.notifier).state =
+                              val;
+                          ref.read(popularSearchPageProvider.notifier).state =
+                              1;
                         },
                       ),
                       const SizedBox(height: TenantAdminSpacing.md),
                       Expanded(
                         child: searchAsync.when(
-                          loading: () => const Center(child: CircularProgressIndicator()),
+                          loading: () =>
+                              const Center(child: CircularProgressIndicator()),
                           error: (err, stack) => const TenantAdminErrorState(
                             title: 'Unable to search products',
                             message: 'Please try again.',
@@ -227,7 +255,8 @@ class PopularProductsCurationScreen extends ConsumerWidget {
                           data: (result) {
                             if (result == null || result.items.isEmpty) {
                               return const Center(
-                                child: Text('No active products found matching search.'),
+                                child: Text(
+                                    'No active products found matching search.'),
                               );
                             }
 
@@ -235,30 +264,45 @@ class PopularProductsCurationScreen extends ConsumerWidget {
                               itemCount: result.items.length,
                               itemBuilder: (context, index) {
                                 final product = result.items[index];
-                                final isAlreadyAdded = currentPopular.any((p) => p.productId == product.id);
+                                final isAlreadyAdded = currentPopular
+                                    .any((p) => p.productId == product.id);
 
                                 return Container(
-                                  margin: const EdgeInsets.only(bottom: TenantAdminSpacing.xs),
+                                  margin: const EdgeInsets.only(
+                                      bottom: TenantAdminSpacing.xs),
                                   decoration: const BoxDecoration(
-                                    border: Border(bottom: BorderSide(color: TenantAdminColors.border)),
+                                    border: Border(
+                                        bottom: BorderSide(
+                                            color: TenantAdminColors.border)),
                                   ),
                                   child: ListTile(
                                     title: Text(
                                       product.name,
-                                      style: const TextStyle(fontWeight: FontWeight.w600),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600),
                                     ),
                                     subtitle: Text(product.sku),
                                     trailing: isAlreadyAdded
                                         ? const Chip(
-                                            label: Text('Curated', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                            backgroundColor: TenantAdminColors.secondary,
+                                            label: Text('Curated',
+                                                style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                            backgroundColor:
+                                                TenantAdminColors.secondary,
                                             side: BorderSide.none,
                                           )
                                         : TextButton.icon(
-                                            icon: const Icon(Icons.add, size: 16),
+                                            icon:
+                                                const Icon(Icons.add, size: 16),
                                             label: const Text('Add'),
                                             onPressed: () {
-                                              ref.read(popularProductsCurationProvider.notifier).addProduct(
+                                              ref
+                                                  .read(
+                                                      popularProductsCurationProvider
+                                                          .notifier)
+                                                  .addProduct(
                                                     product.id,
                                                     product.name,
                                                     product.sku,

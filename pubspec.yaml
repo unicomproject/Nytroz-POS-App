@@ -19,6 +19,7 @@ dependencies:
   fl_chart: ^1.2.0
   intl: ^0.20.3
   crypto: ^3.0.7
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:

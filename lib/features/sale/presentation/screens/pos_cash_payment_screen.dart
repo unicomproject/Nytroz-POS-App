@@ -3,28 +3,21 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
-import '../../../till/presentation/providers/till_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/pos_checkout_api_exception.dart';
 import '../../domain/entities/pos_payment_method_type.dart';
-import '../../data/mappers/completed_sale_receipt_mapper.dart';
-import '../providers/completed_sale_print_provider.dart';
+import '../providers/pos_cash_payment_intent_provider.dart';
 import '../providers/pos_cash_payment_provider.dart';
 import '../providers/pos_cash_payment_success_provider.dart';
 import '../providers/pos_checkout_summary_provider.dart';
 import '../../../hardware/receipt_printer/presentation/providers/cash_drawer_controller.dart';
-import '../widgets/cash_payment/cash_payment_bottom_actions.dart';
-import '../widgets/cash_payment/cash_payment_header.dart';
-import '../widgets/cash_payment/cash_payment_right_panel.dart';
-import '../widgets/cash_payment/cash_received_section.dart';
-import '../widgets/cash_payment/cash_sale_summary_card.dart';
+import '../widgets/cash_payment/cash_payment_screen_body.dart';
 
 class PosCashPaymentScreen extends ConsumerStatefulWidget {
   const PosCashPaymentScreen({super.key});
@@ -36,18 +29,13 @@ class PosCashPaymentScreen extends ConsumerStatefulWidget {
 
 class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
   bool _isSubmitting = false;
-  final String _idempotencyKey =
-      'pos-${DateTime.now().microsecondsSinceEpoch}-${UniqueKey()}';
 
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider);
     final cart = ref.watch(posNewSaleCartProvider);
-    final tillState = ref.watch(tillProvider);
     final summaryAsync = ref.watch(posCheckoutSummaryProvider);
     final cashState = ref.watch(posCashPaymentProvider);
-    final canViewTillSession =
-        session?.hasPermission(PosPermissionCodes.viewTillSession) == true;
 
     if (!PosPermissionAccess.canAccessCashPaymentScreenSession(session)) {
       return const TenantAdminForbiddenScreen();
@@ -85,104 +73,44 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
           builder: (context, constraints) {
             final padding =
                 TenantAdminInsets.pageForWidth(constraints.maxWidth);
-            final useWideLayout =
-                constraints.maxWidth >= TenantAdminBreakpoints.tablet;
 
             return Padding(
               padding: padding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  CashPaymentHeader(
-                    onBack: () => context.pop(),
-                    showTillStatus: canViewTillSession,
-                    tillStatusLabel:
-                        tillState.hasOpenSession ? 'Till Open' : 'Till Closed',
-                    isTillOpen: tillState.hasOpenSession,
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.lg),
                   Expanded(
-                    child: useWideLayout
-                        ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(
-                                flex: 7,
-                                child: Column(
-                                  children: [
-                                    CashSaleSummaryCard(
-                                      itemCount: summary.itemCount,
-                                      subtotal: summary.subtotal,
-                                      discount: summary.discount,
-                                      tax: summary.tax,
-                                      total: total,
-                                    ),
-                                    const SizedBox(
-                                        height: TenantAdminSpacing.lg),
-                                    Expanded(
-                                      child: CashReceivedSection(
-                                        total: total,
-                                        cashReceived: cashReceived,
-                                        inputBuffer: cashState.inputBuffer,
-                                        onClear: () => ref
-                                            .read(
-                                                posCashPaymentProvider.notifier)
-                                            .clearAmount(),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: TenantAdminSpacing.lg),
-                              Expanded(
-                                flex: 5,
-                                child: CashPaymentRightPanel(
-                                  total: total,
-                                  cashReceived: cashReceived,
-                                  onKeyTap: onKeyTap,
-                                ),
-                              ),
-                            ],
-                          )
-                        : SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                CashSaleSummaryCard(
-                                  itemCount: summary.itemCount,
-                                  subtotal: summary.subtotal,
-                                  discount: summary.discount,
-                                  tax: summary.tax,
-                                  total: total,
-                                ),
-                                const SizedBox(height: TenantAdminSpacing.lg),
-                                CashReceivedSection(
-                                  total: total,
-                                  cashReceived: cashReceived,
-                                  inputBuffer: cashState.inputBuffer,
-                                  onClear: () => ref
-                                      .read(posCashPaymentProvider.notifier)
-                                      .clearAmount(),
-                                ),
-                                const SizedBox(height: TenantAdminSpacing.lg),
-                                SizedBox(
-                                  height: 520,
-                                  child: CashPaymentRightPanel(
-                                    total: total,
-                                    cashReceived: cashReceived,
-                                    onKeyTap: onKeyTap,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  CashPaymentBottomActions(
-                    canConfirm: canConfirm,
-                    isLoading: _isSubmitting,
-                    onBack: () => context.pop(),
-                    onConfirm: () => _confirmCashPayment(context, summary),
+                    child: CashPaymentScreenBody(
+                      itemCount: summary.itemCount,
+                      subtotal: summary.subtotal,
+                      discount: summary.discount,
+                      tax: summary.tax,
+                      totalDue: total,
+                      items: cart.itemList,
+                      cashReceived: cashReceived,
+                      inputBuffer: cashState.inputBuffer,
+                      quickAmounts: generateCashQuickAmounts(total),
+                      selectedQuickAmount: cashState.selectedQuickAmount,
+                      onQuickAmountSelected: (amount) => ref
+                          .read(posCashPaymentProvider.notifier)
+                          .setAmount(amount, selectedQuickAmount: amount),
+                      onOtherAmountPressed: () {},
+                      onDigitPressed: onKeyTap,
+                      onDoubleZeroPressed: () => onKeyTap('00'),
+                      onBackspacePressed: () => onKeyTap('backspace'),
+                      onClearPressed: () => ref
+                          .read(posCashPaymentProvider.notifier)
+                          .clearAmount(),
+                      isSubmitting: _isSubmitting,
+                      canCompleteSale: canConfirm,
+                      onExactCashPressed: () {
+                        ref
+                            .read(posCashPaymentProvider.notifier)
+                            .setAmount(total, selectedQuickAmount: total);
+                      },
+                      onCompleteSalePressed: () =>
+                          _confirmCashPayment(context, summary),
+                    ),
                   ),
                 ],
               ),
@@ -197,6 +125,9 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
     BuildContext context,
     PosCheckoutSummaryViewData summary,
   ) async {
+    // Double-tap guard: block if already submitting.
+    if (_isSubmitting) return;
+
     final cashReceived = ref.read(posCashPaymentProvider).cashReceived;
     if (!canConfirmCashPayment(cashReceived, summary.totalPayable)) {
       return;
@@ -228,7 +159,31 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
       return;
     }
 
+    // Acquire submission lock immediately after all local checks pass.
     setState(() => _isSubmitting = true);
+
+    // Build a stable cart fingerprint for idempotency tracking.
+    final saleIdentity = cart.itemList
+        .map((i) => '${i.product.variantId}:${i.quantity}')
+        .join('|');
+    final requestFingerprint = '$saleIdentity|cash=$cashReceived';
+
+    // Obtain the stable idempotency key from the intent state machine.
+    // beginSubmission returns the same intent if already in-flight with
+    // the same fingerprint (prevents duplicate network requests).
+    final CashPaymentIntent intent;
+    try {
+      intent = ref.read(posCashPaymentIntentProvider.notifier).beginSubmission(
+            saleIdentity: saleIdentity,
+            requestFingerprint: requestFingerprint,
+          );
+    } on StateError catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        _showSnackBar(context, e.message);
+      }
+      return;
+    }
 
     try {
       final payload =
@@ -240,13 +195,18 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
                 cashReceived: cashReceived,
                 customerId: cart.selectedCustomer?.customerId,
                 discountApplicationId: cart.discountApplicationId,
-                idempotencyKey: _idempotencyKey,
+                idempotencyKey: intent.key,
               );
 
+      // Mark the intent succeeded — prevents resubmission.
+      ref.read(posCashPaymentIntentProvider.notifier).markSucceeded();
+
+      // Store authoritative backend values (not local preview).
       ref
           .read(posCashPaymentSuccessProvider.notifier)
           .recordCheckoutPayment(payload);
 
+      // Trigger drawer async — isolated from payment success.
       if (payload.drawerOperationId != null &&
           payload.cashDrawerSettings != null) {
         unawaited(
@@ -261,36 +221,28 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
         );
       }
 
-      final activeSession = ref.read(authSessionProvider);
-      if (activeSession != null) {
-        final receipt = const CompletedSaleReceiptMapper().fromCompletedPayment(
-          payment: payload,
-          device: deviceContext,
-          session: activeSession,
-        );
-        unawaited(
-          ref
-              .read(completedSalePrintProvider.notifier)
-              .printAutomatically(receipt),
-        );
-      }
+      if (!context.mounted) return;
+
+      // Navigate to success only after confirmed backend success.
+      context.push('/pos/new-sale/payment/cash/success');
     } on PosCheckoutApiException catch (error) {
-      if (!context.mounted) {
-        return;
+      // Distinguish timeout/unknown outcome from confirmed rejections.
+      // - Unknown: preserve the same intent key for safe retry.
+      // - KnownRejected: require explicit new attempt.
+      if (error.isNetworkUnavailable) {
+        ref.read(posCashPaymentIntentProvider.notifier).markUnknown();
+      } else {
+        ref.read(posCashPaymentIntentProvider.notifier).markKnownRejected();
       }
+
+      if (!context.mounted) return;
       _showSnackBar(context, error.message);
-      return;
+      // Cart, entered amount, customer and discount are intentionally preserved.
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
       }
     }
-
-    if (!context.mounted) {
-      return;
-    }
-
-    context.push('/pos/new-sale/payment/cash/success');
   }
 
   void _showSnackBar(BuildContext context, String message) {

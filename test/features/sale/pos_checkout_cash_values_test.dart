@@ -1,10 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/sale/domain/entities/pos_checkout_summary.dart';
+import 'package:nytroz_pos/features/sale/domain/entities/pos_receipt_snapshot.dart';
 import 'package:nytroz_pos/features/sale/presentation/providers/pos_cash_payment_success_provider.dart';
 
 void main() {
   group('cash checkout values', () {
+    test('receipt snapshot reads backend PascalCase Cash tender fields', () {
+      final snapshot = PosReceiptSnapshot.fromJson(const {
+        'tenders': [
+          {'MethodName': 'Cash', 'Amount': 2800},
+        ],
+      });
+
+      expect(snapshot.tenders.single.paymentMethod, 'Cash');
+      expect(snapshot.tenders.single.amount, 2800);
+    });
+
     test('checkout payload parser reads cashReceived and changeDue', () {
       final payload = PosCheckoutStartPaymentPayload.fromJson(const {
         'checkoutSessionId': 'sale-1',

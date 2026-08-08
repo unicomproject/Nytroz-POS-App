@@ -60,21 +60,38 @@ void main() {
         find.byKey(const ValueKey('continue-payment-button')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  for (final width in <double>[1200, 900, 600]) {
+    testWidgets('payment page has no layout exception at width $width',
+        (tester) async {
+      await _pumpPage(
+        tester,
+        cart: _cart(discount: true),
+        width: width,
+      );
+
+      expect(find.byKey(const ValueKey('payment-method-page')), findsOneWidget);
+      expect(find.byKey(const ValueKey('payment-methods-section')),
+          findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
 
 Future<void> _pumpPage(
   WidgetTester tester, {
   required PosNewSaleCartState cart,
+  double width = 1200,
   double height = 800,
 }) async {
-  await tester.binding.setSurfaceSize(Size(1200, height));
+  await tester.binding.setSurfaceSize(Size(width, height));
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
     ProviderScope(
       child: MaterialApp(
         home: MediaQuery(
           data: MediaQueryData(
-            size: Size(1200, height),
+            size: Size(width, height),
             textScaler: TextScaler.noScaling,
           ),
           child: PaymentMethodPage(
