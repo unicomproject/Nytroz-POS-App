@@ -3,7 +3,7 @@ import 'dart:io';
 void main() {
   final file = File(r'c:\Users\User\Desktop\pos final wep\Tenantadmin\Nytroz-POS-App\lib\features\tenant_admin\outlets\presentation\widgets\business_hours_editor.dart');
   
-  final newContent = '''import 'package:flutter/material.dart';
+  const newContent = '''import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
@@ -529,5 +529,6 @@ class _Guidance extends StatelessWidget {
 ''';
 
   file.writeAsStringSync(newContent);
+  // ignore: avoid_print
   print('Successfully updated business_hours_editor.dart');
 }

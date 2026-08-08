@@ -4,13 +4,14 @@ void main() {
   final file = File(r'c:\Users\User\Desktop\pos final wep\Tenantadmin\Nytroz-POS-App\lib\features\tenant_admin\outlets\presentation\widgets\outlet_form.dart');
   final content = file.readAsStringSync();
   
-  final startText = 'class _OutletReviewStep extends StatelessWidget {';
-  final endText = 'class _OutletWizardActions extends StatelessWidget {';
+  const startText = 'class _OutletReviewStep extends StatelessWidget {';
+  const endText = 'class _OutletWizardActions extends StatelessWidget {';
   
   final startIndex = content.indexOf(startText);
   final endIndex = content.indexOf(endText);
   
   if (startIndex == -1 || endIndex == -1) {
+    // ignore: avoid_print
     print('Indices not found!');
     return;
   }
@@ -363,5 +364,6 @@ class _PanelItem extends StatelessWidget {
 
 ''');
   file.writeAsStringSync(newContent);
-  print('Successfully updated outlet_form.dart with _OutletReviewStep');
+  // ignore: avoid_print
+  print('Successfully updated _OutletReviewStep');
 }

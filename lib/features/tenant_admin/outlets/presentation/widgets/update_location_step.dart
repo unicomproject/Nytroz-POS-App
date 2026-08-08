@@ -4,18 +4,19 @@ void main() {
   final file = File(r'c:\Users\User\Desktop\pos final wep\Tenantadmin\Nytroz-POS-App\lib\features\tenant_admin\outlets\presentation\widgets\outlet_form.dart');
   final content = file.readAsStringSync();
   
-  final startText = 'class _OutletLocationContactStep extends StatelessWidget {';
-  final endText = 'class _OutletReviewStep extends StatelessWidget {';
+  const startText = 'class _OutletLocationContactStep extends StatelessWidget {';
+  const endText = 'class _OutletReviewStep extends StatelessWidget {';
   
   final startIndex = content.indexOf(startText);
   final endIndex = content.indexOf(endText);
   
   if (startIndex == -1 || endIndex == -1) {
+    // ignore: avoid_print
     print('Could not find start or end index');
     return;
   }
   
-  final newClass = '''class _OutletLocationContactStep extends StatelessWidget {
+  const newClass = '''class _OutletLocationContactStep extends StatelessWidget {
   const _OutletLocationContactStep({
     required this.addressLine1,
     required this.addressLine2,
@@ -214,5 +215,6 @@ void main() {
 
   final newContent = content.replaceRange(startIndex, endIndex, newClass);
   file.writeAsStringSync(newContent);
+  // ignore: avoid_print
   print('Successfully replaced _OutletLocationContactStep');
 }

@@ -129,7 +129,7 @@ void main() {
       final remove = CreateOutletRequestDto.fromForm(const OutletFormData(
         outletName: 'New Outlet', outletType: 'STORE', status: 'ACTIVE',
         mainPhoneNumber: '', emailAddress: '', addressLine1: 'Line 1', city: 'Colombo',
-        country: 'LK', postalCode: '', timezone: 'Asia/Colombo', openingHours: const [],
+        country: 'LK', postalCode: '', timezone: 'Asia/Colombo', openingHours: [],
         imageOperation: OutletImageOperation.remove,
       ));
       expect(remove.toUpdateJson()['imageOperation'], 'REMOVE');

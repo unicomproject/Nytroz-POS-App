@@ -330,7 +330,7 @@ class _BusinessHoursEditorState extends State<BusinessHoursEditor> {
               setState(() => draft.closed = !v);
               widget.onChanged();
             },
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: TenantAdminColors.posHomeOrangeEnd,
             inactiveTrackColor: Colors.grey[300],
             inactiveThumbColor: Colors.white,
@@ -344,7 +344,7 @@ class _BusinessHoursEditorState extends State<BusinessHoursEditor> {
               setState(() => draft.overnight = v);
               widget.onChanged();
             } : null,
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: Colors.grey[400],
             inactiveTrackColor: Colors.grey[200],
             inactiveThumbColor: Colors.white,

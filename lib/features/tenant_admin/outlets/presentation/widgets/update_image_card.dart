@@ -3,7 +3,7 @@ import 'dart:io';
 void main() {
   final file = File(r'c:\Users\User\Desktop\pos final wep\Tenantadmin\Nytroz-POS-App\lib\features\tenant_admin\outlets\presentation\widgets\outlet_image_upload_card.dart');
   
-  final newContent = '''import 'package:flutter/material.dart';
+  const newContent = '''import 'package:flutter/material.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../providers/outlet_image_upload_provider.dart';
@@ -128,5 +128,6 @@ class OutletImageUploadCard extends StatelessWidget {
 ''';
 
   file.writeAsStringSync(newContent);
+  // ignore: avoid_print
   print('Successfully updated outlet_image_upload_card.dart');
 }

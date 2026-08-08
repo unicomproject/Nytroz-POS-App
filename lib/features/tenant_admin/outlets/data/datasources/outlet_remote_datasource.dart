@@ -9,8 +9,6 @@ import '../models/outlet_dto.dart';
 import '../models/outlet_image_upload_dto.dart';
 import '../models/tenant_admin_outlet_list_dto.dart';
 import '../models/tenant_admin_outlet_overview_dto.dart';
-import '../models/tenant_admin_outlet_list_dto.dart';
-import '../models/tenant_admin_outlet_overview_dto.dart';
 
 class OutletRemoteDatasource {
   const OutletRemoteDatasource(this._dio);
