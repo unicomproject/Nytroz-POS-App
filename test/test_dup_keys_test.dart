@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('dup label', (tester) async {
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(const MaterialApp(
       home: Scaffold(
         body: DropdownMenu<String>(
           dropdownMenuEntries: [
@@ -15,6 +15,6 @@ void main() {
     ));
     await tester.tap(find.byType(DropdownMenu<String>));
     await tester.pumpAndSettle();
-    print('SUCCESS');
+    debugPrint('SUCCESS');
   });
 }

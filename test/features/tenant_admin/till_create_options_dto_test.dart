@@ -34,7 +34,7 @@ void main() {
     });
 
     test('CreateTillSetupRequestDto generates correct JSON', () {
-      final dto = CreateTillSetupRequestDto(
+      const dto = CreateTillSetupRequestDto(
         tillName: ' Till 1 ',
         tillCode: ' t1 ',
         outletId: 'out1',
@@ -43,7 +43,7 @@ void main() {
         defaultOpeningFloatAmount: '500.50',
         posDeviceId: ' p1 ',
         hardwareAssignments: [
-          const CreateTillHardwareAssignmentDto(hardwareDeviceId: 'h1', isPrimary: true)
+          CreateTillHardwareAssignmentDto(hardwareDeviceId: 'h1', isPrimary: true)
         ],
       );
 

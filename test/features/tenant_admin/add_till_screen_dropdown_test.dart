@@ -12,20 +12,20 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final baseOptions = TillCreateOptions(
-      outlets: const [
+    const baseOptions = TillCreateOptions(
+      outlets: [
         TillOutletOption(id: 'out1', name: 'Outlet 1', code: 'O1', status: 'ACTIVE'),
         TillOutletOption(id: 'out2', name: 'Outlet 2', code: 'O2', status: 'ACTIVE'),
       ],
-      cashiers: const [
+      cashiers: [
         TillCashierOption(id: 'c1', displayName: 'Cashier 1', outletIds: ['out1']),
         TillCashierOption(id: 'c2', displayName: 'Cashier 2', outletIds: ['out2']),
       ],
-      posDevices: const [
+      posDevices: [
         TillPosDeviceOption(id: 'p1', code: 'P1', name: 'POS 1', outletId: 'out1', status: 'ACTIVE', isTrusted: true, isAssigned: false),
         TillPosDeviceOption(id: 'p1_dup', code: 'P1', name: 'POS 1 Dup', outletId: 'out1', status: 'ACTIVE', isTrusted: true, isAssigned: false),
       ],
-      hardwareDevices: const [
+      hardwareDevices: [
         TillHardwareDeviceOption(id: 'h1', code: 'H1', name: 'Scan 1', type: 'barcode_scanner', outletId: 'out1', status: 'ACTIVE', isAssigned: false, connectionStatus: 'ONLINE'),
         TillHardwareDeviceOption(id: 'h2', code: 'H2', name: 'Scan 2', type: 'barcode_scanner', outletId: 'out2', status: 'ACTIVE', isAssigned: false, connectionStatus: 'ONLINE'),
       ],
@@ -40,7 +40,7 @@ void main() {
           tillCreateOptionsProvider('out1').overrideWith((ref) => baseOptions),
           tillCreateOptionsProvider('out2').overrideWith((ref) => baseOptions),
         ],
-        child: MaterialApp(
+        child: const MaterialApp(
           home: Scaffold(
             body: SingleChildScrollView(
               child: AddTillSinglePageForm(

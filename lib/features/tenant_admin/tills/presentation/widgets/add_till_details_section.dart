@@ -134,7 +134,7 @@ class AddTillDetailsSection extends StatelessWidget {
           children: [
             Expanded(
               child: DropdownButtonFormField<String>(
-                key: ValueKey('outlet_dropdown'),
+                key: const ValueKey('outlet_dropdown'),
                 initialValue: safeOutletId,
                 decoration: InputDecoration(
                   labelText: 'Assign Outlet *',
@@ -161,7 +161,7 @@ class AddTillDetailsSection extends StatelessWidget {
             const SizedBox(width: TenantAdminSpacing.lg),
             Expanded(
               child: DropdownButtonFormField<String>(
-                key: ValueKey('status_dropdown'),
+                key: const ValueKey('status_dropdown'),
                 initialValue: safeStatus,
                 decoration: InputDecoration(
                   labelText: 'Status *',

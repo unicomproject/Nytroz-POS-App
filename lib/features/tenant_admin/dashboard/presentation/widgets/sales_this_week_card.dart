@@ -58,10 +58,10 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
             ],
           ),
           const SizedBox(height: 24),
-          Row(
+          const Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
+              Text(
                 'LKR 125,450.00',
                 style: TextStyle(
                   fontSize: 24,
@@ -69,8 +69,8 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
                   color: TenantAdminColors.navy,
                 ),
               ),
-              const SizedBox(width: 8),
-              const Padding(
+              SizedBox(width: 8),
+              Padding(
                 padding: EdgeInsets.only(bottom: 4),
                 child: Row(
                   children: [
