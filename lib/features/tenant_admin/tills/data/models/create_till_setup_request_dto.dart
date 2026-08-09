@@ -8,6 +8,11 @@ class CreateTillSetupRequestDto {
     required this.defaultOpeningFloatAmount,
     this.posDeviceId,
     this.hardwareAssignments = const [],
+    this.deviceName,
+    this.printerName,
+    this.scannerName,
+    this.cashDrawerName,
+    this.cardReaderName,
   });
 
   final String tillName;
@@ -18,6 +23,11 @@ class CreateTillSetupRequestDto {
   final String defaultOpeningFloatAmount;
   final String? posDeviceId;
   final List<CreateTillHardwareAssignmentDto> hardwareAssignments;
+  final String? deviceName;
+  final String? printerName;
+  final String? scannerName;
+  final String? cashDrawerName;
+  final String? cardReaderName;
 
   Map<String, dynamic> toJson() {
     return {
@@ -32,6 +42,16 @@ class CreateTillSetupRequestDto {
       if (hardwareAssignments.isNotEmpty)
         'hardwareAssignments':
             hardwareAssignments.map((e) => e.toJson()).toList(growable: false),
+      if (deviceName != null && deviceName!.trim().isNotEmpty)
+        'deviceName': deviceName!.trim(),
+      if (printerName != null && printerName!.trim().isNotEmpty)
+        'printerName': printerName!.trim(),
+      if (scannerName != null && scannerName!.trim().isNotEmpty)
+        'scannerName': scannerName!.trim(),
+      if (cashDrawerName != null && cashDrawerName!.trim().isNotEmpty)
+        'cashDrawerName': cashDrawerName!.trim(),
+      if (cardReaderName != null && cardReaderName!.trim().isNotEmpty)
+        'cardReaderName': cardReaderName!.trim(),
     };
   }
 }

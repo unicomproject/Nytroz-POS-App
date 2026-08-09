@@ -34,6 +34,26 @@ class AddTillDetailsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final uniqueOutlets = <String, dynamic>{};
+    for (final outlet in options.outlets) {
+      uniqueOutlets[outlet.id] = outlet;
+    }
+    final outlets = uniqueOutlets.values.toList();
+    final hasOutlet = outlets.any((o) => o.id == selectedOutletId);
+    final safeOutletId = hasOutlet ? selectedOutletId : null;
+
+    final uniqueStatuses = options.statuses.toSet().toList();
+    final hasStatus = uniqueStatuses.contains(selectedStatus);
+    final safeStatus = hasStatus ? selectedStatus : null;
+
+    final uniqueCashiers = <String, dynamic>{};
+    for (final cashier in options.cashiers) {
+      uniqueCashiers[cashier.id] = cashier;
+    }
+    final cashiers = uniqueCashiers.values.toList();
+    final hasCashier = cashiers.any((c) => c.id == selectedCashierId);
+    final safeCashierId = hasCashier ? selectedCashierId : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -69,6 +89,7 @@ class AddTillDetailsSection extends StatelessWidget {
             Expanded(
               child: TextFormField(
                 controller: nameController,
+                maxLength: 150,
                 decoration: InputDecoration(
                   labelText: 'Till Name *',
                   hintText: 'Enter till name',
@@ -88,6 +109,7 @@ class AddTillDetailsSection extends StatelessWidget {
             Expanded(
               child: TextFormField(
                 controller: codeController,
+                maxLength: 60,
                 decoration: InputDecoration(
                   labelText: 'Till Code *',
                   hintText: 'Enter till code',
@@ -112,7 +134,8 @@ class AddTillDetailsSection extends StatelessWidget {
           children: [
             Expanded(
               child: DropdownButtonFormField<String>(
-                initialValue: selectedOutletId,
+                key: ValueKey('outlet_dropdown'),
+                initialValue: safeOutletId,
                 decoration: InputDecoration(
                   labelText: 'Assign Outlet *',
                   prefixIcon: const Icon(Icons.location_on_outlined,
@@ -120,10 +143,10 @@ class AddTillDetailsSection extends StatelessWidget {
                   errorText: backendErrors['outletId'],
                 ),
                 items: [
-                  for (final outlet in options.outlets)
+                  for (final outlet in outlets)
                     DropdownMenuItem(
-                      value: outlet.id,
-                      child: Text(outlet.name),
+                      value: outlet.id as String,
+                      child: Text(outlet.name as String),
                     ),
                 ],
                 onChanged: onOutletChanged,
@@ -138,7 +161,8 @@ class AddTillDetailsSection extends StatelessWidget {
             const SizedBox(width: TenantAdminSpacing.lg),
             Expanded(
               child: DropdownButtonFormField<String>(
-                initialValue: selectedStatus,
+                key: ValueKey('status_dropdown'),
+                initialValue: safeStatus,
                 decoration: InputDecoration(
                   labelText: 'Status *',
                   prefixIcon: const Icon(Icons.circle,
@@ -146,7 +170,7 @@ class AddTillDetailsSection extends StatelessWidget {
                   errorText: backendErrors['status'],
                 ),
                 items: [
-                  for (final status in options.statuses)
+                  for (final status in uniqueStatuses)
                     DropdownMenuItem(
                       value: status,
                       child: Text(
@@ -172,7 +196,8 @@ class AddTillDetailsSection extends StatelessWidget {
           children: [
             Expanded(
               child: DropdownButtonFormField<String>(
-                initialValue: selectedCashierId,
+                key: ValueKey('cashier_dropdown_$selectedOutletId'),
+                initialValue: safeCashierId,
                 decoration: InputDecoration(
                   labelText: 'Default Cashier *',
                   prefixIcon: const Icon(Icons.person_outline,
@@ -180,13 +205,11 @@ class AddTillDetailsSection extends StatelessWidget {
                   errorText: backendErrors['defaultCashierTenantUserId'],
                 ),
                 items: [
-                  for (final cashier in options.cashiers)
-                    if (selectedOutletId == null ||
-                        cashier.outletIds.contains(selectedOutletId))
-                      DropdownMenuItem(
-                        value: cashier.id,
-                        child: Text(cashier.displayName),
-                      ),
+                  for (final cashier in cashiers)
+                    DropdownMenuItem(
+                      value: cashier.id as String,
+                      child: Text(cashier.displayName as String),
+                    ),
                 ],
                 onChanged: onCashierChanged,
                 validator: (value) {
@@ -207,7 +230,7 @@ class AddTillDetailsSection extends StatelessWidget {
                     decoration: InputDecoration(
                       labelText: 'Opening Float *',
                       hintText: 'Enter opening float amount',
-                      prefixText: 'Rs. ',
+                      prefixText: '${options.currencyCode} ',
                       errorText: backendErrors['defaultOpeningFloatAmount'],
                     ),
                     keyboardType:
