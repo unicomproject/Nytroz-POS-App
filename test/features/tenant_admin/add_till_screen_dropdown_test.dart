@@ -77,7 +77,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Select POS Device 1 (has a duplicate ID test case)
-    final posDropdown = find.widgetWithText(DropdownMenu<String>, 'Device Name');
+    final posDropdown = find.widgetWithText(DropdownMenu<String>, 'Device Name').first;
     await tester.tap(posDropdown);
     await tester.pumpAndSettle();
     await tester.tap(find.text('POS 1').last);
