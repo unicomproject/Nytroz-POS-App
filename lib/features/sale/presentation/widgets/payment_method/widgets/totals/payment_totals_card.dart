@@ -10,9 +10,9 @@ class PaymentTotalsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         key: const ValueKey('payment-totals-card'),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFFF8FAFC),
           border: Border.all(color: PaymentMethodStyle.border),
           borderRadius: BorderRadius.circular(10),
         ),

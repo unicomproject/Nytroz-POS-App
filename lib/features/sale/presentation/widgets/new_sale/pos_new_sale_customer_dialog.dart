@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,7 +6,7 @@ import 'package:nytroz_pos/core/network/dio_provider.dart';
 import 'package:nytroz_pos/features/device_activation/presentation/providers/device_activation_provider.dart';
 import 'package:nytroz_pos/features/sale/data/datasources/pos_customer_remote_datasource.dart';
 import 'package:nytroz_pos/features/sale/domain/entities/pos_customer.dart';
-import 'package:nytroz_pos/features/sale/presentation/widgets/payment/pos_bottom_action_buttons.dart';
+import 'package:nytroz_pos/features/sale/presentation/widgets/payment_method/payment_method_style.dart';
 import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -21,47 +22,34 @@ Future<PosCustomer?> showPosNewSaleCustomerDialog({
     context: context,
     builder: (_) => UncontrolledProviderScope(
       container: container,
-      child: _PosNewSaleCustomerDialog(
+      child: _PosAddCustomerDialog(
         canCreateCustomer: canCreateCustomer,
       ),
     ),
   );
 }
 
-class _PosNewSaleCustomerDialog extends ConsumerStatefulWidget {
-  const _PosNewSaleCustomerDialog({
-    required this.canCreateCustomer,
-  });
+class _PosAddCustomerDialog extends ConsumerStatefulWidget {
+  const _PosAddCustomerDialog({required this.canCreateCustomer});
 
   final bool canCreateCustomer;
 
   @override
-  ConsumerState<_PosNewSaleCustomerDialog> createState() =>
-      _PosNewSaleCustomerDialogState();
+  ConsumerState<_PosAddCustomerDialog> createState() =>
+      _PosAddCustomerDialogState();
 }
 
-class _PosNewSaleCustomerDialogState
-    extends ConsumerState<_PosNewSaleCustomerDialog> {
-  final _quickAddFormKey = GlobalKey<FormState>();
-  final _searchController = TextEditingController();
+class _PosAddCustomerDialogState extends ConsumerState<_PosAddCustomerDialog> {
+  final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
 
-  bool _isLoading = true;
   bool _isCreating = false;
-  String _errorMessage = '';
-  List<PosCustomer> _customers = [];
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(_loadCustomers);
-  }
+  String? _errorMessage;
 
   @override
   void dispose() {
-    _searchController.dispose();
     _fullNameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
@@ -79,68 +67,131 @@ class _PosNewSaleCustomerDialogState
           borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
         ),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 620,
-            maxHeight: 720,
-          ),
+          constraints: const BoxConstraints(maxWidth: 540),
           child: Padding(
             padding: const EdgeInsets.all(TenantAdminSpacing.xl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Select Customer',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  color: TenantAdminColors.bodyText,
-                                  fontWeight: FontWeight.w900,
-                                ) ??
-                            const TextStyle(
-                              color: TenantAdminColors.bodyText,
-                              fontWeight: FontWeight.w900,
-                            ),
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Close',
-                      onPressed: () => Navigator.of(context).pop(null),
-                      icon: const Icon(Icons.close_rounded),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _DialogHeader(
+                    onClose: _isCreating
+                        ? null
+                        : () => Navigator.of(context).pop(null),
+                  ),
+                  const SizedBox(height: TenantAdminSpacing.xl),
+                  _CustomerField(
+                    key: const ValueKey('add-customer-name'),
+                    controller: _fullNameController,
+                    label: 'Full Name',
+                    hint: 'Enter customer full name',
+                    icon: Icons.person_outline_rounded,
+                    textInputAction: TextInputAction.next,
+                    maxLength: 150,
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Full name is required'
+                        : null,
+                  ),
+                  const SizedBox(height: TenantAdminSpacing.md),
+                  _CustomerField(
+                    key: const ValueKey('add-customer-phone'),
+                    controller: _phoneController,
+                    label: 'Phone Number',
+                    hint: 'Enter customer phone number',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
+                    maxLength: 50,
+                    validator: (value) {
+                      final phone = value?.trim() ?? '';
+                      if (phone.isEmpty) return 'Phone number is required';
+                      if (RegExp(r'\d').allMatches(phone).length < 7) {
+                        return 'Enter a valid phone number';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: TenantAdminSpacing.md),
+                  _CustomerField(
+                    key: const ValueKey('add-customer-email'),
+                    controller: _emailController,
+                    label: 'Email (Optional)',
+                    hint: 'Enter customer email address',
+                    icon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.done,
+                    maxLength: 150,
+                    onFieldSubmitted: (_) => _submitIfAllowed(),
+                    validator: (value) {
+                      final email = value?.trim() ?? '';
+                      if (email.isEmpty) return null;
+                      return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                              .hasMatch(email)
+                          ? null
+                          : 'Enter a valid email address';
+                    },
+                  ),
+                  if (!widget.canCreateCustomer) ...[
+                    const SizedBox(height: TenantAdminSpacing.md),
+                    const _InlineMessage(
+                      message:
+                          'You do not have permission to create customers.',
                     ),
                   ],
-                ),
-                const SizedBox(height: TenantAdminSpacing.md),
-                _SearchBar(
-                  controller: _searchController,
-                  isLoading: _isLoading,
-                  onSearch: _loadCustomers,
-                ),
-                const SizedBox(height: TenantAdminSpacing.md),
-                Flexible(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildCustomerContent(context),
-                        const SizedBox(height: TenantAdminSpacing.lg),
-                        const Divider(),
-                        const SizedBox(height: TenantAdminSpacing.sm),
-                        _buildQuickAddSection(context),
-                      ],
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: TenantAdminSpacing.md),
+                    _InlineMessage(message: _errorMessage!, isError: true),
+                  ],
+                  const SizedBox(height: TenantAdminSpacing.xl),
+                  SizedBox(
+                    height: 52,
+                    child: FilledButton.icon(
+                      key: const ValueKey('create-customer-button'),
+                      onPressed: widget.canCreateCustomer && !_isCreating
+                          ? _createCustomer
+                          : null,
+                      icon: _isCreating
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.person_add_alt_1_rounded),
+                      label: Text(
+                        _isCreating ? 'Creating Customer...' : 'Add Customer',
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: PaymentMethodStyle.orange,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor:
+                            PaymentMethodStyle.orange.withValues(alpha: 0.45),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(TenantAdminRadius.md),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: TenantAdminSpacing.md),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(null),
-                    child: const Text('Close'),
+                  const SizedBox(height: TenantAdminSpacing.sm),
+                  TextButton(
+                    onPressed: _isCreating
+                        ? null
+                        : () => Navigator.of(context).pop(null),
+                    style: TextButton.styleFrom(
+                      foregroundColor: PaymentMethodStyle.orange,
+                    ),
+                    child: const Text('Cancel'),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -148,191 +199,14 @@ class _PosNewSaleCustomerDialogState
     );
   }
 
-  Widget _buildCustomerContent(BuildContext context) {
-    if (_isLoading) {
-      return const SizedBox(
-        height: 150,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: TenantAdminSpacing.md),
-              Text('Loading customers...'),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_errorMessage.isNotEmpty) {
-      return _CustomerMessagePanel(
-        icon: Icons.error_outline_rounded,
-        title: _errorMessage,
-        actionLabel: 'Retry',
-        onAction: _loadCustomers,
-      );
-    }
-
-    if (_customers.isEmpty) {
-      return const _CustomerMessagePanel(
-        icon: Icons.person_search_rounded,
-        title: 'No customers found',
-        message: 'Use Quick Add Customer below to create a new customer.',
-      );
-    }
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxHeight: 260),
-      child: ListView.separated(
-        shrinkWrap: true,
-        itemCount: _customers.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final customer = _customers[index];
-          final subtitle = [customer.phone, customer.email]
-              .where((value) => value?.trim().isNotEmpty == true)
-              .join(' • ');
-
-          return ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const CircleAvatar(
-              child: Icon(Icons.person_outline_rounded),
-            ),
-            title: Text(
-              customer.displayName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: subtitle.isEmpty
-                ? null
-                : Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-            onTap: () => Navigator.of(context).pop(customer),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildQuickAddSection(BuildContext context) {
-    return Form(
-      key: _quickAddFormKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Quick Add Customer',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: TenantAdminColors.bodyText,
-                  fontWeight: FontWeight.w900,
-                ),
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          TextFormField(
-            controller: _fullNameController,
-            decoration: const InputDecoration(labelText: 'Name'),
-            textInputAction: TextInputAction.next,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Name is required';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          TextFormField(
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(labelText: 'Phone number'),
-            textInputAction: TextInputAction.next,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Phone number is required';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          TextFormField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(labelText: 'Email'),
-            textInputAction: TextInputAction.done,
-            validator: (value) {
-              final email = value?.trim() ?? '';
-              if (email.isEmpty) {
-                return null;
-              }
-              final isValid =
-                  RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
-              return isValid ? null : 'Enter a valid email';
-            },
-          ),
-          const SizedBox(height: TenantAdminSpacing.md),
-          PosPrimaryActionButton(
-            onPressed: widget.canCreateCustomer && !_isCreating
-                ? _createCustomer
-                : null,
-            icon: Icons.person_add_alt_1_rounded,
-            isLoading: _isCreating,
-            label: 'Create Customer',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _loadCustomers() async {
-    final deviceContext = ref.read(deviceActivationProvider).deviceContext;
-    if (deviceContext == null) {
-      setState(() {
-        _isLoading = false;
-        _customers = [];
-        _errorMessage = 'Device context is not available.';
-      });
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
-
-    try {
-      final datasource = PosCustomerRemoteDatasource(ref.read(appDioProvider));
-      final customers = await datasource.searchCustomers(
-        deviceId: deviceContext.deviceId,
-        search: _searchController.text.trim(),
-      );
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _customers = customers;
-      });
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _customers = [];
-        _errorMessage = 'Unable to load customers. Try again.';
-      });
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+  void _submitIfAllowed() {
+    if (widget.canCreateCustomer && !_isCreating) {
+      _createCustomer();
     }
   }
 
   Future<void> _createCustomer() async {
-    if (!_quickAddFormKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     final deviceContext = ref.read(deviceActivationProvider).deviceContext;
     if (deviceContext == null) {
@@ -342,33 +216,39 @@ class _PosNewSaleCustomerDialogState
 
     setState(() {
       _isCreating = true;
-      _errorMessage = '';
+      _errorMessage = null;
     });
 
     try {
-      final datasource = PosCustomerRemoteDatasource(ref.read(appDioProvider));
-      final customer = await datasource.createCustomer(
+      final customer =
+          await PosCustomerRemoteDatasource(ref.read(appDioProvider))
+              .createCustomer(
         deviceId: deviceContext.deviceId,
         fullName: _fullNameController.text.trim(),
         phone: _phoneController.text.trim(),
         email: _emptyToNull(_emailController.text),
       );
-      if (!mounted) {
-        return;
-      }
-      Navigator.of(context).pop(customer);
+      if (mounted) Navigator.of(context).pop(customer);
+    } on DioException catch (error) {
+      if (!mounted) return;
+      setState(() => _errorMessage = _apiMessage(error));
     } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _errorMessage = 'Unable to create customer. Try again.';
-      });
+      if (!mounted) return;
+      setState(() => _errorMessage = 'Unable to add customer. Try again.');
     } finally {
-      if (mounted) {
-        setState(() => _isCreating = false);
+      if (mounted) setState(() => _isCreating = false);
+    }
+  }
+
+  String _apiMessage(DioException error) {
+    final data = error.response?.data;
+    if (data is Map) {
+      final message = data['message'] ?? data['error']?['message'];
+      if (message is String && message.trim().isNotEmpty) {
+        return message.trim();
       }
     }
+    return 'Unable to add customer. Try again.';
   }
 
   String? _emptyToNull(String value) {
@@ -377,98 +257,150 @@ class _PosNewSaleCustomerDialogState
   }
 }
 
-class _SearchBar extends StatelessWidget {
-  const _SearchBar({
-    required this.controller,
-    required this.isLoading,
-    required this.onSearch,
-  });
+class _DialogHeader extends StatelessWidget {
+  const _DialogHeader({required this.onClose});
 
-  final TextEditingController controller;
-  final bool isLoading;
-  final VoidCallback onSearch;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: TextField(
-            controller: controller,
-            textInputAction: TextInputAction.search,
-            decoration: const InputDecoration(
-              labelText: 'Search by name or phone number',
-              prefixIcon: Icon(Icons.search),
-            ),
-            onSubmitted: (_) => onSearch(),
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: PaymentMethodStyle.orange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          ),
+          child: const Icon(
+            Icons.person_add_alt_1_rounded,
+            color: PaymentMethodStyle.orange,
           ),
         ),
-        const SizedBox(width: TenantAdminSpacing.sm),
-        FilledButton.icon(
-          onPressed: isLoading ? null : onSearch,
-          icon: const Icon(Icons.search_rounded),
-          label: const Text('Search'),
+        const SizedBox(width: TenantAdminSpacing.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Add Customer',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: TenantAdminColors.bodyText,
+                      fontWeight: FontWeight.w900,
+                    ),
+              ),
+              const SizedBox(height: TenantAdminSpacing.xs),
+              const Text(
+                'Enter the customer details below.',
+                style: TextStyle(
+                  color: TenantAdminColors.mutedText,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          tooltip: 'Close',
+          onPressed: onClose,
+          icon: const Icon(Icons.close_rounded),
         ),
       ],
     );
   }
 }
 
-class _CustomerMessagePanel extends StatelessWidget {
-  const _CustomerMessagePanel({
+class _CustomerField extends StatelessWidget {
+  const _CustomerField({
+    super.key,
+    required this.controller,
+    required this.label,
+    required this.hint,
     required this.icon,
-    required this.title,
-    this.message,
-    this.actionLabel,
-    this.onAction,
+    required this.textInputAction,
+    required this.maxLength,
+    required this.validator,
+    this.keyboardType,
+    this.onFieldSubmitted,
   });
 
+  final TextEditingController controller;
+  final String label;
+  final String hint;
   final IconData icon;
-  final String title;
-  final String? message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
+  final TextInputType? keyboardType;
+  final TextInputAction textInputAction;
+  final int maxLength;
+  final FormFieldValidator<String> validator;
+  final ValueChanged<String>? onFieldSubmitted;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: TenantAdminColors.background,
-        border: Border.all(color: TenantAdminColors.border),
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 36, color: TenantAdminColors.offline),
-            const SizedBox(height: TenantAdminSpacing.sm),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: TenantAdminColors.bodyText,
-                    fontWeight: FontWeight.w900,
-                  ),
-            ),
-            if (message != null) ...[
-              const SizedBox(height: TenantAdminSpacing.xs),
-              Text(
-                message!,
-                textAlign: TextAlign.center,
-                style: TenantAdminTextStyles.muted(context),
-              ),
-            ],
-            if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: TenantAdminSpacing.md),
-              TextButton(
-                onPressed: onAction,
-                child: Text(actionLabel!),
-              ),
-            ],
-          ],
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      maxLength: maxLength,
+      validator: validator,
+      onFieldSubmitted: onFieldSubmitted,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        counterText: '',
+        prefixIcon: Icon(icon),
+        floatingLabelStyle: const TextStyle(
+          color: PaymentMethodStyle.orange,
+          fontWeight: FontWeight.w700,
         ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          borderSide: const BorderSide(
+            color: PaymentMethodStyle.orange,
+            width: 1.5,
+          ),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        ),
+      ),
+    );
+  }
+}
+
+class _InlineMessage extends StatelessWidget {
+  const _InlineMessage({required this.message, this.isError = false});
+
+  final String message;
+  final bool isError;
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        isError ? TenantAdminColors.danger : TenantAdminColors.warning;
+    return Container(
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isError ? Icons.error_outline_rounded : Icons.lock_outline_rounded,
+            color: color,
+            size: 20,
+          ),
+          const SizedBox(width: TenantAdminSpacing.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: color, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
       ),
     );
   }

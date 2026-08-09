@@ -13,8 +13,6 @@ class SaleSummaryCard extends StatelessWidget {
         cart.itemList.fold<int>(0, (sum, line) => sum + line.quantity);
     return Container(
       key: const ValueKey('sale-summary-card'),
-      padding: const EdgeInsets.all(PaymentMethodStyle.padding),
-      decoration: _decoration,
       child: Column(children: [
         Row(children: [
           const Icon(Icons.shopping_cart_outlined,
@@ -176,10 +174,3 @@ class _ImageFallback extends StatelessWidget {
             Icon(Icons.image_not_supported_outlined, color: Color(0xFF7B8798)),
       );
 }
-
-const _decoration = BoxDecoration(
-  color: Colors.white,
-  border: Border.fromBorderSide(BorderSide(color: PaymentMethodStyle.border)),
-  borderRadius:
-      BorderRadius.all(Radius.circular(PaymentMethodStyle.panelRadius)),
-);

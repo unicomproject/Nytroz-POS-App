@@ -41,6 +41,10 @@ class PosCustomer {
     if (status.trim().isEmpty) {
       return 'Unknown';
     }
+    final normalized = status.trim().toUpperCase();
+    if (normalized == 'BLOCKED') {
+      return 'Blocked';
+    }
     return isActive ? 'Active' : 'Inactive';
   }
 
@@ -61,6 +65,17 @@ class PosCustomer {
       return '$currency $amount';
     }
     return amount;
+  }
+
+  String get averageOrderValueDisplay {
+    if (isMixedCurrencySpend || totalOrderCount <= 0) {
+      return '—';
+    }
+    final average = (totalSpentAmount / totalOrderCount).toStringAsFixed(2);
+    final currency = currencyCode?.trim();
+    return currency == null || currency.isEmpty
+        ? average
+        : '$currency $average';
   }
 
   String get initials {
@@ -152,6 +167,7 @@ class PosCustomerOrder {
     required this.currencyCode,
     required this.status,
     this.outletDisplayName,
+    this.tillName,
   });
 
   final String orderId;
@@ -161,6 +177,7 @@ class PosCustomerOrder {
   final String currencyCode;
   final String status;
   final String? outletDisplayName;
+  final String? tillName;
 
   factory PosCustomerOrder.fromJson(Map<String, dynamic> json) {
     return PosCustomerOrder(
@@ -176,6 +193,7 @@ class PosCustomerOrder {
       status: json['status']?.toString() ?? json['Status']?.toString() ?? '',
       outletDisplayName: json['outletDisplayName']?.toString() ??
           json['OutletDisplayName']?.toString(),
+      tillName: json['tillName']?.toString() ?? json['TillName']?.toString(),
     );
   }
 }

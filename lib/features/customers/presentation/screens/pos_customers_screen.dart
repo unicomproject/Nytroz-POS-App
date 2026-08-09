@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dio/dio.dart';
 
 import '../../../../core/access/pos_permission_access.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
+import '../../../cart/presentation/providers/pos_discount_provider.dart';
 import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import '../../../sale/presentation/providers/pos_checkout_summary_provider.dart';
 import '../../../sale/presentation/widgets/new_sale/pos_new_sale_customer_dialog.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../till/presentation/providers/till_provider.dart';
 import '../providers/customers_provider.dart';
 import '../widgets/customer_details_panel.dart';
-import '../widgets/customer_summary_cards.dart';
 import '../widgets/customers_page_header.dart';
 import '../widgets/customers_search_filter_toolbar.dart';
 import '../widgets/customers_table_section.dart';
@@ -36,7 +38,6 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
         return;
       }
       ref.read(customersProvider.notifier).load(resetPage: true);
-      ref.read(customersSummaryProvider.notifier).refresh();
     });
   }
 
@@ -53,9 +54,8 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
       return const TenantAdminForbiddenScreen();
     }
 
-    final summaryState = ref.watch(customersSummaryProvider);
-    final canCreate = PosPermissionAccess.canCreateCustomer(granted);
     final canEdit = PosPermissionAccess.canEditCustomer(granted);
+    final canCreate = PosPermissionAccess.canCreateCustomer(granted);
     final tillOpen = ref.watch(tillProvider).hasOpenSession;
     final canAttachPermission =
         PosPermissionAccess.canAttachCustomerToSale(granted);
@@ -76,120 +76,192 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
                     : null;
 
     return ColoredBox(
-      color: TenantAdminColors.background,
+      color: TenantAdminColors.posHomeDarkBackground,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.maxWidth;
-          final padding = width >= TenantAdminBreakpoints.tablet
-              ? const EdgeInsets.fromLTRB(28, 24, 28, 20)
-              : TenantAdminInsets.pageForWidth(width);
-          final splitView = width >= 1050;
-          final showSecondaryColumns = width >= 1180;
-          final useCardLayout = width < 800;
+          const padding = EdgeInsets.fromLTRB(14, 10, 14, 10);
+          final splitView = width >= 900;
+          final showSecondaryColumns = width >= 1150;
+          final useCardLayout = width < 750;
 
           return Padding(
             padding: padding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                CustomersPageHeader(
-                  canCreateCustomer: canCreate,
-                  onNewCustomer: () => _openNewCustomer(canCreate: canCreate),
-                ),
-                const SizedBox(height: TenantAdminSpacing.lg),
-                CustomerSummaryCards(summary: summaryState),
-                const SizedBox(height: TenantAdminSpacing.lg),
-                CustomersSearchFilterToolbar(
-                  query: customersState.query,
-                  statusFilter: customersState.statusFilter,
-                  sourceFilter: customersState.sourceFilter,
-                  onSearchChanged: (value) => ref
-                      .read(customersProvider.notifier)
-                      .setSearchQuery(value),
-                  onStatusChanged: (value) => ref
-                      .read(customersProvider.notifier)
-                      .setStatusFilter(value),
-                  onSourceChanged: (value) => ref
-                      .read(customersProvider.notifier)
-                      .setSourceFilter(value),
-                  onClear: () =>
-                      ref.read(customersProvider.notifier).clearFilters(),
-                ),
-                const SizedBox(height: TenantAdminSpacing.lg),
-                Expanded(
-                  child: splitView
-                      ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              flex: 72,
-                              child: CustomersTableSection(
-                                customers: customersState.visibleItems,
-                                selectedCustomerId:
-                                    customersState.selectedCustomerId,
-                                isLoading: customersState.isLoading,
-                                errorMessage: customersState.errorMessage,
-                                query: customersState.query,
-                                page: customersState.page,
-                                totalPages: customersState.totalPages,
-                                rangeStart: customersState.rangeStart,
-                                rangeEnd: customersState.rangeEnd,
-                                totalCount: customersState.totalCount,
-                                useCardLayout: false,
-                                showSecondaryColumns: showSecondaryColumns,
-                                onSelect: (id) => ref
-                                    .read(customersProvider.notifier)
-                                    .selectCustomer(id),
-                                onRetry: () =>
-                                    ref.read(customersProvider.notifier).load(),
-                                onPageChanged: (page) => ref
-                                    .read(customersProvider.notifier)
-                                    .goToPage(page),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E6ED)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const CustomersPageHeader(),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: splitView && selected != null
+                        ? Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                flex: 62,
+                                child: Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                        color: const Color(0xFFE2E6ED)),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      CustomersSearchFilterToolbar(
+                                        query: customersState.query,
+                                        statusFilter:
+                                            customersState.statusFilter,
+                                        sourceFilter:
+                                            customersState.sourceFilter,
+                                        onSearchChanged: (value) => ref
+                                            .read(customersProvider.notifier)
+                                            .setSearchQuery(value),
+                                        onStatusChanged: (value) => ref
+                                            .read(customersProvider.notifier)
+                                            .setStatusFilter(value),
+                                        onSourceChanged: (value) => ref
+                                            .read(customersProvider.notifier)
+                                            .setSourceFilter(value),
+                                        onClear: () => ref
+                                            .read(customersProvider.notifier)
+                                            .clearFilters(),
+                                        canAddCustomer: canCreate,
+                                        onAddCustomer: _addCustomer,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Expanded(
+                                        child: CustomersTableSection(
+                                          customers:
+                                              customersState.visibleItems,
+                                          selectedCustomerId:
+                                              customersState.selectedCustomerId,
+                                          isLoading: customersState.isLoading,
+                                          errorMessage:
+                                              customersState.errorMessage,
+                                          query: customersState.query,
+                                          page: customersState.page,
+                                          totalPages: customersState.totalPages,
+                                          rangeStart: customersState.rangeStart,
+                                          rangeEnd: customersState.rangeEnd,
+                                          totalCount: customersState.totalCount,
+                                          useCardLayout: false,
+                                          showSecondaryColumns:
+                                              showSecondaryColumns,
+                                          onSelect: (id) => ref
+                                              .read(customersProvider.notifier)
+                                              .toggleCustomerSelection(id),
+                                          onRetry: () => ref
+                                              .read(customersProvider.notifier)
+                                              .load(),
+                                          onPageChanged: (page) => ref
+                                              .read(customersProvider.notifier)
+                                              .goToPage(page),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: TenantAdminSpacing.lg),
-                            Expanded(
-                              flex: 28,
-                              child: CustomerDetailsPanel(
-                                customer: selected,
-                                recentOrders: customersState.recentOrders,
-                                isLoadingDetail: customersState.isLoadingDetail,
-                                detailErrorMessage:
-                                    customersState.detailErrorMessage,
-                                canAttach: canAttach,
-                                canViewPurchaseHistory: true,
-                                canEdit: canEdit,
-                                isAttaching: customersState.isAttaching,
-                                attachDisabledReason: attachDisabledReason,
-                                onAttachToSale: _attachToSale,
-                                onViewPurchaseHistory: _viewPurchaseHistory,
-                                onEditCustomer: _editCustomer,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 38,
+                                child: CustomerDetailsPanel(
+                                  customer: selected,
+                                  recentOrders: customersState.recentOrders,
+                                  isLoadingDetail:
+                                      customersState.isLoadingDetail,
+                                  detailErrorMessage:
+                                      customersState.detailErrorMessage,
+                                  canAttach: canAttach,
+                                  canViewPurchaseHistory: true,
+                                  canEdit: canEdit,
+                                  isAttaching: customersState.isAttaching,
+                                  attachDisabledReason: attachDisabledReason,
+                                  onAttachToSale: _attachToSale,
+                                  onViewPurchaseHistory: _viewPurchaseHistory,
+                                  onEditCustomer: _editCustomer,
+                                  onDeactivateCustomer: _deactivateCustomer,
+                                ),
                               ),
+                            ],
+                          )
+                        : Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border:
+                                  Border.all(color: const Color(0xFFE2E6ED)),
                             ),
-                          ],
-                        )
-                      : CustomersTableSection(
-                          customers: customersState.visibleItems,
-                          selectedCustomerId: customersState.selectedCustomerId,
-                          isLoading: customersState.isLoading,
-                          errorMessage: customersState.errorMessage,
-                          query: customersState.query,
-                          page: customersState.page,
-                          totalPages: customersState.totalPages,
-                          rangeStart: customersState.rangeStart,
-                          rangeEnd: customersState.rangeEnd,
-                          totalCount: customersState.totalCount,
-                          useCardLayout: useCardLayout,
-                          showSecondaryColumns: false,
-                          onSelect: (id) => _selectOnNarrow(id),
-                          onRetry: () =>
-                              ref.read(customersProvider.notifier).load(),
-                          onPageChanged: (page) => ref
-                              .read(customersProvider.notifier)
-                              .goToPage(page),
-                        ),
-                ),
-              ],
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                CustomersSearchFilterToolbar(
+                                  query: customersState.query,
+                                  statusFilter: customersState.statusFilter,
+                                  sourceFilter: customersState.sourceFilter,
+                                  onSearchChanged: (value) => ref
+                                      .read(customersProvider.notifier)
+                                      .setSearchQuery(value),
+                                  onStatusChanged: (value) => ref
+                                      .read(customersProvider.notifier)
+                                      .setStatusFilter(value),
+                                  onSourceChanged: (value) => ref
+                                      .read(customersProvider.notifier)
+                                      .setSourceFilter(value),
+                                  onClear: () => ref
+                                      .read(customersProvider.notifier)
+                                      .clearFilters(),
+                                  canAddCustomer: canCreate,
+                                  onAddCustomer: _addCustomer,
+                                ),
+                                const SizedBox(height: 10),
+                                Expanded(
+                                  child: CustomersTableSection(
+                                    customers: customersState.visibleItems,
+                                    selectedCustomerId:
+                                        customersState.selectedCustomerId,
+                                    isLoading: customersState.isLoading,
+                                    errorMessage: customersState.errorMessage,
+                                    query: customersState.query,
+                                    page: customersState.page,
+                                    totalPages: customersState.totalPages,
+                                    rangeStart: customersState.rangeStart,
+                                    rangeEnd: customersState.rangeEnd,
+                                    totalCount: customersState.totalCount,
+                                    useCardLayout: useCardLayout,
+                                    showSecondaryColumns:
+                                        splitView && showSecondaryColumns,
+                                    onSelect: (id) => splitView
+                                        ? ref
+                                            .read(customersProvider.notifier)
+                                            .toggleCustomerSelection(id)
+                                        : _selectOnNarrow(id),
+                                    onRetry: () => ref
+                                        .read(customersProvider.notifier)
+                                        .load(),
+                                    onPageChanged: (page) => ref
+                                        .read(customersProvider.notifier)
+                                        .goToPage(page),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -232,11 +304,14 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
       onAttachToSale: _attachToSale,
       onViewPurchaseHistory: _viewPurchaseHistory,
       onEditCustomer: _editCustomer,
+      onDeactivateCustomer: _deactivateCustomer,
     );
   }
 
-  Future<void> _openNewCustomer({required bool canCreate}) async {
-    if (!canCreate) {
+  Future<void> _addCustomer() async {
+    final session = ref.read(authSessionProvider);
+    final granted = session?.permissionCodes.toSet() ?? const {};
+    if (!PosPermissionAccess.canCreateCustomer(granted)) {
       _showMessage('You do not have permission to create customers.');
       return;
     }
@@ -244,14 +319,17 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
     final created = await showPosNewSaleCustomerDialog(
       context: context,
       ref: ref,
-      canCreateCustomer: canCreate,
+      canCreateCustomer: true,
     );
-
     if (created == null || !mounted) {
       return;
     }
 
     await ref.read(customersProvider.notifier).refreshAfterCreate(created);
+    if (!mounted) {
+      return;
+    }
+    _showMessage('${created.displayName} added successfully.');
   }
 
   Future<void> _attachToSale() async {
@@ -277,7 +355,27 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
       return;
     }
 
+    final previousCustomerId =
+        ref.read(posNewSaleCartProvider).selectedCustomer?.customerId;
     ref.read(posNewSaleCartProvider.notifier).setCustomer(result.customer);
+    if (previousCustomerId != result.customer.customerId) {
+      final rebindError = await rebindPosDiscountsAfterCustomerChange(
+        read: ref.read,
+        invalidate: ref.invalidate,
+      );
+      if (!mounted) {
+        return;
+      }
+      if (rebindError != null) {
+        _showMessage(rebindError);
+        return;
+      }
+    } else {
+      ref.invalidate(posCheckoutSummaryProvider);
+    }
+    if (!mounted) {
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content:
@@ -324,6 +422,49 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
 
     await ref.read(customersProvider.notifier).refreshAfterMutation();
     _showMessage('Customer updated successfully.');
+  }
+
+  Future<void> _deactivateCustomer() async {
+    final selected = ref.read(customersProvider).selectedCustomer;
+    if (selected == null || !selected.isActive || !mounted) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Deactivate customer?'),
+        content: Text(
+          '${selected.displayName} will no longer be eligible for new sales.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Deactivate'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await ref.read(customersProvider.notifier).updateCustomer(
+            customerId: selected.customerId,
+            fullName: selected.fullName,
+            phone: selected.phone,
+            email: selected.email,
+            status: 'INACTIVE',
+          );
+      await ref.read(customersProvider.notifier).refreshAfterMutation();
+      _showMessage('Customer deactivated successfully.');
+    } on DioException catch (error) {
+      _showMessage(error.response?.data is Map
+          ? (error.response?.data['message']?.toString() ??
+              'Unable to deactivate customer.')
+          : 'Unable to deactivate customer.');
+    }
   }
 
   void _showMessage(String message) {

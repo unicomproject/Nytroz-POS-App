@@ -27,6 +27,9 @@ void main() {
     expect(repo.created.single.toJson(), isNot(contains('expiresAt')));
     expect(repo.created.single.reason, 'keep');
     expect(container.read(posNewSaleCartProvider).hasItems, isFalse);
+    final notifier = container.read(posParkedSaleProvider.notifier);
+    expect(notifier.totalCount, 1);
+    expect(notifier.totalValue, 1500);
   });
 
   test('timeout preserves cart and unchanged retry reuses idempotency key',

@@ -20,6 +20,12 @@ class PosCartDiscount {
     this.status = 'local',
     this.cartHash,
     this.source = 'MANUAL',
+    this.scope = 'ORDER',
+    this.targetVariantId,
+    this.discountAmount,
+    this.totalAfterDiscount,
+    this.currencyCode = 'LKR',
+    this.expiresAt,
   });
 
   final PosDiscountValueType valueType;
@@ -30,6 +36,12 @@ class PosCartDiscount {
   final String status;
   final String? cartHash;
   final String source;
+  final String scope;
+  final String? targetVariantId;
+  final int? discountAmount;
+  final int? totalAfterDiscount;
+  final String currencyCode;
+  final DateTime? expiresAt;
 
   bool get isBackendApproved =>
       applicationId != null && (status == 'approved' || status == 'applied');
@@ -44,11 +56,22 @@ class PosCartDiscount {
         status: status ?? this.status,
         cartHash: cartHash,
         source: source,
+        scope: scope,
+        targetVariantId: targetVariantId,
+        discountAmount: discountAmount,
+        totalAfterDiscount: totalAfterDiscount,
+        currencyCode: currencyCode,
+        expiresAt: expiresAt,
       );
 
   int amountFor(int baseAmount) {
     if (baseAmount <= 0 || value <= 0) {
       return 0;
+    }
+
+    final authoritativeAmount = discountAmount;
+    if (authoritativeAmount != null) {
+      return authoritativeAmount.clamp(0, baseAmount);
     }
 
     final amount = switch (valueType) {
@@ -69,6 +92,12 @@ class PosCartDiscount {
       'status': status,
       'cartHash': cartHash,
       'source': source,
+      'scope': scope,
+      'targetVariantId': targetVariantId,
+      'discountAmount': discountAmount,
+      'totalAfterDiscount': totalAfterDiscount,
+      'currencyCode': currencyCode,
+      'expiresAt': expiresAt?.toIso8601String(),
     };
   }
 
@@ -88,8 +117,20 @@ class PosCartDiscount {
       status: _nullableString(json['status']) ?? 'local',
       cartHash: _nullableString(json['cartHash']),
       source: _nullableString(json['source']) ?? 'MANUAL',
+      scope: _nullableString(json['scope']) ?? 'ORDER',
+      targetVariantId: _nullableString(json['targetVariantId']),
+      discountAmount: _nullableInt(json['discountAmount']),
+      totalAfterDiscount: _nullableInt(json['totalAfterDiscount']),
+      currencyCode: _nullableString(json['currencyCode']) ?? 'LKR',
+      expiresAt: DateTime.tryParse(json['expiresAt']?.toString() ?? ''),
     );
   }
+}
+
+int? _nullableInt(Object? value) {
+  if (value == null) return null;
+  if (value is num) return value.round();
+  return int.tryParse(value.toString());
 }
 
 double _doubleValue(Object? value) {

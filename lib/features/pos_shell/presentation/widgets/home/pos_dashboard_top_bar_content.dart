@@ -40,7 +40,10 @@ class PosDashboardTopBarContent extends ConsumerWidget {
           children: [
             ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: constraints.maxWidth < 700 ? 180 : 240,
+                maxWidth:
+                    constraints.maxWidth < TenantAdminBreakpoints.smallTablet
+                        ? 180
+                        : 240,
               ),
               child: PosOperationalContextCard(
                 icon: Icons.location_on_outlined,
@@ -51,7 +54,10 @@ class PosDashboardTopBarContent extends ConsumerWidget {
             const SizedBox(width: TenantAdminSpacing.lg),
             ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: constraints.maxWidth < 700 ? 180 : 240,
+                maxWidth:
+                    constraints.maxWidth < TenantAdminBreakpoints.smallTablet
+                        ? 180
+                        : 240,
               ),
               child: PosOperationalContextCard(
                 icon: Icons.point_of_sale_outlined,
@@ -62,7 +68,7 @@ class PosDashboardTopBarContent extends ConsumerWidget {
           ],
         );
 
-        if (constraints.maxWidth < 900) {
+        if (constraints.maxWidth < TenantAdminBreakpoints.tablet) {
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
