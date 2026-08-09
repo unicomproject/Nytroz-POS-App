@@ -29,99 +29,58 @@ class CustomersPagination extends StatelessWidget {
     final pages = _visiblePages(page, safeTotalPages);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        TenantAdminSpacing.lg,
-        TenantAdminSpacing.md,
-        TenantAdminSpacing.lg,
-        TenantAdminSpacing.md,
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 640;
-          final summary = Text(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: Row(
+        children: [
+          Text(
             'Showing $rangeStart to $rangeEnd of $totalCount customers',
             style: const TextStyle(
-              color: TenantAdminColors.mutedText,
+              color: Color(0xFF8E9BAE),
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
-          );
-
-          final controls = Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _PageIconButton(
-                icon: Icons.first_page_rounded,
-                enabled: !isLoading && page > 1,
-                onPressed: () => onPageChanged(1),
-              ),
-              _PageIconButton(
-                icon: Icons.chevron_left_rounded,
-                enabled: !isLoading && page > 1,
-                onPressed: () => onPageChanged(page - 1),
-              ),
-              for (final entry in pages)
-                entry == null
-                    ? const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4),
-                        child: Text('…'),
-                      )
-                    : _PageNumberButton(
-                        page: entry,
-                        selected: entry == page,
-                        enabled: !isLoading,
-                        onPressed: () => onPageChanged(entry),
-                      ),
-              _PageIconButton(
-                icon: Icons.chevron_right_rounded,
-                enabled: !isLoading && page < safeTotalPages,
-                onPressed: () => onPageChanged(page + 1),
-              ),
-              _PageIconButton(
-                icon: Icons.last_page_rounded,
-                enabled: !isLoading && page < safeTotalPages,
-                onPressed: () => onPageChanged(safeTotalPages),
-              ),
-            ],
-          );
-
-          if (compact) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                summary,
-                const SizedBox(height: TenantAdminSpacing.sm),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: controls,
-                ),
-              ],
-            );
-          }
-
-          return Row(
-            children: [
-              Expanded(child: summary),
-              controls,
-            ],
-          );
-        },
+          ),
+          const Spacer(),
+          _PageIconButton(
+            icon: Icons.chevron_left_rounded,
+            enabled: !isLoading && page > 1,
+            onPressed: () => onPageChanged(page - 1),
+          ),
+          const SizedBox(width: 4),
+          for (final entry in pages)
+            entry == null
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child:
+                        Text('…', style: TextStyle(color: Color(0xFF8E9BAE))),
+                  )
+                : _PageNumberButton(
+                    page: entry,
+                    selected: entry == page,
+                    enabled: !isLoading,
+                    onPressed: () => onPageChanged(entry),
+                  ),
+          const SizedBox(width: 4),
+          _PageIconButton(
+            icon: Icons.chevron_right_rounded,
+            enabled: !isLoading && page < safeTotalPages,
+            onPressed: () => onPageChanged(page + 1),
+          ),
+        ],
       ),
     );
   }
 
   List<int?> _visiblePages(int current, int total) {
-    if (total <= 7) {
+    if (total <= 5) {
       return [for (var i = 1; i <= total; i++) i];
     }
-
     final pages = <int?>{1, total, current};
     for (var i = current - 1; i <= current + 1; i++) {
       if (i > 1 && i < total) {
         pages.add(i);
       }
     }
-
     final sorted = pages.whereType<int>().toList()..sort();
     final result = <int?>[];
     for (var i = 0; i < sorted.length; i++) {
@@ -147,10 +106,21 @@ class _PageIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: enabled ? onPressed : null,
-      icon: Icon(icon, size: 20),
-      visualDensity: VisualDensity.compact,
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFE2E6ED)),
+      ),
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        onPressed: enabled ? onPressed : null,
+        icon: Icon(icon,
+            size: 18,
+            color: enabled ? Colors.black87 : const Color(0xFFC4CBD4)),
+      ),
     );
   }
 }
@@ -172,39 +142,49 @@ class _PageNumberButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: TextButton(
-        onPressed: enabled ? onPressed : null,
-        style: TextButton.styleFrom(
-          minimumSize: const Size(36, 36),
-          backgroundColor:
-              selected ? TenantAdminColors.primary : Colors.transparent,
-          foregroundColor: selected ? Colors.white : TenantAdminColors.bodyText,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+      child: InkWell(
+        onTap: enabled ? onPressed : null,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFFF3214) : Colors.white,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color:
+                  selected ? const Color(0xFFFF3214) : const Color(0xFFE2E6ED),
+            ),
           ),
-        ),
-        child: Text(
-          '$page',
-          style: const TextStyle(fontWeight: FontWeight.w800),
+          child: Text(
+            '$page',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 12,
+              color: selected ? Colors.white : Colors.black87,
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-/// Shared loading/empty/error body for the customers table section.
 class CustomersTableBodyStates {
   const CustomersTableBodyStates._();
 
-  static Widget loading() => const SingleChildScrollView(
+  static Widget loading() => const Padding(
         padding: EdgeInsets.all(TenantAdminSpacing.xl),
-        child: TenantAdminLoadingSkeleton(rowCount: 6),
+        child: TenantAdminLoadingSkeleton(rowCount: 4),
       );
 
   static Widget empty({required String title, required String message}) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(TenantAdminSpacing.xl),
-      child: TenantAdminEmptyState(title: title, message: message),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+        child: TenantAdminEmptyState(title: title, message: message),
+      ),
     );
   }
 
@@ -212,12 +192,14 @@ class CustomersTableBodyStates {
     required String message,
     required VoidCallback onRetry,
   }) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(TenantAdminSpacing.xl),
-      child: TenantAdminErrorState(
-        title: 'Unable to load customers',
-        message: message,
-        onRetry: onRetry,
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+        child: TenantAdminErrorState(
+          title: 'Unable to load customers',
+          message: message,
+          onRetry: onRetry,
+        ),
       ),
     );
   }

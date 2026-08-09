@@ -216,6 +216,8 @@ class CompletedSaleReceipt {
     required this.paymentMethods,
     required this.amountTendered,
     required this.change,
+    this.customerName,
+    this.customerPhone,
     this.barcodeValue = '',
     this.footerLines = const [],
     this.tenders = const [],
@@ -239,6 +241,8 @@ class CompletedSaleReceipt {
   final String tillName;
   final String cashierId;
   final String cashierName;
+  final String? customerName;
+  final String? customerPhone;
   final String deviceId;
   final String currency;
   final List<CompletedSaleReceiptLine> items;
@@ -273,6 +277,8 @@ class CompletedSaleReceipt {
         'tillName': tillName,
         'cashierId': cashierId,
         'cashierName': cashierName,
+        'customerName': customerName,
+        'customerPhone': customerPhone,
         'deviceId': deviceId,
         'currency': currency,
         'items': items.map((item) => item.toJson()).toList(growable: false),
@@ -313,6 +319,8 @@ class CompletedSaleReceipt {
       tillName: json['tillName']?.toString() ?? '',
       cashierId: json['cashierId']?.toString() ?? '',
       cashierName: json['cashierName']?.toString() ?? '',
+      customerName: json['customerName']?.toString(),
+      customerPhone: json['customerPhone']?.toString(),
       deviceId: json['deviceId']?.toString() ?? '',
       currency: json['currency']?.toString() ?? '',
       items: (json['items'] as List? ?? const [])

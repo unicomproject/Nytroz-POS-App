@@ -171,6 +171,9 @@ class PosCheckoutStartPaymentPayload {
     this.copyPolicy = const PosReceiptCopyPolicyPayload(),
     this.taxRegistrationNumber,
     this.taxInvoiceLabel,
+    this.customerName,
+    this.customerPhone,
+    this.customerId,
     this.drawerOperationId,
     this.cashDrawerSettings,
     this.receiptDataJson,
@@ -201,6 +204,9 @@ class PosCheckoutStartPaymentPayload {
   final String? tillName;
   final String? cashierId;
   final String? cashierName;
+  final String? customerName;
+  final String? customerPhone;
+  final String? customerId;
   final List<PosReceiptTenderPayload> tenders;
   final List<PosReceiptDiscountPayload> discountLines;
   final List<PosReceiptTaxPayload> taxLines;
@@ -213,6 +219,18 @@ class PosCheckoutStartPaymentPayload {
 
   factory PosCheckoutStartPaymentPayload.fromJson(Map<String, dynamic> json) {
     return PosCheckoutStartPaymentPayload(
+      customerName: json['customerName']?.toString() ??
+          json['CustomerName']?.toString() ??
+          json['customer']?['name']?.toString() ??
+          json['Customer']?['Name']?.toString(),
+      customerPhone: json['customerPhone']?.toString() ??
+          json['CustomerPhone']?.toString() ??
+          json['customer']?['phone']?.toString() ??
+          json['Customer']?['Phone']?.toString(),
+      customerId: json['customerId']?.toString() ??
+          json['CustomerId']?.toString() ??
+          json['customer']?['id']?.toString() ??
+          json['Customer']?['Id']?.toString(),
       checkoutSessionId: json['checkoutSessionId']?.toString() ??
           json['CheckoutSessionId']?.toString() ??
           json['saleId']?.toString() ??

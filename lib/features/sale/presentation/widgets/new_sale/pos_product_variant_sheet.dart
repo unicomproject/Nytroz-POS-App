@@ -926,6 +926,8 @@ class _PosProductVariantSheetState
         'The selected variant is currently unavailable.',
       PosCartMutationResult.priceUnavailable =>
         'A valid price is not available for this product.',
+      PosCartMutationResult.discountMustBeRemoved =>
+        'Remove the active discount before changing the cart.',
       PosCartMutationResult.added ||
       PosCartMutationResult.quantityIncreased =>
         '',

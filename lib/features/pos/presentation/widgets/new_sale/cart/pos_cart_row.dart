@@ -25,6 +25,14 @@ class PosCartRow extends ConsumerWidget {
     final granted = session?.permissionCodes.toSet() ?? const <String>{};
     final canUpdateItems = PosPermissionAccess.canUpdateCartItem(granted);
     final canRemoveItems = PosPermissionAccess.canRemoveCartItem(granted);
+    void reportBlockedMutation(bool changed) {
+      if (changed) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+          'Remove the active discount before changing the cart.',
+        ),
+      ));
+    }
 
     return InkWell(
       onTap: onTap,
@@ -86,12 +94,12 @@ class PosCartRow extends ConsumerWidget {
                   child: PosQuantityStepper(
                     quantity: item.quantity,
                     onIncrement: canUpdateItems
-                        ? () =>
-                            notifier.increaseQuantity(item.product.cartLineKey)
+                        ? () => reportBlockedMutation(
+                            notifier.increaseQuantity(item.product.cartLineKey))
                         : null,
                     onDecrement: canUpdateItems
-                        ? () =>
-                            notifier.decreaseQuantity(item.product.cartLineKey)
+                        ? () => reportBlockedMutation(
+                            notifier.decreaseQuantity(item.product.cartLineKey))
                         : null,
                   ),
                 ),
@@ -127,8 +135,8 @@ class PosCartRow extends ConsumerWidget {
                 child: canRemoveItems
                     ? IconButton(
                         visualDensity: VisualDensity.compact,
-                        onPressed: () =>
-                            notifier.removeItem(item.product.cartLineKey),
+                        onPressed: () => reportBlockedMutation(
+                            notifier.removeItem(item.product.cartLineKey)),
                         icon: const Icon(Icons.close_rounded, size: 20),
                         color: const Color(0xFF2563EB),
                         tooltip: 'Remove item',

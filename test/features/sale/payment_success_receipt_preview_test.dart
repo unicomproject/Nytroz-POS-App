@@ -113,6 +113,71 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+      'displays selected customer name on Left summary and Right receipt preview',
+      (tester) async {
+    final customSuccessData = PosCashPaymentSuccessData(
+      receiptNumber: 'RCP-000100',
+      barcodeValue: 'RCP-000100',
+      saleId: 'sale-1',
+      customerName: 'Maya Silva',
+      customerPhone: '+94771234567',
+      completedAt: DateTime.utc(2026, 8, 8, 6, 34),
+      itemCount: 2,
+      subtotal: 570000,
+      discount: 0,
+      tax: 0,
+      total: 570000,
+      cashReceived: 570000,
+      changeDue: 0,
+      items: const [
+        PosCashPaymentSuccessLineItem(
+          name: 'Team Jersey',
+          quantity: 1,
+          unitPrice: 450000,
+          lineTotal: 450000,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: PaymentSuccessScreenBody(
+              successData: customSuccessData,
+              cashierName: 'Kavin',
+              sessionContext: _sessionContext,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Customer'), findsWidgets);
+    expect(find.text('Maya Silva'), findsWidgets);
+  });
+
+  testWidgets('displays Walk-in Customer fallback when customer is null',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: PaymentSuccessScreenBody(
+              successData: _successData,
+              cashierName: 'Kavin',
+              sessionContext: _sessionContext,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Customer'), findsWidgets);
+    expect(find.text('Walk-in Customer'), findsWidgets);
+  });
 }
 
 final _successData = PosCashPaymentSuccessData(

@@ -185,8 +185,12 @@ class PosParkedSaleNotifier extends AsyncNotifier<List<PosParkedSale>> {
       _pendingKey = null;
       _pendingFingerprint = null;
       final current = state.valueOrNull ?? const <PosParkedSale>[];
+      final isNewSale = !current.any((x) => x.id == sale.id);
+      if (isNewSale) {
+        totalCount += 1;
+        totalValue += sale.total;
+      }
       state = AsyncData([sale, ...current.where((x) => x.id != sale.id)]);
-      totalCount += current.any((x) => x.id == sale.id) ? 0 : 1;
       _setOperation(PosParkedSaleOperation.createSuccess);
       return sale;
     } catch (e) {
@@ -701,6 +705,7 @@ class PosParkedSale {
     final customerIdValue = recalled.customerId?.trim();
     return PosNewSaleCartState(
       items: recalledItems,
+      editableSaleId: recalled.saleId,
       selectedCustomer: customerIdValue?.isNotEmpty == true
           ? PosCustomer(
               customerId: customerIdValue!,

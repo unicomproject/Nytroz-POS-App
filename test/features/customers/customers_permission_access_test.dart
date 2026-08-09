@@ -115,9 +115,23 @@ void main() {
         'ECOMMERCE',
       );
       expect(
+        const CustomersState(
+          sourceFilter: CustomerSourceFilter.clickAndCollect,
+        ).apiSource,
+        'CLICK_AND_COLLECT',
+      );
+      expect(
         const CustomersState(sourceFilter: CustomerSourceFilter.import)
             .apiSource,
         'IMPORT',
+      );
+    });
+
+    test('maps blocked status to canonical backend code', () {
+      expect(
+        const CustomersState(statusFilter: CustomerStatusFilter.blocked)
+            .apiStatus,
+        'BLOCKED',
       );
     });
   });
@@ -187,6 +201,34 @@ void main() {
       expect(summary.activeCustomers, 8);
       expect(summary.customersWithOrders, 5);
       expect(summary.newCustomersThisMonth, 2);
+    });
+
+    test('order maps tillName and average order value handles edge cases', () {
+      final order = PosCustomerOrder.fromJson({
+        'orderId': 'o1',
+        'orderNumber': 'SO-1',
+        'orderDate': '2026-08-08T10:00:00Z',
+        'totalAmount': 2800,
+        'currencyCode': 'LKR',
+        'status': 'COMPLETED',
+        'outletDisplayName': 'Development Main Store',
+        'tillName': 'Front Till 01',
+      });
+      expect(order.tillName, 'Front Till 01');
+
+      const normal = PosCustomer(
+        customerId: 'c1',
+        fullName: 'Normal',
+        totalOrderCount: 2,
+        totalSpentAmount: 5000,
+        currencyCode: 'LKR',
+      );
+      expect(normal.averageOrderValueDisplay, 'LKR 2500.00');
+      expect(
+        const PosCustomer(customerId: 'c2', fullName: 'Zero')
+            .averageOrderValueDisplay,
+        '—',
+      );
     });
   });
 }

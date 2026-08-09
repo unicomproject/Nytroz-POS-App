@@ -21,6 +21,9 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
     PosNewSaleProduct product, {
     int quantity = 1,
   }) {
+    if (state.hasDiscount) {
+      return PosCartMutationResult.discountMustBeRemoved;
+    }
     if (quantity <= 0) {
       return PosCartMutationResult.invalidQuantity;
     }
@@ -47,12 +50,14 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
         : PosCartMutationResult.quantityIncreased;
   }
 
-  void updateCartItem({
+  bool updateCartItem({
     required String cartLineKey,
     required PosNewSaleProduct product,
     required int quantity,
   }) {
+    if (state.hasDiscount) return false;
     _upsertCartItem(product, quantity, replaceKey: cartLineKey);
+    return true;
   }
 
   void _upsertCartItem(
@@ -80,10 +85,11 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
     );
   }
 
-  void decreaseQuantity(String cartLineKey) {
+  bool decreaseQuantity(String cartLineKey) {
+    if (state.hasDiscount) return false;
     final existingItem = state.items[cartLineKey];
     if (existingItem == null) {
-      return;
+      return false;
     }
 
     final updatedItems = Map<String, PosNewSaleCartItem>.of(state.items);
@@ -99,20 +105,24 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
       items: _withoutItemDiscounts(updatedItems),
       cartDiscountSet: true,
     );
+    return true;
   }
 
-  void increaseQuantity(String cartLineKey) {
+  bool increaseQuantity(String cartLineKey) {
+    if (state.hasDiscount) return false;
     final existingItem = state.items[cartLineKey];
     if (existingItem == null) {
-      return;
+      return false;
     }
 
-    addToCart(existingItem.product);
+    final result = addToCart(existingItem.product);
+    return result == PosCartMutationResult.quantityIncreased;
   }
 
-  void removeItem(String cartLineKey) {
+  bool removeItem(String cartLineKey) {
+    if (state.hasDiscount) return false;
     if (!state.items.containsKey(cartLineKey)) {
-      return;
+      return false;
     }
 
     final updatedItems = Map<String, PosNewSaleCartItem>.of(state.items)
@@ -121,6 +131,7 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
       items: _withoutItemDiscounts(updatedItems),
       cartDiscountSet: true,
     );
+    return true;
   }
 
   void clear() {
@@ -199,7 +210,9 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
   }
 
   void clearDiscounts() {
-    if (!state.hasDiscount) {
+    final hasDiscountObjects = state.cartDiscount != null ||
+        state.items.values.any((item) => item.discount != null);
+    if (!state.hasDiscount && !hasDiscountObjects) {
       return;
     }
 
@@ -218,11 +231,13 @@ class PosNewSaleCartState {
     this.items = const {},
     this.selectedCustomer,
     this.cartDiscount,
+    this.editableSaleId,
   });
 
   final Map<String, PosNewSaleCartItem> items;
   final PosCustomer? selectedCustomer;
   final PosCartDiscount? cartDiscount;
+  final String? editableSaleId;
 
   bool get hasItems => items.isNotEmpty;
 
@@ -296,12 +311,15 @@ class PosNewSaleCartState {
     bool selectedCustomerSet = false,
     PosCartDiscount? cartDiscount,
     bool cartDiscountSet = false,
+    String? editableSaleId,
+    bool editableSaleIdSet = false,
   }) {
     return PosNewSaleCartState(
       items: items ?? this.items,
       selectedCustomer:
           selectedCustomerSet ? selectedCustomer : this.selectedCustomer,
       cartDiscount: cartDiscountSet ? cartDiscount : this.cartDiscount,
+      editableSaleId: editableSaleIdSet ? editableSaleId : this.editableSaleId,
     );
   }
 }
@@ -419,6 +437,7 @@ enum PosCartMutationResult {
   productUnavailable,
   variantUnavailable,
   priceUnavailable,
+  discountMustBeRemoved,
 }
 
 String formatLkr(int value) {

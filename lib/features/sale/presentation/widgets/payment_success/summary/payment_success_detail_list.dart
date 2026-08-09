@@ -101,6 +101,13 @@ class PaymentSuccessDetailList extends StatelessWidget {
           label: 'Cashier',
           value: snapshot?.operatorDetails.cashierName ?? cashierName,
         ),
+        _DetailRow(
+          icon: Icons.person_pin_outlined,
+          label: 'Customer',
+          value: successData.customerName?.trim().isNotEmpty == true
+              ? successData.customerName!.trim()
+              : 'Walk-in Customer',
+        ),
         ...tenderRows,
         _DetailRow(
           icon: Icons.attach_money_rounded,

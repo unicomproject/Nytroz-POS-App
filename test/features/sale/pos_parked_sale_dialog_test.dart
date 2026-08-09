@@ -17,6 +17,9 @@ void main() {
     addTearDown(h.dispose);
     await _open(tester);
     expect(find.text('Parked Sales'), findsOneWidget);
+    expect(find.text('Parked Sales Summary'), findsNothing);
+    expect(find.byKey(const ValueKey('dashboard-parked-sales-summary')),
+        findsNothing);
     expect(find.text('1 active'), findsOneWidget);
     expect(find.text('PS-2026-00021'), findsOneWidget);
     expect(find.text('Maya Silva'), findsOneWidget);

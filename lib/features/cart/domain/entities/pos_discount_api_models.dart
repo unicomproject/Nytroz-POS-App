@@ -114,6 +114,59 @@ class PosDiscountApplyResult {
       );
 }
 
+class PosDiscountValidationResult {
+  const PosDiscountValidationResult({
+    required this.discountId,
+    required this.isValid,
+    required this.outcome,
+    required this.calculationMethod,
+    required this.requestedValue,
+    required this.cashierLimit,
+    required this.absoluteLimit,
+    required this.subtotal,
+    required this.eligibleSubtotal,
+    required this.discountAmount,
+    required this.totalAfterDiscount,
+    required this.currencyCode,
+    required this.cartHash,
+    required this.validationMessages,
+  });
+
+  final String discountId;
+  final bool isValid;
+  final String outcome;
+  final String calculationMethod;
+  final double requestedValue;
+  final double cashierLimit;
+  final double absoluteLimit;
+  final int subtotal;
+  final int eligibleSubtotal;
+  final int discountAmount;
+  final int totalAfterDiscount;
+  final String currencyCode;
+  final String cartHash;
+  final List<String> validationMessages;
+
+  factory PosDiscountValidationResult.fromJson(Map<String, dynamic> json) =>
+      PosDiscountValidationResult(
+        discountId: json['discountId']?.toString() ?? '',
+        isValid: json['isValid'] == true,
+        outcome: json['outcome']?.toString() ?? '',
+        calculationMethod: json['calculationMethod']?.toString() ?? '',
+        requestedValue: _double(json['requestedValue']),
+        cashierLimit: _double(json['cashierLimit']),
+        absoluteLimit: _double(json['absoluteLimit']),
+        subtotal: _int(json['subtotal']),
+        eligibleSubtotal: _int(json['eligibleSubtotal']),
+        discountAmount: _int(json['discountAmount']),
+        totalAfterDiscount: _int(json['totalAfterDiscount']),
+        currencyCode: json['currencyCode']?.toString() ?? 'LKR',
+        cartHash: json['cartHash']?.toString() ?? '',
+        validationMessages:
+            _list(json['validationMessages']).map((x) => x.toString()).toList(),
+      );
+}
+
 Map<String, dynamic> _map(Object? value) =>
     value is Map ? Map<String, dynamic>.from(value) : const {};
 List<dynamic> _list(Object? value) => value is List ? value : const [];

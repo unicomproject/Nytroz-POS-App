@@ -52,6 +52,25 @@ void main() {
     expect(find.text('PS-2026-00099'), findsOneWidget);
   });
 
+  testWidgets('dashboard route shows the parked sales side summary',
+      (tester) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final harness = await _pump(tester, repo: _Repo(holds: [_hold]));
+    addTearDown(harness.dispose);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('dashboard-parked-sales-summary')),
+        findsOneWidget);
+    expect(find.text('Parked Sales Summary'), findsOneWidget);
+    expect(find.text('Total Parked Sales'), findsOneWidget);
+    expect(find.text('Total Parked Value'), findsOneWidget);
+    expect(find.text('Start New Sale'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('closing View keeps the Parked Sales route mounted',
       (tester) async {
     final harness = await _pump(tester, repo: _Repo(holds: [_hold]));
@@ -160,7 +179,12 @@ class _Repo implements PosParkedSaleRepository {
       failFirstList = false;
       throw Exception('Parked sales are unavailable.');
     }
-    return PosHoldListDto(holds, holds.length);
+    return PosHoldListDto(
+      holds,
+      holds.length,
+      totalValue: holds.fold(0, (sum, hold) => sum + hold.total),
+      currency: 'LKR',
+    );
   }
 
   @override

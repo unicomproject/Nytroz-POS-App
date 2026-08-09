@@ -44,8 +44,8 @@ void main() {
       deviceId: 'device-1',
       discountSource: 'MANUAL',
       scope: 'LINE',
-      calculationMethod: 'FIXED_AMOUNT',
-      requestedValue: 100,
+      calculationMethod: 'PERCENTAGE',
+      requestedValue: 10,
       targetVariantId: 'backend-variant-1',
       lines: const [
         PosCheckoutLineRequest(variantId: 'backend-variant-1', quantity: 2),
@@ -57,6 +57,53 @@ void main() {
     expect(adapter.lastBody['scope'], 'LINE');
     expect(adapter.lastBody['targetVariantId'], 'backend-variant-1');
     expect(adapter.lastBody, isNot(contains('discountId')));
+  });
+
+  test('manual validation sends no policy id and maps authoritative preview',
+      () async {
+    final adapter = _CapturingAdapter(
+      responseJson: {
+        'data': {
+          'discountId': '',
+          'isValid': true,
+          'outcome': 'DIRECT_APPLY',
+          'calculationMethod': 'PERCENTAGE',
+          'requestedValue': 10,
+          'cashierLimit': 20,
+          'absoluteLimit': 20,
+          'subtotal': 3200,
+          'eligibleSubtotal': 3200,
+          'discountAmount': 320,
+          'totalAfterDiscount': 2880,
+          'currencyCode': 'LKR',
+          'cartHash': 'authoritative-hash',
+          'validationMessages': <String>[],
+        },
+      },
+    );
+    final dio = Dio(BaseOptions(baseUrl: 'http://localhost'))
+      ..httpClientAdapter = adapter;
+
+    final result = await PosDiscountRemoteDatasource(dio).validate(
+      deviceId: 'device-1',
+      scope: 'LINE',
+      calculationMethod: 'PERCENTAGE',
+      requestedValue: 10,
+      targetVariantId: 'backend-variant-1',
+      lines: const [
+        PosCheckoutLineRequest(variantId: 'backend-variant-1', quantity: 1),
+      ],
+    );
+
+    expect(adapter.lastPath, ApiEndpoints.posDiscountValidate);
+    expect(adapter.lastBody['discountSource'], 'MANUAL');
+    expect(adapter.lastBody['discountId'], isNull);
+    expect(adapter.lastBody['targetVariantId'], 'backend-variant-1');
+    expect(result.isValid, isTrue);
+    expect(result.outcome, 'DIRECT_APPLY');
+    expect(result.discountAmount, 320);
+    expect(result.totalAfterDiscount, 2880);
+    expect(result.cartHash, 'authoritative-hash');
   });
 
   test('predefined item catalog requests LINE scope and variant id', () async {

@@ -22,12 +22,6 @@ class PaymentMethodsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         key: const ValueKey('payment-methods-section'),
-        padding: const EdgeInsets.all(PaymentMethodStyle.padding),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: PaymentMethodStyle.border),
-          borderRadius: BorderRadius.circular(PaymentMethodStyle.panelRadius),
-        ),
         child: Column(children: [
           const Row(children: [
             Icon(Icons.credit_card_rounded,

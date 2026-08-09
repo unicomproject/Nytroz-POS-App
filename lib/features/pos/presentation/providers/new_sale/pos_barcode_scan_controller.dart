@@ -177,6 +177,8 @@ PosBarcodeScanOutcome _mapCartResult(PosCartMutationResult result) =>
         PosBarcodeScanOutcome.variantUnavailable,
       PosCartMutationResult.priceUnavailable =>
         PosBarcodeScanOutcome.priceUnavailable,
+      PosCartMutationResult.discountMustBeRemoved =>
+        PosBarcodeScanOutcome.productUnavailable,
     };
 
 PosBarcodeScanOutcome _mapDioError(DioException error) {
