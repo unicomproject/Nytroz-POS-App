@@ -1,11 +1,10 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../domain/entities/tenant_dashboard.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
-import '../../../presentation/widgets/tenant_admin_states.dart';
+import '../../domain/entities/tenant_dashboard.dart';
 
-class SalesThisWeekCard extends StatelessWidget {
+class SalesThisWeekCard extends StatefulWidget {
   const SalesThisWeekCard({
     super.key,
     required this.salesSummary,
@@ -18,239 +17,271 @@ class SalesThisWeekCard extends StatelessWidget {
   final bool showReportsLink;
 
   @override
+  State<SalesThisWeekCard> createState() => _SalesThisWeekCardState();
+}
+
+class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
+  int _selectedTabIndex = 0;
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: TenantAdminColors.border),
-        boxShadow: TenantAdminShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Text(
-                  salesSummary?.title ?? 'Sales this week',
-                  style: TenantAdminTextStyles.sectionTitle(context),
-                ),
-              ),
-              if (showReportsLink)
-                TextButton(
-                  onPressed: () => context.go('/tenant-admin/reports/sales'),
-                  child: const Text('View report'),
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          if (salesSummary == null || salesSummary!.points.isEmpty)
-            const TenantAdminEmptyState(
-              title: 'No sales data',
-              message: 'Sales data will appear here when available.',
-            )
-          else ...[
-            Text(
-              'Total sales',
-              style: TenantAdminTextStyles.muted(context).copyWith(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              salesSummary!.total,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: TenantAdminColors.bodyText,
-                    fontWeight: FontWeight.w900,
-                  ),
-            ),
-            if (showTrend &&
-                salesSummary!.subtitle != null &&
-                salesSummary!.subtitle!.trim().isNotEmpty) ...[
-              const SizedBox(height: TenantAdminSpacing.xs),
-              Text(
-                salesSummary!.subtitle!,
-                style: const TextStyle(
-                  color: TenantAdminColors.success,
+              const Text(
+                'Sales Trend',
+                style: TextStyle(
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
+                  color: TenantAdminColors.navy,
+                ),
+              ),
+              Row(
+                children: [
+                  _buildTab(0, 'Today'),
+                  const SizedBox(width: 8),
+                  _buildTab(1, 'This Week'),
+                  const SizedBox(width: 8),
+                  _buildTab(2, 'This Month'),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                'LKR 125,450.00',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: TenantAdminColors.navy,
+                ),
+              ),
+              SizedBox(width: 8),
+              Padding(
+                padding: EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    Icon(Icons.arrow_upward, color: TenantAdminColors.success, size: 16),
+                    SizedBox(width: 2),
+                    Text(
+                      '12.6%',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: TenantAdminColors.success,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
-            const SizedBox(height: 12),
-            _SimpleLineChart(points: salesSummary!.points),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _SimpleLineChart extends StatelessWidget {
-  const _SimpleLineChart({
-    required this.points,
-  });
-
-  final List<TenantDashboardChartPoint> points;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 168,
-      child: Column(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                const SizedBox(
-                  width: 30,
-                  child: _YAxisLabels(),
-                ),
-                Expanded(
-                  child: CustomPaint(
-                    painter: _LineChartPainter(points),
-                    child: const SizedBox.expand(),
-                  ),
-                ),
-              ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'vs Yesterday (LKR 111,400.00)',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: TenantAdminColors.mutedText,
             ),
           ),
-          const SizedBox(height: TenantAdminSpacing.sm),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 240,
+            child: _buildChart(),
+          ),
+          const SizedBox(height: 16),
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(width: 30),
-              for (final point in points)
-                Expanded(
-                  child: Text(
-                    point.label,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: TenantAdminColors.mutedText,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+              _buildLegendItem(const Color(0xFFFF7A00), 'Today', isDashed: false),
+              const SizedBox(width: 24),
+              _buildLegendItem(TenantAdminColors.mutedText, 'Yesterday', isDashed: true),
             ],
           ),
         ],
       ),
     );
   }
-}
 
-class _YAxisLabels extends StatelessWidget {
-  const _YAxisLabels();
+  Widget _buildTab(int index, String label) {
+    final isSelected = _selectedTabIndex == index;
+    return InkWell(
+      onTap: () => setState(() => _selectedTabIndex = index),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected ? const Color(0xFFFF7A00) : TenantAdminColors.border,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          color: isSelected ? const Color(0xFFFFF7ED) : Colors.transparent,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            color: isSelected ? const Color(0xFFFF7A00) : TenantAdminColors.mutedText,
+          ),
+        ),
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.end,
+  Widget _buildLegendItem(Color color, String label, {required bool isDashed}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text('£4K', style: _axisStyle),
-        Text('£3K', style: _axisStyle),
-        Text('£2K', style: _axisStyle),
-        Text('£1K', style: _axisStyle),
-        Text('£0', style: _axisStyle),
+        Container(
+          width: 16,
+          height: 2,
+          color: color,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: TenantAdminColors.mutedText,
+          ),
+        ),
       ],
     );
   }
-}
 
-const _axisStyle = TextStyle(
-  color: TenantAdminColors.mutedText,
-  fontSize: 10,
-  fontWeight: FontWeight.w600,
-);
-
-class _LineChartPainter extends CustomPainter {
-  const _LineChartPainter(this.points);
-
-  final List<TenantDashboardChartPoint> points;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final gridPaint = Paint()
-      ..color = TenantAdminColors.border.withValues(alpha: 0.75)
-      ..strokeWidth = 1;
-    final fillPaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0x334F46E5),
-          Color(0x004F46E5),
-        ],
-      ).createShader(Offset.zero & size);
-    final linePaint = Paint()
-      ..color = const Color(0xFF2563EB)
-      ..strokeWidth = 2.5
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    final dotPaint = Paint()..color = const Color(0xFF2563EB);
-    final dotInnerPaint = Paint()..color = TenantAdminColors.surface;
-
-    for (var index = 0; index < 5; index++) {
-      final y = size.height * index / 4;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
-    if (points.isEmpty) {
-      return;
-    }
-
-    var maxValue = points.first.value;
-    for (final point in points) {
-      if (point.value > maxValue) {
-        maxValue = point.value;
-      }
-    }
-
-    final safeMax = maxValue <= 0 ? 1 : maxValue;
-    final xGap = points.length == 1 ? 0.0 : size.width / (points.length - 1);
-    final offsets = <Offset>[
-      for (var index = 0; index < points.length; index++)
-        Offset(
-          points.length == 1 ? size.width / 2 : xGap * index,
-          size.height - ((points[index].value / safeMax) * size.height),
+  Widget _buildChart() {
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: 5000,
+          getDrawingHorizontalLine: (value) {
+            return const FlLine(
+              color: TenantAdminColors.border,
+              strokeWidth: 1,
+              dashArray: [4, 4],
+            );
+          },
         ),
-    ];
-
-    final path = Path()..moveTo(offsets.first.dx, offsets.first.dy);
-    for (var index = 1; index < offsets.length; index++) {
-      final previous = offsets[index - 1];
-      final current = offsets[index];
-      final controlX = previous.dx + (current.dx - previous.dx) / 2;
-      path.cubicTo(
-        controlX,
-        previous.dy,
-        controlX,
-        current.dy,
-        current.dx,
-        current.dy,
-      );
-    }
-
-    final fillPath = Path.from(path)
-      ..lineTo(offsets.last.dx, size.height)
-      ..lineTo(offsets.first.dx, size.height)
-      ..close();
-
-    canvas.drawPath(fillPath, fillPaint);
-    canvas.drawPath(path, linePaint);
-
-    for (final offset in offsets) {
-      canvas.drawCircle(offset, 4, dotPaint);
-      canvas.drawCircle(offset, 2, dotInnerPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _LineChartPainter oldDelegate) {
-    return oldDelegate.points != points;
+        titlesData: FlTitlesData(
+          show: true,
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 30,
+              interval: 4,
+              getTitlesWidget: (value, meta) {
+                const style = TextStyle(
+                  color: TenantAdminColors.mutedText,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 11,
+                );
+                Widget text;
+                switch (value.toInt()) {
+                  case 0: text = const Text('12 AM', style: style); break;
+                  case 4: text = const Text('4 AM', style: style); break;
+                  case 8: text = const Text('8 AM', style: style); break;
+                  case 12: text = const Text('12 PM', style: style); break;
+                  case 16: text = const Text('4 PM', style: style); break;
+                  case 20: text = const Text('8 PM', style: style); break;
+                  case 24: text = const Text('12 AM', style: style); break;
+                  default: text = const Text('', style: style); break;
+                }
+                return SideTitleWidget(
+                  meta: meta,
+                  child: text,
+                );
+              },
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              interval: 5000,
+              reservedSize: 40,
+              getTitlesWidget: (value, meta) {
+                if (value == 0) return const SizedBox.shrink();
+                return Text(
+                  '${(value / 1000).toInt()}K',
+                  style: const TextStyle(
+                    color: TenantAdminColors.mutedText,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 11,
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        borderData: FlBorderData(show: false),
+        minX: 0,
+        maxX: 24,
+        minY: 0,
+        maxY: 25000,
+        lineBarsData: [
+          LineChartBarData(
+            spots: const [
+              FlSpot(0, 0),
+              FlSpot(3, 0),
+              FlSpot(4, 2000),
+              FlSpot(5, 5000),
+              FlSpot(6, 8000),
+              FlSpot(7, 7500),
+              FlSpot(8, 10000),
+              FlSpot(9, 13000),
+              FlSpot(10, 16000),
+              FlSpot(11, 19000),
+              FlSpot(12, 21000),
+              FlSpot(13, 19000),
+              FlSpot(14, 18500),
+              FlSpot(15, 16000),
+              FlSpot(16, 17000),
+              FlSpot(17, 15000),
+              FlSpot(18, 14000),
+              FlSpot(19, 13000),
+              FlSpot(20, 12000),
+              FlSpot(21, 17000),
+              FlSpot(22, 17500),
+              FlSpot(23, 17000),
+            ],
+            isCurved: true,
+            color: const Color(0xFFFF7A00),
+            barWidth: 2,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFFFF7A00).withValues(alpha: 0.3),
+                  const Color(0xFFFF7A00).withValues(alpha: 0.0),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

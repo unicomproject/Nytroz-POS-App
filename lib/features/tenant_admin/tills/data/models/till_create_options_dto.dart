@@ -52,9 +52,9 @@ class TillOutletOptionDto {
 
   factory TillOutletOptionDto.fromJson(Map<String, dynamic> json) {
     return TillOutletOptionDto(
-      id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      code: json['code']?.toString() ?? '',
+      id: json['outletId']?.toString() ?? json['id']?.toString() ?? '',
+      name: json['outletName']?.toString() ?? json['name']?.toString() ?? '',
+      code: json['outletCode']?.toString() ?? json['code']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
     );
   }
