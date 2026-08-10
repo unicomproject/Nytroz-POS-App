@@ -6,6 +6,7 @@ import '../../../auth/presentation/providers/session_provider.dart';
 import '../../domain/entities/tenant_admin_context.dart';
 import '../../domain/entities/tenant_admin_menu_item.dart';
 import '../../domain/services/tenant_admin_access_checker.dart';
+import '../../inventory/presentation/navigation/inventory_sidebar_menu.dart';
 import '../../products/presentation/navigation/products_sidebar_menu.dart';
 import '../theme/tenant_admin_theme.dart';
 import 'tenant_admin_sidebar_items.dart';
@@ -131,6 +132,15 @@ class TenantAdminSidebar extends ConsumerWidget {
                         currentPath: currentPath,
                         collapsed: collapsed,
                         compact: compact || collapsed,
+                      )
+                    else if (item.key == 'inventory')
+                      InventorySidebarMenu(
+                        currentPath: currentPath,
+                        collapsed: collapsed,
+                        compact: compact || collapsed,
+                        onNavigate: () {
+                           // Optional callback if needed
+                        },
                       )
                     else
                       TenantAdminSidebarItem(

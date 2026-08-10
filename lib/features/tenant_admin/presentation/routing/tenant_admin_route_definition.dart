@@ -256,12 +256,26 @@ const tenantAdminRouteDefinitions = [
     permissionCode: 'tenant.stock.view',
   ),
   TenantAdminRouteDefinition(
+    path: '/tenant-admin/stock/dashboard',
+    menuKey: 'inventory',
+    title: 'Dashboard',
+    featureCode: 'inventory.stock',
+    permissionCode: 'tenant.stock.dashboard.view',
+  ),
+  TenantAdminRouteDefinition(
     path: '/tenant-admin/stock/current',
     menuKey: 'inventory',
     title: 'Current Stock',
     featureCode: 'inventory.stock',
     permissionCode: 'tenant.stock.view',
     subtitle: 'View stock availability across accessible outlets.',
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/stock/current/:variantId',
+    menuKey: 'inventory',
+    title: 'Product Stock Detail',
+    featureCode: 'inventory.stock',
+    permissionCode: 'tenant.stock.view',
   ),
   TenantAdminRouteDefinition(
     path: '/tenant-admin/stock/in',

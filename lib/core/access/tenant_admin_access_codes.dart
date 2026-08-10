@@ -141,6 +141,9 @@ class TenantAdminPermissionCodes {
   static const tenantProductsUpdate = 'tenant.products.update';
   static const tenantProductsDelete = 'tenant.products.delete';
   static const tenantProductsDetailsView = 'tenant.products.details.view';
+
+  // Inventory Permissions
+  static const tenantStockDashboardView = 'tenant.stock.dashboard.view';
   static const tenantStockView = 'tenant.stock.view';
   static const tenantStockIn = 'tenant.stock.in';
   static const tenantStockOut = 'tenant.stock.out';
