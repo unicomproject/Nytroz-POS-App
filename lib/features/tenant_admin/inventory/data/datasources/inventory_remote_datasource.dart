@@ -1,15 +1,75 @@
 import 'package:dio/dio.dart';
 
 import '../constants/inventory_api_paths.dart';
-import '../models/inventory_dto.dart';
+import '../models/inventory_dashboard_models.dart';
+import '../models/current_stock_dtos.dart';
 
 class InventoryRemoteDatasource {
   const InventoryRemoteDatasource(this._dio);
 
   final Dio _dio;
 
-  Future<CurrentStockPageDto> getCurrentStock(
-      CurrentStockQueryDto query) async {
+  Future<InventoryDashboardMetricsDto> getDashboardMetrics({String? outletId}) async {
+    final response = await _dio.get<dynamic>(
+      InventoryApiPaths.dashboard,
+      queryParameters: _queryParameters(outletId: outletId),
+    );
+
+    return InventoryDashboardMetricsDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<InventoryDashboardAlertsResponseDto> getDashboardAlerts({
+    String? outletId,
+    int page = 1,
+    int pageSize = 10,
+  }) async {
+    final response = await _dio.get<dynamic>(
+      InventoryApiPaths.dashboardAlerts,
+      queryParameters: _queryParameters(
+        outletId: outletId,
+        page: page,
+        pageSize: pageSize,
+      ),
+    );
+
+    return InventoryDashboardAlertsResponseDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<InventoryDashboardActivitiesResponseDto> getDashboardActivities({
+    String? outletId,
+    int page = 1,
+    int pageSize = 10,
+  }) async {
+    final response = await _dio.get<dynamic>(
+      InventoryApiPaths.dashboardActivities,
+      queryParameters: _queryParameters(
+        outletId: outletId,
+        page: page,
+        pageSize: pageSize,
+      ),
+    );
+
+    return InventoryDashboardActivitiesResponseDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<CurrentStockSummaryDto> getCurrentStockSummary({String? outletId}) async {
+    final response = await _dio.get<dynamic>(
+      InventoryApiPaths.currentStockSummary,
+      queryParameters: _queryParameters(outletId: outletId),
+    );
+
+    return CurrentStockSummaryDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<CurrentStockPageDto> getCurrentStock(CurrentStockQueryDto query) async {
     final response = await _dio.get<dynamic>(
       InventoryApiPaths.currentStock,
       queryParameters: query.toQueryParameters(),
@@ -20,42 +80,38 @@ class InventoryRemoteDatasource {
     );
   }
 
-  Future<CurrentStockSummaryDto> getCurrentStockSummary({
+  Future<ProductStockDetailDto> getProductStockDetail(String variantId, {String? outletId}) async {
+    final response = await _dio.get<dynamic>(
+      '${InventoryApiPaths.currentStock}/$variantId/detail',
+      queryParameters: _queryParameters(outletId: outletId),
+    );
+
+    return ProductStockDetailDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<StockMovementHistoryPageDto> getStockMovementHistory(String variantId, StockMovementHistoryQueryDto query) async {
+    final response = await _dio.get<dynamic>(
+      '${InventoryApiPaths.currentStock}/$variantId/movements',
+      queryParameters: query.toQueryParameters(),
+    );
+
+    return StockMovementHistoryPageDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Map<String, dynamic> _queryParameters({
     String? outletId,
-  }) async {
-    final response = await _dio.get<dynamic>(
-      InventoryApiPaths.currentStockSummary,
-      queryParameters: {
-        if (outletId != null && outletId.trim().isNotEmpty)
-          'outletId': outletId.trim(),
-      },
-    );
-
-    return CurrentStockSummaryDto.fromJson(
-      _unwrapApiPayload(response.data, response.requestOptions),
-    );
-  }
-
-  Future<StockInResponseDto> receiveStock(
-      CreateStockInRequestDto request) async {
-    final response = await _dio.post<dynamic>(
-      InventoryApiPaths.stockIn,
-      data: request.toJson(),
-    );
-
-    return StockInResponseDto.fromJson(
-      _unwrapApiPayload(response.data, response.requestOptions),
-    );
-  }
-
-  Future<VariantLookupDto> getProductVariants(String productId) async {
-    final response = await _dio.get<dynamic>(
-      InventoryApiPaths.productVariants(productId),
-    );
-
-    return VariantLookupDto.fromJson(
-      _unwrapApiPayload(response.data, response.requestOptions),
-    );
+    int? page,
+    int? pageSize,
+  }) {
+    return {
+      if (outletId != null && outletId.trim().isNotEmpty) 'outletId': outletId.trim(),
+      if (page != null) 'page': page,
+      if (pageSize != null) 'pageSize': pageSize,
+    };
   }
 
   Map<String, dynamic> _unwrapApiPayload(

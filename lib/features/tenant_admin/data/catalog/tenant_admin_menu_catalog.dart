@@ -80,7 +80,7 @@ const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
   TenantAdminMenuItem(
     key: 'inventory',
     label: 'Inventory',
-    route: '/tenant-admin/stock/current',
+    route: '/tenant-admin/stock/dashboard',
     iconKey: 'inventory',
     featureCode: TenantAdminFeatureCodes.inventoryManagement,
     permissionCode: TenantAdminPermissionCodes.tenantStockView,

@@ -32,8 +32,10 @@ import 'products/presentation/screens/product_list_screen.dart';
 import 'products/presentation/screens/popular_products_curation_screen.dart';
 import 'brands/presentation/screens/brand_list_screen.dart';
 import 'inventory/presentation/navigation/inventory_routes.dart';
-import 'inventory/presentation/screens/current_stock_screen.dart';
-import 'inventory/presentation/screens/stock_in_screen.dart';
+import 'inventory/presentation/dashboard/pages/inventory_dashboard_page.dart';
+import 'inventory/presentation/current_stock/screens/current_stock_screen.dart';
+import 'inventory/presentation/current_stock/screens/product_stock_detail_screen.dart';
+import 'inventory/presentation/stock_in/screens/stock_in_screen.dart';
 import 'reports/presentation/screens/outlet_report_screen.dart';
 import 'reports/presentation/screens/reports_dashboard_screen.dart';
 import 'reports/presentation/screens/sales_report_screen.dart';
@@ -99,10 +101,7 @@ List<RouteBase> tenantAdminRoutes(Ref ref) {
           path: '/tenant-admin/roles',
           redirect: (context, state) => '/tenant-admin/roles-permissions',
         ),
-        GoRoute(
-          path: InventoryRoutes.stockRoot,
-          redirect: (context, state) => InventoryRoutes.currentStock,
-        ),
+        // stockRoot is now handled by the dynamic loop below
         ...tenantAdminRouteDefinitions.map(
           (definition) => _tenantAdminModuleRoute(ref, definition),
         ),
@@ -298,8 +297,20 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return const PopularProductsCurationScreen();
   }
 
+  if (definition.path == InventoryRoutes.dashboard) {
+    return const InventoryDashboardPage();
+  }
+
   if (definition.path == InventoryRoutes.currentStock) {
     return const CurrentStockScreen();
+  }
+
+  if (definition.path == InventoryRoutes.currentStockDetail) {
+    final variantId = state.pathParameters['variantId'];
+    if (variantId != null) {
+      return ProductStockDetailScreen(variantId: variantId);
+    }
+    return const TenantAdminErrorScreen();
   }
 
   if (definition.path == InventoryRoutes.stockIn) {
@@ -498,7 +509,8 @@ bool _canAccessRoute(
     return accessChecker.canAccessProductModule();
   }
 
-  if (definition.path == InventoryRoutes.currentStock) {
+  if (definition.path == InventoryRoutes.currentStock ||
+      definition.path == InventoryRoutes.currentStockDetail) {
     return accessChecker.canAccessCurrentStockPage();
   }
 
