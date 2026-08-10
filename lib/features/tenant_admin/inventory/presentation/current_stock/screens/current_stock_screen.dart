@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:go_router/go_router.dart';
+import 'package:dio/dio.dart';
 
-
+import '../../../../../../core/network/dio_provider.dart';
+import '../../../../../../core/utils/file_downloader/file_downloader.dart';
 import '../../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../../presentation/widgets/tenant_admin_states.dart';
@@ -182,16 +184,7 @@ class CurrentStockScreen extends ConsumerWidget {
                         );
                         
                         final csvString = response.data.toString();
-                        final bytes = utf8.encode(csvString);
-                        final blob = web.Blob([bytes.toJS].toJS, web.BlobPropertyBag(type: 'text/csv'));
-                        final url = web.URL.createObjectURL(blob);
-                        final anchor = web.HTMLAnchorElement()
-                          ..href = url
-                          ..download = 'current_stock.csv';
-                        web.document.body!.append(anchor);
-                        anchor.click();
-                        anchor.remove();
-                        web.URL.revokeObjectURL(url);
+                        downloadCsvFile(csvString, 'current_stock.csv');
                         
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
