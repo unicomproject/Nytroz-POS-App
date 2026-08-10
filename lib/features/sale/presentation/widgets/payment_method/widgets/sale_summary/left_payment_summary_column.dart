@@ -7,17 +7,33 @@ import 'customer_card.dart';
 import 'sale_summary_card.dart';
 
 class LeftPaymentSummaryColumn extends StatelessWidget {
-  const LeftPaymentSummaryColumn({super.key, required this.cart});
+  const LeftPaymentSummaryColumn({
+    super.key,
+    required this.cart,
+    this.onCustomerTap,
+  });
   final PosNewSaleCartState cart;
+  final VoidCallback? onCustomerTap;
 
   @override
-  Widget build(BuildContext context) => Column(children: [
-        Expanded(child: SaleSummaryCard(cart: cart)),
-        const SizedBox(height: PaymentMethodStyle.gap),
-        SizedBox(height: 70, child: CustomerCard(cart: cart)),
-        if (cart.hasDiscount) ...[
-          const SizedBox(height: PaymentMethodStyle.gap),
-          SizedBox(height: 70, child: AppliedDiscountCard(cart: cart)),
-        ],
-      ]);
+  Widget build(BuildContext context) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: PaymentMethodStyle.border),
+          borderRadius: BorderRadius.circular(PaymentMethodStyle.panelRadius),
+        ),
+        padding: const EdgeInsets.all(PaymentMethodStyle.padding),
+        child: Column(children: [
+          Expanded(child: SaleSummaryCard(cart: cart)),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 64,
+            child: CustomerCard(cart: cart, onTap: onCustomerTap),
+          ),
+          if (cart.hasDiscount) ...[
+            const SizedBox(height: 10),
+            SizedBox(height: 64, child: AppliedDiscountCard(cart: cart)),
+          ],
+        ]),
+      );
 }

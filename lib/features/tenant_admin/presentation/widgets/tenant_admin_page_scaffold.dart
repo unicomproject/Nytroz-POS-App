@@ -11,6 +11,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
     this.actions = const [],
     this.padding,
     this.backgroundColor = TenantAdminColors.background,
+    this.scrollable = true,
     this.showBackButton = false,
     this.onBackButtonPressed,
   });
@@ -21,6 +22,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
   final Widget child;
   final EdgeInsets? padding;
   final Color backgroundColor;
+  final bool scrollable;
   final bool showBackButton;
   final VoidCallback? onBackButtonPressed;
 
@@ -34,8 +36,34 @@ class TenantAdminPageScaffold extends StatelessWidget {
               padding ?? TenantAdminInsets.pageForWidth(constraints.maxWidth);
           final isNarrow = constraints.maxWidth < TenantAdminBreakpoints.mobile;
 
+          final content = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (title.isNotEmpty || showBackButton) ...[
+                if (isNarrow)
+                  _VerticalHeader(
+                    title: title,
+                    subtitle: subtitle,
+                    actions: actions,
+                    showBackButton: showBackButton,
+                    onBackButtonPressed: onBackButtonPressed,
+                  )
+                else
+                  _HorizontalHeader(
+                    title: title,
+                    subtitle: subtitle,
+                    actions: actions,
+                    showBackButton: showBackButton,
+                    onBackButtonPressed: onBackButtonPressed,
+                  ),
+                const SizedBox(height: 28),
+              ],
+              if (scrollable) child else Expanded(child: child),
+            ],
+          );
+
           return Padding(
-            padding: EdgeInsets.zero,
+            padding: const EdgeInsets.only(top: 12.0),
             child: Container(
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
@@ -43,34 +71,15 @@ class TenantAdminPageScaffold extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: isNarrow ? null : TenantAdminShadows.card,
               ),
-              child: SingleChildScrollView(
-                padding: basePadding,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (title.isNotEmpty || showBackButton) ...[
-                      if (isNarrow)
-                        _VerticalHeader(
-                          title: title,
-                          subtitle: subtitle,
-                          actions: actions,
-                          showBackButton: showBackButton,
-                          onBackButtonPressed: onBackButtonPressed,
-                        )
-                      else
-                        _HorizontalHeader(
-                          title: title,
-                          subtitle: subtitle,
-                          actions: actions,
-                          showBackButton: showBackButton,
-                          onBackButtonPressed: onBackButtonPressed,
-                        ),
-                      const SizedBox(height: 20),
-                    ],
-                    child,
-                  ],
-                ),
-              ),
+              child: scrollable
+                  ? SingleChildScrollView(
+                      padding: basePadding,
+                      child: content,
+                    )
+                  : Padding(
+                      padding: basePadding,
+                      child: content,
+                    ),
             ),
           );
         },

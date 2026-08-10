@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 
+import '../../../../../../shared/widgets/app_cached_network_image.dart';
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
 class PosProductCard extends StatelessWidget {
@@ -210,26 +211,21 @@ class _ProductImage extends StatelessWidget {
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
       ),
       clipBehavior: Clip.hardEdge,
-      child: imageUrl != null && imageUrl.isNotEmpty
-          ? Image.network(
-              imageUrl,
-              fit: BoxFit.contain,
-              width: double.infinity,
-              height: double.infinity,
-              errorBuilder: (_, __, ___) =>
-                  _ProductImageFallback(visual: visual),
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return const Center(
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                );
-              },
-            )
-          : _ProductImageFallback(visual: visual),
+      child: AppCachedNetworkImage(
+        imageUrl: imageUrl,
+        fit: BoxFit.contain,
+        width: double.infinity,
+        height: double.infinity,
+        memCacheWidth: 300,
+        placeholder: const Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: _ProductImageFallback(visual: visual),
+      ),
     );
 
     if (product.hasOffer) {

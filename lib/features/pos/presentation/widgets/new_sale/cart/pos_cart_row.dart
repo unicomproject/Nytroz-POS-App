@@ -4,6 +4,7 @@ import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 
+import '../../../../../../shared/widgets/app_cached_network_image.dart';
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'pos_quantity_stepper.dart';
 
@@ -24,6 +25,14 @@ class PosCartRow extends ConsumerWidget {
     final granted = session?.permissionCodes.toSet() ?? const <String>{};
     final canUpdateItems = PosPermissionAccess.canUpdateCartItem(granted);
     final canRemoveItems = PosPermissionAccess.canRemoveCartItem(granted);
+    void reportBlockedMutation(bool changed) {
+      if (changed) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+          'Remove the active discount before changing the cart.',
+        ),
+      ));
+    }
 
     return InkWell(
       onTap: onTap,
@@ -85,12 +94,12 @@ class PosCartRow extends ConsumerWidget {
                   child: PosQuantityStepper(
                     quantity: item.quantity,
                     onIncrement: canUpdateItems
-                        ? () =>
-                            notifier.increaseQuantity(item.product.cartLineKey)
+                        ? () => reportBlockedMutation(
+                            notifier.increaseQuantity(item.product.cartLineKey))
                         : null,
                     onDecrement: canUpdateItems
-                        ? () =>
-                            notifier.decreaseQuantity(item.product.cartLineKey)
+                        ? () => reportBlockedMutation(
+                            notifier.decreaseQuantity(item.product.cartLineKey))
                         : null,
                   ),
                 ),
@@ -126,8 +135,8 @@ class PosCartRow extends ConsumerWidget {
                 child: canRemoveItems
                     ? IconButton(
                         visualDensity: VisualDensity.compact,
-                        onPressed: () =>
-                            notifier.removeItem(item.product.cartLineKey),
+                        onPressed: () => reportBlockedMutation(
+                            notifier.removeItem(item.product.cartLineKey)),
                         icon: const Icon(Icons.close_rounded, size: 20),
                         color: const Color(0xFF2563EB),
                         tooltip: 'Remove item',
@@ -156,13 +165,12 @@ class _CartProductThumbnail extends StatelessWidget {
         dimension: 52,
         child: ColoredBox(
           color: TenantAdminColors.background,
-          child: imageUrl != null && imageUrl.isNotEmpty
-              ? Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const _CartImageFallback(),
-                )
-              : const _CartImageFallback(),
+          child: AppCachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.contain,
+            memCacheWidth: 104,
+            errorWidget: const _CartImageFallback(),
+          ),
         ),
       ),
     );

@@ -47,17 +47,21 @@ class _PosPaymentMethodScreenState
     return summaryAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) {
-        final expired = error is PosCheckoutApiException &&
-            error.code == 'pos_checkout.discount_application_expired';
+        final discountNeedsReapply = error is PosCheckoutApiException &&
+            (error.code == 'pos_checkout.discount_application_expired' ||
+                error.code == 'pos_checkout.discount_cart_changed' ||
+                error.code == 'pos_checkout.discount_context_mismatch' ||
+                error.code == 'pos_checkout.discount_application_invalid');
         return _MessageState(
           icon: Icons.error_outline_rounded,
           title: 'Checkout unavailable',
           message: error is PosCheckoutApiException
-              ? error.message
+              ? _checkoutUnavailableMessage(error)
               : 'Unable to load checkout summary.',
-          actionLabel: expired ? 'Remove Discount & Retry' : 'Retry',
+          actionLabel:
+              discountNeedsReapply ? 'Remove Discount & Retry' : 'Retry',
           onAction: () {
-            if (expired) {
+            if (discountNeedsReapply) {
               ref.read(posNewSaleCartProvider.notifier).clearDiscounts();
             }
             ref.invalidate(posCheckoutSummaryProvider);
@@ -85,6 +89,15 @@ class _PosPaymentMethodScreenState
                     summary,
                   )
               : null,
+          onCustomerTap: PosPermissionAccess.hasAny(
+            session?.permissionCodes.toSet() ?? const {},
+            PosPermissionAccess.customerViewOrCreateAccessCodes,
+          )
+              ? () => context.push('/pos/new-sale/payment/customer')
+              : () => PosPermissionAccess.showAccessDeniedSnackBar(
+                    context,
+                    'Customer access is not available for this account.',
+                  ),
         );
       },
     );
@@ -113,6 +126,20 @@ class _PosPaymentMethodScreenState
       if (mounted) setState(() => _isNavigating = false);
     }
   }
+}
+
+String _checkoutUnavailableMessage(PosCheckoutApiException error) {
+  return switch (error.code) {
+    'pos_checkout.discount_cart_changed' ||
+    'pos_checkout.discount_context_mismatch' =>
+      'The discount no longer matches this cart or customer. '
+          'Remove the discount and apply it again, or retry after refreshing.',
+    'pos_checkout.discount_application_expired' =>
+      'The discount approval has expired. Remove the discount and try again.',
+    'pos_checkout.discount_application_invalid' =>
+      'The applied discount is no longer valid. Remove it and apply again.',
+    _ => error.message,
+  };
 }
 
 class _MessageState extends StatelessWidget {

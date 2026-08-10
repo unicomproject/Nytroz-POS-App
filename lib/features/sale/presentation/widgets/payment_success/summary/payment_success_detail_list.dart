@@ -101,6 +101,13 @@ class PaymentSuccessDetailList extends StatelessWidget {
           label: 'Cashier',
           value: snapshot?.operatorDetails.cashierName ?? cashierName,
         ),
+        _DetailRow(
+          icon: Icons.person_pin_outlined,
+          label: 'Customer',
+          value: successData.customerName?.trim().isNotEmpty == true
+              ? successData.customerName!.trim()
+              : 'Walk-in Customer',
+        ),
         ...tenderRows,
         _DetailRow(
           icon: Icons.attach_money_rounded,
@@ -150,7 +157,7 @@ class _DetailRow extends StatelessWidget {
             decoration: BoxDecoration(
               color: isTotal
                   ? TenantAdminColors.success.withValues(alpha: 0.1)
-                  : TenantAdminColors.background,
+                  : TenantAdminColors.secondary,
               shape: BoxShape.circle,
             ),
             child: Icon(

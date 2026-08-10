@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dio/dio.dart';
 import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -37,6 +38,12 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
   late final TextEditingController _codeController;
   late final TextEditingController _floatController;
 
+  final _posDeviceNameController = TextEditingController();
+  final _scannerNameController = TextEditingController();
+  final _printerNameController = TextEditingController();
+  final _cashDrawerNameController = TextEditingController();
+  final _cardReaderNameController = TextEditingController();
+
   String? _selectedOutletId;
   String? _selectedStatus;
   String? _selectedCashierId;
@@ -69,6 +76,19 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
     _selectedStatus ??= statuses.isNotEmpty ? statuses.first : null;
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _codeController.dispose();
+    _floatController.dispose();
+    _posDeviceNameController.dispose();
+    _scannerNameController.dispose();
+    _printerNameController.dispose();
+    _cashDrawerNameController.dispose();
+    _cardReaderNameController.dispose();
+    super.dispose();
+  }
+
   void _markDirty() {
     if (!_isDirty) {
       setState(() {
@@ -94,8 +114,7 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
         if (deviceId != null) {
           hardwareAssignments.add(TillHardwareSelection(
             hardwareDeviceId: deviceId,
-            isPrimary:
-                true, // Assuming primary for now based on wizard behavior
+            isPrimary: true, 
           ));
         }
       }
@@ -114,6 +133,11 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
         defaultOpeningFloatAmount: _floatController.text.trim(),
         posDeviceId: _selectedPosDeviceId,
         hardwareAssignments: hardwareAssignments,
+        deviceName: _posDeviceNameController.text.trim(),
+        scannerName: _scannerNameController.text.trim(),
+        printerName: _printerNameController.text.trim(),
+        cashDrawerName: _cashDrawerNameController.text.trim(),
+        cardReaderName: _cardReaderNameController.text.trim(),
       );
       final createTillSetup = ref.read(createTillSetupProvider);
       await createTillSetup(formData);
@@ -125,12 +149,36 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          // In a real scenario, map validation errors to _backendErrors
-          _backendErrors = {'general': e.toString()};
+          _backendErrors = {};
+          if (e is DioException && e.response?.data != null) {
+            final data = e.response!.data;
+            if (data is Map) {
+              final code = data['code']?.toString() ?? '';
+              final message = data['message']?.toString() ?? '';
+              
+              if (code == 'till.duplicate_code') {
+                _backendErrors = {'tillCode': 'This till code is already in use.'};
+              } else if (code.contains('subscription_limit')) {
+                _backendErrors = {'general': 'Subscription limit reached: $message'};
+              } else {
+                _backendErrors = {'general': message.isNotEmpty ? message : 'Failed to create till.'};
+              }
+            }
+          }
+
+          if (_backendErrors.isEmpty) {
+            final errorMsg = e.toString().toLowerCase();
+            if (errorMsg.contains('till.duplicate_code') || 
+                errorMsg.contains('already in use')) {
+              _backendErrors = {'tillCode': 'This till code is already in use.'};
+            } else {
+              _backendErrors = {'general': 'An error occurred while creating till.'};
+            }
+          }
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(_backendErrors['general'] ?? 'Failed to create till'),
             backgroundColor: TenantAdminColors.danger,
           ),
         );
@@ -182,6 +230,18 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
               builder: (context, constraints) {
                 final isDesktop = constraints.maxWidth > 900;
 
+                final scopedOptionsState = ref.watch(tillCreateOptionsProvider(_selectedOutletId));
+                final scopedOptions = scopedOptionsState.valueOrNull;
+
+                final effectiveOptions = TillCreateOptions(
+                  outlets: widget.options.outlets,
+                  statuses: widget.options.statuses,
+                  currencyCode: widget.options.currencyCode,
+                  cashiers: scopedOptions?.cashiers ?? [],
+                  posDevices: scopedOptions?.posDevices ?? [],
+                  hardwareDevices: scopedOptions?.hardwareDevices ?? [],
+                );
+
                 final detailsSection = AddTillDetailsSection(
                   nameController: _nameController,
                   codeController: _codeController,
@@ -189,7 +249,7 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
                   selectedOutletId: _selectedOutletId,
                   selectedStatus: _selectedStatus,
                   selectedCashierId: _selectedCashierId,
-                  options: widget.options,
+                  options: effectiveOptions,
                   onOutletChanged: (value) {
                     setState(() {
                       _selectedOutletId = value;
@@ -199,6 +259,11 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
                       _selectedPrinterId = null;
                       _selectedCashDrawerId = null;
                       _selectedCardReaderId = null;
+                      _posDeviceNameController.clear();
+                      _scannerNameController.clear();
+                      _printerNameController.clear();
+                      _cashDrawerNameController.clear();
+                      _cardReaderNameController.clear();
                       _markDirty();
                     });
                   },
@@ -208,56 +273,63 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
                       _markDirty();
                     });
                   },
-                  onCashierChanged: (value) {
-                    setState(() {
-                      _selectedCashierId = value;
-                      _markDirty();
-                    });
-                  },
+                  onCashierChanged: scopedOptionsState.isLoading 
+                      ? (value) {} 
+                      : (value) {
+                          setState(() {
+                            _selectedCashierId = value;
+                            _markDirty();
+                          });
+                        },
                   backendErrors: _backendErrors,
                 );
 
                 final hardwareSection = widget.canViewHardware
                     ? AddTillHardwareSection(
-                        options: widget.options,
+                        options: effectiveOptions,
                         selectedOutletId: _selectedOutletId,
                         selectedPosDeviceId: _selectedPosDeviceId,
                         selectedScannerId: _selectedScannerId,
                         selectedPrinterId: _selectedPrinterId,
                         selectedCashDrawerId: _selectedCashDrawerId,
                         selectedCardReaderId: _selectedCardReaderId,
-                        onPosDeviceChanged: widget.canManageHardware
+                        posDeviceNameController: _posDeviceNameController,
+                        scannerNameController: _scannerNameController,
+                        printerNameController: _printerNameController,
+                        cashDrawerNameController: _cashDrawerNameController,
+                        cardReaderNameController: _cardReaderNameController,
+                        onPosDeviceChanged: widget.canManageHardware && !scopedOptionsState.isLoading
                             ? (value) => setState(() {
                                   _selectedPosDeviceId = value;
                                   _markDirty();
                                 })
                             : (value) {},
-                        onScannerChanged: widget.canManageHardware
+                        onScannerChanged: widget.canManageHardware && !scopedOptionsState.isLoading
                             ? (value) => setState(() {
                                   _selectedScannerId = value;
                                   _markDirty();
                                 })
                             : (value) {},
-                        onPrinterChanged: widget.canManageHardware
+                        onPrinterChanged: widget.canManageHardware && !scopedOptionsState.isLoading
                             ? (value) => setState(() {
                                   _selectedPrinterId = value;
                                   _markDirty();
                                 })
                             : (value) {},
-                        onCashDrawerChanged: widget.canManageHardware
+                        onCashDrawerChanged: widget.canManageHardware && !scopedOptionsState.isLoading
                             ? (value) => setState(() {
                                   _selectedCashDrawerId = value;
                                   _markDirty();
                                 })
                             : (value) {},
-                        onCardReaderChanged: widget.canManageHardware
+                        onCardReaderChanged: widget.canManageHardware && !scopedOptionsState.isLoading
                             ? (value) => setState(() {
                                   _selectedCardReaderId = value;
                                   _markDirty();
                                 })
                             : (value) {},
                         quickPairPanel: const AddTillQuickPairPanel(),
-                        hardwareStatusCards: _buildHardwareStatusCards(),
+                        hardwareStatusCards: _buildHardwareStatusCards(effectiveOptions),
                       )
                     : const SizedBox.shrink();
 
@@ -345,41 +417,46 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
     );
   }
 
-  Widget _buildHardwareStatusCards() {
-    return const Column(
+  Widget _buildHardwareStatusCards(TillCreateOptions effectiveOptions) {
+    final cards = <Widget>[];
+
+    void addCard(String? id, IconData icon, String actionLabel) {
+      if (id == null) return;
+      final hw = effectiveOptions.hardwareDevices.where((d) => d.id == id).firstOrNull;
+      if (hw != null) {
+        cards.add(AddTillHardwareStatusCard.fromOption(
+          hw,
+          icon,
+          actionLabel,
+          null,
+        ));
+      }
+    }
+
+    addCard(_selectedScannerId, Icons.qr_code_scanner, 'Test Scan');
+    addCard(_selectedPrinterId, Icons.print, 'Print Test');
+    addCard(_selectedCashDrawerId, Icons.point_of_sale, 'Open Drawer');
+    addCard(_selectedCardReaderId, Icons.credit_card, 'Card Test');
+
+    if (cards.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: TenantAdminSpacing.lg),
+        child: Text(
+          'Select hardware devices to view setup status.',
+          style: TextStyle(color: TenantAdminColors.mutedText),
+        ),
+      );
+    }
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AddTillHardwareStatusCard(
-          deviceName: 'Scanner',
-          deviceCode: 'Select scanner (optional)',
-          type: 'Scanner',
-          status: 'Pending',
-          icon: Icons.qr_code_scanner,
-          actionLabel: 'Test Scan',
-          onAction: null,
-        ),
-        SizedBox(height: TenantAdminSpacing.md),
-        AddTillHardwareStatusCard(
-          deviceName: 'Printer',
-          deviceCode: 'Select printer (optional)',
-          type: 'Receipt Printer',
-          status: 'Pending',
-          icon: Icons.print,
-          actionLabel: 'Print Test',
-          onAction: null,
-        ),
-        SizedBox(height: TenantAdminSpacing.md),
-        AddTillHardwareStatusCard(
-          deviceName: 'Cash Drawer',
-          deviceCode: 'Select cash drawer (optional)',
-          type: 'Cash Drawer',
-          status: 'Pending',
-          icon: Icons.point_of_sale,
-          actionLabel: 'Open Drawer',
-          onAction: null,
-        ),
-        SizedBox(height: TenantAdminSpacing.sm),
-        Row(
+        for (var i = 0; i < cards.length; i++) ...[
+          if (i > 0) const SizedBox(height: TenantAdminSpacing.md),
+          cards[i],
+        ],
+        const SizedBox(height: TenantAdminSpacing.sm),
+        const Row(
           children: [
             Icon(Icons.info_outline,
                 size: 14, color: TenantAdminColors.mutedText),

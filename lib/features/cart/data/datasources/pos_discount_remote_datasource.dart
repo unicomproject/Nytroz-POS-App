@@ -76,15 +76,54 @@ class PosDiscountRemoteDatasource {
     }
   }
 
+  Future<PosDiscountValidationResult> validate({
+    required String deviceId,
+    required String scope,
+    required String calculationMethod,
+    required List<PosCheckoutLineRequest> lines,
+    required double requestedValue,
+    String? targetVariantId,
+    String? reason,
+    String? customerId,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        ApiEndpoints.posDiscountValidate,
+        data: {
+          'deviceId': deviceId,
+          'discountId': null,
+          'discountSource': 'MANUAL',
+          'calculationMethod': calculationMethod,
+          'requestedValue': requestedValue,
+          'scope': scope,
+          if (targetVariantId != null) 'targetVariantId': targetVariantId,
+          if (reason != null && reason.trim().isNotEmpty)
+            'reason': reason.trim(),
+          'saleType': 'NewSale',
+          if (customerId != null && customerId.isNotEmpty)
+            'customerId': customerId,
+          'lines': lines.map((x) => x.toJson()).toList(growable: false),
+        },
+      );
+      return PosDiscountValidationResult.fromJson(_data(response.data));
+    } on DioException catch (error) {
+      throw checkoutApiExceptionFromDio(error);
+    }
+  }
+
   Future<void> cancel({
     required String applicationId,
     required String deviceId,
     String? reason,
   }) async {
-    await _dio.post<Map<String, dynamic>>(
-      '${ApiEndpoints.posDiscounts}/$applicationId/cancel',
-      data: {'deviceId': deviceId, if (reason != null) 'reason': reason},
-    );
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '${ApiEndpoints.posDiscounts}/$applicationId/cancel',
+        data: {'deviceId': deviceId, if (reason != null) 'reason': reason},
+      );
+    } on DioException catch (error) {
+      throw checkoutApiExceptionFromDio(error);
+    }
   }
 
   Future<String> decide({

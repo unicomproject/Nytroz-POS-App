@@ -59,6 +59,11 @@ class TillRepositoryImpl implements TillRepository {
                 isPrimary: e.isPrimary,
               ))
           .toList(growable: false),
+      deviceName: form.deviceName,
+      printerName: form.printerName,
+      scannerName: form.scannerName,
+      cashDrawerName: form.cashDrawerName,
+      cardReaderName: form.cardReaderName,
     );
     final dto = await _remoteDatasource.createTillSetup(request);
     return TillMapper.toCreatedEntity(dto);

@@ -37,6 +37,12 @@ class CompletedSaleReceiptMapper {
       tillName: _fallback(payment.tillName, device.tillName),
       cashierId: _fallback(payment.cashierId, session.userId),
       cashierName: _fallback(payment.cashierName, session.userDisplayName),
+      customerName: payment.customerName?.trim().isNotEmpty == true
+          ? payment.customerName!.trim()
+          : null,
+      customerPhone: payment.customerPhone?.trim().isNotEmpty == true
+          ? payment.customerPhone!.trim()
+          : null,
       deviceId: device.deviceId,
       currency: payment.currency.trim().toUpperCase(),
       items: payment.items

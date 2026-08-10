@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../../tenant_admin/presentation/widgets/tenant_admin_search_field.dart';
 import '../providers/customers_provider.dart';
 
 class CustomersSearchFilterToolbar extends StatelessWidget {
@@ -14,6 +12,8 @@ class CustomersSearchFilterToolbar extends StatelessWidget {
     required this.onStatusChanged,
     required this.onSourceChanged,
     required this.onClear,
+    required this.canAddCustomer,
+    required this.onAddCustomer,
   });
 
   final String query;
@@ -23,78 +23,149 @@ class CustomersSearchFilterToolbar extends StatelessWidget {
   final ValueChanged<CustomerStatusFilter> onStatusChanged;
   final ValueChanged<CustomerSourceFilter> onSourceChanged;
   final VoidCallback onClear;
+  final bool canAddCustomer;
+  final VoidCallback onAddCustomer;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final wrap = constraints.maxWidth < 900;
-        final search = Expanded(
-          child: TenantAdminSearchField(
-            hint: 'Search by name, phone, email, or customer ID...',
-            value: query,
-            onChanged: onSearchChanged,
-          ),
-        );
-
-        final filters = Row(
-          mainAxisSize: MainAxisSize.min,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
           children: [
-            _StatusFilter(
-              value: statusFilter,
-              onChanged: onStatusChanged,
+            Expanded(
+              child: SizedBox(
+                height: 42,
+                child: TextField(
+                  key: const ValueKey('customer-search-input'),
+                  controller: TextEditingController(text: query)
+                    ..selection = TextSelection.collapsed(offset: query.length),
+                  onChanged: onSearchChanged,
+                  decoration: InputDecoration(
+                    hintText: 'Search customers by name, phone, email or code',
+                    hintStyle: const TextStyle(
+                      color: Color(0xFF8E9BAE),
+                      fontSize: 13,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: Color(0xFF8E9BAE),
+                      size: 20,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFE2E6ED)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFE2E6ED)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFF1464F4)),
+                    ),
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(width: TenantAdminSpacing.sm),
-            _SourceFilter(
-              value: sourceFilter,
-              onChanged: onSourceChanged,
-            ),
-            const SizedBox(width: TenantAdminSpacing.sm),
+            const SizedBox(width: 10),
             OutlinedButton.icon(
-              onPressed: onClear,
-              icon: const Icon(Icons.filter_alt_off_outlined, size: 18),
-              label: const Text('Clear'),
+              onPressed: () {},
+              icon: const Icon(Icons.filter_list_rounded, size: 18),
+              label: const Text('Filter'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: TenantAdminColors.bodyText,
-                side: const BorderSide(color: TenantAdminColors.border),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: TenantAdminSpacing.md,
-                  vertical: 14,
-                ),
+                foregroundColor: const Color(0xFF1464F4),
+                side: const BorderSide(color: Color(0xFF1464F4)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
                 ),
               ),
             ),
-          ],
-        );
-
-        if (wrap) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TenantAdminSearchField(
-                hint: 'Search by name, phone, email, or customer ID...',
-                value: query,
-                onChanged: onSearchChanged,
-              ),
-              const SizedBox(height: TenantAdminSpacing.md),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: filters,
+            if (canAddCustomer) ...[
+              const SizedBox(width: 10),
+              FilledButton.icon(
+                key: const ValueKey('customers-add-customer-button'),
+                onPressed: onAddCustomer,
+                icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                label: const Text('Add Customer'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF3214),
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
               ),
             ],
-          );
-        }
-
-        return Row(
-          children: [
-            search,
-            const SizedBox(width: TenantAdminSpacing.md),
-            filters,
           ],
-        );
-      },
+        ),
+        const SizedBox(height: 12),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              const Text(
+                'Status',
+                style: TextStyle(
+                  color: Color(0xFF06235D),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _StatusFilter(
+                value: statusFilter,
+                onChanged: onStatusChanged,
+              ),
+              const SizedBox(width: 16),
+              const Text(
+                'Source',
+                style: TextStyle(
+                  color: Color(0xFF06235D),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _SourceFilter(
+                value: sourceFilter,
+                onChanged: onSourceChanged,
+              ),
+              const SizedBox(width: 16),
+              TextButton.icon(
+                onPressed: onClear,
+                icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                label: const Text('Reset'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF1464F4),
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -110,32 +181,49 @@ class _StatusFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 140,
-      child: DropdownButtonFormField<CustomerStatusFilter>(
-        key: ValueKey(value),
-        initialValue: value,
-        isExpanded: true,
-        decoration: _filterDecoration('Status'),
-        items: const [
-          DropdownMenuItem(
-            value: CustomerStatusFilter.all,
-            child: Text('All'),
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E6ED)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<CustomerStatusFilter>(
+          key: ValueKey(value),
+          value: value,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF63718A), size: 18),
+          style: const TextStyle(
+            color: Color(0xFF06235D),
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
           ),
-          DropdownMenuItem(
-            value: CustomerStatusFilter.active,
-            child: Text('Active'),
-          ),
-          DropdownMenuItem(
-            value: CustomerStatusFilter.inactive,
-            child: Text('Inactive'),
-          ),
-        ],
-        onChanged: (next) {
-          if (next != null) {
-            onChanged(next);
-          }
-        },
+          items: const [
+            DropdownMenuItem(
+              value: CustomerStatusFilter.all,
+              child: Text('All Status'),
+            ),
+            DropdownMenuItem(
+              value: CustomerStatusFilter.active,
+              child: Text('Active'),
+            ),
+            DropdownMenuItem(
+              value: CustomerStatusFilter.inactive,
+              child: Text('Inactive'),
+            ),
+            DropdownMenuItem(
+              value: CustomerStatusFilter.blocked,
+              child: Text('Blocked'),
+            ),
+          ],
+          onChanged: (next) {
+            if (next != null) {
+              onChanged(next);
+            }
+          },
+        ),
       ),
     );
   }
@@ -152,65 +240,58 @@ class _SourceFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 140,
-      child: DropdownButtonFormField<CustomerSourceFilter>(
-        key: ValueKey(value),
-        initialValue: value,
-        isExpanded: true,
-        decoration: _filterDecoration('Source'),
-        items: const [
-          DropdownMenuItem(
-            value: CustomerSourceFilter.all,
-            child: Text('All'),
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E6ED)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<CustomerSourceFilter>(
+          key: ValueKey(value),
+          value: value,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF63718A), size: 18),
+          style: const TextStyle(
+            color: Color(0xFF06235D),
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
           ),
-          DropdownMenuItem(
-            value: CustomerSourceFilter.pos,
-            child: Text('POS'),
-          ),
-          DropdownMenuItem(
-            value: CustomerSourceFilter.manual,
-            child: Text('Manual'),
-          ),
-          DropdownMenuItem(
-            value: CustomerSourceFilter.ecommerce,
-            child: Text('E-commerce'),
-          ),
-          DropdownMenuItem(
-            value: CustomerSourceFilter.import,
-            child: Text('Import'),
-          ),
-        ],
-        onChanged: (next) {
-          if (next != null) {
-            onChanged(next);
-          }
-        },
+          items: const [
+            DropdownMenuItem(
+              value: CustomerSourceFilter.all,
+              child: Text('All Source'),
+            ),
+            DropdownMenuItem(
+              value: CustomerSourceFilter.pos,
+              child: Text('POS'),
+            ),
+            DropdownMenuItem(
+              value: CustomerSourceFilter.manual,
+              child: Text('Manual'),
+            ),
+            DropdownMenuItem(
+              value: CustomerSourceFilter.ecommerce,
+              child: Text('E-commerce'),
+            ),
+            DropdownMenuItem(
+              value: CustomerSourceFilter.clickAndCollect,
+              child: Text('Click & Collect'),
+            ),
+            DropdownMenuItem(
+              value: CustomerSourceFilter.import,
+              child: Text('Import'),
+            ),
+          ],
+          onChanged: (next) {
+            if (next != null) {
+              onChanged(next);
+            }
+          },
+        ),
       ),
     );
   }
-}
-
-InputDecoration _filterDecoration(String label) {
-  return InputDecoration(
-    labelText: label,
-    filled: true,
-    fillColor: TenantAdminColors.surface,
-    contentPadding: const EdgeInsets.symmetric(
-      horizontal: TenantAdminSpacing.md,
-      vertical: 10,
-    ),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      borderSide: const BorderSide(color: TenantAdminColors.border),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      borderSide: const BorderSide(color: TenantAdminColors.border),
-    ),
-    disabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      borderSide: const BorderSide(color: TenantAdminColors.border),
-    ),
-  );
 }

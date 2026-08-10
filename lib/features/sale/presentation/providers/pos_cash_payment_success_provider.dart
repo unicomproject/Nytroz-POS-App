@@ -32,6 +32,8 @@ class PosCashPaymentSuccessData {
     required this.cashReceived,
     required this.changeDue,
     required this.items,
+    this.customerName,
+    this.customerPhone,
     this.receiptDataJson,
   });
 
@@ -47,6 +49,8 @@ class PosCashPaymentSuccessData {
   final int cashReceived;
   final int changeDue;
   final List<PosCashPaymentSuccessLineItem> items;
+  final String? customerName;
+  final String? customerPhone;
   final String? receiptDataJson;
 }
 
@@ -54,7 +58,11 @@ class PosCashPaymentSuccessNotifier
     extends StateNotifier<PosCashPaymentSuccessData?> {
   PosCashPaymentSuccessNotifier() : super(null);
 
-  void recordCheckoutPayment(PosCheckoutStartPaymentPayload payload) {
+  void recordCheckoutPayment(
+    PosCheckoutStartPaymentPayload payload, {
+    String? customerName,
+    String? customerPhone,
+  }) {
     state = PosCashPaymentSuccessData(
       receiptNumber: payload.receiptNumber,
       barcodeValue: payload.barcodeValue.isNotEmpty
@@ -72,6 +80,16 @@ class PosCashPaymentSuccessNotifier
       total: payload.grandTotal,
       cashReceived: payload.cashReceived,
       changeDue: payload.changeDue,
+      customerName: customerName?.trim().isNotEmpty == true
+          ? customerName!.trim()
+          : (payload.customerName?.trim().isNotEmpty == true
+              ? payload.customerName!.trim()
+              : null),
+      customerPhone: customerPhone?.trim().isNotEmpty == true
+          ? customerPhone!.trim()
+          : (payload.customerPhone?.trim().isNotEmpty == true
+              ? payload.customerPhone!.trim()
+              : null),
       items: payload.items
           .map(
             (item) => PosCashPaymentSuccessLineItem(

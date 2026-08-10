@@ -1,6 +1,7 @@
 import '../../domain/entities/product_form_data.dart';
 import '../../domain/entities/tenant_product.dart';
 import '../../domain/entities/tenant_product_create_options.dart';
+import '../../domain/entities/tenant_product_filter_options.dart';
 import '../../domain/entities/product_delete_result.dart';
 import '../../domain/entities/product_status_update_result.dart';
 import '../../domain/entities/tenant_product_detail.dart';
@@ -129,5 +130,11 @@ class TenantProductRepositoryImpl implements TenantProductRepository {
     final month = value.month.toString().padLeft(2, '0');
     final day = value.day.toString().padLeft(2, '0');
     return '$year-$month-$day';
+  }
+
+  @override
+  Future<TenantProductFilterOptions> getProductFilterOptions() async {
+    final dto = await _remoteDatasource.getProductFilterOptions();
+    return TenantProductMapper.toFilterOptions(dto);
   }
 }

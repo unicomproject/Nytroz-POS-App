@@ -17,6 +17,7 @@ import '../theme/tenant_admin_theme.dart';
 import '../widgets/tenant_admin_buttons.dart';
 import '../widgets/tenant_admin_page_scaffold.dart';
 import '../widgets/tenant_admin_states.dart';
+import '../../products/presentation/screens/product_list_screen.dart';
 
 class TenantAdminPlaceholderScreen extends ConsumerWidget {
   const TenantAdminPlaceholderScreen({
@@ -39,7 +40,7 @@ class TenantAdminPlaceholderScreen extends ConsumerWidget {
     }
 
     if (title == 'Products') {
-      return const _ProductListScreen();
+      return const ProductListScreen();
     }
 
     if (title == 'Add Product') {

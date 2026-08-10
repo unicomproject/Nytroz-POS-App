@@ -3,6 +3,7 @@ import '../entities/outlet_create_options.dart';
 import '../entities/outlet_detail_entities.dart';
 import '../entities/outlet_details.dart';
 import '../entities/outlet_list_query.dart';
+import '../entities/outlet_image_upload.dart';
 
 abstract class OutletRepository {
   Future<OutletListResult> getOutlets({required OutletListQuery query});
@@ -32,4 +33,11 @@ abstract class OutletRepository {
   Future<void> deleteOutlet(String id);
 
   Future<List<OutletManagerOption>> getManagerOptions();
+
+  Future<OutletImageUpload> uploadOutletImage(
+    OutletImageUploadInput input, {
+    void Function(int sent, int total)? onProgress,
+  });
+
+  Future<void> deleteStagedOutletImage(String mediaAssetId);
 }

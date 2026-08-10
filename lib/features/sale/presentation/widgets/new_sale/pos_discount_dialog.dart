@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:nytroz_pos/features/sale/presentation/widgets/payment/pos_bottom_action_buttons.dart';
-import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
-import '../../../../cart/domain/entities/pos_cart_discount.dart';
-import '../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
-import '../../../../cart/presentation/providers/pos_discount_provider.dart';
-import '../../../../cart/domain/entities/pos_discount_api_models.dart';
-import '../../../../auth/presentation/providers/session_provider.dart';
 import '../../../../../core/access/pos_access_codes.dart';
+import '../../../../../shared/presentation/app_modal.dart';
+import '../../../../auth/presentation/providers/session_provider.dart';
+import '../../../../cart/domain/entities/pos_cart_discount.dart';
+import '../../../../cart/presentation/providers/pos_discount_provider.dart';
+import '../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../providers/pos_checkout_summary_provider.dart';
+import 'discount/discount_controller.dart';
+import 'discount/discount_item_picker.dart';
+import 'discount/discount_sections.dart';
+import 'discount/discount_state.dart';
+
+typedef PosDiscountPresentationSubmit = Future<void> Function(
+  PosDiscountPresentationState state,
+);
 
 Future<void> showPosDiscountDialog({
   required BuildContext context,
@@ -19,36 +24,30 @@ Future<void> showPosDiscountDialog({
 }) {
   return showAppDialog<void>(
     context: context,
+    barrierDismissible: false,
     builder: (_) => UncontrolledProviderScope(
       container: ProviderScope.containerOf(context),
-      child: const _PosDiscountDialog(),
+      child: const PosDiscountDialog(),
     ),
   );
 }
 
-enum _DiscountScope {
-  manual,
-  item,
-}
+class PosDiscountDialog extends ConsumerStatefulWidget {
+  const PosDiscountDialog({super.key, this.onSubmit});
 
-class _PosDiscountDialog extends ConsumerStatefulWidget {
-  const _PosDiscountDialog();
+  /// Chunk 2 plugs validate -> apply into this boundary. Chunk 1 deliberately
+  /// leaves it null in production and never mutates the cart locally.
+  final PosDiscountPresentationSubmit? onSubmit;
 
   @override
-  ConsumerState<_PosDiscountDialog> createState() => _PosDiscountDialogState();
+  ConsumerState<PosDiscountDialog> createState() => _PosDiscountDialogState();
 }
 
-class _PosDiscountDialogState extends ConsumerState<_PosDiscountDialog> {
-  final _formKey = GlobalKey<FormState>();
+class _PosDiscountDialogState extends ConsumerState<PosDiscountDialog> {
   final _valueController = TextEditingController();
   final _reasonController = TextEditingController();
-
-  _DiscountScope _scope = _DiscountScope.manual;
-  PosDiscountValueType _valueType = PosDiscountValueType.percentage;
-  String? _selectedItemKey;
-  String? _selectedPolicyId;
-  bool _predefined = false;
-  bool _submitting = false;
+  late final String _idempotencyKey =
+      createPosDiscountIdempotencyKey('discount-intent');
 
   @override
   void dispose() {
@@ -60,838 +59,556 @@ class _PosDiscountDialogState extends ConsumerState<_PosDiscountDialog> {
   @override
   Widget build(BuildContext context) {
     final cart = ref.watch(posNewSaleCartProvider);
-    final selectedItem =
-        _selectedItemKey == null ? null : cart.items[_selectedItemKey];
-    final cartVariantIds = cart.itemList
-        .map((item) => item.product.variantId)
-        .whereType<String>()
-        .where((id) => id.isNotEmpty)
-        .toList(growable: false);
-    final catalogQuery = PosDiscountCatalogQuery(
-      scope: _scope == _DiscountScope.item ? 'LINE' : 'ORDER',
-      variantId: _scope == _DiscountScope.item
-          ? selectedItem?.product.variantId
-          : null,
-      variantIds: _scope == _DiscountScope.item ? const [] : cartVariantIds,
-      customerId: cart.selectedCustomer?.customerId,
-      quantity: _scope == _DiscountScope.item
-          ? selectedItem?.quantity.toDouble()
-          : cart.itemList.fold<double>(0, (sum, item) => sum + item.quantity),
-      cartSubtotal: cart.subtotal.toDouble(),
+    final args = PosDiscountControllerArgs(
+      currencyCode: 'LKR',
+      subtotal: cart.subtotal,
+      itemCount: cart.itemList.fold(0, (sum, item) => sum + item.quantity),
     );
-    final canApprove = ref
-            .watch(authSessionProvider)
-            ?.hasPermission(PosPermissionCodes.approveSaleDiscount) ==
-        true;
-    final shouldLoadPolicies =
-        _predefined && (_scope != _DiscountScope.item || selectedItem != null);
-    final catalogAsync = shouldLoadPolicies
-        ? ref.watch(posDiscountCatalogProvider(catalogQuery))
-        : null;
-    final catalog = catalogAsync?.valueOrNull;
-    final expectedPolicyScope =
-        _scope == _DiscountScope.item ? 'LINE' : 'ORDER';
-    final policies = (catalog?.discounts ?? const <PosDiscountPolicy>[])
-        .where((policy) => policy.scope == expectedPolicyScope)
-        .toList(growable: false);
-    final matchingPolicies =
-        _predefined ? policies : const <PosDiscountPolicy>[];
-    final selectedPolicy =
-        matchingPolicies.where((x) => x.id == _selectedPolicyId).firstOrNull ??
-            (matchingPolicies.isEmpty ? null : matchingPolicies.first);
-    if (_predefined &&
-        selectedPolicy != null &&
-        (_selectedPolicyId != selectedPolicy.id ||
-            _valueController.text !=
-                selectedPolicy.predefinedValue.toString())) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || !_predefined) return;
-        setState(() {
-          _selectedPolicyId = selectedPolicy.id;
-          _valueType = selectedPolicy.isPercentage
-              ? PosDiscountValueType.percentage
-              : PosDiscountValueType.fixedAmount;
-          _valueController.text = selectedPolicy.predefinedValue.toString();
+    final state = ref.watch(posDiscountControllerProvider(args));
+    final controller = ref.read(posDiscountControllerProvider(args).notifier);
+    final authorityAsync = ref.watch(posDiscountCatalogProvider(
+      PosDiscountCatalogQuery(
+        scope: 'ORDER',
+        customerId: cart.selectedCustomer?.customerId,
+        quantity: state.currentItemCount.toDouble(),
+        cartSubtotal: cart.subtotal.toDouble(),
+      ),
+    ));
+    authorityAsync.whenData((catalog) {
+      if (state.maxPercentage != catalog.authority.maxPercentage ||
+          state.maxFixedAmount != catalog.authority.maxFixedAmount) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) controller.setAuthority(catalog.authority);
         });
-      });
-    }
+      }
+    });
+    final session = ref.watch(authSessionProvider);
+    final canApply =
+        session?.hasPermission(PosPermissionCodes.applySaleDiscount) == true;
+
+    final media = MediaQuery.of(context);
+    final availableHeight = media.size.height - media.viewInsets.bottom - 24;
+    final maxHeight = availableHeight.clamp(360.0, 820.0);
 
     return SafeArea(
-      child: Dialog(
-        insetPadding: const EdgeInsets.all(TenantAdminSpacing.lg),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-        ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900, maxHeight: 720),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final useTwoColumns =
-                  constraints.maxWidth >= TenantAdminBreakpoints.tablet;
-
-              final sidebar = _DiscountSidebar(
-                selectedScope: _scope,
-                savings: cart.discount,
-                onScopeChanged: (scope) {
-                  setState(() {
-                    _scope = scope;
-                    _formKey.currentState?.reset();
-                  });
-                },
-                onClear: cart.hasDiscount ? () => _clearDiscounts(cart) : null,
-                onClose: () => Navigator.of(context).pop(),
-              );
-              final form = _DiscountForm(
-                formKey: _formKey,
-                scope: _scope,
-                valueType: _valueType,
-                valueController: _valueController,
-                reasonController: _reasonController,
-                selectedItemKey: _selectedItemKey,
-                onValueTypeChanged: (valueType) {
-                  final candidates = policies.where((policy) =>
-                      policy.isPercentage ==
-                          (valueType == PosDiscountValueType.percentage) &&
-                      _predefined);
-                  final nextPolicy =
-                      candidates.isEmpty ? null : candidates.first;
-                  setState(() {
-                    _valueType = valueType;
-                    _selectedPolicyId = nextPolicy?.id;
-                    if (_predefined && nextPolicy != null) {
-                      _valueController.text =
-                          nextPolicy.predefinedValue.toString();
-                    }
-                  });
-                  _formKey.currentState?.validate();
-                },
-                onSelectedItemChanged: (key) {
-                  setState(() => _selectedItemKey = key);
-                  _formKey.currentState?.validate();
-                },
-                onApply: () => _applyDiscount(cart),
-                policies: matchingPolicies,
-                selectedPolicy: selectedPolicy,
-                predefined: _predefined,
-                submitting: _submitting,
-                catalogLoading: catalogAsync?.isLoading == true,
-                catalogError: catalogAsync?.hasError == true
-                    ? catalogAsync!.error.toString()
-                    : null,
-                waitingForItemSelection: _predefined &&
-                    _scope == _DiscountScope.item &&
-                    selectedItem == null,
-                onPolicyChanged: (policy) {
-                  setState(() {
-                    _selectedPolicyId = policy?.id;
-                    if (_predefined && policy != null) {
-                      _valueType = policy.isPercentage
-                          ? PosDiscountValueType.percentage
-                          : PosDiscountValueType.fixedAmount;
-                      _valueController.text = policy.predefinedValue.toString();
-                    }
-                  });
-                },
-                onPredefinedChanged: (value) {
-                  final nextPolicy =
-                      value && policies.isNotEmpty ? policies.first : null;
-                  setState(() {
-                    _predefined = value;
-                    _selectedPolicyId = nextPolicy?.id;
-                    if (value && nextPolicy != null) {
-                      _valueType = nextPolicy.isPercentage
-                          ? PosDiscountValueType.percentage
-                          : PosDiscountValueType.fixedAmount;
-                      _valueController.text =
-                          nextPolicy.predefinedValue.toString();
-                    } else if (!value) {
-                      _valueController.clear();
-                    }
-                  });
-                },
-                pendingDiscount: cart.pendingDiscount,
-                canApprovePending: canApprove,
-                onApprovePending: () => _decidePending(cart, 'APPROVE'),
-                onRejectPending: () => _decidePending(cart, 'REJECT'),
-              );
-
-              if (useTwoColumns) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(width: 300, child: sidebar),
-                    const VerticalDivider(width: 1),
-                    Expanded(child: form),
-                  ],
-                );
-              }
-
-              return SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    sidebar,
-                    const Divider(height: 1),
-                    form,
-                  ],
+      child: AnimatedPadding(
+        duration: const Duration(milliseconds: 180),
+        padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+        child: Dialog(
+          key: const Key('pos-discount-dialog'),
+          insetPadding: const EdgeInsets.all(12),
+          backgroundColor: Colors.white,
+          clipBehavior: Clip.antiAlias,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 1000, maxHeight: maxHeight),
+            child: Column(
+              children: [
+                _DialogHeader(
+                  subtitle: state.scope == PosDiscountScope.item
+                      ? 'Apply a cashier discount to a selected product'
+                      : 'Apply a cashier discount to the current sale',
+                  onClose: () => Navigator.of(context).pop(),
                 ),
-              );
-            },
+                Expanded(
+                  child: cart.hasDiscount
+                      ? _ExistingDiscountGuard(
+                          cart: cart,
+                          submitting: state.isSubmitting,
+                          onRemove: () => _cancel(cart, controller),
+                        )
+                      : !canApply
+                          ? const _PermissionDeniedState()
+                          : !cart.hasItems
+                              ? const _EmptyCartState()
+                              : LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final twoColumns =
+                                        constraints.maxWidth >= 900;
+                                    return SingleChildScrollView(
+                                      key: const Key('discount-dialog-scroll'),
+                                      padding: const EdgeInsets.fromLTRB(
+                                          24, 6, 24, 20),
+                                      child: twoColumns
+                                          ? Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Expanded(
+                                                  flex: 3,
+                                                  child: _FormColumn(
+                                                    cart: cart,
+                                                    state: state,
+                                                    controller: controller,
+                                                    valueController:
+                                                        _valueController,
+                                                    reasonController:
+                                                        _reasonController,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 18),
+                                                Expanded(
+                                                  flex: 2,
+                                                  child: _SummaryColumn(
+                                                      cart: cart, state: state),
+                                                ),
+                                              ],
+                                            )
+                                          : Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.stretch,
+                                              children: [
+                                                _FormColumn(
+                                                  cart: cart,
+                                                  state: state,
+                                                  controller: controller,
+                                                  valueController:
+                                                      _valueController,
+                                                  reasonController:
+                                                      _reasonController,
+                                                ),
+                                                const SizedBox(height: 18),
+                                                _SummaryColumn(
+                                                    cart: cart, state: state),
+                                              ],
+                                            ),
+                                    );
+                                  },
+                                ),
+                ),
+                if (!cart.hasDiscount && canApply && cart.hasItems)
+                  _ActionBar(
+                    enabled: state.canApply,
+                    submitting: state.isSubmitting,
+                    onCancel: () => Navigator.of(context).pop(),
+                    onApply: () => _submit(state, controller),
+                  )
+                else
+                  _CloseAction(onClose: () => Navigator.of(context).pop()),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Future<void> _applyDiscount(PosNewSaleCartState cart) async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    final value = double.parse(_valueController.text.trim());
-    final reason = _reasonController.text.trim();
-    PosDiscountPolicy? policy;
-    if (_predefined) {
-      final selectedItem =
-          _selectedItemKey == null ? null : cart.items[_selectedItemKey];
-      if (_scope == _DiscountScope.item && selectedItem == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Select a cart item first.')),
-        );
-        return;
-      }
-      final cartVariantIds = cart.itemList
-          .map((item) => item.product.variantId)
-          .whereType<String>()
-          .where((id) => id.isNotEmpty)
-          .toList(growable: false);
-      final query = PosDiscountCatalogQuery(
-        scope: _scope == _DiscountScope.item ? 'LINE' : 'ORDER',
-        variantId: _scope == _DiscountScope.item
-            ? selectedItem?.product.variantId
-            : null,
-        variantIds: _scope == _DiscountScope.item ? const [] : cartVariantIds,
-        customerId: cart.selectedCustomer?.customerId,
-        quantity: _scope == _DiscountScope.item
-            ? selectedItem?.quantity.toDouble()
-            : cart.itemList.fold<double>(0, (sum, item) => sum + item.quantity),
-        cartSubtotal: cart.subtotal.toDouble(),
-      );
-      final catalog = ref.read(posDiscountCatalogProvider(query)).valueOrNull;
-      final policies =
-          catalog?.discounts.where((x) => x.id == _selectedPolicyId);
-      policy = policies?.firstOrNull;
-    }
-    if (_predefined && policy == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('No active discount policy is available.')),
-      );
-      return;
-    }
-
-    setState(() => _submitting = true);
+  Future<void> _submit(
+    PosDiscountPresentationState state,
+    PosDiscountController controller,
+  ) async {
+    if (!state.canApply) return;
+    final callback = widget.onSubmit;
+    controller.setSubmitting(true);
     try {
-      final result = await applyPosDiscount(
-        ref: ref,
-        policy: policy,
-        valueType: _valueType,
-        value: _predefined ? policy!.predefinedValue : value,
-        isLineDiscount: _scope == _DiscountScope.item,
-        targetVariantId: _scope == _DiscountScope.item
-            ? cart.items[_selectedItemKey]?.product.variantId
-            : null,
-        reason: reason.isEmpty ? null : reason,
-        predefined: _predefined,
-      );
-      if (!mounted) return;
-      if (result.applied) {
-        Navigator.of(context).pop();
+      if (callback != null) {
+        await callback(state);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(result.messages.isEmpty
-              ? 'Manager approval is required.'
-              : result.messages.join(' ')),
-        ));
+        final result = await applyPosDiscount(
+          ref: ref,
+          valueType:
+              state.calculationMethod == PosDiscountCalculationMethod.percentage
+                  ? PosDiscountValueType.percentage
+                  : PosDiscountValueType.fixedAmount,
+          value: state.parsedRequestedValue!,
+          isLineDiscount: state.scope == PosDiscountScope.item,
+          targetVariantId: state.selectedVariantId,
+          cartLineKey: state.selectedCartLineKey,
+          reason: state.reasonText,
+          idempotencyKey: _idempotencyKey,
+        );
+        if (!mounted) return;
+        if (!result.applied || result.applicationId.isEmpty) {
+          controller.setError(StateError(result.messages.isEmpty
+              ? 'Discount application was rejected.'
+              : result.messages.join(' ')));
+          return;
+        }
+        Navigator.of(context).pop();
       }
     } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
-      }
+      if (mounted) controller.setError(error);
     } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) controller.setSubmitting(false);
     }
   }
 
-  Future<void> _clearDiscounts(PosNewSaleCartState cart) async {
-    final discounts = <PosCartDiscount>[
-      if (cart.cartDiscount != null) cart.cartDiscount!,
-      ...cart.items.values.map((x) => x.discount).whereType<PosCartDiscount>(),
-    ];
-    setState(() => _submitting = true);
+  Future<void> _cancel(
+    PosNewSaleCartState cart,
+    PosDiscountController controller,
+  ) async {
+    final discount = cart.cartDiscount ??
+        cart.items.values
+            .map((item) => item.discount)
+            .whereType<PosCartDiscount>()
+            .firstOrNull;
+    if (discount?.applicationId == null) {
+      controller.setError(StateError(
+          'This discount has no canonical application and cannot be removed online.'));
+      return;
+    }
+    controller.setSubmitting(true);
     try {
-      for (final discount in discounts) {
-        await cancelPosDiscount(ref: ref, discount: discount);
-      }
+      await cancelPosDiscount(ref: ref, discount: discount!);
       ref.read(posNewSaleCartProvider.notifier).clearDiscounts();
       ref.invalidate(posCheckoutSummaryProvider);
+      if (mounted) Navigator.of(context).pop();
     } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unable to remove discount: $error')),
-        );
-      }
+      if (mounted) controller.setError(error);
     } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
-  }
-
-  Future<void> _decidePending(
-    PosNewSaleCartState cart,
-    String decision,
-  ) async {
-    final pending = cart.pendingDiscount;
-    if (pending?.applicationId == null || _submitting) return;
-    setState(() => _submitting = true);
-    try {
-      final status = await ref.read(posDiscountRemoteDatasourceProvider).decide(
-            applicationId: pending!.applicationId!,
-            decision: decision,
-            note: _reasonController.text.trim(),
-          );
-      if (!mounted) return;
-      final notifier = ref.read(posNewSaleCartProvider.notifier);
-      final lineKey = cart.pendingDiscountCartLineKey;
-      if (status == 'APPROVED') {
-        final approved = pending.copyWith(status: 'approved');
-        if (lineKey == null) {
-          notifier.applyCartDiscount(approved);
-        } else {
-          notifier.applyItemDiscount(cartLineKey: lineKey, discount: approved);
-        }
-        ref.invalidate(posCheckoutSummaryProvider);
-        Navigator.of(context).pop();
-      } else {
-        if (lineKey == null) {
-          notifier.clearCartDiscount();
-        } else {
-          notifier.clearItemDiscount(lineKey);
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Discount request rejected.')),
-        );
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error.toString())));
-      }
-    } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) controller.setSubmitting(false);
     }
   }
 }
 
-class _DiscountSidebar extends StatelessWidget {
-  const _DiscountSidebar({
-    required this.selectedScope,
-    required this.savings,
-    required this.onScopeChanged,
-    required this.onClose,
-    this.onClear,
-  });
-
-  final _DiscountScope selectedScope;
-  final int savings;
-  final ValueChanged<_DiscountScope> onScopeChanged;
+class _DialogHeader extends StatelessWidget {
+  const _DialogHeader({required this.subtitle, required this.onClose});
+  final String subtitle;
   final VoidCallback onClose;
-  final VoidCallback? onClear;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Text('Discounts',
-                  style: TenantAdminTextStyles.sectionTitle(context)),
-              const Spacer(),
-              IconButton(
-                tooltip: 'Close',
-                onPressed: onClose,
-                icon: const Icon(Icons.close_rounded),
-              ),
-            ],
-          ),
-          const SizedBox(height: TenantAdminSpacing.md),
-          _DiscountScopeTile(
-            selected: selectedScope == _DiscountScope.manual,
-            icon: Icons.percent_rounded,
-            title: 'Manual Discount',
-            subtitle: 'Apply custom discount',
-            onTap: () => onScopeChanged(_DiscountScope.manual),
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          _DiscountScopeTile(
-            selected: selectedScope == _DiscountScope.item,
-            icon: Icons.sell_outlined,
-            title: 'Item Discount',
-            subtitle: 'Discount on specific items',
-            onTap: () => onScopeChanged(_DiscountScope.item),
-          ),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          Container(
-            padding: const EdgeInsets.all(TenantAdminSpacing.md),
-            decoration: BoxDecoration(
-              color: TenantAdminColors.secondary,
-              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            ),
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 18, 14, 10),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Running Savings',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                const Text('Add Discount',
+                    style: TextStyle(
                         color: TenantAdminColors.bodyText,
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-                const SizedBox(height: TenantAdminSpacing.xs),
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900)),
+                const SizedBox(height: 3),
                 Text(
-                  formatLkr(savings),
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: TenantAdminColors.info,
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-                const SizedBox(height: TenantAdminSpacing.xs),
-                Text(
-                  'Great! You are saving on this sale.',
-                  style: TenantAdminTextStyles.muted(context),
+                  subtitle,
+                  style: const TextStyle(
+                    color: TenantAdminColors.mutedText,
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),
           ),
-          if (onClear != null) ...[
-            const SizedBox(height: TenantAdminSpacing.md),
-            OutlinedButton.icon(
-              onPressed: onClear,
-              icon: const Icon(Icons.delete_outline_rounded),
-              label: const Text('Clear discounts'),
+          IconButton(
+            key: const Key('discount-close'),
+            tooltip: 'Close Add Discount',
+            onPressed: onClose,
+            icon: const Icon(Icons.close, color: TenantAdminColors.bodyText),
+          ),
+        ]),
+      );
+}
+
+class _FormColumn extends StatelessWidget {
+  const _FormColumn({
+    required this.cart,
+    required this.state,
+    required this.controller,
+    required this.valueController,
+    required this.reasonController,
+  });
+  final PosNewSaleCartState cart;
+  final PosDiscountPresentationState state;
+  final PosDiscountController controller;
+  final TextEditingController valueController;
+  final TextEditingController reasonController;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DiscountScopeSelector(
+              scope: state.scope, onChanged: controller.selectScope),
+          if (state.scope == PosDiscountScope.item) ...[
+            const SizedBox(height: 18),
+            DiscountItemPicker(
+              items: cart.itemList,
+              selectedItemKey: state.selectedCartLineKey,
+              onChanged: (item) => controller.selectCartLine(
+                item.product.cartLineKey,
+                item.product.variantId,
+                item.lineTotal,
+              ),
+            ),
+          ],
+          const SizedBox(height: 18),
+          DiscountMethodSelector(
+            method: state.calculationMethod,
+            itemScope: state.scope == PosDiscountScope.item,
+            onChanged: controller.selectCalculationMethod,
+          ),
+          const SizedBox(height: 12),
+          DiscountValueField(
+            controller: valueController,
+            method: state.calculationMethod,
+            currencyCode: state.currencyCode,
+            errorText: state.valueError,
+            onChanged: controller.updateValue,
+          ),
+          if (state.maxPercentage != null || state.maxFixedAmount != null) ...[
+            const SizedBox(height: 7),
+            Text(
+              state.calculationMethod == PosDiscountCalculationMethod.percentage
+                  ? 'Maximum cashier discount: ${state.maxPercentage?.toStringAsFixed(2)}%'
+                  : 'Maximum cashier discount: ${state.currencyCode} ${state.maxFixedAmount?.toStringAsFixed(2)}',
+              key: const Key('discount-authority-guidance'),
+              style: const TextStyle(
+                color: TenantAdminColors.mutedText,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          const SizedBox(height: 18),
+          DiscountReasonSection(
+              controller: reasonController, onChanged: controller.updateReason),
+          if (state.errorMessage != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              key: const Key('discount-presentation-message'),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: TenantAdminColors.secondary,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: Text(state.errorMessage!,
+                  style: const TextStyle(color: Color(0xFF1D4ED8))),
             ),
           ],
         ],
-      ),
-    );
-  }
+      );
 }
 
-class _DiscountScopeTile extends StatelessWidget {
-  const _DiscountScopeTile({
-    required this.selected,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final bool selected;
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
+class _SummaryColumn extends StatelessWidget {
+  const _SummaryColumn({required this.cart, required this.state});
+  final PosNewSaleCartState cart;
+  final PosDiscountPresentationState state;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: selected ? TenantAdminColors.secondary : TenantAdminColors.surface,
-      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(TenantAdminSpacing.md),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            border: Border.all(
-              color:
-                  selected ? TenantAdminColors.info : TenantAdminColors.border,
+    final selected = state.selectedItem(cart);
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      if (state.scope == PosDiscountScope.order)
+        DiscountSummaryCard(
+          title: 'CURRENT SALE SUMMARY',
+          rows: [
+            ('Subtotal', formatLkr(cart.subtotal)),
+            ('Items', '${state.currentItemCount}'),
+          ],
+        )
+      else
+        DiscountSummaryCard(
+          key: const Key('discount-selected-item-summary'),
+          title: 'SELECTED ITEM SUMMARY',
+          rows: selected == null
+              ? const [
+                  ('Item', 'Select a product'),
+                  ('Quantity', '—'),
+                  ('Line Total', '—')
+                ]
+              : [
+                  ('Item', selected.product.name),
+                  ('Quantity', '${selected.quantity}'),
+                  ('Line Total', formatLkr(selected.lineTotal)),
+                ],
+          icon: Icons.shopping_bag_outlined,
+        ),
+      const SizedBox(height: 16),
+      DiscountPreviewCard(state: state),
+      const SizedBox(height: 16),
+      Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF3F7FF),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFBFDBFE)),
+        ),
+        child:
+            const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(Icons.info_outline, color: Color(0xFF2563EB), size: 20),
+          SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              'Only one cashier discount can be applied to the current sale.',
+              style: TextStyle(color: Color(0xFF1D4ED8), fontSize: 12),
             ),
           ),
-          child: Row(
-            children: [
-              Icon(icon, color: TenantAdminColors.info),
-              const SizedBox(width: TenantAdminSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: TenantAdminColors.bodyText,
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: TenantAdminColors.mutedText,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+        ]),
       ),
-    );
+    ]);
   }
 }
 
-class _DiscountForm extends ConsumerWidget {
-  const _DiscountForm({
-    required this.formKey,
-    required this.scope,
-    required this.valueType,
-    required this.valueController,
-    required this.reasonController,
-    required this.selectedItemKey,
-    required this.onValueTypeChanged,
-    required this.onSelectedItemChanged,
-    required this.onApply,
-    required this.policies,
-    required this.selectedPolicy,
-    required this.predefined,
+class _ActionBar extends StatelessWidget {
+  const _ActionBar({
+    required this.enabled,
     required this.submitting,
-    required this.catalogLoading,
-    required this.catalogError,
-    required this.waitingForItemSelection,
-    required this.onPolicyChanged,
-    required this.onPredefinedChanged,
-    required this.pendingDiscount,
-    required this.canApprovePending,
-    required this.onApprovePending,
-    required this.onRejectPending,
+    required this.onCancel,
+    required this.onApply,
   });
-
-  final GlobalKey<FormState> formKey;
-  final _DiscountScope scope;
-  final PosDiscountValueType valueType;
-  final TextEditingController valueController;
-  final TextEditingController reasonController;
-  final String? selectedItemKey;
-  final ValueChanged<PosDiscountValueType> onValueTypeChanged;
-  final ValueChanged<String?> onSelectedItemChanged;
-  final VoidCallback onApply;
-  final List<PosDiscountPolicy> policies;
-  final PosDiscountPolicy? selectedPolicy;
-  final bool predefined;
+  final bool enabled;
   final bool submitting;
-  final bool catalogLoading;
-  final String? catalogError;
-  final bool waitingForItemSelection;
-  final ValueChanged<PosDiscountPolicy?> onPolicyChanged;
-  final ValueChanged<bool> onPredefinedChanged;
-  final PosCartDiscount? pendingDiscount;
-  final bool canApprovePending;
-  final VoidCallback onApprovePending;
-  final VoidCallback onRejectPending;
+  final VoidCallback onCancel;
+  final VoidCallback onApply;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cart = ref.watch(posNewSaleCartProvider);
-    final selectedItem =
-        selectedItemKey == null ? null : cart.items[selectedItemKey];
-    final title =
-        scope == _DiscountScope.manual ? 'Manual Discount' : 'Item Discount';
-    final subtitle = scope == _DiscountScope.manual
-        ? 'Apply custom discount'
-        : 'Discount on specific items';
-
-    return Padding(
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-      child: Form(
-        key: formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(title, style: TenantAdminTextStyles.sectionTitle(context)),
-              const SizedBox(height: TenantAdminSpacing.xs),
-              Text(subtitle, style: TenantAdminTextStyles.muted(context)),
-              if (pendingDiscount != null) ...[
-                const SizedBox(height: TenantAdminSpacing.md),
-                Container(
-                  padding: const EdgeInsets.all(TenantAdminSpacing.md),
-                  decoration: BoxDecoration(
-                    color: TenantAdminColors.warning.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Manager approval pending'),
-                      SelectableText(
-                        'Application: ${pendingDiscount!.applicationId}',
-                      ),
-                      if (canApprovePending) ...[
-                        const SizedBox(height: TenantAdminSpacing.sm),
-                        Row(
-                          children: [
-                            OutlinedButton(
-                              onPressed: submitting ? null : onRejectPending,
-                              child: const Text('Reject'),
-                            ),
-                            const SizedBox(width: TenantAdminSpacing.sm),
-                            FilledButton(
-                              onPressed: submitting ? null : onApprovePending,
-                              child: const Text('Approve'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-              const SizedBox(height: TenantAdminSpacing.lg),
-              SegmentedButton<bool>(
-                segments: const [
-                  ButtonSegment(value: false, label: Text('Manual')),
-                  ButtonSegment(value: true, label: Text('Predefined')),
-                ],
-                selected: {predefined},
-                onSelectionChanged: (value) => onPredefinedChanged(value.first),
-              ),
-              const SizedBox(height: TenantAdminSpacing.md),
-              if (predefined && waitingForItemSelection)
-                const Text('Select a cart item to load applicable policies.')
-              else if (predefined && catalogLoading)
-                const LinearProgressIndicator()
-              else if (predefined && catalogError != null)
-                Text('Unable to load discount policies: $catalogError',
-                    style: const TextStyle(color: Colors.red))
-              else if (predefined && policies.isEmpty)
-                Text(scope == _DiscountScope.item
-                    ? 'No applicable item discount policies.'
-                    : 'No applicable order discount policies.')
-              else if (predefined)
-                DropdownButtonFormField<PosDiscountPolicy>(
-                  key: ValueKey('${valueType.name}-${selectedPolicy?.id}'),
-                  initialValue: selectedPolicy,
-                  decoration:
-                      const InputDecoration(labelText: 'Discount Policy'),
-                  items: policies
-                      .map((policy) => DropdownMenuItem(
-                            value: policy,
-                            child: Text(
-                                '${policy.name} (max ${policy.absoluteValueLimit})'),
-                          ))
-                      .toList(),
-                  onChanged: onPolicyChanged,
-                  validator: (value) =>
-                      value == null ? 'Select a discount policy' : null,
-                ),
-              if (scope == _DiscountScope.item) ...[
-                const SizedBox(height: TenantAdminSpacing.lg),
-                _ItemPicker(
-                  items: cart.itemList,
-                  selectedItemKey: selectedItemKey,
-                  onChanged: onSelectedItemChanged,
-                ),
-              ],
-              const SizedBox(height: TenantAdminSpacing.lg),
-              Text(
-                'Discount Type',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: TenantAdminColors.bodyText,
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(height: TenantAdminSpacing.sm),
-              SegmentedButton<PosDiscountValueType>(
-                segments: const [
-                  ButtonSegment(
-                    value: PosDiscountValueType.percentage,
-                    label: Text('Percentage'),
-                  ),
-                  ButtonSegment(
-                    value: PosDiscountValueType.fixedAmount,
-                    label: Text('Fixed Amount'),
-                  ),
-                ],
-                selected: {valueType},
-                onSelectionChanged: predefined
-                    ? null
-                    : (selection) => onValueTypeChanged(selection.first),
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              TextFormField(
-                controller: valueController,
-                readOnly: predefined,
-                decoration: InputDecoration(
-                  labelText: 'Discount Value',
-                  prefixText: valueType == PosDiscountValueType.fixedAmount
-                      ? '${formatLkrInputPrefix()} '
-                      : null,
-                  suffixText:
-                      valueType == PosDiscountValueType.percentage ? '%' : null,
-                ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                ],
-                validator: (value) => _validateDiscountValue(
-                  value: value,
-                  cart: cart,
-                  selectedItem: selectedItem,
-                ),
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              ValueListenableBuilder<TextEditingValue>(
-                valueListenable: reasonController,
-                builder: (context, value, _) {
-                  return TextFormField(
-                    controller: reasonController,
-                    decoration: InputDecoration(
-                      labelText: 'Reason',
-                      hintText: 'Add a reason or note (optional)',
-                      counterText: '${value.text.length} / 200',
-                    ),
-                    maxLines: 3,
-                    maxLength: 200,
-                    validator: (reason) {
-                      if ((reason ?? '').length > 200) {
-                        return 'Reason cannot exceed 200 characters';
-                      }
-                      return null;
-                    },
-                  );
-                },
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              PosPrimaryActionButton(
-                onPressed: cart.hasItems && !submitting ? onApply : null,
-                icon: Icons.discount_outlined,
-                isLoading: submitting,
-                label: 'Apply Discount',
-              ),
-            ],
-          ),
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: TenantAdminColors.border)),
         ),
-      ),
-    );
-  }
-
-  String? _validateDiscountValue({
-    required String? value,
-    required PosNewSaleCartState cart,
-    required PosNewSaleCartItem? selectedItem,
-  }) {
-    final trimmed = value?.trim() ?? '';
-    if (!cart.hasItems) {
-      return 'Cart empty should not allow applying discount';
-    }
-    if (scope == _DiscountScope.item && selectedItem == null) {
-      return 'Item Discount requires one cart item selected';
-    }
-    if (trimmed.isEmpty) {
-      return 'Discount value required';
-    }
-
-    final parsed = double.tryParse(trimmed);
-    if (parsed == null) {
-      return 'Discount value must be numeric';
-    }
-
-    if (valueType == PosDiscountValueType.percentage) {
-      if (parsed <= 0 || parsed > 100) {
-        return 'Percentage must be greater than 0 and less than or equal to 100';
-      }
-      return null;
-    }
-
-    if (parsed <= 0) {
-      return 'Fixed amount must be greater than 0';
-    }
-
-    final maxAmount = scope == _DiscountScope.manual
-        ? cart.subtotal
-        : selectedItem?.lineTotal ?? 0;
-    if (parsed > maxAmount) {
-      return scope == _DiscountScope.manual
-          ? 'Fixed amount cannot exceed subtotal'
-          : 'Fixed amount cannot exceed selected item line total';
-    }
-
-    return null;
-  }
+        child: LayoutBuilder(builder: (context, constraints) {
+          final stacked = constraints.maxWidth < 520;
+          final cancel = OutlinedButton(
+            key: const Key('discount-cancel'),
+            onPressed: submitting ? null : onCancel,
+            style: OutlinedButton.styleFrom(minimumSize: const Size(150, 52)),
+            child: const Text('Cancel'),
+          );
+          final apply = FilledButton.icon(
+            key: const Key('discount-apply'),
+            onPressed: enabled && !submitting ? onApply : null,
+            icon: submitting
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.sell_outlined),
+            label: const Text('Apply Discount'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(250, 52),
+              backgroundColor: TenantAdminColors.posNewSaleAccent,
+              disabledBackgroundColor: const Color(0xFFF1F5F9),
+            ),
+          );
+          if (stacked) {
+            return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(width: double.infinity, child: apply),
+                  const SizedBox(height: 8),
+                  SizedBox(width: double.infinity, child: cancel),
+                ]);
+          }
+          return Row(children: [
+            Expanded(child: cancel),
+            const SizedBox(width: 14),
+            Expanded(flex: 2, child: apply),
+          ]);
+        }),
+      );
 }
 
-class _ItemPicker extends StatelessWidget {
-  const _ItemPicker({
-    required this.items,
-    required this.selectedItemKey,
-    required this.onChanged,
+class _ExistingDiscountGuard extends StatelessWidget {
+  const _ExistingDiscountGuard({
+    required this.cart,
+    required this.submitting,
+    required this.onRemove,
   });
-
-  final List<PosNewSaleCartItem> items;
-  final String? selectedItemKey;
-  final ValueChanged<String?> onChanged;
-
+  final PosNewSaleCartState cart;
+  final bool submitting;
+  final VoidCallback onRemove;
   @override
-  Widget build(BuildContext context) {
-    if (items.isEmpty) {
-      return Text(
-        'No cart items available.',
-        style: TenantAdminTextStyles.muted(context),
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.check_circle_outline,
+                  color: TenantAdminColors.success, size: 48),
+              const SizedBox(height: 14),
+              const Text('Discount already applied',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 8),
+              const Text(
+                'Only one active cashier discount is allowed. Remove it before applying a different discount.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: TenantAdminColors.mutedText),
+              ),
+              const SizedBox(height: 18),
+              FilledButton.icon(
+                key: const Key('discount-remove'),
+                onPressed: submitting ? null : onRemove,
+                icon: submitting
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.delete_outline),
+                label: const Text('Remove Discount'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: TenantAdminColors.posNewSaleAccent,
+                  minimumSize: const Size(220, 50),
+                ),
+              ),
+            ]),
+          ),
+        ),
       );
-    }
+}
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Select Item',
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: TenantAdminColors.bodyText,
-                fontWeight: FontWeight.w800,
-              ),
+class _PermissionDeniedState extends StatelessWidget {
+  const _PermissionDeniedState();
+  @override
+  Widget build(BuildContext context) => const _SafeState(
+        icon: Icons.lock_outline,
+        title: 'Discount permission required',
+        message: 'Your account does not have sales.discount.apply permission.',
+      );
+}
+
+class _EmptyCartState extends StatelessWidget {
+  const _EmptyCartState();
+  @override
+  Widget build(BuildContext context) => const _SafeState(
+        icon: Icons.remove_shopping_cart_outlined,
+        title: 'Cart is empty',
+        message: 'Add a product before applying a discount.',
+      );
+}
+
+class _SafeState extends StatelessWidget {
+  const _SafeState(
+      {required this.icon, required this.title, required this.message});
+  final IconData icon;
+  final String title;
+  final String message;
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, color: TenantAdminColors.mutedText, size: 44),
+            const SizedBox(height: 12),
+            Text(title,
+                style:
+                    const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 6),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: TenantAdminColors.mutedText)),
+          ]),
         ),
-        const SizedBox(height: TenantAdminSpacing.sm),
-        ...items.map(
-          (item) {
-            final key = item.product.cartLineKey;
-            final selected = key == selectedItemKey;
-            return ListTile(
-              selected: selected,
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(
-                selected
-                    ? Icons.radio_button_checked_rounded
-                    : Icons.radio_button_unchecked_rounded,
-                color: selected
-                    ? TenantAdminColors.info
-                    : TenantAdminColors.mutedText,
-              ),
-              title: Text(item.product.name),
-              subtitle:
-                  Text('Qty ${item.quantity} • ${formatLkr(item.lineTotal)}'),
-              onTap: () => onChanged(key),
-            );
-          },
+      );
+}
+
+class _CloseAction extends StatelessWidget {
+  const _CloseAction({required this.onClose});
+  final VoidCallback onClose;
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 10, 24, 16),
+        child: SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: onClose,
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 50)),
+            child: const Text('Close'),
+          ),
         ),
-      ],
-    );
-  }
+      );
 }

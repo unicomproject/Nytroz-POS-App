@@ -20,20 +20,32 @@ class OutletWizardStepper extends StatelessWidget {
       builder: (context, constraints) {
         final compact = constraints.maxWidth < TenantAdminBreakpoints.tablet;
 
-        return Wrap(
-          spacing: TenantAdminSpacing.sm,
-          runSpacing: TenantAdminSpacing.sm,
+        return Column(
           children: [
-            for (var index = 0; index < steps.length; index++)
-              _StepPill(
-                label: steps[index],
-                index: index,
-                active: index == currentStep,
-                complete: index < currentStep,
-                compact: compact,
-                onTap:
-                    index <= currentStep ? () => onStepSelected(index) : null,
-              ),
+            Row(
+              children: [
+                for (var index = 0; index < steps.length; index++) ...[
+                  _StepItem(
+                    label: steps[index],
+                    index: index,
+                    active: index == currentStep,
+                    complete: index < currentStep,
+                    compact: compact,
+                    onTap: index <= currentStep ? () => onStepSelected(index) : null,
+                  ),
+                  if (index < steps.length - 1)
+                    Expanded(
+                      child: Container(
+                        height: 1,
+                        color: TenantAdminColors.border,
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                    ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(height: 1, color: TenantAdminColors.border),
           ],
         );
       },
@@ -41,8 +53,8 @@ class OutletWizardStepper extends StatelessWidget {
   }
 }
 
-class _StepPill extends StatelessWidget {
-  const _StepPill({
+class _StepItem extends StatelessWidget {
+  const _StepItem({
     required this.label,
     required this.index,
     required this.active,
@@ -60,12 +72,14 @@ class _StepPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active || complete
-        ? TenantAdminColors.primary
+    final color = active
+        ? TenantAdminColors.posHomeOrangeEnd
+        : complete
+            ? const Color(0xFF22C55E)
+            : TenantAdminColors.mutedText;
+    final textColor = active
+        ? TenantAdminColors.posHomeOrangeEnd
         : TenantAdminColors.mutedText;
-    final background = active
-        ? TenantAdminColors.primary.withValues(alpha: 0.10)
-        : TenantAdminColors.surface;
 
     return Semantics(
       button: onTap != null,
@@ -73,20 +87,13 @@ class _StepPill extends StatelessWidget {
       label: '${index + 1}. $label${complete ? ', completed' : ''}',
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(4),
         child: Container(
-          constraints: const BoxConstraints(minHeight: 44),
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
-            vertical: TenantAdminSpacing.sm,
-          ),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: background,
-            border: Border.all(
-              color:
-                  active ? TenantAdminColors.primary : TenantAdminColors.border,
-            ),
-            borderRadius: BorderRadius.circular(999),
+            border: active
+                ? const Border(bottom: BorderSide(color: TenantAdminColors.posHomeOrangeEnd, width: 2))
+                : const Border(bottom: BorderSide(color: Colors.transparent, width: 2)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -109,7 +116,11 @@ class _StepPill extends StatelessWidget {
                 const SizedBox(width: TenantAdminSpacing.sm),
                 Text(
                   label,
-                  style: TextStyle(color: color, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ],

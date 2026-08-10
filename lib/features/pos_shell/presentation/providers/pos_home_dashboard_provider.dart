@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/access/pos_access_codes.dart';
 import '../../../../core/access/pos_permission_access.dart';
 import '../../../../core/network/dio_provider.dart';
+import '../../../../core/utils/timezone_resolver.dart';
 import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
@@ -352,49 +354,17 @@ DateTime _resolveOutletNow({
   required DateTime receivedAt,
   required String? outletTimezone,
 }) {
-  if (serverNowUtc == null) {
-    return DateTime.now();
-  }
-
-  final elapsed = DateTime.now().toUtc().difference(receivedAt);
-  final anchoredUtc = serverNowUtc.add(elapsed);
-  final offset = _timezoneOffset(outletTimezone);
-  return anchoredUtc.add(offset);
-}
-
-Duration _timezoneOffset(String? outletTimezone) {
-  switch (outletTimezone?.trim()) {
-    case 'Asia/Colombo':
-      return const Duration(hours: 5, minutes: 30);
-    default:
-      return Duration.zero;
-  }
+  return TimezoneResolver.resolveOutletNow(
+    serverNowUtc: serverNowUtc,
+    serverTimeReceivedAt: receivedAt,
+    outletTimezone: outletTimezone,
+  );
 }
 
 String _formatTime(DateTime value) {
-  final hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
-  final minute = value.minute.toString().padLeft(2, '0');
-  final period = value.hour >= 12 ? 'PM' : 'AM';
-  return '$hour:$minute $period';
+  return DateFormat('h:mm a').format(value);
 }
 
 String _formatDate(DateTime value) {
-  const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-
-  return '${weekdays[value.weekday - 1]}, ${months[value.month - 1]} '
-      '${value.day}';
+  return DateFormat('EEE, MMM d').format(value);
 }

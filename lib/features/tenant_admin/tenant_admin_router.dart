@@ -101,7 +101,16 @@ List<RouteBase> tenantAdminRoutes(Ref ref) {
           path: '/tenant-admin/roles',
           redirect: (context, state) => '/tenant-admin/roles-permissions',
         ),
-        // stockRoot is now handled by the dynamic loop below
+        // stockRoot is handled dynamically for access control, but we add a redirect
+        // just in case it's navigated to directly.
+        GoRoute(
+          path: InventoryRoutes.stockRoot,
+          redirect: (context, state) => InventoryRoutes.currentStock,
+        ),
+        GoRoute(
+          path: '/tenant-admin/products/import',
+          redirect: (context, state) => '/tenant-admin/products',
+        ),
         ...tenantAdminRouteDefinitions.map(
           (definition) => _tenantAdminModuleRoute(ref, definition),
         ),

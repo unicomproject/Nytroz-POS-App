@@ -13,6 +13,8 @@ import 'package:nytroz_pos/features/auth/presentation/providers/session_provider
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/customers/presentation/providers/customers_provider.dart';
 import 'package:nytroz_pos/features/customers/presentation/screens/pos_customers_screen.dart';
+import 'package:nytroz_pos/features/customers/presentation/widgets/customer_details_panel.dart';
+import 'package:nytroz_pos/features/customers/presentation/widgets/customers_table_section.dart';
 import 'package:nytroz_pos/features/device_activation/application/usecases/activate_device.dart';
 import 'package:nytroz_pos/features/device_activation/data/datasources/device_context_storage.dart';
 import 'package:nytroz_pos/features/device_activation/domain/entities/pos_device_context.dart';
@@ -28,7 +30,7 @@ import 'package:nytroz_pos/features/till/presentation/providers/till_provider.da
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('renders header, summary, list, and selects by customerId',
+  testWidgets('renders header, add action, and list without summary cards',
       (tester) async {
     final container = _createContainer(
       dio: _dioWithHandlers({
@@ -70,17 +72,34 @@ void main() {
       find.text('Search, select, and manage customers during checkout'),
       findsOneWidget,
     );
-    expect(find.text('New Customer'), findsOneWidget);
-    expect(find.text('Total Customers'), findsOneWidget);
+    expect(find.text('New Customer'), findsNothing);
+    expect(find.widgetWithText(FilledButton, 'Add Customer'), findsOneWidget);
+    expect(find.text('Total Customers'), findsNothing);
+    expect(find.text('Active Customers'), findsNothing);
+    expect(find.text('Customers With Orders'), findsNothing);
+    expect(find.text('New Customers This Month'), findsNothing);
     expect(find.text('Alpha Customer'), findsOneWidget);
     expect(find.text('Beta Customer'), findsOneWidget);
-    expect(find.text('Select a customer'), findsOneWidget);
+    expect(find.byType(CustomerDetailsPanel), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byType(CustomersTableSection),
+        matching: find.byType(ListView),
+      ),
+      findsNothing,
+    );
 
-    await tester.tap(find.text('Beta Customer'));
+    await tester.tap(find.text('Beta Customer').first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Select a customer'), findsNothing);
+    expect(find.byType(CustomerDetailsPanel), findsOneWidget);
     expect(container.read(customersProvider).selectedCustomerId, 'cust-200');
+
+    await tester.tap(find.text('Beta Customer').first);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CustomerDetailsPanel), findsNothing);
+    expect(container.read(customersProvider).selectedCustomerId, isNull);
   });
 
   testWidgets('shows list error and retry', (tester) async {
@@ -120,6 +139,22 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Recovered Customer'), findsOneWidget);
+  });
+
+  testWidgets('hides Add Customer without customers.create permission',
+      (tester) async {
+    final container = _createContainer(
+      dio: _dioWithHandlers({
+        'GET /api/v1/customers': (_) =>
+            _pageResponse(items: const [], totalCount: 0),
+      }),
+      canCreateCustomer: false,
+    );
+
+    await _pumpCustomers(tester, container);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add Customer'), findsNothing);
   });
 
   testWidgets('Attach to Sale stores selected customer on cart',
@@ -193,27 +228,6 @@ void main() {
       find.widgetWithText(FilledButton, 'Attach to Sale'),
     );
     expect(button.onPressed, isNull);
-  });
-
-  testWidgets('summary cards show unavailable marker when summary fails',
-      (tester) async {
-    final container = _createContainer(
-      dio: _dioWithCustomerDefaults(
-        {
-          'GET /api/v1/customers': (options) {
-            return _pageResponse(items: const [], totalCount: 5);
-          },
-        },
-        summaryFails: true,
-      ),
-    );
-
-    await _pumpCustomers(tester, container);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Customers With Orders'), findsOneWidget);
-    expect(find.text('New Customers This Month'), findsOneWidget);
-    expect(find.text('—'), findsWidgets);
   });
 
   testWidgets('narrow layout opens details sheet on select', (tester) async {
@@ -367,10 +381,11 @@ ProviderContainer _createContainer({
   bool tillOpen = true,
   bool canStartSale = true,
   bool canEditCustomer = false,
+  bool canCreateCustomer = true,
 }) {
   final permissions = <String>[
     PosPermissionCodes.viewNewSaleCustomers,
-    PosPermissionCodes.createNewSaleCustomer,
+    if (canCreateCustomer) PosPermissionCodes.createNewSaleCustomer,
     PosPermissionCodes.manageCart,
     if (canStartSale) PosPermissionCodes.viewNewSale,
     if (canStartSale) PosPermissionCodes.createSale,
@@ -427,7 +442,7 @@ Map<String, dynamic> _pageResponse({
   required List<Map<String, dynamic>> items,
   required int totalCount,
   int page = 1,
-  int pageSize = 8,
+  int pageSize = 4,
 }) {
   final totalPages =
       totalCount == 0 ? 0 : (totalCount / pageSize).ceil().clamp(1, 9999);

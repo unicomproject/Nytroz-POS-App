@@ -26,8 +26,10 @@ import '../returns_refunds/presentation/screens/pos_return_inspect_items_screen.
 import '../returns_refunds/presentation/screens/pos_return_reason_screen.dart';
 import '../returns_refunds/presentation/screens/pos_return_search_sale_screen.dart';
 import '../sale/presentation/screens/pos_payment_success_screen.dart';
+import '../sale/presentation/screens/pos_checkout_customer_screen.dart';
 import '../sale/presentation/screens/pos_cash_payment_screen.dart';
 import '../sale/presentation/screens/pos_email_receipt_screen.dart';
+import '../sale/presentation/screens/pos_parked_sales_screen.dart';
 import '../sale/presentation/screens/pos_print_receipt_screen.dart';
 import '../pos/presentation/screens/new_sale/pos_new_sale_screen.dart';
 import '../sale/presentation/screens/pos_payment_method_screen.dart';
@@ -49,6 +51,8 @@ List<RouteBase> posShellRoutes(Ref ref) {
           showTopBarSearch: shouldShowPosTopBarSearch(state.uri.path),
           showSidebar: state.uri.path != '/pos/home' &&
               state.uri.path != '/pos/new-sale' &&
+              state.uri.path != '/pos/customers' &&
+              state.uri.path != '/pos/parked-sales' &&
               state.uri.path != '/pos/new-sale/payment' &&
               !state.uri.path.startsWith('/pos/new-sale/payment/') &&
               !state.uri.path.startsWith('/pos/home/'),
@@ -58,6 +62,8 @@ List<RouteBase> posShellRoutes(Ref ref) {
           ),
           isNewSale: state.uri.path == '/pos/new-sale',
           isDashboard: state.uri.path == '/pos/home' ||
+              state.uri.path == '/pos/customers' ||
+              state.uri.path == '/pos/parked-sales' ||
               state.uri.path == '/pos/new-sale/payment/cash' ||
               state.uri.path == '/pos/new-sale/payment/cash/success',
           child: child,
@@ -85,6 +91,13 @@ List<RouteBase> posShellRoutes(Ref ref) {
                       ? const PosPaymentMethodScreen()
                       : const TenantAdminForbiddenScreen(),
               routes: [
+                GoRoute(
+                  path: 'customer',
+                  builder: (context, state) =>
+                      _canAccessCheckoutCustomer(ref.read(authSessionProvider))
+                          ? const PosCheckoutCustomerScreen()
+                          : const TenantAdminForbiddenScreen(),
+                ),
                 GoRoute(
                   path: 'cash',
                   builder: (context, state) =>
@@ -275,7 +288,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
           path: '/pos/parked-sales',
           builder: (context, state) =>
               _canViewParkedSales(ref.read(authSessionProvider))
-                  ? const PosPlaceholderScreen(title: 'Parked Sales')
+                  ? const PosParkedSalesScreen()
                   : const TenantAdminForbiddenScreen(),
         ),
         GoRoute(
@@ -351,15 +364,17 @@ bool shouldShowPosTopBar(String path) {
     return false;
   }
 
-  if (path == '/pos/customers') {
-    return false;
-  }
-
   if (path.startsWith('/pos/returns-refunds')) {
     return false;
   }
 
   if (path == '/pos/new-sale/payment') {
+    return false;
+  }
+
+  // The checkout-customer route owns the shared dark POS top bar so its
+  // unified target workspace is not wrapped by a second desktop header.
+  if (path == '/pos/new-sale/payment/customer') {
     return false;
   }
 
@@ -380,6 +395,7 @@ bool shouldShowPosCashierBottomNavigation(
   return switch (path) {
     '/pos/home' => _canViewPosHome(session),
     '/pos/new-sale' => _canStartNewSale(session),
+    '/pos/parked-sales' => _canViewParkedSales(session),
     '/pos/new-sale/payment/cash' => _canAcceptCashPayment(session),
     '/pos/new-sale/payment/cash/success' => _canViewPaymentSuccess(session),
     '/pos/customers' => _canViewCustomers(session),
@@ -402,6 +418,7 @@ _PosShellHeader _headerForPath(String path) {
     '/pos/new-sale/payment/qr' => 'QR / Mobile Payment',
     '/pos/new-sale/payment/split' => 'Split Payment',
     '/pos/orders' => 'Orders',
+    '/pos/parked-sales' => 'Parked Sales',
     '/pos/customers' => 'Customers',
     '/pos/returns-refunds' => 'Returns & Exchanges',
     '/pos/returns-refunds/summary' => 'Original Sale Summary',
@@ -424,6 +441,7 @@ _PosShellHeader _headerForPath(String path) {
   };
 
   final subtitle = switch (path) {
+    '/pos/parked-sales' => 'Recall or cancel sales that were parked for later.',
     '/pos/cash-drawer' =>
       'Monitor the till cash position and perform drawer actions.',
     '/pos/cash-drawer/cash-in' =>
@@ -529,6 +547,14 @@ bool _canViewCustomers(AuthSession? session) {
       );
 }
 
+bool _canAccessCheckoutCustomer(AuthSession? session) {
+  if (!_canProceedToPayment(session)) return false;
+  return PosPermissionAccess.hasAny(
+    session?.permissionCodes.toSet() ?? const {},
+    PosPermissionAccess.customerViewOrCreateAccessCodes,
+  );
+}
+
 bool _canViewReturnsRefunds(AuthSession? session) {
   return ReturnsRouteGuard.canAccessPath(session, '/pos/returns-refunds');
 }
@@ -557,9 +583,12 @@ bool _canCloseTill(AuthSession? session) {
           session?.permissionCodes.toSet() ?? const {});
 }
 
+/// Home Parked Sales route guard. Uses only canonical `sales.park.*` codes
+/// (view, create, recall) — legacy `pos.sale.park*` aliases are not honored
+/// here so this route reflects the current permission model.
 bool _canViewParkedSales(AuthSession? session) {
   return _canViewPosHome(session) &&
-      PosPermissionAccess.canParkOrViewParkedSales(
+      PosPermissionAccess.canAccessParkedSalesCanonical(
         session?.permissionCodes.toSet() ?? const {},
       );
 }

@@ -53,7 +53,7 @@ void main() {
   group('Tenant Admin footer path helper', () {
     test('marks brands and products as settings area', () {
       expect(isTenantAdminSettingsAreaPath('/tenant-admin/brands'), isTrue);
-      expect(isTenantAdminSettingsAreaPath('/tenant-admin/products'), isTrue);
+      expect(isTenantAdminSettingsAreaPath('/tenant-admin/products'), isFalse);
       expect(isTenantAdminSettingsAreaPath('/tenant-admin/dashboard'), isFalse);
       expect(isTenantAdminSettingsAreaPath('/pos/home'), isFalse);
     });

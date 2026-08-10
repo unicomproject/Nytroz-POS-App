@@ -21,6 +21,7 @@ class PaymentMethodPage extends StatelessWidget {
       required this.isNavigating,
       required this.onSelectMethod,
       required this.onContinue,
+      this.onCustomerTap,
       this.showChrome = true});
   final PosCheckoutSummaryViewData summary;
   final PosNewSaleCartState cart;
@@ -29,6 +30,7 @@ class PaymentMethodPage extends StatelessWidget {
   final bool isNavigating;
   final ValueChanged<PosPaymentMethodType> onSelectMethod;
   final VoidCallback? onContinue;
+  final VoidCallback? onCustomerTap;
   final bool showChrome;
 
   @override
@@ -50,7 +52,11 @@ class PaymentMethodPage extends StatelessWidget {
                   padding: EdgeInsets.fromLTRB(padding, 7, padding, 7),
                   child: Row(children: [
                     Expanded(
-                        flex: 49, child: LeftPaymentSummaryColumn(cart: cart)),
+                        flex: 49,
+                        child: LeftPaymentSummaryColumn(
+                          cart: cart,
+                          onCustomerTap: onCustomerTap,
+                        )),
                     const SizedBox(width: PaymentMethodStyle.gap),
                     Expanded(
                         flex: 51,
@@ -69,7 +75,11 @@ class PaymentMethodPage extends StatelessWidget {
                 padding: EdgeInsets.all(padding),
                 child: Column(children: [
                   SizedBox(
-                      height: 570, child: LeftPaymentSummaryColumn(cart: cart)),
+                      height: 570,
+                      child: LeftPaymentSummaryColumn(
+                        cart: cart,
+                        onCustomerTap: onCustomerTap,
+                      )),
                   const SizedBox(height: PaymentMethodStyle.gap),
                   SizedBox(
                       height: 590,
