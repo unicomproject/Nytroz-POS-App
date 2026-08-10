@@ -16,8 +16,8 @@ class InventoryQuickActions extends StatelessWidget {
         color: Colors.blue,
         onTap: () => context.go(InventoryRoutes.currentStock),
       ),
-      const _ActionCard(title: 'Opening Stock', subtitle: 'Add opening stock for products', iconData: Icons.unarchive_outlined, color: Colors.purple),
-      const _ActionCard(title: 'Stock Adjustment', subtitle: 'Adjust stock for damage, missing or other reasons', iconData: Icons.tune_outlined, color: Colors.orange),
+      const _ActionCard(title: 'Opening Stock', subtitle: 'Add opening stock for products', iconData: Icons.add_box_outlined, color: Colors.purple),
+      const _ActionCard(title: 'Stock Adjustment', subtitle: 'Adjust stock for damage, missing or other reasons', iconData: Icons.swap_vert_outlined, color: Colors.orange),
       const _ActionCard(title: 'Stock Count', subtitle: 'Perform physical stock count', iconData: Icons.fact_check_outlined, color: Colors.green),
     ];
 
