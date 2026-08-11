@@ -102,6 +102,13 @@ class InventoryRemoteDatasource {
     );
   }
 
+  Future<void> createOpeningStock(Map<String, dynamic> data) async {
+    await _dio.post<dynamic>(
+      '/tenant-admin/inventory/opening-stock',
+      data: data,
+    );
+  }
+
   Map<String, dynamic> _queryParameters({
     String? outletId,
     int? page,

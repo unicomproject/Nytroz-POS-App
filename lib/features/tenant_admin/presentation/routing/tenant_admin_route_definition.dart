@@ -286,6 +286,14 @@ const tenantAdminRouteDefinitions = [
     subtitle: 'Receive inventory into an accessible outlet.',
   ),
   TenantAdminRouteDefinition(
+    path: '/tenant-admin/stock/opening',
+    menuKey: 'inventory',
+    title: 'Opening Stock',
+    featureCode: 'inventory.stock',
+    permissionCode: 'tenant.stock.opening',
+    subtitle: 'Add initial opening stock to an outlet.',
+  ),
+  TenantAdminRouteDefinition(
     path: '/tenant-admin/stock/items',
     menuKey: 'inventory',
     title: 'Stock Items',

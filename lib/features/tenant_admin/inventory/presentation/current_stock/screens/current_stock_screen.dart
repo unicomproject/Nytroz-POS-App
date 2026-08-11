@@ -58,27 +58,30 @@ class CurrentStockScreen extends ConsumerWidget {
             builder: (context, constraints) {
               final isCompact = constraints.maxWidth < 800;
               
-              final searchField = TextField(
-                onChanged: (val) {
-                  ref.read(currentStockSearchProvider.notifier).state = val;
-                  ref.read(currentStockPageProvider.notifier).state = 1;
-                },
-                decoration: InputDecoration(
-                  hintText: 'Search by product name, SKU or scan barcode',
-                  hintStyle: (Theme.of(context).textTheme.bodySmall ?? const TextStyle()).copyWith(color: TenantAdminColors.mutedText),
-                  prefixIcon: const Icon(Icons.search, size: 20, color: TenantAdminColors.mutedText),
-                  suffixIcon: const Icon(Icons.qr_code_scanner, size: 20, color: TenantAdminColors.mutedText),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md, vertical: TenantAdminSpacing.sm),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(TenantAdminSpacing.sm),
-                    borderSide: const BorderSide(color: TenantAdminColors.border),
+              final searchField = SizedBox(
+                height: 40,
+                child: TextField(
+                  onChanged: (val) {
+                    ref.read(currentStockSearchProvider.notifier).state = val;
+                    ref.read(currentStockPageProvider.notifier).state = 1;
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Search by product name, SKU or scan barcode',
+                    hintStyle: (Theme.of(context).textTheme.bodySmall ?? const TextStyle()).copyWith(color: TenantAdminColors.mutedText),
+                    prefixIcon: const Icon(Icons.search, size: 20, color: TenantAdminColors.mutedText),
+                    suffixIcon: const Icon(Icons.qr_code_scanner, size: 20, color: TenantAdminColors.mutedText),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md, vertical: 0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(TenantAdminSpacing.sm),
+                      borderSide: const BorderSide(color: TenantAdminColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(TenantAdminSpacing.sm),
+                      borderSide: const BorderSide(color: TenantAdminColors.border),
+                    ),
+                    filled: true,
+                    fillColor: TenantAdminColors.surface,
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(TenantAdminSpacing.sm),
-                    borderSide: const BorderSide(color: TenantAdminColors.border),
-                  ),
-                  filled: true,
-                  fillColor: TenantAdminColors.surface,
                 ),
               );
 
@@ -87,6 +90,84 @@ class CurrentStockScreen extends ConsumerWidget {
                 runSpacing: TenantAdminSpacing.md,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
+                  Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md),
+                    decoration: BoxDecoration(
+                      color: TenantAdminColors.surface,
+                      border: Border.all(color: TenantAdminColors.border),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: ref.watch(currentStockStatusFilterProvider),
+                        hint: Row(
+                          children: [
+                            const Icon(Icons.filter_alt_outlined, size: 18, color: TenantAdminColors.bodyText),
+                            const SizedBox(width: TenantAdminSpacing.sm),
+                            Text(
+                              'All Stock Status',
+                              style: (Theme.of(context).textTheme.labelMedium ?? const TextStyle()).copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: TenantAdminColors.bodyText,
+                              ),
+                            ),
+                          ],
+                        ),
+                        icon: const Padding(
+                          padding: EdgeInsets.only(left: TenantAdminSpacing.sm),
+                          child: Icon(Icons.keyboard_arrow_down, size: 18, color: TenantAdminColors.bodyText),
+                        ),
+                        isDense: true,
+                        onChanged: (val) {
+                          ref.read(currentStockStatusFilterProvider.notifier).state = val;
+                          ref.read(currentStockPageProvider.notifier).state = 1;
+                        },
+                        items: [
+                          DropdownMenuItem<String>(
+                            value: null,
+                            child: Row(
+                              children: [
+                                const Icon(Icons.filter_alt_outlined, size: 18, color: TenantAdminColors.bodyText),
+                                const SizedBox(width: TenantAdminSpacing.sm),
+                                Text('All Stock Status', style: (Theme.of(context).textTheme.labelMedium ?? const TextStyle()).copyWith(fontWeight: FontWeight.w600, color: TenantAdminColors.bodyText)),
+                              ],
+                            ),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'InStock',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.circle, size: 10, color: TenantAdminColors.success),
+                                const SizedBox(width: TenantAdminSpacing.sm),
+                                Text('In Stock', style: (Theme.of(context).textTheme.labelMedium ?? const TextStyle()).copyWith(fontWeight: FontWeight.w600, color: TenantAdminColors.bodyText)),
+                              ],
+                            ),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'LowStock',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.circle, size: 10, color: TenantAdminColors.warning),
+                                const SizedBox(width: TenantAdminSpacing.sm),
+                                Text('Low Stock', style: (Theme.of(context).textTheme.labelMedium ?? const TextStyle()).copyWith(fontWeight: FontWeight.w600, color: TenantAdminColors.bodyText)),
+                              ],
+                            ),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'OutOfStock',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.circle, size: 10, color: TenantAdminColors.danger),
+                                const SizedBox(width: TenantAdminSpacing.sm),
+                                Text('Out of Stock', style: (Theme.of(context).textTheme.labelMedium ?? const TextStyle()).copyWith(fontWeight: FontWeight.w600, color: TenantAdminColors.bodyText)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   Container(
                     height: 40,
                     padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md),
@@ -228,8 +309,8 @@ class CurrentStockScreen extends ConsumerWidget {
 
               return Row(
                 children: [
-                  Expanded(flex: 3, child: searchField),
-                  const Spacer(flex: 1),
+                  Expanded(child: searchField),
+                  const SizedBox(width: TenantAdminSpacing.md),
                   actionButtons,
                 ],
               );
