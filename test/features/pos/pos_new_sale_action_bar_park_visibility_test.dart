@@ -9,7 +9,7 @@ import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/data/models/pos_parked_sale_dtos.dart';
 import 'package:nytroz_pos/features/cart/domain/repositories/pos_parked_sale_repository.dart';
-import 'package:nytroz_pos/features/cart/domain/entities/pos_cart_discount.dart';
+import 'package:nytroz_pos/features/discount/domain/entities/pos_cart_discount.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_parked_sale_provider.dart';
 import 'package:nytroz_pos/features/pos/presentation/widgets/new_sale/actions/pos_new_sale_action_bar.dart';

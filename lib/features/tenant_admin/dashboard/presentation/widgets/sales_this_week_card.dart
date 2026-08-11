@@ -74,7 +74,8 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
                 padding: EdgeInsets.only(bottom: 4),
                 child: Row(
                   children: [
-                    Icon(Icons.arrow_upward, color: TenantAdminColors.success, size: 16),
+                    Icon(Icons.arrow_upward,
+                        color: TenantAdminColors.success, size: 16),
                     SizedBox(width: 2),
                     Text(
                       '12.6%',
@@ -107,9 +108,11 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLegendItem(const Color(0xFFFF7A00), 'Today', isDashed: false),
+              _buildLegendItem(const Color(0xFFFF7A00), 'Today',
+                  isDashed: false),
               const SizedBox(width: 24),
-              _buildLegendItem(TenantAdminColors.mutedText, 'Yesterday', isDashed: true),
+              _buildLegendItem(TenantAdminColors.mutedText, 'Yesterday',
+                  isDashed: true),
             ],
           ),
         ],
@@ -126,7 +129,8 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? const Color(0xFFFF7A00) : TenantAdminColors.border,
+            color:
+                isSelected ? const Color(0xFFFF7A00) : TenantAdminColors.border,
           ),
           borderRadius: BorderRadius.circular(20),
           color: isSelected ? const Color(0xFFFFF7ED) : Colors.transparent,
@@ -136,7 +140,9 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? const Color(0xFFFF7A00) : TenantAdminColors.mutedText,
+            color: isSelected
+                ? const Color(0xFFFF7A00)
+                : TenantAdminColors.mutedText,
           ),
         ),
       ),
@@ -182,8 +188,10 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
         ),
         titlesData: FlTitlesData(
           show: true,
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -197,14 +205,30 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
                 );
                 Widget text;
                 switch (value.toInt()) {
-                  case 0: text = const Text('12 AM', style: style); break;
-                  case 4: text = const Text('4 AM', style: style); break;
-                  case 8: text = const Text('8 AM', style: style); break;
-                  case 12: text = const Text('12 PM', style: style); break;
-                  case 16: text = const Text('4 PM', style: style); break;
-                  case 20: text = const Text('8 PM', style: style); break;
-                  case 24: text = const Text('12 AM', style: style); break;
-                  default: text = const Text('', style: style); break;
+                  case 0:
+                    text = const Text('12 AM', style: style);
+                    break;
+                  case 4:
+                    text = const Text('4 AM', style: style);
+                    break;
+                  case 8:
+                    text = const Text('8 AM', style: style);
+                    break;
+                  case 12:
+                    text = const Text('12 PM', style: style);
+                    break;
+                  case 16:
+                    text = const Text('4 PM', style: style);
+                    break;
+                  case 20:
+                    text = const Text('8 PM', style: style);
+                    break;
+                  case 24:
+                    text = const Text('12 AM', style: style);
+                    break;
+                  default:
+                    text = const Text('', style: style);
+                    break;
                 }
                 return SideTitleWidget(
                   meta: meta,

@@ -282,7 +282,7 @@ class _PlainCell extends StatelessWidget {
 }
 
 class _ActionIconButton extends StatelessWidget {
-    const _ActionIconButton({
+  const _ActionIconButton({
     required this.icon,
     required this.tooltip,
     required this.onPressed,

@@ -1,8 +1,9 @@
 import 'dart:io';
 
 void main() {
-  final file = File(r'c:\Users\User\Desktop\pos final wep\Tenantadmin\Nytroz-POS-App\lib\features\tenant_admin\outlets\presentation\widgets\business_hours_editor.dart');
-  
+  final file = File(
+      r'c:\Users\User\Desktop\pos final wep\Tenantadmin\Nytroz-POS-App\lib\features\tenant_admin\outlets\presentation\widgets\business_hours_editor.dart');
+
   const newContent = '''import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 

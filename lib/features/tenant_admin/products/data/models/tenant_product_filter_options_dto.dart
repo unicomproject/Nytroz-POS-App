@@ -10,7 +10,8 @@ class TenantProductFilterOptionsDto {
 
   factory TenantProductFilterOptionsDto.fromJson(Map<String, dynamic> json) {
     return TenantProductFilterOptionsDto(
-      categories: _mapList(json['categories'], ProductCategoryOptionDto.fromJson),
+      categories:
+          _mapList(json['categories'], ProductCategoryOptionDto.fromJson),
       brands: _mapList(json['brands'], ProductBrandOptionDto.fromJson),
       productStatuses: _mapStringList(json['productStatuses']),
       stockStatuses: _mapStringList(json['stockStatuses']),
@@ -42,5 +43,8 @@ List<String> _mapStringList(Object? value) {
     return const [];
   }
 
-  return value.map((item) => item?.toString() ?? '').where((item) => item.isNotEmpty).toList();
+  return value
+      .map((item) => item?.toString() ?? '')
+      .where((item) => item.isNotEmpty)
+      .toList();
 }

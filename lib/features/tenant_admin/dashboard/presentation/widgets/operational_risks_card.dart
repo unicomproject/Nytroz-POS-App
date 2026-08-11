@@ -19,7 +19,8 @@ class OperationalRisksCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: TenantAdminColors.danger, size: 20),
+              const Icon(Icons.warning_amber_rounded,
+                  color: TenantAdminColors.danger, size: 20),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
@@ -35,7 +36,8 @@ class OperationalRisksCard extends StatelessWidget {
                 onPressed: () {},
                 style: TextButton.styleFrom(
                   foregroundColor: TenantAdminColors.primary,
-                  textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  textStyle: const TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 13),
                 ),
                 child: const Text('View All (7)'),
               ),
@@ -194,8 +196,10 @@ class OperationalRisksCard extends StatelessWidget {
               foregroundColor: buttonColor,
               side: BorderSide(color: buttonColor.withValues(alpha: 0.3)),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+              textStyle:
+                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             ),
             child: Text(buttonText),
           ),

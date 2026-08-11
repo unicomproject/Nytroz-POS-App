@@ -7,10 +7,10 @@ import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../providers/device_activation_provider.dart';
 import '../../../../shared/pos_session/pos_session_bootstrap_provider.dart';
 import '../../../auth/presentation/providers/post_login_navigation_provider.dart';
+import '../../../auth/presentation/providers/pos_login_branding_provider.dart';
+import '../../../auth/domain/entities/pos_login_branding.dart';
+import '../../../auth/presentation/widgets/pos_login_branding_panel.dart';
 import '../widgets/device_activation_form.dart';
-
-const _logoAsset = 'assets/images/logo.png';
-const _terminalAsset = 'assets/images/log-screen-terminal.png';
 
 class DeviceActivationScreen extends ConsumerStatefulWidget {
   const DeviceActivationScreen({super.key});
@@ -34,6 +34,7 @@ class _DeviceActivationScreenState
   @override
   Widget build(BuildContext context) {
     final activationState = ref.watch(deviceActivationProvider);
+    final branding = ref.watch(posLoginBrandingProvider);
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= TenantAdminBreakpoints.tablet;
 
@@ -43,14 +44,20 @@ class _DeviceActivationScreenState
         body: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Expanded(
+            Expanded(
               flex: 45,
-              child: _ActivationBrandPanel(compact: false),
+              child: PosLoginBrandingPanel(
+                branding: branding.tenantSlug.isEmpty &&
+                        branding.brandDisplayName.isEmpty
+                    ? PosLoginBranding.packagedDefault
+                    : branding,
+                compact: false,
+              ),
             ),
             const VerticalDivider(
               width: 1,
               thickness: 1,
-              color: Color(0xFFE5EAF2),
+              color: TenantAdminColors.border,
             ),
             Expanded(
               flex: 55,
@@ -89,7 +96,13 @@ class _DeviceActivationScreenState
           ),
           child: Column(
             children: [
-              const _ActivationBrandPanel(compact: true),
+              PosLoginBrandingPanel(
+                branding: branding.tenantSlug.isEmpty &&
+                        branding.brandDisplayName.isEmpty
+                    ? PosLoginBranding.packagedDefault
+                    : branding,
+                compact: true,
+              ),
               const SizedBox(height: TenantAdminSpacing.xl),
               DeviceActivationForm(
                 formKey: _formKey,
@@ -114,7 +127,7 @@ class _DeviceActivationScreenState
     final sessionContext = ref.read(posSessionContextProvider);
     final activated =
         await ref.read(deviceActivationProvider.notifier).activate(
-              activationCode: _codeController.text,
+              activationCode: _codeController.text.trim(),
               deviceName: sessionContext.deviceName,
             );
 
@@ -128,77 +141,5 @@ class _DeviceActivationScreenState
       final route = ref.read(postLoginRouteProvider);
       context.go(route.path);
     }
-  }
-}
-
-class _ActivationBrandPanel extends StatelessWidget {
-  const _ActivationBrandPanel({required this.compact});
-
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    final logoSize = compact ? 72.0 : 96.0;
-    final terminalWidth = compact ? 300.0 : 440.0;
-    final terminalHeight = compact ? 215.0 : 320.0;
-    final titleSize = compact ? 34.0 : 40.0;
-    final taglineSize = compact ? 18.0 : 20.0;
-
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFFFFFFF),
-            Color(0xFFF3F7FF),
-          ],
-        ),
-      ),
-      child: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? TenantAdminSpacing.lg : 48,
-            vertical: compact ? TenantAdminSpacing.xl : 32,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                _logoAsset,
-                width: logoSize,
-                height: logoSize,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              Text(
-                'Nytroz POS',
-                style: TextStyle(
-                  color: TenantAdminColors.navy,
-                  fontSize: titleSize,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: TenantAdminSpacing.sm),
-              Text(
-                'Smart Cashier System',
-                style: TextStyle(
-                  color: TenantAdminColors.bodyText,
-                  fontSize: taglineSize,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(height: compact ? TenantAdminSpacing.xl : 48),
-              Image.asset(
-                _terminalAsset,
-                width: terminalWidth,
-                height: terminalHeight,
-                fit: BoxFit.contain,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

@@ -143,6 +143,101 @@ void main() {
     expect(find.text('CO'), findsOneWidget);
   });
 
+  testWidgets('cashier image retries after intermittent load failure',
+      (tester) async {
+    const imageUrl = 'https://cdn.example.test/cashier-retry.jpg';
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 320,
+            height: 500,
+            child: CashierProfileCard(
+              dashboard: _dashboard(profileImageUrl: imageUrl),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    var avatar = tester.widget<CircleAvatar>(
+      find.byKey(const Key('cashier-profile-avatar')),
+    );
+    avatar.onForegroundImageError!(
+      NetworkImageLoadException(statusCode: 503, uri: Uri.parse(imageUrl)),
+      StackTrace.empty,
+    );
+    await tester.pump();
+    expect(
+      tester
+          .widget<CircleAvatar>(find.byKey(const Key('cashier-profile-avatar')))
+          .foregroundImage,
+      isNull,
+    );
+
+    await tester.pump(const Duration(seconds: 2));
+    avatar = tester.widget<CircleAvatar>(
+      find.byKey(const Key('cashier-profile-avatar')),
+    );
+    expect(avatar.foregroundImage, isA<NetworkImage>());
+    expect((avatar.foregroundImage! as NetworkImage).url, imageUrl);
+    expect(find.text('CO'), findsOneWidget);
+  });
+
+  testWidgets('cashier image retries when dashboard refreshes with same URL',
+      (tester) async {
+    const imageUrl = 'https://cdn.example.test/cashier-refresh.jpg';
+    final firstDashboard = _dashboard(profileImageUrl: imageUrl);
+    final secondDashboard = _dashboard(profileImageUrl: imageUrl);
+    expect(identical(firstDashboard, secondDashboard), isFalse);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 320,
+            height: 500,
+            child: CashierProfileCard(dashboard: firstDashboard),
+          ),
+        ),
+      ),
+    );
+
+    final avatar = tester.widget<CircleAvatar>(
+      find.byKey(const Key('cashier-profile-avatar')),
+    );
+    avatar.onForegroundImageError!(
+      NetworkImageLoadException(statusCode: 503, uri: Uri.parse(imageUrl)),
+      StackTrace.empty,
+    );
+    await tester.pump();
+    expect(
+      tester
+          .widget<CircleAvatar>(find.byKey(const Key('cashier-profile-avatar')))
+          .foregroundImage,
+      isNull,
+    );
+
+    // Update the same card element in place (POS home refresh).
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 320,
+            height: 500,
+            child: CashierProfileCard(dashboard: secondDashboard),
+          ),
+        ),
+      ),
+    );
+
+    final refreshed = tester.widget<CircleAvatar>(
+      find.byKey(const Key('cashier-profile-avatar')),
+    );
+    expect(refreshed.foregroundImage, isA<NetworkImage>());
+    expect((refreshed.foregroundImage! as NetworkImage).url, imageUrl);
+  });
+
   testWidgets('unavailable summary shows Retry without zero cards', (
     tester,
   ) async {

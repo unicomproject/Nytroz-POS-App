@@ -121,8 +121,7 @@ class TenantProductRemoteDatasource {
       'pageSize': query.pageSize,
       if (query.search != null && query.search!.trim().isNotEmpty)
         'search': query.search!.trim(),
-      if (query.sortBy.trim().isNotEmpty)
-        'sortBy': query.sortBy.trim(),
+      if (query.sortBy.trim().isNotEmpty) 'sortBy': query.sortBy.trim(),
       if (query.sortDirection.trim().isNotEmpty)
         'sortDirection': query.sortDirection.trim(),
       if (query.categoryId != null && query.categoryId!.trim().isNotEmpty)

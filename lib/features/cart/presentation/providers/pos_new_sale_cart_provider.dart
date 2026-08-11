@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/entities/pos_cart_discount.dart';
-import '../../domain/entities/pos_catalog_models.dart';
+import '../../../discount/domain/entities/pos_cart_discount.dart';
+import '../../../pos/domain/entities/pos_catalog_models.dart';
 import '../../../sale/domain/entities/pos_customer.dart';
 
 final posNewSaleCartProvider =
@@ -16,6 +16,12 @@ final posNewSaleSearchQueryProvider = StateProvider.autoDispose<String>(
 class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
   @override
   PosNewSaleCartState build() => const PosNewSaleCartState();
+
+  /// Restores a previously persisted offline New Sale cart (restart recovery).
+  void restoreRecoveredSale(PosNewSaleCartState recovered) {
+    if (!recovered.hasItems) return;
+    state = recovered;
+  }
 
   PosCartMutationResult addToCart(
     PosNewSaleProduct product, {

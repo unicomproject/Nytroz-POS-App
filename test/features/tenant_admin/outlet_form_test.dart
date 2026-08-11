@@ -8,14 +8,27 @@ import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/utils/outl
 import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/widgets/outlet_form.dart';
 import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/providers/outlet_image_upload_provider.dart';
 
-class FakeOutletImageUploadController extends StateNotifier<OutletImageUploadState> implements OutletImageUploadController {
+class FakeOutletImageUploadController
+    extends StateNotifier<OutletImageUploadState>
+    implements OutletImageUploadController {
   FakeOutletImageUploadController() : super(const OutletImageUploadState());
-  @override Future<void> chooseImage() async {}
-  @override Future<void> replaceImage() async {}
-  @override Future<void> retryUpload() async {}
-  @override Future<void> removeImage() async {}
-  @override void initializeExistingImage({required String mediaAssetId, String? imageUrl, String? fileName, String? mimeType, int? fileSizeBytes}) {}
-  @override void reset() {}
+  @override
+  Future<void> chooseImage() async {}
+  @override
+  Future<void> replaceImage() async {}
+  @override
+  Future<void> retryUpload() async {}
+  @override
+  Future<void> removeImage() async {}
+  @override
+  void initializeExistingImage(
+      {required String mediaAssetId,
+      String? imageUrl,
+      String? fileName,
+      String? mimeType,
+      int? fileSizeBytes}) {}
+  @override
+  void reset() {}
 }
 
 void main() {
@@ -60,7 +73,8 @@ void main() {
       await _tapText(tester, 'Next');
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Country or Region must be 2'), findsOneWidget);
+      expect(
+          find.textContaining('Country or Region must be 2'), findsOneWidget);
       expect(submitted, isFalse);
     });
 
@@ -248,7 +262,8 @@ Future<void> _pumpForm(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        outletImageUploadControllerProvider.overrideWith((ref) => FakeOutletImageUploadController()),
+        outletImageUploadControllerProvider
+            .overrideWith((ref) => FakeOutletImageUploadController()),
       ],
       child: MaterialApp(
         home: Scaffold(

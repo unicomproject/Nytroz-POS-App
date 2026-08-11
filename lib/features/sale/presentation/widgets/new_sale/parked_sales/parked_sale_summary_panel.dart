@@ -243,7 +243,8 @@ class ParkedSaleSummaryPanel extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: TenantAdminColors.posHomeAccentOrange,
+                          backgroundColor:
+                              TenantAdminColors.posHomeAccentOrange,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(

@@ -1,4 +1,3 @@
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/sale/domain/entities/pos_receipt_snapshot.dart';
 

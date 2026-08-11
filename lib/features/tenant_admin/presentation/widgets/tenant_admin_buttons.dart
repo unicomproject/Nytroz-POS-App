@@ -33,8 +33,8 @@ class TenantAdminPrimaryButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: backgroundColor ?? TenantAdminColors.primary,
         foregroundColor: Colors.white,
-        disabledBackgroundColor:
-            (backgroundColor ?? TenantAdminColors.primary).withValues(alpha: 0.45),
+        disabledBackgroundColor: (backgroundColor ?? TenantAdminColors.primary)
+            .withValues(alpha: 0.45),
         padding: const EdgeInsets.symmetric(
           horizontal: 28,
           vertical: 16,

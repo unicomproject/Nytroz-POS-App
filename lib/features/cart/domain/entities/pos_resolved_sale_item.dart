@@ -1,4 +1,4 @@
-import 'pos_catalog_models.dart';
+import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
 
 class PosResolvedSaleItem {
   const PosResolvedSaleItem({

@@ -83,9 +83,15 @@ class _AddOutletScreenState extends ConsumerState<AddOutletScreen> {
   Future<void> _discard(String? mediaAssetId) async {
     if (mediaAssetId != null) {
       try {
-        await ref.read(deleteStagedOutletImageProvider).call(mediaAssetId).timeout(const Duration(seconds: 5));
+        await ref
+            .read(deleteStagedOutletImageProvider)
+            .call(mediaAssetId)
+            .timeout(const Duration(seconds: 5));
       } catch (_) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image cleanup will be retried automatically.')));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Image cleanup will be retried automatically.')));
+        }
       }
     }
     ref.read(outletImageUploadControllerProvider.notifier).reset();

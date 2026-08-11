@@ -113,7 +113,8 @@ class ProductListFilterState {
       search: search ?? this.search,
       categoryId: clearCategory ? null : (categoryId ?? this.categoryId),
       brandId: clearBrand ? null : (brandId ?? this.brandId),
-      productStatus: clearProductStatus ? null : (productStatus ?? this.productStatus),
+      productStatus:
+          clearProductStatus ? null : (productStatus ?? this.productStatus),
       stockStatus: clearStockStatus ? null : (stockStatus ?? this.stockStatus),
       sortBy: sortBy ?? this.sortBy,
       sortDirection: sortDirection ?? this.sortDirection,
@@ -137,7 +138,8 @@ class ProductListFilterState {
   }
 }
 
-class ProductListFilterStateNotifier extends StateNotifier<ProductListFilterState> {
+class ProductListFilterStateNotifier
+    extends StateNotifier<ProductListFilterState> {
   ProductListFilterStateNotifier() : super(const ProductListFilterState());
 
   void setSearch(String value) {
@@ -177,7 +179,8 @@ class ProductListFilterStateNotifier extends StateNotifier<ProductListFilterStat
   }
 
   void setSort(String sortBy, String sortDirection) {
-    state = state.copyWith(sortBy: sortBy, sortDirection: sortDirection, pageNumber: 1);
+    state = state.copyWith(
+        sortBy: sortBy, sortDirection: sortDirection, pageNumber: 1);
   }
 
   void setPage(int pageNumber) {
@@ -202,8 +205,8 @@ class ProductListFilterStateNotifier extends StateNotifier<ProductListFilterStat
   }
 }
 
-final productListFilterProvider =
-    StateNotifierProvider<ProductListFilterStateNotifier, ProductListFilterState>((ref) {
+final productListFilterProvider = StateNotifierProvider<
+    ProductListFilterStateNotifier, ProductListFilterState>((ref) {
   return ProductListFilterStateNotifier();
 });
 

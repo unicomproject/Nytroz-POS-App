@@ -160,7 +160,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final isDesktop = width >= TenantAdminBreakpoints.desktop;
-    final isTablet = width >= TenantAdminBreakpoints.tablet && width < TenantAdminBreakpoints.desktop;
+    final isTablet = width >= TenantAdminBreakpoints.tablet &&
+        width < TenantAdminBreakpoints.desktop;
 
     return SingleChildScrollView(
       child: Column(
@@ -429,8 +430,6 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
     return 'ACTIVE';
   }
 
-
-
   Widget _buildProductImageEditCard() {
     return _SectionCard(
       title: 'Product Image',
@@ -447,8 +446,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
               child: widget.detail.imageUrl != null &&
                       widget.detail.imageUrl!.trim().isNotEmpty
                   ? ClipRRect(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.md),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                       child: Image.network(
                         widget.detail.imageUrl!,
                         fit: BoxFit.cover,
@@ -739,8 +737,10 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
             items: const [
               DropdownMenuItem(value: 'IN_STOCK', child: Text('In Stock')),
               DropdownMenuItem(value: 'LOW_STOCK', child: Text('Low Stock')),
-              DropdownMenuItem(value: 'OUT_OF_STOCK', child: Text('Out of Stock')),
-              DropdownMenuItem(value: 'NOT_TRACKED', child: Text('Not Tracked')),
+              DropdownMenuItem(
+                  value: 'OUT_OF_STOCK', child: Text('Out of Stock')),
+              DropdownMenuItem(
+                  value: 'NOT_TRACKED', child: Text('Not Tracked')),
             ],
             onChanged: (val) {
               if (val != null) {
@@ -754,7 +754,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
   }
 
   Widget _buildChannelVisibilityEditCard() {
-    final isDesktop = MediaQuery.sizeOf(context).width >= TenantAdminBreakpoints.desktop;
+    final isDesktop =
+        MediaQuery.sizeOf(context).width >= TenantAdminBreakpoints.desktop;
 
     return _SectionCard(
       title: 'Channel Visibility',

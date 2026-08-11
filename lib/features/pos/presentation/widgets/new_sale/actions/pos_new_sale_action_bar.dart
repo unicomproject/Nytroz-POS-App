@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_parked_sale_provider.dart';
-import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_discount_dialog.dart';
+import 'package:nytroz_pos/features/discount/presentation/widgets/pos_discount_dialog.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_parked_sale_dialog.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_park_sale_dialog.dart';
 import 'package:nytroz_pos/shared/presentation/app_modal.dart';

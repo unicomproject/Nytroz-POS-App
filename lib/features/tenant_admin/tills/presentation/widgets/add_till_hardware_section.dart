@@ -237,10 +237,12 @@ class AddTillHardwareSection extends StatelessWidget {
           initialSelection: safeValue,
           label: Text(label),
           leadingIcon: Icon(icon, color: TenantAdminColors.mutedText),
-          dropdownMenuEntries: uniqueItems.map((e) => DropdownMenuEntry<String>(
-            value: (e as dynamic).id as String,
-            label: (e as dynamic).name as String,
-          )).toList(),
+          dropdownMenuEntries: uniqueItems
+              .map((e) => DropdownMenuEntry<String>(
+                    value: (e as dynamic).id as String,
+                    label: (e as dynamic).name as String,
+                  ))
+              .toList(),
           onSelected: (String? selectedId) {
             onChanged(selectedId);
           },

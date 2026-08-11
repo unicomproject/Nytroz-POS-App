@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/access/pos_permission_access.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
-import '../../../cart/domain/entities/pos_catalog_models.dart';
+import '../../../pos/domain/entities/pos_catalog_models.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../tenant_admin/presentation/widgets/tenant_admin_states.dart';

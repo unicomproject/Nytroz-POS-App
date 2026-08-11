@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
@@ -17,15 +18,67 @@ class CashierProfileCard extends StatefulWidget {
 }
 
 class _CashierProfileCardState extends State<CashierProfileCard> {
+  static const int _maxRetries = 3;
+  static const Duration _retryBaseDelay = Duration(seconds: 2);
+
   String? _failedImageUrl;
+  int _retryAttempt = 0;
+  Timer? _retryTimer;
+
+  @override
+  void dispose() {
+    _retryTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   void didUpdateWidget(CashierProfileCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.dashboard.cashierProfileImageUrl !=
-        widget.dashboard.cashierProfileImageUrl) {
-      _failedImageUrl = null;
+    final oldUrl = oldWidget.dashboard.cashierProfileImageUrl?.trim();
+    final newUrl = widget.dashboard.cashierProfileImageUrl?.trim();
+    if (oldUrl != newUrl) {
+      _resetImageLoadState();
+      return;
     }
+
+    // Same URL after a dashboard refresh — allow another load attempt for
+    // intermittent CDN/network failures that previously marked the URL failed.
+    if (!identical(oldWidget.dashboard, widget.dashboard) &&
+        _failedImageUrl != null) {
+      _resetImageLoadState();
+    }
+  }
+
+  void _resetImageLoadState() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
+    final failedUrl = _failedImageUrl;
+    _failedImageUrl = null;
+    _retryAttempt = 0;
+    if (failedUrl != null) {
+      unawaited(NetworkImage(failedUrl).evict());
+    }
+  }
+
+  void _scheduleImageRetry(String profileImageUrl) {
+    if (_retryAttempt >= _maxRetries) {
+      return;
+    }
+
+    _retryTimer?.cancel();
+    final delay = _retryBaseDelay * (1 << _retryAttempt);
+    _retryAttempt++;
+    _retryTimer = Timer(delay, () {
+      if (!mounted ||
+          widget.dashboard.cashierProfileImageUrl?.trim() != profileImageUrl) {
+        return;
+      }
+      // Evict so Flutter does not keep serving a failed decode for this URL.
+      unawaited(NetworkImage(profileImageUrl).evict());
+      setState(() {
+        _failedImageUrl = null;
+      });
+    });
   }
 
   @override
@@ -78,15 +131,18 @@ class _CashierProfileCardState extends State<CashierProfileCard> {
                           if (kDebugMode) {
                             developer.log(
                               'Cashier profile image load failed. '
-                              'url=$profileImageUrl error=$exception',
+                              'url=$profileImageUrl '
+                              'attempt=$_retryAttempt error=$exception',
                               name: 'pos.home.profile-image',
                               error: exception,
                               stackTrace: stackTrace,
                             );
                           }
-                          if (mounted && _failedImageUrl != profileImageUrl) {
-                            setState(() => _failedImageUrl = profileImageUrl);
+                          if (!mounted || _failedImageUrl == profileImageUrl) {
+                            return;
                           }
+                          setState(() => _failedImageUrl = profileImageUrl);
+                          _scheduleImageRetry(profileImageUrl);
                         }
                       : null,
                   child: Text(
