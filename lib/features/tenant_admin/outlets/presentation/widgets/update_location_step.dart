@@ -1,21 +1,23 @@
 import 'dart:io';
 
 void main() {
-  final file = File(r'c:\Users\User\Desktop\pos final wep\Tenantadmin\Nytroz-POS-App\lib\features\tenant_admin\outlets\presentation\widgets\outlet_form.dart');
+  final file = File(
+      r'c:\Users\User\Desktop\pos final wep\Tenantadmin\Nytroz-POS-App\lib\features\tenant_admin\outlets\presentation\widgets\outlet_form.dart');
   final content = file.readAsStringSync();
-  
-  const startText = 'class _OutletLocationContactStep extends StatelessWidget {';
+
+  const startText =
+      'class _OutletLocationContactStep extends StatelessWidget {';
   const endText = 'class _OutletReviewStep extends StatelessWidget {';
-  
+
   final startIndex = content.indexOf(startText);
   final endIndex = content.indexOf(endText);
-  
+
   if (startIndex == -1 || endIndex == -1) {
     // ignore: avoid_print
     print('Could not find start or end index');
     return;
   }
-  
+
   const newClass = '''class _OutletLocationContactStep extends StatelessWidget {
   const _OutletLocationContactStep({
     required this.addressLine1,

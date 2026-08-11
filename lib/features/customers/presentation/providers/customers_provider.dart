@@ -7,6 +7,7 @@ import '../../../device_activation/presentation/providers/device_activation_prov
 import '../../../sale/data/datasources/pos_customer_remote_datasource.dart';
 import '../../../sale/domain/entities/pos_customer.dart';
 import '../../../sale/domain/entities/pos_customer_page.dart';
+import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 
 final posCustomerRemoteDatasourceProvider =
     Provider<PosCustomerRemoteDatasource>((ref) {
@@ -17,6 +18,7 @@ enum CustomerStatusFilter {
   all,
   active,
   inactive,
+  blocked,
 }
 
 enum CustomerSourceFilter {
@@ -24,6 +26,7 @@ enum CustomerSourceFilter {
   pos,
   manual,
   ecommerce,
+  clickAndCollect,
   import,
 }
 
@@ -33,7 +36,7 @@ class CustomersState {
     this.statusFilter = CustomerStatusFilter.all,
     this.sourceFilter = CustomerSourceFilter.all,
     this.page = 1,
-    this.pageSize = 8,
+    this.pageSize = 4,
     this.items = const [],
     this.totalCount = 0,
     this.totalPages = 0,
@@ -110,6 +113,8 @@ class CustomersState {
         return 'ACTIVE';
       case CustomerStatusFilter.inactive:
         return 'INACTIVE';
+      case CustomerStatusFilter.blocked:
+        return 'BLOCKED';
     }
   }
 
@@ -123,6 +128,8 @@ class CustomersState {
         return 'MANUAL';
       case CustomerSourceFilter.ecommerce:
         return 'ECOMMERCE';
+      case CustomerSourceFilter.clickAndCollect:
+        return 'CLICK_AND_COLLECT';
       case CustomerSourceFilter.import:
         return 'IMPORT';
     }
@@ -375,6 +382,14 @@ class CustomersController extends Notifier<CustomersState> {
     await _loadSelectedCustomer(id);
   }
 
+  Future<void> toggleCustomerSelection(String customerId) async {
+    if (state.selectedCustomerId == customerId) {
+      clearSelection();
+      return;
+    }
+    await selectCustomer(customerId);
+  }
+
   Future<void> _loadSelectedCustomer(String customerId) async {
     final requestId = ++_detailSeq;
     final deviceContext = ref.read(deviceActivationProvider).deviceContext;
@@ -600,6 +615,7 @@ class CustomersController extends Notifier<CustomersState> {
           await ref.read(posCustomerRemoteDatasourceProvider).attachToSale(
                 deviceId: deviceContext.deviceId,
                 customerId: selected.customerId,
+                saleId: ref.read(posNewSaleCartProvider).editableSaleId,
               );
       state = state.copyWith(
         isAttaching: false,

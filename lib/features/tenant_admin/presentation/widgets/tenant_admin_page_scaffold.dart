@@ -12,6 +12,8 @@ class TenantAdminPageScaffold extends StatelessWidget {
     this.padding,
     this.backgroundColor = TenantAdminColors.background,
     this.scrollable = true,
+    this.showBackButton = false,
+    this.onBackButtonPressed,
   });
 
   final String title;
@@ -21,6 +23,8 @@ class TenantAdminPageScaffold extends StatelessWidget {
   final EdgeInsets? padding;
   final Color backgroundColor;
   final bool scrollable;
+  final bool showBackButton;
+  final VoidCallback? onBackButtonPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -35,18 +39,22 @@ class TenantAdminPageScaffold extends StatelessWidget {
           final content = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (title.isNotEmpty) ...[
+              if (title.isNotEmpty || showBackButton) ...[
                 if (isNarrow)
                   _VerticalHeader(
                     title: title,
                     subtitle: subtitle,
                     actions: actions,
+                    showBackButton: showBackButton,
+                    onBackButtonPressed: onBackButtonPressed,
                   )
                 else
                   _HorizontalHeader(
                     title: title,
                     subtitle: subtitle,
                     actions: actions,
+                    showBackButton: showBackButton,
+                    onBackButtonPressed: onBackButtonPressed,
                   ),
                 const SizedBox(height: 28),
               ],
@@ -85,11 +93,15 @@ class _HorizontalHeader extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.actions,
+    required this.showBackButton,
+    this.onBackButtonPressed,
   });
 
   final String title;
   final String? subtitle;
   final List<Widget> actions;
+  final bool showBackButton;
+  final VoidCallback? onBackButtonPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +109,7 @@ class _HorizontalHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: _HeaderText(title: title, subtitle: subtitle),
+          child: _HeaderText(title: title, subtitle: subtitle, showBackButton: showBackButton, onBackButtonPressed: onBackButtonPressed),
         ),
         if (actions.isNotEmpty) ...[
           const SizedBox(width: TenantAdminSpacing.lg),
@@ -117,18 +129,22 @@ class _VerticalHeader extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.actions,
+    required this.showBackButton,
+    this.onBackButtonPressed,
   });
 
   final String title;
   final String? subtitle;
   final List<Widget> actions;
+  final bool showBackButton;
+  final VoidCallback? onBackButtonPressed;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _HeaderText(title: title, subtitle: subtitle),
+        _HeaderText(title: title, subtitle: subtitle, showBackButton: showBackButton, onBackButtonPressed: onBackButtonPressed),
         if (actions.isNotEmpty) ...[
           const SizedBox(height: TenantAdminSpacing.lg),
           Wrap(
@@ -146,16 +162,33 @@ class _HeaderText extends StatelessWidget {
   const _HeaderText({
     required this.title,
     required this.subtitle,
+    required this.showBackButton,
+    this.onBackButtonPressed,
   });
 
   final String title;
   final String? subtitle;
+  final bool showBackButton;
+  final VoidCallback? onBackButtonPressed;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        if (showBackButton) ...[
+          IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (onBackButtonPressed != null) {
+                onBackButtonPressed!();
+              } else if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+          const SizedBox(width: TenantAdminSpacing.sm),
+        ],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,7 +201,8 @@ class _HeaderText extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
               ],
-              Text(title, style: TenantAdminTextStyles.pageTitle(context)),
+              if (title.isNotEmpty)
+                Text(title, style: TenantAdminTextStyles.pageTitle(context)),
               if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
                 const SizedBox(height: TenantAdminSpacing.xs),
                 Text(subtitle!, style: TenantAdminTextStyles.muted(context)),

@@ -19,6 +19,8 @@ class TenantAdminFeatureCodes {
 class TenantAdminPermissionCodes {
   const TenantAdminPermissionCodes._();
 
+  static const tenantStockOpening = 'tenant.stock.opening';
+
   // Page access
   static const tenantAdminDashboardView = 'tenant_admin.dashboard.view';
 
@@ -141,6 +143,9 @@ class TenantAdminPermissionCodes {
   static const tenantProductsUpdate = 'tenant.products.update';
   static const tenantProductsDelete = 'tenant.products.delete';
   static const tenantProductsDetailsView = 'tenant.products.details.view';
+
+  // Inventory Permissions
+  static const tenantStockDashboardView = 'tenant.stock.dashboard.view';
   static const tenantStockView = 'tenant.stock.view';
   static const tenantStockIn = 'tenant.stock.in';
   static const tenantStockOut = 'tenant.stock.out';

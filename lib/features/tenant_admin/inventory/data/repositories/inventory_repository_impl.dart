@@ -1,43 +1,72 @@
-import '../../domain/entities/inventory_entities.dart';
-import '../../domain/repositories/inventory_repository.dart';
+import '../../domain/repositories/i_inventory_repository.dart';
+import '../../domain/entities/current_stock_entities.dart';
 import '../datasources/inventory_remote_datasource.dart';
-import '../mappers/inventory_mapper.dart';
+import '../models/current_stock_dtos.dart';
+import '../models/inventory_dashboard_models.dart';
+import '../models/opening_stock_dtos.dart';
 
-class InventoryRepositoryImpl implements InventoryRepository {
+class InventoryRepositoryImpl implements IInventoryRepository {
   const InventoryRepositoryImpl(this._remoteDatasource);
 
   final InventoryRemoteDatasource _remoteDatasource;
 
   @override
-  Future<CurrentStockPage> getCurrentStock(CurrentStockQuery query) async {
-    final dto = await _remoteDatasource.getCurrentStock(
-      InventoryMapper.toQueryDto(query),
+  Future<InventoryDashboardMetricsDto> getDashboardMetrics({String? outletId}) {
+    return _remoteDatasource.getDashboardMetrics(outletId: outletId);
+  }
+
+  @override
+  Future<InventoryDashboardAlertsResponseDto> getDashboardAlerts({
+    String? outletId,
+    int page = 1,
+    int pageSize = 10,
+  }) {
+    return _remoteDatasource.getDashboardAlerts(
+      outletId: outletId,
+      page: page,
+      pageSize: pageSize,
     );
-    return InventoryMapper.toPage(dto);
+  }
+
+  @override
+  Future<InventoryDashboardActivitiesResponseDto> getDashboardActivities({
+    String? outletId,
+    int page = 1,
+    int pageSize = 10,
+  }) {
+    return _remoteDatasource.getDashboardActivities(
+      outletId: outletId,
+      page: page,
+      pageSize: pageSize,
+    );
   }
 
   @override
   Future<CurrentStockSummary> getCurrentStockSummary({String? outletId}) async {
-    final dto = await _remoteDatasource.getCurrentStockSummary(
-      outletId: outletId,
-    );
-    return InventoryMapper.toSummary(dto);
+    final dto = await _remoteDatasource.getCurrentStockSummary(outletId: outletId);
+    return dto.toDomain();
   }
 
   @override
-  Future<StockInResult> receiveStock(
-    StockInFormInput input, {
-    String? idempotencyKey,
-  }) async {
-    final dto = await _remoteDatasource.receiveStock(
-      InventoryMapper.toStockInRequest(input, idempotencyKey: idempotencyKey),
-    );
-    return InventoryMapper.toStockInResult(dto);
+  Future<CurrentStockPage> getCurrentStock(CurrentStockQueryDto query) async {
+    final dto = await _remoteDatasource.getCurrentStock(query);
+    return dto.toDomain();
   }
 
   @override
-  Future<VariantLookup> getProductVariants(String productId) async {
-    final dto = await _remoteDatasource.getProductVariants(productId);
-    return InventoryMapper.toVariantLookup(dto);
+  Future<ProductStockDetail> getProductStockDetail(String variantId, {String? outletId}) async {
+    final dto = await _remoteDatasource.getProductStockDetail(variantId, outletId: outletId);
+    return dto.toDomain();
+  }
+
+  @override
+  Future<StockMovementHistoryPage> getStockMovementHistory(String variantId, StockMovementHistoryQueryDto query) async {
+    final dto = await _remoteDatasource.getStockMovementHistory(variantId, query);
+    return dto.toDomain();
+  }
+
+  @override
+  Future<void> createOpeningStock(OpeningStockRequestDto request) async {
+    await _remoteDatasource.createOpeningStock(request.toJson());
   }
 }

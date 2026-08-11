@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
+import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/returns_refunds/domain/entities/exchange_difference_result.dart';
 import 'package:nytroz_pos/features/returns_refunds/domain/entities/exchange_replacement_selection.dart';
 import 'package:nytroz_pos/features/returns_refunds/domain/entities/return_flow_steps.dart';

@@ -69,10 +69,10 @@ class DeviceActivationRemoteDatasource {
     } on DioException catch (error) {
       stopwatch.stop();
       developer.log(
-        'API failure. step=activate-device endpoint=${ApiEndpoints.activateDevice} status=${error.response?.statusCode ?? 'none'} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()} message=${_messageFromDio(error)}',
+        'API failure. step=activate-device endpoint=${ApiEndpoints.activateDevice} status=${error.response?.statusCode ?? 'none'} durationMs=${stopwatch.elapsedMilliseconds} authAttached=${_hasAuthHeader()}',
         name: 'pos.session',
       );
-      throw DeviceActivationException(_messageFromDio(error));
+      throw DeviceActivationException(_activationMessage(error));
     }
   }
 
@@ -102,6 +102,7 @@ class DeviceActivationRemoteDatasource {
       deviceFingerprint: form.deviceFingerprint,
       isTrusted: _bool(device['isTrusted']),
       tenantId: _string(json['tenantId']),
+      tenantSlug: _string(json['tenantSlug']),
       outletId: _string(device['outletId'], fallback: _string(outlet['id'])),
       outletName: _string(outlet['name']),
       tillId: _string(device['tillId'], fallback: _string(till['id'])),
@@ -153,6 +154,41 @@ class DeviceActivationRemoteDatasource {
       contextPrefix: 'Device activation failed at ${error.requestOptions.path}',
       fallback: 'Try again.',
     );
+  }
+
+  String _activationMessage(DioException error) {
+    final status = error.response?.statusCode;
+    final code = _apiErrorCode(error.response?.data);
+
+    if (status == 401) {
+      return 'Your session has expired. Please sign in again.';
+    }
+    if (status == 403) {
+      return 'You do not have permission to activate this device.';
+    }
+    if (status == 409 || code == 'device_context.activation_code_used') {
+      return 'This activation code has already been used.';
+    }
+    if (status == 400 || status == 422) {
+      return _safeApiMessage(error.response?.data) ??
+          'The activation code is invalid or unavailable.';
+    }
+    if (status != null && status >= 500) {
+      return 'Device activation is temporarily unavailable. Try again.';
+    }
+
+    return _messageFromDio(error);
+  }
+
+  String? _apiErrorCode(Object? data) {
+    if (data is! Map) return null;
+    return data['errorCode']?.toString() ?? data['code']?.toString();
+  }
+
+  String? _safeApiMessage(Object? data) {
+    if (data is! Map) return null;
+    final message = data['message']?.toString().trim();
+    return message == null || message.isEmpty ? null : message;
   }
 
   bool _hasAuthHeader() {

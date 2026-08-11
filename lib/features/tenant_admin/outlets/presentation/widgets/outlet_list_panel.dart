@@ -170,7 +170,6 @@ class OutletListPanel extends ConsumerWidget {
     );
   }
 
-
   void _resetFilters(WidgetRef ref) {
     ref.read(outletTypeFilterProvider.notifier).state = OutletTypeFilter.all;
     ref.read(outletStatusFilterProvider.notifier).state =
@@ -179,7 +178,6 @@ class OutletListPanel extends ConsumerWidget {
     ref.read(outletPageProvider.notifier).state = 1;
   }
 }
-
 
 class _Toolbar extends ConsumerWidget {
   const _Toolbar({
@@ -356,7 +354,6 @@ class _FilterPill extends StatelessWidget {
     );
   }
 }
-
 
 class _MobilePagination extends StatelessWidget {
   const _MobilePagination({

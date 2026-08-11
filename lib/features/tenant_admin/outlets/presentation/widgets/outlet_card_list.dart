@@ -40,28 +40,28 @@ class OutletCardList extends ConsumerWidget {
         final nameLower = outlet.name.toLowerCase();
         if (nameLower.contains('main outlet')) {
           outlet = outlet.copyWith(
-            managerName: 'Kavin Perera',
-            tillCount: 3,
-            activeTillCount: 3,
-            status: 'Active',
-            imageUrl: 'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300'
-          );
+              managerName: 'Kavin Perera',
+              tillCount: 3,
+              activeTillCount: 3,
+              status: 'Active',
+              imageUrl:
+                  'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300');
         } else if (nameLower.contains('city center')) {
           outlet = outlet.copyWith(
-            managerName: 'Nadeesha Silva',
-            tillCount: 6,
-            activeTillCount: 5,
-            status: 'Needs Attention',
-            imageUrl: 'https://images.unsplash.com/photo-1519567281027-d15c128f64a4?auto=format&fit=crop&q=80&w=300'
-          );
+              managerName: 'Nadeesha Silva',
+              tillCount: 6,
+              activeTillCount: 5,
+              status: 'Needs Attention',
+              imageUrl:
+                  'https://images.unsplash.com/photo-1519567281027-d15c128f64a4?auto=format&fit=crop&q=80&w=300');
         } else if (nameLower.contains('central warehouse')) {
           outlet = outlet.copyWith(
-            managerName: 'Tharindu Jayasekara',
-            tillCount: 2,
-            activeTillCount: 2,
-            status: 'Active',
-            imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=300'
-          );
+              managerName: 'Tharindu Jayasekara',
+              tillCount: 2,
+              activeTillCount: 2,
+              status: 'Active',
+              imageUrl:
+                  'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=300');
         }
 
         final isSelected = ref.watch(selectedOutletIdProvider) == outlet.id;
@@ -118,8 +118,8 @@ class _OutletCard extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color:
-                        TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.12),
+                    color: TenantAdminColors.posHomeOrangeEnd
+                        .withValues(alpha: 0.12),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   )
@@ -273,14 +273,20 @@ class _OutletThumbnail extends StatelessWidget {
   }
 
   Widget _placeholder() {
-    String dummyUrl = 'https://images.unsplash.com/photo-1555529771-835f59fc5efe?auto=format&fit=crop&q=80&w=300';
-    
-    if (outlet.name.toLowerCase().contains('warehouse') || outlet.outletType?.toUpperCase() == 'WAREHOUSE') {
-      dummyUrl = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=300';
-    } else if (outlet.name.toLowerCase().contains('city') || outlet.name.toLowerCase().contains('mall')) {
-      dummyUrl = 'https://images.unsplash.com/photo-1519567281027-d15c128f64a4?auto=format&fit=crop&q=80&w=300';
+    String dummyUrl =
+        'https://images.unsplash.com/photo-1555529771-835f59fc5efe?auto=format&fit=crop&q=80&w=300';
+
+    if (outlet.name.toLowerCase().contains('warehouse') ||
+        outlet.outletType?.toUpperCase() == 'WAREHOUSE') {
+      dummyUrl =
+          'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=300';
+    } else if (outlet.name.toLowerCase().contains('city') ||
+        outlet.name.toLowerCase().contains('mall')) {
+      dummyUrl =
+          'https://images.unsplash.com/photo-1519567281027-d15c128f64a4?auto=format&fit=crop&q=80&w=300';
     } else if (outlet.name.toLowerCase().contains('main')) {
-      dummyUrl = 'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300';
+      dummyUrl =
+          'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300';
     }
 
     return Stack(
@@ -292,7 +298,8 @@ class _OutletThumbnail extends StatelessWidget {
           errorBuilder: (context, error, stackTrace) => Container(
             color: const Color(0xFFF1F5F9), // TenantAdminColors.background
             child: const Center(
-              child: Icon(Icons.image_not_supported, color: Color(0xFF94A3B8)), // TenantAdminColors.mutedText
+              child: Icon(Icons.image_not_supported,
+                  color: Color(0xFF94A3B8)), // TenantAdminColors.mutedText
             ),
           ),
         ),
@@ -440,7 +447,8 @@ class _ManagerCell extends StatelessWidget {
           .join();
       return CircleAvatar(
         radius: 12,
-        backgroundColor: TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.15),
+        backgroundColor:
+            TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.15),
         child: Text(
           initials,
           style: const TextStyle(

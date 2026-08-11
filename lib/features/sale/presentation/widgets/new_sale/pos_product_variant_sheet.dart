@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
-import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
-import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
+import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
+import 'package:nytroz_pos/features/pos/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/device_activation/presentation/providers/device_activation_provider.dart';
 import 'package:nytroz_pos/features/sale/domain/entities/pos_checkout_summary.dart';
@@ -926,6 +926,8 @@ class _PosProductVariantSheetState
         'The selected variant is currently unavailable.',
       PosCartMutationResult.priceUnavailable =>
         'A valid price is not available for this product.',
+      PosCartMutationResult.discountMustBeRemoved =>
+        'Remove the active discount before changing the cart.',
       PosCartMutationResult.added ||
       PosCartMutationResult.quantityIncreased =>
         '',

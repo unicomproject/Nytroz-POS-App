@@ -46,6 +46,7 @@ class PosPrimaryActionButton extends StatefulWidget {
     this.compact = false,
     this.semanticLabel,
     this.backgroundColor,
+    this.gradient,
     this.disabledBackgroundColor,
     this.minimumHeight,
     this.horizontalPadding = PosPrimaryActionTokens.horizontalPadding,
@@ -64,6 +65,7 @@ class PosPrimaryActionButton extends StatefulWidget {
   final bool compact;
   final String? semanticLabel;
   final Color? backgroundColor;
+  final Gradient? gradient;
   final Color? disabledBackgroundColor;
   final double? minimumHeight;
   final double horizontalPadding;
@@ -101,7 +103,7 @@ class _PosPrimaryActionButtonState extends State<PosPrimaryActionButton> {
               : widget.disabledBackgroundColor ??
                   PosPrimaryActionTokens.disabledBackground,
           gradient: showActiveTheme && widget.backgroundColor == null
-              ? PosPrimaryActionTokens.gradient
+              ? widget.gradient ?? PosPrimaryActionTokens.gradient
               : null,
           borderRadius: radius,
           border: _focused ? Border.all(color: Colors.white, width: 2) : null,

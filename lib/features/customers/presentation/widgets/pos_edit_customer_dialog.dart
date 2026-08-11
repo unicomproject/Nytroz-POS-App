@@ -2,10 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../sale/domain/entities/pos_customer.dart';
-import '../../../sale/presentation/widgets/payment/pos_bottom_action_buttons.dart';
-import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../../../shared/presentation/app_modal.dart';
+import 'package:nytroz_pos/features/sale/domain/entities/pos_customer.dart';
+import 'package:nytroz_pos/features/sale/presentation/widgets/payment_method/payment_method_style.dart';
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 import '../providers/customers_provider.dart';
 
 Future<PosCustomer?> showPosEditCustomerDialog({
@@ -73,7 +73,7 @@ class _PosEditCustomerDialogState
           borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
         ),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
+          constraints: const BoxConstraints(maxWidth: 540),
           child: Padding(
             padding: const EdgeInsets.all(TenantAdminSpacing.xl),
             child: Form(
@@ -82,40 +82,44 @@ class _PosEditCustomerDialogState
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Edit Customer',
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    color: TenantAdminColors.bodyText,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Close',
-                        onPressed: _isSaving
-                            ? null
-                            : () => Navigator.of(context).pop(null),
-                        icon: const Icon(Icons.close_rounded),
-                      ),
-                    ],
+                  _DialogHeader(
+                    onClose: _isSaving
+                        ? null
+                        : () => Navigator.of(context).pop(null),
                   ),
-                  const SizedBox(height: TenantAdminSpacing.lg),
+                  const SizedBox(height: TenantAdminSpacing.xl),
                   TextFormField(
                     readOnly: true,
                     initialValue: widget.customer.shortCustomerId,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Customer Code',
+                      prefixIcon: const Icon(Icons.badge_outlined),
+                      floatingLabelStyle: const TextStyle(
+                        color: PaymentMethodStyle.orange,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
+                        borderSide: const BorderSide(
+                          color: PaymentMethodStyle.orange,
+                          width: 1.5,
+                        ),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
+                      ),
                     ),
                   ),
                   const SizedBox(height: TenantAdminSpacing.md),
-                  TextFormField(
+                  _CustomerField(
                     controller: _fullNameController,
+                    label: 'Name',
+                    hint: 'Enter customer full name',
+                    icon: Icons.person_outline_rounded,
                     textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(labelText: 'Name'),
+                    maxLength: 150,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Name is required';
@@ -124,19 +128,33 @@ class _PosEditCustomerDialogState
                     },
                   ),
                   const SizedBox(height: TenantAdminSpacing.md),
-                  TextFormField(
+                  _CustomerField(
                     controller: _phoneController,
+                    label: 'Phone number',
+                    hint: 'Enter customer phone number',
+                    icon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.next,
-                    decoration:
-                        const InputDecoration(labelText: 'Phone number'),
+                    maxLength: 50,
+                    validator: (value) {
+                      final phone = value?.trim() ?? '';
+                      if (phone.isEmpty) return null;
+                      if (RegExp(r'\d').allMatches(phone).length < 7) {
+                        return 'Enter a valid phone number';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: TenantAdminSpacing.md),
-                  TextFormField(
+                  _CustomerField(
                     controller: _emailController,
+                    label: 'Email',
+                    hint: 'Enter customer email address',
+                    icon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(labelText: 'Email'),
+                    textInputAction: TextInputAction.done,
+                    maxLength: 150,
+                    onFieldSubmitted: (_) => _submitIfAllowed(),
                     validator: (value) {
                       final email = value?.trim() ?? '';
                       if (email.isEmpty) {
@@ -150,7 +168,26 @@ class _PosEditCustomerDialogState
                   const SizedBox(height: TenantAdminSpacing.md),
                   DropdownButtonFormField<String>(
                     initialValue: _status,
-                    decoration: const InputDecoration(labelText: 'Status'),
+                    decoration: InputDecoration(
+                      labelText: 'Status',
+                      prefixIcon: const Icon(Icons.verified_user_outlined),
+                      floatingLabelStyle: const TextStyle(
+                        color: PaymentMethodStyle.orange,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
+                        borderSide: const BorderSide(
+                          color: PaymentMethodStyle.orange,
+                          width: 1.5,
+                        ),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
+                      ),
+                    ),
                     items: const [
                       DropdownMenuItem(
                         value: 'ACTIVE',
@@ -171,20 +208,50 @@ class _PosEditCustomerDialogState
                   ),
                   if (_errorMessage != null) ...[
                     const SizedBox(height: TenantAdminSpacing.md),
-                    Text(
-                      _errorMessage!,
-                      style: const TextStyle(
-                        color: TenantAdminColors.danger,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    _InlineMessage(message: _errorMessage!, isError: true),
                   ],
                   const SizedBox(height: TenantAdminSpacing.xl),
-                  PosPrimaryActionButton(
-                    onPressed: _isSaving ? null : _save,
-                    icon: Icons.save_outlined,
-                    isLoading: _isSaving,
-                    label: 'Save Changes',
+                  SizedBox(
+                    height: 52,
+                    child: FilledButton.icon(
+                      onPressed: _isSaving ? null : _save,
+                      icon: _isSaving
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.save_outlined),
+                      label: Text(
+                        _isSaving ? 'Saving Changes...' : 'Save Changes',
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: PaymentMethodStyle.orange,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor:
+                            PaymentMethodStyle.orange.withValues(alpha: 0.45),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(TenantAdminRadius.md),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: TenantAdminSpacing.sm),
+                  TextButton(
+                    onPressed: _isSaving
+                        ? null
+                        : () => Navigator.of(context).pop(null),
+                    style: TextButton.styleFrom(
+                      foregroundColor: PaymentMethodStyle.orange,
+                    ),
+                    child: const Text('Cancel'),
                   ),
                 ],
               ),
@@ -193,6 +260,12 @@ class _PosEditCustomerDialogState
         ),
       ),
     );
+  }
+
+  void _submitIfAllowed() {
+    if (!_isSaving) {
+      _save();
+    }
   }
 
   Future<void> _save() async {
@@ -265,5 +338,153 @@ class _PosEditCustomerDialogState
       }
     }
     return 'Unable to update customer. Try again.';
+  }
+}
+
+class _DialogHeader extends StatelessWidget {
+  const _DialogHeader({required this.onClose});
+
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: PaymentMethodStyle.orange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          ),
+          child: const Icon(
+            Icons.person_rounded,
+            color: PaymentMethodStyle.orange,
+          ),
+        ),
+        const SizedBox(width: TenantAdminSpacing.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Edit Customer',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: TenantAdminColors.bodyText,
+                      fontWeight: FontWeight.w900,
+                    ),
+              ),
+              const SizedBox(height: TenantAdminSpacing.xs),
+              const Text(
+                'Update customer details below.',
+                style: TextStyle(
+                  color: TenantAdminColors.mutedText,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          tooltip: 'Close',
+          onPressed: onClose,
+          icon: const Icon(Icons.close_rounded),
+        ),
+      ],
+    );
+  }
+}
+
+class _CustomerField extends StatelessWidget {
+  const _CustomerField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+    required this.icon,
+    required this.textInputAction,
+    required this.maxLength,
+    required this.validator,
+    this.keyboardType,
+    this.onFieldSubmitted,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+  final IconData icon;
+  final TextInputType? keyboardType;
+  final TextInputAction textInputAction;
+  final int maxLength;
+  final FormFieldValidator<String> validator;
+  final ValueChanged<String>? onFieldSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      maxLength: maxLength,
+      validator: validator,
+      onFieldSubmitted: onFieldSubmitted,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        counterText: '',
+        prefixIcon: Icon(icon),
+        floatingLabelStyle: const TextStyle(
+          color: PaymentMethodStyle.orange,
+          fontWeight: FontWeight.w700,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          borderSide: const BorderSide(
+            color: PaymentMethodStyle.orange,
+            width: 1.5,
+          ),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        ),
+      ),
+    );
+  }
+}
+
+class _InlineMessage extends StatelessWidget {
+  const _InlineMessage({required this.message, this.isError = false});
+
+  final String message;
+  final bool isError;
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        isError ? TenantAdminColors.danger : TenantAdminColors.warning;
+    return Container(
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isError ? Icons.error_outline_rounded : Icons.lock_outline_rounded,
+            color: color,
+            size: 20,
+          ),
+          const SizedBox(width: TenantAdminSpacing.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: color, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
-import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
+import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/domain/entities/pos_resolved_sale_item.dart';
-import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
+import 'package:nytroz_pos/features/pos/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_resolved_variant_cart_action.dart';
 
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/data/mappers/inventory_mapper.dart';
-import 'package:nytroz_pos/features/tenant_admin/inventory/domain/entities/inventory_entities.dart';
+import 'package:nytroz_pos/features/tenant_admin/inventory/domain/entities/stock_in_entities.dart';
 
 void main() {
   group('InventoryMapper', () {
@@ -48,3 +48,4 @@ void main() {
     });
   });
 }
+

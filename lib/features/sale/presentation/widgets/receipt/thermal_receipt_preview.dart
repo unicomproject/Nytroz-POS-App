@@ -60,6 +60,7 @@ class ThermalReceiptPreview extends StatelessWidget {
                     receiptNumber: successData.receiptNumber,
                     completedAt: successData.completedAt,
                     cashierName: cashierName,
+                    customerName: successData.customerName,
                     terminal: terminal,
                   ),
                   const SizedBox(height: TenantAdminSpacing.md),
@@ -160,16 +161,22 @@ class _ReceiptInfoSection extends StatelessWidget {
     required this.receiptNumber,
     required this.completedAt,
     required this.cashierName,
+    this.customerName,
     this.terminal,
   });
 
   final String receiptNumber;
   final DateTime completedAt;
   final String cashierName;
+  final String? customerName;
   final String? terminal;
 
   @override
   Widget build(BuildContext context) {
+    final customerDisplay = customerName?.trim().isNotEmpty == true
+        ? customerName!.trim()
+        : 'Walk-in Customer';
+
     return Column(
       children: [
         _InfoLine(label: 'Receipt No', value: receiptNumber),
@@ -178,6 +185,7 @@ class _ReceiptInfoSection extends StatelessWidget {
           value: formatReceiptDateTime(completedAt),
         ),
         _InfoLine(label: 'Cashier', value: cashierName),
+        _InfoLine(label: 'Customer', value: customerDisplay),
         if (terminal != null) _InfoLine(label: 'Terminal', value: terminal!),
         const _InfoLine(label: 'Payment', value: 'Cash'),
       ],

@@ -52,6 +52,11 @@ class AddTillFormData {
     required this.defaultOpeningFloatAmount,
     this.posDeviceId,
     this.hardwareAssignments = const [],
+    this.deviceName,
+    this.printerName,
+    this.scannerName,
+    this.cashDrawerName,
+    this.cardReaderName,
   });
 
   final String name;
@@ -62,6 +67,11 @@ class AddTillFormData {
   final String defaultOpeningFloatAmount;
   final String? posDeviceId;
   final List<TillHardwareSelection> hardwareAssignments;
+  final String? deviceName;
+  final String? printerName;
+  final String? scannerName;
+  final String? cashDrawerName;
+  final String? cardReaderName;
 }
 
 class TillHardwareSelection {

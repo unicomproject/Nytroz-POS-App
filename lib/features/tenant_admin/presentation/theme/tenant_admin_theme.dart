@@ -50,6 +50,9 @@ class TenantAdminColors {
   static const posHomeProfileBlueEnd = Color(0xFF0752C8);
   static const posNewSaleAccent = Color(0xFFFF2D1A);
   static const posNewSaleAccentEnd = Color(0xFFFF6A00);
+  static const posOnboardingAccent = Color(0xFFFF5A1F);
+  static const posOnboardingHeading = Color(0xFF17191F);
+  static const posOnboardingFieldText = Color(0xFF30343B);
   static const posNewSaleSearchText = Color(0xFF101828);
   static const posNewSaleSearchHint = Color(0xFF173A84);
   static const posNewSaleOnline = Color(0xFF00E522);

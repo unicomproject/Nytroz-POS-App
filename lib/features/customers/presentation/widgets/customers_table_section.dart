@@ -92,39 +92,39 @@ class CustomersTableSection extends StatelessWidget {
     }
 
     if (useCardLayout) {
-      return ListView.separated(
+      return Padding(
         padding: const EdgeInsets.all(TenantAdminSpacing.md),
-        itemCount: customers.length,
-        separatorBuilder: (_, __) =>
-            const SizedBox(height: TenantAdminSpacing.sm),
-        itemBuilder: (context, index) {
-          final customer = customers[index];
-          return CustomerListCard(
-            customer: customer,
-            selected: customer.customerId == selectedCustomerId,
-            onSelect: () => onSelect(customer.customerId),
-          );
-        },
+        child: Column(
+          children: [
+            for (var index = 0; index < customers.length; index++) ...[
+              CustomerListCard(
+                customer: customers[index],
+                selected: customers[index].customerId == selectedCustomerId,
+                onSelect: () => onSelect(customers[index].customerId),
+              ),
+              if (index < customers.length - 1)
+                const SizedBox(height: TenantAdminSpacing.sm),
+            ],
+            const Spacer(),
+          ],
+        ),
       );
     }
 
     return Column(
       children: [
         CustomerTableHeader(showSecondaryColumns: showSecondaryColumns),
-        Expanded(
-          child: ListView.builder(
-            itemCount: customers.length,
-            itemBuilder: (context, index) {
-              final customer = customers[index];
-              return CustomerTableRow(
-                customer: customer,
-                selected: customer.customerId == selectedCustomerId,
-                showSecondaryColumns: showSecondaryColumns,
-                onSelect: () => onSelect(customer.customerId),
-              );
-            },
+        for (final customer in customers)
+          SizedBox(
+            height: 54,
+            child: CustomerTableRow(
+              customer: customer,
+              selected: customer.customerId == selectedCustomerId,
+              showSecondaryColumns: showSecondaryColumns,
+              onSelect: () => onSelect(customer.customerId),
+            ),
           ),
-        ),
+        const Spacer(),
       ],
     );
   }

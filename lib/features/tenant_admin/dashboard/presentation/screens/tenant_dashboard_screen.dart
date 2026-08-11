@@ -9,9 +9,8 @@ import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../providers/tenant_dashboard_provider.dart';
 import '../widgets/dashboard_metric_grid.dart';
-import '../widgets/dashboard_quick_actions_card.dart';
-import '../widgets/needs_attention_card.dart';
-import '../widgets/recent_activity_card.dart';
+import '../widgets/operational_risks_card.dart';
+import '../widgets/attention_and_exceptions_row.dart';
 import '../widgets/sales_this_week_card.dart';
 import '../widgets/tenant_admin_dashboard_header_actions.dart';
 
@@ -116,7 +115,6 @@ class _TabletDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     final sections = <Widget>[];
     final width = MediaQuery.sizeOf(context).width;
-    final useStackedMiddle = width < 820;
 
     if (visibility.showKpiSection) {
       sections.add(
@@ -127,97 +125,46 @@ class _TabletDashboard extends StatelessWidget {
       );
     }
 
-    final middleSections = <Widget>[];
+    if (sections.isNotEmpty) {
+      sections.add(const SizedBox(height: 24));
+    }
 
-    if (visibility.showSalesChart) {
-      middleSections.add(
+    if (width < 820) {
+      // Stacked for small tablets
+      sections.add(
         SalesThisWeekCard(
           salesSummary: visibility.salesSummary,
           showTrend: visibility.showSalesTrend,
           showReportsLink: visibility.showReportsLink,
         ),
       );
-    }
-
-    if (visibility.showNeedsAttentionSection) {
-      middleSections.add(
-        NeedsAttentionCard(
-          items: visibility.visibleAttentionItems,
-          showViewAll: visibility.showNeedsAttentionViewAll,
-        ),
-      );
-    }
-
-    if (visibility.showQuickActionsSection) {
-      middleSections.add(
-        DashboardQuickActionsCard(
-          actions: visibility.visibleQuickActions,
-        ),
-      );
-    }
-
-    if (middleSections.isNotEmpty) {
-      if (sections.isNotEmpty) {
-        sections.add(const SizedBox(height: 20));
-      }
-
-      if (useStackedMiddle) {
-        for (var index = 0; index < middleSections.length; index++) {
-          sections.add(middleSections[index]);
-          if (index != middleSections.length - 1) {
-            sections.add(const SizedBox(height: 20));
-          }
-        }
-      } else {
-        sections.add(
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (visibility.showSalesChart)
-                Expanded(flex: width < 1040 ? 5 : 4, child: middleSections[0]),
-              if (visibility.showSalesChart &&
-                  (visibility.showNeedsAttentionSection ||
-                      visibility.showQuickActionsSection))
-                const SizedBox(width: 16),
-              if (visibility.showNeedsAttentionSection)
-                Expanded(
-                  flex: width < 1040 ? 5 : 4,
-                  child: middleSections[visibility.showSalesChart ? 1 : 0],
-                ),
-              if (visibility.showNeedsAttentionSection &&
-                  visibility.showQuickActionsSection)
-                const SizedBox(width: 16),
-              if (visibility.showQuickActionsSection)
-                Expanded(
-                  flex: width < 1040 ? 4 : 3,
-                  child: middleSections[(visibility.showSalesChart ? 1 : 0) +
-                      (visibility.showNeedsAttentionSection ? 1 : 0)],
-                ),
-            ],
-          ),
-        );
-      }
-    }
-
-    if (visibility.showRecentActivitySection) {
-      if (sections.isNotEmpty) {
-        sections.add(const SizedBox(height: 20));
-      }
-
+      sections.add(const SizedBox(height: 24));
+      sections.add(const OperationalRisksCard());
+    } else {
       sections.add(
-        RecentActivityCard(
-          items: visibility.visibleActivities,
-          showViewAll: visibility.showAllActivityLink,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 5,
+              child: SalesThisWeekCard(
+                salesSummary: visibility.salesSummary,
+                showTrend: visibility.showSalesTrend,
+                showReportsLink: visibility.showReportsLink,
+              ),
+            ),
+            const SizedBox(width: 24),
+            const Expanded(
+              flex: 3,
+              child: OperationalRisksCard(),
+            ),
+          ],
         ),
       );
     }
 
-    if (sections.isEmpty) {
-      return const TenantAdminEmptyState(
-        title: 'Dashboard',
-        message: 'No dashboard widgets available for your access.',
-      );
-    }
+    sections.add(const SizedBox(height: 24));
+    sections.add(const AttentionAndExceptionsRow());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -239,7 +186,6 @@ class _MobileDashboard extends StatelessWidget {
       if (sections.isNotEmpty) {
         sections.add(const SizedBox(height: 16));
       }
-
       sections.add(section);
     }
 
@@ -252,48 +198,16 @@ class _MobileDashboard extends StatelessWidget {
       );
     }
 
-    if (visibility.showNeedsAttentionSection) {
-      addSection(
-        NeedsAttentionCard(
-          items: visibility.visibleAttentionItems,
-          showViewAll: visibility.showNeedsAttentionViewAll,
-        ),
-      );
-    }
+    addSection(
+      SalesThisWeekCard(
+        salesSummary: visibility.salesSummary,
+        showTrend: visibility.showSalesTrend,
+        showReportsLink: visibility.showReportsLink,
+      ),
+    );
 
-    if (visibility.showSalesChart) {
-      addSection(
-        SalesThisWeekCard(
-          salesSummary: visibility.salesSummary,
-          showTrend: visibility.showSalesTrend,
-          showReportsLink: visibility.showReportsLink,
-        ),
-      );
-    }
-
-    if (visibility.showQuickActionsSection) {
-      addSection(
-        DashboardQuickActionsCard(
-          actions: visibility.visibleQuickActions,
-        ),
-      );
-    }
-
-    if (visibility.showRecentActivitySection) {
-      addSection(
-        RecentActivityCard(
-          items: visibility.visibleActivities,
-          showViewAll: visibility.showAllActivityLink,
-        ),
-      );
-    }
-
-    if (sections.isEmpty) {
-      return const TenantAdminEmptyState(
-        title: 'Dashboard',
-        message: 'No dashboard widgets available for your access.',
-      );
-    }
+    addSection(const OperationalRisksCard());
+    addSection(const AttentionAndExceptionsRow());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/cart/domain/entities/pos_cart_discount.dart';
-import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
+import 'package:nytroz_pos/features/discount/domain/entities/pos_cart_discount.dart';
+import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/sale/presentation/providers/pos_checkout_summary_provider.dart';
 
@@ -119,7 +119,7 @@ void main() {
       expect(cart.total, 3250);
     });
 
-    test('clears manual discount when the last cart item is removed', () {
+    test('blocks cart mutation until the active discount is removed', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
@@ -139,12 +139,19 @@ void main() {
           value: 500,
         ),
       );
-      notifier.removeItem(product.cartLineKey);
+      final blocked = notifier.removeItem(product.cartLineKey);
 
-      final cart = container.read(posNewSaleCartProvider);
+      var cart = container.read(posNewSaleCartProvider);
+      expect(blocked, isFalse);
+      expect(cart.hasItems, isTrue);
+      expect(cart.cartDiscount, isNotNull);
+
+      notifier.clearDiscounts();
+      final removed = notifier.removeItem(product.cartLineKey);
+      cart = container.read(posNewSaleCartProvider);
+      expect(removed, isTrue);
       expect(cart.hasItems, isFalse);
       expect(cart.cartDiscount, isNull);
-      expect(cart.discount, 0);
     });
   });
 }

@@ -13,63 +13,37 @@ import 'package:nytroz_pos/features/device_activation/presentation/providers/dev
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_new_sale_customer_dialog.dart';
 
 void main() {
-  testWidgets('customer dialog visibly loads and selects customers', (
-    tester,
-  ) async {
+  testWidgets('dialog is add-only with exactly three customer fields',
+      (tester) async {
+    var requestCount = 0;
     await tester.pumpWidget(
       _CustomerDialogTestApp(
         dio: _dioWithResponse(
           statusCode: 200,
-          data: {
-            'success': true,
-            'data': [
-              {
-                'CustomerId': 'customer-1',
-                'FullName': 'Tom',
-                'Phone': '0771234567',
-                'Email': 'tom@example.com',
-                'Status': 'active',
-              },
-            ],
-          },
+          data: const {'success': true, 'data': <String, dynamic>{}},
+          onRequest: (_) => requestCount++,
         ),
       ),
     );
 
     await tester.tap(find.text('Open'));
-    await tester.pump();
-    expect(find.text('Select Customer'), findsOneWidget);
-    expect(find.text('Loading customers...'), findsOneWidget);
-
     await tester.pumpAndSettle();
 
-    expect(find.text('Tom'), findsOneWidget);
-    expect(find.text('0771234567 • tom@example.com'), findsOneWidget);
-    expect(find.text('Quick Add Customer'), findsOneWidget);
+    expect(find.text('Add Customer'), findsWidgets);
+    expect(find.byType(TextFormField), findsNWidgets(3));
+    expect(find.text('Full Name'), findsOneWidget);
+    expect(find.text('Phone Number'), findsOneWidget);
+    expect(find.text('Email (Optional)'), findsOneWidget);
     expect(find.byIcon(Icons.close_rounded), findsOneWidget);
-
-    await tester.tap(find.text('Tom'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Selected: Tom'), findsOneWidget);
+    expect(find.text('Select Customer'), findsNothing);
+    expect(find.text('Quick Add Customer'), findsNothing);
+    expect(find.byType(ListTile), findsNothing);
+    expect(find.byIcon(Icons.search_rounded), findsNothing);
+    expect(requestCount, 0,
+        reason: 'Opening add-only dialog must not GET list');
   });
 
-  testWidgets('customer dialog shows API error and retry', (tester) async {
-    await tester.pumpWidget(
-      _CustomerDialogTestApp(
-        dio: _dioWithResponse(statusCode: 500, data: {'message': 'Failed'}),
-      ),
-    );
-
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Unable to load customers. Try again.'), findsOneWidget);
-    expect(find.widgetWithText(TextButton, 'Retry'), findsOneWidget);
-    expect(find.widgetWithText(TextButton, 'Close'), findsOneWidget);
-  });
-
-  testWidgets('quick add validates required fields and optional email', (
+  testWidgets('add-only form validates name, phone, and optional email', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -84,12 +58,14 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
 
-    final createButton = find.widgetWithText(FilledButton, 'Create Customer');
+    final createButton = find.byKey(
+      const ValueKey('create-customer-button'),
+    );
     await tester.ensureVisible(createButton);
     await tester.tap(createButton);
     await tester.pumpAndSettle();
 
-    expect(find.text('Name is required'), findsOneWidget);
+    expect(find.text('Full name is required'), findsOneWidget);
     expect(find.text('Phone number is required'), findsOneWidget);
 
     await tester.enterText(find.byType(TextFormField).at(0), 'Maya');
@@ -105,7 +81,84 @@ void main() {
     await tester.tap(createButton);
     await tester.pumpAndSettle();
 
-    expect(find.text('Enter a valid email'), findsOneWidget);
+    expect(find.text('Enter a valid email address'), findsOneWidget);
+  });
+
+  testWidgets('submits only fullName, phone, and email to create API',
+      (tester) async {
+    RequestOptions? captured;
+    await tester.pumpWidget(
+      _CustomerDialogTestApp(
+        dio: _dioWithResponse(
+          statusCode: 201,
+          onRequest: (request) => captured = request,
+          data: {
+            'success': true,
+            'data': {
+              'customerId': 'customer-1',
+              'fullName': 'Maya Silva',
+              'phone': '0711111111',
+              'email': 'maya@example.com',
+              'status': 'ACTIVE',
+            },
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('add-customer-name')),
+      '  Maya Silva  ',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('add-customer-phone')),
+      '0711111111',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('add-customer-email')),
+      'maya@example.com',
+    );
+    await tester.tap(find.byKey(const ValueKey('create-customer-button')));
+    await tester.pumpAndSettle();
+
+    expect(captured?.method, 'POST');
+    expect(captured?.path, '/api/v1/customers');
+    expect(captured?.data, {
+      'fullName': 'Maya Silva',
+      'phone': '0711111111',
+      'email': 'maya@example.com',
+    });
+    expect(find.text('Selected: Maya Silva'), findsOneWidget);
+  });
+
+  testWidgets('shows backend create error without closing the form',
+      (tester) async {
+    await tester.pumpWidget(
+      _CustomerDialogTestApp(
+        dio: _dioWithResponse(
+          statusCode: 409,
+          data: {'message': 'Phone number already exists.'},
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('add-customer-name')),
+      'Duplicate Customer',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('add-customer-phone')),
+      '0711111111',
+    );
+    await tester.tap(find.byKey(const ValueKey('create-customer-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Phone number already exists.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('add-customer-name')), findsOneWidget);
   });
 }
 
@@ -174,11 +227,13 @@ class _CustomerDialogTestAppState extends State<_CustomerDialogTestApp> {
 Dio _dioWithResponse({
   required int statusCode,
   required Map<String, dynamic> data,
+  ValueChanged<RequestOptions>? onRequest,
 }) {
   final dio = Dio(BaseOptions(baseUrl: 'https://test.local'));
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) {
+        onRequest?.call(options);
         final response = Response<Map<String, dynamic>>(
           requestOptions: options,
           statusCode: statusCode,

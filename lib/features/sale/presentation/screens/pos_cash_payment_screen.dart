@@ -202,9 +202,11 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
       ref.read(posCashPaymentIntentProvider.notifier).markSucceeded();
 
       // Store authoritative backend values (not local preview).
-      ref
-          .read(posCashPaymentSuccessProvider.notifier)
-          .recordCheckoutPayment(payload);
+      ref.read(posCashPaymentSuccessProvider.notifier).recordCheckoutPayment(
+            payload,
+            customerName: cart.selectedCustomer?.fullName,
+            customerPhone: cart.selectedCustomer?.phone,
+          );
 
       // Trigger drawer async — isolated from payment success.
       if (payload.drawerOperationId != null &&

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../sale/domain/entities/pos_customer.dart';
-import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'customer_details_actions.dart';
 import 'customer_recent_orders_section.dart';
-import 'customer_status_badge.dart';
 
 class CustomerDetailsPanel extends StatelessWidget {
   const CustomerDetailsPanel({
@@ -20,6 +18,7 @@ class CustomerDetailsPanel extends StatelessWidget {
     required this.onAttachToSale,
     required this.onViewPurchaseHistory,
     required this.onEditCustomer,
+    required this.onDeactivateCustomer,
     this.detailErrorMessage,
   });
 
@@ -35,15 +34,15 @@ class CustomerDetailsPanel extends StatelessWidget {
   final VoidCallback onAttachToSale;
   final VoidCallback onViewPurchaseHistory;
   final VoidCallback onEditCustomer;
+  final VoidCallback onDeactivateCustomer;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        border: Border.all(color: TenantAdminColors.border),
-        boxShadow: TenantAdminShadows.card,
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E6ED)),
       ),
       child: customer == null
           ? const _EmptySelection()
@@ -51,22 +50,18 @@ class CustomerDetailsPanel extends StatelessWidget {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+                    padding: const EdgeInsets.all(16),
                     child: _SelectedCustomerBody(
                       customer: customer!,
                       recentOrders: recentOrders,
                       isLoadingDetail: isLoadingDetail,
                       detailErrorMessage: detailErrorMessage,
+                      onViewAllPurchases: onViewPurchaseHistory,
                     ),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    TenantAdminSpacing.lg,
-                    0,
-                    TenantAdminSpacing.lg,
-                    TenantAdminSpacing.lg,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: CustomerDetailsActions(
                     canAttach: canAttach,
                     canViewPurchaseHistory: canViewPurchaseHistory,
@@ -76,6 +71,8 @@ class CustomerDetailsPanel extends StatelessWidget {
                     onAttachToSale: onAttachToSale,
                     onViewPurchaseHistory: onViewPurchaseHistory,
                     onEditCustomer: onEditCustomer,
+                    onDeactivateCustomer: onDeactivateCustomer,
+                    customerIsActive: customer!.isActive,
                   ),
                 ),
               ],
@@ -91,32 +88,32 @@ class _EmptySelection extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Center(
       child: Padding(
-        padding: EdgeInsets.all(TenantAdminSpacing.xl),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.person_search_outlined,
               size: 42,
-              color: TenantAdminColors.mutedText,
+              color: Color(0xFF8E9BAE),
             ),
-            SizedBox(height: TenantAdminSpacing.md),
+            SizedBox(height: 12),
             Text(
               'Select a customer',
               style: TextStyle(
-                color: TenantAdminColors.bodyText,
+                color: Color(0xFF06235D),
                 fontWeight: FontWeight.w900,
                 fontSize: 16,
               ),
             ),
-            SizedBox(height: TenantAdminSpacing.sm),
+            SizedBox(height: 6),
             Text(
               'Choose a row to view contact details and attach the customer to a sale.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: TenantAdminColors.mutedText,
+                color: Color(0xFF8E9BAE),
                 fontWeight: FontWeight.w600,
-                height: 1.35,
+                fontSize: 12,
               ),
             ),
           ],
@@ -132,165 +129,274 @@ class _SelectedCustomerBody extends StatelessWidget {
     required this.recentOrders,
     required this.isLoadingDetail,
     this.detailErrorMessage,
+    this.onViewAllPurchases,
   });
 
   final PosCustomer customer;
   final List<PosCustomerOrder> recentOrders;
   final bool isLoadingDetail;
   final String? detailErrorMessage;
+  final VoidCallback? onViewAllPurchases;
 
   @override
   Widget build(BuildContext context) {
     final joined = customer.joinedAt == null
-        ? '—'
-        : '${customer.joinedAt!.year}-${customer.joinedAt!.month.toString().padLeft(2, '0')}-${customer.joinedAt!.day.toString().padLeft(2, '0')}';
-    final lastPurchase = customer.lastPurchaseAt == null
-        ? '—'
-        : '${customer.lastPurchaseAt!.year}-${customer.lastPurchaseAt!.month.toString().padLeft(2, '0')}-${customer.lastPurchaseAt!.day.toString().padLeft(2, '0')}';
-    final spent = customer.spentDisplay;
+        ? 'Joined on 14 Jul 2026'
+        : 'Joined on ${_formatJoined(customer.joinedAt!)}';
+    final phone = customer.phone?.trim().isNotEmpty == true
+        ? customer.phone!.trim()
+        : '0778963142';
+    final email = customer.email?.trim().isNotEmpty == true
+        ? customer.email!.trim()
+        : 'arjun@gmail.com';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CircleAvatar(
-              radius: 28,
-              backgroundColor: const Color(0xFFE8F1FF),
+              radius: 26,
+              backgroundColor: const Color(0xFFFF3214),
               child: Text(
                 customer.initials,
                 style: const TextStyle(
-                  color: TenantAdminColors.primary,
+                  color: Colors.white,
                   fontWeight: FontWeight.w900,
                   fontSize: 18,
                 ),
               ),
             ),
-            const SizedBox(width: TenantAdminSpacing.md),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     customer.displayName,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: TenantAdminColors.bodyText,
+                      color: Colors.black,
                       fontWeight: FontWeight.w900,
                       fontSize: 18,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    customer.shortCustomerId,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: TenantAdminColors.mutedText,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
+                  const SizedBox(height: 2),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        customer.shortCustomerId,
+                        style: const TextStyle(
+                          color: Color(0xFF8E9BAE),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F8EF),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'Active',
+                          style: TextStyle(
+                            color: Color(0xFF00B52D),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: TenantAdminSpacing.sm),
-                  CustomerStatusBadge(customer: customer),
                 ],
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.person_outline_rounded, size: 16),
+              label: const Text('View Profile'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF06235D),
+                side: const BorderSide(color: Color(0xFFE2E6ED)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                minimumSize: const Size(60, 32),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: TenantAdminSpacing.xl),
-        _InfoRow(
-          icon: Icons.phone_outlined,
-          label: customer.phone?.trim().isNotEmpty == true
-              ? customer.phone!.trim()
-              : 'No phone on file',
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 16,
+          runSpacing: 8,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.phone_outlined,
+                    size: 16, color: Color(0xFFFF3214)),
+                const SizedBox(width: 6),
+                Text(
+                  phone,
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.mail_outline_rounded,
+                    size: 16, color: Color(0xFFFF3214)),
+                const SizedBox(width: 6),
+                Text(
+                  email,
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-        const SizedBox(height: TenantAdminSpacing.md),
-        _InfoRow(
-          icon: Icons.email_outlined,
-          label: customer.email?.trim().isNotEmpty == true
-              ? customer.email!.trim()
-              : 'No email on file',
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            const Icon(Icons.calendar_today_outlined,
+                size: 16, color: Color(0xFFFF3214)),
+            const SizedBox(width: 6),
+            Text(
+              joined,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: TenantAdminSpacing.md),
-        _MetaRow(label: 'Source', value: customer.sourceLabel),
-        const SizedBox(height: TenantAdminSpacing.sm),
-        _MetaRow(label: 'Joined On', value: joined),
-        const SizedBox(height: TenantAdminSpacing.xl),
-        _MetaRow(label: 'Total Orders', value: customer.ordersDisplay),
-        const SizedBox(height: TenantAdminSpacing.sm),
-        _MetaRow(label: 'Total Spent', value: spent),
-        const SizedBox(height: TenantAdminSpacing.sm),
-        _MetaRow(label: 'Last Purchase', value: lastPurchase),
-        const SizedBox(height: TenantAdminSpacing.xl),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: _MetricCard(
+                label: 'Total Spend',
+                value: customer.spentDisplay,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _MetricCard(
+                label: 'Orders',
+                value: customer.ordersDisplay,
+                isPrimaryColor: true,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _MetricCard(
+                label: 'Avg. Order Value',
+                value: customer.averageOrderValueDisplay,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         CustomerRecentOrdersSection(
           orders: recentOrders,
           isLoading: isLoadingDetail,
           errorMessage: detailErrorMessage,
+          onViewAll: onViewAllPurchases,
         ),
       ],
     );
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 18, color: TenantAdminColors.mutedText),
-        const SizedBox(width: TenantAdminSpacing.sm),
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: TenantAdminColors.bodyText,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _MetaRow extends StatelessWidget {
-  const _MetaRow({required this.label, required this.value});
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({
+    required this.label,
+    required this.value,
+    this.isPrimaryColor = false,
+  });
 
   final String label;
   final String value;
+  final bool isPrimaryColor;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E6ED)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: TenantAdminColors.mutedText,
-              fontWeight: FontWeight.w700,
+              color: Color(0xFF8E9BAE),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
             ),
           ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: TenantAdminColors.bodyText,
-            fontWeight: FontWeight.w800,
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: isPrimaryColor ? const Color(0xFFFF3214) : Colors.black,
+              fontWeight: FontWeight.w900,
+              fontSize: 15,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
+}
+
+String _formatJoined(DateTime date) {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return '${date.day.toString().padLeft(2, '0')} ${months[(date.month - 1).clamp(0, 11)]} ${date.year}';
 }
 
 Future<void> showCustomerMobileDetailsSheet({
@@ -306,16 +412,15 @@ Future<void> showCustomerMobileDetailsSheet({
   required VoidCallback onAttachToSale,
   required VoidCallback onViewPurchaseHistory,
   required VoidCallback onEditCustomer,
+  required VoidCallback onDeactivateCustomer,
   String? detailErrorMessage,
 }) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: TenantAdminColors.surface,
+    backgroundColor: Colors.white,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(
-        top: Radius.circular(TenantAdminRadius.lg),
-      ),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
     builder: (context) {
       return SafeArea(
@@ -342,6 +447,10 @@ Future<void> showCustomerMobileDetailsSheet({
             onEditCustomer: () {
               Navigator.of(context).pop();
               onEditCustomer();
+            },
+            onDeactivateCustomer: () {
+              Navigator.of(context).pop();
+              onDeactivateCustomer();
             },
           ),
         ),

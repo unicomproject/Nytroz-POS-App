@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/network/dio_provider.dart';
 import '../../../../auth/presentation/providers/session_provider.dart';
-import '../../../../cart/data/datasources/pos_barcode_remote_datasource.dart';
+import '../../../data/datasources/remote/pos_barcode_remote_datasource.dart';
 import '../../../../cart/domain/entities/pos_resolved_sale_item.dart';
 import '../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../../cart/presentation/providers/pos_resolved_variant_cart_action.dart';
@@ -177,6 +177,8 @@ PosBarcodeScanOutcome _mapCartResult(PosCartMutationResult result) =>
         PosBarcodeScanOutcome.variantUnavailable,
       PosCartMutationResult.priceUnavailable =>
         PosBarcodeScanOutcome.priceUnavailable,
+      PosCartMutationResult.discountMustBeRemoved =>
+        PosBarcodeScanOutcome.productUnavailable,
     };
 
 PosBarcodeScanOutcome _mapDioError(DioException error) {

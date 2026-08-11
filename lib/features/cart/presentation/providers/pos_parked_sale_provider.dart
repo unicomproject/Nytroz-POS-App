@@ -10,7 +10,7 @@ import 'package:nytroz_pos/features/auth/presentation/providers/session_provider
 import 'package:nytroz_pos/features/cart/data/datasources/pos_parked_sale_remote_datasource.dart';
 import 'package:nytroz_pos/features/cart/data/models/pos_parked_sale_dtos.dart';
 import 'package:nytroz_pos/features/cart/data/repositories/pos_parked_sale_repository_impl.dart';
-import 'package:nytroz_pos/features/cart/domain/entities/pos_cart_discount.dart';
+import 'package:nytroz_pos/features/discount/domain/entities/pos_cart_discount.dart';
 import 'package:nytroz_pos/features/cart/domain/repositories/pos_parked_sale_repository.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/device_activation/presentation/providers/device_activation_provider.dart';
@@ -185,8 +185,12 @@ class PosParkedSaleNotifier extends AsyncNotifier<List<PosParkedSale>> {
       _pendingKey = null;
       _pendingFingerprint = null;
       final current = state.valueOrNull ?? const <PosParkedSale>[];
+      final isNewSale = !current.any((x) => x.id == sale.id);
+      if (isNewSale) {
+        totalCount += 1;
+        totalValue += sale.total;
+      }
       state = AsyncData([sale, ...current.where((x) => x.id != sale.id)]);
-      totalCount += current.any((x) => x.id == sale.id) ? 0 : 1;
       _setOperation(PosParkedSaleOperation.createSuccess);
       return sale;
     } catch (e) {
@@ -701,6 +705,7 @@ class PosParkedSale {
     final customerIdValue = recalled.customerId?.trim();
     return PosNewSaleCartState(
       items: recalledItems,
+      editableSaleId: recalled.saleId,
       selectedCustomer: customerIdValue?.isNotEmpty == true
           ? PosCustomer(
               customerId: customerIdValue!,

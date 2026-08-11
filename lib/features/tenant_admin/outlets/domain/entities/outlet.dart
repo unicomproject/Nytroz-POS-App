@@ -75,9 +75,11 @@ class Outlet {
       tillCount: tillCount ?? this.tillCount,
       onlineTillCount: onlineTillCount ?? this.onlineTillCount,
       activeTillCount: activeTillCount ?? this.activeTillCount,
-      operationalHealthStatus: operationalHealthStatus ?? this.operationalHealthStatus,
+      operationalHealthStatus:
+          operationalHealthStatus ?? this.operationalHealthStatus,
       activeAlertCount: activeAlertCount ?? this.activeAlertCount,
-      canViewTillsAndHealth: canViewTillsAndHealth ?? this.canViewTillsAndHealth,
+      canViewTillsAndHealth:
+          canViewTillsAndHealth ?? this.canViewTillsAndHealth,
       staffCount: staffCount ?? this.staffCount,
       todaysSales: todaysSales ?? this.todaysSales,
     );

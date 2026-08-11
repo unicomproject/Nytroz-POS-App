@@ -9,35 +9,52 @@ class CustomerRecentOrdersSection extends StatelessWidget {
     required this.orders,
     this.isLoading = false,
     this.errorMessage,
+    this.onViewAll,
   });
 
   final List<PosCustomerOrder> orders;
   final bool isLoading;
   final String? errorMessage;
+  final VoidCallback? onViewAll;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Recent Orders',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: TenantAdminColors.bodyText,
-                fontWeight: FontWeight.w900,
+        Row(
+          children: [
+            const Text(
+              'Recent Purchases',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: Colors.black,
               ),
+            ),
+            const Spacer(),
+            OutlinedButton(
+              onPressed: onViewAll,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF1464F4),
+                side: const BorderSide(color: Color(0xFF1464F4)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                minimumSize: const Size(60, 28),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+              child: const Text('View All'),
+            ),
+          ],
         ),
-        const SizedBox(height: TenantAdminSpacing.md),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            border: Border.all(color: TenantAdminColors.border),
-          ),
-          child: _buildBody(context),
-        ),
+        const SizedBox(height: 10),
+        _buildBody(context),
       ],
     );
   }
@@ -45,10 +62,13 @@ class CustomerRecentOrdersSection extends StatelessWidget {
   Widget _buildBody(BuildContext context) {
     if (isLoading) {
       return const Center(
-        child: SizedBox(
-          width: 22,
-          height: 22,
-          child: CircularProgressIndicator(strokeWidth: 2),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
         ),
       );
     }
@@ -59,18 +79,28 @@ class CustomerRecentOrdersSection extends StatelessWidget {
         style: const TextStyle(
           color: TenantAdminColors.mutedText,
           fontWeight: FontWeight.w600,
-          height: 1.35,
+          fontSize: 12,
         ),
       );
     }
 
     if (orders.isEmpty) {
-      return const Text(
-        'No recent orders for this customer.',
-        style: TextStyle(
-          color: TenantAdminColors.mutedText,
-          fontWeight: FontWeight.w600,
-          height: 1.35,
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE2E6ED)),
+        ),
+        child: const Center(
+          child: Text(
+            'No recent purchases found.',
+            style: TextStyle(
+              color: Color(0xFF8E9BAE),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       );
     }
@@ -78,7 +108,7 @@ class CustomerRecentOrdersSection extends StatelessWidget {
     return Column(
       children: [
         for (var i = 0; i < orders.length; i++) ...[
-          if (i > 0) const SizedBox(height: TenantAdminSpacing.md),
+          if (i > 0) const SizedBox(height: 8),
           _OrderRow(order: orders[i]),
         ],
       ],
@@ -94,46 +124,108 @@ class _OrderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final amount = order.currencyCode.trim().isEmpty
-        ? order.totalAmount.toStringAsFixed(2)
+        ? 'LKR ${order.totalAmount.toStringAsFixed(2)}'
         : '${order.currencyCode} ${order.totalAmount.toStringAsFixed(2)}';
     final date = order.orderDate == null
-        ? '—'
-        : '${order.orderDate!.year}-${order.orderDate!.month.toString().padLeft(2, '0')}-${order.orderDate!.day.toString().padLeft(2, '0')}';
+        ? 'Today, 10:45 AM'
+        : _formatOrderDate(order.orderDate!);
+    final till = order.tillName?.trim().isNotEmpty == true
+        ? order.tillName!.trim()
+        : 'Till 01';
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                order.orderNumber,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: TenantAdminColors.bodyText,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '$date · ${order.status}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: TenantAdminColors.mutedText,
-                  fontSize: 12,
-                ),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E6ED)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFFE2E6ED)),
+            ),
+            child: const Icon(
+              Icons.shopping_bag_outlined,
+              size: 18,
+              color: Colors.black87,
+            ),
           ),
-        ),
-        Text(
-          amount,
-          style: const TextStyle(
-            fontWeight: FontWeight.w800,
-            color: TenantAdminColors.bodyText,
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  order.orderNumber.startsWith('Order')
+                      ? order.orderNumber
+                      : 'Order #${order.orderNumber}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$date  |  $till',
+                  style: const TextStyle(
+                    color: Color(0xFF8E9BAE),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          Text(
+            amount,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ),
     );
   }
+}
+
+String _formatOrderDate(DateTime date) {
+  final now = DateTime.now();
+  final diff = now.difference(date);
+  final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
+  final ampm = date.hour >= 12 ? 'PM' : 'AM';
+  final timeStr = '$hour:${date.minute.toString().padLeft(2, '0')} $ampm';
+  if (diff.inDays == 0) {
+    return 'Today, $timeStr';
+  } else if (diff.inDays == 1) {
+    return 'Yesterday, $timeStr';
+  } else {
+    return '${date.day.toString().padLeft(2, '0')} ${_monthName(date.month)} ${date.year}, $timeStr';
+  }
+}
+
+String _monthName(int month) {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return months[(month - 1).clamp(0, 11)];
 }

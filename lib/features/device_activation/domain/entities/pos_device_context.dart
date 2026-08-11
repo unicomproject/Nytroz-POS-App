@@ -8,6 +8,7 @@ class PosDeviceContext {
     required this.deviceFingerprint,
     required this.isTrusted,
     required this.tenantId,
+    this.tenantSlug = '',
     required this.outletId,
     required this.outletName,
     required this.tillId,
@@ -26,6 +27,7 @@ class PosDeviceContext {
   final String deviceFingerprint;
   final bool isTrusted;
   final String tenantId;
+  final String tenantSlug;
   final String outletId;
   final String outletName;
   final String tillId;
@@ -45,6 +47,7 @@ class PosDeviceContext {
       'deviceFingerprint': deviceFingerprint,
       'isTrusted': isTrusted,
       'tenantId': tenantId,
+      'tenantSlug': tenantSlug,
       'outletId': outletId,
       'outletName': outletName,
       'tillId': tillId,
@@ -66,6 +69,7 @@ class PosDeviceContext {
       deviceFingerprint: json['deviceFingerprint'] as String? ?? '',
       isTrusted: json['isTrusted'] == true,
       tenantId: json['tenantId'] as String? ?? '',
+      tenantSlug: json['tenantSlug'] as String? ?? '',
       outletId: json['outletId'] as String? ?? '',
       outletName: json['outletName'] as String? ?? '',
       tillId: json['tillId'] as String? ?? '',

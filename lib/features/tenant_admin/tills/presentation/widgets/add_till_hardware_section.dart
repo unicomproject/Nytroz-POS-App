@@ -13,6 +13,11 @@ class AddTillHardwareSection extends StatelessWidget {
     required this.selectedPrinterId,
     required this.selectedCashDrawerId,
     required this.selectedCardReaderId,
+    required this.posDeviceNameController,
+    required this.scannerNameController,
+    required this.printerNameController,
+    required this.cashDrawerNameController,
+    required this.cardReaderNameController,
     required this.onPosDeviceChanged,
     required this.onScannerChanged,
     required this.onPrinterChanged,
@@ -29,6 +34,12 @@ class AddTillHardwareSection extends StatelessWidget {
   final String? selectedPrinterId;
   final String? selectedCashDrawerId;
   final String? selectedCardReaderId;
+
+  final TextEditingController posDeviceNameController;
+  final TextEditingController scannerNameController;
+  final TextEditingController printerNameController;
+  final TextEditingController cashDrawerNameController;
+  final TextEditingController cardReaderNameController;
 
   final ValueChanged<String?> onPosDeviceChanged;
   final ValueChanged<String?> onScannerChanged;
@@ -49,7 +60,6 @@ class AddTillHardwareSection extends StatelessWidget {
                 d.outletId == selectedOutletId &&
                 (d.isAssigned == false ||
                     [
-                      selectedPosDeviceId,
                       selectedScannerId,
                       selectedPrinterId,
                       selectedCashDrawerId,
@@ -57,9 +67,14 @@ class AddTillHardwareSection extends StatelessWidget {
                     ].contains(d.id)))
             .toList(growable: false);
 
-    final posDevices = availableDevices
-        .where((d) => d.type.toLowerCase() == 'pos_terminal')
-        .toList();
+    final posDevices = selectedOutletId == null
+        ? <TillPosDeviceOption>[]
+        : options.posDevices
+            .where((d) =>
+                d.outletId == selectedOutletId &&
+                (d.isAssigned == false || d.id == selectedPosDeviceId))
+            .toList(growable: false);
+
     final scanners = availableDevices
         .where((d) => d.type.toLowerCase() == 'barcode_scanner')
         .toList();
@@ -117,48 +132,58 @@ class AddTillHardwareSection extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildDropdown(
+                  _buildCombo(
                     label: 'Device Name',
                     value: selectedPosDeviceId,
+                    controller: posDeviceNameController,
                     items: posDevices,
                     onChanged: onPosDeviceChanged,
                     icon: Icons.computer,
+                    outletId: selectedOutletId,
                   ),
                   const SizedBox(height: TenantAdminSpacing.xs),
                   const Text('A friendly name to identify this till device.',
                       style: TextStyle(
                           fontSize: 12, color: TenantAdminColors.mutedText)),
                   const SizedBox(height: TenantAdminSpacing.lg),
-                  _buildDropdown(
+                  _buildCombo(
                     label: 'Scanner',
                     value: selectedScannerId,
+                    controller: scannerNameController,
                     items: scanners,
                     onChanged: onScannerChanged,
                     icon: Icons.qr_code_scanner,
+                    outletId: selectedOutletId,
                   ),
                   const SizedBox(height: TenantAdminSpacing.md),
-                  _buildDropdown(
+                  _buildCombo(
                     label: 'Receipt Printer',
                     value: selectedPrinterId,
+                    controller: printerNameController,
                     items: printers,
                     onChanged: onPrinterChanged,
                     icon: Icons.print,
+                    outletId: selectedOutletId,
                   ),
                   const SizedBox(height: TenantAdminSpacing.md),
-                  _buildDropdown(
+                  _buildCombo(
                     label: 'Cash Drawer',
                     value: selectedCashDrawerId,
+                    controller: cashDrawerNameController,
                     items: cashDrawers,
                     onChanged: onCashDrawerChanged,
                     icon: Icons.point_of_sale,
+                    outletId: selectedOutletId,
                   ),
                   const SizedBox(height: TenantAdminSpacing.md),
-                  _buildDropdown(
+                  _buildCombo(
                     label: 'Card Reader',
                     value: selectedCardReaderId,
+                    controller: cardReaderNameController,
                     items: cardReaders,
                     onChanged: onCardReaderChanged,
                     icon: Icons.credit_card,
+                    outletId: selectedOutletId,
                   ),
                 ],
               ),
@@ -185,34 +210,44 @@ class AddTillHardwareSection extends StatelessWidget {
     );
   }
 
-  Widget _buildDropdown({
+  Widget _buildCombo({
     required String label,
     required String? value,
-    required List<TillHardwareDeviceOption> items,
+    required TextEditingController controller,
+    required List<dynamic> items,
     required ValueChanged<String?> onChanged,
     required IconData icon,
+    required String? outletId,
   }) {
-    final hasValue = items.any((item) => item.id == value);
+    final Map<String, dynamic> uniqueMap = {};
+    for (final item in items) {
+      uniqueMap[item.id as String] = item;
+    }
+    final uniqueItems = uniqueMap.values.toList();
+
+    final hasValue = uniqueItems.any((item) => (item as dynamic).id == value);
     final safeValue = hasValue ? value : null;
 
-    return DropdownButtonFormField<String>(
-      initialValue: safeValue,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: TenantAdminColors.mutedText),
-      ),
-      items: [
-        const DropdownMenuItem(
-          value: null,
-          child: Text('None (Optional)',
-              style: TextStyle(color: TenantAdminColors.mutedText)),
-        ),
-        ...items.map((e) => DropdownMenuItem(
-              value: e.id,
-              child: Text(e.name),
-            )),
-      ],
-      onChanged: onChanged,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return DropdownMenu<String>(
+          key: ValueKey('${label}_$outletId'),
+          width: constraints.maxWidth,
+          controller: controller,
+          initialSelection: safeValue,
+          label: Text(label),
+          leadingIcon: Icon(icon, color: TenantAdminColors.mutedText),
+          dropdownMenuEntries: uniqueItems
+              .map((e) => DropdownMenuEntry<String>(
+                    value: (e as dynamic).id as String,
+                    label: (e as dynamic).name as String,
+                  ))
+              .toList(),
+          onSelected: (String? selectedId) {
+            onChanged(selectedId);
+          },
+        );
+      },
     );
   }
 }
