@@ -114,7 +114,7 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
         if (deviceId != null) {
           hardwareAssignments.add(TillHardwareSelection(
             hardwareDeviceId: deviceId,
-            isPrimary: true, 
+            isPrimary: true,
           ));
         }
       }
@@ -155,24 +155,35 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
             if (data is Map) {
               final code = data['code']?.toString() ?? '';
               final message = data['message']?.toString() ?? '';
-              
+
               if (code == 'till.duplicate_code') {
-                _backendErrors = {'tillCode': 'This till code is already in use.'};
+                _backendErrors = {
+                  'tillCode': 'This till code is already in use.'
+                };
               } else if (code.contains('subscription_limit')) {
-                _backendErrors = {'general': 'Subscription limit reached: $message'};
+                _backendErrors = {
+                  'general': 'Subscription limit reached: $message'
+                };
               } else {
-                _backendErrors = {'general': message.isNotEmpty ? message : 'Failed to create till.'};
+                _backendErrors = {
+                  'general':
+                      message.isNotEmpty ? message : 'Failed to create till.'
+                };
               }
             }
           }
 
           if (_backendErrors.isEmpty) {
             final errorMsg = e.toString().toLowerCase();
-            if (errorMsg.contains('till.duplicate_code') || 
+            if (errorMsg.contains('till.duplicate_code') ||
                 errorMsg.contains('already in use')) {
-              _backendErrors = {'tillCode': 'This till code is already in use.'};
+              _backendErrors = {
+                'tillCode': 'This till code is already in use.'
+              };
             } else {
-              _backendErrors = {'general': 'An error occurred while creating till.'};
+              _backendErrors = {
+                'general': 'An error occurred while creating till.'
+              };
             }
           }
         });
@@ -230,7 +241,8 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
               builder: (context, constraints) {
                 final isDesktop = constraints.maxWidth > 900;
 
-                final scopedOptionsState = ref.watch(tillCreateOptionsProvider(_selectedOutletId));
+                final scopedOptionsState =
+                    ref.watch(tillCreateOptionsProvider(_selectedOutletId));
                 final scopedOptions = scopedOptionsState.valueOrNull;
 
                 final effectiveOptions = TillCreateOptions(
@@ -273,8 +285,8 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
                       _markDirty();
                     });
                   },
-                  onCashierChanged: scopedOptionsState.isLoading 
-                      ? (value) {} 
+                  onCashierChanged: scopedOptionsState.isLoading
+                      ? (value) {}
                       : (value) {
                           setState(() {
                             _selectedCashierId = value;
@@ -298,38 +310,44 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
                         printerNameController: _printerNameController,
                         cashDrawerNameController: _cashDrawerNameController,
                         cardReaderNameController: _cardReaderNameController,
-                        onPosDeviceChanged: widget.canManageHardware && !scopedOptionsState.isLoading
+                        onPosDeviceChanged: widget.canManageHardware &&
+                                !scopedOptionsState.isLoading
                             ? (value) => setState(() {
                                   _selectedPosDeviceId = value;
                                   _markDirty();
                                 })
                             : (value) {},
-                        onScannerChanged: widget.canManageHardware && !scopedOptionsState.isLoading
+                        onScannerChanged: widget.canManageHardware &&
+                                !scopedOptionsState.isLoading
                             ? (value) => setState(() {
                                   _selectedScannerId = value;
                                   _markDirty();
                                 })
                             : (value) {},
-                        onPrinterChanged: widget.canManageHardware && !scopedOptionsState.isLoading
+                        onPrinterChanged: widget.canManageHardware &&
+                                !scopedOptionsState.isLoading
                             ? (value) => setState(() {
                                   _selectedPrinterId = value;
                                   _markDirty();
                                 })
                             : (value) {},
-                        onCashDrawerChanged: widget.canManageHardware && !scopedOptionsState.isLoading
+                        onCashDrawerChanged: widget.canManageHardware &&
+                                !scopedOptionsState.isLoading
                             ? (value) => setState(() {
                                   _selectedCashDrawerId = value;
                                   _markDirty();
                                 })
                             : (value) {},
-                        onCardReaderChanged: widget.canManageHardware && !scopedOptionsState.isLoading
+                        onCardReaderChanged: widget.canManageHardware &&
+                                !scopedOptionsState.isLoading
                             ? (value) => setState(() {
                                   _selectedCardReaderId = value;
                                   _markDirty();
                                 })
                             : (value) {},
                         quickPairPanel: const AddTillQuickPairPanel(),
-                        hardwareStatusCards: _buildHardwareStatusCards(effectiveOptions),
+                        hardwareStatusCards:
+                            _buildHardwareStatusCards(effectiveOptions),
                       )
                     : const SizedBox.shrink();
 
@@ -422,7 +440,8 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
 
     void addCard(String? id, IconData icon, String actionLabel) {
       if (id == null) return;
-      final hw = effectiveOptions.hardwareDevices.where((d) => d.id == id).firstOrNull;
+      final hw =
+          effectiveOptions.hardwareDevices.where((d) => d.id == id).firstOrNull;
       if (hw != null) {
         cards.add(AddTillHardwareStatusCard.fromOption(
           hw,

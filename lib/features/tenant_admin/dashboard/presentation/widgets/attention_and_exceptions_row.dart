@@ -10,7 +10,7 @@ class AttentionAndExceptionsRow extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 800;
-        
+
         final needsAttention = _NeedsAttentionSection();
         final storeExceptions = _StoreExceptionsSection();
 
@@ -81,7 +81,8 @@ class _NeedsAttentionSection extends StatelessWidget {
                 onPressed: () {},
                 style: TextButton.styleFrom(
                   foregroundColor: TenantAdminColors.primary,
-                  textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  textStyle: const TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 13),
                 ),
                 child: const Text('View All'),
               ),
@@ -230,7 +231,8 @@ class _StoreExceptionsSection extends StatelessWidget {
                 onPressed: () {},
                 style: TextButton.styleFrom(
                   foregroundColor: TenantAdminColors.primary,
-                  textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  textStyle: const TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 13),
                 ),
                 child: const Text('View All'),
               ),

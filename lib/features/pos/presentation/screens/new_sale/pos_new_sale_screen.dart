@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
-import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
+import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
+import 'package:nytroz_pos/features/pos/presentation/providers/pos_catalog_provider.dart';
+import 'package:nytroz_pos/features/discount/presentation/providers/pos_discount_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -15,7 +16,7 @@ import '../../providers/new_sale/pos_barcode_scan_feedback.dart';
 import '../../providers/new_sale/pos_camera_scanner_provider.dart';
 import '../../../../hardware/barcode_scanner/presentation/providers/barcode_scanner_configuration_provider.dart';
 import '../../../../sale/presentation/widgets/new_sale/pos_camera_barcode_scanner.dart';
-import '../../../../cart/presentation/providers/pos_new_sale_search_coordinator.dart';
+import '../../providers/pos_new_sale_search_coordinator.dart';
 import '../../widgets/new_sale/cart/pos_new_sale_cart_panel.dart';
 
 class PosNewSaleScreen extends ConsumerStatefulWidget {
@@ -30,10 +31,41 @@ class PosNewSaleScreen extends ConsumerStatefulWidget {
   ConsumerState<PosNewSaleScreen> createState() => _PosNewSaleScreenState();
 }
 
-class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen> {
+class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen>
+    with WidgetsBindingObserver {
   String? _lastRoutePath;
   int _lastFeedbackEventId = 0;
   bool _cameraScannerOpening = false;
+  bool _recoveryAttempted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      ensureDiscountOutboxConnectivityWake(ref: ref);
+      if (_recoveryAttempted) return;
+      _recoveryAttempted = true;
+      await restoreRecoverablePendingSale(ref: ref);
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref
+          .read(posDiscountOfflineCoordinatorProvider)
+          .connectivity
+          .requestSyncWake();
+    }
+  }
 
   @override
   void didChangeDependencies() {

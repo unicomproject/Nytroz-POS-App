@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../../../shared/widgets/pos_action_buttons.dart';
+import '../../../auth/presentation/widgets/pos_onboarding_form_components.dart';
 
 class DeviceActivationForm extends StatelessWidget {
   const DeviceActivationForm({
@@ -23,25 +23,15 @@ class DeviceActivationForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelSize = isWide ? 15.0 : 14.0;
-    final textSize = isWide ? 18.0 : 16.0;
-    final hintSize = isWide ? 17.0 : 15.0;
-    final iconSize = isWide ? 26.0 : 24.0;
-    final verticalPadding = isWide ? 20.0 : 17.0;
-    final borderRadius = isWide ? 14.0 : 12.0;
-
     return Form(
       key: formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Activate Device',
-            style: TextStyle(
-              color: TenantAdminColors.navy,
-              fontWeight: FontWeight.w900,
-              fontSize: isWide ? 32 : 28,
-            ),
+          PosOnboardingHeading(
+            leadingText: 'Activate',
+            accentText: 'Device',
+            isWide: isWide,
           ),
           const SizedBox(height: TenantAdminSpacing.sm),
           Text(
@@ -72,62 +62,18 @@ class DeviceActivationForm extends StatelessWidget {
             ),
             const SizedBox(height: TenantAdminSpacing.lg),
           ],
-          Text(
-            'Device Activation Code',
-            style: TextStyle(
-              color: TenantAdminColors.navy,
-              fontSize: labelSize,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextFormField(
+          PosOnboardingField(
+            label: 'Device Activation Code',
+            hint: 'Enter device activation code',
             controller: codeController,
+            icon: Icons.key,
+            isWide: isWide,
+            semanticLabel: 'Device Activation Code',
+            keyboardType: TextInputType.text,
             textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => onSubmit(),
-            style: TextStyle(
-              color: TenantAdminColors.bodyText,
-              fontWeight: FontWeight.w500,
-              fontSize: textSize,
-            ),
-            decoration: InputDecoration(
-              prefixIcon: Icon(
-                Icons.key_outlined,
-                color: TenantAdminColors.mutedText,
-                size: iconSize,
-              ),
-              hintText: 'Enter device activation code',
-              hintStyle: TextStyle(
-                color: TenantAdminColors.mutedText.withValues(alpha: 0.75),
-                fontWeight: FontWeight.w400,
-                fontSize: hintSize,
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: verticalPadding,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-                borderSide: const BorderSide(
-                  color: TenantAdminColors.navy,
-                  width: 1.5,
-                ),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-                borderSide: const BorderSide(color: TenantAdminColors.danger),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-                borderSide: const BorderSide(color: TenantAdminColors.danger),
-              ),
-            ),
+            onFieldSubmitted: (_) {
+              if (!isSubmitting) onSubmit();
+            },
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Device activation code is required.';
@@ -136,12 +82,13 @@ class DeviceActivationForm extends StatelessWidget {
             },
           ),
           SizedBox(height: isWide ? 28 : TenantAdminSpacing.lg),
-          PosPrimaryActionButton(
+          PosOnboardingPrimaryAction(
             label: 'Activate Device',
+            semanticLabel:
+                isSubmitting ? 'Activating device' : 'Activate Device',
             onPressed: isSubmitting ? null : onSubmit,
             isLoading: isSubmitting,
-            fullWidth: true,
-            minimumHeight: isWide ? 62 : 56,
+            isWide: isWide,
           ),
         ],
       ),

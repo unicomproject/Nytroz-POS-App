@@ -24,7 +24,6 @@ class ProductSummarySection extends ConsumerWidget {
           borderRadius: BorderRadius.circular(TenantAdminRadius.md),
           border: Border.all(color: TenantAdminColors.border),
         ),
-        
       ),
       data: (summary) {
         if (summary == null) {

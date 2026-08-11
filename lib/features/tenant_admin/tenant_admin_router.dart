@@ -51,6 +51,7 @@ import 'presentation/screens/tenant_admin_error_screen.dart';
 import 'presentation/screens/tenant_admin_forbidden_screen.dart';
 import 'presentation/screens/tenant_admin_loading_screen.dart';
 import 'presentation/screens/tenant_admin_placeholder_screen.dart';
+import 'login_branding/presentation/screens/tenant_login_branding_screen.dart';
 
 List<RouteBase> tenantAdminRoutes(Ref ref) {
   return [
@@ -169,6 +170,10 @@ String? _tenantAdminAccessRedirect(
 }
 
 Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
+  if (definition.path == '/tenant-admin/settings') {
+    return const TenantLoginBrandingScreen();
+  }
+
   if (definition.path == '/tenant-admin/dashboard') {
     return const TenantDashboardScreen();
   }

@@ -31,7 +31,9 @@ class OutletWizardStepper extends StatelessWidget {
                     active: index == currentStep,
                     complete: index < currentStep,
                     compact: compact,
-                    onTap: index <= currentStep ? () => onStepSelected(index) : null,
+                    onTap: index <= currentStep
+                        ? () => onStepSelected(index)
+                        : null,
                   ),
                   if (index < steps.length - 1)
                     Expanded(
@@ -92,8 +94,11 @@ class _StepItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             border: active
-                ? const Border(bottom: BorderSide(color: TenantAdminColors.posHomeOrangeEnd, width: 2))
-                : const Border(bottom: BorderSide(color: Colors.transparent, width: 2)),
+                ? const Border(
+                    bottom: BorderSide(
+                        color: TenantAdminColors.posHomeOrangeEnd, width: 2))
+                : const Border(
+                    bottom: BorderSide(color: Colors.transparent, width: 2)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

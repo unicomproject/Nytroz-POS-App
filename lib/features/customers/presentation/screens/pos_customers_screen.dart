@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/access/pos_permission_access.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
-import '../../../cart/presentation/providers/pos_discount_provider.dart';
+import '../../../discount/presentation/providers/pos_discount_provider.dart';
 import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../sale/presentation/providers/pos_checkout_summary_provider.dart';
 import '../../../sale/presentation/widgets/new_sale/pos_new_sale_customer_dialog.dart';

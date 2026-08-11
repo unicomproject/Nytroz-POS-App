@@ -49,7 +49,8 @@ final uploadOutletImageProvider = Provider<UploadOutletImage>((ref) {
   return UploadOutletImage(ref.watch(outletRepositoryProvider));
 });
 
-final deleteStagedOutletImageProvider = Provider<DeleteStagedOutletImage>((ref) {
+final deleteStagedOutletImageProvider =
+    Provider<DeleteStagedOutletImage>((ref) {
   return DeleteStagedOutletImage(ref.watch(outletRepositoryProvider));
 });
 

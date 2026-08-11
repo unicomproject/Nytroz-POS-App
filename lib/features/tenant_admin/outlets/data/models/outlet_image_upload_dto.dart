@@ -16,7 +16,11 @@ class OutletImageUploadDto {
     final fileName = json['originalFileName']?.toString();
     final mimeType = json['mimeType']?.toString();
     final fileSize = json['fileSizeBytes'];
-    if (id == null || id.isEmpty || fileName == null || mimeType == null || fileSize is! num) {
+    if (id == null ||
+        id.isEmpty ||
+        fileName == null ||
+        mimeType == null ||
+        fileSize is! num) {
       throw const FormatException('Invalid outlet image upload response.');
     }
     return OutletImageUploadDto(

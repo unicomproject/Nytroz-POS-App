@@ -69,9 +69,12 @@ class _InfoCard extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 70),
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
             decoration: BoxDecoration(
-              color: success ? const Color(0xFFF6FCF7) : const Color(0xFFF8FAFC),
+              color:
+                  success ? const Color(0xFFF6FCF7) : const Color(0xFFF8FAFC),
               border: Border.all(
-                color: success ? const Color(0xFFC8E6C9) : PaymentMethodStyle.border,
+                color: success
+                    ? const Color(0xFFC8E6C9)
+                    : PaymentMethodStyle.border,
               ),
               borderRadius: BorderRadius.circular(10),
             ),

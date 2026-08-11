@@ -55,6 +55,7 @@ class PosPermissionCodes {
   static const createCashDrawerMovement = 'cash_drawer.movement.create';
   static const viewTillSession = 'till.session.view';
   static const viewNotifications = 'notifications.view';
+
   /// Legacy alias — prefer [createParkedSale].
   static const parkSale = 'pos.sale.park';
 

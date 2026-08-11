@@ -85,62 +85,66 @@ extension TenantAdminOutletOverviewMapper on TenantAdminOutletOverviewDto {
     double mockStockValue = inventory?.stockValue ?? 0.0;
     int mockOpenOrderCount = orders?.openOrderCount ?? 0;
     String mockStatus = outlet.status;
-    List<TenantAdminOutletOverviewAlert> mockAlerts = alerts?.map((e) => e.toEntity()).toList(growable: false) ?? const [];
+    List<TenantAdminOutletOverviewAlert> mockAlerts =
+        alerts?.map((e) => e.toEntity()).toList(growable: false) ?? const [];
     int mockTotalActiveAlertCount = totalActiveAlertCount;
     String mockSalesCurrency = sales?.currencyCode ?? 'LKR';
     String mockInventoryCurrency = inventory?.currencyCode ?? 'LKR';
-    
+
     final nameLower = outlet.name.toLowerCase();
-    
+
     if (nameLower.contains('main outlet')) {
-        mockManagerName = 'Kavin Perera';
-        mockManagerEmail = 'main@oneverz.com';
-        mockManagerPhone = '+94 11 234 5678';
-        mockAddress = '123 Galle Road';
-        mockCity = 'Colombo 03, Sri Lanka';
-        mockTotalTills = 3;
-        mockActiveTills = 3;
-        mockTodayNetSales = 125450.00;
-        mockStockValue = 4850000.00;
-        mockOpenOrderCount = 12;
-        mockStatus = 'Active';
-        mockImageUrl = 'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300';
+      mockManagerName = 'Kavin Perera';
+      mockManagerEmail = 'main@oneverz.com';
+      mockManagerPhone = '+94 11 234 5678';
+      mockAddress = '123 Galle Road';
+      mockCity = 'Colombo 03, Sri Lanka';
+      mockTotalTills = 3;
+      mockActiveTills = 3;
+      mockTodayNetSales = 125450.00;
+      mockStockValue = 4850000.00;
+      mockOpenOrderCount = 12;
+      mockStatus = 'Active';
+      mockImageUrl =
+          'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300';
     } else if (nameLower.contains('city center')) {
-        mockManagerName = 'Nadeesha Silva';
-        mockManagerEmail = 'citycenter@oneverz.com';
-        mockManagerPhone = '+94 11 234 5679';
-        mockAddress = '456 City Center Mall';
-        mockCity = 'Colombo 02, Sri Lanka';
-        mockTotalTills = 6;
-        mockActiveTills = 5;
-        mockTodayNetSales = 85400.00;
-        mockStockValue = 3200000.00;
-        mockOpenOrderCount = 8;
-        mockStatus = 'Needs Attention';
-        mockImageUrl = 'https://images.unsplash.com/photo-1519567281027-d15c128f64a4?auto=format&fit=crop&q=80&w=300';
-        mockAlerts = [
-            TenantAdminOutletOverviewAlert(
-                alertId: 'alert_1',
-                title: '1 till offline at City Center',
-                severity: 'warning',
-                description: 'Last sync failed',
-                occurredAt: DateTime.now().subtract(const Duration(hours: 2)),
-            )
-        ];
-        mockTotalActiveAlertCount = 1;
+      mockManagerName = 'Nadeesha Silva';
+      mockManagerEmail = 'citycenter@oneverz.com';
+      mockManagerPhone = '+94 11 234 5679';
+      mockAddress = '456 City Center Mall';
+      mockCity = 'Colombo 02, Sri Lanka';
+      mockTotalTills = 6;
+      mockActiveTills = 5;
+      mockTodayNetSales = 85400.00;
+      mockStockValue = 3200000.00;
+      mockOpenOrderCount = 8;
+      mockStatus = 'Needs Attention';
+      mockImageUrl =
+          'https://images.unsplash.com/photo-1519567281027-d15c128f64a4?auto=format&fit=crop&q=80&w=300';
+      mockAlerts = [
+        TenantAdminOutletOverviewAlert(
+          alertId: 'alert_1',
+          title: '1 till offline at City Center',
+          severity: 'warning',
+          description: 'Last sync failed',
+          occurredAt: DateTime.now().subtract(const Duration(hours: 2)),
+        )
+      ];
+      mockTotalActiveAlertCount = 1;
     } else if (nameLower.contains('central warehouse')) {
-        mockManagerName = 'Tharindu Jayasekara';
-        mockManagerEmail = 'warehouse@oneverz.com';
-        mockManagerPhone = '+94 11 234 5680';
-        mockAddress = '789 Warehouse Road';
-        mockCity = 'Kelaniya, Sri Lanka';
-        mockTotalTills = 2;
-        mockActiveTills = 2;
-        mockTodayNetSales = 0.0;
-        mockStockValue = 15500000.00;
-        mockOpenOrderCount = 45;
-        mockStatus = 'Active';
-        mockImageUrl = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=300';
+      mockManagerName = 'Tharindu Jayasekara';
+      mockManagerEmail = 'warehouse@oneverz.com';
+      mockManagerPhone = '+94 11 234 5680';
+      mockAddress = '789 Warehouse Road';
+      mockCity = 'Kelaniya, Sri Lanka';
+      mockTotalTills = 2;
+      mockActiveTills = 2;
+      mockTodayNetSales = 0.0;
+      mockStockValue = 15500000.00;
+      mockOpenOrderCount = 45;
+      mockStatus = 'Active';
+      mockImageUrl =
+          'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=300';
     }
 
     return TenantAdminOutletOverview(

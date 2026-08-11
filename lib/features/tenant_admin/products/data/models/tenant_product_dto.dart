@@ -26,7 +26,8 @@ class TenantProductListItemDto {
       productCode: json['productCode']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       sku: json['sku']?.toString() ?? '',
-      status: json['productStatus']?.toString() ?? json['status']?.toString() ?? '',
+      status:
+          json['productStatus']?.toString() ?? json['status']?.toString() ?? '',
       categoryName: _nullableString(json['categoryName']),
       categoryId: _nullableString(json['categoryId']),
       brandId: _nullableString(json['brandId']),
@@ -36,7 +37,9 @@ class TenantProductListItemDto {
       priceTo: _doubleValue(json['priceTo']),
       primaryBarcode: _nullableString(json['primaryBarcode']),
       currencyCode: _nullableString(json['currencyCode']),
-      stockQuantity: json['stockQuantity'] != null ? _intValue(json['stockQuantity']) : null,
+      stockQuantity: json['stockQuantity'] != null
+          ? _intValue(json['stockQuantity'])
+          : null,
       stockStatus: _nullableString(json['stockStatus']),
       imageUrl: _nullableString(json['imageUrl']),
       rowVersion: _intValue(json['rowVersion'], fallback: 1),
@@ -81,7 +84,10 @@ class TenantProductListResultDto {
       fallback: items.length,
     );
     final catalogTotalCount = _intValue(
-      json['catalogTotalCount'] ?? json['summary']?['catalogTotalCount'] ?? json['summary']?['totalProducts'] ?? totalCount,
+      json['catalogTotalCount'] ??
+          json['summary']?['catalogTotalCount'] ??
+          json['summary']?['totalProducts'] ??
+          totalCount,
       fallback: totalCount,
     );
 
