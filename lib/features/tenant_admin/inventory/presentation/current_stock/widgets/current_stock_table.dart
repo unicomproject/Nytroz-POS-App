@@ -82,12 +82,12 @@ class CurrentStockTable extends ConsumerWidget {
                           showCheckboxColumn: false,
                           columns: const [
                       DataColumn(label: Text('Product')),
-                      DataColumn(label: Text('On Hand')),
-                      DataColumn(label: Text('Reserved')),
-                      DataColumn(label: Text('Available')),
-                      DataColumn(label: Text('Status')),
-                      DataColumn(label: Text('Reorder Level')),
-                      DataColumn(label: Text('Action')),
+                      DataColumn(label: Expanded(child: Text('On Hand', textAlign: TextAlign.center))),
+                      DataColumn(label: Expanded(child: Text('Reserved', textAlign: TextAlign.center))),
+                      DataColumn(label: Expanded(child: Text('Available', textAlign: TextAlign.center))),
+                      DataColumn(label: Expanded(child: Text('Status', textAlign: TextAlign.center))),
+                      DataColumn(label: Expanded(child: Text('Reorder Level', textAlign: TextAlign.center))),
+                      DataColumn(label: Expanded(child: Text('Action', textAlign: TextAlign.center))),
                     ],
                     rows: stockPage.items.map((item) {
                       return DataRow(
@@ -138,30 +138,29 @@ class CurrentStockTable extends ConsumerWidget {
                               ],
                             ),
                           ),
-                          DataCell(Text(item.onHandQuantity.toStringAsFixed(0))),
-                          DataCell(Text(item.reservedQuantity.toStringAsFixed(0))),
-                          DataCell(Text(
-                            item.availableQuantity.toStringAsFixed(0),
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          )),
-                          DataCell(_buildStatusBadge(context, item.stockStatus)),
-                          DataCell(Text(item.reorderLevel.toStringAsFixed(0), style: Theme.of(context).textTheme.bodySmall)),
+                          DataCell(Center(child: Text(item.onHandQuantity.toStringAsFixed(0), style: const TextStyle(fontWeight: FontWeight.w600)))),
+                          DataCell(Center(child: Text(item.reservedQuantity.toStringAsFixed(0), style: const TextStyle(fontWeight: FontWeight.w600)))),
+                          DataCell(Center(child: Text(item.availableQuantity.toStringAsFixed(0), style: const TextStyle(fontWeight: FontWeight.w700)))),
+                          DataCell(Center(child: _buildStatusBadge(context, item.stockStatus))),
+                          DataCell(Center(child: Text(item.reorderLevel.toStringAsFixed(0), style: (Theme.of(context).textTheme.bodySmall ?? const TextStyle()).copyWith(fontWeight: FontWeight.w600)))),
                           DataCell(
-                            OutlinedButton(
-                              onPressed: () {
-                                if (item.variantId != null) {
-                                  context.push('/tenant-admin/stock/current/${item.variantId}');
-                                }
-                              },
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md),
-                                side: const BorderSide(color: Color(0xFFF97316)),
-                                foregroundColor: const Color(0xFFF97316),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(TenantAdminSpacing.sm)),
-                              ),
-                              child: Text(
-                                'View',
-                                style: (Theme.of(context).textTheme.labelSmall ?? const TextStyle()).copyWith(color: const Color(0xFFF97316), fontWeight: FontWeight.w600),
+                            Center(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  if (item.variantId != null) {
+                                    context.push('/tenant-admin/stock/current/${item.variantId}');
+                                  }
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md),
+                                  side: const BorderSide(color: Color(0xFFF97316)),
+                                  foregroundColor: const Color(0xFFF97316),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(TenantAdminSpacing.sm)),
+                                ),
+                                child: Text(
+                                  'View',
+                                  style: (Theme.of(context).textTheme.labelSmall ?? const TextStyle()).copyWith(color: const Color(0xFFF97316), fontWeight: FontWeight.w600),
+                                ),
                               ),
                             ),
                           ),

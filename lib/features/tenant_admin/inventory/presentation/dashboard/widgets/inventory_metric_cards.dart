@@ -57,8 +57,8 @@ class InventoryMetricCard extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF334155),
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -66,8 +66,8 @@ class InventoryMetricCard extends StatelessWidget {
                   value,
                   style: const TextStyle(
                     fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
                     height: 1.1,
                   ),
                 ),
@@ -83,7 +83,12 @@ class InventoryMetricCard extends StatelessWidget {
               ],
             ),
           ),
-          Icon(Icons.chevron_right, color: const Color(0xFF64748B).withValues(alpha: 0.5)),
+          const Icon(
+            Icons.chevron_right,
+            color: Colors.black,
+            size: 24,
+            weight: 800,
+          ),
         ],
       ),
     );

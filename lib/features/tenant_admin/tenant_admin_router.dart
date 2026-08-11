@@ -26,6 +26,7 @@ import 'products/presentation/dashboard/product_dashboard_page.dart';
 import 'products/presentation/navigation/products_coming_soon_screen.dart';
 import 'products/presentation/navigation/products_route_guard.dart';
 import 'products/presentation/navigation/products_sidebar_routes.dart';
+import 'inventory/presentation/opening_stock/screens/opening_stock_wizard_screen.dart';
 import 'products/presentation/screens/add_product_screen.dart';
 import 'products/presentation/screens/product_detail_screen.dart';
 import 'products/presentation/screens/product_list_screen.dart';
@@ -331,6 +332,10 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return const StockInScreen();
   }
 
+  if (definition.path == InventoryRoutes.openingStock) {
+    return const OpeningStockWizardScreen();
+  }
+
   if (definition.path == '/tenant-admin/reports') {
     return const ReportsDashboardScreen();
   }
@@ -530,6 +535,14 @@ bool _canAccessRoute(
 
   if (definition.path == InventoryRoutes.stockIn) {
     return accessChecker.canAccessStockInPage();
+  }
+
+  if (definition.path == InventoryRoutes.openingStock) {
+    return accessChecker.canAccessOpeningStockPage();
+  }
+
+  if (definition.path == InventoryRoutes.openingStock) {
+    return accessChecker.canAccessOpeningStockPage();
   }
 
   if (definition.path == '/tenant-admin/reports') {

@@ -19,6 +19,8 @@ class TenantAdminFeatureCodes {
 class TenantAdminPermissionCodes {
   const TenantAdminPermissionCodes._();
 
+  static const tenantStockOpening = 'tenant.stock.opening';
+
   // Page access
   static const tenantAdminDashboardView = 'tenant_admin.dashboard.view';
 

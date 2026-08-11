@@ -3,6 +3,7 @@ import '../../domain/entities/current_stock_entities.dart';
 import '../datasources/inventory_remote_datasource.dart';
 import '../models/current_stock_dtos.dart';
 import '../models/inventory_dashboard_models.dart';
+import '../models/opening_stock_dtos.dart';
 
 class InventoryRepositoryImpl implements IInventoryRepository {
   const InventoryRepositoryImpl(this._remoteDatasource);
@@ -62,5 +63,10 @@ class InventoryRepositoryImpl implements IInventoryRepository {
   Future<StockMovementHistoryPage> getStockMovementHistory(String variantId, StockMovementHistoryQueryDto query) async {
     final dto = await _remoteDatasource.getStockMovementHistory(variantId, query);
     return dto.toDomain();
+  }
+
+  @override
+  Future<void> createOpeningStock(OpeningStockRequestDto request) async {
+    await _remoteDatasource.createOpeningStock(request.toJson());
   }
 }

@@ -897,6 +897,14 @@ class TenantAdminAccessChecker {
 
   bool canAccessStockInPage() => canStockIn();
 
+  bool canAccessOpeningStockPage() {
+    return canAny([
+      TenantAdminPermissionCodes.tenantStockOpening,
+      TenantAdminPermissionCodes.tenantStockIn,
+      TenantAdminPermissionCodes.tenantStockView,
+    ]);
+  }
+
   bool canViewStockNav() => canViewCurrentStock();
 
   bool canFetchCurrentStockList() => canViewCurrentStock();
