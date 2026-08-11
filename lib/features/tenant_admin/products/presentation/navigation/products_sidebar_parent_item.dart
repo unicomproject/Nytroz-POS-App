@@ -25,7 +25,7 @@ class ProductsSidebarParentItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = selected || expanded;
+    final active = selected;
     final itemColor = active
         ? TenantAdminSidebarTokens.activeForeground
         : TenantAdminSidebarTokens.foreground;
@@ -74,7 +74,8 @@ class ProductsSidebarParentItem extends StatelessWidget {
                             style: TextStyle(
                               color: itemColor,
                               fontSize: 13,
-                              fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                              fontWeight:
+                                  active ? FontWeight.w800 : FontWeight.w600,
                             ),
                           ),
                         ),

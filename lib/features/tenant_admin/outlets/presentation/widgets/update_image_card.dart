@@ -77,7 +77,7 @@ class OutletImageUploadCard extends StatelessWidget {
           children: [
             const Icon(Icons.cloud_upload_outlined, size: 32, color: TenantAdminColors.mutedText),
             const SizedBox(height: 8),
-            Text('Drag and drop an image here', style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 12)),
+            Text('Upload an image', style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 12)),
             const SizedBox(height: 4),
             Text('or', style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 12)),
             const SizedBox(height: 8),

@@ -2,7 +2,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+
+import '../../../../../core/network/dio_provider.dart';
+import '../../../../../core/network/media_url_resolver.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
@@ -12,6 +16,7 @@ import '../../domain/entities/tenant_product_detail.dart';
 import '../dashboard/product_dashboard_providers.dart';
 import '../providers/tenant_product_providers.dart';
 import '../utils/product_api_errors.dart';
+import 'package:nytroz_pos/features/tenant_admin/presentation/widgets/tenant_admin_toast.dart';
 import '../utils/product_form_validation.dart';
 import 'product_form_fields.dart';
 
@@ -40,6 +45,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
   final _skuController = TextEditingController();
   final _barcodeController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _longDescriptionController = TextEditingController();
   final _priceController = TextEditingController();
   final _costPriceController = TextEditingController();
   final _discountPriceController = TextEditingController();
@@ -62,6 +68,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
   String? _taxId;
   final _selectedOutletIds = <String>{};
   var _submitting = false;
+  var _uploadingImage = false;
+  String? _overrideImageUrl;
   Map<String, String> _fieldErrors = const {};
 
   bool get _useDropdowns => widget.fieldsEnabled && widget.options != null;
@@ -109,6 +117,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
     _skuController.text = detail.sku;
     _barcodeController.text = detail.barcode ?? '';
     _descriptionController.text = detail.shortDescription ?? '';
+    _longDescriptionController.text = detail.longDescription ?? '';
     _priceController.text = _formatNumber(detail.sellingPrice);
     _costPriceController.text =
         detail.costPrice == null ? '' : _formatNumber(detail.costPrice!);
@@ -145,6 +154,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
     _skuController.dispose();
     _barcodeController.dispose();
     _descriptionController.dispose();
+    _longDescriptionController.dispose();
     _priceController.dispose();
     _costPriceController.dispose();
     _discountPriceController.dispose();
@@ -160,7 +170,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final isDesktop = width >= TenantAdminBreakpoints.desktop;
-    final isTablet = width >= TenantAdminBreakpoints.tablet && width < TenantAdminBreakpoints.desktop;
+    final isTablet = width >= TenantAdminBreakpoints.tablet &&
+        width < TenantAdminBreakpoints.desktop;
 
     return SingleChildScrollView(
       child: Column(
@@ -315,6 +326,9 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
       shortDescription: _descriptionController.text.trim().isEmpty
           ? null
           : _descriptionController.text.trim(),
+      longDescription: _longDescriptionController.text.trim().isEmpty
+          ? null
+          : _longDescriptionController.text.trim(),
       sellingPrice: sellingPrice,
       taxId: _taxId,
       costPrice: costPrice,
@@ -369,8 +383,10 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Product updated successfully.')),
+      showProductSaveToast(
+        context,
+        title: 'Product Updated',
+        message: 'Product updated successfully.',
       );
       context.go('/tenant-admin/products');
     } on DioException catch (error) {
@@ -429,9 +445,109 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
     return 'ACTIVE';
   }
 
+  String _resolveImageUrl(String rawUrl) {
+    final trimmed = rawUrl.trim();
+    if (trimmed.isEmpty) return trimmed;
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    final baseUrl = ref.read(appDioProvider).options.baseUrl;
+    return MediaUrlResolver.resolve(trimmed, apiBaseUrl: baseUrl) ?? trimmed;
+  }
 
+  Future<void> _uploadOrReplaceImage() async {
+    if (_uploadingImage) return;
+
+    try {
+      final picker = ImagePicker();
+      final XFile? file = await picker.pickImage(source: ImageSource.gallery);
+      if (file == null) return;
+
+      final bytes = await file.readAsBytes();
+      if (bytes.length > 5242880) {
+        if (mounted) {
+          showAppToast(
+            context,
+            message: 'Image file size exceeds maximum limit of 5MB.',
+            type: AppToastType.error,
+          );
+        }
+        return;
+      }
+
+      final fileName = file.name;
+      String mimeType = file.mimeType ?? '';
+      if (mimeType.isEmpty || mimeType == 'application/octet-stream') {
+        final lower = fileName.toLowerCase();
+        if (lower.endsWith('.png')) {
+          mimeType = 'image/png';
+        } else if (lower.endsWith('.webp')) {
+          mimeType = 'image/webp';
+        } else {
+          mimeType = 'image/jpeg';
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _uploadingImage = true;
+        });
+      }
+
+      final uploadedDto =
+          await ref.read(tenantProductRepositoryProvider).uploadProductImage(
+                widget.productId,
+                bytes,
+                fileName,
+                mimeType,
+              );
+
+      if (mounted) {
+        setState(() {
+          _overrideImageUrl = uploadedDto.imageUrl;
+        });
+      }
+
+      ref.invalidate(productDetailProvider(widget.productId));
+      ref.invalidate(productListProvider);
+
+      if (mounted) {
+        showAppToast(
+          context,
+          message: 'Product image uploaded successfully',
+          type: AppToastType.success,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        String msg = 'Failed to upload image';
+        if (e is DioException) {
+          final data = e.response?.data;
+          if (data is Map && data['message'] != null) {
+            msg = data['message'].toString();
+          }
+        }
+        showAppToast(
+          context,
+          message: msg,
+          type: AppToastType.error,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _uploadingImage = false;
+        });
+      }
+    }
+  }
 
   Widget _buildProductImageEditCard() {
+    final rawUrl = _overrideImageUrl ?? widget.detail.imageUrl;
+    final displayUrl = (rawUrl != null && rawUrl.trim().isNotEmpty)
+        ? _resolveImageUrl(rawUrl)
+        : null;
+
     return _SectionCard(
       title: 'Product Image',
       child: Column(
@@ -444,13 +560,11 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
                 borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                 border: Border.all(color: TenantAdminColors.border),
               ),
-              child: widget.detail.imageUrl != null &&
-                      widget.detail.imageUrl!.trim().isNotEmpty
+              child: displayUrl != null && displayUrl.trim().isNotEmpty
                   ? ClipRRect(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.md),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                       child: Image.network(
-                        widget.detail.imageUrl!,
+                        displayUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
                             _buildPlaceholderImage(),
@@ -463,7 +577,9 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: _inputsEnabled ? () {} : null,
+              onPressed: (_inputsEnabled && !_uploadingImage)
+                  ? _uploadOrReplaceImage
+                  : null,
               icon: const Icon(Icons.upload_outlined, size: 18),
               label: const Text(
                 'Upload / Replace Image',
@@ -554,6 +670,13 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
         hint: 'Add a short description',
         icon: Icons.notes_outlined,
         controller: _descriptionController,
+        enabled: _inputsEnabled,
+      ),
+      ProductFormTextField(
+        label: 'Long description',
+        hint: 'Add detailed product description',
+        icon: Icons.description_outlined,
+        controller: _longDescriptionController,
         enabled: _inputsEnabled,
       ),
       _useDropdowns
@@ -739,8 +862,10 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
             items: const [
               DropdownMenuItem(value: 'IN_STOCK', child: Text('In Stock')),
               DropdownMenuItem(value: 'LOW_STOCK', child: Text('Low Stock')),
-              DropdownMenuItem(value: 'OUT_OF_STOCK', child: Text('Out of Stock')),
-              DropdownMenuItem(value: 'NOT_TRACKED', child: Text('Not Tracked')),
+              DropdownMenuItem(
+                  value: 'OUT_OF_STOCK', child: Text('Out of Stock')),
+              DropdownMenuItem(
+                  value: 'NOT_TRACKED', child: Text('Not Tracked')),
             ],
             onChanged: (val) {
               if (val != null) {
@@ -754,7 +879,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
   }
 
   Widget _buildChannelVisibilityEditCard() {
-    final isDesktop = MediaQuery.sizeOf(context).width >= TenantAdminBreakpoints.desktop;
+    final isDesktop =
+        MediaQuery.sizeOf(context).width >= TenantAdminBreakpoints.desktop;
 
     return _SectionCard(
       title: 'Channel Visibility',

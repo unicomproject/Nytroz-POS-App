@@ -107,6 +107,13 @@ List<RouteBase> tenantAdminRoutes(Ref ref) {
           path: '/tenant-admin/products/import',
           redirect: (context, state) => '/tenant-admin/products',
         ),
+        GoRoute(
+          path: '/tenant-admin/products/draft/:id',
+          builder: (context, state) {
+            final draftId = state.pathParameters['id'];
+            return AddProductScreen(resumeProductId: draftId);
+          },
+        ),
         ...tenantAdminRouteDefinitions.map(
           (definition) => _tenantAdminModuleRoute(ref, definition),
         ),
@@ -276,8 +283,15 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return const ProductListScreen();
   }
 
-  if (definition.path == ProductsSidebarRoutes.add) {
-    return const AddProductScreen();
+  if (definition.path == ProductsSidebarRoutes.add ||
+      state.uri.path.startsWith('/tenant-admin/products/draft/')) {
+    final draftId = state.pathParameters['productId'] ??
+        state.pathParameters['id'] ??
+        (state.uri.pathSegments.length >= 4 &&
+                state.uri.pathSegments[2] == 'draft'
+            ? state.uri.pathSegments[3]
+            : null);
+    return AddProductScreen(resumeProductId: draftId);
   }
 
   if (definition.path == ProductsSidebarRoutes.categories) {

@@ -322,7 +322,7 @@ class _DeleteConfirmationDialog extends StatelessWidget {
                     SizedBox(width: TenantAdminSpacing.sm),
                     Expanded(
                       child: Text(
-                        'This action cannot be undone. The product will be permanently deleted.',
+                        'Products with sales or stock history will be archived to preserve reports, while products without history will be permanently deleted.',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

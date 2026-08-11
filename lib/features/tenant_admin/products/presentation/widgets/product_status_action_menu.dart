@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../dashboard/product_dashboard_providers.dart';
 import '../providers/tenant_product_providers.dart';
+import 'package:nytroz_pos/features/tenant_admin/presentation/widgets/tenant_admin_toast.dart';
 import '../utils/product_api_errors.dart';
 import '../utils/product_status_actions.dart';
 
@@ -112,8 +113,10 @@ class ProductStatusActionMenu extends ConsumerWidget {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(action.successMessage(productName))),
+      showProductSaveToast(
+        context,
+        title: 'Status Updated',
+        message: action.successMessage(productName),
       );
     } on DioException catch (error) {
       if (!context.mounted) {

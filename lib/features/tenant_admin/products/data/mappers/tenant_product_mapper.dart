@@ -123,6 +123,10 @@ class TenantProductMapper {
               id: item.id,
               code: item.code,
               name: item.name,
+              unitType: item.unitType,
+              symbol: item.symbol,
+              recommendedAllowDecimalQuantity:
+                  item.recommendedAllowDecimalQuantity,
             ),
           )
           .toList(),
@@ -178,6 +182,7 @@ class TenantProductMapper {
       brandId: dto.brandId,
       unitType: dto.unitType,
       shortDescription: dto.shortDescription,
+      longDescription: dto.longDescription,
       imageUrl: dto.imageUrl,
       costPrice: dto.costPrice,
       sellingPrice: dto.sellingPrice,

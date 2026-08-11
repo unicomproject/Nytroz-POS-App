@@ -2,6 +2,9 @@ import 'package:dio/dio.dart';
 
 const productBackendFieldAliases = {
   'productName': 'productName',
+  'productCode': 'productCode',
+  'shortName': 'productCode',
+  'internalCode': 'productCode',
   'sku': 'sku',
   'barcode': 'barcode',
   'categoryId': 'categoryId',
@@ -76,6 +79,13 @@ Map<String, String> productValidationErrors(DioException error) {
       return {'sku': message};
     case 'product.duplicate_barcode':
       return {'barcode': message};
+    case 'product.duplicate_code':
+    case 'product.duplicate_product_code':
+      return {'productCode': message};
+    case 'product.invalid_category':
+      return {'categoryId': message};
+    case 'product.invalid_brand':
+      return {'brandId': message};
     case 'product.validation_failed':
       return mapped;
     default:
