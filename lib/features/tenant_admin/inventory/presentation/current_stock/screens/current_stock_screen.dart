@@ -135,7 +135,7 @@ class CurrentStockScreen extends ConsumerWidget {
                             ),
                           ),
                           DropdownMenuItem<String>(
-                            value: 'InStock',
+                            value: 'IN_STOCK',
                             child: Row(
                               children: [
                                 const Icon(Icons.circle, size: 10, color: TenantAdminColors.success),
@@ -145,7 +145,7 @@ class CurrentStockScreen extends ConsumerWidget {
                             ),
                           ),
                           DropdownMenuItem<String>(
-                            value: 'LowStock',
+                            value: 'LOW_STOCK',
                             child: Row(
                               children: [
                                 const Icon(Icons.circle, size: 10, color: TenantAdminColors.warning),
@@ -155,7 +155,7 @@ class CurrentStockScreen extends ConsumerWidget {
                             ),
                           ),
                           DropdownMenuItem<String>(
-                            value: 'OutOfStock',
+                            value: 'OUT_OF_STOCK',
                             child: Row(
                               children: [
                                 const Icon(Icons.circle, size: 10, color: TenantAdminColors.danger),
