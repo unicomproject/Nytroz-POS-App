@@ -181,8 +181,9 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   void setBatchTracking(bool val) {
     if (state.productStructure == 'BUNDLE') return;
     if (!state.trackInventory) return;
-    if (state.serialTracking && val)
+    if (state.serialTracking && val) {
       return; // Serial and Batch mutually exclusive
+    }
 
     if (!val) {
       state = state.copyWith(
@@ -202,8 +203,9 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     if (state.productStructure == 'BUNDLE') return;
     if (!state.trackInventory) return;
     if (!state.batchTracking && val) return; // Expiry requires Batch
-    if (state.serialTracking && val)
+    if (state.serialTracking && val) {
       return; // Serial and Expiry mutually exclusive
+    }
 
     state = state.copyWith(
       expiryTracking: val,

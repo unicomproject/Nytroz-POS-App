@@ -69,19 +69,19 @@ void main() {
       expect(controller.wizardState.unitModel, 'MULTIPLE_UNITS');
 
       controller.selectUnitModel('SINGLE_UNIT');
-      expect(controller.debugState.unitModel, 'SINGLE_UNIT');
+      expect(controller.state.unitModel, 'SINGLE_UNIT');
     });
 
     test('setProductUnit updates productUnitId and baseUnitId', () {
       controller.setProductUnit('uom-piece');
-      expect(controller.debugState.productUnitId, 'uom-piece');
-      expect(controller.debugState.baseUnitId, 'uom-piece');
+      expect(controller.state.productUnitId, 'uom-piece');
+      expect(controller.state.baseUnitId, 'uom-piece');
     });
 
     test('setBaseUnit sets baseUnitId and defaults sellingUnitId', () {
       controller.setBaseUnit('uom-piece');
-      expect(controller.debugState.baseUnitId, 'uom-piece');
-      expect(controller.debugState.sellingUnitId, 'uom-piece');
+      expect(controller.state.baseUnitId, 'uom-piece');
+      expect(controller.state.sellingUnitId, 'uom-piece');
     });
 
     test('setPurchaseUnit and setItemsPerPurchaseUnit update factors', () {
@@ -89,8 +89,8 @@ void main() {
       controller.setPurchaseUnit('uom-pack');
       controller.setItemsPerPurchaseUnit(6);
 
-      expect(controller.debugState.purchaseUnitId, 'uom-pack');
-      expect(controller.debugState.itemsPerPurchaseUnit, 6);
+      expect(controller.state.purchaseUnitId, 'uom-pack');
+      expect(controller.state.itemsPerPurchaseUnit, 6);
     });
 
     test('validateStep3Continue validates Single Unit model', () {

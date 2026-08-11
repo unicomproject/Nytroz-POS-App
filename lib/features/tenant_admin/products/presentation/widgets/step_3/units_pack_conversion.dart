@@ -161,7 +161,7 @@ class _UnitsPackConversionFormState
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    final activeColor = TenantAdminColors.posHomeAccentOrange;
+    const activeColor = TenantAdminColors.posHomeAccentOrange;
 
     return InkWell(
       onTap: onTap,
@@ -170,7 +170,7 @@ class _UnitsPackConversionFormState
         padding: const EdgeInsets.all(TenantAdminSpacing.lg),
         decoration: BoxDecoration(
           color: isSelected
-              ? activeColor.withOpacity(0.04)
+              ? activeColor.withValues(alpha: 0.04)
               : TenantAdminColors.surface,
           borderRadius: BorderRadius.circular(TenantAdminRadius.md),
           border: Border.all(
@@ -181,11 +181,10 @@ class _UnitsPackConversionFormState
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Radio<bool>(
-              value: true,
-              groupValue: isSelected,
-              onChanged: (_) => onTap(),
-              activeColor: activeColor,
+            Icon(
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+              color: isSelected ? activeColor : TenantAdminColors.mutedText,
+              size: 24,
             ),
             const SizedBox(width: TenantAdminSpacing.xs),
             Expanded(
@@ -661,7 +660,7 @@ class _UnitsPackConversionFormState
         ),
         const SizedBox(height: TenantAdminSpacing.xs),
         DropdownButtonFormField<String>(
-          value: validValue,
+          initialValue: validValue,
           isExpanded: true,
           decoration: InputDecoration(
             hintText: 'Select Unit',
@@ -790,7 +789,7 @@ class _UnitsPackConversionFormState
             ),
           ),
           value: state.allowDecimalQuantity,
-          activeColor: TenantAdminColors.posHomeAccentOrange,
+          activeThumbColor: TenantAdminColors.posHomeAccentOrange,
           onChanged: (val) => controller.setAllowDecimalQuantity(val),
         ),
       ),
@@ -837,10 +836,10 @@ class _UnitsPackConversionFormState
     return Container(
       padding: const EdgeInsets.all(TenantAdminSpacing.lg),
       decoration: BoxDecoration(
-        color: TenantAdminColors.posHomeAccentOrange.withOpacity(0.04),
+        color: TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         border: Border.all(
-          color: TenantAdminColors.posHomeAccentOrange.withOpacity(0.3),
+          color: TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
