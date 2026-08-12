@@ -66,6 +66,20 @@ void main() {
       expect(find.text('Sarah Ahmed'), findsOneWidget);
       expect(find.text('sarah@coffeecorner.com'), findsOneWidget);
     });
+
+    testWidgets('search advertises server-supported phone search',
+        (tester) async {
+      await _pumpUserList(
+        tester,
+        permissions: [TenantAdminPermissionCodes.tenantUsersView],
+        features: [TenantAdminFeatureCodes.staffManagement],
+        width: 1200,
+      );
+
+      expect(find.text('Search users by name, email or phone...'), findsOneWidget);
+      expect(find.text('Till Access'), findsNothing);
+      expect(find.text('Reset PIN'), findsNothing);
+    });
   });
 
   group('Add/Edit user screen', () {

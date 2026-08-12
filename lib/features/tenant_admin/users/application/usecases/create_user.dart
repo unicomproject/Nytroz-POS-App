@@ -6,7 +6,10 @@ class CreateUser {
 
   final TenantUserRepository _repository;
 
-  Future<TenantUserDetail> call(UserFormData form) {
-    return _repository.createUser(form);
+  Future<TenantUserDetail> call(
+    UserFormData form, {
+    String? idempotencyKey,
+  }) {
+    return _repository.createUser(form, idempotencyKey: idempotencyKey);
   }
 }

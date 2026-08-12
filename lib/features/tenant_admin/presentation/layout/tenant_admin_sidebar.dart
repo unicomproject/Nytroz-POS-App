@@ -285,7 +285,7 @@ class _SidebarFooter extends StatelessWidget {
                       child: Text(
                         'Sign out',
                         style: TextStyle(
-                          color: TenantAdminSidebarTokens.foreground,
+                          color: TenantAdminColors.bodyText,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

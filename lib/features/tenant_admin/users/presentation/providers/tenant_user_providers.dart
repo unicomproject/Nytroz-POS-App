@@ -58,6 +58,8 @@ final userDetailProvider =
   return ref.watch(getUserDetailProvider).call(id);
 });
 
+final selectedUserIdProvider = StateProvider<String?>((ref) => null);
+
 final userSearchProvider = StateProvider<String>((ref) => '');
 
 final userStatusFilterProvider =

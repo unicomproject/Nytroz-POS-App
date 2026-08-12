@@ -118,6 +118,8 @@ class TenantAdminSharedShell extends ConsumerWidget {
 
             if (showInlineSidebar) {
               return Scaffold(
+                bottomNavigationBar:
+                    TenantAdminFooterNavigation(currentPath: currentRoute),
                 body: Column(
                   children: [
                     const TenantAdminHeader(),
@@ -136,7 +138,6 @@ class TenantAdminSharedShell extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    TenantAdminFooterNavigation(currentPath: currentRoute),
                   ],
                 ),
               );
@@ -215,6 +216,8 @@ class _TenantAdminMobileShellState extends State<_TenantAdminMobileShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
+      bottomNavigationBar:
+          TenantAdminFooterNavigation(currentPath: widget.currentPath),
       drawer: TenantAdminSidebarMobileDrawer(
         items: widget.items,
         currentPath: widget.currentPath,
@@ -228,7 +231,6 @@ class _TenantAdminMobileShellState extends State<_TenantAdminMobileShell> {
             onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
           ),
           Expanded(child: widget.child),
-          TenantAdminFooterNavigation(currentPath: widget.currentPath),
         ],
       ),
     );

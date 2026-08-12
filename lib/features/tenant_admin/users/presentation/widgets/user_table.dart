@@ -12,6 +12,7 @@ class UserTable extends StatelessWidget {
     super.key,
     required this.users,
     required this.visibility,
+    required this.selectedUserId,
     required this.onView,
     required this.onEdit,
     required this.onDelete,
@@ -19,153 +20,181 @@ class UserTable extends StatelessWidget {
 
   final List<TenantUser> users;
   final UserListVisibility visibility;
+  final String? selectedUserId;
   final ValueChanged<TenantUser> onView;
   final ValueChanged<TenantUser> onEdit;
   final ValueChanged<TenantUser> onDelete;
 
   @override
   Widget build(BuildContext context) {
-    final canView = visibility.visibleRowActions.any(
-      (action) => action.actionId == UserRowActionId.viewDetails,
-    );
-    final canEdit = visibility.visibleRowActions.any(
-      (action) => action.actionId == UserRowActionId.edit,
-    );
-    final canDelete = visibility.visibleRowActions.any(
-      (action) => action.actionId == UserRowActionId.delete,
-    );
+    final canView = visibility.visibleRowActions
+        .any((action) => action.actionId == UserRowActionId.viewDetails);
+    final canEdit = visibility.visibleRowActions
+        .any((action) => action.actionId == UserRowActionId.edit);
+    final canDeactivate = visibility.visibleRowActions
+        .any((action) => action.actionId == UserRowActionId.delete);
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        headingRowHeight: 48,
-        dataRowMinHeight: 60,
-        dataRowMaxHeight: 66,
-        columnSpacing: TenantAdminSpacing.xl,
-        horizontalMargin: TenantAdminSpacing.lg,
-        headingTextStyle: const TextStyle(
-          color: TenantAdminColors.bodyText,
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
+    return Column(
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(20, 10, 20, 8),
+          child: _UserRowHeader(),
         ),
-        dataTextStyle: const TextStyle(
-          color: TenantAdminColors.bodyText,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-        columns: const [
-          DataColumn(label: Text('User')),
-          DataColumn(label: Text('Role')),
-          DataColumn(label: Text('Outlet')),
-          DataColumn(label: Text('Status')),
-          DataColumn(label: Text('Last Active')),
-          DataColumn(
-            label: Align(
-              alignment: Alignment.centerRight,
-              child: Text('Actions'),
-            ),
+        for (final user in users)
+          _UserRow(
+            user: user,
+            selected: user.id == selectedUserId,
+            canView: canView,
+            canEdit: canEdit,
+            canDeactivate: canDeactivate,
+            onView: onView,
+            onEdit: onEdit,
+            onDeactivate: onDelete,
           ),
-        ],
-        rows: [
-          for (final user in users)
-            DataRow(
-              cells: [
-                DataCell(
-                  _UserIdentityCell(user: user, canView: canView),
-                  onTap: canView ? () => onView(user) : null,
-                ),
-                DataCell(_PlainCell(_emptyDash(user.roleName))),
-                DataCell(_PlainCell(_emptyDash(user.outletName))),
-                DataCell(UserStatusBadge(status: user.status)),
-                DataCell(_PlainCell(formatUserLastActive(user.lastActiveAt))),
-                DataCell(
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Row(
+      ],
+    );
+  }
+}
+
+class _UserRowHeader extends StatelessWidget {
+  const _UserRowHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(
+      color: TenantAdminColors.mutedText,
+      fontSize: 10,
+      fontWeight: FontWeight.w800,
+    );
+    return const Row(
+      children: [
+        Expanded(flex: 25, child: Text('USER', style: style)),
+        Expanded(flex: 16, child: Text('ROLE', style: style)),
+        Expanded(flex: 17, child: Text('OUTLET ACCESS', style: style)),
+        Expanded(flex: 13, child: Text('LAST ACTIVE', style: style)),
+        Expanded(flex: 12, child: Text('STATUS', style: style)),
+        Expanded(flex: 17, child: Text('ACTIONS', style: style)),
+      ],
+    );
+  }
+}
+
+class _UserRow extends StatelessWidget {
+  const _UserRow({
+    required this.user,
+    required this.selected,
+    required this.canView,
+    required this.canEdit,
+    required this.canDeactivate,
+    required this.onView,
+    required this.onEdit,
+    required this.onDeactivate,
+  });
+
+  final TenantUser user;
+  final bool selected;
+  final bool canView;
+  final bool canEdit;
+  final bool canDeactivate;
+  final ValueChanged<TenantUser> onView;
+  final ValueChanged<TenantUser> onEdit;
+  final ValueChanged<TenantUser> onDeactivate;
+
+  @override
+  Widget build(BuildContext context) {
+    final outline = selected
+        ? TenantAdminColors.posHomeAccentOrange
+        : TenantAdminColors.border;
+
+    return Semantics(
+      selected: selected,
+      button: canView,
+      label: 'User ${user.fullName}',
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        child: Material(
+          color: TenantAdminColors.surface,
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          child: InkWell(
+            onTap: canView ? () => onView(user) : null,
+            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            child: Container(
+              padding: const EdgeInsets.all(TenantAdminSpacing.md),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                border: Border.all(color: outline, width: selected ? 1.5 : 1),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(flex: 25, child: _Identity(user: user)),
+                  Expanded(flex: 16, child: _Role(user: user)),
+                  Expanded(flex: 17, child: _OutletAccess(user: user)),
+                  Expanded(flex: 13, child: _LastActive(user: user)),
+                  Expanded(flex: 12, child: UserStatusBadge(status: user.status)),
+                  Expanded(
+                    flex: 17,
+                    child: Column(
                       mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (canView)
-                          _ActionIconButton(
-                            icon: Icons.visibility_outlined,
-                            tooltip: 'View details',
+                          _TextAction(
+                            label: 'View',
                             onPressed: () => onView(user),
                           ),
-                        if (canEdit) ...[
-                          const SizedBox(width: TenantAdminSpacing.sm),
-                          _ActionIconButton(
-                            icon: Icons.edit_outlined,
-                            tooltip: 'Edit user',
+                        if (canEdit)
+                          _TextAction(
+                            label: 'Edit',
                             onPressed: () => onEdit(user),
                           ),
-                        ],
-                        if (canDelete) ...[
-                          const SizedBox(width: TenantAdminSpacing.sm),
-                          _ActionIconButton(
-                            icon: Icons.delete_outline,
-                            tooltip: 'Delete user',
+                        if (canDeactivate)
+                          _TextAction(
+                            label: 'Deactivate',
                             destructive: true,
-                            onPressed: () => onDelete(user),
+                            onPressed: () => onDeactivate(user),
                           ),
-                        ],
                       ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-        ],
+          ),
+        ),
       ),
     );
   }
 }
 
-class _UserIdentityCell extends StatelessWidget {
-  const _UserIdentityCell({required this.user, required this.canView});
+class _Identity extends StatelessWidget {
+  const _Identity({required this.user});
 
   final TenantUser user;
-  final bool canView;
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
         CircleAvatar(
-          radius: 16,
+          radius: 19,
           backgroundColor: TenantAdminColors.secondary,
-          child: Text(
-            _initials(user.fullName),
-            style: const TextStyle(
-              color: TenantAdminColors.primary,
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
-            ),
-          ),
+          child: Text(_initials(user.fullName),
+              style: const TextStyle(color: TenantAdminColors.posHomeAccentOrange, fontWeight: FontWeight.w800)),
         ),
         const SizedBox(width: TenantAdminSpacing.sm),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 220),
+        Expanded(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                user.fullName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: canView
-                      ? TenantAdminColors.primary
-                      : TenantAdminColors.bodyText,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              Text(
-                user.email,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TenantAdminTextStyles.muted(context),
-              ),
+              Text(user.fullName, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w800, color: TenantAdminColors.bodyText)),
+              Text(user.email, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 11)),
+              if ((user.phone ?? '').trim().isNotEmpty)
+                Text(user.phone!, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 11)),
             ],
           ),
         ),
@@ -174,68 +203,81 @@ class _UserIdentityCell extends StatelessWidget {
   }
 }
 
-class _PlainCell extends StatelessWidget {
-  const _PlainCell(this.value);
-
-  final String value;
-
+class _Role extends StatelessWidget {
+  const _Role({required this.user});
+  final TenantUser user;
   @override
-  Widget build(BuildContext context) {
-    return Text(value, maxLines: 1, overflow: TextOverflow.ellipsis);
-  }
+  Widget build(BuildContext context) => _TwoLineCell(
+        primary: _dash(user.roleName),
+        secondary: _nonEmpty(user.roleDescription),
+      );
 }
 
-class _ActionIconButton extends StatelessWidget {
-  const _ActionIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-    this.destructive = false,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-  final bool destructive;
-
+class _OutletAccess extends StatelessWidget {
+  const _OutletAccess({required this.user});
+  final TenantUser user;
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      style: IconButton.styleFrom(
-        backgroundColor: TenantAdminColors.surface,
-        foregroundColor:
-            destructive ? TenantAdminColors.danger : TenantAdminColors.primary,
-        side: BorderSide(
-          color: destructive
-              ? TenantAdminColors.danger.withValues(alpha: 0.25)
-              : TenantAdminColors.border,
-        ),
-        minimumSize: const Size(32, 32),
-        padding: EdgeInsets.zero,
-      ),
-      icon: Icon(icon, size: 16),
+    final names = user.outlets.map((outlet) => outlet.name).where((name) => name.trim().isNotEmpty).toList();
+    final count = user.outletCount ?? names.length;
+    return _TwoLineCell(
+      primary: names.isNotEmpty ? names.take(2).join(', ') : _dash(user.outletName),
+      secondary: count > 0 ? '$count ${count == 1 ? 'Outlet' : 'Outlets'}' : null,
     );
   }
 }
 
-String _emptyDash(String value) {
-  final trimmed = value.trim();
-  return trimmed.isEmpty ? '—' : trimmed;
+class _LastActive extends StatelessWidget {
+  const _LastActive({required this.user});
+  final TenantUser user;
+  @override
+  Widget build(BuildContext context) => _TwoLineCell(
+        primary: formatUserLastActive(user.lastActiveAt),
+        secondary: user.lastActiveAt == null ? null : formatUserDate(user.lastActiveAt),
+      );
 }
 
+class _TwoLineCell extends StatelessWidget {
+  const _TwoLineCell({required this.primary, this.secondary});
+  final String primary;
+  final String? secondary;
+  @override
+  Widget build(BuildContext context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(primary, maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: TenantAdminColors.bodyText, fontWeight: FontWeight.w700, fontSize: 12)),
+          if (secondary != null) Text(secondary!, maxLines: 2, overflow: TextOverflow.ellipsis,
+              style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 11)),
+        ],
+      );
+}
+
+class _TextAction extends StatelessWidget {
+  const _TextAction({required this.label, required this.onPressed, this.destructive = false});
+  final String label;
+  final VoidCallback onPressed;
+  final bool destructive;
+  @override
+  Widget build(BuildContext context) => TextButton(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          foregroundColor: destructive ? TenantAdminColors.danger : TenantAdminColors.info,
+          minimumSize: const Size(0, 30),
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        ),
+        child: Text(label),
+      );
+}
+
+String? _nonEmpty(String? value) =>
+    value?.trim().isNotEmpty == true ? value!.trim() : null;
+String _dash(String value) => value.trim().isEmpty ? '—' : value.trim();
 String _initials(String fullName) {
-  final parts =
-      fullName.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-  if (parts.isEmpty) {
-    return '?';
-  }
-
-  if (parts.length == 1) {
-    return parts.first.substring(0, 1).toUpperCase();
-  }
-
-  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
-      .toUpperCase();
+  final parts = fullName.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+  if (parts.isEmpty) return '?';
+  if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+  return (parts.first.substring(0, 1) + parts.last.substring(0, 1)).toUpperCase();
 }

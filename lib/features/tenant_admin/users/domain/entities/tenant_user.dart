@@ -6,7 +6,10 @@ class TenantUser {
     this.phone,
     this.roleId,
     required this.roleName,
+    this.roleDescription,
     required this.outletName,
+    this.outlets = const [],
+    this.outletCount,
     required this.status,
     this.lastActiveAt,
   });
@@ -17,7 +20,10 @@ class TenantUser {
   final String? phone;
   final String? roleId;
   final String roleName;
+  final String? roleDescription;
   final String outletName;
+  final List<UserOutletOption> outlets;
+  final int? outletCount;
   final String status;
   final DateTime? lastActiveAt;
 }
@@ -87,11 +93,13 @@ class RoleOption {
     required this.id,
     required this.name,
     required this.code,
+    this.roleDescription,
   });
 
   final String id;
   final String name;
   final String code;
+  final String? roleDescription;
 }
 
 class UserOutletOption {
@@ -150,30 +158,54 @@ class TenantUserDetail {
     required this.fullName,
     required this.email,
     this.phone,
+    this.employeeId,
+    this.staffCode,
     this.roleId,
     required this.roleName,
+    this.roleDescription,
     required this.outlets,
+    this.outletCount,
+    this.accessSummary,
     required this.status,
     required this.permissionOverrideEnabled,
     required this.overriddenPermissionIds,
     this.lastActiveAt,
     this.createdAt,
     this.profileImageUrl,
+    this.profileMediaAssetId,
   });
 
   final String id;
   final String fullName;
   final String email;
   final String? phone;
+  final String? employeeId;
+  final String? staffCode;
   final String? roleId;
   final String roleName;
+  final String? roleDescription;
   final List<UserOutletOption> outlets;
+  final int? outletCount;
+  final TenantUserAccessSummary? accessSummary;
   final String status;
   final bool permissionOverrideEnabled;
   final List<String> overriddenPermissionIds;
   final DateTime? lastActiveAt;
   final DateTime? createdAt;
   final String? profileImageUrl;
+  final String? profileMediaAssetId;
+}
+
+class TenantUserAccessSummary {
+  const TenantUserAccessSummary({
+    required this.outletCount,
+    required this.moduleCount,
+    required this.permissionCount,
+  });
+
+  final int outletCount;
+  final int moduleCount;
+  final int permissionCount;
 }
 
 class UserFormData {
@@ -181,6 +213,7 @@ class UserFormData {
     required this.fullName,
     required this.email,
     this.phone,
+    this.employeeId,
     required this.roleId,
     this.outletIds = const [],
     this.permissionOverrideEnabled = false,
@@ -188,11 +221,13 @@ class UserFormData {
     this.sendInviteEmail = false,
     this.status,
     this.profileImageFileName,
+    this.profileMediaAssetId,
   });
 
   final String fullName;
   final String email;
   final String? phone;
+  final String? employeeId;
   final String roleId;
   final List<String> outletIds;
   final bool permissionOverrideEnabled;
@@ -200,4 +235,5 @@ class UserFormData {
   final bool sendInviteEmail;
   final String? status;
   final String? profileImageFileName;
+  final String? profileMediaAssetId;
 }

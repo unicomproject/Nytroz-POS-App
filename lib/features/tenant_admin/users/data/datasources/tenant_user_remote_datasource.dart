@@ -30,10 +30,16 @@ class TenantUserRemoteDatasource {
     );
   }
 
-  Future<TenantUserDetailDto> createUser(UserWriteRequestDto request) async {
+  Future<TenantUserDetailDto> createUser(
+    UserWriteRequestDto request, {
+    String? idempotencyKey,
+  }) async {
     final response = await _dio.post<dynamic>(
       _usersPath,
       data: request.toJson(),
+      options: idempotencyKey == null || idempotencyKey.trim().isEmpty
+          ? null
+          : Options(headers: {'Idempotency-Key': idempotencyKey.trim()}),
     );
 
     return TenantUserDetailDto.fromJson(

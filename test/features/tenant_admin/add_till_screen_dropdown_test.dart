@@ -93,8 +93,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify Outlet dropdown exists
-    final outletDropdown =
-        find.widgetWithText(DropdownButtonFormField<String>, 'Assign Outlet *');
+    final outletDropdown = find.byKey(const ValueKey('outlet_dropdown'));
     expect(outletDropdown, findsOneWidget);
 
     // Initial state: nothing selected, no assertion.
@@ -107,16 +106,14 @@ void main() {
     await tester.pumpAndSettle();
 
     // Now select Cashier 1
-    final cashierDropdown = find.widgetWithText(
-        DropdownButtonFormField<String>, 'Default Cashier *');
+    final cashierDropdown = find.byKey(const ValueKey('cashier_dropdown_out1'));
     await tester.tap(cashierDropdown);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cashier 1').last);
     await tester.pumpAndSettle();
 
     // Select POS Device 1 (has a duplicate ID test case)
-    final posDropdown =
-        find.widgetWithText(DropdownMenu<String>, 'Device Name').first;
+    final posDropdown = find.byKey(const ValueKey('Device Name_out1'));
     await tester.tap(posDropdown);
     await tester.pumpAndSettle();
     await tester.tap(find.text('POS 1').last);
@@ -132,12 +129,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Ensure the dependent dropdowns did not crash and are available
-    expect(
-        find.widgetWithText(DropdownButtonFormField<String>, 'Assign Outlet *'),
-        findsOneWidget);
-    expect(
-        find.widgetWithText(
-            DropdownButtonFormField<String>, 'Default Cashier *'),
-        findsOneWidget);
+    expect(find.byKey(const ValueKey('outlet_dropdown')), findsOneWidget);
+    expect(find.byKey(const ValueKey('cashier_dropdown_out2')), findsOneWidget);
   });
 }

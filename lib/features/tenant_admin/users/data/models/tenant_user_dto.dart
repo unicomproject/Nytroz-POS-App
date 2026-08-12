@@ -6,7 +6,10 @@ class TenantUserListItemDto {
     this.phone,
     this.roleId,
     required this.roleName,
+    this.roleDescription,
     required this.outletName,
+    this.outlets = const [],
+    this.outletCount,
     required this.status,
     this.lastActiveAt,
   });
@@ -19,7 +22,12 @@ class TenantUserListItemDto {
       phone: json['phoneNumber'] as String? ?? json['phone'] as String?,
       roleId: json['roleId']?.toString(),
       roleName: json['roleName'] as String? ?? '',
+      roleDescription: json['roleDescription'] as String?,
       outletName: json['outletName'] as String? ?? '',
+      outlets: _mapList(json['outlets'], UserOutletOptionDto.fromJson),
+      outletCount: json.containsKey('outletCount')
+          ? _intValue(json['outletCount'])
+          : null,
       status: json['status'] as String? ?? '',
       lastActiveAt: _dateValue(json['lastActiveAt']),
     );
@@ -31,7 +39,10 @@ class TenantUserListItemDto {
   final String? phone;
   final String? roleId;
   final String roleName;
+  final String? roleDescription;
   final String outletName;
+  final List<UserOutletOptionDto> outlets;
+  final int? outletCount;
   final String status;
   final DateTime? lastActiveAt;
 }
@@ -69,6 +80,7 @@ class RoleOptionDto {
     required this.id,
     required this.name,
     required this.code,
+    this.roleDescription,
   });
 
   factory RoleOptionDto.fromJson(Map<String, dynamic> json) {
@@ -76,12 +88,14 @@ class RoleOptionDto {
       id: json['roleId']?.toString() ?? json['id']?.toString() ?? '',
       name: json['roleName'] as String? ?? json['name'] as String? ?? '',
       code: json['roleCode'] as String? ?? json['code'] as String? ?? '',
+      roleDescription: json['roleDescription'] as String?,
     );
   }
 
   final String id;
   final String name;
   final String code;
+  final String? roleDescription;
 }
 
 class UserOutletOptionDto {
@@ -174,15 +188,21 @@ class TenantUserDetailDto {
     required this.fullName,
     required this.email,
     this.phone,
+    this.employeeId,
+    this.staffCode,
     this.roleId,
     required this.roleName,
+    this.roleDescription,
     required this.outlets,
+    this.outletCount,
+    this.accessSummary,
     required this.status,
     required this.permissionOverrideEnabled,
     required this.overriddenPermissionIds,
     this.lastActiveAt,
     this.createdAt,
     this.profileImageUrl,
+    this.profileMediaAssetId,
   });
 
   factory TenantUserDetailDto.fromJson(Map<String, dynamic> json) {
@@ -191,9 +211,20 @@ class TenantUserDetailDto {
       fullName: json['fullName'] as String? ?? '',
       email: json['email'] as String? ?? '',
       phone: json['phoneNumber'] as String? ?? json['phone'] as String?,
+      employeeId: json['employeeId'] as String?,
+      staffCode: json['staffCode'] as String?,
       roleId: json['roleId']?.toString(),
       roleName: json['roleName'] as String? ?? '',
+      roleDescription: json['roleDescription'] as String?,
       outlets: _mapList(json['outlets'], UserOutletOptionDto.fromJson),
+      outletCount: json.containsKey('outletCount')
+          ? _intValue(json['outletCount'])
+          : null,
+      accessSummary: json['accessSummary'] is Map
+          ? TenantUserAccessSummaryDto.fromJson(
+              Map<String, dynamic>.from(json['accessSummary'] as Map),
+            )
+          : null,
       status: json['status'] as String? ?? '',
       permissionOverrideEnabled: json['permissionOverrideEnabled'] == true,
       overriddenPermissionIds: (json['overriddenPermissionIds'] is List)
@@ -204,6 +235,8 @@ class TenantUserDetailDto {
       lastActiveAt: _dateValue(json['lastActiveAt']),
       createdAt: _dateValue(json['createdAt']),
       profileImageUrl: json['profileImageUrl'] as String?,
+      profileMediaAssetId: json['profileMediaAssetId']?.toString() ??
+          json['profileImageMediaAssetId']?.toString(),
     );
   }
 
@@ -211,15 +244,41 @@ class TenantUserDetailDto {
   final String fullName;
   final String email;
   final String? phone;
+  final String? employeeId;
+  final String? staffCode;
   final String? roleId;
   final String roleName;
+  final String? roleDescription;
   final List<UserOutletOptionDto> outlets;
+  final int? outletCount;
+  final TenantUserAccessSummaryDto? accessSummary;
   final String status;
   final bool permissionOverrideEnabled;
   final List<String> overriddenPermissionIds;
   final DateTime? lastActiveAt;
   final DateTime? createdAt;
   final String? profileImageUrl;
+  final String? profileMediaAssetId;
+}
+
+class TenantUserAccessSummaryDto {
+  const TenantUserAccessSummaryDto({
+    required this.outletCount,
+    required this.moduleCount,
+    required this.permissionCount,
+  });
+
+  factory TenantUserAccessSummaryDto.fromJson(Map<String, dynamic> json) {
+    return TenantUserAccessSummaryDto(
+      outletCount: _intValue(json['outletCount']),
+      moduleCount: _intValue(json['moduleCount']),
+      permissionCount: _intValue(json['permissionCount']),
+    );
+  }
+
+  final int outletCount;
+  final int moduleCount;
+  final int permissionCount;
 }
 
 int _intValue(dynamic value, {int fallback = 0}) {

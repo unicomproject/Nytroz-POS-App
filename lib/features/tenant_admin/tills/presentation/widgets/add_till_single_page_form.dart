@@ -235,8 +235,32 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
       },
       child: Form(
         key: _formKey,
-        child: Column(
-          children: [
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+          ),
+          padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Add Till',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Create a till and connect its hardware.',
+                style: TextStyle(
+                  color: TenantAdminColors.mutedText,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: TenantAdminSpacing.xl),
             LayoutBuilder(
               builder: (context, constraints) {
                 final isDesktop = constraints.maxWidth > 900;
@@ -381,55 +405,54 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
               },
             ),
             const SizedBox(height: TenantAdminSpacing.xl),
-            Container(
-              padding: const EdgeInsets.only(top: TenantAdminSpacing.lg),
-              decoration: const BoxDecoration(
-                border:
-                    Border(top: BorderSide(color: TenantAdminColors.border)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  SizedBox(
-                    width: 120,
-                    child: TenantAdminSecondaryButton(
-                      onPressed: _isSubmitting ? null : () => context.pop(),
-                      label: 'Cancel',
-                    ),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.md),
-                  SizedBox(
-                    width: 160,
-                    child: ElevatedButton(
-                      onPressed: _isSubmitting ? null : _submit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6A00),
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor:
-                            const Color(0xFFFF6A00).withValues(alpha: 0.45),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: TenantAdminSpacing.lg,
-                          vertical: TenantAdminSpacing.md,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(TenantAdminRadius.md),
-                        ),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _isSubmitting ? null : () => context.pop(),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.black87,
+                      side: BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: TenantAdminSpacing.md,
                       ),
-                      child: _isSubmitting
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white))
-                          : const Text('Create Till',
-                              style: TextStyle(fontWeight: FontWeight.w600)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                      ),
                     ),
+                    child: const Text('Cancel',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: TenantAdminSpacing.lg),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isSubmitting ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6A00),
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: const Color(0xFFFF6A00).withValues(alpha: 0.45),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: TenantAdminSpacing.md,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                      ),
+                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
+                        : const Text('Create Till',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                ),
+              ],
             ),
           ],
+        ),
         ),
       ),
     );

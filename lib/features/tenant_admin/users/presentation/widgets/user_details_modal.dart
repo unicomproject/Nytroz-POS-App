@@ -165,8 +165,8 @@ class _UserDetailsContent extends ConsumerWidget {
               children: [
                 if (canDelete)
                   TenantAdminSecondaryButton(
-                    label: 'Delete User',
-                    icon: Icons.delete_outline,
+                  label: 'Deactivate',
+                  icon: Icons.person_off_outlined,
                     onPressed: () => _delete(context, ref),
                   ),
                 if (canDelete && canEdit)
@@ -192,7 +192,7 @@ class _UserDetailsContent extends ConsumerWidget {
     final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete user'),
+        title: const Text('Deactivate user'),
         content: Text(
           'Are you sure you want to disable "${user.fullName}"?',
         ),
@@ -206,7 +206,7 @@ class _UserDetailsContent extends ConsumerWidget {
               backgroundColor: TenantAdminColors.danger,
             ),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: const Text('Deactivate'),
           ),
         ],
       ),
@@ -218,6 +218,10 @@ class _UserDetailsContent extends ConsumerWidget {
 
     try {
       await ref.read(deleteUserProvider).call(user.id);
+      if (ref.read(selectedUserIdProvider) == user.id) {
+        ref.read(selectedUserIdProvider.notifier).state = null;
+      }
+      ref.invalidate(userDetailProvider(user.id));
       ref.invalidate(userListProvider);
       if (context.mounted) {
         Navigator.of(context).pop();
@@ -228,7 +232,7 @@ class _UserDetailsContent extends ConsumerWidget {
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to delete user.')),
+          const SnackBar(content: Text('Failed to deactivate user.')),
         );
       }
     }

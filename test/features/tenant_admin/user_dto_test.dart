@@ -14,7 +14,17 @@ void main() {
             'phoneNumber': '+44 7911 123456',
             'roleId': '22222222-2222-2222-2222-222222222222',
             'roleName': 'Store Manager',
+            'roleDescription': 'Leads day-to-day outlet operations',
             'outletName': 'High Street Store',
+            'outlets': [
+              {
+                'outletId': 'outlet-1',
+                'outletName': 'High Street Store',
+                'outletCode': 'HS-01',
+                'status': 'ACTIVE',
+              },
+            ],
+            'outletCount': 1,
             'status': 'ACTIVE',
             'lastActiveAt': '2026-06-22T10:00:00Z',
           },
@@ -28,6 +38,10 @@ void main() {
       expect(dto.items.single.fullName, 'Sarah Ahmed');
       expect(dto.items.single.email, 'sarah@coffeecorner.com');
       expect(dto.items.single.roleName, 'Store Manager');
+      expect(dto.items.single.roleDescription,
+          'Leads day-to-day outlet operations');
+      expect(dto.items.single.outlets.single.name, 'High Street Store');
+      expect(dto.items.single.outletCount, 1);
       expect(dto.items.single.status, 'ACTIVE');
       expect(dto.items.single.lastActiveAt, isNotNull);
     });
@@ -99,6 +113,7 @@ void main() {
         'phoneNumber': '+44 7911 123456',
         'roleId': 'role-1',
         'roleName': 'Store Manager',
+        'roleDescription': 'Leads day-to-day outlet operations',
         'outlets': [
           {
             'outletId': 'outlet-1',
@@ -108,6 +123,12 @@ void main() {
           },
         ],
         'status': 'ACTIVE',
+        'outletCount': 1,
+        'accessSummary': {
+          'outletCount': 1,
+          'moduleCount': 4,
+          'permissionCount': 12,
+        },
         'permissionOverrideEnabled': true,
         'overriddenPermissionIds': ['perm-1', 'perm-2'],
         'createdAt': '2026-01-05T08:00:00Z',
@@ -118,6 +139,9 @@ void main() {
       expect(dto.permissionOverrideEnabled, isTrue);
       expect(dto.overriddenPermissionIds, ['perm-1', 'perm-2']);
       expect(dto.createdAt, isNotNull);
+      expect(dto.roleDescription, 'Leads day-to-day outlet operations');
+      expect(dto.outletCount, 1);
+      expect(dto.accessSummary?.moduleCount, 4);
     });
   });
 
@@ -152,8 +176,15 @@ void main() {
         'fullName': 'Sarah Ahmed',
         'email': 'sarah@coffeecorner.com',
         'roleName': 'Store Manager',
+        'roleDescription': 'Leads day-to-day outlet operations',
         'outlets': [],
         'status': 'ACTIVE',
+        'outletCount': 2,
+        'accessSummary': {
+          'outletCount': 2,
+          'moduleCount': 4,
+          'permissionCount': 12,
+        },
         'permissionOverrideEnabled': false,
         'overriddenPermissionIds': [],
       });
@@ -163,6 +194,9 @@ void main() {
       expect(detail.fullName, 'Sarah Ahmed');
       expect(detail.permissionOverrideEnabled, isFalse);
       expect(detail.outlets, isEmpty);
+      expect(detail.roleDescription, 'Leads day-to-day outlet operations');
+      expect(detail.outletCount, 2);
+      expect(detail.accessSummary?.permissionCount, 12);
     });
   });
 }

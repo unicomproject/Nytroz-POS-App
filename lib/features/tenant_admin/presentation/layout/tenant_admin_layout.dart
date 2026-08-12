@@ -13,7 +13,6 @@ import '../../domain/errors/tenant_admin_context_exception.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../screens/tenant_admin_error_screen.dart';
 import '../screens/tenant_admin_loading_screen.dart';
-import 'tenant_admin_bottom_nav.dart';
 import 'tenant_admin_navigation_drawer.dart';
 import 'tenant_admin_sidebar.dart';
 import 'tenant_admin_top_bar.dart';
@@ -156,10 +155,6 @@ class _TenantAdminMobileShellState extends State<_TenantAdminMobileShell> {
         accessChecker: widget.accessChecker,
       ),
       body: widget.child,
-      bottomNavigationBar: TenantAdminBottomNav(
-        items: widget.items,
-        currentPath: widget.currentPath,
-      ),
     );
   }
 }
