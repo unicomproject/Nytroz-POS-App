@@ -692,8 +692,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
               rawErrorMsg.toLowerCase().contains('unexpected error'))
           ? (extractedErrors.isNotEmpty
               ? extractedErrors.values.join(' ')
-              : 'Save failed. Raw Error: $rawErrorMsg | Data: ${e is DioException ? e.response?.data : e.toString()}')
-          : 'Save failed. Raw: $rawErrorMsg | Data: ${e is DioException ? e.response?.data : e.toString()}';
+              : 'An error occurred while saving product draft. Please verify form details and retry.')
+          : rawErrorMsg;
 
       state = state.copyWith(
         isSubmitting: false,
