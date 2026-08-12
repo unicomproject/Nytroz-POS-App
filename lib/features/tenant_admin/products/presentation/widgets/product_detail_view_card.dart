@@ -202,6 +202,13 @@ class _BasicDetailsCard extends StatelessWidget {
             : '—',
       ),
       _InfoItemData(
+        icon: Icons.description_outlined,
+        label: 'Long description',
+        value: detail.longDescription?.isNotEmpty == true
+            ? detail.longDescription!
+            : '—',
+      ),
+      _InfoItemData(
         icon: Icons.category_outlined,
         label: 'Category',
         value:

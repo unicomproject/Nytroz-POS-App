@@ -3,7 +3,10 @@ import 'package:dio/dio.dart';
 import '../../domain/entities/tenant_product.dart';
 import '../models/product_create_request_dto.dart';
 import '../models/product_delete_response_dto.dart';
+import '../models/product_draft_response_dto.dart';
 import '../models/product_status_update_dto.dart';
+import '../models/save_product_draft_request_dto.dart';
+import '../models/staged_image_response_dto.dart';
 import '../models/tenant_product_create_options_dto.dart';
 import '../models/tenant_product_detail_dto.dart';
 import '../models/tenant_product_dto.dart';
@@ -111,6 +114,140 @@ class TenantProductRemoteDatasource {
     final response = await _dio.delete<dynamic>('$_productsPath/$productId');
 
     return ProductDeleteResponseDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<ProductDraftResponseDto> saveDraft(
+    SaveProductDraftRequestDto request,
+  ) async {
+    final response = await _dio.post<dynamic>(
+      '$_productsPath/draft',
+      data: request.toJson(),
+    );
+
+    return ProductDraftResponseDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<ProductDraftResponseDto> updateDraft(
+    String productId,
+    SaveProductDraftRequestDto request,
+  ) async {
+    final response = await _dio.put<dynamic>(
+      '$_productsPath/$productId/draft',
+      data: request.toJson(),
+    );
+
+    return ProductDraftResponseDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<ProductDraftResponseDto> getSetup(String productId) async {
+    final response = await _dio.get<dynamic>('$_productsPath/$productId/setup');
+
+    return ProductDraftResponseDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<StagedImageResponseDto> stageImage(
+    List<int> bytes,
+    String fileName,
+    String mimeType,
+  ) async {
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromBytes(
+        bytes,
+        filename: fileName,
+        contentType: DioMediaType.parse(mimeType),
+      ),
+    });
+
+    final response = await _dio.post<dynamic>(
+      '$_productsPath/images/stage',
+      data: formData,
+    );
+
+    return StagedImageResponseDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<ProductImageResponseDto> uploadProductImage(
+    String productId,
+    List<int> bytes,
+    String fileName,
+    String mimeType,
+  ) async {
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromBytes(
+        bytes,
+        filename: fileName,
+        contentType: DioMediaType.parse(mimeType),
+      ),
+    });
+
+    final response = await _dio.post<dynamic>(
+      '/api/v1/products/$productId/images',
+      data: formData,
+    );
+
+    return ProductImageResponseDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<ProductDraftResponseDto> reorderProductImages(
+    String productId,
+    int expectedRowVersion,
+    String? primaryProductImageId,
+    List<Map<String, dynamic>> items,
+  ) async {
+    final response = await _dio.put<dynamic>(
+      '/api/v1/products/$productId/images/reorder',
+      data: {
+        'expectedRowVersion': expectedRowVersion,
+        if (primaryProductImageId != null)
+          'primaryProductImageId': primaryProductImageId,
+        'items': items,
+      },
+    );
+
+    return ProductDraftResponseDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<ProductDraftResponseDto> deleteProductImage(
+    String productId,
+    String productImageId,
+  ) async {
+    final response = await _dio.delete<dynamic>(
+      '/api/v1/products/$productId/images/$productImageId',
+    );
+
+    return ProductDraftResponseDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<ProductDraftResponseDto> replaceProductImages(
+    String productId,
+    int expectedRowVersion,
+    List<String> stagedMediaAssetIds,
+  ) async {
+    final response = await _dio.post<dynamic>(
+      '/api/v1/products/$productId/images/replace',
+      data: {
+        'expectedRowVersion': expectedRowVersion,
+        'stagedMediaAssetIds': stagedMediaAssetIds,
+      },
+    );
+
+    return ProductDraftResponseDto.fromJson(
       _unwrapApiPayload(response.data, response.requestOptions),
     );
   }

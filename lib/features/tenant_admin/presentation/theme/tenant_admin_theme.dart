@@ -7,6 +7,7 @@ class TenantAdminColors {
   static const navySoft = Color(0xFF0E2748);
   static const startSaleHero = Color(0xFF001C38);
   static const background = Color(0xFF030303);
+  static const subtleBackground = Color(0xFFF8FAFC);
   static const surface = Colors.white;
   static const border = Color(0xFFE5EAF4);
   static const mutedText = Color(0xFF64748B);

@@ -8,7 +8,12 @@ import '../providers/tenant_product_visibility_provider.dart';
 import '../widgets/add_product_wizard.dart';
 
 class AddProductScreen extends ConsumerWidget {
-  const AddProductScreen({super.key});
+  const AddProductScreen({
+    super.key,
+    this.resumeProductId,
+  });
+
+  final String? resumeProductId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -17,8 +22,8 @@ class AddProductScreen extends ConsumerWidget {
 
     if (!hasAccess) {
       return const TenantAdminPageScaffold(
-        title: 'Add product',
-        subtitle: 'Enter the main details for a new product.',
+        title: 'Add Product',
+        subtitle: 'Enter the basic information for the product.',
         child: TenantAdminEmptyState(
           title: 'No access',
           message: 'You do not have permission to add products.',
@@ -28,8 +33,8 @@ class AddProductScreen extends ConsumerWidget {
     }
 
     return TenantAdminPageScaffold(
-      title: 'Add product',
-      subtitle: 'Enter the main details for a new product.',
+      title: 'Add Product',
+      subtitle: 'Enter the basic information for the product.',
       child: optionsState.when(
         loading: () => const TenantAdminLoadingSkeleton(rowCount: 8),
         error: (error, stackTrace) => TenantAdminErrorState(
@@ -50,6 +55,7 @@ class AddProductScreen extends ConsumerWidget {
             options: options,
             dropdownsEnabled: true,
             canCreate: ref.watch(productAddPageAccessProvider),
+            resumeProductId: resumeProductId,
           );
         },
       ),

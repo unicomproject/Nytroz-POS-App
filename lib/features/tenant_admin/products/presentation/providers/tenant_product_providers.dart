@@ -13,11 +13,13 @@ import '../../application/usecases/update_product.dart';
 import '../../application/usecases/update_product_status.dart';
 import '../../data/datasources/tenant_product_remote_datasource.dart';
 import '../../data/repositories/tenant_product_repository_impl.dart';
+import '../../domain/entities/add_product_wizard_state.dart';
 import '../../domain/entities/tenant_product.dart';
 import '../../domain/entities/tenant_product_create_options.dart';
-import '../../domain/entities/tenant_product_filter_options.dart';
 import '../../domain/entities/tenant_product_detail.dart';
+import '../../domain/entities/tenant_product_filter_options.dart';
 import '../../domain/repositories/tenant_product_repository.dart';
+import '../controllers/add_product_wizard_controller.dart';
 
 final tenantProductRemoteDatasourceProvider =
     Provider<TenantProductRemoteDatasource>((ref) {
@@ -295,4 +297,10 @@ final productEditCreateOptionsProvider =
   }
 
   return ref.watch(getProductCreateOptionsProvider).call();
+});
+
+final addProductWizardControllerProvider = StateNotifierProvider.autoDispose<
+    AddProductWizardController, AddProductWizardState>((ref) {
+  final repo = ref.watch(tenantProductRepositoryProvider);
+  return AddProductWizardController(repo);
 });

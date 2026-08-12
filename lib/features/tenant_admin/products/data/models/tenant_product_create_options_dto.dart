@@ -66,6 +66,9 @@ class ProductUnitOptionDto {
     required this.id,
     required this.code,
     required this.name,
+    this.unitType,
+    this.symbol,
+    this.recommendedAllowDecimalQuantity,
   });
 
   factory ProductUnitOptionDto.fromJson(Map<String, dynamic> json) {
@@ -73,12 +76,19 @@ class ProductUnitOptionDto {
       id: json['unitId']?.toString() ?? json['id']?.toString() ?? '',
       code: json['unitCode'] as String? ?? json['code'] as String? ?? '',
       name: json['unitName'] as String? ?? json['name'] as String? ?? '',
+      unitType: json['unitType'] as String?,
+      symbol: json['symbol'] as String?,
+      recommendedAllowDecimalQuantity:
+          json['recommendedAllowDecimalQuantity'] as bool?,
     );
   }
 
   final String id;
   final String code;
   final String name;
+  final String? unitType;
+  final String? symbol;
+  final bool? recommendedAllowDecimalQuantity;
 }
 
 class ProductTaxOptionDto {

@@ -69,10 +69,20 @@ class ProductListPanel extends ConsumerWidget {
             child: ProductTable(
               products: result.items,
               visibility: visibility,
-              onView: (product) =>
-                  context.go('/tenant-admin/products/${product.id}'),
-              onEdit: (product) =>
-                  context.go('/tenant-admin/products/${product.id}/edit'),
+              onView: (product) {
+                if (product.status == 'DRAFT') {
+                  context.go('/tenant-admin/products/draft/${product.id}');
+                } else {
+                  context.go('/tenant-admin/products/${product.id}');
+                }
+              },
+              onEdit: (product) {
+                if (product.status == 'DRAFT') {
+                  context.go('/tenant-admin/products/draft/${product.id}');
+                } else {
+                  context.go('/tenant-admin/products/${product.id}/edit');
+                }
+              },
             ),
           ),
         if (visibility.showPagination && result.totalCount > 0) ...[

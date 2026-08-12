@@ -15,6 +15,7 @@ void main() {
         'brandId': '44444444-4444-4444-4444-444444444444',
         'unitType': 'KG',
         'shortDescription': 'Fresh roast',
+        'longDescription': 'Premium roasted dark coffee beans from South America.',
         'imageUrl': 'https://example.com/product.png',
         'costPrice': 900,
         'sellingPrice': 1250.5,
@@ -64,7 +65,8 @@ void main() {
       expect(dto.productId, '11111111-1111-1111-1111-111111111111');
       expect(dto.productName, 'Espresso Beans');
       expect(dto.sku, 'ESP-001');
-      expect(dto.categoryName, 'Coffee');
+      expect(dto.shortDescription, 'Fresh roast');
+      expect(dto.longDescription, 'Premium roasted dark coffee beans from South America.');
       expect(dto.unitType, 'KG');
       expect(dto.sellingPrice, 1250.5);
       expect(dto.trackInventory, isTrue);

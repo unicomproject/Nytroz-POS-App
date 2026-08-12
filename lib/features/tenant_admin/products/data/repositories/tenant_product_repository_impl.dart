@@ -9,7 +9,10 @@ import '../../domain/repositories/tenant_product_repository.dart';
 import '../datasources/tenant_product_remote_datasource.dart';
 import '../mappers/tenant_product_mapper.dart';
 import '../models/product_create_request_dto.dart';
+import '../models/product_draft_response_dto.dart';
 import '../models/product_status_update_dto.dart';
+import '../models/save_product_draft_request_dto.dart';
+import '../models/staged_image_response_dto.dart';
 
 class TenantProductRepositoryImpl implements TenantProductRepository {
   const TenantProductRepositoryImpl(this._remoteDatasource);
@@ -88,6 +91,7 @@ class TenantProductRepositoryImpl implements TenantProductRepository {
       brandId: request.brandId,
       unitType: request.unitType,
       shortDescription: request.shortDescription,
+      longDescription: request.longDescription,
       costPrice: request.costPrice,
       sellingPrice: request.sellingPrice,
       discountPrice: request.discountPrice,
@@ -136,5 +140,81 @@ class TenantProductRepositoryImpl implements TenantProductRepository {
   Future<TenantProductFilterOptions> getProductFilterOptions() async {
     final dto = await _remoteDatasource.getProductFilterOptions();
     return TenantProductMapper.toFilterOptions(dto);
+  }
+
+  @override
+  Future<ProductDraftResponseDto> saveDraft(
+    SaveProductDraftRequestDto request,
+  ) {
+    return _remoteDatasource.saveDraft(request);
+  }
+
+  @override
+  Future<ProductDraftResponseDto> updateDraft(
+    String productId,
+    SaveProductDraftRequestDto request,
+  ) {
+    return _remoteDatasource.updateDraft(productId, request);
+  }
+
+  @override
+  Future<ProductDraftResponseDto> getSetup(String productId) {
+    return _remoteDatasource.getSetup(productId);
+  }
+
+  @override
+  Future<StagedImageResponseDto> stageImage(
+    List<int> bytes,
+    String fileName,
+    String mimeType,
+  ) {
+    return _remoteDatasource.stageImage(bytes, fileName, mimeType);
+  }
+
+  @override
+  Future<ProductImageResponseDto> uploadProductImage(
+    String productId,
+    List<int> bytes,
+    String fileName,
+    String mimeType,
+  ) {
+    return _remoteDatasource.uploadProductImage(
+        productId, bytes, fileName, mimeType);
+  }
+
+  @override
+  Future<ProductDraftResponseDto> reorderProductImages(
+    String productId,
+    int expectedRowVersion,
+    String? primaryProductImageId,
+    List<Map<String, dynamic>> items,
+  ) {
+    return _remoteDatasource.reorderProductImages(
+      productId,
+      expectedRowVersion,
+      primaryProductImageId,
+      items,
+    );
+  }
+
+  @override
+  Future<ProductDraftResponseDto> deleteProductImage(
+    String productId,
+    String productImageId,
+  ) {
+    return _remoteDatasource.deleteProductImage(productId, productImageId);
+  }
+
+  @override
+  Future<ProductDraftResponseDto> replaceProductImages(
+    String productId,
+    int expectedRowVersion,
+    List<String> stagedMediaAssetIds,
+  ) {
+    return _remoteDatasource.replaceProductImages(
+      productId,
+      expectedRowVersion,
+      stagedMediaAssetIds,
+    );
   }
 }

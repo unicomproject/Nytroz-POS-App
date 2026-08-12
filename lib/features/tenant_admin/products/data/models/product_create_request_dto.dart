@@ -42,6 +42,7 @@ class ProductCreateRequestDto {
     this.subCategoryId,
     this.brandId,
     this.shortDescription,
+    this.longDescription,
     this.taxId,
     this.costPrice,
     this.discountPrice,
@@ -68,6 +69,7 @@ class ProductCreateRequestDto {
   final String? brandId;
   final String unitType;
   final String? shortDescription;
+  final String? longDescription;
   final double sellingPrice;
   final String? taxId;
   final double? costPrice;
@@ -101,6 +103,8 @@ class ProductCreateRequestDto {
       'unitType': unitType.trim(),
       if (shortDescription != null && shortDescription!.trim().isNotEmpty)
         'shortDescription': shortDescription!.trim(),
+      if (longDescription != null && longDescription!.trim().isNotEmpty)
+        'longDescription': longDescription!.trim(),
       if (costPrice != null) 'costPrice': costPrice,
       'sellingPrice': sellingPrice,
       if (discountPrice != null) 'discountPrice': discountPrice,

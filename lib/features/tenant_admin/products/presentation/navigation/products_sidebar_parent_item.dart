@@ -25,7 +25,7 @@ class ProductsSidebarParentItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = selected || expanded;
+    final active = selected;
     final itemColor = active
         ? TenantAdminSidebarTokens.activeForeground
         : TenantAdminSidebarTokens.foreground;
