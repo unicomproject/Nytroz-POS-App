@@ -233,7 +233,13 @@ class AddTillHardwareSection extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
             const SizedBox(height: 8),
             DropdownMenu<String>(
               key: ValueKey('${label}_$outletId'),
@@ -243,24 +249,35 @@ class AddTillHardwareSection extends StatelessWidget {
               hintText: 'Select $label',
               leadingIcon: Icon(icon, color: TenantAdminColors.mutedText),
               inputDecorationTheme: InputDecorationTheme(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+                  borderSide: BorderSide(
+                    color: TenantAdminColors.border.withValues(alpha: 0.5),
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+                  borderSide: BorderSide(
+                    color: TenantAdminColors.border.withValues(alpha: 0.5),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(color: Color(0xFFFF6A00)),
                 ),
               ),
-              dropdownMenuEntries: uniqueItems.map((e) => DropdownMenuEntry<String>(
-                value: (e as dynamic).id as String,
-                label: (e as dynamic).name as String,
-              )).toList(),
+              dropdownMenuEntries: uniqueItems
+                  .map(
+                    (item) => DropdownMenuEntry<String>(
+                      value: (item as dynamic).id as String,
+                      label: item.name as String,
+                    ),
+                  )
+                  .toList(),
               onSelected: (String? selectedId) {
                 onChanged(selectedId);
               },
