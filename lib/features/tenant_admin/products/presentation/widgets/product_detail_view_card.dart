@@ -202,6 +202,13 @@ class _BasicDetailsCard extends StatelessWidget {
             : '—',
       ),
       _InfoItemData(
+        icon: Icons.description_outlined,
+        label: 'Long description',
+        value: detail.longDescription?.isNotEmpty == true
+            ? detail.longDescription!
+            : '—',
+      ),
+      _InfoItemData(
         icon: Icons.category_outlined,
         label: 'Category',
         value:
@@ -323,7 +330,7 @@ class _ChannelVisibilityCard extends StatelessWidget {
       title: 'Channel Visibility',
       child: isDesktop
           ? const Row(
-              children:  [
+              children: [
                 Expanded(
                   child: _ChannelItem(
                     icon: Icons.storefront_outlined,
@@ -344,7 +351,7 @@ class _ChannelVisibilityCard extends StatelessWidget {
               ],
             )
           : const Column(
-              children:  [
+              children: [
                 _ChannelItem(
                   icon: Icons.storefront_outlined,
                   title: 'In-Store POS',

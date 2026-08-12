@@ -256,6 +256,13 @@ const tenantAdminRouteDefinitions = [
     permissionCode: 'tenant.stock.view',
   ),
   TenantAdminRouteDefinition(
+    path: '/tenant-admin/stock/dashboard',
+    menuKey: 'inventory',
+    title: 'Dashboard',
+    featureCode: 'inventory.stock',
+    permissionCode: 'tenant.stock.dashboard.view',
+  ),
+  TenantAdminRouteDefinition(
     path: '/tenant-admin/stock/current',
     menuKey: 'inventory',
     title: 'Current Stock',
@@ -264,12 +271,27 @@ const tenantAdminRouteDefinitions = [
     subtitle: 'View stock availability across accessible outlets.',
   ),
   TenantAdminRouteDefinition(
+    path: '/tenant-admin/stock/current/:variantId',
+    menuKey: 'inventory',
+    title: 'Product Stock Detail',
+    featureCode: 'inventory.stock',
+    permissionCode: 'tenant.stock.view',
+  ),
+  TenantAdminRouteDefinition(
     path: '/tenant-admin/stock/in',
     menuKey: 'inventory',
     title: 'Stock In',
     featureCode: 'inventory.stock',
     permissionCode: 'tenant.stock.in',
     subtitle: 'Receive inventory into an accessible outlet.',
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/stock/opening',
+    menuKey: 'inventory',
+    title: 'Opening Stock',
+    featureCode: 'inventory.stock',
+    permissionCode: 'tenant.stock.opening',
+    subtitle: 'Add initial opening stock to an outlet.',
   ),
   TenantAdminRouteDefinition(
     path: '/tenant-admin/stock/items',

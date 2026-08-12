@@ -29,6 +29,7 @@ class ProductFormData {
     this.subCategoryId,
     this.brandId,
     this.shortDescription,
+    this.longDescription,
     this.taxId,
     this.costPrice,
     this.discountPrice,
@@ -55,6 +56,7 @@ class ProductFormData {
   final String? brandId;
   final String unitType;
   final String? shortDescription;
+  final String? longDescription;
   final double sellingPrice;
   final String? taxId;
   final double? costPrice;

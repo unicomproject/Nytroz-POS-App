@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/discount/presentation/providers/pos_discount_provider.dart';
 import 'package:nytroz_pos/features/device_activation/presentation/providers/device_activation_provider.dart';
 import 'package:nytroz_pos/features/sale/domain/entities/pos_payment_method_type.dart';
 import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
@@ -101,7 +102,34 @@ class PosPaymentBar extends ConsumerWidget {
               const SizedBox(width: TenantAdminSpacing.sm),
               FilledButton.icon(
                 onPressed: canProceed
-                    ? () => context.push('/pos/new-sale/payment')
+                    ? () async {
+                        final pending = cart.cartDiscount?.isPendingSync ==
+                                true ||
+                            cart.items.values.any(
+                                (item) => item.discount?.isPendingSync == true);
+                        if (pending) {
+                          await syncPendingPosDiscounts(ref: ref);
+                          final refreshed = ref.read(posNewSaleCartProvider);
+                          final stillPending =
+                              refreshed.cartDiscount?.isPendingSync == true ||
+                                  refreshed.items.values.any((item) =>
+                                      item.discount?.isPendingSync == true);
+                          if (stillPending) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                  'Discount is saved offline and must sync before payment.',
+                                )),
+                              );
+                            }
+                            return;
+                          }
+                        }
+                        if (context.mounted) {
+                          context.push('/pos/new-sale/payment');
+                        }
+                      }
                     : null,
                 icon: isNarrow
                     ? const SizedBox.shrink()

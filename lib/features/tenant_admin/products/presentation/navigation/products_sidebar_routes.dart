@@ -29,7 +29,14 @@ class ProductsSidebarRoutes {
         path.startsWith('$list/');
   }
 
-  static bool isParentActive(String path) => isProductsArea(path);
+  static bool isParentActive(String path) {
+    return path == list ||
+        path == dashboard ||
+        (path.startsWith('$list/') &&
+            path != add &&
+            path != import &&
+            !path.endsWith('/edit'));
+  }
 
   static bool isChildActive({
     required String currentPath,

@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/core/access/tenant_admin_access_codes.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_context.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_access_checker.dart';
-import 'package:nytroz_pos/features/tenant_admin/inventory/domain/entities/inventory_entities.dart';
-import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/providers/inventory_providers.dart';
-import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/screens/current_stock_screen.dart';
+import 'package:nytroz_pos/features/tenant_admin/inventory/domain/entities/current_stock_entities.dart';
+import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/current_stock/providers/current_stock_providers.dart';
+import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/current_stock/screens/current_stock_screen.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_access_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_context_provider.dart';
 
@@ -209,3 +209,4 @@ TenantAdminAccessChecker _checker({
     ),
   );
 }
+

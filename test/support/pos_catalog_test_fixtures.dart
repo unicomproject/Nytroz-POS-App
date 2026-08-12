@@ -1,5 +1,5 @@
-import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
-import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
+import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
+import 'package:nytroz_pos/features/pos/presentation/providers/pos_catalog_provider.dart';
 
 const testTicketsCategoryId = 'cat-tickets';
 const testServicesCategoryId = 'cat-services';

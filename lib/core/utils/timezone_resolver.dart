@@ -35,8 +35,7 @@ class TimezoneResolver {
     }
 
     final currentNowUtc = (nowUtc ?? DateTime.now()).toUtc();
-    final elapsed =
-        currentNowUtc.difference(serverTimeReceivedAt.toUtc());
+    final elapsed = currentNowUtc.difference(serverTimeReceivedAt.toUtc());
     final anchoredUtc = serverNowUtc.toUtc().add(elapsed);
 
     final zone = outletTimezone?.trim();

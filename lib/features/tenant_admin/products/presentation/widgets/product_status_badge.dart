@@ -157,5 +157,3 @@ class StockStatusBadge extends StatelessWidget {
     );
   }
 }
-
-

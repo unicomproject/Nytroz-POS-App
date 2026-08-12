@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/data/constants/inventory_api_paths.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/data/datasources/inventory_remote_datasource.dart';
-import 'package:nytroz_pos/features/tenant_admin/inventory/data/models/inventory_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/inventory/data/models/current_stock_dtos.dart';
 
 void main() {
   group('InventoryRemoteDatasource', () {
@@ -100,3 +100,4 @@ class _StaticAdapter implements HttpClientAdapter {
     );
   }
 }
+

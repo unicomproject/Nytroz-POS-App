@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../cart/presentation/providers/pos_discount_provider.dart';
+import '../../../discount/presentation/providers/pos_discount_provider.dart';
 import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../customers/presentation/providers/customers_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';

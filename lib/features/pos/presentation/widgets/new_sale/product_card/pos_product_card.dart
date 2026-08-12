@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
+import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 
 import '../../../../../../shared/widgets/app_cached_network_image.dart';

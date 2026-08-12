@@ -53,7 +53,9 @@ class ProductListPanel extends ConsumerWidget {
                     const SizedBox(height: TenantAdminSpacing.lg),
                     TextButton(
                       onPressed: () {
-                        ref.read(productListFilterProvider.notifier).resetFilters();
+                        ref
+                            .read(productListFilterProvider.notifier)
+                            .resetFilters();
                       },
                       child: const Text('Reset Filters'),
                     ),
@@ -67,10 +69,20 @@ class ProductListPanel extends ConsumerWidget {
             child: ProductTable(
               products: result.items,
               visibility: visibility,
-              onView: (product) =>
-                  context.go('/tenant-admin/products/${product.id}'),
-              onEdit: (product) =>
-                  context.go('/tenant-admin/products/${product.id}/edit'),
+              onView: (product) {
+                if (product.status == 'DRAFT') {
+                  context.go('/tenant-admin/products/draft/${product.id}');
+                } else {
+                  context.go('/tenant-admin/products/${product.id}');
+                }
+              },
+              onEdit: (product) {
+                if (product.status == 'DRAFT') {
+                  context.go('/tenant-admin/products/draft/${product.id}');
+                } else {
+                  context.go('/tenant-admin/products/${product.id}/edit');
+                }
+              },
             ),
           ),
         if (visibility.showPagination && result.totalCount > 0) ...[
@@ -162,7 +174,8 @@ class _PaginationFooter extends ConsumerWidget {
                 if (pageNum == -1)
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4),
-                    child: Text('...', style: TextStyle(color: TenantAdminColors.mutedText)),
+                    child: Text('...',
+                        style: TextStyle(color: TenantAdminColors.mutedText)),
                   )
                 else
                   _PageNumberButton(
@@ -174,7 +187,8 @@ class _PaginationFooter extends ConsumerWidget {
               ],
               _PageButton(
                 icon: Icons.chevron_right,
-                onPressed: page < totalPages ? () => notifier.setPage(page + 1) : null,
+                onPressed:
+                    page < totalPages ? () => notifier.setPage(page + 1) : null,
               ),
             ],
           ),
@@ -252,9 +266,13 @@ class _PageNumberButton extends StatelessWidget {
       height: 34,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: isActive ? TenantAdminColors.posHomeAccentOrange : Colors.transparent,
+        color: isActive
+            ? TenantAdminColors.posHomeAccentOrange
+            : Colors.transparent,
         border: Border.all(
-          color: isActive ? TenantAdminColors.posHomeAccentOrange : TenantAdminColors.border,
+          color: isActive
+              ? TenantAdminColors.posHomeAccentOrange
+              : TenantAdminColors.border,
         ),
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
       ),
@@ -275,4 +293,3 @@ class _PageNumberButton extends StatelessWidget {
     );
   }
 }
-

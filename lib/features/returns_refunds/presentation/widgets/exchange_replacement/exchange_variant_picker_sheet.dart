@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../cart/domain/entities/pos_catalog_models.dart';
-import '../../../../cart/presentation/providers/pos_catalog_provider.dart';
+import '../../../../pos/domain/entities/pos_catalog_models.dart';
+import '../../../../pos/presentation/providers/pos_catalog_provider.dart';
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../domain/entities/exchange_replacement_selection.dart';
 import '../../providers/return_create_credit_provider.dart';

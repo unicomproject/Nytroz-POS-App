@@ -36,9 +36,8 @@ class ProductDetailScreen extends ConsumerWidget {
         : const AsyncData(null);
 
     final pageTitle = isEditRoute ? 'Edit product' : 'Product details';
-    final pageSubtitle = isEditRoute
-        ? 'Edit product information'
-        : 'View product information.';
+    final pageSubtitle =
+        isEditRoute ? 'Edit product information' : 'View product information.';
 
     if (!hasViewAccess) {
       return TenantAdminPageScaffold(
@@ -144,7 +143,8 @@ class ProductDetailScreen extends ConsumerWidget {
                 const SizedBox(width: 8),
                 _HeaderBadgeColumn(
                   label: 'Stock Status',
-                  badge: StockStatusBadge(status: _calculateStockStatus(detail)),
+                  badge:
+                      StockStatusBadge(status: _calculateStockStatus(detail)),
                 ),
                 if (canDelete) ...[
                   const SizedBox(width: 8),

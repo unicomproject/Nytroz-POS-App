@@ -58,8 +58,8 @@ class CustomerDetailsActions extends StatelessWidget {
                     foregroundColor: Colors.white,
                     disabledBackgroundColor: const Color(0xFFFFB0A3),
                     disabledForegroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 10),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

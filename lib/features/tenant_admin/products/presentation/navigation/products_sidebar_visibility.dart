@@ -69,7 +69,8 @@ class ProductsSidebarVisibility {
         children.where((child) => child.isVisible).toList(growable: false);
 
     return ProductsSidebarVisibility(
-      showParent: visibleChildren.isNotEmpty || access.canAccessProductListPage(),
+      showParent:
+          visibleChildren.isNotEmpty || access.canAccessProductListPage(),
       children: children,
     );
   }

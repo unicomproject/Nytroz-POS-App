@@ -8,6 +8,12 @@ class ApiEndpoints {
   static const tenantLogin = '/api/v1/tenant-auth/login';
   static const tenantRefresh = '/api/v1/tenant-auth/refresh';
   static const tenantLogout = '/api/v1/tenant-auth/logout';
+  static String publicPosLoginBranding(String tenantSlug) =>
+      '/api/v1/pos/public/login-branding/${Uri.encodeComponent(tenantSlug)}';
+  static const tenantAdminPosLoginBranding =
+      '/api/v1/tenant-admin/settings/pos-login-branding';
+  static String tenantAdminPosLoginBrandingMedia(String purpose) =>
+      '$tenantAdminPosLoginBranding/media/$purpose';
 
   static const tenantAdminOutlets = '/api/v1/tenant-admin/outlets';
   static const tenantAdminOutletOptions =

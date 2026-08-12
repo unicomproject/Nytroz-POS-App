@@ -807,6 +807,12 @@ class TenantAdminPermissionAliases {
     'tenant.stock.in': [
       'tenant.stock.in',
     ],
+    'tenant.stock.opening': [
+      'tenant.stock.opening',
+      'inventory.opening_stock',
+      'tenant.stock.in',
+      'tenant.stock.view',
+    ],
     'tenant.stock.out': [
       'tenant.stock.out',
     ],

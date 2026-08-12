@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/network/dio_provider.dart';
+import 'package:nytroz_pos/core/network/media_url_resolver.dart';
 
-//import '../../../../../shared/widgets/app_cached_network_image.dart';
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/tenant_product.dart';
 import 'product_delete_action.dart';
-//import 'product_status_action_menu.dart';
 import 'product_status_badge.dart';
 
 class ProductTable extends StatelessWidget {
@@ -35,8 +36,8 @@ class ProductTable extends StatelessWidget {
                 constraints: BoxConstraints(minWidth: constraints.maxWidth),
                 child: DataTable(
                   headingRowHeight: 52,
-                  dataRowMinHeight: 72,
-                  dataRowMaxHeight: 84,
+                  dataRowMinHeight: 68,
+                  dataRowMaxHeight: 68,
                   columnSpacing: TenantAdminSpacing.xl,
                   horizontalMargin: TenantAdminSpacing.lg,
                   headingRowColor:
@@ -210,7 +211,7 @@ class _ProductIdentityCell extends StatelessWidget {
   }
 }
 
-class _ProductAvatar extends StatelessWidget {
+class _ProductAvatar extends ConsumerWidget {
   const _ProductAvatar({
     required this.imageUrl,
     required this.name,
@@ -220,18 +221,22 @@ class _ProductAvatar extends StatelessWidget {
   final String name;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final trimmed = name.trim();
     final initials =
         trimmed.isEmpty ? '?' : trimmed.substring(0, 1).toUpperCase();
 
     if (imageUrl != null && imageUrl!.trim().isNotEmpty) {
+      final baseUrl = ref.watch(appDioProvider).options.baseUrl;
+      final resolvedUrl =
+          MediaUrlResolver.resolve(imageUrl!, apiBaseUrl: baseUrl) ??
+              imageUrl!;
       return ClipRRect(
         borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
         child: Image.network(
-          imageUrl!,
-          width: 36,
-          height: 36,
+          resolvedUrl,
+          width: 56,
+          height: 56,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) =>
               _FallbackAvatar(initials: initials),
@@ -251,19 +256,19 @@ class _FallbackAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 64,
-      height: 64,
+      width: 56,
+      height: 56,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: TenantAdminColors.secondary,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
       ),
       child: Text(
         initials,
         style: const TextStyle(
           color: TenantAdminColors.primary,
           fontWeight: FontWeight.w800,
-          fontSize: 22,
+          fontSize: 18,
         ),
       ),
     );
@@ -282,7 +287,7 @@ class _PlainCell extends StatelessWidget {
 }
 
 class _ActionIconButton extends StatelessWidget {
-    const _ActionIconButton({
+  const _ActionIconButton({
     required this.icon,
     required this.tooltip,
     required this.onPressed,

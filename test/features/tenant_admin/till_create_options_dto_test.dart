@@ -10,13 +10,34 @@ void main() {
           {'id': 'out1', 'name': 'Main', 'code': 'M1', 'status': 'ACTIVE'}
         ],
         'cashiers': [
-          {'id': 'c1', 'displayName': 'John', 'outletIds': ['out1']}
+          {
+            'id': 'c1',
+            'displayName': 'John',
+            'outletIds': ['out1']
+          }
         ],
         'posDevices': [
-          {'id': 'p1', 'code': 'POS1', 'name': 'Tab1', 'outletId': 'out1', 'status': 'ACTIVE', 'isTrusted': true, 'isAssigned': false}
+          {
+            'id': 'p1',
+            'code': 'POS1',
+            'name': 'Tab1',
+            'outletId': 'out1',
+            'status': 'ACTIVE',
+            'isTrusted': true,
+            'isAssigned': false
+          }
         ],
         'hardwareDevices': [
-          {'id': 'h1', 'code': 'HW1', 'name': 'Scan1', 'type': 'barcode_scanner', 'outletId': 'out1', 'status': 'ACTIVE', 'isAssigned': false, 'connectionStatus': 'ONLINE'}
+          {
+            'id': 'h1',
+            'code': 'HW1',
+            'name': 'Scan1',
+            'type': 'barcode_scanner',
+            'outletId': 'out1',
+            'status': 'ACTIVE',
+            'isAssigned': false,
+            'connectionStatus': 'ONLINE'
+          }
         ],
         'statuses': ['ACTIVE', 'INACTIVE'],
         'currencyCode': 'LKR'
@@ -43,7 +64,8 @@ void main() {
         defaultOpeningFloatAmount: '500.50',
         posDeviceId: ' p1 ',
         hardwareAssignments: [
-          CreateTillHardwareAssignmentDto(hardwareDeviceId: 'h1', isPrimary: true)
+          CreateTillHardwareAssignmentDto(
+              hardwareDeviceId: 'h1', isPrimary: true)
         ],
       );
 

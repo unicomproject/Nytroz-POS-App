@@ -36,12 +36,12 @@ import 'package:nytroz_pos/features/pos/presentation/widgets/new_sale/pos_new_sa
 import 'package:nytroz_pos/features/pos/presentation/widgets/new_sale/product_card/pos_product_card.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/dashboard_action_card.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/sidebar/pos_sidebar.dart';
-import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
-import 'package:nytroz_pos/features/cart/domain/entities/pos_barcode_lookup_result.dart';
-import 'package:nytroz_pos/features/cart/data/datasources/pos_barcode_remote_datasource.dart';
-import 'package:nytroz_pos/features/cart/presentation/providers/pos_catalog_provider.dart';
+import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
+import 'package:nytroz_pos/features/pos/domain/entities/pos_barcode_lookup_result.dart';
+import 'package:nytroz_pos/features/pos/data/datasources/remote/pos_barcode_remote_datasource.dart';
+import 'package:nytroz_pos/features/pos/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
-import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_search_coordinator.dart';
+import 'package:nytroz_pos/features/pos/presentation/providers/pos_new_sale_search_coordinator.dart';
 import 'package:nytroz_pos/features/cash_drawer/presentation/screens/pos_close_till_screen.dart';
 import 'package:nytroz_pos/features/pos/presentation/providers/new_sale/pos_barcode_scan_controller.dart';
 import 'package:nytroz_pos/features/pos/presentation/providers/new_sale/pos_camera_scanner_provider.dart';

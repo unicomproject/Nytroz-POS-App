@@ -41,11 +41,17 @@ class ProductUnitOption {
     required this.id,
     required this.code,
     required this.name,
+    this.unitType,
+    this.symbol,
+    this.recommendedAllowDecimalQuantity,
   });
 
   final String id;
   final String code;
   final String name;
+  final String? unitType;
+  final String? symbol;
+  final bool? recommendedAllowDecimalQuantity;
 }
 
 class ProductTaxOption {

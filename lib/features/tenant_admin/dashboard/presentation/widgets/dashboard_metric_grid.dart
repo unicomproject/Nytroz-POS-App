@@ -59,11 +59,17 @@ class _NewDashboardMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, color) = _getMetricConfig(metric.key);
-    
+
     // Parse trend logic
-    final isUp = metric.trend?.contains('+') == true || metric.trend?.contains('↑') == true || (metric.trend != null && !metric.trend!.contains('-') && metric.trend!.contains('%'));
-    final trendColor = metric.trend == null ? Colors.transparent : (isUp ? TenantAdminColors.success : TenantAdminColors.danger);
-    
+    final isUp = metric.trend?.contains('+') == true ||
+        metric.trend?.contains('↑') == true ||
+        (metric.trend != null &&
+            !metric.trend!.contains('-') &&
+            metric.trend!.contains('%'));
+    final trendColor = metric.trend == null
+        ? Colors.transparent
+        : (isUp ? TenantAdminColors.success : TenantAdminColors.danger);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -116,7 +122,8 @@ class _NewDashboardMetricCard extends StatelessWidget {
                     if (metric.trend != null)
                       Row(
                         children: [
-                          Icon(isUp ? Icons.arrow_upward : Icons.arrow_downward, color: trendColor, size: 14),
+                          Icon(isUp ? Icons.arrow_upward : Icons.arrow_downward,
+                              color: trendColor, size: 14),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -180,7 +187,7 @@ class _NewDashboardMetricCard extends StatelessWidget {
       ),
     );
   }
-  
+
   (IconData, Color) _getMetricConfig(String key) {
     switch (key) {
       case 'sales':

@@ -85,6 +85,7 @@ class TenantProductDetail {
     this.subCategoryId,
     this.brandId,
     this.shortDescription,
+    this.longDescription,
     this.imageUrl,
     this.costPrice,
     this.discountPrice,
@@ -104,6 +105,7 @@ class TenantProductDetail {
   final String? brandId;
   final String unitType;
   final String? shortDescription;
+  final String? longDescription;
   final String? imageUrl;
   final double? costPrice;
   final double sellingPrice;

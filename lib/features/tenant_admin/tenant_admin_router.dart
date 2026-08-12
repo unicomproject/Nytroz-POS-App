@@ -26,14 +26,17 @@ import 'products/presentation/dashboard/product_dashboard_page.dart';
 import 'products/presentation/navigation/products_coming_soon_screen.dart';
 import 'products/presentation/navigation/products_route_guard.dart';
 import 'products/presentation/navigation/products_sidebar_routes.dart';
+import 'inventory/presentation/opening_stock/screens/opening_stock_wizard_screen.dart';
 import 'products/presentation/screens/add_product_screen.dart';
 import 'products/presentation/screens/product_detail_screen.dart';
 import 'products/presentation/screens/product_list_screen.dart';
 import 'products/presentation/screens/popular_products_curation_screen.dart';
 import 'brands/presentation/screens/brand_list_screen.dart';
 import 'inventory/presentation/navigation/inventory_routes.dart';
-import 'inventory/presentation/screens/current_stock_screen.dart';
-import 'inventory/presentation/screens/stock_in_screen.dart';
+import 'inventory/presentation/dashboard/pages/inventory_dashboard_page.dart';
+import 'inventory/presentation/current_stock/screens/current_stock_screen.dart';
+import 'inventory/presentation/current_stock/screens/product_stock_detail_screen.dart';
+import 'inventory/presentation/stock_in/screens/stock_in_screen.dart';
 import 'reports/presentation/screens/outlet_report_screen.dart';
 import 'reports/presentation/screens/reports_dashboard_screen.dart';
 import 'reports/presentation/screens/sales_report_screen.dart';
@@ -49,6 +52,7 @@ import 'presentation/screens/tenant_admin_error_screen.dart';
 import 'presentation/screens/tenant_admin_forbidden_screen.dart';
 import 'presentation/screens/tenant_admin_loading_screen.dart';
 import 'presentation/screens/tenant_admin_placeholder_screen.dart';
+import 'login_branding/presentation/screens/tenant_login_branding_screen.dart';
 
 List<RouteBase> tenantAdminRoutes(Ref ref) {
   return [
@@ -99,6 +103,8 @@ List<RouteBase> tenantAdminRoutes(Ref ref) {
           path: '/tenant-admin/roles',
           redirect: (context, state) => '/tenant-admin/roles-permissions',
         ),
+        // stockRoot is handled dynamically for access control, but we add a redirect
+        // just in case it's navigated to directly.
         GoRoute(
           path: InventoryRoutes.stockRoot,
           redirect: (context, state) => InventoryRoutes.currentStock,
@@ -106,6 +112,13 @@ List<RouteBase> tenantAdminRoutes(Ref ref) {
         GoRoute(
           path: '/tenant-admin/products/import',
           redirect: (context, state) => '/tenant-admin/products',
+        ),
+        GoRoute(
+          path: '/tenant-admin/products/draft/:id',
+          builder: (context, state) {
+            final draftId = state.pathParameters['id'];
+            return AddProductScreen(resumeProductId: draftId);
+          },
         ),
         ...tenantAdminRouteDefinitions.map(
           (definition) => _tenantAdminModuleRoute(ref, definition),
@@ -165,6 +178,10 @@ String? _tenantAdminAccessRedirect(
 }
 
 Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
+  if (definition.path == '/tenant-admin/settings') {
+    return const TenantLoginBrandingScreen();
+  }
+
   if (definition.path == '/tenant-admin/dashboard') {
     return const TenantDashboardScreen();
   }
@@ -276,8 +293,15 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return const ProductListScreen();
   }
 
-  if (definition.path == ProductsSidebarRoutes.add) {
-    return const AddProductScreen();
+  if (definition.path == ProductsSidebarRoutes.add ||
+      state.uri.path.startsWith('/tenant-admin/products/draft/')) {
+    final draftId = state.pathParameters['productId'] ??
+        state.pathParameters['id'] ??
+        (state.uri.pathSegments.length >= 4 &&
+                state.uri.pathSegments[2] == 'draft'
+            ? state.uri.pathSegments[3]
+            : null);
+    return AddProductScreen(resumeProductId: draftId);
   }
 
   if (definition.path == ProductsSidebarRoutes.categories) {
@@ -302,12 +326,28 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return const PopularProductsCurationScreen();
   }
 
+  if (definition.path == InventoryRoutes.dashboard) {
+    return const InventoryDashboardPage();
+  }
+
   if (definition.path == InventoryRoutes.currentStock) {
     return const CurrentStockScreen();
   }
 
+  if (definition.path == InventoryRoutes.currentStockDetail) {
+    final variantId = state.pathParameters['variantId'];
+    if (variantId != null) {
+      return ProductStockDetailScreen(variantId: variantId);
+    }
+    return const TenantAdminErrorScreen();
+  }
+
   if (definition.path == InventoryRoutes.stockIn) {
     return const StockInScreen();
+  }
+
+  if (definition.path == InventoryRoutes.openingStock) {
+    return const OpeningStockWizardScreen();
   }
 
   if (definition.path == '/tenant-admin/reports') {
@@ -502,12 +542,21 @@ bool _canAccessRoute(
     return accessChecker.canAccessProductModule();
   }
 
-  if (definition.path == InventoryRoutes.currentStock) {
+  if (definition.path == InventoryRoutes.currentStock ||
+      definition.path == InventoryRoutes.currentStockDetail) {
     return accessChecker.canAccessCurrentStockPage();
   }
 
   if (definition.path == InventoryRoutes.stockIn) {
     return accessChecker.canAccessStockInPage();
+  }
+
+  if (definition.path == InventoryRoutes.openingStock) {
+    return accessChecker.canAccessOpeningStockPage();
+  }
+
+  if (definition.path == InventoryRoutes.openingStock) {
+    return accessChecker.canAccessOpeningStockPage();
   }
 
   if (definition.path == '/tenant-admin/reports') {

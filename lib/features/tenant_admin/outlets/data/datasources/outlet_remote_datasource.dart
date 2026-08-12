@@ -126,6 +126,7 @@ class OutletRemoteDatasource {
   Future<List<OutletManagerOptionDto>> getManagerOptions() async {
     return const [];
   }
+
   Map<String, dynamic> _listQueryParameters(OutletListQuery query) {
     return {
       'page': query.page,

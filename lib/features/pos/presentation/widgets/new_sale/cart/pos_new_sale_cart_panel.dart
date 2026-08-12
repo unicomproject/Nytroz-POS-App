@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
-import 'package:nytroz_pos/features/cart/domain/entities/pos_catalog_models.dart';
+import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_product_variant_sheet.dart';
 

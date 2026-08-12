@@ -13,11 +13,13 @@ import '../../application/usecases/update_product.dart';
 import '../../application/usecases/update_product_status.dart';
 import '../../data/datasources/tenant_product_remote_datasource.dart';
 import '../../data/repositories/tenant_product_repository_impl.dart';
+import '../../domain/entities/add_product_wizard_state.dart';
 import '../../domain/entities/tenant_product.dart';
 import '../../domain/entities/tenant_product_create_options.dart';
-import '../../domain/entities/tenant_product_filter_options.dart';
 import '../../domain/entities/tenant_product_detail.dart';
+import '../../domain/entities/tenant_product_filter_options.dart';
 import '../../domain/repositories/tenant_product_repository.dart';
+import '../controllers/add_product_wizard_controller.dart';
 
 final tenantProductRemoteDatasourceProvider =
     Provider<TenantProductRemoteDatasource>((ref) {
@@ -113,7 +115,8 @@ class ProductListFilterState {
       search: search ?? this.search,
       categoryId: clearCategory ? null : (categoryId ?? this.categoryId),
       brandId: clearBrand ? null : (brandId ?? this.brandId),
-      productStatus: clearProductStatus ? null : (productStatus ?? this.productStatus),
+      productStatus:
+          clearProductStatus ? null : (productStatus ?? this.productStatus),
       stockStatus: clearStockStatus ? null : (stockStatus ?? this.stockStatus),
       sortBy: sortBy ?? this.sortBy,
       sortDirection: sortDirection ?? this.sortDirection,
@@ -137,7 +140,8 @@ class ProductListFilterState {
   }
 }
 
-class ProductListFilterStateNotifier extends StateNotifier<ProductListFilterState> {
+class ProductListFilterStateNotifier
+    extends StateNotifier<ProductListFilterState> {
   ProductListFilterStateNotifier() : super(const ProductListFilterState());
 
   void setSearch(String value) {
@@ -177,7 +181,8 @@ class ProductListFilterStateNotifier extends StateNotifier<ProductListFilterStat
   }
 
   void setSort(String sortBy, String sortDirection) {
-    state = state.copyWith(sortBy: sortBy, sortDirection: sortDirection, pageNumber: 1);
+    state = state.copyWith(
+        sortBy: sortBy, sortDirection: sortDirection, pageNumber: 1);
   }
 
   void setPage(int pageNumber) {
@@ -202,8 +207,8 @@ class ProductListFilterStateNotifier extends StateNotifier<ProductListFilterStat
   }
 }
 
-final productListFilterProvider =
-    StateNotifierProvider<ProductListFilterStateNotifier, ProductListFilterState>((ref) {
+final productListFilterProvider = StateNotifierProvider<
+    ProductListFilterStateNotifier, ProductListFilterState>((ref) {
   return ProductListFilterStateNotifier();
 });
 
@@ -292,4 +297,10 @@ final productEditCreateOptionsProvider =
   }
 
   return ref.watch(getProductCreateOptionsProvider).call();
+});
+
+final addProductWizardControllerProvider = StateNotifierProvider.autoDispose<
+    AddProductWizardController, AddProductWizardState>((ref) {
+  final repo = ref.watch(tenantProductRepositoryProvider);
+  return AddProductWizardController(repo);
 });

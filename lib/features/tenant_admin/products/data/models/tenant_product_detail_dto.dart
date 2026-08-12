@@ -17,6 +17,7 @@ class TenantProductDetailDto {
     this.subCategoryId,
     this.brandId,
     this.shortDescription,
+    this.longDescription,
     this.imageUrl,
     this.costPrice,
     this.discountPrice,
@@ -39,6 +40,7 @@ class TenantProductDetailDto {
       brandId: _nullableString(json['brandId']),
       unitType: json['unitType'] as String? ?? '',
       shortDescription: _nullableString(json['shortDescription']),
+      longDescription: _nullableString(json['longDescription']),
       imageUrl: _nullableString(json['imageUrl']),
       costPrice: _doubleValue(json['costPrice']),
       sellingPrice: _doubleValue(json['sellingPrice']) ?? 0,
@@ -82,6 +84,7 @@ class TenantProductDetailDto {
   final String? brandId;
   final String unitType;
   final String? shortDescription;
+  final String? longDescription;
   final String? imageUrl;
   final double? costPrice;
   final double sellingPrice;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/cart/domain/entities/pos_cart_discount.dart';
+import 'package:nytroz_pos/features/discount/domain/entities/pos_cart_discount.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/sale/domain/entities/pos_payment_method_type.dart';
 import 'package:nytroz_pos/features/sale/presentation/providers/pos_checkout_summary_provider.dart';
