@@ -81,6 +81,11 @@ class TenantAdminAppHeader extends ConsumerWidget {
                     ),
                     const Spacer(),
                     if (!veryCompact) ...[
+                      _TillSessionChip(
+                        isOpen: isOpen,
+                        compact: compact,
+                      ),
+                      const SizedBox(width: TenantAdminSpacing.sm),
                       _ContextChip(
                         icon: Icons.location_on_outlined,
                         label: outletLabel,
