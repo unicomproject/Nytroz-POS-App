@@ -24,8 +24,14 @@ class TenantUserRepositoryImpl implements TenantUserRepository {
   }
 
   @override
-  Future<TenantUserDetail> createUser(UserFormData form) async {
-    final dto = await _remoteDatasource.createUser(_toRequestDto(form));
+  Future<TenantUserDetail> createUser(
+    UserFormData form, {
+    String? idempotencyKey,
+  }) async {
+    final dto = await _remoteDatasource.createUser(
+      _toRequestDto(form),
+      idempotencyKey: idempotencyKey,
+    );
     return TenantUserMapper.toDetailEntity(dto);
   }
 
@@ -51,12 +57,14 @@ class TenantUserRepositoryImpl implements TenantUserRepository {
       fullName: form.fullName,
       email: form.email,
       phoneNumber: form.phone,
+      employeeId: form.employeeId,
       roleId: form.roleId,
       outletIds: form.outletIds,
       permissionOverrideEnabled: form.permissionOverrideEnabled,
       overriddenPermissionIds: form.overriddenPermissionIds,
       sendInviteEmail: form.status == null ? form.sendInviteEmail : null,
       status: form.status,
+      profileMediaAssetId: form.profileMediaAssetId,
     );
   }
 }

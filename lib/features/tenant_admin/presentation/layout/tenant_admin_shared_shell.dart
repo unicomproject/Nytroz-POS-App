@@ -16,7 +16,6 @@ import '../screens/tenant_admin_loading_screen.dart';
 import '../theme/tenant_admin_theme.dart';
 import '../widgets/tenant_admin_shared_cards.dart';
 import 'tenant_admin_breadcrumb.dart';
-import 'tenant_admin_footer_navigation.dart';
 import 'tenant_admin_header.dart';
 import 'tenant_admin_navigation_drawer.dart';
 import 'tenant_admin_responsive_content_area.dart';
@@ -136,7 +135,6 @@ class TenantAdminSharedShell extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    TenantAdminFooterNavigation(currentPath: currentRoute),
                   ],
                 ),
               );
@@ -228,7 +226,6 @@ class _TenantAdminMobileShellState extends State<_TenantAdminMobileShell> {
             onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
           ),
           Expanded(child: widget.child),
-          TenantAdminFooterNavigation(currentPath: widget.currentPath),
         ],
       ),
     );

@@ -79,8 +79,6 @@ class TenantAdminAppHeader extends ConsumerWidget {
                           ? TenantAdminSpacing.sm
                           : TenantAdminSpacing.lg,
                     ),
-                    if (!veryCompact)
-                      _TillSessionChip(isOpen: isOpen, compact: compact),
                     const Spacer(),
                     if (!veryCompact) ...[
                       _ContextChip(

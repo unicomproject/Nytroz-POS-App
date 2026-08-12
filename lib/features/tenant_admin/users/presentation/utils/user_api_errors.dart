@@ -20,6 +20,11 @@ String? _errorCode(DioException error) {
 }
 
 Map<String, String> userValidationErrors(DioException error) {
+  final detailErrors = _detailFieldErrors(error);
+  if (detailErrors.isNotEmpty) {
+    return detailErrors;
+  }
+
   final code = _errorCode(error);
   final message = userErrorMessage(error, fallback: 'Failed to save user');
 
@@ -37,6 +42,32 @@ Map<String, String> userValidationErrors(DioException error) {
     default:
       return const {};
   }
+}
+
+Map<String, String> _detailFieldErrors(DioException error) {
+  final data = error.response?.data;
+  if (data is! Map || data['details'] is! List) {
+    return const {};
+  }
+
+  final errors = <String, String>{};
+  for (final item in data['details'] as List) {
+    if (item is! Map) {
+      continue;
+    }
+
+    final field = item['field']?.toString();
+    if (field == null || field.trim().isEmpty) {
+      continue;
+    }
+
+    final message = item['message']?.toString() ??
+        item['error']?.toString() ??
+        userErrorMessage(error, fallback: 'Invalid value.');
+    errors[field.trim()] = message;
+  }
+
+  return errors;
 }
 
 String userSubmitErrorMessage(

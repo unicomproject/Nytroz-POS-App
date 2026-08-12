@@ -1,8 +1,8 @@
 enum UserStatusFilter {
   all('All'),
   active('Active'),
-  inactive('Inactive'),
-  invited('Invited');
+  invited('Invited'),
+  inactive('Inactive');
 
   const UserStatusFilter(this.label);
 

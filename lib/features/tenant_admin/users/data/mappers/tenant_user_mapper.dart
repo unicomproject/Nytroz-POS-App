@@ -12,7 +12,10 @@ class TenantUserMapper {
       phone: dto.phone,
       roleId: dto.roleId,
       roleName: dto.roleName,
+      roleDescription: dto.roleDescription,
       outletName: dto.outletName,
+      outlets: dto.outlets.map(toOutletOption).toList(growable: false),
+      outletCount: dto.outletCount,
       status: dto.status,
       lastActiveAt: dto.lastActiveAt,
     );
@@ -28,7 +31,12 @@ class TenantUserMapper {
   }
 
   static RoleOption toRoleOption(RoleOptionDto dto) {
-    return RoleOption(id: dto.id, name: dto.name, code: dto.code);
+    return RoleOption(
+      id: dto.id,
+      name: dto.name,
+      code: dto.code,
+      roleDescription: dto.roleDescription,
+    );
   }
 
   static UserOutletOption toOutletOption(UserOutletOptionDto dto) {
@@ -76,13 +84,23 @@ class TenantUserMapper {
       phone: dto.phone,
       roleId: dto.roleId,
       roleName: dto.roleName,
+      roleDescription: dto.roleDescription,
       outlets: dto.outlets.map(toOutletOption).toList(growable: false),
+      outletCount: dto.outletCount,
+      accessSummary: dto.accessSummary == null
+          ? null
+          : TenantUserAccessSummary(
+              outletCount: dto.accessSummary!.outletCount,
+              moduleCount: dto.accessSummary!.moduleCount,
+              permissionCount: dto.accessSummary!.permissionCount,
+            ),
       status: dto.status,
       permissionOverrideEnabled: dto.permissionOverrideEnabled,
       overriddenPermissionIds: dto.overriddenPermissionIds,
       lastActiveAt: dto.lastActiveAt,
       createdAt: dto.createdAt,
       profileImageUrl: dto.profileImageUrl,
+      profileMediaAssetId: dto.profileMediaAssetId,
     );
   }
 }

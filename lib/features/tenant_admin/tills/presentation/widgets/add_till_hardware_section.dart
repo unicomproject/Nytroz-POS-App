@@ -99,7 +99,7 @@ class AddTillHardwareSection extends StatelessWidget {
               width: 24,
               height: 24,
               decoration: const BoxDecoration(
-                color: TenantAdminColors.secondary,
+                color: Color(0xFFFF6A00),
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
@@ -230,20 +230,42 @@ class AddTillHardwareSection extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        return DropdownMenu<String>(
-          key: ValueKey('${label}_$outletId'),
-          width: constraints.maxWidth,
-          controller: controller,
-          initialSelection: safeValue,
-          label: Text(label),
-          leadingIcon: Icon(icon, color: TenantAdminColors.mutedText),
-          dropdownMenuEntries: uniqueItems.map((e) => DropdownMenuEntry<String>(
-            value: (e as dynamic).id as String,
-            label: (e as dynamic).name as String,
-          )).toList(),
-          onSelected: (String? selectedId) {
-            onChanged(selectedId);
-          },
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            const SizedBox(height: 8),
+            DropdownMenu<String>(
+              key: ValueKey('${label}_$outletId'),
+              width: constraints.maxWidth,
+              controller: controller,
+              initialSelection: safeValue,
+              hintText: 'Select $label',
+              leadingIcon: Icon(icon, color: TenantAdminColors.mutedText),
+              inputDecorationTheme: InputDecorationTheme(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFFF6A00)),
+                ),
+              ),
+              dropdownMenuEntries: uniqueItems.map((e) => DropdownMenuEntry<String>(
+                value: (e as dynamic).id as String,
+                label: (e as dynamic).name as String,
+              )).toList(),
+              onSelected: (String? selectedId) {
+                onChanged(selectedId);
+              },
+            ),
+          ],
         );
       },
     );

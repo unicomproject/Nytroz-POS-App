@@ -12,6 +12,7 @@ import '../../domain/entities/tenant_user.dart';
 import '../providers/tenant_user_providers.dart';
 import '../providers/tenant_user_visibility_provider.dart';
 import '../utils/user_api_errors.dart';
+import 'add_user_wizard_screen.dart';
 import '../widgets/user_access_section.dart';
 import '../widgets/user_basic_info_section.dart';
 import '../widgets/user_permission_override_panel.dart';
@@ -27,6 +28,10 @@ class AddEditUserScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!isEdit) {
+      return const AddUserWizardScreen();
+    }
+
     ref.watch(authHeaderSyncProvider);
     final canCreate = ref.watch(userCreateAccessProvider);
     final canInvite = ref.watch(userInviteAccessProvider);

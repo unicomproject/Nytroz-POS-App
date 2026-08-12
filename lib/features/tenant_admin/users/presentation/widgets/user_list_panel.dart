@@ -22,12 +22,18 @@ class UserListPanel extends ConsumerWidget {
     required this.visibility,
     required this.statusFilter,
     required this.isMobile,
+    required this.showDetailPanel,
+    required this.selectedUserId,
+    required this.onSelect,
   });
 
   final TenantUserListResult result;
   final UserListVisibility visibility;
   final UserStatusFilter statusFilter;
   final bool isMobile;
+  final bool showDetailPanel;
+  final String? selectedUserId;
+  final ValueChanged<TenantUser> onSelect;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -88,7 +94,10 @@ class UserListPanel extends ConsumerWidget {
               child: UserMobileList(
                 users: result.items,
                 visibility: visibility,
-                onView: (user) => showUserDetailsModal(context, user.id),
+                onView: (user) {
+                  onSelect(user);
+                  showUserDetailsModal(context, user.id);
+                },
                 onEdit: (user) =>
                     context.go('/tenant-admin/staff/${user.id}/edit'),
                 onDelete: (user) => _confirmDelete(context, ref, user),
@@ -98,7 +107,13 @@ class UserListPanel extends ConsumerWidget {
             UserTable(
               users: result.items,
               visibility: visibility,
-              onView: (user) => showUserDetailsModal(context, user.id),
+              selectedUserId: selectedUserId,
+              onView: (user) {
+                onSelect(user);
+                if (!showDetailPanel) {
+                  showUserDetailsModal(context, user.id);
+                }
+              },
               onEdit: (user) =>
                   context.go('/tenant-admin/staff/${user.id}/edit'),
               onDelete: (user) => _confirmDelete(context, ref, user),
@@ -130,7 +145,7 @@ class UserListPanel extends ConsumerWidget {
     final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete user'),
+        title: const Text('Deactivate user'),
         content: Text(
           'Are you sure you want to disable "${user.fullName}"? '
           'They will no longer be able to sign in.',
@@ -145,7 +160,7 @@ class UserListPanel extends ConsumerWidget {
               backgroundColor: TenantAdminColors.danger,
             ),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: const Text('Deactivate'),
           ),
         ],
       ),
@@ -157,6 +172,10 @@ class UserListPanel extends ConsumerWidget {
 
     try {
       await ref.read(deleteUserProvider).call(user.id);
+      if (ref.read(selectedUserIdProvider) == user.id) {
+        ref.read(selectedUserIdProvider.notifier).state = null;
+      }
+      ref.invalidate(userDetailProvider(user.id));
       ref.invalidate(userListProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -166,7 +185,7 @@ class UserListPanel extends ConsumerWidget {
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to delete user.')),
+          const SnackBar(content: Text('Failed to deactivate user.')),
         );
       }
     }

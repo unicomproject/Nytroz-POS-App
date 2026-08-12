@@ -5,7 +5,10 @@ abstract class TenantUserRepository {
 
   Future<TenantUserCreateOptions> getCreateOptions();
 
-  Future<TenantUserDetail> createUser(UserFormData form);
+  Future<TenantUserDetail> createUser(
+    UserFormData form, {
+    String? idempotencyKey,
+  });
 
   Future<TenantUserDetail> getUserById(String id);
 
