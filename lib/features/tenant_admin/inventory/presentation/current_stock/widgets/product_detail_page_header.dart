@@ -23,7 +23,6 @@ class ProductDetailPageHeader extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         // ── Row 2: Page title + subtitle ──
         Text(
           'Product Stock Detail',
@@ -45,5 +44,3 @@ class ProductDetailPageHeader extends StatelessWidget {
     );
   }
 }
-
-

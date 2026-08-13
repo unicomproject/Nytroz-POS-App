@@ -65,19 +65,27 @@ class OpeningStockWizardScreen extends ConsumerWidget {
                   children: [
                     const Text(
                       'Inventory',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w500),
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 6),
-                      child: Icon(Icons.chevron_right, size: 14, color: Color(0xFF94A3B8)),
+                      child: Icon(Icons.chevron_right,
+                          size: 14, color: Color(0xFF94A3B8)),
                     ),
                     const Text(
                       'Opening Stock',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w500),
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 6),
-                      child: Icon(Icons.chevron_right, size: 14, color: Color(0xFF94A3B8)),
+                      child: Icon(Icons.chevron_right,
+                          size: 14, color: Color(0xFF94A3B8)),
                     ),
                     Text(
                       currentStepBreadcrumb,
@@ -108,10 +116,12 @@ class OpeningStockWizardScreen extends ConsumerWidget {
                           const SizedBox(height: 2),
                           const Text(
                             'Select the product and outlet to add opening stock.',
-                            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                            style: TextStyle(
+                                fontSize: 13, color: Color(0xFF64748B)),
                           ),
                           const SizedBox(height: 14),
-                          OpeningStockStepperHeader(currentStep: state.currentStep),
+                          OpeningStockStepperHeader(
+                              currentStep: state.currentStep),
                         ],
                       );
                     }
@@ -135,11 +145,13 @@ class OpeningStockWizardScreen extends ConsumerWidget {
                             SizedBox(height: 2),
                             Text(
                               'Select the product and outlet to add opening stock.',
-                              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                              style: TextStyle(
+                                  fontSize: 13, color: Color(0xFF64748B)),
                             ),
                           ],
                         ),
-                        OpeningStockStepperHeader(currentStep: state.currentStep),
+                        OpeningStockStepperHeader(
+                            currentStep: state.currentStep),
                       ],
                     );
                   },

@@ -55,7 +55,8 @@ class InventoryDashboardAlertItemDto {
       outletName: json['outletName'] as String? ?? '',
       alertType: json['alertType'] as String? ?? '',
       severity: json['severity'] as String? ?? '',
-      detectedOn: DateTime.tryParse(json['detectedOn']?.toString() ?? '') ?? DateTime.now(),
+      detectedOn: DateTime.tryParse(json['detectedOn']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 
@@ -76,14 +77,18 @@ class InventoryDashboardAlertsResponseDto {
     required this.items,
   });
 
-  factory InventoryDashboardAlertsResponseDto.fromJson(Map<String, dynamic>? json) {
+  factory InventoryDashboardAlertsResponseDto.fromJson(
+      Map<String, dynamic>? json) {
     if (json == null || json['items'] == null) {
       return const InventoryDashboardAlertsResponseDto(items: []);
     }
 
     final itemsList = json['items'] as List<dynamic>;
     return InventoryDashboardAlertsResponseDto(
-      items: itemsList.map((e) => InventoryDashboardAlertItemDto.fromJson(e as Map<String, dynamic>)).toList(),
+      items: itemsList
+          .map((e) => InventoryDashboardAlertItemDto.fromJson(
+              e as Map<String, dynamic>))
+          .toList(),
     );
   }
 
@@ -101,14 +106,16 @@ class InventoryDashboardActivityItemDto {
     required this.changeQuantity,
   });
 
-  factory InventoryDashboardActivityItemDto.fromJson(Map<String, dynamic> json) {
+  factory InventoryDashboardActivityItemDto.fromJson(
+      Map<String, dynamic> json) {
     return InventoryDashboardActivityItemDto(
       stockMovementId: json['stockMovementId'] as String,
       activityType: json['activityType'] as String? ?? '',
       referenceNumber: json['referenceNumber'] as String?,
       outletId: json['outletId'] as String,
       outletName: json['outletName'] as String? ?? '',
-      timestamp: DateTime.tryParse(json['timestamp']?.toString() ?? '') ?? DateTime.now(),
+      timestamp: DateTime.tryParse(json['timestamp']?.toString() ?? '') ??
+          DateTime.now(),
       changeQuantity: (json['changeQuantity'] as num?)?.toDouble() ?? 0.0,
     );
   }
@@ -127,14 +134,18 @@ class InventoryDashboardActivitiesResponseDto {
     required this.items,
   });
 
-  factory InventoryDashboardActivitiesResponseDto.fromJson(Map<String, dynamic>? json) {
+  factory InventoryDashboardActivitiesResponseDto.fromJson(
+      Map<String, dynamic>? json) {
     if (json == null || json['items'] == null) {
       return const InventoryDashboardActivitiesResponseDto(items: []);
     }
 
     final itemsList = json['items'] as List<dynamic>;
     return InventoryDashboardActivitiesResponseDto(
-      items: itemsList.map((e) => InventoryDashboardActivityItemDto.fromJson(e as Map<String, dynamic>)).toList(),
+      items: itemsList
+          .map((e) => InventoryDashboardActivityItemDto.fromJson(
+              e as Map<String, dynamic>))
+          .toList(),
     );
   }
 

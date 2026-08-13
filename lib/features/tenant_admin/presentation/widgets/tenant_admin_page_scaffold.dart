@@ -109,7 +109,11 @@ class _HorizontalHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: _HeaderText(title: title, subtitle: subtitle, showBackButton: showBackButton, onBackButtonPressed: onBackButtonPressed),
+          child: _HeaderText(
+              title: title,
+              subtitle: subtitle,
+              showBackButton: showBackButton,
+              onBackButtonPressed: onBackButtonPressed),
         ),
         if (actions.isNotEmpty) ...[
           const SizedBox(width: TenantAdminSpacing.lg),
@@ -144,7 +148,11 @@ class _VerticalHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _HeaderText(title: title, subtitle: subtitle, showBackButton: showBackButton, onBackButtonPressed: onBackButtonPressed),
+        _HeaderText(
+            title: title,
+            subtitle: subtitle,
+            showBackButton: showBackButton,
+            onBackButtonPressed: onBackButtonPressed),
         if (actions.isNotEmpty) ...[
           const SizedBox(height: TenantAdminSpacing.lg),
           Wrap(

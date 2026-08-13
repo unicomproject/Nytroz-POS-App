@@ -7,6 +7,9 @@ import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
 import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.dart';
 import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
+import 'package:nytroz_pos/features/pos_shell/application/state/pos_home_dashboard_state.dart';
+import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_home_dashboard_provider.dart';
+import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_top_bar.dart';
 import 'package:nytroz_pos/features/tenant_admin/data/catalog/tenant_admin_menu_catalog.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_context.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_access_checker.dart';
@@ -35,6 +38,7 @@ TenantAdminAccessChecker _fullAccess() {
     TenantAdminContext(
       tenantId: 'tenant-1',
       tenantName: 'OneVerz',
+      tenantLogoUrl: 'https://example.test/tenant-logo.png',
       userId: 'user-1',
       userDisplayName: 'Admin',
       roles: const [],
@@ -234,6 +238,19 @@ List<Override> _shellOverrides(TenantAdminAccessChecker access) {
     tillSessionStorageProvider.overrideWithValue(_TestTillSessionStorage()),
     openTillProvider.overrideWithValue(OpenTill(_FakeTillRepository())),
     tillProvider.overrideWith((ref) => _PresetTillController()),
+    posHomeDashboardProvider.overrideWith(
+      (ref) => const PosHomeDashboardState(
+        actions: [],
+        fallbackUserDisplayName: 'Admin',
+        businessDisplayName: 'Tenant Brand',
+        businessLogoUrl: 'https://example.test/tenant-logo.png',
+        outletName: 'Main Outlet',
+        tillLabel: 'Front Till 01',
+        tillStatusLabel: 'Closed',
+        isTillOpen: false,
+        statusMessage: 'Session Closed',
+      ),
+    ),
     tenantAdminAccessCheckerProvider.overrideWith((ref) async => access),
     tenantAdminContextProvider.overrideWith((ref) async => access.context),
     tenantAdminMenuProvider.overrideWith((ref) async {
@@ -300,7 +317,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(TenantAdminHeader), findsOneWidget);
+      expect(find.byType(PosTopBar), findsOneWidget);
+      expect(find.byType(TenantAdminHeader), findsNothing);
       expect(find.byType(TenantAdminSidebar), findsOneWidget);
       expect(find.byType(TenantAdminFooterNavigation), findsOneWidget);
       expect(find.text('Dashboard body'), findsOneWidget);
@@ -391,7 +409,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(TenantAdminHeader), findsOneWidget);
+      expect(find.byType(PosTopBar), findsOneWidget);
+      expect(find.byType(TenantAdminHeader), findsNothing);
       expect(find.byType(TenantAdminSidebar), findsNothing);
       expect(find.byType(TenantAdminFooterNavigation), findsOneWidget);
       expect(find.byIcon(Icons.menu_rounded), findsOneWidget);

@@ -60,7 +60,8 @@ class InventoryActivitiesTable extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 4),
-                      Icon(Icons.chevron_right, size: 16, color: Color(0xFF3B82F6)),
+                      Icon(Icons.chevron_right,
+                          size: 16, color: Color(0xFF3B82F6)),
                     ],
                   ),
                 ),
@@ -72,7 +73,10 @@ class InventoryActivitiesTable extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(TenantAdminSpacing.xxl),
               child: Center(
-                child: Text('No activities found.', style: (Theme.of(context).textTheme.bodyMedium ?? const TextStyle()).copyWith(color: TenantAdminColors.mutedText)),
+                child: Text('No activities found.',
+                    style: (Theme.of(context).textTheme.bodyMedium ??
+                            const TextStyle())
+                        .copyWith(color: TenantAdminColors.mutedText)),
               ),
             )
           else
@@ -88,7 +92,6 @@ class InventoryActivitiesTable extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _ActivityRow extends StatelessWidget {
@@ -105,7 +108,7 @@ class _ActivityRow extends StatelessWidget {
           // Icon
           _buildIcon(),
           const SizedBox(width: 16),
-          
+
           // Activity Info
           Expanded(
             child: Column(
@@ -135,7 +138,7 @@ class _ActivityRow extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Date & Time
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -159,7 +162,7 @@ class _ActivityRow extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 16),
-          
+
           // Chevron
           const Icon(Icons.chevron_right, size: 20, color: Color(0xFF64748B)),
         ],
@@ -170,7 +173,7 @@ class _ActivityRow extends StatelessWidget {
   Widget _buildIcon() {
     IconData iconData = Icons.history;
     Color color = const Color(0xFF64748B);
-    
+
     if (activity.activityType.toLowerCase().contains('opening')) {
       iconData = Icons.check_circle_outline;
       color = const Color(0xFF22C55E); // Green
@@ -197,15 +200,28 @@ class _ActivityRow extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
   String _formatTime(DateTime date) {
-    final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
+    final hour =
+        date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
     final amPm = date.hour >= 12 ? 'PM' : 'AM';
     final minute = date.minute.toString().padLeft(2, '0');
     return '$hour:$minute $amPm';
   }
 }
-

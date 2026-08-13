@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../application/state/pos_home_dashboard_state.dart';
 import '../home/pos_branding.dart';
 import 'pos_top_bar_notification_button.dart';
 
@@ -8,10 +9,16 @@ class PosTopBar extends StatelessWidget {
   const PosTopBar({
     super.key,
     required this.content,
+    this.dashboard,
+    this.brandName,
+    this.brandLogoUrl,
     this.trailing = const PosTopBarNotificationButton(dark: true),
   });
 
   final Widget content;
+  final PosHomeDashboardState? dashboard;
+  final String? brandName;
+  final String? brandLogoUrl;
   final Widget? trailing;
 
   @override
@@ -43,7 +50,11 @@ class PosTopBar extends StatelessWidget {
                     minWidth: veryCompact ? 116 : 156,
                     maxWidth: compact ? 180 : 240,
                   ),
-                  child: const PosBranding(),
+                  child: PosBranding(
+                    dashboard: dashboard,
+                    brandName: brandName,
+                    logoUrl: brandLogoUrl,
+                  ),
                 ),
                 SizedBox(
                   width: veryCompact

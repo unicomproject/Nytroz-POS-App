@@ -96,13 +96,15 @@ class _UserDetailsContent extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(user.fullName, style: TenantAdminTextStyles.sectionTitle(context)),
+                  Text(user.fullName,
+                      style: TenantAdminTextStyles.sectionTitle(context)),
                   const SizedBox(height: TenantAdminSpacing.xs),
                   UserStatusBadge(status: user.status),
                   const SizedBox(height: TenantAdminSpacing.xs),
                   Text(
                     'Last active ${formatUserLastActive(user.lastActiveAt)}',
-                    style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 12),
+                    style: TenantAdminTextStyles.muted(context)
+                        .copyWith(fontSize: 12),
                   ),
                 ],
               ),
@@ -114,20 +116,29 @@ class _UserDetailsContent extends ConsumerWidget {
         _DetailRow(icon: Icons.email_outlined, value: user.email),
         if ((user.phone ?? '').trim().isNotEmpty)
           _DetailRow(icon: Icons.phone_outlined, value: user.phone!),
-        _DetailRow(icon: Icons.calendar_today_outlined, value: 'Joined on ${formatUserDate(user.createdAt)}'),
+        _DetailRow(
+            icon: Icons.calendar_today_outlined,
+            value: 'Joined on ${formatUserDate(user.createdAt)}'),
         const SizedBox(height: TenantAdminSpacing.lg),
         const _SectionTitle('Role & access'),
-        _DetailRow(icon: Icons.badge_outlined, label: 'Assigned role', value: _dash(user.roleName)),
+        _DetailRow(
+            icon: Icons.badge_outlined,
+            label: 'Assigned role',
+            value: _dash(user.roleName)),
         if (_hasText(user.roleDescription))
           Padding(
-            padding: const EdgeInsets.only(left: 36, bottom: TenantAdminSpacing.sm),
-            child: Text(user.roleDescription!.trim(), style: TenantAdminTextStyles.muted(context)),
+            padding:
+                const EdgeInsets.only(left: 36, bottom: TenantAdminSpacing.sm),
+            child: Text(user.roleDescription!.trim(),
+                style: TenantAdminTextStyles.muted(context)),
           ),
         _DetailRow(
           icon: Icons.location_on_outlined,
           label: 'Outlet access',
           value: outletNames.isEmpty ? 'No outlets assigned' : outletNames,
-          secondary: outletCount > 0 ? '$outletCount ${outletCount == 1 ? 'Outlet' : 'Outlets'}' : null,
+          secondary: outletCount > 0
+              ? '$outletCount ${outletCount == 1 ? 'Outlet' : 'Outlets'}'
+              : null,
         ),
         if (user.accessSummary != null) ...[
           const SizedBox(height: TenantAdminSpacing.lg),
@@ -144,7 +155,8 @@ class _UserDetailsContent extends ConsumerWidget {
                 TenantAdminSecondaryButton(
                   label: 'Edit',
                   icon: Icons.edit_outlined,
-                  onPressed: () => context.go('/tenant-admin/staff/${user.id}/edit'),
+                  onPressed: () =>
+                      context.go('/tenant-admin/staff/${user.id}/edit'),
                 ),
               if (canDeactivate)
                 TenantAdminSecondaryButton(
@@ -164,11 +176,15 @@ class _UserDetailsContent extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Deactivate user'),
-        content: Text('Deactivate "${user.fullName}"? They will no longer be able to sign in.'),
+        content: Text(
+            'Deactivate "${user.fullName}"? They will no longer be able to sign in.'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel')),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: TenantAdminColors.danger),
+            style: FilledButton.styleFrom(
+                backgroundColor: TenantAdminColors.danger),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Deactivate'),
           ),
@@ -182,11 +198,13 @@ class _UserDetailsContent extends ConsumerWidget {
       ref.invalidate(userDetailProvider(user.id));
       ref.invalidate(userListProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${user.fullName} has been deactivated.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${user.fullName} has been deactivated.')));
       }
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to deactivate user.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to deactivate user.')));
       }
     }
   }
@@ -198,12 +216,17 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: TenantAdminSpacing.sm),
-        child: Text(value.toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: TenantAdminColors.bodyText)),
+        child: Text(value.toUpperCase(),
+            style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: TenantAdminColors.bodyText)),
       );
 }
 
 class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.icon, required this.value, this.label, this.secondary});
+  const _DetailRow(
+      {required this.icon, required this.value, this.label, this.secondary});
   final IconData icon;
   final String value;
   final String? label;
@@ -217,11 +240,22 @@ class _DetailRow extends StatelessWidget {
             Icon(icon, size: 18, color: TenantAdminColors.mutedText),
             const SizedBox(width: TenantAdminSpacing.md),
             Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                if (label != null) Text(label!, style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 12)),
-                Text(value, style: const TextStyle(color: TenantAdminColors.bodyText, fontWeight: FontWeight.w700)),
-                if (secondary != null) Text(secondary!, style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 12)),
-              ]),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (label != null)
+                      Text(label!,
+                          style: TenantAdminTextStyles.muted(context)
+                              .copyWith(fontSize: 12)),
+                    Text(value,
+                        style: const TextStyle(
+                            color: TenantAdminColors.bodyText,
+                            fontWeight: FontWeight.w700)),
+                    if (secondary != null)
+                      Text(secondary!,
+                          style: TenantAdminTextStyles.muted(context)
+                              .copyWith(fontSize: 12)),
+                  ]),
             ),
           ],
         ),
@@ -234,29 +268,50 @@ class _AccessSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
         children: [
-          Expanded(child: _SummaryCard(label: 'Outlets', value: summary.outletCount.toString(), icon: Icons.location_on_outlined)),
+          Expanded(
+              child: _SummaryCard(
+                  label: 'Outlets',
+                  value: summary.outletCount.toString(),
+                  icon: Icons.location_on_outlined)),
           const SizedBox(width: TenantAdminSpacing.sm),
-          Expanded(child: _SummaryCard(label: 'Modules', value: summary.moduleCount.toString(), icon: Icons.inventory_2_outlined)),
+          Expanded(
+              child: _SummaryCard(
+                  label: 'Modules',
+                  value: summary.moduleCount.toString(),
+                  icon: Icons.inventory_2_outlined)),
           const SizedBox(width: TenantAdminSpacing.sm),
-          Expanded(child: _SummaryCard(label: 'Permissions', value: summary.permissionCount.toString(), icon: Icons.lock_outline)),
+          Expanded(
+              child: _SummaryCard(
+                  label: 'Permissions',
+                  value: summary.permissionCount.toString(),
+                  icon: Icons.lock_outline)),
         ],
       );
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.label, required this.value, required this.icon});
+  const _SummaryCard(
+      {required this.label, required this.value, required this.icon});
   final String label;
   final String value;
   final IconData icon;
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: TenantAdminSpacing.md, horizontal: TenantAdminSpacing.sm),
-        decoration: BoxDecoration(color: TenantAdminColors.secondary, borderRadius: BorderRadius.circular(TenantAdminRadius.sm)),
+        padding: const EdgeInsets.symmetric(
+            vertical: TenantAdminSpacing.md, horizontal: TenantAdminSpacing.sm),
+        decoration: BoxDecoration(
+            color: TenantAdminColors.secondary,
+            borderRadius: BorderRadius.circular(TenantAdminRadius.sm)),
         child: Column(children: [
           Icon(icon, size: 18, color: TenantAdminColors.posHomeAccentOrange),
           const SizedBox(height: TenantAdminSpacing.xs),
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-          Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, color: TenantAdminColors.mutedText)),
+          Text(value,
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          Text(label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontSize: 10, color: TenantAdminColors.mutedText)),
         ]),
       );
 }
@@ -264,8 +319,13 @@ class _SummaryCard extends StatelessWidget {
 bool _hasText(String? value) => value?.trim().isNotEmpty == true;
 String _dash(String value) => value.trim().isEmpty ? '—' : value.trim();
 String _initials(String fullName) {
-  final parts = fullName.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+  final parts = fullName
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .toList();
   if (parts.isEmpty) return '?';
   if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-  return (parts.first.substring(0, 1) + parts.last.substring(0, 1)).toUpperCase();
+  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+      .toUpperCase();
 }

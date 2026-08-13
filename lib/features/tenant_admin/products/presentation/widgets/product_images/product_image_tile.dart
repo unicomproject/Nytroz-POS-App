@@ -50,8 +50,7 @@ class ProductImageTile extends StatelessWidget {
                           ),
                         )
                       : const Center(
-                          child:
-                              Icon(Icons.image_outlined, color: Colors.grey),
+                          child: Icon(Icons.image_outlined, color: Colors.grey),
                         )),
             ),
           ),
