@@ -64,7 +64,9 @@ void main() {
       expect(find.byIcon(Icons.arrow_back_ios_new_rounded), findsOneWidget);
       expect(find.byIcon(Icons.help_outline), findsNothing);
       expect(find.text('Quick Amounts'), findsOneWidget);
-      expect(find.text('Set Exact'), findsOneWidget);
+      expect(find.text('100'), findsOneWidget);
+      expect(find.text('500'), findsOneWidget);
+      expect(find.text('1,000'), findsOneWidget);
     });
 
     testWidgets('keeps open till layout fixed on tablet height',

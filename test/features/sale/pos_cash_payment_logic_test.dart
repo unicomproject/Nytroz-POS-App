@@ -4,13 +4,14 @@ import 'package:nytroz_pos/features/sale/presentation/providers/pos_cash_payment
 void main() {
   group('Cash Payment Logic Tests', () {
     test('generateCashQuickAmounts produces correct options for LKR', () {
-      expect(generateCashQuickAmounts(1700), [1700, 2000]);
-      expect(generateCashQuickAmounts(2800), [2800, 3000]);
-      expect(generateCashQuickAmounts(16280), [16280, 17000]);
-      expect(generateCashQuickAmounts(2000), [2000, 3000]);
-      expect(generateCashQuickAmounts(1), [1, 1000]);
-      expect(generateCashQuickAmounts(999), [999, 1000]);
-      expect(generateCashQuickAmounts(1000), [1000, 2000]);
+      expect(generateCashQuickAmounts(1700), [1700, 2000, 3000]);
+      expect(generateCashQuickAmounts(2800), [2800, 3000, 4000]);
+      expect(generateCashQuickAmounts(16280), [16280, 17000, 18000]);
+      expect(generateCashQuickAmounts(2000), [2000, 3000, 4000]);
+      expect(generateCashQuickAmounts(8500), [8500, 9000, 10000]);
+      expect(generateCashQuickAmounts(1), [1, 1000, 2000]);
+      expect(generateCashQuickAmounts(999), [999, 1000, 2000]);
+      expect(generateCashQuickAmounts(1000), [1000, 2000, 3000]);
       expect(generateCashQuickAmounts(0), []);
       expect(generateCashQuickAmounts(-500), []);
     });

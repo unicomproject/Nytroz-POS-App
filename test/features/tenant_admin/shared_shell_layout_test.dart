@@ -296,7 +296,7 @@ void main() {
   });
 
   group('TenantAdminSharedShell', () {
-    testWidgets('renders header, sidebar and footer once on desktop',
+    testWidgets('renders header and sidebar without footer on desktop',
         (tester) async {
       final access = _fullAccess();
       tester.view.physicalSize = const Size(1400, 900);
@@ -320,7 +320,7 @@ void main() {
       expect(find.byType(PosTopBar), findsOneWidget);
       expect(find.byType(TenantAdminHeader), findsNothing);
       expect(find.byType(TenantAdminSidebar), findsOneWidget);
-      expect(find.byType(TenantAdminFooterNavigation), findsOneWidget);
+      expect(find.byType(TenantAdminFooterNavigation), findsNothing);
       expect(find.text('Dashboard body'), findsOneWidget);
       expect(find.text('Online Store'), findsOneWidget);
       expect(find.text('Hardware'), findsOneWidget);
@@ -389,7 +389,7 @@ void main() {
       expect(find.text('Online Store is not available yet.'), findsOneWidget);
     });
 
-    testWidgets('mobile uses drawer and keeps footer', (tester) async {
+    testWidgets('mobile uses drawer without footer', (tester) async {
       final access = _fullAccess();
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1;
@@ -412,7 +412,7 @@ void main() {
       expect(find.byType(PosTopBar), findsOneWidget);
       expect(find.byType(TenantAdminHeader), findsNothing);
       expect(find.byType(TenantAdminSidebar), findsNothing);
-      expect(find.byType(TenantAdminFooterNavigation), findsOneWidget);
+      expect(find.byType(TenantAdminFooterNavigation), findsNothing);
       expect(find.byIcon(Icons.menu_rounded), findsOneWidget);
 
       await tester.tap(find.byIcon(Icons.menu_rounded));
@@ -442,7 +442,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(TenantAdminSidebar), findsOneWidget);
-      expect(find.byType(TenantAdminFooterNavigation), findsOneWidget);
+      expect(find.byType(TenantAdminFooterNavigation), findsNothing);
       expect(tester.takeException(), isNull);
     });
   });

@@ -21,23 +21,23 @@ class CashPaymentOrderTotals extends StatelessWidget {
         _SummaryRow(
           label: 'Subtotal',
           value: formatLkr(subtotal),
-          labelColor: Colors.black,
-          valueColor: Colors.black,
+          labelColor: TenantAdminColors.bodyText,
+          valueColor: TenantAdminColors.bodyText,
         ),
-        const SizedBox(height: TenantAdminSpacing.sm),
+        const SizedBox(height: 4),
         _SummaryRow(
           label: 'Discount',
           value: '- ${formatLkr(discount)}',
-          labelColor: Colors.black,
+          labelColor: TenantAdminColors.bodyText,
           valueColor: TenantAdminColors.danger,
           icon: Icons.local_offer_outlined,
           iconColor: TenantAdminColors.danger,
         ),
-        const SizedBox(height: TenantAdminSpacing.sm),
+        const SizedBox(height: 4),
         _SummaryRow(
           label: 'Tax',
           value: formatLkr(tax),
-          labelColor: Colors.black,
+          labelColor: TenantAdminColors.bodyText,
           valueColor: TenantAdminColors.info,
         ),
       ],
@@ -64,8 +64,9 @@ class _SummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.w700,
+    final style = Theme.of(context).textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+          fontSize: 11,
           color: labelColor ?? TenantAdminColors.bodyText,
         );
 
@@ -76,9 +77,12 @@ class _SummaryRow extends StatelessWidget {
             children: [
               Text(label, style: style),
               if (icon != null) ...[
-                const SizedBox(width: TenantAdminSpacing.xs),
-                Icon(icon,
-                    size: 16, color: iconColor ?? TenantAdminColors.mutedText),
+                const SizedBox(width: 4),
+                Icon(
+                  icon,
+                  size: 12,
+                  color: iconColor ?? TenantAdminColors.mutedText,
+                ),
               ],
             ],
           ),

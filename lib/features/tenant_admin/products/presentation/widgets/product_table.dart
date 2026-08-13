@@ -5,6 +5,7 @@ import 'package:nytroz_pos/core/network/media_url_resolver.dart';
 
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/widgets/tenant_admin_row_action.dart';
 import '../../domain/entities/tenant_product.dart';
 import 'product_delete_action.dart';
 import 'product_status_badge.dart';
@@ -98,16 +99,16 @@ class ProductTable extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 if (visibility.showViewAction)
-                                  _ActionIconButton(
+                                  TenantAdminRowAction(
                                     icon: Icons.visibility_outlined,
-                                    tooltip: 'View details',
+                                    label: 'View',
                                     onPressed: () => onView(product),
                                   ),
                                 if (visibility.showEditAction) ...[
                                   const SizedBox(width: TenantAdminSpacing.sm),
-                                  _ActionIconButton(
+                                  TenantAdminRowAction(
                                     icon: Icons.edit_outlined,
-                                    tooltip: 'Edit product',
+                                    label: 'Edit',
                                     onPressed: () => onEdit(product),
                                   ),
                                 ],
@@ -282,50 +283,5 @@ class _PlainCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(value);
-  }
-}
-
-class _ActionIconButton extends StatelessWidget {
-  const _ActionIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-    // ignore: unused_element_parameter
-    this.isDanger = false,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-  final bool isDanger;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isDanger ? TenantAdminColors.danger : const Color(0xFF1890FF);
-    final bg = isDanger
-        ? TenantAdminColors.danger.withValues(alpha: 0.08)
-        : const Color(0xFF1890FF).withValues(alpha: 0.08);
-    final border = isDanger
-        ? TenantAdminColors.danger.withValues(alpha: 0.3)
-        : const Color(0xFF1890FF).withValues(alpha: 0.3);
-
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: 32,
-          height: 32,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: border, width: 1),
-          ),
-          child: Icon(icon, size: 16, color: color),
-        ),
-      ),
-    );
   }
 }

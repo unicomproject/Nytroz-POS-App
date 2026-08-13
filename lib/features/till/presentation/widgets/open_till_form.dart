@@ -157,7 +157,7 @@ class _OpenTillFormState extends State<OpenTillForm> {
             Text(
               'Open Till',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: TenantAdminColors.navy,
+                    color: TenantAdminColors.bodyText,
                     fontWeight: FontWeight.w900,
                   ),
             ),
@@ -195,7 +195,7 @@ class _OpenTillFormState extends State<OpenTillForm> {
                 return null;
               },
               style: const TextStyle(
-                color: TenantAdminColors.navy,
+                color: TenantAdminColors.bodyText,
                 fontSize: 34,
                 fontWeight: FontWeight.w900,
               ),
@@ -208,23 +208,25 @@ class _OpenTillFormState extends State<OpenTillForm> {
                 ),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
-                enabledBorder: _border(TenantAdminColors.primary, 2),
-                focusedBorder: _border(TenantAdminColors.primary, 2),
-                errorBorder: _border(Colors.red, 1.5),
-                focusedErrorBorder: _border(Colors.red, 2),
+                enabledBorder:
+                    _border(TenantAdminColors.posHomeAccentOrange, 2),
+                focusedBorder:
+                    _border(TenantAdminColors.posHomeAccentOrange, 2),
+                errorBorder: _border(TenantAdminColors.danger, 1.5),
+                focusedErrorBorder: _border(TenantAdminColors.danger, 2),
               ),
             ),
             const SizedBox(height: 8),
             if (widget.errorMessage != null) ...[
               _StatusMessage(
                 icon: Icons.error_outline,
-                color: Colors.red,
+                color: TenantAdminColors.danger,
                 message: widget.errorMessage!,
               ),
             ] else if (_hasValidAmount) ...[
               const _StatusMessage(
                 icon: Icons.check_circle_outline,
-                color: Color(0xff16a34a),
+                color: TenantAdminColors.success,
                 message: 'Amount is valid',
               ),
             ],
@@ -243,7 +245,8 @@ class _OpenTillFormState extends State<OpenTillForm> {
                 hintText: 'Enter note (optional)...',
                 alignLabelWithHint: true,
                 enabledBorder: _border(TenantAdminColors.border, 1),
-                focusedBorder: _border(TenantAdminColors.primary, 1.5),
+                focusedBorder:
+                    _border(TenantAdminColors.posHomeAccentOrange, 1.5),
               ),
             ),
             const SizedBox(height: 8),
@@ -268,7 +271,7 @@ class _OpenTillFormState extends State<OpenTillForm> {
           const Text(
             'Quick Amounts',
             style: TextStyle(
-              color: TenantAdminColors.navy,
+              color: TenantAdminColors.bodyText,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -328,25 +331,11 @@ class _OpenTillFormState extends State<OpenTillForm> {
                 Expanded(
                   child: _KeypadButton(
                     label: 'C',
-                    labelColor: const Color(0xffef3158),
+                    labelColor: TenantAdminColors.danger,
                     onPressed: () => _setAmount(0),
                   ),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          OutlinedButton.icon(
-            key: const Key('set-exact-amount'),
-            onPressed: () => FocusScope.of(context).unfocus(),
-            icon: const Icon(Icons.point_of_sale_outlined),
-            label: const Text('Set Exact'),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(52),
-              foregroundColor: TenantAdminColors.primary,
-              backgroundColor: const Color(0xffeef3ff),
-              side: BorderSide.none,
-              textStyle: const TextStyle(fontWeight: FontWeight.w900),
             ),
           ),
         ],
@@ -364,6 +353,7 @@ class _OpenTillFormState extends State<OpenTillForm> {
         isLoading: widget.isSubmitting,
         fullWidth: true,
         minimumHeight: 64,
+        backgroundColor: TenantAdminColors.posHomeAccentOrange,
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -422,7 +412,7 @@ class _FieldHeading extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              color: TenantAdminColors.navy,
+              color: TenantAdminColors.bodyText,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -483,7 +473,7 @@ class _TillSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xfff8faff),
+          color: TenantAdminColors.expectedCashSurface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: TenantAdminColors.border),
         ),
@@ -493,7 +483,8 @@ class _TillSummaryCard extends StatelessWidget {
             const Text(
               'Till Summary',
               style: TextStyle(
-                  color: TenantAdminColors.navy, fontWeight: FontWeight.w900),
+                  color: TenantAdminColors.bodyText,
+                  fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 8),
             _SummaryRow(
@@ -541,7 +532,7 @@ class _SummaryRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                    color: TenantAdminColors.navy,
+                    color: TenantAdminColors.bodyText,
                     fontSize: 12,
                     fontWeight: FontWeight.w900),
               ),
@@ -561,8 +552,11 @@ class _QuickAmountButton extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(48),
-          foregroundColor: TenantAdminColors.primary,
-          side: const BorderSide(color: TenantAdminColors.border),
+          foregroundColor: TenantAdminColors.posHomeAccentOrange,
+          side: const BorderSide(
+            color: TenantAdminColors.posHomeAccentOrange,
+            width: 1.5,
+          ),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
         ),
         child: Text(amount == 1000 ? '1,000' : '$amount'),
@@ -575,7 +569,7 @@ class _KeypadButton extends StatelessWidget {
     this.label,
     this.icon,
     this.semanticLabel,
-    this.labelColor = TenantAdminColors.navy,
+    this.labelColor = TenantAdminColors.bodyText,
   });
   final VoidCallback onPressed;
   final String? label;

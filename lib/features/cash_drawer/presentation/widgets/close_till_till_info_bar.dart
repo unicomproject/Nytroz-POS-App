@@ -119,10 +119,14 @@ class _TillInfoItem extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: TenantAdminColors.secondary,
+            color: TenantAdminColors.expectedCashSurface,
             borderRadius: BorderRadius.circular(TenantAdminRadius.md),
           ),
-          child: Icon(icon, color: TenantAdminColors.info, size: 22),
+          child: Icon(
+            icon,
+            color: TenantAdminColors.posHomeAccentOrange,
+            size: 22,
+          ),
         ),
         const SizedBox(width: TenantAdminSpacing.md),
         Expanded(
