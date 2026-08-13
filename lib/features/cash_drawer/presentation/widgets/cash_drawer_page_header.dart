@@ -2,44 +2,24 @@ import 'package:flutter/material.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
+/// Page title + subtitle inside the main white Cash Drawer content card.
+/// No back arrow on the main Cash Drawer screen.
 class CashDrawerPageHeader extends StatelessWidget {
-  const CashDrawerPageHeader({
-    super.key,
-    required this.onBack,
-  });
-
-  final VoidCallback onBack;
+  const CashDrawerPageHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        IconButton(
-          onPressed: onBack,
-          tooltip: 'Back',
-          icon: const Icon(Icons.arrow_back_rounded),
-          style: IconButton.styleFrom(
-            backgroundColor: TenantAdminColors.surface,
-            side: const BorderSide(color: TenantAdminColors.border),
-          ),
+        Text(
+          'Cash Drawer',
+          style: TenantAdminTextStyles.pageTitle(context),
         ),
-        const SizedBox(width: TenantAdminSpacing.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Cash Drawer',
-                style: TenantAdminTextStyles.pageTitle(context),
-              ),
-              const SizedBox(height: TenantAdminSpacing.xs),
-              Text(
-                'Monitor the till cash position and perform drawer actions.',
-                style: TenantAdminTextStyles.muted(context),
-              ),
-            ],
-          ),
+        const SizedBox(height: TenantAdminSpacing.xs),
+        Text(
+          'Monitor the till cash position and perform drawer actions.',
+          style: TenantAdminTextStyles.muted(context),
         ),
       ],
     );

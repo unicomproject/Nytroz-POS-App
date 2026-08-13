@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import 'cash_drawer_section_card.dart';
 import '../../domain/entities/cash_drawer_summary.dart';
 import '../providers/cash_drawer_provider.dart';
 
@@ -15,79 +14,95 @@ class CashDrawerTillSummarySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CashDrawerSectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Till Summary',
-            style: TenantAdminTextStyles.sectionTitle(context),
-          ),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final columns = width >= TenantAdminBreakpoints.tablet
-                  ? 4
-                  : width >= TenantAdminBreakpoints.mobile
-                      ? 2
-                      : 1;
-              final tileWidth = columns == 1
-                  ? width
-                  : (width - TenantAdminSpacing.md * (columns - 1)) / columns;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'TILL SUMMARY',
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: TenantAdminColors.mutedText,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6,
+              ),
+        ),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final columns = width >= TenantAdminBreakpoints.desktop
+                ? 5
+                : width >= TenantAdminBreakpoints.tablet
+                    ? 3
+                    : width >= TenantAdminBreakpoints.mobile
+                        ? 2
+                        : 1;
+            const gap = TenantAdminSpacing.md;
+            final tileWidth = columns == 1
+                ? width
+                : ((width - gap * (columns - 1)) / columns).floorToDouble();
 
-              final tiles = [
-                _SummaryTile(label: 'Till', value: summary.tillName),
-                _SummaryTile(
-                  label: 'Status',
-                  value: summary.status,
-                  valueColor: summary.isOpen
-                      ? TenantAdminColors.success
-                      : TenantAdminColors.mutedText,
+            final tiles = [
+              _SummaryTile(
+                label: 'Till',
+                value: summary.tillName,
+                icon: Icons.point_of_sale_rounded,
+                iconColor: TenantAdminColors.posHomeAccentOrange,
+              ),
+              _SummaryTile(
+                label: 'Status',
+                value: summary.isOpen ? 'Open' : summary.status,
+                icon: Icons.show_chart_rounded,
+                iconColor: summary.isOpen
+                    ? TenantAdminColors.success
+                    : TenantAdminColors.mutedText,
+                valueColor: summary.isOpen
+                    ? TenantAdminColors.success
+                    : TenantAdminColors.mutedText,
+              ),
+              _SummaryTile(
+                label: 'Opening Cash',
+                value: formatCashDrawerAmount(
+                  summary.openingCash,
+                  currencyCode: summary.currencyCode,
                 ),
-                _SummaryTile(label: 'Opened By', value: summary.openedBy),
-                _SummaryTile(
-                  label: 'Opened Time',
-                  value: formatCashDrawerOpenedTime(summary.openedTime),
+                icon: Icons.account_balance_wallet_outlined,
+                iconColor: TenantAdminColors.posHomeAccentOrange,
+              ),
+              _SummaryTile(
+                label: 'Cash Sales',
+                value: formatCashDrawerAmount(
+                  summary.cashSales,
+                  currencyCode: summary.currencyCode,
                 ),
-                _SummaryTile(
-                  label: 'Opening Cash',
-                  value: formatCashDrawerAmount(summary.openingCash),
+                icon: Icons.bar_chart_rounded,
+                iconColor: TenantAdminColors.success,
+              ),
+              _SummaryTile(
+                label: 'Current Expected Cash',
+                value: formatCashDrawerAmount(
+                  summary.currentExpectedCash,
+                  currencyCode: summary.currencyCode,
                 ),
-                _SummaryTile(
-                  label: 'Cash Sales',
-                  value: formatCashDrawerAmount(summary.cashSales),
-                ),
-                _SummaryTile(
-                  label: 'Cash Refunds',
-                  value: formatCashDrawerAmount(summary.cashRefunds),
-                ),
-                _SummaryTile(
-                  label: 'Cash Drops',
-                  value: formatCashDrawerAmount(summary.cashDrops),
-                ),
-                _SummaryTile(
-                  label: 'Current Expected Cash',
-                  value: formatCashDrawerAmount(summary.currentExpectedCash),
-                  emphasize: true,
-                ),
-              ];
+                icon: Icons.account_balance_wallet_rounded,
+                iconColor: TenantAdminColors.posHomeAccentOrange,
+                emphasize: true,
+              ),
+            ];
 
-              return Wrap(
-                spacing: TenantAdminSpacing.md,
-                runSpacing: TenantAdminSpacing.md,
-                children: [
-                  for (final tile in tiles)
-                    SizedBox(
-                      width: tileWidth,
-                      child: tile,
-                    ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
+            return Wrap(
+              spacing: gap,
+              runSpacing: gap,
+              children: [
+                for (final tile in tiles)
+                  SizedBox(
+                    width: columns == 1 ? width : tileWidth,
+                    child: tile,
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -96,51 +111,73 @@ class _SummaryTile extends StatelessWidget {
   const _SummaryTile({
     required this.label,
     required this.value,
+    required this.icon,
+    required this.iconColor,
     this.valueColor,
     this.emphasize = false,
   });
 
   final String label;
   final String value;
+  final IconData icon;
+  final Color iconColor;
   final Color? valueColor;
   final bool emphasize;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-      decoration: BoxDecoration(
-        color: emphasize
-            ? TenantAdminColors.secondary
-            : TenantAdminColors.background,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        border: Border.all(
+    return Semantics(
+      label: '$label $value',
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 88),
+        padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+        decoration: BoxDecoration(
           color: emphasize
-              ? TenantAdminColors.info.withValues(alpha: .25)
-              : TenantAdminColors.border,
+              ? TenantAdminColors.expectedCashSurface
+              : TenantAdminColors.surface,
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          border: Border.all(
+            color: emphasize
+                ? TenantAdminColors.posHomeAccentOrange
+                : TenantAdminColors.border,
+            width: emphasize ? 1.5 : 1,
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: TenantAdminColors.mutedText,
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          Text(
-            value,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: valueColor ?? TenantAdminColors.bodyText,
-                  fontWeight: emphasize ? FontWeight.w900 : FontWeight.w800,
-                ),
-          ),
-        ],
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: iconColor, size: 22),
+            const SizedBox(width: TenantAdminSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: TenantAdminColors.mutedText,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const SizedBox(height: TenantAdminSpacing.sm),
+                  Text(
+                    value,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: valueColor ??
+                              (emphasize
+                                  ? TenantAdminColors.posHomeAccentOrange
+                                  : TenantAdminColors.bodyText),
+                          fontWeight:
+                              emphasize ? FontWeight.w900 : FontWeight.w800,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

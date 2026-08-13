@@ -74,9 +74,15 @@ void main() {
       );
       expect(
         PosPermissionAccess.canCreateCashDrawerMovement({
-          PosPermissionCodes.manageCashDrawer,
+          PosPermissionCodes.createCashDrawerMovement,
         }),
         isTrue,
+      );
+      expect(
+        PosPermissionAccess.canCreateCashDrawerMovement({
+          PosPermissionCodes.manageCashDrawer,
+        }),
+        isFalse,
       );
       expect(
         PosPermissionAccess.canCloseTill({

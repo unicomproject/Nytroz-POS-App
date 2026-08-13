@@ -35,12 +35,18 @@ class CashDropTillInfoBar extends StatelessWidget {
             _TillInfoItem(
               icon: Icons.schedule_outlined,
               label: 'Current Expected Cash',
-              value: formatCashDrawerAmount(summary.currentExpectedCash),
+              value: formatCashDrawerAmount(
+                summary.currentExpectedCash,
+                currencyCode: summary.currencyCode,
+              ),
             ),
             _TillInfoItem(
               icon: Icons.account_balance_wallet_outlined,
               label: 'Available Cash in Drawer',
-              value: formatCashDrawerAmount(availableCash),
+              value: formatCashDrawerAmount(
+                availableCash,
+                currencyCode: summary.currencyCode,
+              ),
             ),
           ];
 

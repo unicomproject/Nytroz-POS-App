@@ -5,6 +5,7 @@ import 'package:nytroz_pos/features/auth/presentation/providers/session_provider
 import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_product_variant_sheet.dart';
+import 'package:nytroz_pos/features/sale/presentation/providers/pos_checkout_summary_provider.dart';
 
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'pos_cart_header.dart';
@@ -19,6 +20,9 @@ class PosNewSaleCartPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cart = ref.watch(posNewSaleCartProvider);
+    final pricingAsync = cart.hasItems
+        ? ref.watch(posCheckoutSummaryProvider)
+        : const AsyncValue<PosCheckoutSummaryViewData>.loading();
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
@@ -47,9 +51,9 @@ class PosNewSaleCartPanel extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: TenantAdminSpacing.md),
-              PosCartSummary(cart: cart),
+              PosCartSummary(cart: cart, pricingAsync: pricingAsync),
               const SizedBox(height: TenantAdminSpacing.md),
-              PosPaymentBar(cart: cart),
+              PosPaymentBar(cart: cart, pricingAsync: pricingAsync),
             ],
           ),
         ),

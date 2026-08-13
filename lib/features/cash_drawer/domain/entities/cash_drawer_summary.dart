@@ -1,5 +1,7 @@
 class CashDrawerSummary {
   const CashDrawerSummary({
+    required this.tillSessionId,
+    required this.tillId,
     required this.tillName,
     required this.status,
     required this.openedBy,
@@ -11,8 +13,11 @@ class CashDrawerSummary {
     required this.cashIns,
     required this.cashOuts,
     required this.currentExpectedCash,
+    required this.currencyCode,
   });
 
+  final String tillSessionId;
+  final String tillId;
   final String tillName;
   final String status;
   final String openedBy;
@@ -24,10 +29,13 @@ class CashDrawerSummary {
   final double cashIns;
   final double cashOuts;
   final double currentExpectedCash;
+  final String currencyCode;
 
   bool get isOpen => status.toLowerCase() == 'open';
 
   CashDrawerSummary copyWith({
+    String? tillSessionId,
+    String? tillId,
     String? tillName,
     String? status,
     String? openedBy,
@@ -39,8 +47,11 @@ class CashDrawerSummary {
     double? cashIns,
     double? cashOuts,
     double? currentExpectedCash,
+    String? currencyCode,
   }) {
     return CashDrawerSummary(
+      tillSessionId: tillSessionId ?? this.tillSessionId,
+      tillId: tillId ?? this.tillId,
       tillName: tillName ?? this.tillName,
       status: status ?? this.status,
       openedBy: openedBy ?? this.openedBy,
@@ -52,6 +63,7 @@ class CashDrawerSummary {
       cashIns: cashIns ?? this.cashIns,
       cashOuts: cashOuts ?? this.cashOuts,
       currentExpectedCash: currentExpectedCash ?? this.currentExpectedCash,
+      currencyCode: currencyCode ?? this.currencyCode,
     );
   }
 }

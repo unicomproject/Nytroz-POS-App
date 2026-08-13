@@ -46,7 +46,10 @@ class CloseTillTillInfoBar extends StatelessWidget {
             _TillInfoItem(
               icon: Icons.account_balance_wallet_outlined,
               label: 'Expected Cash',
-              value: formatCashDrawerAmount(summary.currentExpectedCash),
+              value: formatCashDrawerAmount(
+                summary.currentExpectedCash,
+                currencyCode: summary.currencyCode,
+              ),
             ),
           ];
 
