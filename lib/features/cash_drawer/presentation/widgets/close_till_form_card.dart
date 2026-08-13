@@ -64,6 +64,20 @@ class CloseTillFormCard extends ConsumerWidget {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                     ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                      borderSide: const BorderSide(
+                        color: TenantAdminColors.posHomeAccentOrange,
+                        width: 1.5,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                      borderSide: const BorderSide(
+                        color: TenantAdminColors.posHomeAccentOrange,
+                        width: 2,
+                      ),
+                    ),
                   ),
                   validator: validateCloseTillCountedCash,
                 );

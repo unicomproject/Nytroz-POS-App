@@ -177,6 +177,7 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
                 canCloseTill: false,
                 isLoading: false,
                 onCloseTill: () {},
+                onSaveDraft: null,
               ),
             ],
           ),
@@ -256,6 +257,7 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
                     canCloseTill: canCloseTill,
                     isLoading: isSubmitting,
                     onCloseTill: _closeTill,
+                    onSaveDraft: _saveDraft,
                   ),
                 ],
               ),
@@ -277,6 +279,16 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
       return;
     }
     context.go('/pos/cash-drawer');
+  }
+
+  void _saveDraft() {
+    ref.read(closeTillFormProvider.notifier).saveDraft();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(content: Text('Close till draft saved on this device.')),
+      );
   }
 
   Future<void> _closeTill() async {

@@ -216,8 +216,9 @@ void main() {
 
   group('Chunk 1 layout regression — Quick Amount logic intact', () {
     test('generateCashQuickAmounts still correct after Chunk 3', () {
-      expect(generateCashQuickAmounts(1700), [1700, 2000]);
-      expect(generateCashQuickAmounts(2000), [2000, 3000]);
+      expect(generateCashQuickAmounts(1700), [1700, 2000, 3000]);
+      expect(generateCashQuickAmounts(2000), [2000, 3000, 4000]);
+      expect(generateCashQuickAmounts(8500), [8500, 9000, 10000]);
       expect(generateCashQuickAmounts(0), []);
     });
   });

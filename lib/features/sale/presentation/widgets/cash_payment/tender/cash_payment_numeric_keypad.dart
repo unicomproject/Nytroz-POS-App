@@ -17,60 +17,80 @@ class CashPaymentNumericKeypad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
-          child: Row(
+          flex: 3,
+          child: Column(
             children: [
-              _buildDigitKey('7', context),
-              _buildDigitKey('8', context),
-              _buildDigitKey('9', context),
-              _buildActionKey(
-                icon: Icons.backspace_outlined,
-                onTap: onBackspacePressed,
-                context: context,
+              Expanded(
+                child: Row(
+                  children: [
+                    _buildDigitKey('7', context),
+                    _buildDigitKey('8', context),
+                    _buildDigitKey('9', context),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              Expanded(
+                child: Row(
+                  children: [
+                    _buildDigitKey('4', context),
+                    _buildDigitKey('5', context),
+                    _buildDigitKey('6', context),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              Expanded(
+                child: Row(
+                  children: [
+                    _buildDigitKey('1', context),
+                    _buildDigitKey('2', context),
+                    _buildDigitKey('3', context),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              Expanded(
+                child: Row(
+                  children: [
+                    _buildKey(
+                      label: '00',
+                      onTap: onDoubleZeroPressed,
+                      context: context,
+                    ),
+                    _buildDigitKey('0', context),
+                    _buildDisabledKey('.', context),
+                  ],
+                ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: TenantAdminSpacing.sm),
+        const SizedBox(width: 6),
         Expanded(
-          child: Row(
+          child: Column(
             children: [
-              _buildDigitKey('4', context),
-              _buildDigitKey('5', context),
-              _buildDigitKey('6', context),
-              _buildDisabledKey('+', context),
-            ],
-          ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.sm),
-        Expanded(
-          child: Row(
-            children: [
-              _buildDigitKey('1', context),
-              _buildDigitKey('2', context),
-              _buildDigitKey('3', context),
-              _buildDisabledKey('-', context),
-            ],
-          ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.sm),
-        Expanded(
-          child: Row(
-            children: [
-              _buildKey(
-                label: '00',
-                onTap: onDoubleZeroPressed,
-                context: context,
+              Expanded(
+                flex: 2,
+                child: _buildActionKey(
+                  icon: Icons.backspace_outlined,
+                  onTap: onBackspacePressed,
+                  context: context,
+                ),
               ),
-              _buildDigitKey('0', context),
-              _buildDisabledKey('.', context),
-              _buildActionKey(
-                label: 'C',
-                color: TenantAdminColors.danger,
-                onTap: onClearPressed,
-                context: context,
+              const SizedBox(height: 6),
+              Expanded(
+                flex: 2,
+                child: _buildActionKey(
+                  label: 'C',
+                  color: TenantAdminColors.danger,
+                  onTap: onClearPressed,
+                  context: context,
+                ),
               ),
             ],
           ),
@@ -96,27 +116,30 @@ class CashPaymentNumericKeypad extends StatelessWidget {
   }) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+        padding: const EdgeInsets.symmetric(horizontal: 3),
         child: Material(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
             child: Container(
-              height: double.infinity,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
                 border: Border.all(color: TenantAdminColors.border),
-                boxShadow: TenantAdminShadows.card,
               ),
               child: icon != null
-                  ? Icon(icon, color: color ?? TenantAdminColors.bodyText)
+                  ? Icon(
+                      icon,
+                      size: 18,
+                      color: color ?? TenantAdminColors.bodyText,
+                    )
                   : Text(
                       label ?? '',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
+                            fontSize: 16,
                             color: color ?? TenantAdminColors.bodyText,
                           ),
                     ),
@@ -130,20 +153,20 @@ class CashPaymentNumericKeypad extends StatelessWidget {
   Widget _buildDisabledKey(String label, BuildContext context) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+        padding: const EdgeInsets.symmetric(horizontal: 3),
         child: Container(
-          height: double.infinity,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: TenantAdminColors.background,
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            color: TenantAdminColors.subtleBackground,
+            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
             border: Border.all(color: TenantAdminColors.border),
           ),
           child: Text(
             label,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: TenantAdminColors.mutedText.withValues(alpha: 0.5),
+                  fontSize: 16,
+                  color: TenantAdminColors.mutedText.withValues(alpha: 0.45),
                 ),
           ),
         ),
@@ -158,12 +181,37 @@ class CashPaymentNumericKeypad extends StatelessWidget {
     required VoidCallback onTap,
     required BuildContext context,
   }) {
-    return _buildKey(
-      label: label,
-      icon: icon,
-      color: color,
-      onTap: onTap,
-      context: context,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+          child: Container(
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+              border: Border.all(color: TenantAdminColors.border),
+            ),
+            child: icon != null
+                ? Icon(
+                    icon,
+                    size: 18,
+                    color: color ?? TenantAdminColors.bodyText,
+                  )
+                : Text(
+                    label ?? '',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                          color: color ?? TenantAdminColors.bodyText,
+                        ),
+                  ),
+          ),
+        ),
+      ),
     );
   }
 }

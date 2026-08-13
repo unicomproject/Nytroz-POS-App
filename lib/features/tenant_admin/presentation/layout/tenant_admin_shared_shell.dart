@@ -20,7 +20,6 @@ import '../screens/tenant_admin_loading_screen.dart';
 import '../theme/tenant_admin_theme.dart';
 import '../widgets/tenant_admin_shared_cards.dart';
 import 'tenant_admin_breadcrumb.dart';
-import 'tenant_admin_footer_navigation.dart';
 import 'tenant_admin_navigation_drawer.dart';
 import 'tenant_admin_responsive_content_area.dart';
 import 'tenant_admin_sidebar.dart';
@@ -31,8 +30,7 @@ import 'tenant_admin_sidebar.dart';
 /// TenantAdminSharedShell
 /// ├── TenantAdminHeader
 /// ├── TenantAdminSidebar / drawer
-/// ├── TenantAdminResponsiveContentArea
-/// └── TenantAdminFooterNavigation
+/// └── TenantAdminResponsiveContentArea
 /// ```
 class TenantAdminSharedShell extends ConsumerWidget {
   const TenantAdminSharedShell({
@@ -120,8 +118,6 @@ class TenantAdminSharedShell extends ConsumerWidget {
 
             if (showInlineSidebar) {
               return Scaffold(
-                bottomNavigationBar:
-                    TenantAdminFooterNavigation(currentPath: currentRoute),
                 body: Column(
                   children: [
                     PosTopBar(
@@ -224,8 +220,6 @@ class _TenantAdminMobileShellState extends State<_TenantAdminMobileShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      bottomNavigationBar:
-          TenantAdminFooterNavigation(currentPath: widget.currentPath),
       drawer: TenantAdminSidebarMobileDrawer(
         items: widget.items,
         currentPath: widget.currentPath,
