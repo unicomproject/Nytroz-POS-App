@@ -10,7 +10,8 @@ class CurrentStockSummaryCards extends StatelessWidget {
 
   final CurrentStockSummary summary;
 
-  Widget _buildCard(BuildContext context, String value, String title, Widget icon, Color color) {
+  Widget _buildCard(BuildContext context, String value, String title,
+      Widget icon, Color color) {
     return Container(
       height: 86,
       decoration: BoxDecoration(
@@ -39,11 +40,18 @@ class CurrentStockSummaryCards extends StatelessWidget {
             children: [
               Text(
                 value,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: TenantAdminColors.bodyText),
+                style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: TenantAdminColors.bodyText),
               ),
               Text(
                 title,
-                style: (Theme.of(context).textTheme.labelSmall ?? const TextStyle()).copyWith(color: TenantAdminColors.mutedText, fontWeight: FontWeight.w600),
+                style: (Theme.of(context).textTheme.labelSmall ??
+                        const TextStyle())
+                    .copyWith(
+                        color: TenantAdminColors.mutedText,
+                        fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -93,7 +101,8 @@ class CurrentStockSummaryCards extends StatelessWidget {
           return Column(
             children: cards
                 .map((c) => Padding(
-                      padding: const EdgeInsets.only(bottom: TenantAdminSpacing.md),
+                      padding:
+                          const EdgeInsets.only(bottom: TenantAdminSpacing.md),
                       child: c,
                     ))
                 .toList(),
@@ -137,4 +146,3 @@ class CurrentStockSummaryCards extends StatelessWidget {
     );
   }
 }
-

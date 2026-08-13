@@ -25,14 +25,11 @@ class ProductListTile extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected
-              ? primaryOrange.withValues(alpha: 0.04)
-              : Colors.white,
+          color:
+              isSelected ? primaryOrange.withValues(alpha: 0.04) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? primaryOrange
-                : const Color(0xFFE2E8F0),
+            color: isSelected ? primaryOrange : const Color(0xFFE2E8F0),
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: isSelected
@@ -60,10 +57,13 @@ class ProductListTile extends StatelessWidget {
                   ? Image.network(
                       product.imageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.inventory_2_outlined, color: Color(0xFF94A3B8), size: 24),
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                          Icons.inventory_2_outlined,
+                          color: Color(0xFF94A3B8),
+                          size: 24),
                     )
-                  : const Icon(Icons.inventory_2_outlined, color: Color(0xFF94A3B8), size: 24),
+                  : const Icon(Icons.inventory_2_outlined,
+                      color: Color(0xFF94A3B8), size: 24),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -91,12 +91,14 @@ class ProductListTile extends StatelessWidget {
                           color: Color(0xFF64748B),
                         ),
                       ),
-                      if (product.categoryName != null && product.categoryName!.isNotEmpty) ...[
+                      if (product.categoryName != null &&
+                          product.categoryName!.isNotEmpty) ...[
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 6),
                           child: Text(
                             '•',
-                            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                            style: TextStyle(
+                                color: Color(0xFF94A3B8), fontSize: 12),
                           ),
                         ),
                         Expanded(

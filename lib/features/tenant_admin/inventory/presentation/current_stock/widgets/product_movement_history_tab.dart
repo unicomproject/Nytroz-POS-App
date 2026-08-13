@@ -48,7 +48,8 @@ class RecentMovementsTable extends ConsumerWidget {
                         SizedBox(height: 2),
                         Text('Latest stock movements for this product',
                             style: TextStyle(
-                                fontSize: 12, color: TenantAdminColors.mutedText)),
+                                fontSize: 12,
+                                color: TenantAdminColors.mutedText)),
                       ],
                     ),
                   ],
@@ -64,7 +65,7 @@ class RecentMovementsTable extends ConsumerWidget {
               ],
             ),
           ),
-          
+
           historyState.when(
             loading: () => const Padding(
               padding: EdgeInsets.all(TenantAdminSpacing.xl),
@@ -74,8 +75,7 @@ class RecentMovementsTable extends ConsumerWidget {
               padding: const EdgeInsets.all(TenantAdminSpacing.xl),
               child: Center(
                   child: Text('Error: ${err.toString()}',
-                      style: const TextStyle(
-                          color: TenantAdminColors.danger))),
+                      style: const TextStyle(color: TenantAdminColors.danger))),
             ),
             data: (pageData) {
               if (pageData.items.isEmpty) {
@@ -83,18 +83,20 @@ class RecentMovementsTable extends ConsumerWidget {
                   padding: EdgeInsets.all(TenantAdminSpacing.xl),
                   child: Center(
                       child: Text('No movements recorded.',
-                          style: TextStyle(
-                              color: TenantAdminColors.mutedText))),
+                          style:
+                              TextStyle(color: TenantAdminColors.mutedText))),
                 );
               }
               // Show only the 5 most recent items
               final recent = pageData.items.take(5).toList();
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.xl),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: TenantAdminSpacing.xl),
                 child: Column(
                   children: recent.map((move) {
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: TenantAdminSpacing.md),
+                      padding:
+                          const EdgeInsets.only(bottom: TenantAdminSpacing.md),
                       child: MovementRow(move: move),
                     );
                   }).toList(),
@@ -137,7 +139,7 @@ class MovementRow extends StatelessWidget {
     if (change < 0) return const Color(0xFFEF4444); // Red
     return TenantAdminColors.mutedText;
   }
-  
+
   static Color _bgForChange(double change) {
     if (change > 0) return const Color(0xFFDCFCE7); // Light Green
     if (change < 0) return const Color(0xFFFEE2E2); // Light Red
@@ -147,14 +149,14 @@ class MovementRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final changeColor = _colorForChange(move.change);
-    
+
     // For icon background, we use specific colors based on type to match mockup
     Color iconColor = changeColor;
     Color iconBg = _bgForChange(move.change);
-    
+
     if (move.movementType?.toLowerCase() == 'adjustment out') {
-       iconColor = const Color(0xFFF97316);
-       iconBg = const Color(0xFFFFF7ED);
+      iconColor = const Color(0xFFF97316);
+      iconBg = const Color(0xFFFFF7ED);
     }
 
     final date = move.date;
@@ -190,7 +192,8 @@ class MovementRow extends StatelessWidget {
               color: iconBg,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(_iconForType(move.movementType), color: iconColor, size: 20),
+            child: Icon(_iconForType(move.movementType),
+                color: iconColor, size: 20),
           ),
           const SizedBox(width: 16),
           // Info
@@ -247,7 +250,8 @@ class MovementRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Icon(Icons.chevron_right, color: TenantAdminColors.mutedText, size: 20),
+          const Icon(Icons.chevron_right,
+              color: TenantAdminColors.mutedText, size: 20),
         ],
       ),
     );
@@ -255,8 +259,18 @@ class MovementRow extends StatelessWidget {
 
   static String _monthName(int m) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     if (m >= 1 && m <= 12) return months[m - 1];
     return '';

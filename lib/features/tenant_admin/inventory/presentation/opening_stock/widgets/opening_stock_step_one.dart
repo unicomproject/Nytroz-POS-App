@@ -13,7 +13,8 @@ class OpeningStockStepOne extends ConsumerWidget {
     final state = ref.watch(openingStockProvider);
     final notifier = ref.read(openingStockProvider.notifier);
 
-    final canContinue = state.selectedProduct != null && state.selectedOutlet != null;
+    final canContinue =
+        state.selectedProduct != null && state.selectedOutlet != null;
 
     return Column(
       children: [
@@ -24,7 +25,8 @@ class OpeningStockStepOne extends ConsumerWidget {
 
               if (isNarrow) {
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Column(
                     children: const [
                       SizedBox(
@@ -44,7 +46,8 @@ class OpeningStockStepOne extends ConsumerWidget {
               }
 
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: const [
@@ -69,7 +72,6 @@ class OpeningStockStepOne extends ConsumerWidget {
             },
           ),
         ),
-
         OpeningStockActionBar(
           canContinue: canContinue,
           onContinue: () => notifier.nextStep(),

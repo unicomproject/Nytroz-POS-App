@@ -229,8 +229,7 @@ class _ProductAvatar extends ConsumerWidget {
     if (imageUrl != null && imageUrl!.trim().isNotEmpty) {
       final baseUrl = ref.watch(appDioProvider).options.baseUrl;
       final resolvedUrl =
-          MediaUrlResolver.resolve(imageUrl!, apiBaseUrl: baseUrl) ??
-              imageUrl!;
+          MediaUrlResolver.resolve(imageUrl!, apiBaseUrl: baseUrl) ?? imageUrl!;
       return ClipRRect(
         borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
         child: Image.network(

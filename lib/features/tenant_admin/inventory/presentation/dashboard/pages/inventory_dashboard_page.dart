@@ -80,7 +80,8 @@ class InventoryDashboardPage extends ConsumerWidget {
           return Column(
             children: cards
                 .map((c) => Padding(
-                      padding: const EdgeInsets.only(bottom: TenantAdminSpacing.md),
+                      padding:
+                          const EdgeInsets.only(bottom: TenantAdminSpacing.md),
                       child: c,
                     ))
                 .toList(),
@@ -121,7 +122,8 @@ class InventoryDashboardPage extends ConsumerWidget {
           ],
         );
       },
-      loading: () => const Center(child: Padding(
+      loading: () => const Center(
+          child: Padding(
         padding: EdgeInsets.all(TenantAdminSpacing.xxl),
         child: TenantAdminLoadingSkeleton(rowCount: 2),
       )),
@@ -175,4 +177,3 @@ class InventoryDashboardPage extends ConsumerWidget {
     );
   }
 }
-

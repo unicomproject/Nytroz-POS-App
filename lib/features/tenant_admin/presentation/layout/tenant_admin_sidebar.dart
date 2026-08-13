@@ -56,8 +56,12 @@ class TenantAdminSidebar extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(collapsed ? 12 : 18, 18, 12, 8),
+              padding: EdgeInsets.fromLTRB(
+                  collapsed ? 0 : 18, 18, collapsed ? 0 : 12, 8),
               child: Row(
+                mainAxisAlignment: collapsed
+                    ? MainAxisAlignment.center
+                    : MainAxisAlignment.start,
                 children: [
                   Container(
                     width: 36,
@@ -139,7 +143,7 @@ class TenantAdminSidebar extends ConsumerWidget {
                         collapsed: collapsed,
                         compact: compact || collapsed,
                         onNavigate: () {
-                           // Optional callback if needed
+                          // Optional callback if needed
                         },
                       )
                     else
@@ -150,7 +154,7 @@ class TenantAdminSidebar extends ConsumerWidget {
                         enabled: true,
                         visuallyDisabled: !item.isRouteAvailable,
                         collapsed: collapsed,
-                        compact: compact,
+                        compact: compact || collapsed,
                         onTap: () => _onItemTap(context, item),
                       ),
                 ],

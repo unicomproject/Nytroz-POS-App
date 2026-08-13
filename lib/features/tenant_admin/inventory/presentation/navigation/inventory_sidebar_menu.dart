@@ -31,8 +31,10 @@ class InventorySidebarMenu extends ConsumerWidget {
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
       data: (accessChecker) {
-        final canViewDashboard = accessChecker.can(TenantAdminPermissionCodes.tenantStockDashboardView);
-        final canViewCurrentStock = accessChecker.can(TenantAdminPermissionCodes.tenantStockView);
+        final canViewDashboard = accessChecker
+            .can(TenantAdminPermissionCodes.tenantStockDashboardView);
+        final canViewCurrentStock =
+            accessChecker.can(TenantAdminPermissionCodes.tenantStockView);
 
         final hasVisibleChildren = canViewDashboard || canViewCurrentStock;
 
@@ -54,9 +56,11 @@ class InventorySidebarMenu extends ConsumerWidget {
               compact: compact,
               onToggle: () {
                 if (!collapsed && !expanded) {
-                  ref.read(inventorySidebarExpandedProvider.notifier).state = true;
+                  ref.read(inventorySidebarExpandedProvider.notifier).state =
+                      true;
                 } else if (!collapsed && expanded) {
-                  ref.read(inventorySidebarExpandedProvider.notifier).state = false;
+                  ref.read(inventorySidebarExpandedProvider.notifier).state =
+                      false;
                 }
               },
             ),

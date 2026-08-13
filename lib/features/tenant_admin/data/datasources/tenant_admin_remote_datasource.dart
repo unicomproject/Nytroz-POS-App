@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/network/media_url_resolver.dart';
 import '../models/tenant_admin_context_dto.dart';
 
 class TenantAdminRemoteDatasource {
@@ -22,6 +23,13 @@ class TenantAdminRemoteDatasource {
       );
     }
 
-    return TenantAdminContextDto.fromApiJson(data);
+    final dto = TenantAdminContextDto.fromApiJson(data);
+    return dto.copyWith(
+      tenantLogoUrl: MediaUrlResolver.resolve(
+        dto.tenantLogoUrl,
+        apiBaseUrl: _dio.options.baseUrl,
+        replaceLoopbackHost: true,
+      ),
+    );
   }
 }

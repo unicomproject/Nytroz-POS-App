@@ -2,6 +2,7 @@ class TenantAdminContext {
   const TenantAdminContext({
     required this.tenantId,
     required this.tenantName,
+    this.tenantLogoUrl,
     required this.userId,
     required this.userDisplayName,
     required this.roles,
@@ -20,6 +21,7 @@ class TenantAdminContext {
 
   final String tenantId;
   final String tenantName;
+  final String? tenantLogoUrl;
   final String userId;
   final String userDisplayName;
   final List<TenantAdminRoleScope> roles;
