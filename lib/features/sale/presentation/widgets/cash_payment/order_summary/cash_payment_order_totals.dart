@@ -21,11 +21,14 @@ class CashPaymentOrderTotals extends StatelessWidget {
         _SummaryRow(
           label: 'Subtotal',
           value: formatLkr(subtotal),
+          labelColor: Colors.black,
+          valueColor: Colors.black,
         ),
         const SizedBox(height: TenantAdminSpacing.sm),
         _SummaryRow(
           label: 'Discount',
           value: '- ${formatLkr(discount)}',
+          labelColor: Colors.black,
           valueColor: TenantAdminColors.danger,
           icon: Icons.local_offer_outlined,
           iconColor: TenantAdminColors.danger,
@@ -34,7 +37,8 @@ class CashPaymentOrderTotals extends StatelessWidget {
         _SummaryRow(
           label: 'Tax',
           value: formatLkr(tax),
-          valueColor: TenantAdminColors.primary,
+          labelColor: Colors.black,
+          valueColor: TenantAdminColors.info,
         ),
       ],
     );
@@ -45,6 +49,7 @@ class _SummaryRow extends StatelessWidget {
   const _SummaryRow({
     required this.label,
     required this.value,
+    this.labelColor,
     this.valueColor,
     this.icon,
     this.iconColor,
@@ -52,6 +57,7 @@ class _SummaryRow extends StatelessWidget {
 
   final String label;
   final String value;
+  final Color? labelColor;
   final Color? valueColor;
   final IconData? icon;
   final Color? iconColor;
@@ -60,7 +66,7 @@ class _SummaryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.w700,
-          color: TenantAdminColors.bodyText,
+          color: labelColor ?? TenantAdminColors.bodyText,
         );
 
     return Row(

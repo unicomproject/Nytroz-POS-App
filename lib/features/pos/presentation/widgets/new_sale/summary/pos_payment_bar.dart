@@ -7,6 +7,7 @@ import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_car
 import 'package:nytroz_pos/features/discount/presentation/providers/pos_discount_provider.dart';
 import 'package:nytroz_pos/features/device_activation/presentation/providers/device_activation_provider.dart';
 import 'package:nytroz_pos/features/sale/domain/entities/pos_payment_method_type.dart';
+import 'package:nytroz_pos/features/sale/presentation/providers/pos_checkout_summary_provider.dart';
 import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
 
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -14,10 +15,12 @@ import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 class PosPaymentBar extends ConsumerWidget {
   const PosPaymentBar({
     required this.cart,
+    required this.pricingAsync,
     super.key,
   });
 
   final PosNewSaleCartState cart;
+  final AsyncValue<PosCheckoutSummaryViewData> pricingAsync;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,11 +38,16 @@ class PosPaymentBar extends ConsumerWidget {
         deviceContext.outletId.trim().isNotEmpty &&
         deviceContext.tillId.trim().isNotEmpty;
     final hasOpenTillSession = tillState.hasOpenSession;
+    final pricingState = resolvePaymentBarPricingState(
+      cart: cart,
+      pricingAsync: pricingAsync,
+    );
     final canProceed = cart.hasItems &&
         canCheckout &&
         hasPaymentMethod &&
         hasTrustedDevice &&
-        hasOpenTillSession;
+        hasOpenTillSession &&
+        pricingState.canUseForPayment;
 
     const redOrangeColor = Color(0xFFFF2D1A);
 
@@ -86,7 +94,7 @@ class PosPaymentBar extends ConsumerWidget {
                     const SizedBox(width: TenantAdminSpacing.sm),
                     Expanded(
                       child: Text(
-                        formatLkr(cart.total),
+                        pricingState.label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -157,4 +165,53 @@ class PosPaymentBar extends ConsumerWidget {
       },
     );
   }
+}
+
+class PaymentBarPricingState {
+  const PaymentBarPricingState({
+    required this.label,
+    required this.canUseForPayment,
+    this.authoritativeTotal,
+  });
+
+  final String label;
+  final bool canUseForPayment;
+  final int? authoritativeTotal;
+}
+
+PaymentBarPricingState resolvePaymentBarPricingState({
+  required PosNewSaleCartState cart,
+  required AsyncValue<PosCheckoutSummaryViewData> pricingAsync,
+}) {
+  if (!cart.hasItems) {
+    return const PaymentBarPricingState(
+      label: 'LKR 0.00',
+      canUseForPayment: false,
+    );
+  }
+  if (pricingAsync.isLoading) {
+    return const PaymentBarPricingState(
+      label: 'Calculating…',
+      canUseForPayment: false,
+    );
+  }
+  if (pricingAsync.hasError) {
+    return const PaymentBarPricingState(
+      label: 'Total unavailable',
+      canUseForPayment: false,
+    );
+  }
+  final pricing = pricingAsync.valueOrNull;
+  if (pricing == null ||
+      !isCurrentAuthoritativePricing(cart: cart, pricing: pricing)) {
+    return const PaymentBarPricingState(
+      label: 'Total unavailable',
+      canUseForPayment: false,
+    );
+  }
+  return PaymentBarPricingState(
+    label: formatLkr(pricing.totalPayable),
+    authoritativeTotal: pricing.totalPayable,
+    canUseForPayment: true,
+  );
 }

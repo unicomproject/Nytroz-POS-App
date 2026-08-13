@@ -11,7 +11,7 @@ class CloseTillMismatchWarningCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(TenantAdminSpacing.lg),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2),
+        color: TenantAdminColors.dangerSurface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
         border: Border.all(color: TenantAdminColors.danger),
         boxShadow: TenantAdminShadows.card,

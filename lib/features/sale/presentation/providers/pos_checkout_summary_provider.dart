@@ -32,6 +32,7 @@ class PosCheckoutSummaryViewData {
     required this.cashierName,
     required this.paymentMethods,
     required this.usedFallback,
+    this.pricingInputFingerprint = '',
     this.fallbackMessage,
     this.validationMessages = const [],
   });
@@ -47,6 +48,7 @@ class PosCheckoutSummaryViewData {
   final String cashierName;
   final List<PosPaymentMethodType> paymentMethods;
   final bool usedFallback;
+  final String pricingInputFingerprint;
   final String? fallbackMessage;
   final List<String> validationMessages;
 
@@ -73,6 +75,7 @@ class PosCheckoutSummaryViewData {
           : 'Cashier',
       paymentMethods: allowedPosPaymentMethods(grantedPermissions),
       usedFallback: true,
+      pricingInputFingerprint: checkoutPricingInputFingerprint(cart),
       fallbackMessage: fallbackMessage ?? checkoutFallbackUnavailableMessage,
     );
   }
@@ -102,6 +105,7 @@ class PosCheckoutSummaryViewData {
       cashierName: payload.saleDetails.cashierName,
       paymentMethods: methods,
       usedFallback: false,
+      pricingInputFingerprint: checkoutPricingInputFingerprint(cart),
       validationMessages: payload.validationMessages,
     );
   }
@@ -162,6 +166,32 @@ final posCheckoutSummaryProvider =
     rethrow;
   }
 });
+
+String checkoutPricingInputFingerprint(PosNewSaleCartState cart) {
+  final lines = cart.itemList
+      .map((item) => [
+            item.product.cartLineKey,
+            item.product.variantId ?? '',
+            item.product.uomId ?? '',
+            item.quantity,
+            item.product.normalizedLineNote,
+          ].join(':'))
+      .toList(growable: false)
+    ..sort();
+  return [
+    ...lines,
+    'customer:${cart.selectedCustomer?.customerId ?? ''}',
+    'discount:${cart.discountApplicationId ?? ''}',
+  ].join('|');
+}
+
+bool isCurrentAuthoritativePricing({
+  required PosNewSaleCartState cart,
+  required PosCheckoutSummaryViewData pricing,
+}) =>
+    cart.hasItems &&
+    !pricing.usedFallback &&
+    pricing.pricingInputFingerprint == checkoutPricingInputFingerprint(cart);
 
 List<PosCheckoutLineRequest> checkoutLinesFromCart(PosNewSaleCartState cart) {
   return cart.itemList

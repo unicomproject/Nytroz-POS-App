@@ -7,20 +7,30 @@ import 'package:nytroz_pos/features/discount/presentation/providers/pos_discount
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/discount/presentation/widgets/discount_sync_conflict_panel.dart';
 import 'package:nytroz_pos/features/discount/presentation/widgets/pos_discount_dialog.dart';
+import 'package:nytroz_pos/features/sale/presentation/providers/pos_checkout_summary_provider.dart';
 
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
 class PosCartSummary extends ConsumerWidget {
   const PosCartSummary({
     required this.cart,
+    required this.pricingAsync,
     super.key,
   });
 
   final PosNewSaleCartState cart;
+  final AsyncValue<PosCheckoutSummaryViewData> pricingAsync;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final conflictDiscount = _conflictDiscount(cart);
+    final candidate = pricingAsync.valueOrNull;
+    final pricing = !pricingAsync.isLoading &&
+            !pricingAsync.hasError &&
+            candidate != null &&
+            isCurrentAuthoritativePricing(cart: cart, pricing: candidate)
+        ? candidate
+        : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -42,19 +52,26 @@ class PosCartSummary extends ConsumerWidget {
         ],
         _CartTotalLine(
           label: 'Subtotal',
-          value: formatLkr(cart.subtotal),
+          value: pricing == null ? '—' : formatLkr(pricing.subtotal),
+          labelColor: Colors.black,
+          valueColor: Colors.black,
         ),
         const SizedBox(height: TenantAdminSpacing.sm),
         _CartTotalLine(
           labelWidget: _DiscountSummaryLabel(cart: cart),
-          value: cart.hasDiscount
-              ? '- ${formatLkr(cart.discount)}'
-              : formatLkr(cart.discount),
+          value: pricing == null
+              ? '—'
+              : pricing.discount > 0
+                  ? '- ${formatLkr(pricing.discount)}'
+                  : formatLkr(pricing.discount),
+          valueColor: TenantAdminColors.danger,
         ),
         const SizedBox(height: TenantAdminSpacing.sm),
         _CartTotalLine(
           label: 'Tax',
-          value: formatLkr(cart.tax),
+          value: pricing == null ? '—' : formatLkr(pricing.tax),
+          labelColor: Colors.black,
+          valueColor: TenantAdminColors.info,
         ),
       ],
     );
@@ -109,7 +126,7 @@ class _DiscountSummaryLabel extends ConsumerWidget {
         Text(
           'Discount',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: TenantAdminColors.bodyText,
+                color: Colors.black,
                 fontWeight: FontWeight.w700,
               ),
         ),
@@ -168,21 +185,25 @@ class _CartTotalLine extends StatelessWidget {
     this.label,
     this.labelWidget,
     required this.value,
+    this.labelColor = TenantAdminColors.bodyText,
+    this.valueColor = TenantAdminColors.bodyText,
   }) : assert(label != null || labelWidget != null);
 
   final String? label;
   final Widget? labelWidget;
   final String value;
+  final Color labelColor;
+  final Color valueColor;
 
   @override
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: TenantAdminColors.bodyText,
+          color: labelColor,
           fontWeight: FontWeight.w800,
         );
 
     final valueStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: TenantAdminColors.bodyText,
+          color: valueColor,
           fontWeight: FontWeight.w900,
         );
 
