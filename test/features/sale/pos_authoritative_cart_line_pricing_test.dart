@@ -183,7 +183,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: Row(
-              children: [
+              children: const [
                 Expanded(
                   child: PosCartAuthoritativeUnitPriceDisplay(
                     catalogUnitPrice: 2800,

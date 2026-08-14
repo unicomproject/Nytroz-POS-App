@@ -421,7 +421,8 @@ void main() {
       // Product card + cart unit price show catalog values; line total waits for
       // authoritative checkout pricing.
       expect(find.text('LKR 1,500.00'), findsNWidgets(2));
-      expect(find.text('—'), findsOneWidget);
+      // One cart-line placeholder plus Subtotal, Discount and Tax placeholders.
+      expect(find.text('—'), findsNWidgets(4));
       // Without a successful checkout-summary response, payment stays gated.
       expect(tester.widget<FilledButton>(paymentButton).onPressed, isNull);
 
@@ -429,14 +430,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Qty 2'), findsOneWidget);
-      expect(find.text('LKR 3,000.00'), findsWidgets);
+      expect(find.text('LKR 1,500.00'), findsNWidgets(2));
+      expect(find.text('—'), findsNWidgets(4));
 
       await tester.tap(find.byIcon(Icons.remove));
       await tester.pumpAndSettle();
 
       expect(find.text('Qty 1'), findsOneWidget);
       expect(find.text('LKR 1,500.00'), findsNWidgets(2));
-      expect(find.text('—'), findsOneWidget);
+      expect(find.text('—'), findsNWidgets(4));
 
       await tester.tap(find.byTooltip('Remove item'));
       await tester.pumpAndSettle();
