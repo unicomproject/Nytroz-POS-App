@@ -13,6 +13,7 @@ import 'package:nytroz_pos/features/device_activation/data/datasources/device_co
 import 'package:nytroz_pos/features/device_activation/domain/entities/pos_device_context.dart';
 import 'package:nytroz_pos/features/device_activation/domain/repositories/device_activation_repository.dart';
 import 'package:nytroz_pos/features/device_activation/presentation/providers/device_activation_provider.dart';
+import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_top_bar.dart';
 import 'package:nytroz_pos/features/till/application/usecases/open_till.dart';
 import 'package:nytroz_pos/features/till/data/datasources/till_session_storage.dart';
 import 'package:nytroz_pos/features/till/domain/entities/open_till.dart';
@@ -27,7 +28,7 @@ void main() {
     testWidgets('blocks till open when device is not trusted', (tester) async {
       await _pumpTillOpenScreen(tester);
 
-      expect(find.text('OneVerz'), findsOneWidget);
+      expect(find.byType(PosTopBar), findsOneWidget);
       expect(find.text('Device activation required'), findsOneWidget);
       expect(
         find.text(
@@ -38,7 +39,6 @@ void main() {
       expect(find.text('Activate device'), findsOneWidget);
       expect(find.text('Open Till'), findsNothing);
       expect(find.text('Outlet Fetch'), findsNothing);
-      expect(find.byIcon(Icons.arrow_back_ios_new_rounded), findsOneWidget);
       expect(find.byIcon(Icons.help_outline), findsNothing);
     });
 
@@ -49,7 +49,7 @@ void main() {
         authSession: _cashierSession,
       );
 
-      expect(find.text('OneVerz'), findsOneWidget);
+      expect(find.byType(PosTopBar), findsOneWidget);
       expect(find.text('Open Till'), findsWidgets);
       expect(find.text('Front Till'), findsWidgets);
       expect(find.text('Main Outlet'), findsWidgets);
@@ -61,7 +61,6 @@ void main() {
       expect(find.text('Till Fetch'), findsNothing);
       expect(find.text('Step 3 of 3'), findsNothing);
       expect(find.text('Device trusted'), findsNothing);
-      expect(find.byIcon(Icons.arrow_back_ios_new_rounded), findsOneWidget);
       expect(find.byIcon(Icons.help_outline), findsNothing);
       expect(find.text('Quick Amounts'), findsOneWidget);
       expect(find.text('100'), findsOneWidget);

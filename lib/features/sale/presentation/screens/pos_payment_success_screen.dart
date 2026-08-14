@@ -8,6 +8,7 @@ import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../providers/pos_cash_payment_success_provider.dart';
+import '../utils/receipt_cashier_display.dart';
 import '../widgets/payment_success/payment_success_screen_body.dart';
 
 class PosPaymentSuccessScreen extends ConsumerWidget {
@@ -29,7 +30,11 @@ class PosPaymentSuccessScreen extends ConsumerWidget {
       );
     }
 
-    final cashierName = session?.userDisplayName ?? 'Unknown Cashier';
+    final cashierName = resolveReceiptCashierDisplayName(
+      receiptDataJson: successData.receiptDataJson,
+      paymentCashierName: successData.cashierName,
+      sessionDisplayName: session?.userDisplayName,
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'cash_payment_numeric_keypad.dart';
 
 class CashPaymentQuickAmountsSection extends StatelessWidget {
   const CashPaymentQuickAmountsSection({
@@ -56,11 +57,11 @@ class CashPaymentQuickAmountsSection extends StatelessWidget {
               child: Text(
                 label,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
                       color: isSelected
                           ? TenantAdminColors.posHomeAccentOrange
-                          : TenantAdminColors.bodyText,
+                          : CashPaymentKeypadStyle.digitColor,
                     ),
               ),
             ),

@@ -24,6 +24,30 @@ class CloseTillFormCard extends ConsumerWidget {
   final TextEditingController notesController;
   final double expectedCash;
 
+  InputDecoration _fieldDecoration({
+    required String labelText,
+    String? hintText,
+    String? prefixText,
+    bool filled = false,
+    bool alignLabelWithHint = false,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      prefixText: prefixText,
+      filled: filled,
+      fillColor: filled ? TenantAdminColors.subtleBackground : null,
+      alignLabelWithHint: alignLabelWithHint,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      labelStyle: const TextStyle(fontSize: 14),
+      hintStyle: const TextStyle(fontSize: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final formState = ref.watch(closeTillFormProvider);
@@ -31,6 +55,8 @@ class CloseTillFormCard extends ConsumerWidget {
     final mismatchReasonRequired = difference != null && difference != 0;
 
     return CashDrawerSectionCard(
+      expand: true,
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       child: Form(
         key: formKey,
         child: Column(
@@ -38,9 +64,13 @@ class CloseTillFormCard extends ConsumerWidget {
           children: [
             Text(
               'Close Till Form',
-              style: TenantAdminTextStyles.sectionTitle(context),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: TenantAdminColors.bodyText,
+                    fontSize: 17,
+                  ),
             ),
-            const SizedBox(height: TenantAdminSpacing.lg),
+            const SizedBox(height: 14),
             LayoutBuilder(
               builder: (context, constraints) {
                 final useRow =
@@ -48,6 +78,10 @@ class CloseTillFormCard extends ConsumerWidget {
 
                 final countedField = TextFormField(
                   controller: countedCashController,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
@@ -58,21 +92,19 @@ class CloseTillFormCard extends ConsumerWidget {
                   onChanged: ref
                       .read(closeTillFormProvider.notifier)
                       .setCountedCashText,
-                  decoration: InputDecoration(
+                  decoration: _fieldDecoration(
                     labelText: 'Counted Cash *',
                     prefixText: '${formatLkrInputPrefix()} ',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                    ),
+                  ).copyWith(
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
                       borderSide: const BorderSide(
                         color: TenantAdminColors.posHomeAccentOrange,
                         width: 1.5,
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
                       borderSide: const BorderSide(
                         color: TenantAdminColors.posHomeAccentOrange,
                         width: 2,
@@ -83,23 +115,16 @@ class CloseTillFormCard extends ConsumerWidget {
                 );
 
                 final expectedField = InputDecorator(
-                  decoration: InputDecoration(
+                  decoration: _fieldDecoration(
                     labelText: 'Expected Cash',
                     filled: true,
-                    fillColor: TenantAdminColors.background,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: TenantAdminSpacing.md,
-                      vertical: TenantAdminSpacing.md,
-                    ),
                   ),
                   child: Text(
                     formatCashDrawerAmount(expectedCash),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: TenantAdminColors.bodyText,
                           fontWeight: FontWeight.w700,
+                          fontSize: 15,
                         ),
                   ),
                 );
@@ -109,7 +134,7 @@ class CloseTillFormCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(child: countedField),
-                      const SizedBox(width: TenantAdminSpacing.lg),
+                      const SizedBox(width: 10),
                       Expanded(child: expectedField),
                     ],
                   );
@@ -119,30 +144,31 @@ class CloseTillFormCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     countedField,
-                    const SizedBox(height: TenantAdminSpacing.lg),
+                    const SizedBox(height: 8),
                     expectedField,
                   ],
                 );
               },
             ),
-            const SizedBox(height: TenantAdminSpacing.lg),
+            const SizedBox(height: 12),
             CloseTillDifferenceBadge(difference: difference),
-            const SizedBox(height: TenantAdminSpacing.lg),
+            const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               key: ValueKey(formState.mismatchReason),
               initialValue: formState.mismatchReason,
-              decoration: InputDecoration(
+              style: const TextStyle(
+                fontSize: 15,
+                color: TenantAdminColors.bodyText,
+              ),
+              decoration: _fieldDecoration(
                 labelText:
                     'Mismatch Reason${mismatchReasonRequired ? ' *' : ''}',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                ),
               ),
               items: [
                 for (final reason in CloseTillMismatchReason.options)
                   DropdownMenuItem(
                     value: reason,
-                    child: Text(reason),
+                    child: Text(reason, style: const TextStyle(fontSize: 15)),
                   ),
               ],
               onChanged:
@@ -152,18 +178,21 @@ class CloseTillFormCard extends ConsumerWidget {
                 required: mismatchReasonRequired,
               ),
             ),
-            const SizedBox(height: TenantAdminSpacing.lg),
-            TextFormField(
-              controller: notesController,
-              maxLines: 4,
-              maxLength: 500,
-              onChanged: ref.read(closeTillFormProvider.notifier).setNotes,
-              decoration: InputDecoration(
-                labelText: 'Notes',
-                hintText: 'Add notes about the till close...',
-                alignLabelWithHint: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            const SizedBox(height: 12),
+            Expanded(
+              child: TextFormField(
+                controller: notesController,
+                expands: true,
+                minLines: null,
+                maxLines: null,
+                maxLength: 500,
+                textAlignVertical: TextAlignVertical.top,
+                style: const TextStyle(fontSize: 15),
+                onChanged: ref.read(closeTillFormProvider.notifier).setNotes,
+                decoration: _fieldDecoration(
+                  labelText: 'Notes',
+                  hintText: 'Add notes about the till close...',
+                  alignLabelWithHint: true,
                 ),
               ),
             ),

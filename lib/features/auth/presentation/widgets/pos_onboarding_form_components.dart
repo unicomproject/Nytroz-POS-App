@@ -179,14 +179,7 @@ class PosOnboardingPrimaryAction extends StatelessWidget {
         onPressed: onPressed,
         isLoading: isLoading,
         fullWidth: true,
-        gradient: const LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            TenantAdminColors.posNewSaleAccent,
-            TenantAdminColors.posNewSaleAccentEnd,
-          ],
-        ),
+        backgroundColor: TenantAdminColors.posHomeAccentOrange,
         minimumHeight: isWide ? 68 : 56,
         child: Row(
           children: [

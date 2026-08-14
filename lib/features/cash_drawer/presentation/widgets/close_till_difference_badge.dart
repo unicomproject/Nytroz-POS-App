@@ -16,7 +16,10 @@ class CloseTillDifferenceBadge extends StatelessWidget {
     if (difference == null) {
       return Text(
         'Enter counted cash to calculate the difference.',
-        style: TenantAdminTextStyles.muted(context),
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: TenantAdminColors.mutedText,
+              fontSize: 13,
+            ),
       );
     }
 
@@ -25,13 +28,10 @@ class CloseTillDifferenceBadge extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: TenantAdminSpacing.lg,
-        vertical: TenantAdminSpacing.md,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: colors.background,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
         border: Border.all(color: colors.border),
       ),
       child: Column(
@@ -39,17 +39,19 @@ class CloseTillDifferenceBadge extends StatelessWidget {
         children: [
           Text(
             'Difference',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: TenantAdminColors.mutedText,
                   fontWeight: FontWeight.w600,
+                  fontSize: 12,
                 ),
           ),
-          const SizedBox(height: TenantAdminSpacing.xs),
+          const SizedBox(height: 2),
           Text(
             label,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: colors.foreground,
                   fontWeight: FontWeight.w800,
+                  fontSize: 15,
                 ),
           ),
         ],

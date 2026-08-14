@@ -18,7 +18,7 @@ class CashPaymentOrderItemsList extends StatelessWidget {
           child: DefaultTextStyle(
             style: Theme.of(context).textTheme.labelSmall!.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: TenantAdminColors.primary,
+                  color: TenantAdminColors.posHomeAccentOrange,
                   fontSize: 10,
                 ),
             child: const Row(

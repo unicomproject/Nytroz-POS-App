@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../providers/customers_provider.dart';
+import 'customers_ui_tokens.dart';
 
 class CustomersSearchFilterToolbar extends StatelessWidget {
   const CustomersSearchFilterToolbar({
@@ -68,7 +70,9 @@ class CustomersSearchFilterToolbar extends StatelessWidget {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFF1464F4)),
+                      borderSide: BorderSide(
+                        color: TenantAdminColors.posHomeAccentOrange,
+                      ),
                     ),
                   ),
                 ),
@@ -80,8 +84,9 @@ class CustomersSearchFilterToolbar extends StatelessWidget {
               icon: const Icon(Icons.filter_list_rounded, size: 18),
               label: const Text('Filter'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1464F4),
-                side: const BorderSide(color: Color(0xFF1464F4)),
+                backgroundColor: CustomersUiTokens.lightBlueSurface,
+                foregroundColor: CustomersUiTokens.accentText,
+                side: const BorderSide(color: CustomersUiTokens.lightBlueBorder),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
                 shape: RoundedRectangleBorder(
@@ -101,7 +106,7 @@ class CustomersSearchFilterToolbar extends StatelessWidget {
                 icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
                 label: const Text('Add Customer'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF3214),
+                  backgroundColor: TenantAdminColors.posHomeAccentOrange,
                   foregroundColor: Colors.white,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
@@ -155,7 +160,16 @@ class CustomersSearchFilterToolbar extends StatelessWidget {
                 icon: const Icon(Icons.restart_alt_rounded, size: 18),
                 label: const Text('Reset'),
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF1464F4),
+                  backgroundColor: CustomersUiTokens.lightBlueSurface,
+                  foregroundColor: CustomersUiTokens.accentText,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: const BorderSide(
+                      color: CustomersUiTokens.lightBlueBorder,
+                    ),
+                  ),
                   textStyle: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
