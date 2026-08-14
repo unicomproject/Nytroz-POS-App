@@ -19,6 +19,7 @@ class CurrentStockTable extends ConsumerWidget {
     final search = ref.watch(currentStockSearchProvider);
     final currentPage = stockPage.page;
     final pageSize = ref.watch(currentStockPageSizeProvider);
+    final pageSizeOptions = <int>{pageSize, 10, 25, 50}.toList()..sort();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -310,7 +311,7 @@ class CurrentStockTable extends ConsumerWidget {
                               value: pageSize,
                               icon: const Icon(Icons.keyboard_arrow_down,
                                   size: 16),
-                              items: [10, 25, 50].map((int value) {
+                              items: pageSizeOptions.map((int value) {
                                 return DropdownMenuItem<int>(
                                   value: value,
                                   child: Text(value.toString(),
