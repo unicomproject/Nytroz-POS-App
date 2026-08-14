@@ -130,28 +130,35 @@ class OpeningStockWizardScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'Opening Stock',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                                color: TenantAdminColors.bodyText,
-                                letterSpacing: -0.5,
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Opening Stock',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: TenantAdminColors.bodyText,
+                                  letterSpacing: -0.5,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Select the product and outlet to add opening stock.',
-                              style: TextStyle(
-                                  fontSize: 13, color: Color(0xFF64748B)),
-                            ),
-                          ],
+                              SizedBox(height: 2),
+                              Text(
+                                'Select the product and outlet to add opening stock.',
+                                style: TextStyle(
+                                    fontSize: 13, color: Color(0xFF64748B)),
+                              ),
+                            ],
+                          ),
                         ),
-                        OpeningStockStepperHeader(
-                            currentStep: state.currentStep),
+                        Flexible(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: OpeningStockStepperHeader(
+                                currentStep: state.currentStep),
+                          ),
+                        ),
                       ],
                     );
                   },

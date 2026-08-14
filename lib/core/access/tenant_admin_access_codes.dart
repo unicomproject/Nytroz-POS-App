@@ -170,6 +170,19 @@ class TenantAdminPermissionCodes {
   static const tenantStockExpiryView = 'tenant.stock.expiry.view';
   static const tenantStockAdjustmentsView = 'tenant.stock.adjustments.view';
   static const tenantStockTransfersView = 'tenant.stock.transfers.view';
+
+  // Locked Inventory permission codes (frontend UX aliases until API grants them).
+  static const inventoryStockView = 'inventory.stock.view';
+  static const inventoryOpeningStockManage = 'inventory.opening_stock.manage';
+  static const inventoryReceivingManage = 'inventory.receiving.manage';
+  static const inventorySerialsView = 'inventory.serials.view';
+  static const inventoryChannelAllocationView =
+      'inventory.channel_allocation.view';
+  static const inventoryChannelAllocationManage =
+      'inventory.channel_allocation.manage';
+  static const inventoryStockAdjust = 'inventory.stock.adjust';
+  static const inventoryAlertsView = 'inventory.alerts.view';
+  static const inventoryMovementsView = 'inventory.movements.view';
   static const tenantReportsProductsView = 'tenant.reports.products.view';
   static const tenantCategoriesView = 'tenant.categories.view';
   static const tenantBrandsView = 'tenant.brands.view';

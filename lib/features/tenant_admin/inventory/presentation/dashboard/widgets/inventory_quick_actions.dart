@@ -23,17 +23,27 @@ class InventoryQuickActions extends StatelessWidget {
         color: TenantAdminColors.info,
         onTap: () => context.go(InventoryRoutes.openingStock),
       ),
-      const _ActionCard(
+      _ActionCard(
         title: 'Stock Adjustment',
         subtitle: 'Adjust stock for damage, missing or other reasons',
         iconData: Icons.swap_vert_outlined,
         color: TenantAdminColors.warning,
+        onTap: () => context.go(InventoryRoutes.adjustment),
       ),
-      const _ActionCard(
+      _ActionCard(
         title: 'Stock Count',
         subtitle: 'Perform physical stock count',
         iconData: Icons.fact_check_outlined,
         color: TenantAdminColors.success,
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Stock Count is not available in this phase (STOCKTAKE_DEFERRED).',
+              ),
+            ),
+          );
+        },
       ),
     ];
 

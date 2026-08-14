@@ -11,7 +11,7 @@ import '../../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../../presentation/widgets/tenant_admin_states.dart';
 import '../../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../../presentation/providers/tenant_admin_access_provider.dart';
-import '../../../../../../core/access/tenant_admin_access_codes.dart';
+import '../../navigation/inventory_routes.dart';
 import '../providers/current_stock_providers.dart';
 import '../widgets/current_stock_summary_cards.dart';
 import '../widgets/current_stock_table.dart';
@@ -25,7 +25,7 @@ class CurrentStockScreen extends ConsumerWidget {
     final accessChecker = accessCheckerState.valueOrNull;
 
     if (accessChecker == null ||
-        !accessChecker.can(TenantAdminPermissionCodes.tenantStockView)) {
+        !accessChecker.canAccessCurrentStockPage()) {
       return const TenantAdminPageScaffold(
         title: 'Current Stock',
         child: TenantAdminEmptyState(
@@ -387,12 +387,11 @@ class CurrentStockScreen extends ConsumerWidget {
                       minimumSize: const Size(120, 48),
                     ),
                   ),
-                  if (accessChecker
-                      .can(TenantAdminPermissionCodes.tenantStockIn)) ...[
+                  if (accessChecker.canAccessReceivingPage()) ...[
                     TenantAdminPrimaryButton(
                       label: 'Stock In',
                       icon: Icons.add,
-                      onPressed: () {},
+                      onPressed: () => context.go(InventoryRoutes.receiving),
                     ),
                   ],
                 ],

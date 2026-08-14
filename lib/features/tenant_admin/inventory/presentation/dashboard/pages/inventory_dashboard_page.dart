@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../../presentation/widgets/tenant_admin_states.dart';
+import '../../../../presentation/providers/tenant_admin_access_provider.dart';
 import '../providers/inventory_dashboard_providers.dart';
 import '../widgets/inventory_activities_table.dart';
 import '../widgets/inventory_alerts_table.dart';
@@ -136,6 +137,9 @@ class InventoryDashboardPage extends ConsumerWidget {
   }
 
   Widget _buildTables(WidgetRef ref, double width) {
+    final accessChecker =
+        ref.watch(tenantAdminAccessCheckerProvider).valueOrNull;
+    final showAlerts = accessChecker?.canViewInventoryAlerts() ?? true;
     final alertsState = ref.watch(inventoryDashboardAlertsProvider);
     final activitiesState = ref.watch(inventoryDashboardActivitiesProvider);
 
@@ -160,8 +164,10 @@ class InventoryDashboardPage extends ConsumerWidget {
     if (width < 1100) {
       return Column(
         children: [
-          alertsWidget,
-          const SizedBox(height: TenantAdminSpacing.lg),
+          if (showAlerts) ...[
+            alertsWidget,
+            const SizedBox(height: TenantAdminSpacing.lg),
+          ],
           activitiesWidget,
         ],
       );
@@ -170,8 +176,10 @@ class InventoryDashboardPage extends ConsumerWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: alertsWidget),
-        const SizedBox(width: TenantAdminSpacing.xl),
+        if (showAlerts) ...[
+          Expanded(child: alertsWidget),
+          const SizedBox(width: TenantAdminSpacing.xl),
+        ],
         Expanded(child: activitiesWidget),
       ],
     );
