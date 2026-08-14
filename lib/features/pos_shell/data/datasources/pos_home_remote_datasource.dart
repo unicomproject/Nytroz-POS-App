@@ -613,7 +613,18 @@ class PosHomeCardPayload {
 }
 
 class PosHomeException implements Exception {
-  const PosHomeException(this.message);
+  const PosHomeException(this.message, {this.reasonCode, this.requiredAction});
 
   final String message;
+  final String? reasonCode;
+  final String? requiredAction;
+
+  bool get shouldClearStaleTillSession => switch (reasonCode) {
+        'NO_OPEN_TILL_SESSION' ||
+        'TILL_NOT_FOUND' ||
+        'TILL_INACTIVE' ||
+        'DEVICE_NOT_ASSIGNED_TO_TILL' =>
+          true,
+        _ => false,
+      };
 }

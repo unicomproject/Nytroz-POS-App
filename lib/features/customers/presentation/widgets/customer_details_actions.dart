@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+
 class CustomerDetailsActions extends StatelessWidget {
   const CustomerDetailsActions({
     super.key,
@@ -54,7 +56,7 @@ class CustomerDetailsActions extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF3214),
+                    backgroundColor: TenantAdminColors.posHomeAccentOrange,
                     foregroundColor: Colors.white,
                     disabledBackgroundColor: const Color(0xFFFFB0A3),
                     disabledForegroundColor: Colors.white,

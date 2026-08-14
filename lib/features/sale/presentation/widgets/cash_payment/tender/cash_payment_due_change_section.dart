@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'cash_payment_numeric_keypad.dart';
 
 class CashPaymentDueChangeSection extends StatelessWidget {
   const CashPaymentDueChangeSection({
@@ -31,16 +32,16 @@ class CashPaymentDueChangeSection extends StatelessWidget {
             'CHANGE DUE',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                  color: TenantAdminColors.bodyText,
+                  fontSize: 13,
+                  color: CashPaymentKeypadStyle.digitColor,
                 ),
           ),
           const Spacer(),
           Text(
             formatLkr(changeDue > 0 ? changeDue : 0),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
                   color: TenantAdminColors.success,
                 ),
           ),

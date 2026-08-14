@@ -32,9 +32,12 @@ class PosCheckoutSummaryViewData {
     required this.cashierName,
     required this.paymentMethods,
     required this.usedFallback,
+    this.currency = '',
     this.pricingInputFingerprint = '',
     this.fallbackMessage,
     this.validationMessages = const [],
+    this.calculatedLines = const [],
+    this.linesByClientLineId = const {},
   });
 
   final int itemCount;
@@ -48,9 +51,12 @@ class PosCheckoutSummaryViewData {
   final String cashierName;
   final List<PosPaymentMethodType> paymentMethods;
   final bool usedFallback;
+  final String currency;
   final String pricingInputFingerprint;
   final String? fallbackMessage;
   final List<String> validationMessages;
+  final List<PosCalculatedCartLinePayload> calculatedLines;
+  final Map<String, PosCalculatedCartLinePayload> linesByClientLineId;
 
   factory PosCheckoutSummaryViewData.fallback({
     required PosNewSaleCartState cart,
@@ -75,9 +81,24 @@ class PosCheckoutSummaryViewData {
           : 'Cashier',
       paymentMethods: allowedPosPaymentMethods(grantedPermissions),
       usedFallback: true,
+      currency: '',
       pricingInputFingerprint: checkoutPricingInputFingerprint(cart),
       fallbackMessage: fallbackMessage ?? checkoutFallbackUnavailableMessage,
     );
+  }
+
+  static Map<String, PosCalculatedCartLinePayload> _indexLinesByClientLineId(
+    List<PosCalculatedCartLinePayload> lines,
+  ) {
+    final indexed = <String, PosCalculatedCartLinePayload>{};
+    for (final line in lines) {
+      final clientLineId = line.clientLineId?.trim();
+      if (clientLineId == null || clientLineId.isEmpty) {
+        continue;
+      }
+      indexed[clientLineId] = line;
+    }
+    return indexed;
   }
 
   factory PosCheckoutSummaryViewData.fromPayload({
@@ -105,8 +126,11 @@ class PosCheckoutSummaryViewData {
       cashierName: payload.saleDetails.cashierName,
       paymentMethods: methods,
       usedFallback: false,
+      currency: payload.billingSummary.currency,
       pricingInputFingerprint: checkoutPricingInputFingerprint(cart),
       validationMessages: payload.validationMessages,
+      calculatedLines: payload.lines,
+      linesByClientLineId: _indexLinesByClientLineId(payload.lines),
     );
   }
 }
@@ -170,6 +194,7 @@ final posCheckoutSummaryProvider =
 String checkoutPricingInputFingerprint(PosNewSaleCartState cart) {
   final lines = cart.itemList
       .map((item) => [
+            item.product.clientLineId ?? '',
             item.product.cartLineKey,
             item.product.variantId ?? '',
             item.product.uomId ?? '',
@@ -183,6 +208,37 @@ String checkoutPricingInputFingerprint(PosNewSaleCartState cart) {
     'customer:${cart.selectedCustomer?.customerId ?? ''}',
     'discount:${cart.discountApplicationId ?? ''}',
   ].join('|');
+}
+
+PosCalculatedCartLinePayload? authoritativeLinePricingFor({
+  required PosNewSaleCartItem item,
+  required PosCheckoutSummaryViewData pricing,
+}) {
+  final clientLineId = item.product.clientLineId?.trim();
+  if (clientLineId != null && clientLineId.isNotEmpty) {
+    return pricing.linesByClientLineId[clientLineId];
+  }
+
+  final matches = pricing.calculatedLines.where((line) {
+    return line.variantId == (item.product.variantId ?? '') &&
+        (line.uomId ?? '') == (item.product.uomId ?? '') &&
+        (line.lineNote ?? '') == item.product.normalizedLineNote &&
+        line.quantity == item.quantity;
+  }).toList(growable: false);
+
+  if (matches.length == 1) {
+    return matches.single;
+  }
+
+  return null;
+}
+
+String formatCheckoutMoney(String currency, int value) {
+  final normalizedCurrency = currency.trim();
+  if (normalizedCurrency.isEmpty) {
+    return formatLkr(value);
+  }
+  return '$normalizedCurrency ${formatLkr(value).replaceFirst('LKR ', '')}';
 }
 
 bool isCurrentAuthoritativePricing({

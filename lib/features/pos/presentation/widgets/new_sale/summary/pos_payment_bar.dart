@@ -49,7 +49,7 @@ class PosPaymentBar extends ConsumerWidget {
         hasOpenTillSession &&
         pricingState.canUseForPayment;
 
-    const redOrangeColor = Color(0xFFFF2D1A);
+    const accentColor = TenantAdminColors.posHomeAccentOrange;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -65,7 +65,7 @@ class PosPaymentBar extends ConsumerWidget {
             vertical: TenantAdminSpacing.sm,
           ),
           decoration: BoxDecoration(
-            color: redOrangeColor,
+            color: accentColor,
             borderRadius: BorderRadius.circular(TenantAdminRadius.md),
           ),
           child: Row(
@@ -147,7 +147,7 @@ class PosPaymentBar extends ConsumerWidget {
                   minimumSize: Size(isNarrow ? 80 : 150, 44),
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   backgroundColor: Colors.white,
-                  foregroundColor: redOrangeColor,
+                  foregroundColor: accentColor,
                   disabledBackgroundColor: Colors.white.withValues(alpha: 0.68),
                   disabledForegroundColor: TenantAdminColors.offline,
                   textStyle: const TextStyle(

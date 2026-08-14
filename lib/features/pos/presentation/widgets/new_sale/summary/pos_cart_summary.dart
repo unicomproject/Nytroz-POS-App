@@ -154,7 +154,7 @@ class _DiscountSummaryLabel extends ConsumerWidget {
                           ? TenantAdminColors.warning
                           : isApplied
                               ? TenantAdminColors.success
-                              : const Color(0xFFFF2D1A),
+                              : TenantAdminColors.posHomeAccentOrange,
                 ),
                 const SizedBox(width: TenantAdminSpacing.xs),
                 Text(
@@ -166,7 +166,7 @@ class _DiscountSummaryLabel extends ConsumerWidget {
                             ? TenantAdminColors.warning
                             : isApplied
                                 ? TenantAdminColors.success
-                                : const Color(0xFFFF2D1A),
+                                : TenantAdminColors.posHomeAccentOrange,
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
                   ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+
 class CustomerTableHeader extends StatelessWidget {
   const CustomerTableHeader({
     super.key,
@@ -58,7 +60,7 @@ class _HeaderCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const headerStyle = TextStyle(
-      color: Color(0xFF1464F4),
+      color: TenantAdminColors.posHomeAccentOrange,
       fontWeight: FontWeight.w800,
       fontSize: 13,
     );
@@ -80,7 +82,7 @@ class _HeaderCell extends StatelessWidget {
             const Icon(
               Icons.unfold_more_rounded,
               size: 16,
-              color: Color(0xFF1464F4),
+              color: TenantAdminColors.posHomeAccentOrange,
             ),
           ],
         ],

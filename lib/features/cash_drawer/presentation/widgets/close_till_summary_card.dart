@@ -23,14 +23,19 @@ class CloseTillSummaryCard extends ConsumerWidget {
     final statusColors = closeTillClosingStatusColors(closingStatus);
 
     return CashDrawerSectionCard(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'Till Close Summary',
-            style: TenantAdminTextStyles.sectionTitle(context),
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: TenantAdminColors.bodyText,
+                  fontSize: 17,
+                ),
           ),
-          const SizedBox(height: TenantAdminSpacing.lg),
+          const SizedBox(height: 8),
           LayoutBuilder(
             builder: (context, constraints) {
               final useFourColumns =
@@ -83,8 +88,7 @@ class CloseTillSummaryCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     for (var index = 0; index < items.length; index += 1) ...[
-                      if (index > 0)
-                        const SizedBox(width: TenantAdminSpacing.lg),
+                      if (index > 0) const SizedBox(width: 10),
                       Expanded(child: items[index]),
                     ],
                   ],
@@ -98,16 +102,16 @@ class CloseTillSummaryCard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(child: items[0]),
-                        const SizedBox(width: TenantAdminSpacing.lg),
+                        const SizedBox(width: 10),
                         Expanded(child: items[1]),
                       ],
                     ),
-                    const SizedBox(height: TenantAdminSpacing.lg),
+                    const SizedBox(height: 8),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(child: items[2]),
-                        const SizedBox(width: TenantAdminSpacing.lg),
+                        const SizedBox(width: 10),
                         Expanded(child: items[3]),
                       ],
                     ),
@@ -119,8 +123,7 @@ class CloseTillSummaryCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (var index = 0; index < items.length; index += 1) ...[
-                    if (index > 0)
-                      const SizedBox(height: TenantAdminSpacing.md),
+                    if (index > 0) const SizedBox(height: 6),
                     items[index],
                   ],
                 ],
@@ -153,20 +156,22 @@ class _SummaryColumn extends StatelessWidget {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: TenantAdminColors.mutedText,
                 fontWeight: FontWeight.w600,
+                fontSize: 12,
               ),
         ),
-        const SizedBox(height: TenantAdminSpacing.sm),
+        const SizedBox(height: 4),
         if (child != null)
           child!
         else
           Text(
             value ?? '-',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: valueColor ?? TenantAdminColors.bodyText,
                   fontWeight: FontWeight.w800,
+                  fontSize: 15,
                 ),
           ),
       ],
@@ -186,10 +191,7 @@ class _ClosingStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: TenantAdminSpacing.md,
-        vertical: TenantAdminSpacing.sm,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: colors.background,
         borderRadius: BorderRadius.circular(TenantAdminRadius.xl),
@@ -197,9 +199,10 @@ class _ClosingStatusChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: colors.foreground,
               fontWeight: FontWeight.w800,
+              fontSize: 13,
             ),
       ),
     );

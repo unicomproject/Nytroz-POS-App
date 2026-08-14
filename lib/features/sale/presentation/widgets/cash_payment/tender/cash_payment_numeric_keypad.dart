@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
+/// Target Cash Payment keypad typography — bold dark black digits.
+abstract final class CashPaymentKeypadStyle {
+  static const digitColor = Color(0xFF030303);
+  static const digitFontSize = 22.0;
+  static const actionLabelColor = Color(0xFF030303);
+  static const actionLabelFontSize = 10.0;
+}
+
 class CashPaymentNumericKeypad extends StatelessWidget {
   const CashPaymentNumericKeypad({
     super.key,
@@ -78,6 +86,7 @@ class CashPaymentNumericKeypad extends StatelessWidget {
                 flex: 2,
                 child: _buildActionKey(
                   icon: Icons.backspace_outlined,
+                  actionLabel: 'Backspace',
                   onTap: onBackspacePressed,
                   context: context,
                 ),
@@ -87,6 +96,7 @@ class CashPaymentNumericKeypad extends StatelessWidget {
                 flex: 2,
                 child: _buildActionKey(
                   label: 'C',
+                  actionLabel: 'Clear',
                   color: TenantAdminColors.danger,
                   onTap: onClearPressed,
                   context: context,
@@ -105,6 +115,21 @@ class CashPaymentNumericKeypad extends StatelessWidget {
       onTap: () => onDigitPressed(digit),
       context: context,
     );
+  }
+
+  TextStyle _digitStyle(BuildContext context) {
+    return Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w900,
+              fontSize: CashPaymentKeypadStyle.digitFontSize,
+              color: CashPaymentKeypadStyle.digitColor,
+              height: 1,
+            ) ??
+        const TextStyle(
+          fontWeight: FontWeight.w900,
+          fontSize: CashPaymentKeypadStyle.digitFontSize,
+          color: CashPaymentKeypadStyle.digitColor,
+          height: 1,
+        );
   }
 
   Widget _buildKey({
@@ -132,16 +157,14 @@ class CashPaymentNumericKeypad extends StatelessWidget {
               child: icon != null
                   ? Icon(
                       icon,
-                      size: 18,
-                      color: color ?? TenantAdminColors.bodyText,
+                      size: 20,
+                      color: color ?? CashPaymentKeypadStyle.digitColor,
                     )
                   : Text(
                       label ?? '',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                            color: color ?? TenantAdminColors.bodyText,
-                          ),
+                      style: _digitStyle(context).copyWith(
+                        color: color ?? CashPaymentKeypadStyle.digitColor,
+                      ),
                     ),
             ),
           ),
@@ -163,11 +186,9 @@ class CashPaymentNumericKeypad extends StatelessWidget {
           ),
           child: Text(
             label,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  color: TenantAdminColors.mutedText.withValues(alpha: 0.45),
-                ),
+            style: _digitStyle(context).copyWith(
+              color: TenantAdminColors.mutedText.withValues(alpha: 0.45),
+            ),
           ),
         ),
       ),
@@ -177,6 +198,7 @@ class CashPaymentNumericKeypad extends StatelessWidget {
   Widget _buildActionKey({
     String? label,
     IconData? icon,
+    String? actionLabel,
     Color? color,
     required VoidCallback onTap,
     required BuildContext context,
@@ -195,20 +217,36 @@ class CashPaymentNumericKeypad extends StatelessWidget {
               borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
               border: Border.all(color: TenantAdminColors.border),
             ),
-            child: icon != null
-                ? Icon(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (icon != null)
+                  Icon(
                     icon,
-                    size: 18,
-                    color: color ?? TenantAdminColors.bodyText,
+                    size: 22,
+                    color: color ?? CashPaymentKeypadStyle.digitColor,
                   )
-                : Text(
+                else
+                  Text(
                     label ?? '',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 18,
-                          color: color ?? TenantAdminColors.bodyText,
+                    style: _digitStyle(context).copyWith(
+                      fontSize: 24,
+                      color: color ?? CashPaymentKeypadStyle.digitColor,
+                    ),
+                  ),
+                if (actionLabel != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    actionLabel,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: CashPaymentKeypadStyle.actionLabelFontSize,
+                          color: color ?? CashPaymentKeypadStyle.actionLabelColor,
                         ),
                   ),
+                ],
+              ],
+            ),
           ),
         ),
       ),

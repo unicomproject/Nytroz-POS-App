@@ -142,19 +142,21 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
         child: Padding(
           padding:
               TenantAdminInsets.pageForWidth(MediaQuery.sizeOf(context).width),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              CloseTillPageHeader(onBack: _goBack),
-              const Spacer(),
-              _CloseTillLoadError(
-                message: drawerState.errorMessage ??
-                    ref.watch(tillProvider).errorMessage ??
-                    'Close till information is unavailable.',
-                onRetry: _loadCloseTillData,
-              ),
-              const Spacer(),
-            ],
+          child: CashDrawerSectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                CloseTillPageHeader(onBack: _goBack),
+                const Spacer(),
+                _CloseTillLoadError(
+                  message: drawerState.errorMessage ??
+                      ref.watch(tillProvider).errorMessage ??
+                      'Close till information is unavailable.',
+                  onRetry: _loadCloseTillData,
+                ),
+                const Spacer(),
+              ],
+            ),
           ),
         ),
       );
@@ -166,20 +168,21 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
         child: Padding(
           padding:
               TenantAdminInsets.pageForWidth(MediaQuery.sizeOf(context).width),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              CloseTillPageHeader(onBack: _goBack),
-              const SizedBox(height: TenantAdminSpacing.xl),
-              const _TillRequiredMessage(),
-              const Spacer(),
-              CloseTillBottomActions(
-                canCloseTill: false,
-                isLoading: false,
-                onCloseTill: () {},
-                onSaveDraft: null,
-              ),
-            ],
+          child: CashDrawerSectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                CloseTillPageHeader(onBack: _goBack),
+                const SizedBox(height: TenantAdminSpacing.xl),
+                const _TillRequiredMessage(),
+                const Spacer(),
+                CloseTillBottomActions(
+                  canCloseTill: false,
+                  isLoading: false,
+                  onCloseTill: () {},
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -197,69 +200,81 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
           final padding = TenantAdminInsets.pageForWidth(constraints.maxWidth);
 
           return Padding(
-            padding: padding,
+            padding: EdgeInsets.fromLTRB(
+              padding.left > 16 ? 16 : padding.left,
+              padding.top > 12 ? 12 : padding.top,
+              padding.right > 16 ? 16 : padding.right,
+              padding.bottom > 12 ? 12 : padding.bottom,
+            ),
             child: SizedBox.expand(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  CloseTillPageHeader(onBack: _goBack),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  CloseTillTillInfoBar(summary: summary),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, bodyConstraints) {
-                        final useColumns = bodyConstraints.maxWidth >=
-                            TenantAdminBreakpoints.tablet;
-                        final form = CloseTillFormCard(
-                          formKey: _formKey,
-                          countedCashController: _countedCashController,
-                          notesController: _notesController,
-                          expectedCash: expectedCash,
-                        );
-                        final summaryColumn = Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            CloseTillSummaryCard(expectedCash: expectedCash),
-                            if (showMismatchWarning) ...[
-                              const SizedBox(height: TenantAdminSpacing.md),
-                              const CloseTillMismatchWarningCard(),
+              child: CashDrawerSectionCard(
+                padding: EdgeInsets.all(
+                  constraints.maxWidth >= TenantAdminBreakpoints.tablet
+                      ? TenantAdminSpacing.lg
+                      : TenantAdminSpacing.md,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CloseTillPageHeader(onBack: _goBack),
+                    const SizedBox(height: 8),
+                    CloseTillTillInfoBar(summary: summary),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, bodyConstraints) {
+                          final useColumns = bodyConstraints.maxWidth >=
+                              TenantAdminBreakpoints.tablet;
+                          final form = CloseTillFormCard(
+                            formKey: _formKey,
+                            countedCashController: _countedCashController,
+                            notesController: _notesController,
+                            expectedCash: expectedCash,
+                          );
+                          final summaryColumn = Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              CloseTillSummaryCard(expectedCash: expectedCash),
+                              if (showMismatchWarning) ...[
+                                const SizedBox(height: 8),
+                                const CloseTillMismatchWarningCard(),
+                              ],
+                              const Spacer(),
                             ],
-                          ],
-                        );
+                          );
 
-                        if (useColumns) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          if (useColumns) {
+                            // Fixed two-column fit — no page scroll.
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(flex: 5, child: form),
+                                const SizedBox(width: 12),
+                                Expanded(flex: 3, child: summaryColumn),
+                              ],
+                            );
+                          }
+
+                          // Narrow: fixed vertical split, no page scroll.
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Expanded(flex: 3, child: form),
-                              const SizedBox(width: TenantAdminSpacing.lg),
+                              const SizedBox(height: 8),
                               Expanded(flex: 2, child: summaryColumn),
                             ],
                           );
-                        }
-
-                        return SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              form,
-                              const SizedBox(height: TenantAdminSpacing.lg),
-                              summaryColumn,
-                            ],
-                          ),
-                        );
-                      },
+                        },
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  CloseTillBottomActions(
-                    canCloseTill: canCloseTill,
-                    isLoading: isSubmitting,
-                    onCloseTill: _closeTill,
-                    onSaveDraft: _saveDraft,
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    CloseTillBottomActions(
+                      canCloseTill: canCloseTill,
+                      isLoading: isSubmitting,
+                      onCloseTill: _closeTill,
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -279,16 +294,6 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
       return;
     }
     context.go('/pos/cash-drawer');
-  }
-
-  void _saveDraft() {
-    ref.read(closeTillFormProvider.notifier).saveDraft();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(content: Text('Close till draft saved on this device.')),
-      );
   }
 
   Future<void> _closeTill() async {

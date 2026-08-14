@@ -3,20 +3,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/sale/domain/entities/pos_checkout_summary.dart';
 
 import '../../../../../../shared/widgets/app_cached_network_image.dart';
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import 'pos_cart_authoritative_price_display.dart';
 import 'pos_quantity_stepper.dart';
 
 class PosCartRow extends ConsumerWidget {
   const PosCartRow({
     required this.item,
     required this.onTap,
+    this.linePricing,
+    this.isAuthoritative = false,
+    this.currency = '',
     super.key,
   });
 
   final PosNewSaleCartItem item;
   final VoidCallback onTap;
+  final PosCalculatedCartLinePayload? linePricing;
+  final bool isAuthoritative;
+  final String currency;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -106,28 +114,20 @@ class PosCartRow extends ConsumerWidget {
               ),
               Expanded(
                 flex: 4,
-                child: Text(
-                  formatLkr(item.product.price),
-                  textAlign: TextAlign.right,
-                  maxLines: 1,
-                  style: const TextStyle(
-                    color: Color(0xFF2563EB),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
+                child: PosCartAuthoritativeUnitPriceDisplay(
+                  catalogUnitPrice: item.product.price,
+                  currency: currency,
+                  isAuthoritative: isAuthoritative,
+                  linePricing: linePricing,
                 ),
               ),
               Expanded(
                 flex: 4,
-                child: Text(
-                  formatLkr(item.lineTotal),
-                  textAlign: TextAlign.right,
-                  maxLines: 1,
-                  style: const TextStyle(
-                    color: TenantAdminColors.bodyText,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                  ),
+                child: PosCartAuthoritativeLineTotalDisplay(
+                  catalogLineTotal: item.lineTotal,
+                  currency: currency,
+                  isAuthoritative: isAuthoritative,
+                  linePricing: linePricing,
                 ),
               ),
               SizedBox(

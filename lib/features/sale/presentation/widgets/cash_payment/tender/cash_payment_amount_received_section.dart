@@ -3,6 +3,8 @@ import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../../domain/entities/pos_cash_payment_observability.dart';
 
+import 'cash_payment_numeric_keypad.dart';
+
 class CashPaymentAmountReceivedSection extends StatelessWidget {
   const CashPaymentAmountReceivedSection({
     super.key,
@@ -54,11 +56,12 @@ class CashPaymentAmountReceivedSection extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           _formatInputDisplay(inputBuffer, cashReceived),
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: TenantAdminColors.bodyText,
-                fontSize: 26,
-                height: 1.1,
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: CashPaymentKeypadStyle.digitColor,
+                fontSize: 34,
+                height: 1.05,
+                letterSpacing: -0.5,
               ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
