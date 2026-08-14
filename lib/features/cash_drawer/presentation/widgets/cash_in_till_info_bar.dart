@@ -33,12 +33,18 @@ class CashInTillInfoBar extends StatelessWidget {
             _TillInfoItem(
               icon: Icons.account_balance_wallet_outlined,
               label: 'Current Expected Cash',
-              value: formatCashDrawerAmount(summary.currentExpectedCash),
+              value: formatCashDrawerAmount(
+                summary.currentExpectedCash,
+                currencyCode: summary.currencyCode,
+              ),
             ),
             _TillInfoItem(
               icon: Icons.savings_outlined,
               label: 'Opening Cash',
-              value: formatCashDrawerAmount(summary.openingCash),
+              value: formatCashDrawerAmount(
+                summary.openingCash,
+                currencyCode: summary.currencyCode,
+              ),
             ),
           ];
 

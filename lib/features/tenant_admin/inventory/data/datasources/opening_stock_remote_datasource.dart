@@ -21,7 +21,8 @@ class OpeningStockRemoteDatasource {
         requestOptions: response.requestOptions,
         response: response,
         type: DioExceptionType.badResponse,
-        message: data['message']?.toString() ?? 'Failed to submit opening stock.',
+        message:
+            data['message']?.toString() ?? 'Failed to submit opening stock.',
       );
     }
 

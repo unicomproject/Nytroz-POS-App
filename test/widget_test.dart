@@ -401,6 +401,9 @@ void main() {
       );
       expect(tester.widget<FilledButton>(paymentButton).onPressed, isNull);
       expect(find.text('No items added'), findsOneWidget);
+      expect(find.text('Subtotal'), findsNothing);
+      expect(find.text('Discount'), findsNothing);
+      expect(find.text('Tax'), findsNothing);
 
       await tester.tap(find.text('More Categories'));
       await tester.pumpAndSettle();
@@ -411,28 +414,39 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('No items added'), findsNothing);
+      expect(find.text('Subtotal'), findsOneWidget);
+      expect(find.text('Discount'), findsOneWidget);
+      expect(find.text('Tax'), findsOneWidget);
       expect(find.text('Qty 1'), findsOneWidget);
-      // Product grid and cart both show unit price; cart also shows line total,
-      // subtotal, and total.
-      expect(find.text('LKR 1,500.00'), findsNWidgets(5));
-      expect(tester.widget<FilledButton>(paymentButton).onPressed, isNotNull);
+      // Product card + cart unit price show catalog values; line total waits for
+      // authoritative checkout pricing.
+      expect(find.text('LKR 1,500.00'), findsNWidgets(2));
+      // One cart-line placeholder plus Subtotal, Discount and Tax placeholders.
+      expect(find.text('—'), findsNWidgets(4));
+      // Without a successful checkout-summary response, payment stays gated.
+      expect(tester.widget<FilledButton>(paymentButton).onPressed, isNull);
 
       await tester.tap(find.text('General Admission').first);
       await tester.pumpAndSettle();
 
       expect(find.text('Qty 2'), findsOneWidget);
-      expect(find.text('LKR 3,000.00'), findsNWidgets(3));
+      expect(find.text('LKR 1,500.00'), findsNWidgets(2));
+      expect(find.text('—'), findsNWidgets(4));
 
       await tester.tap(find.byIcon(Icons.remove));
       await tester.pumpAndSettle();
 
       expect(find.text('Qty 1'), findsOneWidget);
-      expect(find.text('LKR 1,500.00'), findsNWidgets(5));
+      expect(find.text('LKR 1,500.00'), findsNWidgets(2));
+      expect(find.text('—'), findsNWidgets(4));
 
       await tester.tap(find.byTooltip('Remove item'));
       await tester.pumpAndSettle();
 
       expect(find.text('No items added'), findsOneWidget);
+      expect(find.text('Subtotal'), findsNothing);
+      expect(find.text('Discount'), findsNothing);
+      expect(find.text('Tax'), findsNothing);
       expect(tester.widget<FilledButton>(paymentButton).onPressed, isNull);
     });
 

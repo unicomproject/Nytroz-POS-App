@@ -105,7 +105,7 @@ class _NewSaleSearchFieldState extends ConsumerState<_NewSaleSearchField> {
                   const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
               prefixIcon: const Icon(
                 Icons.qr_code_2_rounded,
-                color: Color(0xFFFF2D1A),
+                color: TenantAdminColors.posHomeAccentOrange,
                 size: 36,
               ),
               prefixIconConstraints: const BoxConstraints(minWidth: 48),
@@ -144,7 +144,7 @@ class _NewSaleSearchFieldState extends ConsumerState<_NewSaleSearchField> {
                     tooltip: 'Open barcode scanner',
                     icon: const Icon(
                       Icons.center_focus_strong_rounded,
-                      color: Color(0xFFFF2D1A),
+                      color: TenantAdminColors.posHomeAccentOrange,
                       size: 30,
                     ),
                     padding: EdgeInsets.zero,
@@ -166,7 +166,7 @@ class _NewSaleSearchFieldState extends ConsumerState<_NewSaleSearchField> {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                 borderSide: const BorderSide(
-                  color: Color(0xFFFF2D1A),
+                  color: TenantAdminColors.posHomeAccentOrange,
                   width: 1.5,
                 ),
               ),

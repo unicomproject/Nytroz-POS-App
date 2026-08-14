@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/widgets/tenant_admin_row_action.dart';
 import '../../domain/entities/tenant_user.dart';
 import '../config/user_row_action_configs.dart';
 import '../utils/user_api_errors.dart';
@@ -131,7 +132,8 @@ class _UserRow extends StatelessWidget {
                   Expanded(flex: 16, child: _Role(user: user)),
                   Expanded(flex: 17, child: _OutletAccess(user: user)),
                   Expanded(flex: 13, child: _LastActive(user: user)),
-                  Expanded(flex: 12, child: UserStatusBadge(status: user.status)),
+                  Expanded(
+                      flex: 12, child: UserStatusBadge(status: user.status)),
                   Expanded(
                     flex: 17,
                     child: Column(
@@ -139,18 +141,21 @@ class _UserRow extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (canView)
-                          _TextAction(
+                          TenantAdminRowAction(
+                            icon: Icons.visibility_outlined,
                             label: 'View',
                             onPressed: () => onView(user),
                           ),
                         if (canEdit)
-                          _TextAction(
+                          TenantAdminRowAction(
+                            icon: Icons.edit_outlined,
                             label: 'Edit',
                             onPressed: () => onEdit(user),
                           ),
                         if (canDeactivate)
-                          _TextAction(
-                            label: 'Deactivate',
+                          TenantAdminRowAction(
+                            icon: Icons.block_outlined,
+                            label: 'Disable',
                             destructive: true,
                             onPressed: () => onDeactivate(user),
                           ),
@@ -180,7 +185,9 @@ class _Identity extends StatelessWidget {
           radius: 19,
           backgroundColor: TenantAdminColors.secondary,
           child: Text(_initials(user.fullName),
-              style: const TextStyle(color: TenantAdminColors.posHomeAccentOrange, fontWeight: FontWeight.w800)),
+              style: const TextStyle(
+                  color: TenantAdminColors.posHomeAccentOrange,
+                  fontWeight: FontWeight.w800)),
         ),
         const SizedBox(width: TenantAdminSpacing.sm),
         Expanded(
@@ -188,13 +195,23 @@ class _Identity extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(user.fullName, maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w800, color: TenantAdminColors.bodyText)),
-              Text(user.email, maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 11)),
+              Text(user.fullName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: TenantAdminColors.bodyText)),
+              Text(user.email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TenantAdminTextStyles.muted(context)
+                      .copyWith(fontSize: 11)),
               if ((user.phone ?? '').trim().isNotEmpty)
-                Text(user.phone!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 11)),
+                Text(user.phone!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TenantAdminTextStyles.muted(context)
+                        .copyWith(fontSize: 11)),
             ],
           ),
         ),
@@ -218,11 +235,16 @@ class _OutletAccess extends StatelessWidget {
   final TenantUser user;
   @override
   Widget build(BuildContext context) {
-    final names = user.outlets.map((outlet) => outlet.name).where((name) => name.trim().isNotEmpty).toList();
+    final names = user.outlets
+        .map((outlet) => outlet.name)
+        .where((name) => name.trim().isNotEmpty)
+        .toList();
     final count = user.outletCount ?? names.length;
     return _TwoLineCell(
-      primary: names.isNotEmpty ? names.take(2).join(', ') : _dash(user.outletName),
-      secondary: count > 0 ? '$count ${count == 1 ? 'Outlet' : 'Outlets'}' : null,
+      primary:
+          names.isNotEmpty ? names.take(2).join(', ') : _dash(user.outletName),
+      secondary:
+          count > 0 ? '$count ${count == 1 ? 'Outlet' : 'Outlets'}' : null,
     );
   }
 }
@@ -233,7 +255,9 @@ class _LastActive extends StatelessWidget {
   @override
   Widget build(BuildContext context) => _TwoLineCell(
         primary: formatUserLastActive(user.lastActiveAt),
-        secondary: user.lastActiveAt == null ? null : formatUserDate(user.lastActiveAt),
+        secondary: user.lastActiveAt == null
+            ? null
+            : formatUserDate(user.lastActiveAt),
       );
 }
 
@@ -246,29 +270,20 @@ class _TwoLineCell extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(primary, maxLines: 1, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: TenantAdminColors.bodyText, fontWeight: FontWeight.w700, fontSize: 12)),
-          if (secondary != null) Text(secondary!, maxLines: 2, overflow: TextOverflow.ellipsis,
-              style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 11)),
+          Text(primary,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  color: TenantAdminColors.bodyText,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12)),
+          if (secondary != null)
+            Text(secondary!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TenantAdminTextStyles.muted(context)
+                    .copyWith(fontSize: 11)),
         ],
-      );
-}
-
-class _TextAction extends StatelessWidget {
-  const _TextAction({required this.label, required this.onPressed, this.destructive = false});
-  final String label;
-  final VoidCallback onPressed;
-  final bool destructive;
-  @override
-  Widget build(BuildContext context) => TextButton(
-        onPressed: onPressed,
-        style: TextButton.styleFrom(
-          foregroundColor: destructive ? TenantAdminColors.danger : TenantAdminColors.info,
-          minimumSize: const Size(0, 30),
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-        ),
-        child: Text(label),
       );
 }
 
@@ -276,8 +291,13 @@ String? _nonEmpty(String? value) =>
     value?.trim().isNotEmpty == true ? value!.trim() : null;
 String _dash(String value) => value.trim().isEmpty ? '—' : value.trim();
 String _initials(String fullName) {
-  final parts = fullName.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+  final parts = fullName
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .toList();
   if (parts.isEmpty) return '?';
   if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-  return (parts.first.substring(0, 1) + parts.last.substring(0, 1)).toUpperCase();
+  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+      .toUpperCase();
 }

@@ -94,6 +94,7 @@ class _BrandToolbar extends ConsumerWidget {
                 TenantAdminPrimaryButton(
                   label: 'Add Brand',
                   icon: Icons.add,
+                  backgroundColor: TenantAdminColors.posHomeAccentOrange,
                   onPressed: () => openBrandDetailsPanel(
                     context: context,
                     canSave: true,
@@ -119,6 +120,7 @@ class _BrandToolbar extends ConsumerWidget {
               TenantAdminPrimaryButton(
                 label: 'Add Brand',
                 icon: Icons.add,
+                backgroundColor: TenantAdminColors.posHomeAccentOrange,
                 onPressed: () => openBrandDetailsPanel(
                   context: context,
                   canSave: true,

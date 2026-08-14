@@ -46,10 +46,7 @@ void main() {
           body: CashPaymentAmountReceivedSection(
             cashReceived: 3000,
             inputBuffer: '3000',
-            onDigitPressed: (_) {},
-            onDoubleZeroPressed: () {},
-            onBackspacePressed: () {},
-            onClearPressed: () {},
+            totalDue: 2800,
             failure: const CashPaymentFailure(
               message: 'The payment result is unknown.',
               correlation: 'a1b2c3d4e5f6',
@@ -99,10 +96,7 @@ void main() {
                   child: CashPaymentAmountReceivedSection(
                     cashReceived: 3500,
                     inputBuffer: '3500',
-                    onDigitPressed: (_) {},
-                    onDoubleZeroPressed: () {},
-                    onBackspacePressed: () {},
-                    onClearPressed: () {},
+                    totalDue: 2800,
                     failure: const CashPaymentFailure(
                       message:
                           'The request could not be completed. Contact support before retrying this payment.',

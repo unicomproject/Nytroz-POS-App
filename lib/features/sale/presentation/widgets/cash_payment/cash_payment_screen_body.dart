@@ -19,14 +19,12 @@ class CashPaymentScreenBody extends StatelessWidget {
     required this.quickAmounts,
     required this.selectedQuickAmount,
     required this.onQuickAmountSelected,
-    required this.onOtherAmountPressed,
     required this.onDigitPressed,
     required this.onDoubleZeroPressed,
     required this.onBackspacePressed,
     required this.onClearPressed,
     required this.isSubmitting,
     required this.canCompleteSale,
-    required this.onExactCashPressed,
     required this.onCompleteSalePressed,
     this.failure,
     this.onDismissFailure,
@@ -44,7 +42,6 @@ class CashPaymentScreenBody extends StatelessWidget {
   final List<int> quickAmounts;
   final int? selectedQuickAmount;
   final ValueChanged<int> onQuickAmountSelected;
-  final VoidCallback onOtherAmountPressed;
   final ValueChanged<String> onDigitPressed;
   final VoidCallback onDoubleZeroPressed;
   final VoidCallback onBackspacePressed;
@@ -52,7 +49,6 @@ class CashPaymentScreenBody extends StatelessWidget {
 
   final bool isSubmitting;
   final bool canCompleteSale;
-  final VoidCallback onExactCashPressed;
   final VoidCallback onCompleteSalePressed;
 
   final CashPaymentFailure? failure;
@@ -67,6 +63,26 @@ class CashPaymentScreenBody extends StatelessWidget {
 
         return useWideLayout ? _buildWideLayout() : _buildNarrowLayout();
       },
+    );
+  }
+
+  Widget _buildTenderPanel() {
+    return CashPaymentTenderPanel(
+      totalDue: totalDue,
+      cashReceived: cashReceived,
+      inputBuffer: inputBuffer,
+      quickAmounts: quickAmounts,
+      selectedQuickAmount: selectedQuickAmount,
+      onQuickAmountSelected: onQuickAmountSelected,
+      onDigitPressed: onDigitPressed,
+      onDoubleZeroPressed: onDoubleZeroPressed,
+      onBackspacePressed: onBackspacePressed,
+      onClearPressed: onClearPressed,
+      isSubmitting: isSubmitting,
+      canCompleteSale: canCompleteSale,
+      onCompleteSalePressed: onCompleteSalePressed,
+      failure: failure,
+      onDismissFailure: onDismissFailure,
     );
   }
 
@@ -85,74 +101,37 @@ class CashPaymentScreenBody extends StatelessWidget {
             items: items,
           ),
         ),
-        const SizedBox(width: TenantAdminSpacing.lg),
+        const SizedBox(width: 12),
         Expanded(
           flex: 3,
-          child: CashPaymentTenderPanel(
-            totalDue: totalDue,
-            cashReceived: cashReceived,
-            inputBuffer: inputBuffer,
-            quickAmounts: quickAmounts,
-            selectedQuickAmount: selectedQuickAmount,
-            onQuickAmountSelected: onQuickAmountSelected,
-            onOtherAmountPressed: onOtherAmountPressed,
-            onDigitPressed: onDigitPressed,
-            onDoubleZeroPressed: onDoubleZeroPressed,
-            onBackspacePressed: onBackspacePressed,
-            onClearPressed: onClearPressed,
-            isSubmitting: isSubmitting,
-            canCompleteSale: canCompleteSale,
-            onExactCashPressed: onExactCashPressed,
-            onCompleteSalePressed: onCompleteSalePressed,
-            failure: failure,
-            onDismissFailure: onDismissFailure,
-          ),
+          child: _buildTenderPanel(),
         ),
       ],
     );
   }
 
   Widget _buildNarrowLayout() {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            height: 400,
-            child: CashPaymentOrderSummaryCard(
-              itemCount: itemCount,
-              subtotal: subtotal,
-              discount: discount,
-              tax: tax,
-              total: totalDue,
-              items: items,
-            ),
+    // Fixed split — no page scroll. Item list scrolls inside its card only.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          flex: 2,
+          child: CashPaymentOrderSummaryCard(
+            itemCount: itemCount,
+            subtotal: subtotal,
+            discount: discount,
+            tax: tax,
+            total: totalDue,
+            items: items,
           ),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          SizedBox(
-            height: 700,
-            child: CashPaymentTenderPanel(
-              totalDue: totalDue,
-              cashReceived: cashReceived,
-              inputBuffer: inputBuffer,
-              quickAmounts: quickAmounts,
-              selectedQuickAmount: selectedQuickAmount,
-              onQuickAmountSelected: onQuickAmountSelected,
-              onOtherAmountPressed: onOtherAmountPressed,
-              onDigitPressed: onDigitPressed,
-              onDoubleZeroPressed: onDoubleZeroPressed,
-              onBackspacePressed: onBackspacePressed,
-              onClearPressed: onClearPressed,
-              isSubmitting: isSubmitting,
-              canCompleteSale: canCompleteSale,
-              onExactCashPressed: onExactCashPressed,
-              onCompleteSalePressed: onCompleteSalePressed,
-              failure: failure,
-              onDismissFailure: onDismissFailure,
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+        Expanded(
+          flex: 3,
+          child: _buildTenderPanel(),
+        ),
+      ],
     );
   }
 }

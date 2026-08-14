@@ -39,8 +39,7 @@ class UserWriteRequestDto {
       'overriddenPermissionIds': overriddenPermissionIds,
       if (sendInviteEmail != null) 'sendInviteEmail': sendInviteEmail,
       if (status != null) 'status': status,
-      if (profileMediaAssetId != null &&
-          profileMediaAssetId!.trim().isNotEmpty)
+      if (profileMediaAssetId != null && profileMediaAssetId!.trim().isNotEmpty)
         'profileMediaAssetId': profileMediaAssetId!.trim(),
     };
   }

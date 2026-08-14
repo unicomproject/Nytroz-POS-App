@@ -35,7 +35,8 @@ class InventoryAlertsTable extends StatelessWidget {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
+                    Icon(Icons.warning_amber_rounded,
+                        color: Colors.red, size: 20),
                     SizedBox(width: 8),
                     Text(
                       'Priority Alerts',
@@ -60,7 +61,8 @@ class InventoryAlertsTable extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 4),
-                      Icon(Icons.chevron_right, size: 16, color: Color(0xFF3B82F6)),
+                      Icon(Icons.chevron_right,
+                          size: 16, color: Color(0xFF3B82F6)),
                     ],
                   ),
                 ),
@@ -72,7 +74,10 @@ class InventoryAlertsTable extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(TenantAdminSpacing.xxl),
               child: Center(
-                child: Text('No alerts found.', style: (Theme.of(context).textTheme.bodyMedium ?? const TextStyle()).copyWith(color: TenantAdminColors.mutedText)),
+                child: Text('No alerts found.',
+                    style: (Theme.of(context).textTheme.bodyMedium ??
+                            const TextStyle())
+                        .copyWith(color: TenantAdminColors.mutedText)),
               ),
             )
           else
@@ -104,12 +109,14 @@ class _AlertRow extends StatelessWidget {
     Color buttonColor = const Color(0xFFF97316); // Default orange
     String buttonText = 'View';
 
-    if (alert.severity.toLowerCase() == 'critical' || alert.severity.toLowerCase() == 'high') {
+    if (alert.severity.toLowerCase() == 'critical' ||
+        alert.severity.toLowerCase() == 'high') {
       severityColor = const Color(0xFFEF4444); // Red
       badgeColor = const Color(0xFFEF4444);
       badgeBg = const Color(0xFFFEE2E2);
       badgeText = 'High';
-    } else if (alert.severity.toLowerCase() == 'warning' || alert.severity.toLowerCase() == 'medium') {
+    } else if (alert.severity.toLowerCase() == 'warning' ||
+        alert.severity.toLowerCase() == 'medium') {
       severityColor = const Color(0xFFF97316); // Orange
       badgeColor = const Color(0xFFF97316);
       badgeBg = const Color(0xFFFFEDD5);
@@ -146,7 +153,7 @@ class _AlertRow extends StatelessWidget {
                   // Icon
                   _buildIcon(),
                   const SizedBox(width: 16),
-                  
+
                   // Product Name & SKU
                   Expanded(
                     flex: 2,
@@ -177,13 +184,14 @@ class _AlertRow extends StatelessWidget {
                       ],
                     ),
                   ),
-                  
+
                   // Location
                   Expanded(
                     flex: 1,
                     child: Row(
                       children: [
-                        const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF64748B)),
+                        const Icon(Icons.location_on_outlined,
+                            size: 16, color: Color(0xFF64748B)),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -199,12 +207,13 @@ class _AlertRow extends StatelessWidget {
                       ],
                     ),
                   ),
-                  
+
                   // Badge
                   Container(
                     width: 70,
                     alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: badgeBg,
                       borderRadius: BorderRadius.circular(6),
@@ -219,14 +228,16 @@ class _AlertRow extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 24),
-                  
+
                   // Action Button
                   OutlinedButton(
                     onPressed: () {},
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      side: BorderSide(color: buttonColor.withValues(alpha: 0.3)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      side:
+                          BorderSide(color: buttonColor.withValues(alpha: 0.3)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
                       minimumSize: const Size(0, 36),
                     ),
                     child: Row(
@@ -257,7 +268,7 @@ class _AlertRow extends StatelessWidget {
   Widget _buildIcon() {
     IconData iconData = Icons.warning_amber_rounded;
     Color color = Colors.red;
-    
+
     if (alert.alertType.toLowerCase() == 'outofstock') {
       iconData = Icons.inventory_2_outlined;
       color = Colors.red;
@@ -286,4 +297,3 @@ class _AlertRow extends StatelessWidget {
     );
   }
 }
-

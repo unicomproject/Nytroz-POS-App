@@ -305,7 +305,7 @@ class PosPermissionAccess {
   }
 
   static bool canCreateCashDrawerMovement(Set<String> granted) {
-    return granted.contains(PosPermissionCodes.manageCashDrawer);
+    return granted.contains(PosPermissionCodes.createCashDrawerMovement);
   }
 
   static bool canManageCashDrawerActions(Set<String> granted) {

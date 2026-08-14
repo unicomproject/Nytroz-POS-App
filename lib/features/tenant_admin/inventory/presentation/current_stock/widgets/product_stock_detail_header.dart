@@ -43,7 +43,8 @@ class ProductStockDetailHeader extends StatelessWidget {
                 color: TenantAdminColors.background,
                 borderRadius: BorderRadius.circular(TenantAdminSpacing.sm),
               ),
-              child: const Icon(Icons.image_not_supported, color: TenantAdminColors.mutedText),
+              child: const Icon(Icons.image_not_supported,
+                  color: TenantAdminColors.mutedText),
             ),
           const SizedBox(width: TenantAdminSpacing.lg),
           Expanded(
@@ -52,22 +53,39 @@ class ProductStockDetailHeader extends StatelessWidget {
               children: [
                 Text(
                   detail.productName ?? 'Unknown Product',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 if (detail.variantName != null)
-                  Text(detail.variantName!, style: Theme.of(context).textTheme.bodyMedium),
+                  Text(detail.variantName!,
+                      style: Theme.of(context).textTheme.bodyMedium),
                 const SizedBox(height: TenantAdminSpacing.sm),
-                Text('SKU: ${detail.sku ?? "N/A"}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: TenantAdminColors.mutedText)),
+                Text('SKU: ${detail.sku ?? "N/A"}',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: TenantAdminColors.mutedText)),
                 if (detail.categoryName != null)
-                  Text('Category: ${detail.categoryName}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: TenantAdminColors.mutedText)),
+                  Text('Category: ${detail.categoryName}',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: TenantAdminColors.mutedText)),
                 const SizedBox(height: TenantAdminSpacing.md),
                 Row(
                   children: [
-                    _buildStatCard(context, 'On Hand', detail.totalOnHand.toString()),
+                    _buildStatCard(
+                        context, 'On Hand', detail.totalOnHand.toString()),
                     const SizedBox(width: TenantAdminSpacing.md),
-                    _buildStatCard(context, 'Available', detail.totalAvailable.toString(), color: TenantAdminColors.success),
+                    _buildStatCard(
+                        context, 'Available', detail.totalAvailable.toString(),
+                        color: TenantAdminColors.success),
                     const SizedBox(width: TenantAdminSpacing.md),
-                    _buildStatCard(context, 'Reserved', detail.totalReserved.toString(), color: TenantAdminColors.warning),
+                    _buildStatCard(
+                        context, 'Reserved', detail.totalReserved.toString(),
+                        color: TenantAdminColors.warning),
                   ],
                 ),
               ],
@@ -78,23 +96,30 @@ class ProductStockDetailHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String label, String value, {Color? color}) {
+  Widget _buildStatCard(BuildContext context, String label, String value,
+      {Color? color}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md, vertical: TenantAdminSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+          horizontal: TenantAdminSpacing.md, vertical: TenantAdminSpacing.sm),
       decoration: BoxDecoration(
         color: (color ?? TenantAdminColors.primary).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(TenantAdminSpacing.sm),
-        border: Border.all(color: (color ?? TenantAdminColors.primary).withValues(alpha: 0.3)),
+        border: Border.all(
+            color: (color ?? TenantAdminColors.primary).withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
-          Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: TenantAdminColors.mutedText)),
+          Text(label,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: TenantAdminColors.mutedText)),
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: color ?? TenantAdminColors.primary,
-              fontWeight: FontWeight.bold,
-            ),
+                  color: color ?? TenantAdminColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
           ),
         ],
       ),

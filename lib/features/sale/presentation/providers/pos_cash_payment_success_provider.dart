@@ -34,6 +34,7 @@ class PosCashPaymentSuccessData {
     required this.items,
     this.customerName,
     this.customerPhone,
+    this.cashierName,
     this.receiptDataJson,
   });
 
@@ -51,6 +52,7 @@ class PosCashPaymentSuccessData {
   final List<PosCashPaymentSuccessLineItem> items;
   final String? customerName;
   final String? customerPhone;
+  final String? cashierName;
   final String? receiptDataJson;
 }
 
@@ -90,6 +92,9 @@ class PosCashPaymentSuccessNotifier
           : (payload.customerPhone?.trim().isNotEmpty == true
               ? payload.customerPhone!.trim()
               : null),
+      cashierName: payload.cashierName?.trim().isNotEmpty == true
+          ? payload.cashierName!.trim()
+          : null,
       items: payload.items
           .map(
             (item) => PosCashPaymentSuccessLineItem(

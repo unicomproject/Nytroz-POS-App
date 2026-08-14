@@ -9,12 +9,11 @@ class CloseTillMismatchWarningCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2),
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        color: TenantAdminColors.dangerSurface,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
         border: Border.all(color: TenantAdminColors.danger),
-        boxShadow: TenantAdminShadows.card,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -22,27 +21,29 @@ class CloseTillMismatchWarningCard extends StatelessWidget {
           const Icon(
             Icons.warning_amber_rounded,
             color: TenantAdminColors.danger,
-            size: 24,
+            size: 20,
           ),
-          const SizedBox(width: TenantAdminSpacing.md),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Cash variance reason is required',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: TenantAdminColors.danger,
                         fontWeight: FontWeight.w800,
+                        fontSize: 14,
                       ),
                 ),
-                const SizedBox(height: TenantAdminSpacing.xs),
+                const SizedBox(height: 2),
                 Text(
                   'Please provide a reason for the cash difference before closing the till.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: TenantAdminColors.danger,
                         fontWeight: FontWeight.w600,
-                        height: 1.4,
+                        fontSize: 13,
+                        height: 1.3,
                       ),
                 ),
               ],

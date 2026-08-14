@@ -6,6 +6,7 @@ import '../../../../../core/access/pos_permission_access.dart';
 import '../../../../../shared/pos_session/pos_session_provider.dart';
 import '../../../../auth/presentation/providers/session_provider.dart';
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../utils/receipt_cashier_display.dart';
 import '../../providers/pos_cash_payment_success_provider.dart';
 import '../payment/pos_bottom_action_buttons.dart';
 import '../receipt/thermal_receipt_preview.dart';
@@ -89,9 +90,13 @@ class _PrintReceiptDialogState extends ConsumerState<PrintReceiptDialog> {
       );
     }
 
-    final cashierName = session?.userDisplayName.trim().isNotEmpty == true
-        ? session!.userDisplayName
-        : sessionContext.userName;
+    final cashierName = resolveReceiptCashierDisplayName(
+      receiptDataJson: successData.receiptDataJson,
+      paymentCashierName: successData.cashierName,
+      sessionDisplayName: session?.userDisplayName.trim().isNotEmpty == true
+          ? session!.userDisplayName
+          : sessionContext.userName,
+    );
 
     return _buildShell(
       context,

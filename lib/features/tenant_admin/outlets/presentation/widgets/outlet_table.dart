@@ -6,6 +6,7 @@ import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 import '../../domain/entities/outlet.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_data_table.dart';
+import '../../../presentation/widgets/tenant_admin_row_action.dart';
 import '../../../presentation/widgets/tenant_admin_status_badge.dart';
 import '../config/outlet_row_action_configs.dart';
 import '../config/outlet_table_column_configs.dart';
@@ -216,16 +217,16 @@ class OutletTable extends ConsumerWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _ActionIconButton(
+                TenantAdminRowAction(
                   icon: Icons.visibility_outlined,
-                  tooltip: 'View outlet',
+                  label: 'View',
                   onPressed: () => _handleRowTap(context, ref, outlet.id),
                 ),
                 if (canEdit) const SizedBox(width: TenantAdminSpacing.sm),
                 if (canEdit)
-                  _ActionIconButton(
+                  TenantAdminRowAction(
                     icon: Icons.edit_outlined,
-                    tooltip: 'Edit outlet',
+                    label: 'Edit',
                     onPressed: () => context.go(
                       '/tenant-admin/outlets/${outlet.id}/edit',
                     ),
@@ -233,9 +234,9 @@ class OutletTable extends ConsumerWidget {
                 if (canEdit && canDelete)
                   const SizedBox(width: TenantAdminSpacing.sm),
                 if (canDelete)
-                  _ActionIconButton(
+                  TenantAdminRowAction(
                     icon: Icons.delete_outline,
-                    tooltip: 'Delete outlet',
+                    label: 'Delete',
                     destructive: true,
                     onPressed: () => _confirmDelete(context, ref, outlet),
                   ),
@@ -359,41 +360,6 @@ class _SortableHeader extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ActionIconButton extends StatelessWidget {
-  const _ActionIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-    this.destructive = false,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-  final bool destructive;
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      style: IconButton.styleFrom(
-        backgroundColor: TenantAdminColors.surface,
-        foregroundColor:
-            destructive ? TenantAdminColors.danger : TenantAdminColors.primary,
-        side: BorderSide(
-          color: destructive
-              ? TenantAdminColors.danger.withValues(alpha: 0.25)
-              : TenantAdminColors.border,
-        ),
-        minimumSize: const Size(34, 34),
-        padding: EdgeInsets.zero,
-      ),
-      icon: Icon(icon, size: 17),
     );
   }
 }

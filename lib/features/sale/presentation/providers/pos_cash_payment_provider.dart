@@ -135,17 +135,20 @@ List<int> generateCashQuickAmounts(int totalDue) {
   }
 
   final exactAmount = totalDue;
-  int nextRoundedAmount;
-
+  final int nextRoundedAmount;
   if (totalDue % 1000 == 0) {
     nextRoundedAmount = totalDue + 1000;
   } else {
     nextRoundedAmount = (totalDue / 1000).ceil() * 1000;
   }
+  final thirdAmount = nextRoundedAmount + 1000;
 
-  if (exactAmount == nextRoundedAmount) {
-    return [exactAmount];
+  final amounts = <int>[exactAmount];
+  if (nextRoundedAmount != exactAmount) {
+    amounts.add(nextRoundedAmount);
   }
-
-  return [exactAmount, nextRoundedAmount];
+  if (thirdAmount != exactAmount && thirdAmount != nextRoundedAmount) {
+    amounts.add(thirdAmount);
+  }
+  return amounts;
 }

@@ -65,12 +65,14 @@ class OpeningStockStepThree extends ConsumerWidget {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                            const Icon(Icons.error_outline,
+                                color: Colors.red, size: 20),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 state.errorMessage!,
-                                style: const TextStyle(color: Colors.red, fontSize: 13),
+                                style: const TextStyle(
+                                    color: Colors.red, fontSize: 13),
                               ),
                             ),
                           ],
@@ -92,13 +94,16 @@ class OpeningStockStepThree extends ConsumerWidget {
                           _ReviewRow(
                             label: 'Product',
                             value: state.selectedProduct?.name ?? 'N/A',
-                            subValue: 'SKU: ${state.selectedProduct?.sku ?? "N/A"}',
+                            subValue:
+                                'SKU: ${state.selectedProduct?.sku ?? "N/A"}',
                           ),
                           const Divider(height: 24, color: Color(0xFFE2E8F0)),
                           _ReviewRow(
                             label: 'Target Outlet',
                             value: state.selectedOutlet?.name ?? 'N/A',
-                            subValue: state.selectedOutlet?.city ?? state.selectedOutlet?.location ?? '',
+                            subValue: state.selectedOutlet?.city ??
+                                state.selectedOutlet?.location ??
+                                '',
                           ),
                           const Divider(height: 24, color: Color(0xFFE2E8F0)),
                           _ReviewRow(
@@ -127,7 +132,8 @@ class OpeningStockStepThree extends ConsumerWidget {
                             const Divider(height: 24, color: Color(0xFFE2E8F0)),
                             _ReviewRow(
                               label: 'Expiry Date',
-                              value: "${state.expiryDate!.year}-${state.expiryDate!.month.toString().padLeft(2, '0')}-${state.expiryDate!.day.toString().padLeft(2, '0')}",
+                              value:
+                                  "${state.expiryDate!.year}-${state.expiryDate!.month.toString().padLeft(2, '0')}-${state.expiryDate!.day.toString().padLeft(2, '0')}",
                             ),
                           ],
                           if (state.notes.isNotEmpty) ...[
@@ -146,7 +152,6 @@ class OpeningStockStepThree extends ConsumerWidget {
             ),
           ),
         ),
-
         OpeningStockActionBar(
           canContinue: !state.isSubmitting,
           isLoading: state.isSubmitting,
@@ -194,7 +199,9 @@ class _ReviewRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
-                color: isBold ? const Color(0xFFFF6A00) : TenantAdminColors.bodyText,
+                color: isBold
+                    ? const Color(0xFFFF6A00)
+                    : TenantAdminColors.bodyText,
               ),
             ),
             if (subValue != null && subValue!.isNotEmpty)

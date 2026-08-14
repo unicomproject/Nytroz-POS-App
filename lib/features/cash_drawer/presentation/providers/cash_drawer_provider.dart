@@ -1,20 +1,25 @@
+import 'dart:math';
+
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/dio_provider.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
-import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../till/presentation/providers/till_provider.dart';
-import '../../../../shared/pos_session/pos_session_provider.dart';
+import '../../data/datasources/cash_drawer_remote_datasource.dart';
+import '../../data/repositories/cash_drawer_repository_impl.dart';
 import '../../domain/entities/cash_drawer_summary.dart';
 import '../../domain/entities/cash_movement.dart';
+import '../../domain/repositories/cash_drawer_repository.dart';
 
-/// Frontend-only cash drawer state.
-/// backend endpoints exist (movements list, cash in/out, close till).
+/// Backend-authoritative cash drawer financial state.
 class CashDrawerState {
   const CashDrawerState({
     this.summary,
     this.movements = const [],
     this.isSubmitting = false,
+    this.isLoading = false,
     this.errorMessage,
     this.closeTillMessage,
   });
@@ -22,6 +27,7 @@ class CashDrawerState {
   final CashDrawerSummary? summary;
   final List<CashMovement> movements;
   final bool isSubmitting;
+  final bool isLoading;
   final String? errorMessage;
   final String? closeTillMessage;
 
@@ -31,15 +37,18 @@ class CashDrawerState {
     CashDrawerSummary? summary,
     List<CashMovement>? movements,
     bool? isSubmitting,
+    bool? isLoading,
     String? errorMessage,
     String? closeTillMessage,
     bool clearError = false,
     bool clearCloseTillMessage = false,
+    bool clearSummary = false,
   }) {
     return CashDrawerState(
-      summary: summary ?? this.summary,
+      summary: clearSummary ? null : summary ?? this.summary,
       movements: movements ?? this.movements,
       isSubmitting: isSubmitting ?? this.isSubmitting,
+      isLoading: isLoading ?? this.isLoading,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
       closeTillMessage: clearCloseTillMessage
           ? null
@@ -48,53 +57,72 @@ class CashDrawerState {
   }
 }
 
+final cashDrawerRepositoryProvider = Provider<CashDrawerRepository>((ref) {
+  return CashDrawerRepositoryImpl(
+    CashDrawerRemoteDatasource(ref.watch(appDioProvider)),
+  );
+});
+
 class CashDrawerController extends StateNotifier<CashDrawerState> {
   CashDrawerController(this._ref) : super(const CashDrawerState()) {
-    _ref.listen(tillProvider, (_, __) => refresh());
+    _ref.listen(tillProvider, (_, __) {
+      refresh();
+    });
     refresh();
   }
 
   final Ref _ref;
-  var _movementSequence = 0;
 
-  void refresh() {
-    final tillState = _ref.read(tillProvider);
-    final sessionContext = _ref.read(posSessionContextProvider);
-    final authSession = _ref.read(authSessionProvider);
-    final tillSession = tillState.session;
-    final hasOpenSession = tillState.hasOpenSession;
+  Future<void> refresh() async {
+    final device = _ref.read(deviceActivationProvider).deviceContext;
+    final deviceId = device?.deviceId.trim() ?? '';
+    if (deviceId.isEmpty) {
+      state = state.copyWith(
+        clearSummary: true,
+        movements: const [],
+        clearError: true,
+        isLoading: false,
+      );
+      return;
+    }
 
-    final openingCash = tillSession?.openingFloat ?? 0;
-    final movements = state.movements;
+    final session = _ref.read(authSessionProvider);
+    if (session == null || session.accessToken.trim().isEmpty) {
+      state = state.copyWith(
+        errorMessage: 'Sign in is required to load the cash drawer.',
+        isLoading: false,
+      );
+      return;
+    }
 
-    final totals = _totalsFromMovements(movements);
-    final expectedCash = openingCash +
-        totals.cashSales +
-        totals.cashIns -
-        totals.cashRefunds -
-        totals.cashDrops -
-        totals.cashOuts;
+    _ensureAuthorizationHeader(_ref.read(appDioProvider), session.accessToken);
+    state = state.copyWith(isLoading: true, clearError: true);
 
-    state = state.copyWith(
-      clearError: true,
-      summary: CashDrawerSummary(
-        tillName: tillSession?.tillName.trim().isNotEmpty == true
-            ? tillSession!.tillName
-            : sessionContext.tillName,
-        status: hasOpenSession ? 'Open' : 'Closed',
-        openedBy: authSession?.userDisplayName.trim().isNotEmpty == true
-            ? authSession!.userDisplayName
-            : sessionContext.userName,
-        openedTime: tillSession?.openedAt,
-        openingCash: openingCash,
-        cashSales: totals.cashSales,
-        cashRefunds: totals.cashRefunds,
-        cashDrops: totals.cashDrops,
-        cashIns: totals.cashIns,
-        cashOuts: totals.cashOuts,
-        currentExpectedCash: expectedCash,
-      ),
-    );
+    try {
+      final repository = _ref.read(cashDrawerRepositoryProvider);
+      final summary = await repository.getSummary(deviceId);
+      final movements = await repository.getMovements(deviceId);
+      state = state.copyWith(
+        summary: summary,
+        movements: movements,
+        isLoading: false,
+        clearError: true,
+      );
+    } on CashDrawerException catch (error) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: error.message,
+        clearSummary: true,
+        movements: const [],
+      );
+    } catch (error) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Cash drawer could not be loaded. $error',
+        clearSummary: true,
+        movements: const [],
+      );
+    }
   }
 
   Future<bool> recordCashIn({
@@ -115,10 +143,11 @@ class CashDrawerController extends StateNotifier<CashDrawerState> {
     String? note,
   }) async {
     final expected = state.summary?.currentExpectedCash ?? 0;
+    final currency = state.summary?.currencyCode ?? '';
     if (amount > expected) {
       state = state.copyWith(
         errorMessage:
-            'Amount cannot exceed current expected cash (${formatLkr(expected.round())}).',
+            'Amount cannot exceed current expected cash (${formatCashDrawerAmount(expected, currencyCode: currency)}).',
       );
       return false;
     }
@@ -136,10 +165,11 @@ class CashDrawerController extends StateNotifier<CashDrawerState> {
     String? note,
   }) async {
     final expected = state.summary?.currentExpectedCash ?? 0;
+    final currency = state.summary?.currencyCode ?? '';
     if (amount > expected) {
       state = state.copyWith(
         errorMessage:
-            'Amount cannot exceed available cash in drawer (${formatLkr(expected.round())}).',
+            'Amount cannot exceed available cash in drawer (${formatCashDrawerAmount(expected, currencyCode: currency)}).',
       );
       return false;
     }
@@ -200,13 +230,14 @@ class CashDrawerController extends StateNotifier<CashDrawerState> {
     }
 
     final difference = closedSession.cashDifference;
+    final currency = summary.currencyCode;
     final differenceLabel = difference == 0
         ? 'balanced'
         : difference > 0
-            ? 'over by ${formatLkr(difference.abs().round())}'
-            : 'short by ${formatLkr(difference.abs().round())}';
+            ? 'over by ${formatCashDrawerAmount(difference.abs(), currencyCode: currency)}'
+            : 'short by ${formatCashDrawerAmount(difference.abs(), currencyCode: currency)}';
 
-    refresh();
+    await refresh();
     state = state.copyWith(
       isSubmitting: false,
       clearCloseTillMessage: true,
@@ -236,96 +267,84 @@ class CashDrawerController extends StateNotifier<CashDrawerState> {
       return false;
     }
 
-    state = state.copyWith(isSubmitting: true, clearError: true);
-
-    await Future<void>.delayed(const Duration(milliseconds: 250));
-
-    final authSession = _ref.read(authSessionProvider);
-    final userName = authSession?.userDisplayName.trim().isNotEmpty == true
-        ? authSession!.userDisplayName
-        : _ref.read(posSessionContextProvider).userName;
-
-    _movementSequence += 1;
-    final movement = CashMovement(
-      id: 'local-${DateTime.now().millisecondsSinceEpoch}-$_movementSequence',
-      type: type,
-      amount: amount,
-      dateTime: DateTime.now(),
-      userName: userName,
-      reason: reason?.trim().isEmpty == true ? null : reason?.trim(),
-      note: note?.trim().isEmpty == true ? null : note?.trim(),
-    );
-
-    final movements = [movement, ...state.movements];
-    final totals = _totalsFromMovements(movements);
-    final expectedCash = summary.openingCash +
-        totals.cashSales +
-        totals.cashIns -
-        totals.cashRefunds -
-        totals.cashDrops -
-        totals.cashOuts;
-
-    state = state.copyWith(
-      isSubmitting: false,
-      movements: movements,
-      summary: summary.copyWith(
-        cashSales: totals.cashSales,
-        cashRefunds: totals.cashRefunds,
-        cashDrops: totals.cashDrops,
-        cashIns: totals.cashIns,
-        cashOuts: totals.cashOuts,
-        currentExpectedCash: expectedCash,
-      ),
-    );
-    return true;
-  }
-
-  _MovementTotals _totalsFromMovements(List<CashMovement> movements) {
-    var cashSales = 0.0;
-    var cashRefunds = 0.0;
-    var cashDrops = 0.0;
-    var cashIns = 0.0;
-    var cashOuts = 0.0;
-
-    for (final movement in movements) {
-      switch (movement.type) {
-        case CashMovementType.cashSale:
-          cashSales += movement.amount;
-        case CashMovementType.cashRefund:
-          cashRefunds += movement.amount;
-        case CashMovementType.cashDrop:
-          cashDrops += movement.amount;
-        case CashMovementType.cashIn:
-          cashIns += movement.amount;
-        case CashMovementType.cashOut:
-          cashOuts += movement.amount;
-      }
+    final device = _ref.read(deviceActivationProvider).deviceContext;
+    final deviceId = device?.deviceId.trim() ?? '';
+    if (deviceId.isEmpty) {
+      state = state.copyWith(
+        errorMessage: 'Device context is required for cash movements.',
+      );
+      return false;
     }
 
-    return _MovementTotals(
-      cashSales: cashSales,
-      cashRefunds: cashRefunds,
-      cashDrops: cashDrops,
-      cashIns: cashIns,
-      cashOuts: cashOuts,
-    );
+    final authSession = _ref.read(authSessionProvider);
+    if (authSession == null || authSession.accessToken.trim().isEmpty) {
+      state = state.copyWith(
+        errorMessage: 'Sign in is required for cash movements.',
+      );
+      return false;
+    }
+
+    final effectiveReason = () {
+      final primary = reason?.trim();
+      if (primary != null && primary.isNotEmpty) return primary;
+      final fallback = note?.trim();
+      if (fallback != null && fallback.isNotEmpty) return fallback;
+      return null;
+    }();
+    if (effectiveReason == null) {
+      state = state.copyWith(
+        errorMessage: 'A reason is required for cash movements.',
+      );
+      return false;
+    }
+
+    _ensureAuthorizationHeader(
+        _ref.read(appDioProvider), authSession.accessToken);
+    state = state.copyWith(isSubmitting: true, clearError: true);
+
+    try {
+      await _ref.read(cashDrawerRepositoryProvider).createMovement(
+            requestId: _newRequestId(),
+            deviceId: deviceId,
+            tillSessionId: summary.tillSessionId,
+            type: type,
+            amount: amount,
+            reason: effectiveReason,
+            referenceNumber: note?.trim().isEmpty == true ? null : note?.trim(),
+          );
+      await refresh();
+      state = state.copyWith(isSubmitting: false, clearError: true);
+      return true;
+    } on CashDrawerException catch (error) {
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: error.message,
+      );
+      return false;
+    } catch (error) {
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: 'Cash movement could not be saved. $error',
+      );
+      return false;
+    }
   }
 }
 
-class _MovementTotals {
-  const _MovementTotals({
-    required this.cashSales,
-    required this.cashRefunds,
-    required this.cashDrops,
-    required this.cashIns,
-    required this.cashOuts,
-  });
+void _ensureAuthorizationHeader(Dio dio, String accessToken) {
+  dio.options.headers['Authorization'] = 'Bearer $accessToken';
+}
 
-  final double cashSales;
-  final double cashRefunds;
-  final double cashDrops;
-  final double cashIns;
-  final double cashOuts;
+String _newRequestId() {
+  final random = Random.secure();
+  final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  final hex =
+      bytes.map((value) => value.toRadixString(16).padLeft(2, '0')).join();
+  return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
+      '${hex.substring(12, 16)}-${hex.substring(16, 20)}-'
+      '${hex.substring(20)}';
 }
 
 final cashDrawerProvider =
@@ -333,8 +352,20 @@ final cashDrawerProvider =
   return CashDrawerController(ref);
 });
 
-String formatCashDrawerAmount(double value) {
-  return formatLkr(value.round());
+String formatCashDrawerAmount(double value, {String currencyCode = ''}) {
+  final currency = currencyCode.trim().isEmpty ? '' : currencyCode.trim();
+  final parts = value.toStringAsFixed(2).split('.');
+  final whole = parts.first;
+  final buffer = StringBuffer();
+  for (var i = 0; i < whole.length; i++) {
+    buffer.write(whole[i]);
+    final remaining = whole.length - i;
+    if (remaining > 1 && remaining % 3 == 1) {
+      buffer.write(',');
+    }
+  }
+  final amount = '${buffer.toString()}.${parts.last}';
+  return currency.isEmpty ? amount : '$currency $amount';
 }
 
 String formatCashDrawerDateTime(DateTime value) {
