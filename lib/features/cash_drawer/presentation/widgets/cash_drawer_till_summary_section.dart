@@ -8,9 +8,11 @@ class CashDrawerTillSummarySection extends StatelessWidget {
   const CashDrawerTillSummarySection({
     super.key,
     required this.summary,
+    this.compact = false,
   });
 
   final CashDrawerSummary summary;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -25,18 +27,23 @@ class CashDrawerTillSummarySection extends StatelessWidget {
                 letterSpacing: 0.6,
               ),
         ),
-        const SizedBox(height: TenantAdminSpacing.lg),
+        SizedBox(
+          height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.lg,
+        ),
         LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
-            final columns = width >= TenantAdminBreakpoints.desktop
+            final columns = compact
                 ? 5
-                : width >= TenantAdminBreakpoints.tablet
-                    ? 3
-                    : width >= TenantAdminBreakpoints.mobile
-                        ? 2
-                        : 1;
-            const gap = TenantAdminSpacing.md;
+                : width >= TenantAdminBreakpoints.desktop
+                    ? 5
+                    : width >= TenantAdminBreakpoints.tablet
+                        ? 3
+                        : width >= TenantAdminBreakpoints.mobile
+                            ? 2
+                            : 1;
+            final gap =
+                compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md;
             final tileWidth = columns == 1
                 ? width
                 : ((width - gap * (columns - 1)) / columns).floorToDouble();
@@ -47,6 +54,7 @@ class CashDrawerTillSummarySection extends StatelessWidget {
                 value: summary.tillName,
                 icon: Icons.point_of_sale_rounded,
                 iconColor: TenantAdminColors.posHomeAccentOrange,
+                compact: compact,
               ),
               _SummaryTile(
                 label: 'Status',
@@ -58,6 +66,7 @@ class CashDrawerTillSummarySection extends StatelessWidget {
                 valueColor: summary.isOpen
                     ? TenantAdminColors.success
                     : TenantAdminColors.mutedText,
+                compact: compact,
               ),
               _SummaryTile(
                 label: 'Opening Cash',
@@ -67,6 +76,7 @@ class CashDrawerTillSummarySection extends StatelessWidget {
                 ),
                 icon: Icons.account_balance_wallet_outlined,
                 iconColor: TenantAdminColors.posHomeAccentOrange,
+                compact: compact,
               ),
               _SummaryTile(
                 label: 'Cash Sales',
@@ -76,6 +86,7 @@ class CashDrawerTillSummarySection extends StatelessWidget {
                 ),
                 icon: Icons.bar_chart_rounded,
                 iconColor: TenantAdminColors.success,
+                compact: compact,
               ),
               _SummaryTile(
                 label: 'Current Expected Cash',
@@ -86,6 +97,7 @@ class CashDrawerTillSummarySection extends StatelessWidget {
                 icon: Icons.account_balance_wallet_rounded,
                 iconColor: TenantAdminColors.posHomeAccentOrange,
                 emphasize: true,
+                compact: compact,
               ),
             ];
 
@@ -115,6 +127,7 @@ class _SummaryTile extends StatelessWidget {
     required this.iconColor,
     this.valueColor,
     this.emphasize = false,
+    this.compact = false,
   });
 
   final String label;
@@ -123,14 +136,18 @@ class _SummaryTile extends StatelessWidget {
   final Color iconColor;
   final Color? valueColor;
   final bool emphasize;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       label: '$label $value',
       child: Container(
-        constraints: const BoxConstraints(minHeight: 88),
-        padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+        constraints: BoxConstraints(minHeight: compact ? 52 : 88),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.lg,
+          vertical: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.lg,
+        ),
         decoration: BoxDecoration(
           color: emphasize
               ? TenantAdminColors.expectedCashSurface
@@ -146,7 +163,7 @@ class _SummaryTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: iconColor, size: 22),
+            Icon(icon, color: iconColor, size: compact ? 16 : 22),
             const SizedBox(width: TenantAdminSpacing.sm),
             Expanded(
               child: Column(
@@ -154,24 +171,31 @@ class _SummaryTile extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: TenantAdminColors.mutedText,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    style: (compact
+                            ? Theme.of(context).textTheme.labelSmall
+                            : Theme.of(context).textTheme.labelMedium)
+                        ?.copyWith(
+                      color: TenantAdminColors.mutedText,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  const SizedBox(height: TenantAdminSpacing.sm),
+                  SizedBox(
+                    height: compact ? 2 : TenantAdminSpacing.sm,
+                  ),
                   Text(
                     value,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: valueColor ??
-                              (emphasize
-                                  ? TenantAdminColors.posHomeAccentOrange
-                                  : TenantAdminColors.bodyText),
-                          fontWeight:
-                              emphasize ? FontWeight.w900 : FontWeight.w800,
-                        ),
+                    style: (compact
+                            ? Theme.of(context).textTheme.titleSmall
+                            : Theme.of(context).textTheme.titleMedium)
+                        ?.copyWith(
+                      color: valueColor ??
+                          (emphasize
+                              ? TenantAdminColors.posHomeAccentOrange
+                              : TenantAdminColors.bodyText),
+                      fontWeight: emphasize ? FontWeight.w900 : FontWeight.w800,
+                    ),
                   ),
                 ],
               ),

@@ -9,10 +9,14 @@ class CashDrawerMovementsSection extends StatelessWidget {
     super.key,
     required this.movements,
     required this.currencyCode,
+    this.compact = false,
+    this.maxVisible = 8,
   });
 
   final List<CashMovement> movements;
   final String currencyCode;
+  final bool compact;
+  final int maxVisible;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +31,9 @@ class CashDrawerMovementsSection extends StatelessWidget {
                 letterSpacing: 0.6,
               ),
         ),
-        const SizedBox(height: TenantAdminSpacing.lg),
+        SizedBox(
+          height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.lg,
+        ),
         if (movements.isEmpty)
           const _EmptyMovementsState()
         else
@@ -35,12 +41,13 @@ class CashDrawerMovementsSection extends StatelessWidget {
             builder: (context, constraints) {
               final useTable =
                   constraints.maxWidth >= TenantAdminBreakpoints.tablet;
-              final visible = movements.take(8).toList();
+              final visible = movements.take(maxVisible).toList();
 
               if (useTable) {
                 return _MovementsTable(
                   movements: visible,
                   currencyCode: currencyCode,
+                  compact: compact,
                 );
               }
 
@@ -107,10 +114,12 @@ class _MovementsTable extends StatelessWidget {
   const _MovementsTable({
     required this.movements,
     required this.currencyCode,
+    required this.compact,
   });
 
   final List<CashMovement> movements;
   final String currencyCode;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +135,11 @@ class _MovementsTable extends StatelessWidget {
         ),
         const Divider(height: 1, color: TenantAdminColors.border),
         for (final movement in movements) ...[
-          _MovementRow(movement: movement, currencyCode: currencyCode),
+          _MovementRow(
+            movement: movement,
+            currencyCode: currencyCode,
+            compact: compact,
+          ),
           const Divider(height: 1, color: TenantAdminColors.border),
         ],
       ],
@@ -138,15 +151,19 @@ class _MovementRow extends StatelessWidget {
   const _MovementRow({
     required this.movement,
     required this.currencyCode,
+    required this.compact,
   });
 
   final CashMovement movement;
   final String currencyCode;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: TenantAdminSpacing.md),
+      padding: EdgeInsets.symmetric(
+        vertical: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
+      ),
       child: Row(
         children: [
           Expanded(
