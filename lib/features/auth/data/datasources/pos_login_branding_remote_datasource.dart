@@ -27,8 +27,7 @@ class PosLoginBrandingRemoteDatasource {
       dto: PosLoginBrandingDto(
         response.data ?? const {},
         apiBaseUrl: _dio.options.baseUrl,
-        replaceLoopbackHost:
-            defaultTargetPlatform == TargetPlatform.android,
+        replaceLoopbackHost: defaultTargetPlatform == TargetPlatform.android,
       ),
       etag: response.headers.value('etag'),
     );

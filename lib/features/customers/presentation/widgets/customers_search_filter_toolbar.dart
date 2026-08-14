@@ -86,7 +86,8 @@ class CustomersSearchFilterToolbar extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 backgroundColor: CustomersUiTokens.lightBlueSurface,
                 foregroundColor: CustomersUiTokens.accentText,
-                side: const BorderSide(color: CustomersUiTokens.lightBlueBorder),
+                side:
+                    const BorderSide(color: CustomersUiTokens.lightBlueBorder),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
                 shape: RoundedRectangleBorder(

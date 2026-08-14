@@ -38,7 +38,9 @@ class CustomerTableRow extends StatelessWidget {
             border: Border(
               bottom: const BorderSide(color: Color(0xFFE2E6ED)),
               left: BorderSide(
-                color: selected ? TenantAdminColors.posHomeAccentOrange : Colors.transparent,
+                color: selected
+                    ? TenantAdminColors.posHomeAccentOrange
+                    : Colors.transparent,
                 width: 3,
               ),
             ),
@@ -313,8 +315,9 @@ class CustomerListCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color:
-                  selected ? TenantAdminColors.posHomeAccentOrange : const Color(0xFFE2E6ED),
+              color: selected
+                  ? TenantAdminColors.posHomeAccentOrange
+                  : const Color(0xFFE2E6ED),
               width: selected ? 2 : 1,
             ),
           ),

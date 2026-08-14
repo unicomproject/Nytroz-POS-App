@@ -46,7 +46,8 @@ void main() {
         pricingInputFingerprint: checkoutPricingInputFingerprint(_cart()),
       );
 
-      final mapped = authoritativeLinePricingFor(item: _cart().itemList.single, pricing: pricing);
+      final mapped = authoritativeLinePricingFor(
+          item: _cart().itemList.single, pricing: pricing);
 
       expect(mapped?.effectiveUnitPrice, 2100);
       expect(mapped?.lineTotal, 2100);
@@ -91,16 +92,19 @@ void main() {
         currency: 'LKR',
         calculatedLines: const [lineA, lineB],
         linesByClientLineId: const {'line-a': lineA, 'line-b': lineB},
-        pricingInputFingerprint: checkoutPricingInputFingerprint(_twoLineCart()),
+        pricingInputFingerprint:
+            checkoutPricingInputFingerprint(_twoLineCart()),
       );
 
       final items = _twoLineCart().itemList;
       expect(
-        authoritativeLinePricingFor(item: items.first, pricing: pricing)?.lineTotal,
+        authoritativeLinePricingFor(item: items.first, pricing: pricing)
+            ?.lineTotal,
         2100,
       );
       expect(
-        authoritativeLinePricingFor(item: items.last, pricing: pricing)?.lineTotal,
+        authoritativeLinePricingFor(item: items.last, pricing: pricing)
+            ?.lineTotal,
         2800,
       );
     });
@@ -157,7 +161,8 @@ void main() {
       );
     });
 
-    testWidgets('promoted line shows struck-through original and effective price',
+    testWidgets(
+        'promoted line shows struck-through original and effective price',
         (tester) async {
       const linePricing = PosCalculatedCartLinePayload(
         clientLineId: 'client-line-1',
@@ -211,7 +216,8 @@ void main() {
       expect(find.text('25% OFF'), findsOneWidget);
     });
 
-    testWidgets('non-authoritative line total is not shown as final', (tester) async {
+    testWidgets('non-authoritative line total is not shown as final',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -243,8 +249,12 @@ void main() {
       );
 
       container.read(posNewSaleCartProvider.notifier).addToCart(product);
-      final lineId =
-          container.read(posNewSaleCartProvider).itemList.single.product.clientLineId;
+      final lineId = container
+          .read(posNewSaleCartProvider)
+          .itemList
+          .single
+          .product
+          .clientLineId;
 
       expect(lineId, isNotNull);
       expect(lineId, isNotEmpty);
@@ -271,7 +281,8 @@ PosNewSaleCartState _cart({int quantity = 1}) {
   );
   return PosNewSaleCartState(
     items: {
-      product.cartLineKey: PosNewSaleCartItem(product: product, quantity: quantity),
+      product.cartLineKey:
+          PosNewSaleCartItem(product: product, quantity: quantity),
     },
   );
 }

@@ -371,7 +371,9 @@ class _MetricCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: isPrimaryColor ? TenantAdminColors.posHomeAccentOrange : Colors.black,
+              color: isPrimaryColor
+                  ? TenantAdminColors.posHomeAccentOrange
+                  : Colors.black,
               fontWeight: FontWeight.w900,
               fontSize: 15,
             ),

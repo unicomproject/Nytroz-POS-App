@@ -38,9 +38,7 @@ class PosHomeScreen extends ConsumerWidget {
             message: message,
             onRetry: () => unawaited(retryPosHomeDashboard(ref)),
             actionLabel: showOpenTillAction ? 'Open Till' : null,
-            onAction: showOpenTillAction
-                ? () => _openTill(context)
-                : null,
+            onAction: showOpenTillAction ? () => _openTill(context) : null,
           ),
         );
       },

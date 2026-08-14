@@ -129,9 +129,9 @@ class PosAppliedPromotionPayload {
       policyCode: _text(json, 'policyCode'),
       policyName: _text(json, 'policyName'),
       calculationMethod: _text(json, 'calculationMethod'),
-      discountValue:
-          (json['discountValue'] ?? json['DiscountValue'] as num?)?.toDouble() ??
-              0,
+      discountValue: (json['discountValue'] ?? json['DiscountValue'] as num?)
+              ?.toDouble() ??
+          0,
     );
   }
 

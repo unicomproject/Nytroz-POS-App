@@ -84,7 +84,8 @@ class CashPaymentOrderSummaryCard extends StatelessWidget {
           ),
           DecoratedBox(
             decoration: BoxDecoration(
-              color: TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.12),
+              color:
+                  TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.12),
               borderRadius: const BorderRadius.vertical(
                 bottom: Radius.circular(TenantAdminRadius.md),
               ),
