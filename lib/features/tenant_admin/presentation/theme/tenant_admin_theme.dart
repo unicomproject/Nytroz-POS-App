@@ -12,9 +12,9 @@ class TenantAdminColors {
   static const border = Color(0xFFE5EAF4);
   static const mutedText = Color(0xFF64748B);
   static const bodyText = Color(0xFF081B3A);
-  static const primary = Color(0xFF3F2BFF);
-  static const primaryHover = Color(0xFF2F21D7);
-  static const secondary = Color(0xFFEFF6FF);
+  static const primary = Color(0xFFFF6A00);
+  static const primaryHover = Color(0xFFE85F00);
+  static const secondary = Color(0xFFFFF3EA);
   static const success = Color(0xFF16A34A);
   static const successSurface = Color(0xFFEFFAF3);
   static const successBorder = Color(0xFFBBF7D0);
@@ -25,7 +25,7 @@ class TenantAdminColors {
   static const dangerSurface = Color(0xFFFEF2F2);
   static const dangerBorder = Color(0xFFFECACA);
   static const info = Color(0xFF2563EB);
-  static const pending = Color(0xFF7C3AED);
+  static const pending = Color(0xFFF59E0B);
   static const offline = Color(0xFF94A3B8);
   static const posHomeProfileStart = Color(0xFF142C55);
   static const posHomeProfileEnd = Color(0xFF0B1C38);
@@ -78,8 +78,11 @@ class TenantAdminSpacing {
   static const sm = 8.0;
   static const md = 12.0;
   static const lg = 16.0;
+  static const xlg = 20.0;
   static const xl = 24.0;
   static const xxl = 32.0;
+  static const xxxl = 40.0;
+  static const huge = 48.0;
 }
 
 class TenantAdminRadius {
@@ -109,11 +112,18 @@ class TenantAdminBreakpoints {
   static const mobile = 600.0;
   static const smallTablet = 700.0;
   static const tablet = 900.0;
+  static const tabletLandscape = 1024.0;
   static const desktop = 1280.0;
+  static const largeDesktop = 1440.0;
 
   static bool isDesktop(double width) => width >= desktop;
 
+  static bool isLargeDesktop(double width) => width >= largeDesktop;
+
   static bool isTablet(double width) => width >= tablet && width < desktop;
+
+  static bool isTabletLandscape(double width) =>
+      width >= tabletLandscape && width < desktop;
 
   static bool isSmallTablet(double width) =>
       width >= smallTablet && width < tablet;
@@ -126,14 +136,23 @@ class TenantAdminInsets {
 
   static EdgeInsets pageForWidth(double width) {
     if (width < TenantAdminBreakpoints.mobile) {
-      return const EdgeInsets.all(TenantAdminSpacing.sm);
+      return const EdgeInsets.all(TenantAdminSpacing.lg);
     }
 
     if (width < TenantAdminBreakpoints.tablet) {
-      return const EdgeInsets.all(TenantAdminSpacing.md);
+      return const EdgeInsets.all(TenantAdminSpacing.lg);
     }
 
-    return const EdgeInsets.fromLTRB(24, 24, 24, 20);
+    if (width < TenantAdminBreakpoints.desktop) {
+      return const EdgeInsets.all(TenantAdminSpacing.xlg);
+    }
+
+    return const EdgeInsets.fromLTRB(
+      TenantAdminSpacing.xl,
+      TenantAdminSpacing.xl,
+      TenantAdminSpacing.xl,
+      TenantAdminSpacing.xlg,
+    );
   }
 }
 
@@ -153,7 +172,7 @@ class TenantAdminAppHeaderTokens {
   const TenantAdminAppHeaderTokens._();
 
   /// Height of the shared black Tenant Admin application header.
-  static const height = 38.0;
+  static const height = 44.0;
 }
 
 class TenantAdminSidebarTokens {
@@ -181,8 +200,13 @@ class TenantAdminContentTokens {
   static const sidePanelWidth = 420.0;
   static const formFieldHeight = 48.0;
   static const buttonHeight = 44.0;
+  static const tabletButtonHeight = 48.0;
   static const tableHeaderHeight = 48.0;
   static const contentGap = TenantAdminSpacing.lg;
+  static const defaultListPageSize = 5;
+  static const desktopMasterRatio = 0.65;
+  static const detailPanelRatio = 0.35;
+  static const minUsablePanelWidth = 320.0;
 }
 
 class TenantAdminTextStyles {

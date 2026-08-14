@@ -48,14 +48,12 @@ const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
   TenantAdminMenuItem(
     key: 'online-store',
     label: 'Online Store',
-    route: '',
+    route: '/tenant-admin/online-store',
     iconKey: 'online-store',
-    featureCode: TenantAdminFeatureCodes.dashboard,
-    permissionCode: TenantAdminPermissionCodes.tenantDashboardView,
+    featureCode: TenantAdminFeatureCodes.onlineStore,
+    permissionCode: TenantAdminPermissionCodes.onlineStoreView,
     visible: true,
     order: 5,
-    isRouteAvailable: false,
-    unavailableMessage: 'Online Store is not available yet.',
   ),
   TenantAdminMenuItem(
     key: 'roles-access',

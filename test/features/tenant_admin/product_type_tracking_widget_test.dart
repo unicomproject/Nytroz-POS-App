@@ -166,8 +166,7 @@ void main() {
   }
 
   group('ProductTypeTracking Widget Tests', () {
-    testWidgets('renders common header and structure cards',
-        (tester) async {
+    testWidgets('renders common header and structure cards', (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState()));
 
       expect(find.text('Product Type & Tracking Setup'), findsOneWidget);

@@ -99,16 +99,16 @@ class TillMonitoringAlertsSheet extends StatelessWidget {
     switch (reason.severity) {
       case TillAlertSeverity.critical:
       case TillAlertSeverity.error:
-        color = Colors.red;
+        color = TenantAdminColors.danger;
         icon = Icons.error;
         break;
       case TillAlertSeverity.warning:
-        color = Colors.orange;
+        color = TenantAdminColors.warning;
         icon = Icons.warning;
         break;
       case TillAlertSeverity.info:
       default:
-        color = Colors.blue;
+        color = TenantAdminColors.info;
         icon = Icons.info;
         break;
     }

@@ -840,7 +840,8 @@ class _PosProductVariantSheetState
         PosCheckoutLineRequest(
           variantId: recommendation.variantId!,
           quantity: 1,
-          clientLineId: recommendationClientLineIds[recommendation.relationshipId],
+          clientLineId:
+              recommendationClientLineIds[recommendation.relationshipId],
           source: 'recommendation',
           recommendationParentProductId: detail.summary.productId,
           recommendationRelationshipId: recommendation.relationshipId,

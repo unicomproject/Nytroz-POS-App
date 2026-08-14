@@ -36,12 +36,14 @@ class TenantAdminPrimaryButton extends StatelessWidget {
         disabledBackgroundColor: (backgroundColor ?? TenantAdminColors.primary)
             .withValues(alpha: 0.45),
         padding: const EdgeInsets.symmetric(
-          horizontal: 28,
-          vertical: 16,
+          horizontal: TenantAdminSpacing.xl,
+          vertical: TenantAdminSpacing.md,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         ),
+        minimumSize: const Size(44, TenantAdminContentTokens.buttonHeight),
+        tapTargetSize: MaterialTapTargetSize.padded,
         elevation: 0,
       ),
       child: child,
@@ -77,6 +79,8 @@ class TenantAdminSecondaryButton extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         ),
+        minimumSize: const Size(44, TenantAdminContentTokens.buttonHeight),
+        tapTargetSize: MaterialTapTargetSize.padded,
       ),
       child: _ButtonContent(label: label, icon: icon, loading: loading),
     );
@@ -105,8 +109,8 @@ class TenantAdminIconButton extends StatelessWidget {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         child: Container(
-          width: 40,
-          height: 40,
+          width: TenantAdminContentTokens.buttonHeight,
+          height: TenantAdminContentTokens.buttonHeight,
           decoration: BoxDecoration(
             color: danger
                 ? TenantAdminColors.danger.withValues(alpha: 0.08)

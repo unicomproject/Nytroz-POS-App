@@ -11,6 +11,7 @@ import '../../application/usecases/update_till.dart';
 import '../../data/datasources/till_remote_datasource.dart';
 import '../../data/repositories/till_repository_impl.dart';
 import '../../../presentation/providers/tenant_admin_access_provider.dart';
+import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/till.dart';
 import '../../domain/entities/till_create_options.dart';
 import '../../domain/entities/till_monitoring.dart';
@@ -84,7 +85,8 @@ final tillStatusFilterProvider =
 
 final tillPageProvider = StateProvider<int>((ref) => 1);
 
-final tillPageSizeProvider = StateProvider<int>((ref) => 10);
+final tillPageSizeProvider =
+    StateProvider<int>((ref) => TenantAdminContentTokens.defaultListPageSize);
 
 final tillSortByProvider = StateProvider<String>((ref) => 'name');
 

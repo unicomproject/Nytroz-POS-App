@@ -124,6 +124,20 @@ class TenantAdminAccessChecker {
           TenantAdminPermissionCodes.dashboardSalesSummaryView,
           TenantAdminPermissionCodes.dashboardOrdersSummaryView,
         ]);
+      case TenantAdminFeatureCodes.onlineStore:
+        return canAny([
+          TenantAdminPermissionCodes.onlineStoreView,
+          TenantAdminPermissionCodes.onlineStoreManage,
+          TenantAdminPermissionCodes.onlineStorePublish,
+          TenantAdminPermissionCodes.onlineStoreDomainsManage,
+          TenantAdminPermissionCodes.onlineStoreBrandingManage,
+          TenantAdminPermissionCodes.onlineStoreSupportManage,
+          TenantAdminPermissionCodes.onlineStoreFulfillmentManage,
+          TenantAdminPermissionCodes.onlineStoreCatalogManage,
+          TenantAdminPermissionCodes.onlineStorePoliciesManage,
+        ]);
+      case TenantAdminFeatureCodes.clickCollect:
+        return can(TenantAdminPermissionCodes.onlineStoreFulfillmentManage);
       case TenantAdminFeatureCodes.billingSubscription:
         return canAny([
           TenantAdminPermissionCodes.billingView,
@@ -290,12 +304,7 @@ class TenantAdminAccessChecker {
           menuItem.permissionCode,
         );
       case 'online-store':
-        // No dedicated Online Store permission/route yet — show disabled
-        // only to users who already have Tenant Admin dashboard access.
-        return canShowAction(
-          menuItem.featureCode,
-          menuItem.permissionCode,
-        );
+        return canAccessOnlineStoreModule();
       case 'hardware':
         return canAny([
           TenantAdminPermissionCodes.tenantHardwareView,
@@ -310,6 +319,65 @@ class TenantAdminAccessChecker {
     return canShowAction(
       TenantAdminFeatureCodes.dashboard,
       TenantAdminPermissionCodes.tenantAdminDashboardView,
+    );
+  }
+
+  bool canAccessOnlineStoreModule() =>
+      _hasEnabledFeatureEntitlement(TenantAdminFeatureCodes.onlineStore) &&
+      hasRuntimeFlag(TenantAdminFeatureCodes.onlineStore) &&
+      can(TenantAdminPermissionCodes.onlineStoreView);
+
+  bool canViewOnlineStore() => canAccessOnlineStoreModule();
+
+  bool canManageOnlineStore() => _canUseOnlineStorePermission(
+      TenantAdminPermissionCodes.onlineStoreManage);
+
+  bool canManageOnlineStoreDomains() => _canUseOnlineStorePermission(
+        TenantAdminPermissionCodes.onlineStoreDomainsManage,
+      );
+
+  bool canManageOnlineStoreBranding() => _canUseOnlineStorePermission(
+        TenantAdminPermissionCodes.onlineStoreBrandingManage,
+      );
+
+  bool canManageOnlineStoreSupport() => _canUseOnlineStorePermission(
+        TenantAdminPermissionCodes.onlineStoreSupportManage,
+      );
+
+  bool canManageOnlineStoreFulfillment() {
+    if (!_hasEnabledFeatureEntitlement(TenantAdminFeatureCodes.onlineStore) ||
+        !hasRuntimeFlag(TenantAdminFeatureCodes.onlineStore)) {
+      return false;
+    }
+
+    if (!_hasEnabledFeatureEntitlement(TenantAdminFeatureCodes.clickCollect) ||
+        !hasRuntimeFlag(TenantAdminFeatureCodes.clickCollect)) {
+      return false;
+    }
+
+    return can(TenantAdminPermissionCodes.onlineStoreFulfillmentManage);
+  }
+
+  bool canManageOnlineStoreCatalog() => _canUseOnlineStorePermission(
+        TenantAdminPermissionCodes.onlineStoreCatalogManage,
+      );
+
+  bool canManageOnlineStorePolicies() => _canUseOnlineStorePermission(
+        TenantAdminPermissionCodes.onlineStorePoliciesManage,
+      );
+
+  bool canPublishOnlineStore() => _canUseOnlineStorePermission(
+        TenantAdminPermissionCodes.onlineStorePublish,
+      );
+
+  bool _canUseOnlineStorePermission(String permissionCode) =>
+      _hasEnabledFeatureEntitlement(TenantAdminFeatureCodes.onlineStore) &&
+      hasRuntimeFlag(TenantAdminFeatureCodes.onlineStore) &&
+      can(permissionCode);
+
+  bool _hasEnabledFeatureEntitlement(String featureCode) {
+    return _context.featureEntitlements.any(
+      (feature) => feature.featureCode == featureCode && feature.enabled,
     );
   }
 

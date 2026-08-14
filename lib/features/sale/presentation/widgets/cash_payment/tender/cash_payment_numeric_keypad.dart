@@ -241,7 +241,8 @@ class CashPaymentNumericKeypad extends StatelessWidget {
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           fontSize: CashPaymentKeypadStyle.actionLabelFontSize,
-                          color: color ?? CashPaymentKeypadStyle.actionLabelColor,
+                          color:
+                              color ?? CashPaymentKeypadStyle.actionLabelColor,
                         ),
                   ),
                 ],

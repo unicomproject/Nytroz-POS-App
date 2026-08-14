@@ -18,92 +18,76 @@ class TillMonitoringSummaryCards extends ConsumerWidget {
         return LayoutBuilder(
           builder: (context, constraints) {
             final isMobile = constraints.maxWidth < 600;
+            final isTablet = constraints.maxWidth < 900;
+            final cards = [
+              _buildCard(
+                title: 'TOTAL TILLS',
+                count: summary.totalTills,
+                subtitle: 'All registered tills',
+                icon: Icons.point_of_sale_rounded,
+                iconBgColor: TenantAdminColors.posHomeAccentOrange
+                    .withValues(alpha: 0.1),
+                iconColor: TenantAdminColors.posHomeAccentOrange,
+                subtitleColor: TenantAdminColors.mutedText,
+              ),
+              _buildCard(
+                title: 'ONLINE',
+                count: summary.onlineCount,
+                subtitle:
+                    '${summary.totalTills == 0 ? 0 : (summary.onlineCount / summary.totalTills * 100).round()}% of tills online',
+                icon: Icons.wifi_rounded,
+                iconBgColor: TenantAdminColors.success.withValues(alpha: 0.12),
+                iconColor: TenantAdminColors.success,
+                subtitleColor: TenantAdminColors.success,
+              ),
+              _buildCard(
+                title: 'OFFLINE',
+                count: summary.offlineCount,
+                subtitle:
+                    '${summary.totalTills == 0 ? 0 : (summary.offlineCount / summary.totalTills * 100).round()}% of tills offline',
+                icon: Icons.wifi_off_rounded,
+                iconBgColor: TenantAdminColors.danger.withValues(alpha: 0.10),
+                iconColor: TenantAdminColors.danger,
+                subtitleColor: TenantAdminColors.danger,
+              ),
+            ];
 
             if (isMobile) {
               return Column(
+                children: cards
+                    .map(
+                      (card) => Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: TenantAdminSpacing.md,
+                        ),
+                        child: card,
+                      ),
+                    )
+                    .toList(growable: false),
+              );
+            }
+
+            if (isTablet) {
+              return Wrap(
+                spacing: TenantAdminSpacing.md,
+                runSpacing: TenantAdminSpacing.md,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                          child: _buildCard(
-                        title: 'TOTAL TILLS',
-                        count: summary.totalTills,
-                        subtitle: 'All registered tills',
-                        icon: Icons.point_of_sale,
-                        iconBgColor: Colors.purple.shade50,
-                        iconColor: Colors.purple,
-                        subtitleColor: TenantAdminColors.mutedText,
-                      )),
-                    ],
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                          child: _buildCard(
-                        title: 'ONLINE',
-                        count: summary.onlineCount,
-                        subtitle:
-                            '${summary.totalTills == 0 ? 0 : (summary.onlineCount / summary.totalTills * 100).round()}% online',
-                        icon: Icons.wifi,
-                        iconBgColor: Colors.green.shade50,
-                        iconColor: Colors.green,
-                        subtitleColor: Colors.green,
-                      )),
-                      const SizedBox(width: TenantAdminSpacing.md),
-                      Expanded(
-                          child: _buildCard(
-                        title: 'OFFLINE',
-                        count: summary.offlineCount,
-                        subtitle:
-                            '${summary.totalTills == 0 ? 0 : (summary.offlineCount / summary.totalTills * 100).round()}% offline',
-                        icon: Icons.wifi_off,
-                        iconBgColor: Colors.red.shade50,
-                        iconColor: Colors.red,
-                        subtitleColor: Colors.red,
-                      )),
-                    ],
-                  ),
+                  for (final card in cards)
+                    SizedBox(
+                      width: (constraints.maxWidth - TenantAdminSpacing.md) / 2,
+                      child: card,
+                    ),
                 ],
               );
             }
 
             return Row(
               children: [
-                Expanded(
-                    child: _buildCard(
-                  title: 'TOTAL TILLS',
-                  count: summary.totalTills,
-                  subtitle: 'All registered tills',
-                  icon: Icons.point_of_sale,
-                  iconBgColor: Colors.purple.shade50,
-                  iconColor: Colors.purple,
-                  subtitleColor: TenantAdminColors.mutedText,
-                )),
+                Expanded(child: cards[0]),
                 const SizedBox(width: TenantAdminSpacing.lg),
-                Expanded(
-                    child: _buildCard(
-                  title: 'ONLINE',
-                  count: summary.onlineCount,
-                  subtitle:
-                      '${summary.totalTills == 0 ? 0 : (summary.onlineCount / summary.totalTills * 100).round()}% of tills online',
-                  icon: Icons.wifi,
-                  iconBgColor: Colors.green.shade50,
-                  iconColor: Colors.green,
-                  subtitleColor: Colors.green,
-                )),
+                Expanded(child: cards[1]),
                 const SizedBox(width: TenantAdminSpacing.lg),
-                Expanded(
-                    child: _buildCard(
-                  title: 'OFFLINE',
-                  count: summary.offlineCount,
-                  subtitle:
-                      '${summary.totalTills == 0 ? 0 : (summary.offlineCount / summary.totalTills * 100).round()}% of tills offline',
-                  icon: Icons.wifi_off,
-                  iconBgColor: Colors.red.shade50,
-                  iconColor: Colors.red,
-                  subtitleColor: Colors.red,
-                )),
+                Expanded(child: cards[2]),
               ],
             );
           },
@@ -125,18 +109,22 @@ class TillMonitoringSummaryCards extends ConsumerWidget {
     required Color subtitleColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+      constraints: const BoxConstraints(minHeight: 104),
+      padding: const EdgeInsets.symmetric(
+        horizontal: TenantAdminSpacing.lg,
+        vertical: TenantAdminSpacing.md,
+      ),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: TenantAdminColors.border),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 46,
+            height: 46,
             decoration: BoxDecoration(
               color: iconBgColor,
               shape: BoxShape.circle,
@@ -160,7 +148,7 @@ class TillMonitoringSummaryCards extends ConsumerWidget {
                 Text(
                   count.toString(),
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 25,
                     color: TenantAdminColors.bodyText,
                     fontWeight: FontWeight.bold,
                   ),

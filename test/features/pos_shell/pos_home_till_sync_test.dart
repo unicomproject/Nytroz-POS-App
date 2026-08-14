@@ -69,7 +69,8 @@ void main() {
         ).shouldClearStaleTillSession,
         isTrue,
       );
-      expect(shouldClearStaleTillSessionForHomeReason('PERMISSION_DENIED'), isFalse);
+      expect(shouldClearStaleTillSessionForHomeReason('PERMISSION_DENIED'),
+          isFalse);
     });
   });
 }

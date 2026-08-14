@@ -12,18 +12,22 @@ class OutletCardList extends ConsumerWidget {
     required this.onView,
     required this.onEdit,
     required this.onDisable,
+    this.scrollable = false,
   });
 
   final List<Outlet> outlets;
   final ValueChanged<Outlet> onView;
   final ValueChanged<Outlet> onEdit;
   final ValueChanged<Outlet> onDisable;
+  final bool scrollable;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: !scrollable,
+      physics: scrollable
+          ? const ClampingScrollPhysics()
+          : const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(
         horizontal: TenantAdminSpacing.lg,
         vertical: TenantAdminSpacing.md,
@@ -32,38 +36,7 @@ class OutletCardList extends ConsumerWidget {
       separatorBuilder: (_, __) =>
           const SizedBox(height: TenantAdminSpacing.md),
       itemBuilder: (context, index) {
-        var outlet = outlets[index];
-
-        // ── MOCK DATA ENRICHMENT FOR BACKEND OUTLETS (Matches Image 2) ──
-        // The backend now provides the names 'Main Outlet', 'City Center', etc.
-        // We enrich them with the mock manager/tills data to match the UI design.
-        final nameLower = outlet.name.toLowerCase();
-        if (nameLower.contains('main outlet')) {
-          outlet = outlet.copyWith(
-              managerName: 'Kavin Perera',
-              tillCount: 3,
-              activeTillCount: 3,
-              status: 'Active',
-              imageUrl:
-                  'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300');
-        } else if (nameLower.contains('city center')) {
-          outlet = outlet.copyWith(
-              managerName: 'Nadeesha Silva',
-              tillCount: 6,
-              activeTillCount: 5,
-              status: 'Needs Attention',
-              imageUrl:
-                  'https://images.unsplash.com/photo-1519567281027-d15c128f64a4?auto=format&fit=crop&q=80&w=300');
-        } else if (nameLower.contains('central warehouse')) {
-          outlet = outlet.copyWith(
-              managerName: 'Tharindu Jayasekara',
-              tillCount: 2,
-              activeTillCount: 2,
-              status: 'Active',
-              imageUrl:
-                  'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=300');
-        }
-
+        final outlet = outlets[index];
         final isSelected = ref.watch(selectedOutletIdProvider) == outlet.id;
 
         return _OutletCard(
@@ -101,249 +74,269 @@ class _OutletCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(TenantAdminSpacing.md),
-        decoration: BoxDecoration(
-          color: TenantAdminColors.surface,
-          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-          border: Border.all(
-            color: isSelected
-                ? TenantAdminColors.posHomeOrangeEnd
-                : TenantAdminColors.border,
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: TenantAdminColors.posHomeOrangeEnd
-                        .withValues(alpha: 0.12),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  )
-                ]
-              : null,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // ── Outlet thumbnail ──────────────────────────────
-            _OutletThumbnail(outlet: outlet),
-            const SizedBox(width: TenantAdminSpacing.md),
-
-            // ── Main info ─────────────────────────────────────
-            Expanded(
-              child: Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 720;
+        final content = compact
+            ? Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Name + type badge
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Flexible(
-                        child: Text(
-                          outlet.name,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: TenantAdminColors.bodyText,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      _TypeBadge(type: outlet.outletType),
+                      _OutletThumbnail(outlet: outlet, compact: true),
+                      const SizedBox(width: TenantAdminSpacing.md),
+                      Expanded(child: _OutletMainInfo(outlet: outlet)),
                     ],
                   ),
-                  const SizedBox(height: TenantAdminSpacing.sm),
-
-                  // Code | Manager | Tills | Status — one row
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Code
-                      _LabelValue(
-                        label: 'Code',
-                        value: outlet.code.isNotEmpty ? outlet.code : '—',
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.lg),
-
-                      // Manager
-                      _ManagerCell(
-                        name: outlet.managerName,
-                        avatarUrl: outlet.managerAvatarUrl,
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.lg),
-
-                      // Tills
-                      _LabelValue(
-                        label: 'Tills',
-                        valueWidget: Row(
-                          children: [
-                            Text(
-                              '${outlet.activeTillCount} / ${outlet.tillCount}',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: TenantAdminColors.bodyText,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            _StatusBadge(isActive: _isActive),
-                          ],
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: TenantAdminSpacing.md),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _ActionsColumn(
+                      isActive: _isActive,
+                      onView: onView,
+                      onEdit: onEdit,
+                      onDisable: onDisable,
+                      horizontal: true,
+                    ),
                   ),
                 ],
-              ),
-            ),
+              )
+            : Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _OutletThumbnail(outlet: outlet),
+                  const SizedBox(width: TenantAdminSpacing.md),
+                  Expanded(child: _OutletMainInfo(outlet: outlet)),
+                  const SizedBox(width: TenantAdminSpacing.md),
+                  _ActionsColumn(
+                    isActive: _isActive,
+                    onView: onView,
+                    onEdit: onEdit,
+                    onDisable: onDisable,
+                  ),
+                ],
+              );
 
-            // ── Actions ───────────────────────────────────────
-            const SizedBox(width: TenantAdminSpacing.md),
-            _ActionsColumn(
-              isActive: _isActive,
-              onView: onView,
-              onEdit: onEdit,
-              onDisable: onDisable,
+        return Semantics(
+          button: true,
+          selected: isSelected,
+          label: 'Outlet ${outlet.name}',
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.all(TenantAdminSpacing.md),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? TenantAdminColors.posHomeAccentOrange
+                        .withValues(alpha: 0.04)
+                    : TenantAdminColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected
+                      ? TenantAdminColors.posHomeAccentOrange
+                      : TenantAdminColors.border,
+                  width: isSelected ? 2 : 1,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: TenantAdminColors.posHomeAccentOrange
+                              .withValues(alpha: 0.12),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: content,
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
 
-// ─── Outlet thumbnail ──────────────────────────────────────────────────────
+class _OutletMainInfo extends StatelessWidget {
+  const _OutletMainInfo({required this.outlet});
+
+  final Outlet outlet;
+
+  bool get _isActive => outlet.status.toUpperCase() == 'ACTIVE';
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stackMeta = constraints.maxWidth < 520;
+        final metaCells = [
+          _LabelValue(
+            label: 'Code',
+            value: outlet.code.isNotEmpty ? outlet.code : '-',
+          ),
+          _ManagerCell(
+            name: outlet.managerName,
+            avatarUrl: outlet.managerAvatarUrl,
+          ),
+          _LabelValue(
+            label: 'Tills',
+            valueWidget: Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  outlet.canViewTillsAndHealth
+                      ? '${outlet.activeTillCount} / ${outlet.tillCount}'
+                      : 'Restricted',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: outlet.canViewTillsAndHealth
+                        ? TenantAdminColors.bodyText
+                        : TenantAdminColors.mutedText,
+                  ),
+                ),
+                if (outlet.canViewTillsAndHealth)
+                  _StatusBadge(isActive: _isActive),
+              ],
+            ),
+          ),
+        ];
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    outlet.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: TenantAdminColors.bodyText,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                _TypeBadge(type: outlet.outletType),
+              ],
+            ),
+            const SizedBox(height: TenantAdminSpacing.sm),
+            if (stackMeta)
+              Wrap(
+                spacing: TenantAdminSpacing.lg,
+                runSpacing: TenantAdminSpacing.sm,
+                children: metaCells,
+              )
+            else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(child: metaCells[0]),
+                  const SizedBox(width: TenantAdminSpacing.lg),
+                  Expanded(flex: 2, child: metaCells[1]),
+                  const SizedBox(width: TenantAdminSpacing.lg),
+                  Expanded(flex: 2, child: metaCells[2]),
+                ],
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
 
 class _OutletThumbnail extends StatelessWidget {
-  const _OutletThumbnail({required this.outlet});
+  const _OutletThumbnail({
+    required this.outlet,
+    this.compact = false,
+  });
+
   final Outlet outlet;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final hasImage = outlet.imageUrl != null && outlet.imageUrl!.isNotEmpty;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+      borderRadius: BorderRadius.circular(12),
       child: SizedBox(
-        width: 90,
-        height: 72,
+        width: compact ? 72 : 90,
+        height: compact ? 64 : 72,
         child: hasImage
-            ? Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.network(
-                    outlet.imageUrl!,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return _placeholder();
-                    },
-                    errorBuilder: (_, __, ___) => _placeholder(),
-                  ),
-                  _gradientOverlay(),
-                ],
+            ? Image.network(
+                outlet.imageUrl!,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  return loadingProgress == null ? child : _placeholder();
+                },
+                errorBuilder: (_, __, ___) => _placeholder(),
               )
             : _placeholder(),
       ),
     );
   }
 
-  Widget _gradientOverlay() {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: 28,
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-            colors: [
-              Color(0x55000000),
-              Colors.transparent,
-            ],
-          ),
+  Widget _placeholder() {
+    return Container(
+      color: const Color(0xFFF8FAFC),
+      child: const Center(
+        child: Icon(
+          Icons.storefront_outlined,
+          color: TenantAdminColors.mutedText,
+          size: 28,
         ),
       ),
     );
   }
-
-  Widget _placeholder() {
-    String dummyUrl =
-        'https://images.unsplash.com/photo-1555529771-835f59fc5efe?auto=format&fit=crop&q=80&w=300';
-
-    if (outlet.name.toLowerCase().contains('warehouse') ||
-        outlet.outletType?.toUpperCase() == 'WAREHOUSE') {
-      dummyUrl =
-          'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=300';
-    } else if (outlet.name.toLowerCase().contains('city') ||
-        outlet.name.toLowerCase().contains('mall')) {
-      dummyUrl =
-          'https://images.unsplash.com/photo-1519567281027-d15c128f64a4?auto=format&fit=crop&q=80&w=300';
-    } else if (outlet.name.toLowerCase().contains('main')) {
-      dummyUrl =
-          'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300';
-    }
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Image.network(
-          dummyUrl,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Container(
-            color: const Color(0xFFF1F5F9), // TenantAdminColors.background
-            child: const Center(
-              child: Icon(Icons.image_not_supported,
-                  color: Color(0xFF94A3B8)), // TenantAdminColors.mutedText
-            ),
-          ),
-        ),
-        _gradientOverlay(),
-      ],
-    );
-  }
 }
-
-// ─── Type badge ────────────────────────────────────────────────────────────
 
 class _TypeBadge extends StatelessWidget {
   const _TypeBadge({this.type});
+
   final String? type;
 
   @override
   Widget build(BuildContext context) {
-    if (type == null || type!.isEmpty) return const SizedBox.shrink();
+    if (type == null || type!.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     final isWarehouse = type!.toUpperCase() == 'WAREHOUSE';
     final bgColor =
         isWarehouse ? const Color(0xFFEFF6FF) : const Color(0xFFF0FDF4);
     final textColor =
-        isWarehouse ? const Color(0xFF2563EB) : const Color(0xFF16A34A);
+        isWarehouse ? const Color(0xFF2563EB) : TenantAdminColors.success;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         type!,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: 11,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           color: textColor,
         ),
       ),
     );
   }
 }
-
-// ─── Label + Value helper ─────────────────────────────────────────────────
 
 class _LabelValue extends StatelessWidget {
   const _LabelValue({
@@ -358,107 +351,119 @@ class _LabelValue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            color: TenantAdminColors.mutedText,
-          ),
-        ),
-        const SizedBox(height: 2),
-        valueWidget ??
-            Text(
-              value ?? '—',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: TenantAdminColors.bodyText,
-              ),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 72, maxWidth: 190),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: TenantAdminColors.mutedText,
             ),
-      ],
+          ),
+          const SizedBox(height: 2),
+          valueWidget ??
+              Text(
+                value ?? '-',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: TenantAdminColors.bodyText,
+                ),
+              ),
+        ],
+      ),
     );
   }
 }
 
-// ─── Manager cell ──────────────────────────────────────────────────────────
-
 class _ManagerCell extends StatelessWidget {
   const _ManagerCell({this.name, this.avatarUrl});
+
   final String? name;
   final String? avatarUrl;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Manager',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            color: TenantAdminColors.mutedText,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Row(
-          children: [
-            _avatar(),
-            const SizedBox(width: 6),
-            Text(
-              name != null && name!.isNotEmpty ? name! : 'Not assigned',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: name != null && name!.isNotEmpty
-                    ? TenantAdminColors.bodyText
-                    : TenantAdminColors.mutedText,
-                fontStyle: name != null && name!.isNotEmpty
-                    ? FontStyle.normal
-                    : FontStyle.italic,
-              ),
+    final hasManager = name != null && name!.trim().isNotEmpty;
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 120, maxWidth: 220),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Manager',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: TenantAdminColors.mutedText,
             ),
-          ],
-        ),
-      ],
+          ),
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              _avatar(hasManager),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  hasManager ? name!.trim() : 'Not assigned',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: hasManager
+                        ? TenantAdminColors.bodyText
+                        : TenantAdminColors.mutedText,
+                    fontStyle: hasManager ? FontStyle.normal : FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _avatar() {
+  Widget _avatar(bool hasManager) {
     if (avatarUrl != null && avatarUrl!.isNotEmpty) {
       return CircleAvatar(
         radius: 12,
         backgroundImage: NetworkImage(avatarUrl!),
         onBackgroundImageError: (_, __) {},
-        child: null,
       );
     }
-    if (name != null && name!.isNotEmpty) {
+
+    if (hasManager) {
       final initials = name!
           .trim()
           .split(' ')
-          .where((w) => w.isNotEmpty)
+          .where((word) => word.isNotEmpty)
           .take(2)
-          .map((w) => w[0].toUpperCase())
+          .map((word) => word[0].toUpperCase())
           .join();
       return CircleAvatar(
         radius: 12,
         backgroundColor:
-            TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.15),
+            TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.12),
         child: Text(
           initials,
           style: const TextStyle(
             fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: TenantAdminColors.posHomeOrangeEnd,
+            fontWeight: FontWeight.w800,
+            color: TenantAdminColors.posHomeAccentOrange,
           ),
         ),
       );
     }
+
     return const CircleAvatar(
       radius: 12,
       backgroundColor: Color(0xFFF1F5F9),
@@ -471,17 +476,17 @@ class _ManagerCell extends StatelessWidget {
   }
 }
 
-// ─── Status badge ──────────────────────────────────────────────────────────
-
 class _StatusBadge extends StatelessWidget {
   const _StatusBadge({required this.isActive});
+
   final bool isActive;
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? const Color(0xFF16A34A) : const Color(0xFFF59E0B);
+    final color =
+        isActive ? TenantAdminColors.success : TenantAdminColors.warning;
     final bg = isActive ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB);
-    final label = isActive ? 'Active' : 'Needs Attention';
+    final label = isActive ? 'Active' : 'Attention';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -498,12 +503,16 @@ class _StatusBadge extends StatelessWidget {
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: color,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
             ),
           ),
         ],
@@ -512,48 +521,62 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-// ─── Actions column ────────────────────────────────────────────────────────
-
 class _ActionsColumn extends StatelessWidget {
   const _ActionsColumn({
     required this.isActive,
     required this.onView,
     required this.onEdit,
     required this.onDisable,
+    this.horizontal = false,
   });
 
   final bool isActive;
   final VoidCallback onView;
   final VoidCallback onEdit;
   final VoidCallback onDisable;
+  final bool horizontal;
 
   @override
   Widget build(BuildContext context) {
+    final actions = [
+      _ActionBtn(
+        icon: Icons.visibility_outlined,
+        label: 'View',
+        color: TenantAdminColors.info,
+        onTap: onView,
+      ),
+      _ActionBtn(
+        icon: Icons.edit_outlined,
+        label: 'Edit',
+        color: TenantAdminColors.info,
+        onTap: onEdit,
+      ),
+      _ActionBtn(
+        icon: isActive ? Icons.block_outlined : Icons.check_circle_outline,
+        label: isActive ? 'Disable' : 'Activate',
+        color: isActive ? TenantAdminColors.danger : TenantAdminColors.success,
+        onTap: onDisable,
+      ),
+    ];
+
+    if (horizontal) {
+      return Wrap(
+        spacing: TenantAdminSpacing.sm,
+        runSpacing: TenantAdminSpacing.xs,
+        alignment: WrapAlignment.end,
+        children: actions,
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _ActionBtn(
-          icon: Icons.visibility_outlined,
-          label: 'View',
-          color: TenantAdminColors.info,
-          onTap: onView,
-        ),
+        actions[0],
         const SizedBox(height: 4),
-        _ActionBtn(
-          icon: Icons.edit_outlined,
-          label: 'Edit',
-          color: TenantAdminColors.info,
-          onTap: onEdit,
-        ),
+        actions[1],
         const SizedBox(height: 4),
-        _ActionBtn(
-          icon: isActive ? Icons.block_outlined : Icons.check_circle_outline,
-          label: isActive ? 'Disable' : 'Activate',
-          color:
-              isActive ? TenantAdminColors.danger : TenantAdminColors.success,
-          onTap: onDisable,
-        ),
+        actions[2],
       ],
     );
   }
@@ -576,9 +599,9 @@ class _ActionBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -588,7 +611,7 @@ class _ActionBtn extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: color,
               ),
             ),

@@ -25,12 +25,16 @@ class OutletListScreen extends ConsumerWidget {
     return visibilityState.when(
       loading: () => const TenantAdminPageScaffold(
         title: 'Outlets',
-        subtitle: 'Manage the places where your business sells.',
+        subtitle: 'Manage all business outlets and sales locations.',
+        backgroundColor: TenantAdminColors.background,
+        fillHeight: true,
         child: TenantAdminLoadingSkeleton(rowCount: 8),
       ),
       error: (error, stackTrace) => TenantAdminPageScaffold(
         title: 'Outlets',
-        subtitle: 'Manage the places where your business sells.',
+        subtitle: 'Manage all business outlets and sales locations.',
+        backgroundColor: TenantAdminColors.background,
+        fillHeight: true,
         child: TenantAdminErrorState(
           title: 'Unable to load outlets',
           message: outletLoadErrorMessage(error),
@@ -52,13 +56,17 @@ class OutletListScreen extends ConsumerWidget {
           loading: () => TenantAdminPageScaffold(
             title: visibility.showTitle ? 'Outlets' : '',
             subtitle: visibility.showSubtitle
-                ? 'Manage the places where your business sells.'
+                ? 'Manage all business outlets and sales locations.'
                 : null,
+            backgroundColor: TenantAdminColors.background,
+            fillHeight: true,
             child: const TenantAdminLoadingSkeleton(rowCount: 8),
           ),
           error: (error, stackTrace) => TenantAdminPageScaffold(
             title: 'Outlets',
-            subtitle: 'Manage the places where your business sells.',
+            subtitle: 'Manage all business outlets and sales locations.',
+            backgroundColor: TenantAdminColors.background,
+            fillHeight: true,
             child: TenantAdminErrorState(
               title: 'Unable to load outlets',
               message: outletLoadErrorMessage(error),
@@ -116,6 +124,7 @@ class OutletListScreen extends ConsumerWidget {
                   isMobile: isMobile,
                   showPanelTitle: true,
                   showAddButton: true,
+                  boundedHeight: isDesktop,
                 );
 
                 if (isDesktop) {
@@ -132,6 +141,8 @@ class OutletListScreen extends ConsumerWidget {
                 // Mobile / tablet: stacked column, wrapped in the page scaffold.
                 return TenantAdminPageScaffold(
                   title: '',
+                  backgroundColor: TenantAdminColors.background,
+                  fillHeight: true,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -141,7 +152,7 @@ class OutletListScreen extends ConsumerWidget {
                       ],
                       listPanel,
                       const SizedBox(height: TenantAdminSpacing.xl),
-                      const OutletDetailPanel(),
+                      const OutletDetailPanel(scrollable: false),
                     ],
                   ),
                 );
@@ -167,11 +178,14 @@ class _DesktopLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomPad = MediaQuery.of(context).padding.bottom;
-    return ColoredBox(
-      color: TenantAdminColors.background,
+    return TenantAdminPageScaffold(
+      title: '',
+      backgroundColor: TenantAdminColors.background,
+      fillHeight: true,
+      scrollable: false,
+      padding: EdgeInsets.zero,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(0, 0, 0, bottomPad > 0 ? bottomPad : 8),
+        padding: const EdgeInsets.all(0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -203,10 +217,8 @@ class _DesktopLayout extends StatelessWidget {
                   children: [
                     // ── Left: list panel (65 %) ─────────────────
                     Expanded(
-                      flex: 65,
-                      child: SingleChildScrollView(
-                        child: listPanel,
-                      ),
+                      flex: 64,
+                      child: listPanel,
                     ),
 
                     // ── Divider ─────────────────────────────────
@@ -218,10 +230,8 @@ class _DesktopLayout extends StatelessWidget {
 
                     // ── Right: detail panel (35 %) ──────────────
                     const Expanded(
-                      flex: 35,
-                      child: SingleChildScrollView(
-                        child: OutletDetailPanel(),
-                      ),
+                      flex: 36,
+                      child: OutletDetailPanel(),
                     ),
                   ],
                 ),

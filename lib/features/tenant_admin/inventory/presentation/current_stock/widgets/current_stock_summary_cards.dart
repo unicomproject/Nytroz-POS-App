@@ -67,29 +67,45 @@ class CurrentStockSummaryCards extends StatelessWidget {
         context,
         summary.totalProducts.toString(),
         'Products',
-        const Icon(Icons.view_in_ar_outlined, color: Colors.blue, size: 28),
-        Colors.blue,
+        const Icon(
+          Icons.view_in_ar_outlined,
+          color: TenantAdminColors.primary,
+          size: 28,
+        ),
+        TenantAdminColors.primary,
       ),
       _buildCard(
         context,
         summary.totalItemsInStock.toString(),
         'In Stock',
-        const Icon(Icons.check_circle_outline, color: Colors.green, size: 28),
-        Colors.green,
+        const Icon(
+          Icons.check_circle_outline,
+          color: TenantAdminColors.success,
+          size: 28,
+        ),
+        TenantAdminColors.success,
       ),
       _buildCard(
         context,
         summary.totalItemsLowStock.toString(),
         'Low Stock',
-        const Icon(Icons.error_outline, color: Colors.orange, size: 28),
-        Colors.orange,
+        const Icon(
+          Icons.error_outline,
+          color: TenantAdminColors.warning,
+          size: 28,
+        ),
+        TenantAdminColors.warning,
       ),
       _buildCard(
         context,
         summary.totalItemsOutOfStock.toString(),
         'Out of Stock',
-        const Icon(Icons.error_outline, color: Colors.red, size: 28),
-        Colors.red,
+        const Icon(
+          Icons.error_outline,
+          color: TenantAdminColors.danger,
+          size: 28,
+        ),
+        TenantAdminColors.danger,
       ),
     ];
 

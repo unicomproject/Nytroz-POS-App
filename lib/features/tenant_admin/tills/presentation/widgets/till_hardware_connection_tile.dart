@@ -30,67 +30,83 @@ class TillHardwareConnectionTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: statusUi.color.withValues(alpha: 0.3)),
         ),
-        child: Row(
-          children: [
-            Icon(
-              TillHardwareTypeUi.iconFor(connection.type),
-              color: statusUi.color,
-              size: 24,
-            ),
-            const SizedBox(width: TenantAdminSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    TillHardwareTypeUi.labelFor(connection.type),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: TenantAdminColors.mutedText,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    connection.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: TenantAdminColors.bodyText,
-                    ),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: connection.connectionStatus ==
-                                TillHardwareConnectionStatus.needsAttention
-                            ? Colors.orange.shade800
-                            : TenantAdminColors.mutedText,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final stackStatus = constraints.maxWidth < 340;
+
+            final deviceText = Row(
               children: [
-                Icon(statusUi.icon, color: statusUi.color, size: 20),
-                const SizedBox(height: 4),
-                Text(
-                  statusUi.label,
-                  style: TextStyle(
-                    color: statusUi.color,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                Icon(
+                  TillHardwareTypeUi.iconFor(connection.type),
+                  color: statusUi.color,
+                  size: 22,
+                ),
+                const SizedBox(width: TenantAdminSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        TillHardwareTypeUi.labelFor(connection.type),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: TenantAdminColors.mutedText,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        connection.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: TenantAdminColors.bodyText,
+                        ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: connection.connectionStatus ==
+                                    TillHardwareConnectionStatus.needsAttention
+                                ? Colors.orange.shade800
+                                : TenantAdminColors.mutedText,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
-            ),
-          ],
+            );
+
+            final status = _ConnectionStatusPill(statusUi: statusUi);
+
+            if (stackStatus) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  deviceText,
+                  const SizedBox(height: TenantAdminSpacing.sm),
+                  status,
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(child: deviceText),
+                const SizedBox(width: TenantAdminSpacing.sm),
+                status,
+              ],
+            );
+          },
         ),
       ),
     );
@@ -109,5 +125,40 @@ class TillHardwareConnectionTile extends StatelessWidget {
     ];
     if (parts.isEmpty) return null;
     return parts.join(' ');
+  }
+}
+
+class _ConnectionStatusPill extends StatelessWidget {
+  const _ConnectionStatusPill({required this.statusUi});
+
+  final TillHardwareConnectionStatusUi statusUi;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: statusUi.color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: statusUi.color.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(statusUi.icon, color: statusUi.color, size: 15),
+          const SizedBox(width: 4),
+          Text(
+            statusUi.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: statusUi.color,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

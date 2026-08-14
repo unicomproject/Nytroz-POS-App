@@ -51,14 +51,17 @@ class FakeTenantProductRepository implements TenantProductRepository {
   }
 
   @override
-  Future<ProductDraftResponseDto> saveDraft(SaveProductDraftRequestDto request) async {
+  Future<ProductDraftResponseDto> saveDraft(
+      SaveProductDraftRequestDto request) async {
     lastDraftRequest = request;
     storedDraft = ProductDraftResponseDto(
       productId: 'prod-123',
       productName: request.productName ?? 'Untitled Product',
       productCode: request.productCode,
       status: 'DRAFT',
-      currentSetupStep: request.advanceStep ? request.currentSetupStep + 1 : request.currentSetupStep,
+      currentSetupStep: request.advanceStep
+          ? request.currentSetupStep + 1
+          : request.currentSetupStep,
       rowVersion: 1,
       categoryId: request.categoryId,
       brandId: request.brandId,
@@ -73,14 +76,17 @@ class FakeTenantProductRepository implements TenantProductRepository {
   }
 
   @override
-  Future<ProductDraftResponseDto> updateDraft(String productId, SaveProductDraftRequestDto request) async {
+  Future<ProductDraftResponseDto> updateDraft(
+      String productId, SaveProductDraftRequestDto request) async {
     lastDraftRequest = request;
     storedDraft = ProductDraftResponseDto(
       productId: productId,
       productName: request.productName ?? 'Untitled Product',
       productCode: request.productCode,
       status: 'DRAFT',
-      currentSetupStep: request.advanceStep ? request.currentSetupStep + 1 : request.currentSetupStep,
+      currentSetupStep: request.advanceStep
+          ? request.currentSetupStep + 1
+          : request.currentSetupStep,
       rowVersion: (request.expectedRowVersion ?? 0) + 1,
       categoryId: request.categoryId,
       brandId: request.brandId,
@@ -100,7 +106,8 @@ class FakeTenantProductRepository implements TenantProductRepository {
   }
 
   @override
-  Future<StagedImageResponseDto> stageImage(List<int> bytes, String fileName, String mimeType) async {
+  Future<StagedImageResponseDto> stageImage(
+      List<int> bytes, String fileName, String mimeType) async {
     return StagedImageResponseDto(
       mediaAssetId: 'asset-${DateTime.now().millisecondsSinceEpoch}',
       publicUrl: 'https://cdn.example.com/$fileName',
@@ -113,7 +120,8 @@ class FakeTenantProductRepository implements TenantProductRepository {
   }
 
   @override
-  Future<ProductImageResponseDto> uploadProductImage(String productId, List<int> bytes, String fileName, String mimeType) async {
+  Future<ProductImageResponseDto> uploadProductImage(String productId,
+      List<int> bytes, String fileName, String mimeType) async {
     return const ProductImageResponseDto(
       productImageId: 'img-1',
       imageUrl: 'https://cdn.example.com/photo.png',
@@ -124,7 +132,8 @@ class FakeTenantProductRepository implements TenantProductRepository {
   }
 
   @override
-  Future<ProductDraftResponseDto> deleteProductImage(String productId, String productImageId) async {
+  Future<ProductDraftResponseDto> deleteProductImage(
+      String productId, String productImageId) async {
     return const ProductDraftResponseDto(
       productId: 'prod-123',
       productName: 'Existing Headset',
@@ -139,7 +148,11 @@ class FakeTenantProductRepository implements TenantProductRepository {
   }
 
   @override
-  Future<ProductDraftResponseDto> reorderProductImages(String productId, int expectedRowVersion, String? primaryProductImageId, List<Map<String, dynamic>> items) async {
+  Future<ProductDraftResponseDto> reorderProductImages(
+      String productId,
+      int expectedRowVersion,
+      String? primaryProductImageId,
+      List<Map<String, dynamic>> items) async {
     return ProductDraftResponseDto(
       productId: productId,
       productName: 'Existing Headset',
@@ -154,7 +167,8 @@ class FakeTenantProductRepository implements TenantProductRepository {
   }
 
   @override
-  Future<ProductDraftResponseDto> replaceProductImages(String productId, int expectedRowVersion, List<String> stagedMediaAssetIds) async {
+  Future<ProductDraftResponseDto> replaceProductImages(String productId,
+      int expectedRowVersion, List<String> stagedMediaAssetIds) async {
     return ProductDraftResponseDto(
       productId: productId,
       productName: 'Existing Headset',
@@ -169,21 +183,32 @@ class FakeTenantProductRepository implements TenantProductRepository {
   }
 
   @override
-  Future<ProductCreateResult> createProduct(ProductFormData request) => throw UnimplementedError();
+  Future<ProductCreateResult> createProduct(ProductFormData request) =>
+      throw UnimplementedError();
   @override
-  Future<ProductDeleteResult> deleteProduct(String productId) => throw UnimplementedError();
+  Future<ProductDeleteResult> deleteProduct(String productId) =>
+      throw UnimplementedError();
   @override
-  Future<TenantProductDetail> getProductById(String productId) => throw UnimplementedError();
+  Future<TenantProductDetail> getProductById(String productId) =>
+      throw UnimplementedError();
   @override
-  Future<TenantProductFilterOptions> getProductFilterOptions() => throw UnimplementedError();
+  Future<TenantProductFilterOptions> getProductFilterOptions() =>
+      throw UnimplementedError();
   @override
-  Future<TenantProductListResult> getProducts({required TenantProductListQuery query}) => throw UnimplementedError();
+  Future<TenantProductListResult> getProducts(
+          {required TenantProductListQuery query}) =>
+      throw UnimplementedError();
   @override
-  Future<TenantProductSummary> getProductSummary() => throw UnimplementedError();
+  Future<TenantProductSummary> getProductSummary() =>
+      throw UnimplementedError();
   @override
-  Future<TenantProductDetail> updateProduct(String productId, ProductFormData request) => throw UnimplementedError();
+  Future<TenantProductDetail> updateProduct(
+          String productId, ProductFormData request) =>
+      throw UnimplementedError();
   @override
-  Future<ProductStatusUpdateResult> updateProductStatus(String productId, String status) => throw UnimplementedError();
+  Future<ProductStatusUpdateResult> updateProductStatus(
+          String productId, String status) =>
+      throw UnimplementedError();
 }
 
 void main() {
@@ -220,11 +245,15 @@ void main() {
       final success = await controller.saveAndContinue();
 
       expect(success, false);
-      expect(controller.wizardState.fieldErrors.containsKey('productName'), true);
-      expect(controller.wizardState.fieldErrors.containsKey('categoryId'), true);
+      expect(
+          controller.wizardState.fieldErrors.containsKey('productName'), true);
+      expect(
+          controller.wizardState.fieldErrors.containsKey('categoryId'), true);
     });
 
-    test('Save & Continue succeeds with Product Name and Category (Brand optional)', () async {
+    test(
+        'Save & Continue succeeds with Product Name and Category (Brand optional)',
+        () async {
       await controller.initWizard();
       controller.updateProductName('Gaming Mouse');
       controller.updateCategory('cat-1');
@@ -237,7 +266,8 @@ void main() {
       expect(repo.lastDraftRequest?.advanceStep, true);
     });
 
-    test('Staging image enforces 10 count & 5MB limit & format check', () async {
+    test('Staging image enforces 10 count & 5MB limit & format check',
+        () async {
       await controller.initWizard();
 
       // Test format validation failure
@@ -247,7 +277,8 @@ void main() {
         'application/pdf',
       );
       expect(invalidFormatSuccess, false);
-      expect(controller.wizardState.pageError, contains('Unsupported image format'));
+      expect(controller.wizardState.pageError,
+          contains('Unsupported image format'));
 
       // Test 5MB size limit failure
       final oversizedBytes = List<int>.filled(5242881, 0);
@@ -270,7 +301,9 @@ void main() {
       expect(controller.wizardState.stagedMediaAssets.first.isPrimary, true);
     });
 
-    test('Step 2 tracking toggle logic enforces canonical dependencies & mutual exclusivity', () {
+    test(
+        'Step 2 tracking toggle logic enforces canonical dependencies & mutual exclusivity',
+        () {
       controller.setTrackInventory(true);
       expect(controller.wizardState.trackInventory, true);
 
@@ -304,7 +337,9 @@ void main() {
       expect(controller.wizardState.serialTracking, false);
     });
 
-    test('Save & Continue on Step 2 sends Step 2 payload and advances to Step 3', () async {
+    test(
+        'Save & Continue on Step 2 sends Step 2 payload and advances to Step 3',
+        () async {
       await controller.initWizard();
       controller.updateProductName('Wireless Headphones');
       controller.updateCategory('cat-1');
@@ -324,7 +359,8 @@ void main() {
       expect(repo.lastDraftRequest?.advanceStep, true);
     });
 
-    test('loadExistingDraft hydrates draft and restores currentSetupStep', () async {
+    test('loadExistingDraft hydrates draft and restores currentSetupStep',
+        () async {
       repo.storedDraft = const ProductDraftResponseDto(
         productId: 'prod-123',
         productName: 'Existing Headset',
@@ -343,7 +379,9 @@ void main() {
       expect(controller.wizardState.currentStep, 4);
     });
 
-    test('initWizard preserves active session step state when resumeProductId matches', () async {
+    test(
+        'initWizard preserves active session step state when resumeProductId matches',
+        () async {
       repo.storedDraft = const ProductDraftResponseDto(
         productId: 'prod-123',
         productName: 'Existing Headset',
@@ -364,7 +402,9 @@ void main() {
       expect(controller.wizardState.currentStep, 3);
     });
 
-    test('clears stagedMediaAssets after save draft while keeping productImages', () async {
+    test(
+        'clears stagedMediaAssets after save draft while keeping productImages',
+        () async {
       await controller.initWizard();
       controller.updateProductName('Test Product');
       controller.updateCategory('cat-1');

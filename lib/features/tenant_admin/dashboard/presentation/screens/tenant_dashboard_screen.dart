@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../auth/presentation/providers/session_provider.dart';
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/providers/tenant_admin_context_provider.dart';
+import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../providers/tenant_dashboard_provider.dart';
@@ -27,6 +28,8 @@ class TenantDashboardScreen extends ConsumerWidget {
         return const TenantAdminPageScaffold(
           title: 'Dashboard',
           subtitle: 'See how your business is doing today.',
+          backgroundColor: TenantAdminColors.background,
+          fillHeight: true,
           child: TenantAdminLoadingSkeleton(rowCount: 8),
         );
       },
@@ -34,6 +37,8 @@ class TenantDashboardScreen extends ConsumerWidget {
         return TenantAdminPageScaffold(
           title: 'Dashboard',
           subtitle: 'See how your business is doing today.',
+          backgroundColor: TenantAdminColors.background,
+          fillHeight: true,
           child: TenantAdminErrorState(
             title: 'Unable to load dashboard',
             message:
@@ -66,6 +71,8 @@ class TenantDashboardScreen extends ConsumerWidget {
         return LayoutBuilder(
           builder: (context, constraints) {
             final isMobile = constraints.maxWidth < 620;
+            final useBoundedViewport =
+                constraints.maxWidth >= 1400 && constraints.maxHeight >= 820;
 
             return TenantAdminPageScaffold(
               title: visibility.showTitle ? 'Dashboard' : '',
@@ -73,9 +80,14 @@ class TenantDashboardScreen extends ConsumerWidget {
                   ? 'See how your business is doing today.'
                   : null,
               actions: [headerActions],
+              backgroundColor: TenantAdminColors.background,
+              fillHeight: true,
+              scrollable: !useBoundedViewport,
               child: isMobile
                   ? _MobileDashboard(visibility: visibility)
-                  : _TabletDashboard(visibility: visibility),
+                  : useBoundedViewport
+                      ? _ViewportDashboard(visibility: visibility)
+                      : _TabletDashboard(visibility: visibility),
             );
           },
         );
@@ -106,6 +118,76 @@ class TenantAdminForbiddenScreenFallback extends ConsumerWidget {
   }
 }
 
+class _ViewportDashboard extends StatelessWidget {
+  const _ViewportDashboard({required this.visibility});
+
+  final TenantDashboardVisibility visibility;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isShort = constraints.maxHeight < 720;
+        final gap = isShort ? 14.0 : 16.0;
+        final kpiHeight = isShort ? 138.0 : 146.0;
+
+        final sections = <Widget>[
+          if (visibility.showKpiSection) ...[
+            DashboardMetricGrid(
+              metrics:
+                  visibility.visibleMetrics.take(4).toList(growable: false),
+              compact: false,
+              cardHeight: kpiHeight,
+              spacing: gap,
+            ),
+            SizedBox(height: gap),
+          ],
+          Expanded(
+            flex: isShort ? 4 : 5,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: 62,
+                  child: SalesThisWeekCard(
+                    salesSummary: visibility.salesSummary,
+                    showTrend: visibility.showSalesTrend,
+                    showReportsLink: visibility.showReportsLink,
+                    expandChart: true,
+                    compact: isShort,
+                  ),
+                ),
+                SizedBox(width: gap),
+                Expanded(
+                  flex: 38,
+                  child: OperationalRisksCard(
+                    compact: isShort,
+                    scrollableWhenConstrained: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: gap),
+          Expanded(
+            flex: 3,
+            child: AttentionAndExceptionsRow(
+              stretch: true,
+              compact: isShort,
+              scrollableWhenConstrained: true,
+            ),
+          ),
+        ];
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: sections,
+        );
+      },
+    );
+  }
+}
+
 class _TabletDashboard extends StatelessWidget {
   const _TabletDashboard({required this.visibility});
 
@@ -121,6 +203,7 @@ class _TabletDashboard extends StatelessWidget {
         DashboardMetricGrid(
           metrics: visibility.visibleMetrics.take(4).toList(growable: false),
           compact: false,
+          cardHeight: width < 1200 ? 138 : 148,
         ),
       );
     }
@@ -136,6 +219,7 @@ class _TabletDashboard extends StatelessWidget {
           salesSummary: visibility.salesSummary,
           showTrend: visibility.showSalesTrend,
           showReportsLink: visibility.showReportsLink,
+          compact: width < 1100,
         ),
       );
       sections.add(const SizedBox(height: 24));
@@ -151,12 +235,13 @@ class _TabletDashboard extends StatelessWidget {
                 salesSummary: visibility.salesSummary,
                 showTrend: visibility.showSalesTrend,
                 showReportsLink: visibility.showReportsLink,
+                compact: width < 1100,
               ),
             ),
             const SizedBox(width: 24),
-            const Expanded(
+            Expanded(
               flex: 3,
-              child: OperationalRisksCard(),
+              child: OperationalRisksCard(compact: width < 1100),
             ),
           ],
         ),
@@ -164,7 +249,7 @@ class _TabletDashboard extends StatelessWidget {
     }
 
     sections.add(const SizedBox(height: 24));
-    sections.add(const AttentionAndExceptionsRow());
+    sections.add(AttentionAndExceptionsRow(compact: width < 1100));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -194,6 +279,7 @@ class _MobileDashboard extends StatelessWidget {
         DashboardMetricGrid(
           metrics: visibility.visibleMetrics.take(4).toList(growable: false),
           compact: true,
+          cardHeight: 132,
         ),
       );
     }
@@ -203,11 +289,12 @@ class _MobileDashboard extends StatelessWidget {
         salesSummary: visibility.salesSummary,
         showTrend: visibility.showSalesTrend,
         showReportsLink: visibility.showReportsLink,
+        compact: true,
       ),
     );
 
-    addSection(const OperationalRisksCard());
-    addSection(const AttentionAndExceptionsRow());
+    addSection(const OperationalRisksCard(compact: true));
+    addSection(const AttentionAndExceptionsRow(compact: true));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

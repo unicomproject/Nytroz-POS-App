@@ -53,6 +53,7 @@ import 'presentation/screens/tenant_admin_forbidden_screen.dart';
 import 'presentation/screens/tenant_admin_loading_screen.dart';
 import 'presentation/screens/tenant_admin_placeholder_screen.dart';
 import 'login_branding/presentation/screens/tenant_login_branding_screen.dart';
+import 'online_store/presentation/screens/online_store_setup_screen.dart';
 
 List<RouteBase> tenantAdminRoutes(Ref ref) {
   return [
@@ -285,6 +286,42 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return const UserListScreen();
   }
 
+  if (definition.path == '/tenant-admin/online-store') {
+    return const OnlineStoreSetupScreen(stepNumber: 1);
+  }
+
+  if (definition.path == '/tenant-admin/online-store/activation') {
+    return const OnlineStoreSetupScreen(stepNumber: 2);
+  }
+
+  if (definition.path == '/tenant-admin/online-store/identity') {
+    return const OnlineStoreSetupScreen(stepNumber: 3);
+  }
+
+  if (definition.path == '/tenant-admin/online-store/domain') {
+    return const OnlineStoreSetupScreen(stepNumber: 4);
+  }
+
+  if (definition.path == '/tenant-admin/online-store/branding') {
+    return const OnlineStoreSetupScreen(stepNumber: 5);
+  }
+
+  if (definition.path == '/tenant-admin/online-store/support') {
+    return const OnlineStoreSetupScreen(stepNumber: 6);
+  }
+
+  if (definition.path == '/tenant-admin/online-store/click-collect') {
+    return const OnlineStoreSetupScreen(stepNumber: 7);
+  }
+
+  if (definition.path == '/tenant-admin/online-store/products-policies') {
+    return const OnlineStoreSetupScreen(stepNumber: 8);
+  }
+
+  if (definition.path == '/tenant-admin/online-store/review') {
+    return const OnlineStoreSetupScreen(stepNumber: 9);
+  }
+
   if (definition.path == ProductsSidebarRoutes.dashboard) {
     return const ProductDashboardPage();
   }
@@ -510,6 +547,10 @@ bool _canAccessRoute(
   if (definition.path == '/tenant-admin/staff' ||
       definition.path == '/tenant-admin/staff/:id') {
     return accessChecker.canAccessUserModule();
+  }
+
+  if (definition.menuKey == 'online-store') {
+    return accessChecker.canViewOnlineStore();
   }
 
   if (definition.path == ProductsSidebarRoutes.dashboard) {

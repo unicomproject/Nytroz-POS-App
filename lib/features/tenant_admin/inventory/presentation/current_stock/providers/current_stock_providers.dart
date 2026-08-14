@@ -2,13 +2,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../core/network/dio_provider.dart';
 import '../../../data/models/current_stock_dtos.dart';
 import '../../../domain/entities/current_stock_entities.dart';
+import '../../../../presentation/theme/tenant_admin_theme.dart';
 import '../../dashboard/providers/inventory_dashboard_providers.dart';
 
 final currentStockSearchProvider = StateProvider<String>((ref) => '');
 final currentStockStatusFilterProvider = StateProvider<String?>((ref) => null);
 final currentStockOutletFilterProvider = StateProvider<String?>((ref) => null);
 final currentStockPageProvider = StateProvider<int>((ref) => 1);
-final currentStockPageSizeProvider = StateProvider<int>((ref) => 10);
+final currentStockPageSizeProvider =
+    StateProvider<int>((ref) => TenantAdminContentTokens.defaultListPageSize);
 
 class InventoryOutletOption {
   final String id;
@@ -66,7 +68,8 @@ final productStockDetailProvider = FutureProvider.autoDispose
 });
 
 final stockMovementHistoryPageProvider = StateProvider<int>((ref) => 1);
-final stockMovementHistoryPageSizeProvider = StateProvider<int>((ref) => 10);
+final stockMovementHistoryPageSizeProvider =
+    StateProvider<int>((ref) => TenantAdminContentTokens.defaultListPageSize);
 
 final stockMovementHistoryProvider = FutureProvider.autoDispose
     .family<StockMovementHistoryPage, String>((ref, variantId) async {
