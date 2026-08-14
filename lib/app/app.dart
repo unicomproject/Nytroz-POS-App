@@ -72,4 +72,3 @@ class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
     );
   }
 }
-//

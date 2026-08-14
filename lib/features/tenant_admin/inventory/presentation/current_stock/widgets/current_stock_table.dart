@@ -310,9 +310,6 @@ class CurrentStockTable extends ConsumerWidget {
                               value: pageSize,
                               icon: const Icon(Icons.keyboard_arrow_down,
                                   size: 16),
-                              items: [
-                                TenantAdminContentTokens.defaultListPageSize,
-                              ].map((int value) {
                               items: [10, 25, 50].map((int value) {
                                 return DropdownMenuItem<int>(
                                   value: value,
