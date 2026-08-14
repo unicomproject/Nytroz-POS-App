@@ -72,27 +72,26 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
           return Padding(
             padding: padding,
             child: CashDrawerSectionCard(
-              padding: EdgeInsets.all(
-                wide ? TenantAdminSpacing.xxl : TenantAdminSpacing.xl,
-              ),
+              expand: true,
+              padding: const EdgeInsets.all(TenantAdminSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const CashDrawerPageHeader(),
                   if (!tillState.hasOpenSession ||
                       (summary != null && !summary.isOpen)) ...[
-                    const SizedBox(height: TenantAdminSpacing.md),
+                    const SizedBox(height: TenantAdminSpacing.sm),
                     const _TillClosedBanner(),
                   ],
                   if (drawerState.errorMessage != null) ...[
-                    const SizedBox(height: TenantAdminSpacing.md),
+                    const SizedBox(height: TenantAdminSpacing.sm),
                     _ErrorBanner(
                       message: drawerState.errorMessage!,
                       onRetry: () =>
                           ref.read(cashDrawerProvider.notifier).refresh(),
                     ),
                   ],
-                  const SizedBox(height: TenantAdminSpacing.lg),
+                  const SizedBox(height: TenantAdminSpacing.md),
                   Expanded(
                     child: _buildBody(
                       drawerState: drawerState,
@@ -157,6 +156,7 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
     }
 
     final actions = CashDrawerActionsSection(
+      compact: wide,
       canOpenDrawer: canOpenDrawer,
       canCashIn: canCashIn,
       canCashOut: canCashOut,
@@ -171,28 +171,58 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
     final movements = CashDrawerMovementsSection(
       movements: drawerState.movements,
       currencyCode: summary.currencyCode,
+      compact: wide,
+      maxVisible: wide ? 5 : 8,
     );
+
+    final summaryCard = CashDrawerSectionCard(
+      padding: EdgeInsets.all(
+        wide ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
+      ),
+      child: CashDrawerTillSummarySection(summary: summary, compact: wide),
+    );
+    final actionsCard = CashDrawerSectionCard(
+      expand: wide,
+      padding: EdgeInsets.all(
+        wide ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
+      ),
+      child: actions,
+    );
+    final movementsCard = CashDrawerSectionCard(
+      expand: wide,
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
+      child: movements,
+    );
+
+    if (wide) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          summaryCard,
+          const SizedBox(height: TenantAdminSpacing.md),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 4, child: actionsCard),
+                const SizedBox(width: TenantAdminSpacing.md),
+                Expanded(flex: 6, child: movementsCard),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
 
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          CashDrawerTillSummarySection(summary: summary),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          if (wide)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(flex: 4, child: actions),
-                const SizedBox(width: TenantAdminSpacing.lg),
-                Expanded(flex: 6, child: movements),
-              ],
-            )
-          else ...[
-            actions,
-            const SizedBox(height: TenantAdminSpacing.lg),
-            movements,
-          ],
+          summaryCard,
+          const SizedBox(height: TenantAdminSpacing.md),
+          actionsCard,
+          const SizedBox(height: TenantAdminSpacing.md),
+          movementsCard,
         ],
       ),
     );

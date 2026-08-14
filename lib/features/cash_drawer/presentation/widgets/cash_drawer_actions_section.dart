@@ -15,6 +15,7 @@ class CashDrawerActionsSection extends StatelessWidget {
     required this.onCashIn,
     required this.onCashOut,
     required this.onCloseTill,
+    this.compact = false,
   });
 
   final bool canOpenDrawer;
@@ -27,9 +28,50 @@ class CashDrawerActionsSection extends StatelessWidget {
   final VoidCallback onCashIn;
   final VoidCallback onCashOut;
   final VoidCallback onCloseTill;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final cards = [
+      _DrawerActionCard(
+        icon: Icons.inbox_outlined,
+        iconColor: TenantAdminColors.success,
+        title: 'Open Drawer',
+        description: 'Open the cash drawer.',
+        enabled: actionsEnabled && canOpenDrawer && !openDrawerBusy,
+        busy: openDrawerBusy,
+        onTap: onOpenDrawer,
+        compact: compact,
+      ),
+      _DrawerActionCard(
+        icon: Icons.arrow_downward_rounded,
+        iconColor: TenantAdminColors.success,
+        title: 'Cash In',
+        description: 'Add cash to the drawer.',
+        enabled: actionsEnabled && canCashIn,
+        onTap: onCashIn,
+        compact: compact,
+      ),
+      _DrawerActionCard(
+        icon: Icons.arrow_upward_rounded,
+        iconColor: TenantAdminColors.danger,
+        title: 'Cash Out / Drop',
+        description: 'Remove cash from the drawer.',
+        enabled: actionsEnabled && canCashOut,
+        onTap: onCashOut,
+        compact: compact,
+      ),
+      _DrawerActionCard(
+        icon: Icons.lock_outline_rounded,
+        iconColor: TenantAdminColors.posHomeAccentOrange,
+        title: 'Close Till',
+        description: 'Close the till and finalize cash count.',
+        enabled: actionsEnabled && canCloseTill,
+        onTap: onCloseTill,
+        compact: compact,
+      ),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -41,71 +83,69 @@ class CashDrawerActionsSection extends StatelessWidget {
                 letterSpacing: 0.6,
               ),
         ),
-        const SizedBox(height: TenantAdminSpacing.lg),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final useGrid =
-                constraints.maxWidth >= TenantAdminBreakpoints.tablet;
-            final cards = [
-              _DrawerActionCard(
-                icon: Icons.inbox_outlined,
-                iconColor: TenantAdminColors.success,
-                title: 'Open Drawer',
-                description: 'Open the cash drawer.',
-                enabled: actionsEnabled && canOpenDrawer && !openDrawerBusy,
-                busy: openDrawerBusy,
-                onTap: onOpenDrawer,
-              ),
-              _DrawerActionCard(
-                icon: Icons.arrow_downward_rounded,
-                iconColor: TenantAdminColors.success,
-                title: 'Cash In',
-                description: 'Add cash to the drawer.',
-                enabled: actionsEnabled && canCashIn,
-                onTap: onCashIn,
-              ),
-              _DrawerActionCard(
-                icon: Icons.arrow_upward_rounded,
-                iconColor: TenantAdminColors.danger,
-                title: 'Cash Out / Drop',
-                description: 'Remove cash from the drawer.',
-                enabled: actionsEnabled && canCashOut,
-                onTap: onCashOut,
-              ),
-              _DrawerActionCard(
-                icon: Icons.lock_outline_rounded,
-                iconColor: TenantAdminColors.posHomeAccentOrange,
-                title: 'Close Till',
-                description: 'Close the till and finalize cash count.',
-                enabled: actionsEnabled && canCloseTill,
-                onTap: onCloseTill,
-              ),
-            ];
-
-            if (!useGrid) {
-              return Column(
-                children: [
-                  for (var i = 0; i < cards.length; i++) ...[
-                    if (i > 0) const SizedBox(height: TenantAdminSpacing.md),
-                    cards[i],
+        SizedBox(
+          height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.lg,
+        ),
+        if (compact)
+          Expanded(child: _CompactActionGrid(cards: cards))
+        else
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < TenantAdminBreakpoints.tablet) {
+                return Column(
+                  children: [
+                    for (var i = 0; i < cards.length; i++) ...[
+                      if (i > 0) const SizedBox(height: TenantAdminSpacing.md),
+                      cards[i],
+                    ],
                   ],
-                ],
-              );
-            }
+                );
+              }
 
-            return GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: TenantAdminSpacing.md,
-              crossAxisSpacing: TenantAdminSpacing.md,
-              childAspectRatio:
-                  constraints.maxWidth >= TenantAdminBreakpoints.tablet
-                      ? 2.4
-                      : 1.7,
-              children: cards,
-            );
-          },
+              return GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: TenantAdminSpacing.md,
+                crossAxisSpacing: TenantAdminSpacing.md,
+                childAspectRatio: 2.4,
+                children: cards,
+              );
+            },
+          ),
+      ],
+    );
+  }
+}
+
+class _CompactActionGrid extends StatelessWidget {
+  const _CompactActionGrid({required this.cards});
+
+  final List<Widget> cards;
+
+  @override
+  Widget build(BuildContext context) {
+    const spacing = TenantAdminSpacing.sm;
+    return Column(
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              Expanded(child: cards[0]),
+              const SizedBox(width: spacing),
+              Expanded(child: cards[1]),
+            ],
+          ),
+        ),
+        const SizedBox(height: spacing),
+        Expanded(
+          child: Row(
+            children: [
+              Expanded(child: cards[2]),
+              const SizedBox(width: spacing),
+              Expanded(child: cards[3]),
+            ],
+          ),
         ),
       ],
     );
@@ -121,6 +161,7 @@ class _DrawerActionCard extends StatelessWidget {
     required this.enabled,
     required this.onTap,
     this.busy = false,
+    this.compact = false,
   });
 
   final IconData icon;
@@ -129,6 +170,7 @@ class _DrawerActionCard extends StatelessWidget {
   final String description;
   final bool enabled;
   final bool busy;
+  final bool compact;
   final VoidCallback onTap;
 
   @override
@@ -153,12 +195,17 @@ class _DrawerActionCard extends StatelessWidget {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+              padding: EdgeInsets.symmetric(
+                horizontal:
+                    compact ? TenantAdminSpacing.sm : TenantAdminSpacing.lg,
+                vertical:
+                    compact ? TenantAdminSpacing.xs : TenantAdminSpacing.lg,
+              ),
               child: Row(
                 children: [
                   Container(
-                    width: 56,
-                    height: 56,
+                    width: compact ? 32 : 56,
+                    height: compact ? 32 : 56,
                     decoration: BoxDecoration(
                       color: enabled
                           ? iconColor.withValues(alpha: 0.12)
@@ -167,18 +214,22 @@ class _DrawerActionCard extends StatelessWidget {
                     ),
                     child: busy
                         ? const Padding(
-                            padding: EdgeInsets.all(TenantAdminSpacing.md),
-                            child: CircularProgressIndicator(strokeWidth: 2.5),
+                            padding: EdgeInsets.all(TenantAdminSpacing.sm),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : Icon(
                             icon,
                             color: enabled
                                 ? iconColor
                                 : TenantAdminColors.mutedText,
-                            size: 28,
+                            size: compact ? 18 : 28,
                           ),
                   ),
-                  const SizedBox(width: TenantAdminSpacing.md),
+                  SizedBox(
+                    width: compact
+                        ? TenantAdminSpacing.sm
+                        : TenantAdminSpacing.md,
+                  ),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,25 +239,31 @@ class _DrawerActionCard extends StatelessWidget {
                           title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: enabled
-                                        ? TenantAdminColors.bodyText
-                                        : TenantAdminColors.mutedText,
-                                    fontWeight: FontWeight.w900,
-                                  ),
+                          style: (compact
+                                  ? Theme.of(context).textTheme.titleSmall
+                                  : Theme.of(context).textTheme.titleMedium)
+                              ?.copyWith(
+                            color: enabled
+                                ? TenantAdminColors.bodyText
+                                : TenantAdminColors.mutedText,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                        const SizedBox(height: TenantAdminSpacing.xs),
-                        Text(
-                          description,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: TenantAdminColors.mutedText,
-                                    height: 1.35,
-                                  ),
-                        ),
+                        if (!compact) ...[
+                          const SizedBox(height: TenantAdminSpacing.xs),
+                          Text(
+                            description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: TenantAdminColors.mutedText,
+                                  height: 1.35,
+                                ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

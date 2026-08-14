@@ -8,6 +8,7 @@ import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../pos_shell/presentation/widgets/common/pos_top_bar.dart';
 import '../../../pos_shell/presentation/widgets/home/pos_dashboard_top_bar_content.dart';
+import '../../../pos_shell/presentation/providers/pos_home_dashboard_provider.dart';
 import '../providers/till_provider.dart';
 import '../../../../shared/pos_session/pos_session_bootstrap_provider.dart';
 import '../../../auth/presentation/providers/post_login_navigation_provider.dart';
@@ -238,6 +239,11 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
       if (!mounted) {
         return;
       }
+      // The Open Till screen header also watches the POS Home provider. Before
+      // the till is opened that provider legitimately caches
+      // NO_OPEN_TILL_SESSION. Drop that stale result after the authoritative
+      // open/refresh completes so POS Home resolves the newly-created session.
+      ref.invalidate(posHomeDashboardProvider);
       final route = ref.read(postLoginRouteProvider);
       context.go(route.path);
     }
