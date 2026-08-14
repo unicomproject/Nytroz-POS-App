@@ -1,4 +1,6 @@
 import 'staged_product_image.dart';
+import 'step4_variant_configuration_state.dart';
+import 'step5_barcode_sku_state.dart';
 import 'tenant_product_create_options.dart';
 
 class ProductUnitConversionItem {
@@ -92,6 +94,12 @@ class AddProductWizardState {
   // Options cache
   final TenantProductCreateOptions? createOptions;
 
+  // Step 4 Variant Configuration State
+  final Step4VariantConfigurationState step4State;
+
+  // Step 5 Barcode & SKU State
+  final Step5BarcodeSkuState step5State;
+
   const AddProductWizardState({
     this.currentStep = 1,
     this.targetSetupStep,
@@ -143,6 +151,8 @@ class AddProductWizardState {
     this.componentCount = 0,
     this.componentsConfigured = false,
     this.createOptions,
+    this.step4State = const Step4VariantConfigurationState(),
+    this.step5State = const Step5BarcodeSkuState(),
   });
 
   bool get isEditMode => productId != null && productId!.isNotEmpty;
@@ -219,6 +229,8 @@ class AddProductWizardState {
     int? componentCount,
     bool? componentsConfigured,
     TenantProductCreateOptions? createOptions,
+    Step4VariantConfigurationState? step4State,
+    Step5BarcodeSkuState? step5State,
   }) {
     return AddProductWizardState(
       currentStep: currentStep ?? this.currentStep,
@@ -286,6 +298,8 @@ class AddProductWizardState {
       componentCount: componentCount ?? this.componentCount,
       componentsConfigured: componentsConfigured ?? this.componentsConfigured,
       createOptions: createOptions ?? this.createOptions,
+      step4State: step4State ?? this.step4State,
+      step5State: step5State ?? this.step5State,
     );
   }
 }

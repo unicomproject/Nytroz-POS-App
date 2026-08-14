@@ -35,6 +35,7 @@ class AddProductScreen extends ConsumerWidget {
     return TenantAdminPageScaffold(
       title: 'Add Product',
       subtitle: 'Enter the basic information for the product.',
+      scrollable: false,
       child: optionsState.when(
         loading: () => const TenantAdminLoadingSkeleton(rowCount: 8),
         error: (error, stackTrace) => TenantAdminErrorState(

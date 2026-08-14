@@ -165,8 +165,8 @@ class _UserDetailsContent extends ConsumerWidget {
               children: [
                 if (canDelete)
                   TenantAdminSecondaryButton(
-                  label: 'Deactivate',
-                  icon: Icons.person_off_outlined,
+                    label: 'Deactivate',
+                    icon: Icons.person_off_outlined,
                     onPressed: () => _delete(context, ref),
                   ),
                 if (canDelete && canEdit)

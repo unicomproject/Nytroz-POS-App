@@ -139,7 +139,7 @@ class TenantAdminSidebar extends ConsumerWidget {
                         collapsed: collapsed,
                         compact: compact || collapsed,
                         onNavigate: () {
-                           // Optional callback if needed
+                          // Optional callback if needed
                         },
                       )
                     else

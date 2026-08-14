@@ -17,14 +17,22 @@ class InventoryQuickActions extends StatelessWidget {
         onTap: () => context.go(InventoryRoutes.currentStock),
       ),
       _ActionCard(
-        title: 'Opening Stock', 
-        subtitle: 'Add opening stock for products', 
-        iconData: Icons.add_box_outlined, 
+        title: 'Opening Stock',
+        subtitle: 'Add opening stock for products',
+        iconData: Icons.add_box_outlined,
         color: Colors.purple,
         onTap: () => context.go(InventoryRoutes.openingStock),
       ),
-      const _ActionCard(title: 'Stock Adjustment', subtitle: 'Adjust stock for damage, missing or other reasons', iconData: Icons.swap_vert_outlined, color: Colors.orange),
-      const _ActionCard(title: 'Stock Count', subtitle: 'Perform physical stock count', iconData: Icons.fact_check_outlined, color: Colors.green),
+      const _ActionCard(
+          title: 'Stock Adjustment',
+          subtitle: 'Adjust stock for damage, missing or other reasons',
+          iconData: Icons.swap_vert_outlined,
+          color: Colors.orange),
+      const _ActionCard(
+          title: 'Stock Count',
+          subtitle: 'Perform physical stock count',
+          iconData: Icons.fact_check_outlined,
+          color: Colors.green),
     ];
 
     return LayoutBuilder(
@@ -33,7 +41,8 @@ class InventoryQuickActions extends StatelessWidget {
           return Column(
             children: cards
                 .map((c) => Padding(
-                      padding: const EdgeInsets.only(bottom: TenantAdminSpacing.md),
+                      padding:
+                          const EdgeInsets.only(bottom: TenantAdminSpacing.md),
                       child: c,
                     ))
                 .toList(),
@@ -167,4 +176,3 @@ class _ActionCard extends StatelessWidget {
     );
   }
 }
-

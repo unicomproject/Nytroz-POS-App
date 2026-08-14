@@ -1,13 +1,16 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../data/models/product_draft_response_dto.dart';
 import '../../data/models/save_product_draft_request_dto.dart';
+import '../../data/models/step5_barcode_dtos.dart';
+import '../../data/models/duplicate_barcode_conflict_dto.dart';
 import '../utils/product_api_errors.dart';
 import '../../domain/entities/add_product_wizard_state.dart';
 import '../../domain/entities/staged_product_image.dart';
 import '../../domain/entities/tenant_product_create_options.dart';
+import '../../domain/entities/step4_variant_configuration_state.dart';
+import '../../domain/utils/variant_combination_generator.dart';
 import '../../domain/repositories/tenant_product_repository.dart';
 
 class AddProductWizardController extends StateNotifier<AddProductWizardState> {
@@ -551,6 +554,19 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       itemsPerPurchaseUnit: state.itemsPerPurchaseUnit,
       purchaseUnitsPerOuterPack: state.purchaseUnitsPerOuterPack,
       allowDecimalQuantity: state.allowDecimalQuantity,
+      variantConfiguration: _buildVariantConfigurationDto(),
+      baseSku: state.step5State.baseSku.trim().isEmpty
+          ? null
+          : state.step5State.baseSku.trim(),
+      parentProductBarcode: state.step5State.parentProductBarcode.trim().isEmpty
+          ? null
+          : state.step5State.parentProductBarcode.trim(),
+      variantIdentifiers: state.step5State.variantIdentifiers.isNotEmpty
+          ? state.step5State.variantIdentifiers
+          : null,
+      additionalBarcodes: state.step5State.additionalBarcodes.isNotEmpty
+          ? state.step5State.additionalBarcodes
+          : null,
     );
 
     try {
@@ -648,7 +664,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       currentSetupStep: state.currentStep,
       advanceStep: true,
       wizardAction:
-          state.currentStep == 8 ? 'CREATE_PRODUCT' : 'SAVE_AND_CONTINUE',
+          state.currentStep == 7 ? 'CREATE_PRODUCT' : 'SAVE_AND_CONTINUE',
       expectedRowVersion: state.isEditMode ? state.rowVersion : null,
       stagedMediaAssetIds:
           state.stagedMediaAssets.map((e) => e.mediaAssetId).toList(),
@@ -661,6 +677,19 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       itemsPerPurchaseUnit: state.itemsPerPurchaseUnit,
       purchaseUnitsPerOuterPack: state.purchaseUnitsPerOuterPack,
       allowDecimalQuantity: state.allowDecimalQuantity,
+      variantConfiguration: _buildVariantConfigurationDto(),
+      baseSku: state.step5State.baseSku.trim().isEmpty
+          ? null
+          : state.step5State.baseSku.trim(),
+      parentProductBarcode: state.step5State.parentProductBarcode.trim().isEmpty
+          ? null
+          : state.step5State.parentProductBarcode.trim(),
+      variantIdentifiers: state.step5State.variantIdentifiers.isNotEmpty
+          ? state.step5State.variantIdentifiers
+          : null,
+      additionalBarcodes: state.step5State.additionalBarcodes.isNotEmpty
+          ? state.step5State.additionalBarcodes
+          : null,
     );
 
     try {
@@ -676,7 +705,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       final targetStep = response.targetSetupStep ??
           (response.currentSetupStep > initialStep
               ? response.currentSetupStep
-              : (initialStep + 1).clamp(1, 8));
+              : (initialStep + 1).clamp(1, 7));
 
       state = state.copyWith(
         currentStep: targetStep,
@@ -688,6 +717,35 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       final extractedErrors =
           e is DioException ? productValidationErrors(e) : <String, String>{};
       final rawErrorMsg = _extractErrorMessage(e);
+
+      // Handle duplicate barcode conflict explicitly
+      if (e is DioException &&
+          e.response?.statusCode == 409 &&
+          e.response?.data != null) {
+        final data = e.response!.data;
+        if (data is Map<String, dynamic> && data.containsKey('barcode')) {
+          // heuristics for duplicate barcode DTO
+          final conflictDto = DuplicateBarcodeConflictDto.fromJson(data);
+
+          // Mark the fields invalid in Step 5 field errors
+          if (conflictDto.barcode != null) {
+            extractedErrors['barcode'] = 'Barcode already in use';
+          }
+          if (conflictDto.sku != null) {
+            extractedErrors['sku'] = 'SKU already in use';
+          }
+
+          state = state.copyWith(
+            isSubmitting: false,
+            fieldErrors: extractedErrors,
+            step5State: state.step5State
+                .copyWith(duplicateBarcodeConflict: conflictDto),
+            pageError: 'Duplicate barcode or SKU detected.',
+          );
+          return false;
+        }
+      }
+
       final displayError = (rawErrorMsg == 'An unexpected error occurred.' ||
               rawErrorMsg.toLowerCase().contains('unexpected error'))
           ? (extractedErrors.isNotEmpty
@@ -746,6 +804,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       expectedRowVersion: state.isEditMode ? state.rowVersion : null,
       stagedMediaAssetIds:
           state.stagedMediaAssets.map((e) => e.mediaAssetId).toList(),
+      variantConfiguration: _buildVariantConfigurationDto(),
     );
 
     try {
@@ -760,7 +819,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       _hydrateFromDraftResponse(response);
       final targetStep = response.currentSetupStep > initialStep
           ? response.currentSetupStep
-          : (initialStep + 1).clamp(1, 8);
+          : (initialStep + 1).clamp(1, 7);
 
       state = state.copyWith(
         currentStep: targetStep,
@@ -778,7 +837,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   }
 
   void goToStep(int step) {
-    if (step >= 1 && step <= 8) {
+    if (step >= 1 && step <= 7) {
       state = state.copyWith(currentStep: step);
     }
   }
@@ -1037,6 +1096,17 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       );
     }).toList();
 
+    final step4State =
+        _mapVariantConfigState(draft.variantConfiguration, state.createOptions);
+
+    final step5State = state.step5State.copyWith(
+      baseSku: draft.baseSku ?? '',
+      parentProductBarcode: draft.parentProductBarcode ?? '',
+      variantIdentifiers: draft.variantIdentifiers ?? const [],
+      additionalBarcodes: draft.additionalBarcodes ?? const [],
+      duplicateBarcodeConflict: null,
+    );
+
     state = state.copyWith(
       productId: draft.productId,
       status: draft.status,
@@ -1104,6 +1174,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
                       orElse: () => state.stagedMediaAssets.first)
                   .mediaAssetId
               : null),
+      step4State: step4State,
+      step5State: step5State,
     );
   }
 
@@ -1132,5 +1204,412 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       }
     }
     return e.toString();
+  }
+
+  // --- STEP 4 WIZARD LOGIC ---
+  void addAttributeRow() {
+    final rows = List<AttributeConfigRow>.from(state.step4State.attributeRows);
+    rows.add(const AttributeConfigRow());
+    state = state.copyWith(
+      step4State: state.step4State.copyWith(attributeRows: rows),
+      isDirty: true,
+    );
+  }
+
+  void removeAttributeRow(int index) {
+    final rows = List<AttributeConfigRow>.from(state.step4State.attributeRows);
+    if (index >= 0 && index < rows.length) {
+      rows.removeAt(index);
+      state = state.copyWith(
+        step4State: state.step4State.copyWith(attributeRows: rows),
+        isDirty: true,
+      );
+    }
+  }
+
+  void selectAttribute(int index, String templateId) {
+    final template = state.createOptions?.variantOptionTemplates.firstWhere(
+      (t) => t.id == templateId,
+      orElse: () => ProductVariantOptionTemplate(
+          id: '', code: '', name: '', optionType: ''),
+    );
+
+    final rows = List<AttributeConfigRow>.from(state.step4State.attributeRows);
+    if (index >= 0 && index < rows.length) {
+      rows[index] = rows[index].copyWith(
+        templateId: templateId,
+        templateName: template?.name ?? '',
+        selectedValues: [], // Clear values when attribute changes
+      );
+      state = state.copyWith(
+        step4State: state.step4State.copyWith(attributeRows: rows),
+        isDirty: true,
+      );
+    }
+  }
+
+  void selectValues(int index, List<String> valueIds) {
+    final rows = List<AttributeConfigRow>.from(state.step4State.attributeRows);
+    if (index >= 0 && index < rows.length) {
+      final templateId = rows[index].templateId;
+      if (templateId == null) return;
+
+      final selectedVals = <SelectedOptionValue>[];
+      for (final vId in valueIds) {
+        // Find value definition if available in createOptions (assuming it has values,
+        // currently TenantProductCreateOptionsDto doesn't expose values, so we just use the ID as name for now
+        // or wait, let's just create it with valueId)
+        selectedVals.add(SelectedOptionValue(
+          valueId: vId,
+          templateId: templateId,
+          valueName:
+              vId, // Ideally resolve name, assuming UI provides it or we look it up
+        ));
+      }
+
+      rows[index] = rows[index].copyWith(selectedValues: selectedVals);
+      state = state.copyWith(
+        step4State: state.step4State.copyWith(attributeRows: rows),
+        isDirty: true,
+      );
+    }
+  }
+
+  void generateVariants() {
+    final newVariants = VariantCombinationGenerator.reconcileVariants(
+      activeAttributes: state.step4State.attributeRows,
+      existingVariants: state.step4State.generatedVariants,
+      deletedVariants: state.step4State.deletedVariants,
+      productName: state.productName,
+    );
+
+    state = state.copyWith(
+      step4State: state.step4State.copyWith(generatedVariants: newVariants),
+      isDirty: true,
+    );
+  }
+
+  void updateVariantDisplayLabel(String key, String label) {
+    final variants =
+        List<GeneratedVariantRow>.from(state.step4State.generatedVariants);
+    final idx = variants.indexWhere((v) => v.clientCombinationKey == key);
+    if (idx >= 0) {
+      variants[idx] = variants[idx].copyWith(displayLabel: label);
+      state = state.copyWith(
+        step4State: state.step4State.copyWith(generatedVariants: variants),
+        isDirty: true,
+      );
+    }
+  }
+
+  void toggleVariantInclusion(String key, bool included) {
+    final variants =
+        List<GeneratedVariantRow>.from(state.step4State.generatedVariants);
+    final idx = variants.indexWhere((v) => v.clientCombinationKey == key);
+    if (idx >= 0) {
+      variants[idx] = variants[idx].copyWith(isIncluded: included);
+      state = state.copyWith(
+        step4State: state.step4State.copyWith(generatedVariants: variants),
+        isDirty: true,
+      );
+    }
+  }
+
+  void confirmDeleteVariant(String key) {
+    final variants =
+        List<GeneratedVariantRow>.from(state.step4State.generatedVariants);
+    final deleted =
+        List<DeletedVariantTombstone>.from(state.step4State.deletedVariants);
+
+    final index = variants.indexWhere((v) => v.clientCombinationKey == key);
+    if (index >= 0) {
+      final v = variants[index];
+      deleted.add(DeletedVariantTombstone(
+        clientCombinationKey: v.clientCombinationKey,
+        productVariantId: v.productVariantId,
+        optionCombinationHash: v.optionCombinationHash,
+        selectedValues: v.selectedValues,
+      ));
+      variants.removeAt(index);
+    }
+
+    state = state.copyWith(
+      step4State: state.step4State.copyWith(
+        generatedVariants: variants,
+        deletedVariants: deleted,
+      ),
+      isDirty: true,
+    );
+  }
+
+  Step4VariantConfigurationState _mapVariantConfigState(
+      VariantConfigurationResponseDto? dto,
+      TenantProductCreateOptions? options) {
+    if (dto == null) return const Step4VariantConfigurationState();
+
+    final attributeRows = dto.options.map((opt) {
+      final templateName = options?.variantOptionTemplates
+              .firstWhere((t) => t.id == opt.sourceOptionTemplateId,
+                  orElse: () => ProductVariantOptionTemplate(
+                      id: '', code: '', name: '', optionType: ''))
+              .name ??
+          '';
+      return AttributeConfigRow(
+        templateId: opt.sourceOptionTemplateId,
+        templateName: templateName,
+        selectedValues: opt.values
+            .map((v) => SelectedOptionValue(
+                  valueId: v.sourceOptionTemplateValueId,
+                  templateId: opt.sourceOptionTemplateId,
+                  valueName: v
+                      .sourceOptionTemplateValueId, // Resolve real name if possible
+                ))
+            .toList(),
+      );
+    }).toList();
+
+    final variants = dto.variants.map((v) {
+      return GeneratedVariantRow(
+        clientCombinationKey: v.clientCombinationKey,
+        productVariantId: v.productVariantId,
+        combinationLabel: v.combinationLabel,
+        displayLabel: v.displayLabel,
+        isIncluded: v.includeVariant,
+        exactImageMediaAssetId: v.exactImageMediaAssetId,
+        selectedValues: v.selectedValues
+            .map((sv) => SelectedOptionValue(
+                  valueId: sv.sourceOptionTemplateValueId,
+                  templateId: sv.sourceOptionTemplateId,
+                  valueName: sv.sourceOptionTemplateValueId,
+                ))
+            .toList(),
+      );
+    }).toList();
+
+    final deleted = dto.deletedCombinations.map((d) {
+      return DeletedVariantTombstone(
+        clientCombinationKey: d.clientCombinationKey,
+        productVariantId: d.productVariantId,
+        optionCombinationHash: d.optionCombinationHash,
+        selectedValues: d.selectedValues
+            .map((sv) => SelectedOptionValue(
+                  valueId: sv.sourceOptionTemplateValueId,
+                  templateId: sv.sourceOptionTemplateId,
+                  valueName: sv.sourceOptionTemplateValueId,
+                ))
+            .toList(),
+      );
+    }).toList();
+
+    return Step4VariantConfigurationState(
+      attributeRows: attributeRows,
+      generatedVariants: variants,
+      deletedVariants: deleted,
+    );
+  }
+
+  VariantConfigurationDto? _buildVariantConfigurationDto() {
+    if (state.productStructure != 'VARIANT') return null;
+
+    final options = <VariantConfigurationOptionDto>[];
+    for (int i = 0; i < state.step4State.attributeRows.length; i++) {
+      final row = state.step4State.attributeRows[i];
+      if (row.isValid) {
+        options.add(VariantConfigurationOptionDto(
+          sourceOptionTemplateId: row.templateId,
+          sortOrder: i + 1,
+          values: row.selectedValues.asMap().entries.map((entry) {
+            return VariantConfigurationOptionValueDto(
+              sourceOptionTemplateValueId: entry.value.valueId,
+              sortOrder: entry.key + 1,
+            );
+          }).toList(),
+        ));
+      }
+    }
+
+    final variants = state.step4State.generatedVariants.map((v) {
+      return VariantConfigurationVariantDto(
+        clientCombinationKey: v.clientCombinationKey,
+        productVariantId: v.productVariantId,
+        displayLabel: v.displayLabel,
+        includeVariant: v.isIncluded,
+        exactImageMediaAssetId: v.exactImageMediaAssetId,
+        selectedValues: v.selectedValues
+            .map((sv) => VariantConfigurationSelectedValueDto(
+                  sourceOptionTemplateId: sv.templateId,
+                  sourceOptionTemplateValueId: sv.valueId,
+                ))
+            .toList(),
+      );
+    }).toList();
+
+    final deleted = state.step4State.deletedVariants.map((tombstone) {
+      return VariantConfigurationDeletedCombinationDto(
+        clientCombinationKey: tombstone.clientCombinationKey,
+        productVariantId: tombstone.productVariantId,
+        optionCombinationHash: tombstone.optionCombinationHash,
+        selectedValues: tombstone.selectedValues
+            .map((sv) => VariantConfigurationSelectedValueDto(
+                  sourceOptionTemplateId: sv.templateId,
+                  sourceOptionTemplateValueId: sv.valueId,
+                ))
+            .toList(),
+      );
+    }).toList();
+
+    return VariantConfigurationDto(
+      options: options,
+      variants: variants,
+      deletedCombinations: deleted,
+    );
+  }
+
+  // --- STEP 5 LOGIC ---
+  void updateBaseSku(String val) {
+    final updatedErrors = Map<String, String>.from(state.fieldErrors)
+      ..remove('baseSku');
+    state = state.copyWith(
+      step5State: state.step5State.copyWith(baseSku: val),
+      isDirty: true,
+      fieldErrors: updatedErrors,
+    );
+  }
+
+  void autoGenerateSku() {
+    // Frontend-driven simplified generation for now based on internal code/product name if empty
+    String generated = state.internalCode;
+    if (generated.isEmpty) {
+      generated = state.productName
+          .replaceAll(RegExp(r'[^A-Za-z0-9]'), '')
+          .toUpperCase();
+    }
+    if (generated.isEmpty)
+      generated =
+          'SKU-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
+
+    updateBaseSku(generated);
+  }
+
+  void updateParentProductBarcode(String val) {
+    final updatedErrors = Map<String, String>.from(state.fieldErrors)
+      ..remove('parentProductBarcode');
+    state = state.copyWith(
+      step5State: state.step5State.copyWith(parentProductBarcode: val),
+      isDirty: true,
+      fieldErrors: updatedErrors,
+    );
+  }
+
+  void updateVariantIdentifier(Step5VariantIdentifierDto updatedVariant) {
+    final list = List<Step5VariantIdentifierDto>.from(
+        state.step5State.variantIdentifiers);
+    final idx = list.indexWhere(
+        (e) => e.productVariantId == updatedVariant.productVariantId);
+    if (idx >= 0) {
+      list[idx] = updatedVariant;
+    } else {
+      list.add(updatedVariant);
+    }
+
+    state = state.copyWith(
+      step5State: state.step5State.copyWith(variantIdentifiers: list),
+      isDirty: true,
+    );
+  }
+
+  void addAdditionalBarcode(Step5AdditionalBarcodeDto dto) {
+    final list = List<Step5AdditionalBarcodeDto>.from(
+        state.step5State.additionalBarcodes);
+    // If it's primary, demote others
+    if (dto.isPrimary) {
+      for (int i = 0; i < list.length; i++) {
+        list[i] = Step5AdditionalBarcodeDto(
+          barcodeId: list[i].barcodeId,
+          barcode: list[i].barcode,
+          barcodeType: list[i].barcodeType,
+          productVariantId: list[i].productVariantId,
+          uomId: list[i].uomId,
+          quantityPerScan: list[i].quantityPerScan,
+          isPrimary: false,
+          status: list[i].status,
+        );
+      }
+    }
+    list.add(dto);
+
+    state = state.copyWith(
+      step5State: state.step5State.copyWith(additionalBarcodes: list),
+      isDirty: true,
+    );
+  }
+
+  void editAdditionalBarcode(
+      Step5AdditionalBarcodeDto dto, String? oldBarcodeId, int index) {
+    final list = List<Step5AdditionalBarcodeDto>.from(
+        state.step5State.additionalBarcodes);
+    if (dto.isPrimary) {
+      for (int i = 0; i < list.length; i++) {
+        list[i] = Step5AdditionalBarcodeDto(
+          barcodeId: list[i].barcodeId,
+          barcode: list[i].barcode,
+          barcodeType: list[i].barcodeType,
+          productVariantId: list[i].productVariantId,
+          uomId: list[i].uomId,
+          quantityPerScan: list[i].quantityPerScan,
+          isPrimary: false,
+          status: list[i].status,
+        );
+      }
+    }
+    if (index >= 0 && index < list.length) {
+      list[index] = dto;
+    }
+
+    state = state.copyWith(
+      step5State: state.step5State.copyWith(additionalBarcodes: list),
+      isDirty: true,
+    );
+  }
+
+  void removeAdditionalBarcode(int index) {
+    final list = List<Step5AdditionalBarcodeDto>.from(
+        state.step5State.additionalBarcodes);
+    if (index >= 0 && index < list.length) {
+      list.removeAt(index);
+    }
+    state = state.copyWith(
+      step5State: state.step5State.copyWith(additionalBarcodes: list),
+      isDirty: true,
+    );
+  }
+
+  void setPrimaryBarcode(int index) {
+    final list = List<Step5AdditionalBarcodeDto>.from(
+        state.step5State.additionalBarcodes);
+    if (index >= 0 && index < list.length) {
+      for (int i = 0; i < list.length; i++) {
+        list[i] = Step5AdditionalBarcodeDto(
+          barcodeId: list[i].barcodeId,
+          barcode: list[i].barcode,
+          barcodeType: list[i].barcodeType,
+          productVariantId: list[i].productVariantId,
+          uomId: list[i].uomId,
+          quantityPerScan: list[i].quantityPerScan,
+          isPrimary: i == index,
+          status: list[i].status,
+        );
+      }
+    }
+    state = state.copyWith(
+      step5State: state.step5State.copyWith(additionalBarcodes: list),
+      isDirty: true,
+    );
+  }
+
+  void clearDuplicateConflict() {
+    state = state.copyWith(
+      step5State: state.step5State.copyWith(duplicateBarcodeConflict: null),
+    );
   }
 }

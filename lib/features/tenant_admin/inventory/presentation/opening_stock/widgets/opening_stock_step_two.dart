@@ -8,7 +8,8 @@ class OpeningStockStepTwo extends ConsumerStatefulWidget {
   const OpeningStockStepTwo({super.key});
 
   @override
-  ConsumerState<OpeningStockStepTwo> createState() => _OpeningStockStepTwoState();
+  ConsumerState<OpeningStockStepTwo> createState() =>
+      _OpeningStockStepTwoState();
 }
 
 class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
@@ -23,8 +24,10 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
   void initState() {
     super.initState();
     final state = ref.read(openingStockProvider);
-    _quantityController = TextEditingController(text: state.quantity > 0 ? state.quantity.toString() : '1');
-    _unitCostController = TextEditingController(text: state.unitCost > 0 ? state.unitCost.toString() : '0.00');
+    _quantityController = TextEditingController(
+        text: state.quantity > 0 ? state.quantity.toString() : '1');
+    _unitCostController = TextEditingController(
+        text: state.unitCost > 0 ? state.unitCost.toString() : '0.00');
     _batchController = TextEditingController(text: state.batchNumber);
     _notesController = TextEditingController(text: state.notes);
   }
@@ -94,7 +97,8 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 20),
+                          const Icon(Icons.check_circle,
+                              color: Color(0xFF10B981), size: 20),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(
@@ -111,14 +115,16 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                                 const SizedBox(height: 2),
                                 Text(
                                   'Outlet: ${state.selectedOutlet?.name ?? "N/A"}',
-                                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Color(0xFF64748B)),
                                 ),
                               ],
                             ),
                           ),
                           TextButton(
                             onPressed: () => notifier.setStep(0),
-                            child: const Text('Change', style: TextStyle(color: primaryOrange)),
+                            child: const Text('Change',
+                                style: TextStyle(color: primaryOrange)),
                           ),
                         ],
                       ),
@@ -135,12 +141,17 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                             children: [
                               const Text(
                                 'Initial Quantity *',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: TenantAdminColors.bodyText),
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: TenantAdminColors.bodyText),
                               ),
                               const SizedBox(height: 6),
                               TextField(
                                 controller: _quantityController,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
                                 onChanged: (val) {
                                   final q = double.tryParse(val) ?? 0;
                                   notifier.setQuantity(q);
@@ -148,7 +159,8 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                                 },
                                 decoration: InputDecoration(
                                   hintText: 'e.g. 100',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8)),
                                   isDense: true,
                                 ),
                               ),
@@ -164,19 +176,25 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                             children: [
                               const Text(
                                 'Unit Cost (LKR)',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: TenantAdminColors.bodyText),
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: TenantAdminColors.bodyText),
                               ),
                               const SizedBox(height: 6),
                               TextField(
                                 controller: _unitCostController,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
                                 onChanged: (val) {
                                   final c = double.tryParse(val) ?? 0;
                                   notifier.setUnitCost(c);
                                 },
                                 decoration: InputDecoration(
                                   hintText: '0.00',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8)),
                                   isDense: true,
                                 ),
                               ),
@@ -196,15 +214,20 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                             children: [
                               const Text(
                                 'Batch Number (Optional)',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: TenantAdminColors.bodyText),
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: TenantAdminColors.bodyText),
                               ),
                               const SizedBox(height: 6),
                               TextField(
                                 controller: _batchController,
-                                onChanged: (val) => notifier.setBatchNumber(val),
+                                onChanged: (val) =>
+                                    notifier.setBatchNumber(val),
                                 decoration: InputDecoration(
                                   hintText: 'e.g. BATCH-001',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8)),
                                   isDense: true,
                                 ),
                               ),
@@ -220,16 +243,22 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                             children: [
                               const Text(
                                 'Expiry Date (Optional)',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: TenantAdminColors.bodyText),
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: TenantAdminColors.bodyText),
                               ),
                               const SizedBox(height: 6),
                               InkWell(
                                 onTap: () async {
                                   final picked = await showDatePicker(
                                     context: context,
-                                    initialDate: state.expiryDate ?? DateTime.now().add(const Duration(days: 90)),
+                                    initialDate: state.expiryDate ??
+                                        DateTime.now()
+                                            .add(const Duration(days: 90)),
                                     firstDate: DateTime.now(),
-                                    lastDate: DateTime.now().add(const Duration(days: 3650)),
+                                    lastDate: DateTime.now()
+                                        .add(const Duration(days: 3650)),
                                   );
                                   if (picked != null) {
                                     notifier.setExpiryDate(picked);
@@ -237,13 +266,16 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                                 },
                                 borderRadius: BorderRadius.circular(8),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 12),
                                   decoration: BoxDecoration(
-                                    border: Border.all(color: const Color(0xFFCBD5E1)),
+                                    border: Border.all(
+                                        color: const Color(0xFFCBD5E1)),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         state.expiryDate != null
@@ -251,10 +283,13 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                                             : 'Select date',
                                         style: TextStyle(
                                           fontSize: 13,
-                                          color: state.expiryDate != null ? TenantAdminColors.bodyText : const Color(0xFF94A3B8),
+                                          color: state.expiryDate != null
+                                              ? TenantAdminColors.bodyText
+                                              : const Color(0xFF94A3B8),
                                         ),
                                       ),
-                                      const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF64748B)),
+                                      const Icon(Icons.calendar_today_outlined,
+                                          size: 16, color: Color(0xFF64748B)),
                                     ],
                                   ),
                                 ),
@@ -272,7 +307,10 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                       children: [
                         const Text(
                           'Notes / Remarks (Optional)',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: TenantAdminColors.bodyText),
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: TenantAdminColors.bodyText),
                         ),
                         const SizedBox(height: 6),
                         TextField(
@@ -280,8 +318,10 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                           maxLines: 2,
                           onChanged: (val) => notifier.setNotes(val),
                           decoration: InputDecoration(
-                            hintText: 'e.g. Initial inventory count from store setup',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                            hintText:
+                                'e.g. Initial inventory count from store setup',
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8)),
                             isDense: true,
                           ),
                         ),
@@ -293,7 +333,6 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
             ),
           ),
         ),
-
         OpeningStockActionBar(
           canContinue: canContinue,
           onContinue: () => notifier.nextStep(),

@@ -234,7 +234,8 @@ class _ProductImageUploadCardState
                                         gaplessPlayback: true,
                                         loadingBuilder:
                                             (context, child, loadingProgress) {
-                                          if (loadingProgress == null) return child;
+                                          if (loadingProgress == null)
+                                            return child;
                                           return Container(
                                             color: const Color(0xFFF1F5F9),
                                             child: Center(
@@ -260,8 +261,10 @@ class _ProductImageUploadCardState
                                             ),
                                           );
                                         },
-                                        errorBuilder: (_, __, ___) => const Center(
-                                          child: Icon(Icons.broken_image_outlined,
+                                        errorBuilder: (_, __, ___) =>
+                                            const Center(
+                                          child: Icon(
+                                              Icons.broken_image_outlined,
                                               color: Colors.grey),
                                         ),
                                       )

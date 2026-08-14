@@ -14,6 +14,8 @@ import 'product_type_tracking.dart';
 import 'product_wizard_summary.dart';
 import 'step_1/step_1_basic_details.dart';
 import 'step_3/units_pack_conversion.dart';
+import 'step_4/step_4_variant_configuration_form.dart';
+import 'step_5/step_5_barcode_sku_form.dart';
 
 class AddProductWizard extends ConsumerStatefulWidget {
   const AddProductWizard({
@@ -171,39 +173,42 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           onStepTapped: (step) => controller.goToStep(step),
         ),
 
-        const SizedBox(height: TenantAdminSpacing.xl),
+        const SizedBox(height: TenantAdminSpacing.lg),
 
         // Content + Conditional Summary Rail
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final showSummary =
-                (state.isEditMode || state.productStructureConfirmed) &&
-                    constraints.maxWidth >= 1000;
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(TenantAdminSpacing.xl),
-                    decoration: BoxDecoration(
-                      color: TenantAdminColors.surface,
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-                      border: Border.all(color: TenantAdminColors.border),
-                      boxShadow: TenantAdminShadows.card,
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final showSummary = widget.resumeProductId != null &&
+                  state.status.toUpperCase() == 'DRAFT' &&
+                  constraints.maxWidth >= 1000;
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+                      decoration: BoxDecoration(
+                        color: TenantAdminColors.surface,
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.lg),
+                        border: Border.all(color: TenantAdminColors.border),
+                        boxShadow: TenantAdminShadows.card,
+                      ),
+                      child: _buildStepContent(state, controller),
                     ),
-                    child: _buildStepContent(state, controller),
                   ),
-                ),
-                if (showSummary) ...[
-                  const SizedBox(width: TenantAdminSpacing.xl),
-                  ProductWizardSummary(state: state),
+                  if (showSummary) ...[
+                    const SizedBox(width: TenantAdminSpacing.lg),
+                    ProductWizardSummary(state: state),
+                  ],
                 ],
-              ],
-            );
-          },
+              );
+            },
+          ),
         ),
 
-        const SizedBox(height: TenantAdminSpacing.xl),
+        const SizedBox(height: TenantAdminSpacing.lg),
 
         // Wizard Bottom Actions Footer (shared CTAs — do not duplicate in steps)
         AddProductFooter(
@@ -235,28 +240,25 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
               : null,
           showSkip: state.currentStep == 2,
           onSaveAndContinue: () async {
-            final isStep8 = state.currentStep == 8;
+            final isStep7 = state.currentStep == 7;
             final success = await controller.saveAndContinue();
             if (success && context.mounted) {
               showProductSaveToast(
                 context,
-                title: isStep8
-                    ? 'Product Created'
-                    : 'Product Saved',
-                message: isStep8
+                title: isStep7 ? 'Product Created' : 'Product Saved',
+                message: isStep7
                     ? 'Product created successfully'
                     : 'Product saved successfully',
               );
-              if (isStep8) {
+              if (isStep7) {
                 context.go('/tenant-admin/products');
               }
             }
           },
           isSavingDraft: state.isSavingDraft,
           isSubmitting: state.isSubmitting,
-          saveAndContinueLabel: state.currentStep == 8
-              ? 'Create Product'
-              : 'Save & Continue',
+          saveAndContinueLabel:
+              state.currentStep == 8 ? 'Create Product' : 'Save & Continue',
         ),
       ],
     );
@@ -287,15 +289,25 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           controller: controller,
         );
       case 4:
-        return _buildStepPlaceholder('Step 4 — Product Configuration');
+        switch (state.productStructure.toUpperCase()) {
+          case 'VARIANT':
+            return Step4VariantConfigurationForm(
+              state: state,
+              controller: controller,
+              formKey: GlobalKey<FormState>(),
+            );
+          case 'BUNDLE':
+            return _buildStepPlaceholder('Bundle / Kit Composition');
+          case 'SIMPLE':
+          default:
+            return _buildStepPlaceholder('Simple Product Configuration');
+        }
       case 5:
-        return _buildStepPlaceholder('Step 5 — Barcode & SKU');
+        return const Step5BarcodeSkuForm();
       case 6:
         return _buildStepPlaceholder('Step 6 — Pricing & Tax');
       case 7:
-        return _buildStepPlaceholder('Step 7 — Channel Visibility');
-      case 8:
-        return _buildStepPlaceholder('Step 8 — Review & Create');
+        return _buildStepPlaceholder('Step 7 — Review & Create');
       default:
         return Step1BasicDetails(
           state: state,

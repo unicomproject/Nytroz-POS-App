@@ -131,7 +131,8 @@ class _UserRow extends StatelessWidget {
                   Expanded(flex: 16, child: _Role(user: user)),
                   Expanded(flex: 17, child: _OutletAccess(user: user)),
                   Expanded(flex: 13, child: _LastActive(user: user)),
-                  Expanded(flex: 12, child: UserStatusBadge(status: user.status)),
+                  Expanded(
+                      flex: 12, child: UserStatusBadge(status: user.status)),
                   Expanded(
                     flex: 17,
                     child: Column(
@@ -180,7 +181,9 @@ class _Identity extends StatelessWidget {
           radius: 19,
           backgroundColor: TenantAdminColors.secondary,
           child: Text(_initials(user.fullName),
-              style: const TextStyle(color: TenantAdminColors.posHomeAccentOrange, fontWeight: FontWeight.w800)),
+              style: const TextStyle(
+                  color: TenantAdminColors.posHomeAccentOrange,
+                  fontWeight: FontWeight.w800)),
         ),
         const SizedBox(width: TenantAdminSpacing.sm),
         Expanded(
@@ -188,13 +191,23 @@ class _Identity extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(user.fullName, maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w800, color: TenantAdminColors.bodyText)),
-              Text(user.email, maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 11)),
+              Text(user.fullName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: TenantAdminColors.bodyText)),
+              Text(user.email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TenantAdminTextStyles.muted(context)
+                      .copyWith(fontSize: 11)),
               if ((user.phone ?? '').trim().isNotEmpty)
-                Text(user.phone!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 11)),
+                Text(user.phone!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TenantAdminTextStyles.muted(context)
+                        .copyWith(fontSize: 11)),
             ],
           ),
         ),
@@ -218,11 +231,16 @@ class _OutletAccess extends StatelessWidget {
   final TenantUser user;
   @override
   Widget build(BuildContext context) {
-    final names = user.outlets.map((outlet) => outlet.name).where((name) => name.trim().isNotEmpty).toList();
+    final names = user.outlets
+        .map((outlet) => outlet.name)
+        .where((name) => name.trim().isNotEmpty)
+        .toList();
     final count = user.outletCount ?? names.length;
     return _TwoLineCell(
-      primary: names.isNotEmpty ? names.take(2).join(', ') : _dash(user.outletName),
-      secondary: count > 0 ? '$count ${count == 1 ? 'Outlet' : 'Outlets'}' : null,
+      primary:
+          names.isNotEmpty ? names.take(2).join(', ') : _dash(user.outletName),
+      secondary:
+          count > 0 ? '$count ${count == 1 ? 'Outlet' : 'Outlets'}' : null,
     );
   }
 }
@@ -233,7 +251,9 @@ class _LastActive extends StatelessWidget {
   @override
   Widget build(BuildContext context) => _TwoLineCell(
         primary: formatUserLastActive(user.lastActiveAt),
-        secondary: user.lastActiveAt == null ? null : formatUserDate(user.lastActiveAt),
+        secondary: user.lastActiveAt == null
+            ? null
+            : formatUserDate(user.lastActiveAt),
       );
 }
 
@@ -246,16 +266,26 @@ class _TwoLineCell extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(primary, maxLines: 1, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: TenantAdminColors.bodyText, fontWeight: FontWeight.w700, fontSize: 12)),
-          if (secondary != null) Text(secondary!, maxLines: 2, overflow: TextOverflow.ellipsis,
-              style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 11)),
+          Text(primary,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  color: TenantAdminColors.bodyText,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12)),
+          if (secondary != null)
+            Text(secondary!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TenantAdminTextStyles.muted(context)
+                    .copyWith(fontSize: 11)),
         ],
       );
 }
 
 class _TextAction extends StatelessWidget {
-  const _TextAction({required this.label, required this.onPressed, this.destructive = false});
+  const _TextAction(
+      {required this.label, required this.onPressed, this.destructive = false});
   final String label;
   final VoidCallback onPressed;
   final bool destructive;
@@ -263,7 +293,8 @@ class _TextAction extends StatelessWidget {
   Widget build(BuildContext context) => TextButton(
         onPressed: onPressed,
         style: TextButton.styleFrom(
-          foregroundColor: destructive ? TenantAdminColors.danger : TenantAdminColors.info,
+          foregroundColor:
+              destructive ? TenantAdminColors.danger : TenantAdminColors.info,
           minimumSize: const Size(0, 30),
           padding: const EdgeInsets.symmetric(horizontal: 4),
           textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
@@ -276,8 +307,13 @@ String? _nonEmpty(String? value) =>
     value?.trim().isNotEmpty == true ? value!.trim() : null;
 String _dash(String value) => value.trim().isEmpty ? '—' : value.trim();
 String _initials(String fullName) {
-  final parts = fullName.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+  final parts = fullName
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .toList();
   if (parts.isEmpty) return '?';
   if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-  return (parts.first.substring(0, 1) + parts.last.substring(0, 1)).toUpperCase();
+  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+      .toUpperCase();
 }

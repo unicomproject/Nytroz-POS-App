@@ -50,8 +50,10 @@ class OpeningStockState {
   }) {
     return OpeningStockState(
       currentStep: currentStep ?? this.currentStep,
-      selectedProduct: clearProduct ? null : (selectedProduct ?? this.selectedProduct),
-      selectedOutlet: clearOutlet ? null : (selectedOutlet ?? this.selectedOutlet),
+      selectedProduct:
+          clearProduct ? null : (selectedProduct ?? this.selectedProduct),
+      selectedOutlet:
+          clearOutlet ? null : (selectedOutlet ?? this.selectedOutlet),
       quantity: quantity ?? this.quantity,
       unitCost: unitCost ?? this.unitCost,
       batchNumber: batchNumber ?? this.batchNumber,

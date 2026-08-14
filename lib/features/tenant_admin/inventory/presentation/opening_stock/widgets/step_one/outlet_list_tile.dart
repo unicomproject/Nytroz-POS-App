@@ -18,9 +18,11 @@ class OutletListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isWarehouse = outlet.outletType?.toLowerCase().contains('warehouse') == true ||
-        outlet.name.toLowerCase().contains('warehouse');
-    final isDefault = outlet.name.toLowerCase().contains('main') || outlet.code.contains('001');
+    final isWarehouse =
+        outlet.outletType?.toLowerCase().contains('warehouse') == true ||
+            outlet.name.toLowerCase().contains('warehouse');
+    final isDefault = outlet.name.toLowerCase().contains('main') ||
+        outlet.code.contains('001');
 
     return InkWell(
       onTap: onTap,
@@ -29,14 +31,11 @@ class OutletListTile extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? primaryOrange.withValues(alpha: 0.04)
-              : Colors.white,
+          color:
+              isSelected ? primaryOrange.withValues(alpha: 0.04) : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected
-                ? primaryOrange
-                : const Color(0xFFF1F5F9),
+            color: isSelected ? primaryOrange : const Color(0xFFF1F5F9),
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -69,9 +68,13 @@ class OutletListTile extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                isWarehouse ? Icons.warehouse_outlined : Icons.storefront_outlined,
+                isWarehouse
+                    ? Icons.warehouse_outlined
+                    : Icons.storefront_outlined,
                 size: 16,
-                color: isWarehouse ? const Color(0xFF9333EA) : const Color(0xFF0284C7),
+                color: isWarehouse
+                    ? const Color(0xFF9333EA)
+                    : const Color(0xFF0284C7),
               ),
             ),
             const SizedBox(width: 10),
@@ -97,7 +100,8 @@ class OutletListTile extends StatelessWidget {
                       if (isDefault) ...[
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1.5),
                           decoration: BoxDecoration(
                             color: const Color(0xFFDCFCE7),
                             borderRadius: BorderRadius.circular(4),
@@ -146,7 +150,9 @@ class OutletListTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: isWarehouse ? const Color(0xFF7E22CE) : const Color(0xFF0369A1),
+                  color: isWarehouse
+                      ? const Color(0xFF7E22CE)
+                      : const Color(0xFF0369A1),
                 ),
               ),
             ),

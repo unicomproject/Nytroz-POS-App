@@ -56,7 +56,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
                     showBackButton: showBackButton,
                     onBackButtonPressed: onBackButtonPressed,
                   ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 20),
               ],
               if (scrollable) child else Expanded(child: child),
             ],
@@ -109,7 +109,11 @@ class _HorizontalHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: _HeaderText(title: title, subtitle: subtitle, showBackButton: showBackButton, onBackButtonPressed: onBackButtonPressed),
+          child: _HeaderText(
+              title: title,
+              subtitle: subtitle,
+              showBackButton: showBackButton,
+              onBackButtonPressed: onBackButtonPressed),
         ),
         if (actions.isNotEmpty) ...[
           const SizedBox(width: TenantAdminSpacing.lg),
@@ -144,7 +148,11 @@ class _VerticalHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _HeaderText(title: title, subtitle: subtitle, showBackButton: showBackButton, onBackButtonPressed: onBackButtonPressed),
+        _HeaderText(
+            title: title,
+            subtitle: subtitle,
+            showBackButton: showBackButton,
+            onBackButtonPressed: onBackButtonPressed),
         if (actions.isNotEmpty) ...[
           const SizedBox(height: TenantAdminSpacing.lg),
           Wrap(
@@ -204,7 +212,7 @@ class _HeaderText extends StatelessWidget {
               if (title.isNotEmpty)
                 Text(title, style: TenantAdminTextStyles.pageTitle(context)),
               if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
-                const SizedBox(height: TenantAdminSpacing.xs),
+                const SizedBox(height: 6),
                 Text(subtitle!, style: TenantAdminTextStyles.muted(context)),
               ],
             ],

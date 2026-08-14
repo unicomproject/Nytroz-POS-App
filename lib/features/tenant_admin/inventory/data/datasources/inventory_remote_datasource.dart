@@ -9,7 +9,8 @@ class InventoryRemoteDatasource {
 
   final Dio _dio;
 
-  Future<InventoryDashboardMetricsDto> getDashboardMetrics({String? outletId}) async {
+  Future<InventoryDashboardMetricsDto> getDashboardMetrics(
+      {String? outletId}) async {
     final response = await _dio.get<dynamic>(
       InventoryApiPaths.dashboard,
       queryParameters: _queryParameters(outletId: outletId),
@@ -58,7 +59,8 @@ class InventoryRemoteDatasource {
     );
   }
 
-  Future<CurrentStockSummaryDto> getCurrentStockSummary({String? outletId}) async {
+  Future<CurrentStockSummaryDto> getCurrentStockSummary(
+      {String? outletId}) async {
     final response = await _dio.get<dynamic>(
       InventoryApiPaths.currentStockSummary,
       queryParameters: _queryParameters(outletId: outletId),
@@ -69,7 +71,8 @@ class InventoryRemoteDatasource {
     );
   }
 
-  Future<CurrentStockPageDto> getCurrentStock(CurrentStockQueryDto query) async {
+  Future<CurrentStockPageDto> getCurrentStock(
+      CurrentStockQueryDto query) async {
     final response = await _dio.get<dynamic>(
       InventoryApiPaths.currentStock,
       queryParameters: query.toQueryParameters(),
@@ -80,7 +83,8 @@ class InventoryRemoteDatasource {
     );
   }
 
-  Future<ProductStockDetailDto> getProductStockDetail(String variantId, {String? outletId}) async {
+  Future<ProductStockDetailDto> getProductStockDetail(String variantId,
+      {String? outletId}) async {
     final response = await _dio.get<dynamic>(
       '${InventoryApiPaths.currentStock}/$variantId/detail',
       queryParameters: _queryParameters(outletId: outletId),
@@ -91,7 +95,8 @@ class InventoryRemoteDatasource {
     );
   }
 
-  Future<StockMovementHistoryPageDto> getStockMovementHistory(String variantId, StockMovementHistoryQueryDto query) async {
+  Future<StockMovementHistoryPageDto> getStockMovementHistory(
+      String variantId, StockMovementHistoryQueryDto query) async {
     final response = await _dio.get<dynamic>(
       '${InventoryApiPaths.currentStock}/$variantId/movements',
       queryParameters: query.toQueryParameters(),
@@ -115,7 +120,8 @@ class InventoryRemoteDatasource {
     int? pageSize,
   }) {
     return {
-      if (outletId != null && outletId.trim().isNotEmpty) 'outletId': outletId.trim(),
+      if (outletId != null && outletId.trim().isNotEmpty)
+        'outletId': outletId.trim(),
       if (page != null) 'page': page,
       if (pageSize != null) 'pageSize': pageSize,
     };

@@ -36,8 +36,8 @@ class ProductTable extends StatelessWidget {
                 constraints: BoxConstraints(minWidth: constraints.maxWidth),
                 child: DataTable(
                   headingRowHeight: 52,
-                  dataRowMinHeight: 68,
-                  dataRowMaxHeight: 68,
+                  dataRowMinHeight: 80,
+                  dataRowMaxHeight: 120,
                   columnSpacing: TenantAdminSpacing.xl,
                   horizontalMargin: TenantAdminSpacing.lg,
                   headingRowColor:
@@ -94,35 +94,11 @@ class ProductTable extends StatelessWidget {
                           DataCell(
                               StockStatusBadge(status: product.stockStatus)),
                           DataCell(
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (visibility.showViewAction)
-                                  _ActionIconButton(
-                                    icon: Icons.visibility_outlined,
-                                    tooltip: 'View details',
-                                    onPressed: () => onView(product),
-                                  ),
-                                if (visibility.showEditAction) ...[
-                                  const SizedBox(width: TenantAdminSpacing.sm),
-                                  _ActionIconButton(
-                                    icon: Icons.edit_outlined,
-                                    tooltip: 'Edit product',
-                                    onPressed: () => onEdit(product),
-                                  ),
-                                ],
-                                if (visibility.showDeleteAction ||
-                                    visibility.showEditAction ||
-                                    visibility.showViewAction) ...[
-                                  const SizedBox(width: TenantAdminSpacing.sm),
-                                  ProductDeleteAction(
-                                    productId: product.id,
-                                    productName: product.name,
-                                    sku: product.sku,
-                                    imageUrl: product.imageUrl,
-                                  ),
-                                ],
-                              ],
+                            ProductActionColumn(
+                              product: product,
+                              visibility: visibility,
+                              onView: () => onView(product),
+                              onEdit: () => onEdit(product),
                             ),
                           ),
                         ],
@@ -229,8 +205,7 @@ class _ProductAvatar extends ConsumerWidget {
     if (imageUrl != null && imageUrl!.trim().isNotEmpty) {
       final baseUrl = ref.watch(appDioProvider).options.baseUrl;
       final resolvedUrl =
-          MediaUrlResolver.resolve(imageUrl!, apiBaseUrl: baseUrl) ??
-              imageUrl!;
+          MediaUrlResolver.resolve(imageUrl!, apiBaseUrl: baseUrl) ?? imageUrl!;
       return ClipRRect(
         borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
         child: Image.network(
@@ -286,45 +261,98 @@ class _PlainCell extends StatelessWidget {
   }
 }
 
-class _ActionIconButton extends StatelessWidget {
-  const _ActionIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-    // ignore: unused_element_parameter
-    this.isDanger = false,
+class ProductActionColumn extends StatelessWidget {
+  const ProductActionColumn({
+    super.key,
+    required this.product,
+    required this.visibility,
+    required this.onView,
+    required this.onEdit,
   });
 
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-  final bool isDanger;
+  final TenantProduct product;
+  final ProductListVisibility visibility;
+  final VoidCallback onView;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
-    final color = isDanger ? TenantAdminColors.danger : const Color(0xFF1890FF);
-    final bg = isDanger
-        ? TenantAdminColors.danger.withValues(alpha: 0.08)
-        : const Color(0xFF1890FF).withValues(alpha: 0.08);
-    final border = isDanger
-        ? TenantAdminColors.danger.withValues(alpha: 0.3)
-        : const Color(0xFF1890FF).withValues(alpha: 0.3);
+    final showDelete = visibility.showDeleteAction ||
+        visibility.showEditAction ||
+        visibility.showViewAction;
 
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: 32,
-          height: 32,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: border, width: 1),
-          ),
-          child: Icon(icon, size: 16, color: color),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (visibility.showViewAction) ...[
+            _ActionRowButton(
+              icon: Icons.visibility_outlined,
+              label: 'View',
+              onPressed: onView,
+            ),
+            if (visibility.showEditAction || showDelete)
+              const SizedBox(height: 8),
+          ],
+          if (visibility.showEditAction) ...[
+            _ActionRowButton(
+              icon: Icons.edit_outlined,
+              label: 'Edit',
+              onPressed: onEdit,
+            ),
+            if (showDelete) const SizedBox(height: 8),
+          ],
+          if (showDelete)
+            ProductDeleteAction(
+              productId: product.id,
+              productName: product.name,
+              sku: product.sku,
+              imageUrl: product.imageUrl,
+              compact: false,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionRowButton extends StatelessWidget {
+  const _ActionRowButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    const color = Color(0xFF1890FF);
+
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: color,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );

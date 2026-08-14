@@ -94,4 +94,3 @@ class InventoryMetricCard extends StatelessWidget {
     );
   }
 }
-

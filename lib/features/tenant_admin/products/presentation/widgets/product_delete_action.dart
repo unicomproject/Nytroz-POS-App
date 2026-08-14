@@ -40,28 +40,57 @@ class ProductDeleteAction extends ConsumerWidget {
       message: isDeleting ? 'Deleting product...' : 'Delete product',
       child: InkWell(
         onTap: isDeleting ? null : () => _confirmAndDelete(context, ref),
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: 32,
-          height: 32,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: border, width: 1),
-          ),
-          child: isDeleting
-              ? const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(
-                  Icons.delete_outline,
-                  size: 16,
-                  color: color,
+        borderRadius: BorderRadius.circular(compact ? 8 : 4),
+        child: compact
+            ? Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: border, width: 1),
                 ),
-        ),
+                child: isDeleting
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(
+                        Icons.delete_outline,
+                        size: 16,
+                        color: color,
+                      ),
+              )
+            : Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    isDeleting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: color),
+                          )
+                        : const Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: color,
+                          ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Delete',
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
       ),
     );
   }

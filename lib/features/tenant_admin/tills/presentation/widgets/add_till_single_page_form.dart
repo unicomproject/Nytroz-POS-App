@@ -239,7 +239,8 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+            border: Border.all(
+                color: TenantAdminColors.border.withValues(alpha: 0.5)),
           ),
           padding: const EdgeInsets.all(TenantAdminSpacing.xl),
           child: Column(
@@ -261,198 +262,205 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
                 ),
               ),
               const SizedBox(height: TenantAdminSpacing.xl),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isDesktop = constraints.maxWidth > 900;
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isDesktop = constraints.maxWidth > 900;
 
-                final scopedOptionsState =
-                    ref.watch(tillCreateOptionsProvider(_selectedOutletId));
-                final scopedOptions = scopedOptionsState.valueOrNull;
+                  final scopedOptionsState =
+                      ref.watch(tillCreateOptionsProvider(_selectedOutletId));
+                  final scopedOptions = scopedOptionsState.valueOrNull;
 
-                final effectiveOptions = TillCreateOptions(
-                  outlets: widget.options.outlets,
-                  statuses: widget.options.statuses,
-                  currencyCode: widget.options.currencyCode,
-                  cashiers: scopedOptions?.cashiers ?? [],
-                  posDevices: scopedOptions?.posDevices ?? [],
-                  hardwareDevices: scopedOptions?.hardwareDevices ?? [],
-                );
+                  final effectiveOptions = TillCreateOptions(
+                    outlets: widget.options.outlets,
+                    statuses: widget.options.statuses,
+                    currencyCode: widget.options.currencyCode,
+                    cashiers: scopedOptions?.cashiers ?? [],
+                    posDevices: scopedOptions?.posDevices ?? [],
+                    hardwareDevices: scopedOptions?.hardwareDevices ?? [],
+                  );
 
-                final detailsSection = AddTillDetailsSection(
-                  nameController: _nameController,
-                  codeController: _codeController,
-                  floatController: _floatController,
-                  selectedOutletId: _selectedOutletId,
-                  selectedStatus: _selectedStatus,
-                  selectedCashierId: _selectedCashierId,
-                  options: effectiveOptions,
-                  onOutletChanged: (value) {
-                    setState(() {
-                      _selectedOutletId = value;
-                      _selectedCashierId = null;
-                      _selectedPosDeviceId = null;
-                      _selectedScannerId = null;
-                      _selectedPrinterId = null;
-                      _selectedCashDrawerId = null;
-                      _selectedCardReaderId = null;
-                      _posDeviceNameController.clear();
-                      _scannerNameController.clear();
-                      _printerNameController.clear();
-                      _cashDrawerNameController.clear();
-                      _cardReaderNameController.clear();
-                      _markDirty();
-                    });
-                  },
-                  onStatusChanged: (value) {
-                    setState(() {
-                      _selectedStatus = value;
-                      _markDirty();
-                    });
-                  },
-                  onCashierChanged: scopedOptionsState.isLoading
-                      ? (value) {}
-                      : (value) {
-                          setState(() {
-                            _selectedCashierId = value;
-                            _markDirty();
-                          });
-                        },
-                  backendErrors: _backendErrors,
-                );
+                  final detailsSection = AddTillDetailsSection(
+                    nameController: _nameController,
+                    codeController: _codeController,
+                    floatController: _floatController,
+                    selectedOutletId: _selectedOutletId,
+                    selectedStatus: _selectedStatus,
+                    selectedCashierId: _selectedCashierId,
+                    options: effectiveOptions,
+                    onOutletChanged: (value) {
+                      setState(() {
+                        _selectedOutletId = value;
+                        _selectedCashierId = null;
+                        _selectedPosDeviceId = null;
+                        _selectedScannerId = null;
+                        _selectedPrinterId = null;
+                        _selectedCashDrawerId = null;
+                        _selectedCardReaderId = null;
+                        _posDeviceNameController.clear();
+                        _scannerNameController.clear();
+                        _printerNameController.clear();
+                        _cashDrawerNameController.clear();
+                        _cardReaderNameController.clear();
+                        _markDirty();
+                      });
+                    },
+                    onStatusChanged: (value) {
+                      setState(() {
+                        _selectedStatus = value;
+                        _markDirty();
+                      });
+                    },
+                    onCashierChanged: scopedOptionsState.isLoading
+                        ? (value) {}
+                        : (value) {
+                            setState(() {
+                              _selectedCashierId = value;
+                              _markDirty();
+                            });
+                          },
+                    backendErrors: _backendErrors,
+                  );
 
-                final hardwareSection = widget.canViewHardware
-                    ? AddTillHardwareSection(
-                        options: effectiveOptions,
-                        selectedOutletId: _selectedOutletId,
-                        selectedPosDeviceId: _selectedPosDeviceId,
-                        selectedScannerId: _selectedScannerId,
-                        selectedPrinterId: _selectedPrinterId,
-                        selectedCashDrawerId: _selectedCashDrawerId,
-                        selectedCardReaderId: _selectedCardReaderId,
-                        posDeviceNameController: _posDeviceNameController,
-                        scannerNameController: _scannerNameController,
-                        printerNameController: _printerNameController,
-                        cashDrawerNameController: _cashDrawerNameController,
-                        cardReaderNameController: _cardReaderNameController,
-                        onPosDeviceChanged: widget.canManageHardware &&
-                                !scopedOptionsState.isLoading
-                            ? (value) => setState(() {
-                                  _selectedPosDeviceId = value;
-                                  _markDirty();
-                                })
-                            : (value) {},
-                        onScannerChanged: widget.canManageHardware &&
-                                !scopedOptionsState.isLoading
-                            ? (value) => setState(() {
-                                  _selectedScannerId = value;
-                                  _markDirty();
-                                })
-                            : (value) {},
-                        onPrinterChanged: widget.canManageHardware &&
-                                !scopedOptionsState.isLoading
-                            ? (value) => setState(() {
-                                  _selectedPrinterId = value;
-                                  _markDirty();
-                                })
-                            : (value) {},
-                        onCashDrawerChanged: widget.canManageHardware &&
-                                !scopedOptionsState.isLoading
-                            ? (value) => setState(() {
-                                  _selectedCashDrawerId = value;
-                                  _markDirty();
-                                })
-                            : (value) {},
-                        onCardReaderChanged: widget.canManageHardware &&
-                                !scopedOptionsState.isLoading
-                            ? (value) => setState(() {
-                                  _selectedCardReaderId = value;
-                                  _markDirty();
-                                })
-                            : (value) {},
-                        quickPairPanel: const AddTillQuickPairPanel(),
-                        hardwareStatusCards:
-                            _buildHardwareStatusCards(effectiveOptions),
-                      )
-                    : const SizedBox.shrink();
+                  final hardwareSection = widget.canViewHardware
+                      ? AddTillHardwareSection(
+                          options: effectiveOptions,
+                          selectedOutletId: _selectedOutletId,
+                          selectedPosDeviceId: _selectedPosDeviceId,
+                          selectedScannerId: _selectedScannerId,
+                          selectedPrinterId: _selectedPrinterId,
+                          selectedCashDrawerId: _selectedCashDrawerId,
+                          selectedCardReaderId: _selectedCardReaderId,
+                          posDeviceNameController: _posDeviceNameController,
+                          scannerNameController: _scannerNameController,
+                          printerNameController: _printerNameController,
+                          cashDrawerNameController: _cashDrawerNameController,
+                          cardReaderNameController: _cardReaderNameController,
+                          onPosDeviceChanged: widget.canManageHardware &&
+                                  !scopedOptionsState.isLoading
+                              ? (value) => setState(() {
+                                    _selectedPosDeviceId = value;
+                                    _markDirty();
+                                  })
+                              : (value) {},
+                          onScannerChanged: widget.canManageHardware &&
+                                  !scopedOptionsState.isLoading
+                              ? (value) => setState(() {
+                                    _selectedScannerId = value;
+                                    _markDirty();
+                                  })
+                              : (value) {},
+                          onPrinterChanged: widget.canManageHardware &&
+                                  !scopedOptionsState.isLoading
+                              ? (value) => setState(() {
+                                    _selectedPrinterId = value;
+                                    _markDirty();
+                                  })
+                              : (value) {},
+                          onCashDrawerChanged: widget.canManageHardware &&
+                                  !scopedOptionsState.isLoading
+                              ? (value) => setState(() {
+                                    _selectedCashDrawerId = value;
+                                    _markDirty();
+                                  })
+                              : (value) {},
+                          onCardReaderChanged: widget.canManageHardware &&
+                                  !scopedOptionsState.isLoading
+                              ? (value) => setState(() {
+                                    _selectedCardReaderId = value;
+                                    _markDirty();
+                                  })
+                              : (value) {},
+                          quickPairPanel: const AddTillQuickPairPanel(),
+                          hardwareStatusCards:
+                              _buildHardwareStatusCards(effectiveOptions),
+                        )
+                      : const SizedBox.shrink();
 
-                if (isDesktop) {
-                  return Row(
+                  if (isDesktop) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: detailsSection,
+                        ),
+                        if (widget.canViewHardware) ...[
+                          const SizedBox(width: TenantAdminSpacing.xl),
+                          Expanded(
+                            child: hardwareSection,
+                          ),
+                        ],
+                      ],
+                    );
+                  }
+
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: detailsSection,
-                      ),
+                      detailsSection,
                       if (widget.canViewHardware) ...[
-                        const SizedBox(width: TenantAdminSpacing.xl),
-                        Expanded(
-                          child: hardwareSection,
-                        ),
+                        const SizedBox(height: TenantAdminSpacing.xl),
+                        hardwareSection,
                       ],
                     ],
                   );
-                }
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    detailsSection,
-                    if (widget.canViewHardware) ...[
-                      const SizedBox(height: TenantAdminSpacing.xl),
-                      hardwareSection,
-                    ],
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: TenantAdminSpacing.xl),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isSubmitting ? null : () => context.pop(),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black87,
-                      side: BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: TenantAdminSpacing.md,
+                },
+              ),
+              const SizedBox(height: TenantAdminSpacing.xl),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _isSubmitting ? null : () => context.pop(),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.black87,
+                        side: BorderSide(
+                            color: TenantAdminColors.border
+                                .withValues(alpha: 0.5)),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: TenantAdminSpacing.md,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(TenantAdminRadius.md),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                      ),
+                      child: const Text('Cancel',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
-                    child: const Text('Cancel',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
-                ),
-                const SizedBox(width: TenantAdminSpacing.lg),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6A00),
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: const Color(0xFFFF6A00).withValues(alpha: 0.45),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: TenantAdminSpacing.md,
+                  const SizedBox(width: TenantAdminSpacing.lg),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF6A00),
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor:
+                            const Color(0xFFFF6A00).withValues(alpha: 0.45),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: TenantAdminSpacing.md,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(TenantAdminRadius.md),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
+                          : const Text('Create Till',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : const Text('Create Till',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
-                ),
-              ],
-            ),
-          ],
-        ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

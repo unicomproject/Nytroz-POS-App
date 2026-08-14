@@ -249,24 +249,31 @@ class AddTillDetailsSection extends StatelessWidget {
                         hintText: 'Enter opening float amount',
                         prefixText: '${options.currencyCode} ',
                         errorText: backendErrors['defaultOpeningFloatAmount'],
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 16),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+                          borderSide: BorderSide(
+                              color: TenantAdminColors.border
+                                  .withValues(alpha: 0.5)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+                          borderSide: BorderSide(
+                              color: TenantAdminColors.border
+                                  .withValues(alpha: 0.5)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFFF6A00)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFFF6A00)),
                         ),
                       ),
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d*')),
                       ],
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -288,7 +295,8 @@ class AddTillDetailsSection extends StatelessWidget {
                           child: Text(
                             'Opening float is the starting cash amount in this till.',
                             style: TextStyle(
-                                fontSize: 12, color: TenantAdminColors.mutedText),
+                                fontSize: 12,
+                                color: TenantAdminColors.mutedText),
                           ),
                         ),
                       ],
@@ -303,16 +311,25 @@ class AddTillDetailsSection extends StatelessWidget {
     );
   }
 
-  Widget _buildLabeledField({required String label, required bool isRequired, required Widget child}) {
+  Widget _buildLabeledField(
+      {required String label,
+      required bool isRequired,
+      required Widget child}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            Text(label,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             if (isRequired)
-              const Text(' *', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 14)),
+              const Text(' *',
+                  style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14)),
           ],
         ),
         const SizedBox(height: 8),
@@ -321,19 +338,27 @@ class AddTillDetailsSection extends StatelessWidget {
     );
   }
 
-  InputDecoration _buildInputDecoration({required String hintText, required IconData icon, Color? iconColor, double? iconSize, String? errorText}) {
+  InputDecoration _buildInputDecoration(
+      {required String hintText,
+      required IconData icon,
+      Color? iconColor,
+      double? iconSize,
+      String? errorText}) {
     return InputDecoration(
       hintText: hintText,
-      prefixIcon: Icon(icon, color: iconColor ?? TenantAdminColors.mutedText, size: iconSize),
+      prefixIcon: Icon(icon,
+          color: iconColor ?? TenantAdminColors.mutedText, size: iconSize),
       errorText: errorText,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+        borderSide:
+            BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+        borderSide:
+            BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),

@@ -66,7 +66,8 @@ class OpeningStockNotifier extends StateNotifier<OpeningStockState> {
 
   Future<bool> submit() async {
     if (state.selectedProduct == null || state.selectedOutlet == null) {
-      state = state.copyWith(errorMessage: 'Please select a product and an outlet.');
+      state = state.copyWith(
+          errorMessage: 'Please select a product and an outlet.');
       return false;
     }
 
@@ -86,7 +87,8 @@ class OpeningStockNotifier extends StateNotifier<OpeningStockState> {
             productId: state.selectedProduct!.id,
             quantity: state.quantity,
             unitCost: state.unitCost,
-            batchNumber: state.batchNumber.isNotEmpty ? state.batchNumber : null,
+            batchNumber:
+                state.batchNumber.isNotEmpty ? state.batchNumber : null,
             expiryDate: state.expiryDate != null
                 ? "${state.expiryDate!.year.toString().padLeft(4, '0')}-${state.expiryDate!.month.toString().padLeft(2, '0')}-${state.expiryDate!.day.toString().padLeft(2, '0')}"
                 : null,

@@ -109,14 +109,17 @@ class AddUserWizardState {
       roleId: clearRole ? null : roleId ?? this.roleId,
       employeeId: employeeId ?? this.employeeId,
       accountStatus: accountStatus ?? this.accountStatus,
-      profileMediaAssetId:
-          clearProfileMedia ? null : profileMediaAssetId ?? this.profileMediaAssetId,
-      profileFileName: clearProfileMedia ? null : profileFileName ?? this.profileFileName,
+      profileMediaAssetId: clearProfileMedia
+          ? null
+          : profileMediaAssetId ?? this.profileMediaAssetId,
+      profileFileName:
+          clearProfileMedia ? null : profileFileName ?? this.profileFileName,
       outletAccessMode: outletAccessMode ?? this.outletAccessMode,
       selectedOutletIds: selectedOutletIds ?? this.selectedOutletIds,
       permissionOverrideEnabled:
           permissionOverrideEnabled ?? this.permissionOverrideEnabled,
-      selectedPermissionIds: selectedPermissionIds ?? this.selectedPermissionIds,
+      selectedPermissionIds:
+          selectedPermissionIds ?? this.selectedPermissionIds,
       isDirty: isDirty ?? this.isDirty,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       fieldErrors: clearErrors ? const {} : fieldErrors ?? this.fieldErrors,
@@ -169,7 +172,8 @@ class AddUserWizardController extends StateNotifier<AddUserWizardState> {
       );
 
   void setRoleId(String? value) => _markDirty(
-        state.copyWith(roleId: value, clearRole: value == null, clearErrors: true),
+        state.copyWith(
+            roleId: value, clearRole: value == null, clearErrors: true),
       );
 
   void setEmployeeId(String value) => _markDirty(

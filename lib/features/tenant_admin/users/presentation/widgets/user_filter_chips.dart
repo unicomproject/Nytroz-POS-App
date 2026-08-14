@@ -61,9 +61,11 @@ class _UserStatusFilterChip extends StatelessWidget {
             vertical: TenantAdminSpacing.sm,
           ),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFFFF2E8) : TenantAdminColors.surface,
+            color:
+                selected ? const Color(0xFFFFF2E8) : TenantAdminColors.surface,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: selected ? accent : TenantAdminColors.border),
+            border:
+                Border.all(color: selected ? accent : TenantAdminColors.border),
           ),
           child: Text(
             label,

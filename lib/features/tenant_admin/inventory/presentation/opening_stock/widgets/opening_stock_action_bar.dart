@@ -37,7 +37,8 @@ class OpeningStockActionBar extends StatelessWidget {
               foregroundColor: const Color(0xFF475569),
               side: const BorderSide(color: Color(0xFFCBD5E1)),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             child: const Text(
               'Cancel',
@@ -55,7 +56,8 @@ class OpeningStockActionBar extends StatelessWidget {
               foregroundColor: Colors.white,
               disabledForegroundColor: Colors.white70,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
               elevation: canContinue ? 2 : 0,
               shadowColor: primaryOrange.withValues(alpha: 0.4),
             ),
@@ -63,7 +65,8 @@ class OpeningStockActionBar extends StatelessWidget {
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2),
                   )
                 : Row(
                     mainAxisSize: MainAxisSize.min,

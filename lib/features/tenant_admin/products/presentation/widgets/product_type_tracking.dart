@@ -16,101 +16,108 @@ class ProductTypeTracking extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Page Header
-        const Text(
-          'Product Type & Tracking Setup',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: TenantAdminColors.bodyText,
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Page Header
+          const Text(
+            'Product Type & Tracking Setup',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: TenantAdminColors.bodyText,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Choose the product type and how this product should be tracked.',
-          style: TextStyle(
-            fontSize: 14,
-            color: TenantAdminColors.mutedText,
+          const SizedBox(height: 4),
+          const Text(
+            'Choose the product type and how this product should be tracked.',
+            style: TextStyle(
+              fontSize: 14,
+              color: TenantAdminColors.mutedText,
+            ),
           ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.xl),
+          const SizedBox(height: TenantAdminSpacing.lg),
 
-        // Section 1: Select Product Type
-        const Text(
-          'Select Product Type',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: TenantAdminColors.bodyText,
+          // Section 1: Select Product Type
+          const Text(
+            'Select Product Type',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: TenantAdminColors.bodyText,
+            ),
           ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.md),
+          const SizedBox(height: TenantAdminSpacing.md),
 
-        // 3 Product Structure Cards
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isNarrow = constraints.maxWidth < 680;
-            final cards = [
-              ProductStructureCard(
-                structure: 'SIMPLE',
-                title: 'Simple Product',
-                description:
-                    'Single standalone product with one price and SKU.',
-                icon: Icons.inventory_2_outlined,
-                selected: state.productStructure == 'SIMPLE',
-                onSelected: () => controller.setProductStructure('SIMPLE'),
-              ),
-              ProductStructureCard(
-                structure: 'VARIANT',
-                title: 'Variant Product',
-                description:
-                    'Product with options like size, color, or material.',
-                icon: Icons.dashboard_customize_outlined,
-                selected: state.productStructure == 'VARIANT',
-                onSelected: () => controller.setProductStructure('VARIANT'),
-              ),
-              ProductStructureCard(
-                structure: 'BUNDLE',
-                title: 'Bundle / Kit',
-                description: 'Collection of existing items sold together.',
-                icon: Icons.inventory_outlined,
-                selected: state.productStructure == 'BUNDLE',
-                onSelected: () => controller.setProductStructure('BUNDLE'),
-              ),
-            ];
+          // 3 Product Structure Cards
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 680;
+              final cards = [
+                ProductStructureCard(
+                  structure: 'SIMPLE',
+                  title: 'Simple Product',
+                  description:
+                      'Single standalone product with one price and SKU.',
+                  icon: Icons.inventory_2_outlined,
+                  selected: state.productStructure == 'SIMPLE',
+                  onSelected: () => controller.setProductStructure('SIMPLE'),
+                ),
+                ProductStructureCard(
+                  structure: 'VARIANT',
+                  title: 'Variant Product',
+                  description:
+                      'Product with options like size, color, or material.',
+                  icon: Icons.dashboard_customize_outlined,
+                  selected: state.productStructure == 'VARIANT',
+                  onSelected: () => controller.setProductStructure('VARIANT'),
+                ),
+                ProductStructureCard(
+                  structure: 'BUNDLE',
+                  title: 'Bundle / Kit',
+                  description: 'Collection of existing items sold together.',
+                  icon: Icons.inventory_outlined,
+                  selected: state.productStructure == 'BUNDLE',
+                  enabled: false,
+                  onSelected: () => controller.setProductStructure('BUNDLE'),
+                ),
+              ];
 
-            if (isNarrow) {
-              return Column(
-                children: [
-                  cards[0],
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  cards[1],
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  cards[2],
-                ],
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    cards[0],
+                    const SizedBox(height: TenantAdminSpacing.md),
+                    cards[1],
+                    const SizedBox(height: TenantAdminSpacing.md),
+                    cards[2],
+                  ],
+                );
+              }
+
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: cards[0]),
+                    const SizedBox(width: TenantAdminSpacing.md),
+                    Expanded(child: cards[1]),
+                    const SizedBox(width: TenantAdminSpacing.md),
+                    Expanded(child: cards[2]),
+                  ],
+                ),
               );
-            }
+            },
+          ),
 
-            return Row(
-              children: [
-                Expanded(child: cards[0]),
-                const SizedBox(width: TenantAdminSpacing.md),
-                Expanded(child: cards[1]),
-                const SizedBox(width: TenantAdminSpacing.md),
-                Expanded(child: cards[2]),
-              ],
-            );
-          },
-        ),
+          const SizedBox(height: TenantAdminSpacing.lg),
 
-        const SizedBox(height: TenantAdminSpacing.xxl),
-
-        // Dynamic content based on productStructure
-        _buildDynamicContent(context),
-      ],
+          // Dynamic content based on productStructure
+          _buildDynamicContent(context),
+        ],
+      ),
     );
   }
 
@@ -190,6 +197,7 @@ class ProductTypeTracking extends StatelessWidget {
 
             if (isNarrow) {
               return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   trackTile,
                   const SizedBox(height: TenantAdminSpacing.md),
@@ -204,27 +212,33 @@ class ProductTypeTracking extends StatelessWidget {
 
             return Column(
               children: [
-                Row(
-                  children: [
-                    Expanded(child: trackTile),
-                    const SizedBox(width: TenantAdminSpacing.md),
-                    Expanded(child: batchTile),
-                  ],
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: trackTile),
+                      const SizedBox(width: TenantAdminSpacing.md),
+                      Expanded(child: batchTile),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: TenantAdminSpacing.md),
-                Row(
-                  children: [
-                    Expanded(child: expiryTile),
-                    const SizedBox(width: TenantAdminSpacing.md),
-                    Expanded(child: serialTile),
-                  ],
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: expiryTile),
+                      const SizedBox(width: TenantAdminSpacing.md),
+                      Expanded(child: serialTile),
+                    ],
+                  ),
                 ),
               ],
             );
           },
         ),
 
-        const SizedBox(height: TenantAdminSpacing.xl),
+        const SizedBox(height: TenantAdminSpacing.lg),
 
         // Simple Info Banner
         _buildInfoBanner(
@@ -349,7 +363,7 @@ class ProductTypeTracking extends StatelessWidget {
           },
         ),
 
-        const SizedBox(height: TenantAdminSpacing.xl),
+        const SizedBox(height: TenantAdminSpacing.lg),
 
         // Variant Info Banner
         _buildInfoBanner(
@@ -409,6 +423,7 @@ class ProductTypeTracking extends StatelessWidget {
 
             if (isNarrow) {
               return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   cards[0],
                   const SizedBox(height: TenantAdminSpacing.md),
@@ -419,20 +434,22 @@ class ProductTypeTracking extends StatelessWidget {
               );
             }
 
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: cards[0]),
-                const SizedBox(width: TenantAdminSpacing.md),
-                Expanded(child: cards[1]),
-                const SizedBox(width: TenantAdminSpacing.md),
-                Expanded(child: cards[2]),
-              ],
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: cards[0]),
+                  const SizedBox(width: TenantAdminSpacing.md),
+                  Expanded(child: cards[1]),
+                  const SizedBox(width: TenantAdminSpacing.md),
+                  Expanded(child: cards[2]),
+                ],
+              ),
             );
           },
         ),
 
-        const SizedBox(height: TenantAdminSpacing.xl),
+        const SizedBox(height: TenantAdminSpacing.lg),
 
         // Bundle Info Banner
         _buildInfoBanner(
@@ -457,13 +474,15 @@ class ProductTypeTracking extends StatelessWidget {
         ],
       );
     }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(flex: 5, child: tile),
-        const SizedBox(width: TenantAdminSpacing.md),
-        Expanded(flex: 5, child: hint),
-      ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(flex: 5, child: tile),
+          const SizedBox(width: TenantAdminSpacing.md),
+          Expanded(flex: 5, child: hint),
+        ],
+      ),
     );
   }
 
@@ -539,8 +558,8 @@ class ProductStructureCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-          constraints: const BoxConstraints(minHeight: 120),
+          padding: const EdgeInsets.all(TenantAdminSpacing.md),
+          constraints: const BoxConstraints(minHeight: 96),
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(TenantAdminRadius.md),
@@ -588,7 +607,7 @@ class ProductStructureCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: TenantAdminSpacing.md),
+              const SizedBox(height: TenantAdminSpacing.sm),
               Text(
                 title,
                 style: TextStyle(
@@ -644,9 +663,9 @@ class TrackingRuleTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: TenantAdminSpacing.md,
-          vertical: TenantAdminSpacing.sm + 2,
+          vertical: TenantAdminSpacing.sm,
         ),
-        constraints: const BoxConstraints(minHeight: 64),
+        constraints: const BoxConstraints(minHeight: 56),
         decoration: BoxDecoration(
           color: TenantAdminColors.secondary,
           borderRadius: BorderRadius.circular(TenantAdminRadius.md),
@@ -656,7 +675,7 @@ class TrackingRuleTile extends StatelessWidget {
           children: [
             Icon(
               icon,
-              size: 22,
+              size: 20,
               color: enabled && value
                   ? TenantAdminColors.posHomeAccentOrange
                   : TenantAdminColors.mutedText,
@@ -721,9 +740,9 @@ class TrackingContextHint extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: TenantAdminSpacing.md,
-        vertical: TenantAdminSpacing.sm + 2,
+        vertical: TenantAdminSpacing.sm,
       ),
-      constraints: const BoxConstraints(minHeight: 64),
+      constraints: const BoxConstraints(minHeight: 56),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
@@ -773,8 +792,8 @@ class BundleInventoryBehaviourCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-      constraints: const BoxConstraints(minHeight: 120),
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
+      constraints: const BoxConstraints(minHeight: 96),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),

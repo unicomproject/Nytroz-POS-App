@@ -114,7 +114,7 @@ class ProductBasicDetailsForm extends StatelessWidget {
 
   Widget _buildCodeField() {
     return ProductFormTextField(
-      label: 'Short Name / Internal Code',
+      label: 'Short Name / Product Code',
       hint: 'e.g. MERCH-TSHIRT-01',
       icon: Icons.qr_code_2_outlined,
       controller: codeController,
