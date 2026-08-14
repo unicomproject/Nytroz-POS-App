@@ -8,10 +8,14 @@ class DashboardMetricGrid extends StatelessWidget {
     super.key,
     required this.metrics,
     required this.compact,
+    this.cardHeight,
+    this.spacing,
   });
 
   final List<TenantDashboardMetric> metrics;
   final bool compact;
+  final double? cardHeight;
+  final double? spacing;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +26,9 @@ class DashboardMetricGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxColumns = compact
-            ? 2
+            ? constraints.maxWidth >= 520
+                ? 2
+                : 1
             : constraints.maxWidth >= 1080
                 ? 4
                 : constraints.maxWidth >= 520
@@ -30,6 +36,7 @@ class DashboardMetricGrid extends StatelessWidget {
                     : 1;
         final crossAxisCount =
             metrics.length < maxColumns ? metrics.length : maxColumns;
+        final resolvedSpacing = spacing ?? (compact ? 12.0 : 16.0);
 
         return GridView.builder(
           shrinkWrap: true,
@@ -37,9 +44,9 @@ class DashboardMetricGrid extends StatelessWidget {
           itemCount: metrics.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            mainAxisExtent: 160,
+            crossAxisSpacing: resolvedSpacing,
+            mainAxisSpacing: resolvedSpacing,
+            mainAxisExtent: cardHeight ?? (compact ? 142 : 150),
           ),
           itemBuilder: (context, index) {
             final metric = metrics[index];
@@ -71,11 +78,12 @@ class _NewDashboardMetricCard extends StatelessWidget {
         : (isUp ? TenantAdminColors.success : TenantAdminColors.danger);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: TenantAdminColors.border),
+        boxShadow: TenantAdminShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,15 +92,15 @@ class _NewDashboardMetricCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
                   color: color,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: Colors.white, size: 24),
+                child: Icon(icon, color: Colors.white, size: 22),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,11 +182,11 @@ class _NewDashboardMetricCard extends StatelessWidget {
           ),
           const Spacer(),
           const Divider(height: 1),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             'View ${metric.title.replaceAll("TODAY'S ", "")} >',
             style: const TextStyle(
-              color: TenantAdminColors.primary,
+              color: TenantAdminColors.posHomeAccentOrange,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -192,7 +200,10 @@ class _NewDashboardMetricCard extends StatelessWidget {
     switch (key) {
       case 'sales':
       case 'todays_sales':
-        return (Icons.shopping_bag_outlined, const Color(0xFFFF7A00));
+        return (
+          Icons.shopping_bag_outlined,
+          TenantAdminColors.posHomeAccentOrange
+        );
       case 'orders':
         return (Icons.shopping_cart_outlined, const Color(0xFF3B82F6));
       case 'outlets':

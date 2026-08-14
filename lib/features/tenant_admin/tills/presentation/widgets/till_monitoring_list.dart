@@ -2,18 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/widgets/tenant_admin_pagination.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../providers/till_providers.dart';
-import '../../domain/entities/till_monitoring.dart';
 import 'till_monitoring_row.dart';
 
 class TillMonitoringList extends ConsumerWidget {
   const TillMonitoringList({
     super.key,
     required this.onTillSelected,
+    this.scrollable = false,
   });
 
   final ValueChanged<String> onTillSelected;
+  final bool scrollable;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,30 +31,43 @@ class TillMonitoringList extends ConsumerWidget {
           );
         }
 
+        final listView = ListView.separated(
+          shrinkWrap: !scrollable,
+          physics: scrollable
+              ? const ClampingScrollPhysics()
+              : const NeverScrollableScrollPhysics(),
+          itemCount: result.items.length,
+          separatorBuilder: (context, index) => const Divider(
+            height: 1,
+            color: TenantAdminColors.border,
+          ),
+          itemBuilder: (context, index) {
+            final item = result.items[index];
+            return TillMonitoringRow(
+              item: item,
+              isSelected: item.id == selectedTillId,
+              onTap: () => onTillSelected(item.id),
+            );
+          },
+        );
+
         return Container(
           decoration: BoxDecoration(
             color: TenantAdminColors.surface,
             borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
             border: Border.all(color: TenantAdminColors.border),
-            boxShadow: TenantAdminShadows.card,
           ),
           child: Column(
             children: [
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: result.items.length,
-                separatorBuilder: (context, index) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final item = result.items[index];
-                  return TillMonitoringRow(
-                    item: item,
-                    isSelected: item.id == selectedTillId,
-                    onTap: () => onTillSelected(item.id),
-                  );
-                },
+              if (scrollable) Expanded(child: listView) else listView,
+              TenantAdminPaginationBar(
+                currentPage: result.page,
+                pageSize: result.pageSize,
+                totalCount: result.totalCount,
+                itemLabel: 'tills',
+                onPageChanged: (page) =>
+                    ref.read(tillPageProvider.notifier).state = page,
               ),
-              _buildPagination(ref, result),
             ],
           ),
         );
@@ -62,54 +77,6 @@ class TillMonitoringList extends ConsumerWidget {
         title: 'Unable to load tills',
         message: 'Please try again.',
         onRetry: () => ref.invalidate(tillListResultFutureProvider),
-      ),
-    );
-  }
-
-  Widget _buildPagination(WidgetRef ref, TillMonitoringResult result) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: TenantAdminSpacing.lg,
-        vertical: TenantAdminSpacing.md,
-      ),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: TenantAdminColors.border)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              'Showing ${result.rangeStart} to ${result.rangeEnd} of ${result.totalCount} tills',
-              style: const TextStyle(
-                color: TenantAdminColors.mutedText,
-                fontSize: 13,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (result.totalPages > 1)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left),
-                  onPressed: result.page > 1
-                      ? () => ref.read(tillPageProvider.notifier).state =
-                          result.page - 1
-                      : null,
-                ),
-                Text('Page ${result.page} of ${result.totalPages}'),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  onPressed: result.page < result.totalPages
-                      ? () => ref.read(tillPageProvider.notifier).state =
-                          result.page + 1
-                      : null,
-                ),
-              ],
-            ),
-        ],
       ),
     );
   }

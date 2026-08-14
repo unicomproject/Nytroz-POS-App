@@ -10,6 +10,8 @@ class TenantAdminFeatureCodes {
   static const inventoryManagement = 'inventory.stock';
   static const reportsAnalytics = 'reports';
   static const sales = 'sales';
+  static const onlineStore = 'online_store';
+  static const clickCollect = 'click_collect';
   static const billingSubscription = 'subscription.billing';
   static const tenantSettings = 'tenant.settings';
   static const activityAudit = 'tenant.activity';
@@ -81,6 +83,20 @@ class TenantAdminPermissionCodes {
   static const notificationRead = 'notification.read';
   static const tenantContextView = 'tenant.context.view';
   static const profileView = 'profile.view';
+
+  // Tenant Admin Online Store
+  static const onlineStoreView = 'tenant.online_store.view';
+  static const onlineStoreManage = 'tenant.online_store.manage';
+  static const onlineStorePublish = 'tenant.online_store.publish';
+  static const onlineStoreDomainsManage = 'tenant.online_store.domains.manage';
+  static const onlineStoreBrandingManage =
+      'tenant.online_store.branding.manage';
+  static const onlineStoreSupportManage = 'tenant.online_store.support.manage';
+  static const onlineStoreFulfillmentManage =
+      'tenant.online_store.fulfillment.manage';
+  static const onlineStoreCatalogManage = 'tenant.online_store.catalog.manage';
+  static const onlineStorePoliciesManage =
+      'tenant.online_store.policies.manage';
 
   // Legacy codes retained for backward compatibility with existing API responses.
   static const dashboardView = tenantAdminDashboardView;

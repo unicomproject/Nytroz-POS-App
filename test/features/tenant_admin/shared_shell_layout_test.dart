@@ -62,6 +62,11 @@ TenantAdminAccessChecker _fullAccess() {
           enabled: true,
         ),
         TenantAdminFeatureEntitlement(
+          featureCode: TenantAdminFeatureCodes.onlineStore,
+          featureName: 'Online Store',
+          enabled: true,
+        ),
+        TenantAdminFeatureEntitlement(
           featureCode: TenantAdminFeatureCodes.rolePermission,
           featureName: 'Roles',
           enabled: true,
@@ -98,6 +103,7 @@ TenantAdminAccessChecker _fullAccess() {
           TenantAdminPermissionCodes.tenantStockView,
           TenantAdminPermissionCodes.tenantProductImport,
           TenantAdminPermissionCodes.tenantHardwareView,
+          TenantAdminPermissionCodes.onlineStoreView,
           TenantAdminPermissionCodes.tenantSettingsView,
         ])
           TenantAdminPermission(permissionCode: code, permissionName: code),
@@ -273,7 +279,7 @@ void main() {
         tenantAdminMenuCatalog
             .firstWhere((item) => item.key == 'online-store')
             .isRouteAvailable,
-        isFalse,
+        isTrue,
       );
     });
   });
@@ -344,8 +350,7 @@ void main() {
       expect(menuLabels.last, 'Settings');
     });
 
-    testWidgets('disabled online store shows unavailable snackbar',
-        (tester) async {
+    testWidgets('online store route is available from sidebar', (tester) async {
       final access = _fullAccess();
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1;
@@ -365,10 +370,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(find.text('Online Store'));
-      await tester.tap(find.text('Online Store'));
-      await tester.pumpAndSettle();
-      expect(find.text('Online Store is not available yet.'), findsOneWidget);
+      expect(find.text('Online Store'), findsOneWidget);
+      expect(find.text('Online Store is not available yet.'), findsNothing);
     });
 
     testWidgets('mobile uses drawer and keeps footer', (tester) async {

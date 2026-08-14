@@ -6,6 +6,7 @@ import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
+import '../../../presentation/widgets/tenant_admin_pagination.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/tenant_user.dart';
 import '../providers/tenant_user_providers.dart';
@@ -119,10 +120,11 @@ class UserListPanel extends ConsumerWidget {
               onDelete: (user) => _confirmDelete(context, ref, user),
             ),
           if (visibility.showPagination && result.totalCount > 0)
-            _PaginationFooter(
-              page: result.page,
+            TenantAdminPaginationBar(
+              currentPage: result.page,
               pageSize: result.pageSize,
               totalCount: result.totalCount,
+              itemLabel: 'users',
               onPageChanged: (nextPage) =>
                   ref.read(userPageProvider.notifier).state = nextPage,
             ),
@@ -223,58 +225,6 @@ class _PanelTitle extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _PaginationFooter extends StatelessWidget {
-  const _PaginationFooter({
-    required this.page,
-    required this.pageSize,
-    required this.totalCount,
-    required this.onPageChanged,
-  });
-
-  final int page;
-  final int pageSize;
-  final int totalCount;
-  final ValueChanged<int> onPageChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final totalPages =
-        pageSize <= 0 ? 1 : (totalCount / pageSize).ceil().clamp(1, 9999);
-    final rangeStart = totalCount == 0 ? 0 : ((page - 1) * pageSize) + 1;
-    final rangeEnd = (page * pageSize).clamp(0, totalCount);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: TenantAdminSpacing.lg,
-        vertical: TenantAdminSpacing.md,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              'Showing $rangeStart to $rangeEnd of $totalCount users',
-              style: const TextStyle(
-                color: TenantAdminColors.mutedText,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: page > 1 ? () => onPageChanged(page - 1) : null,
-            icon: const Icon(Icons.chevron_left, size: 18),
-          ),
-          Text('$page / $totalPages'),
-          IconButton(
-            onPressed: page < totalPages ? () => onPageChanged(page + 1) : null,
-            icon: const Icon(Icons.chevron_right, size: 18),
-          ),
-        ],
-      ),
     );
   }
 }

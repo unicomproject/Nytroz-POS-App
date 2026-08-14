@@ -15,6 +15,7 @@ import '../../domain/entities/outlet_create_options.dart';
 import '../../domain/entities/outlet_details.dart';
 import '../../domain/entities/outlet_list_query.dart';
 import '../../domain/repositories/outlet_repository.dart';
+import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../utils/outlet_list_filters.dart';
 
 final outletRemoteDatasourceProvider = Provider<OutletRemoteDatasource>((ref) {
@@ -64,7 +65,8 @@ final outletTypeFilterProvider =
 
 final outletPageProvider = StateProvider<int>((ref) => 1);
 
-final outletPageSizeProvider = StateProvider<int>((ref) => 10);
+final outletPageSizeProvider =
+    StateProvider<int>((ref) => TenantAdminContentTokens.defaultListPageSize);
 
 final outletSortByProvider = StateProvider<String>((ref) => 'name');
 
