@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
+import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../providers/till_visibility_provider.dart';
 import '../widgets/till_monitoring_workspace.dart';
 
@@ -71,6 +72,10 @@ class TillMonitoringScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+              TenantAdminPrimaryButton(
+                label: 'Add Till',
+                icon: Icons.add,
+                backgroundColor: TenantAdminColors.posHomeAccentOrange,
                 onPressed: () => context.go('/tenant-admin/tills/add'),
                 icon: const Icon(Icons.add, size: 20),
                 label: const Text('Add Till'),

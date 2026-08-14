@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../../domain/entities/pos_receipt_snapshot.dart';
+import '../../../utils/receipt_cashier_display.dart';
 import '../../../providers/pos_cash_payment_success_provider.dart';
 
 class PaymentSuccessDetailList extends StatelessWidget {
@@ -99,7 +100,11 @@ class PaymentSuccessDetailList extends StatelessWidget {
         _DetailRow(
           icon: Icons.person_outline,
           label: 'Cashier',
-          value: snapshot?.operatorDetails.cashierName ?? cashierName,
+          value: resolveReceiptCashierDisplayName(
+            receiptDataJson: successData.receiptDataJson,
+            paymentCashierName: successData.cashierName,
+            sessionDisplayName: cashierName,
+          ),
         ),
         _DetailRow(
           icon: Icons.person_pin_outlined,

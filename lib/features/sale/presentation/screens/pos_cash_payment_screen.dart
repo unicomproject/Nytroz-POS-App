@@ -75,44 +75,35 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
                 TenantAdminInsets.pageForWidth(constraints.maxWidth);
 
             return Padding(
-              padding: padding,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: CashPaymentScreenBody(
-                      itemCount: summary.itemCount,
-                      subtotal: summary.subtotal,
-                      discount: summary.discount,
-                      tax: summary.tax,
-                      totalDue: total,
-                      items: cart.itemList,
-                      cashReceived: cashReceived,
-                      inputBuffer: cashState.inputBuffer,
-                      quickAmounts: generateCashQuickAmounts(total),
-                      selectedQuickAmount: cashState.selectedQuickAmount,
-                      onQuickAmountSelected: (amount) => ref
-                          .read(posCashPaymentProvider.notifier)
-                          .setAmount(amount, selectedQuickAmount: amount),
-                      onOtherAmountPressed: () {},
-                      onDigitPressed: onKeyTap,
-                      onDoubleZeroPressed: () => onKeyTap('00'),
-                      onBackspacePressed: () => onKeyTap('backspace'),
-                      onClearPressed: () => ref
-                          .read(posCashPaymentProvider.notifier)
-                          .clearAmount(),
-                      isSubmitting: _isSubmitting,
-                      canCompleteSale: canConfirm,
-                      onExactCashPressed: () {
-                        ref
-                            .read(posCashPaymentProvider.notifier)
-                            .setAmount(total, selectedQuickAmount: total);
-                      },
-                      onCompleteSalePressed: () =>
-                          _confirmCashPayment(context, summary),
-                    ),
-                  ),
-                ],
+              padding: EdgeInsets.fromLTRB(
+                padding.left > 16 ? 16 : padding.left,
+                padding.top > 12 ? 12 : padding.top,
+                padding.right > 16 ? 16 : padding.right,
+                padding.bottom > 12 ? 12 : padding.bottom,
+              ),
+              child: CashPaymentScreenBody(
+                itemCount: summary.itemCount,
+                subtotal: summary.subtotal,
+                discount: summary.discount,
+                tax: summary.tax,
+                totalDue: total,
+                items: cart.itemList,
+                cashReceived: cashReceived,
+                inputBuffer: cashState.inputBuffer,
+                quickAmounts: generateCashQuickAmounts(total),
+                selectedQuickAmount: cashState.selectedQuickAmount,
+                onQuickAmountSelected: (amount) => ref
+                    .read(posCashPaymentProvider.notifier)
+                    .setAmount(amount, selectedQuickAmount: amount),
+                onDigitPressed: onKeyTap,
+                onDoubleZeroPressed: () => onKeyTap('00'),
+                onBackspacePressed: () => onKeyTap('backspace'),
+                onClearPressed: () =>
+                    ref.read(posCashPaymentProvider.notifier).clearAmount(),
+                isSubmitting: _isSubmitting,
+                canCompleteSale: canConfirm,
+                onCompleteSalePressed: () =>
+                    _confirmCashPayment(context, summary),
               ),
             );
           },

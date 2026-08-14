@@ -7,12 +7,14 @@ import '../../../../shared/pos_session/pos_session_bootstrap_provider.dart';
 
 import '../../../../core/access/pos_permission_access.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
+import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../till/presentation/providers/till_provider.dart';
 import '../providers/cash_drawer_provider.dart';
 import '../providers/close_till_provider.dart';
 import '../widgets/close_till_bottom_actions.dart';
+import '../widgets/cash_drawer_section_card.dart';
 import '../widgets/close_till_form_card.dart';
 import '../widgets/close_till_mismatch_warning_card.dart';
 import '../widgets/close_till_page_header.dart';
@@ -44,9 +46,21 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
       if (!mounted) {
         return;
       }
-      ref.read(cashDrawerProvider.notifier).refresh();
-      _initializeCloseTillForm();
+      _loadCloseTillData();
     });
+  }
+
+  Future<void> _loadCloseTillData() async {
+    final device = ref.read(deviceActivationProvider).deviceContext;
+    if (device != null) {
+      await ref
+          .read(tillProvider.notifier)
+          .refreshCurrentSession(deviceContext: device, force: true);
+    }
+    await ref.read(cashDrawerProvider.notifier).refresh();
+    if (!mounted) return;
+    _initializeCloseTillForm();
+    setState(() {});
   }
 
   @override
@@ -69,14 +83,15 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
 
     final tillState = ref.read(tillProvider);
     final summary = ref.read(cashDrawerProvider).summary;
+    if (!tillState.hasOpenSession || summary == null || !summary.isOpen) {
+      return;
+    }
     final formNotifier = ref.read(closeTillFormProvider.notifier);
 
     formNotifier.reset();
     formNotifier.restoreDraftIfAvailable();
 
-    if (tillState.hasOpenSession && summary != null && summary.isOpen) {
-      formNotifier.applyDefaultCountedCash(summary.currentExpectedCash);
-    }
+    formNotifier.applyDefaultCountedCash(summary.currentExpectedCash);
 
     _syncControllersFromFormState();
     _initializedForm = true;
@@ -114,10 +129,36 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
       });
     }
 
-    if (summary == null) {
+    if (summary == null && drawerState.isLoading) {
       return const ColoredBox(
         color: TenantAdminColors.background,
         child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (summary == null) {
+      return ColoredBox(
+        color: TenantAdminColors.background,
+        child: Padding(
+          padding:
+              TenantAdminInsets.pageForWidth(MediaQuery.sizeOf(context).width),
+          child: CashDrawerSectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                CloseTillPageHeader(onBack: _goBack),
+                const Spacer(),
+                _CloseTillLoadError(
+                  message: drawerState.errorMessage ??
+                      ref.watch(tillProvider).errorMessage ??
+                      'Close till information is unavailable.',
+                  onRetry: _loadCloseTillData,
+                ),
+                const Spacer(),
+              ],
+            ),
+          ),
+        ),
       );
     }
 
@@ -127,20 +168,21 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
         child: Padding(
           padding:
               TenantAdminInsets.pageForWidth(MediaQuery.sizeOf(context).width),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              CloseTillPageHeader(onBack: _goBack),
-              const SizedBox(height: TenantAdminSpacing.xl),
-              const _TillRequiredMessage(),
-              const Spacer(),
-              CloseTillBottomActions(
-                canCloseTill: false,
-                isLoading: false,
-                onSaveDraft: () {},
-                onCloseTill: () {},
-              ),
-            ],
+          child: CashDrawerSectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                CloseTillPageHeader(onBack: _goBack),
+                const SizedBox(height: TenantAdminSpacing.xl),
+                const _TillRequiredMessage(),
+                const Spacer(),
+                CloseTillBottomActions(
+                  canCloseTill: false,
+                  isLoading: false,
+                  onCloseTill: () {},
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -158,44 +200,81 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
           final padding = TenantAdminInsets.pageForWidth(constraints.maxWidth);
 
           return Padding(
-            padding: padding,
+            padding: EdgeInsets.fromLTRB(
+              padding.left > 16 ? 16 : padding.left,
+              padding.top > 12 ? 12 : padding.top,
+              padding.right > 16 ? 16 : padding.right,
+              padding.bottom > 12 ? 12 : padding.bottom,
+            ),
             child: SizedBox.expand(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  CloseTillPageHeader(onBack: _goBack),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  CloseTillTillInfoBar(summary: summary),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          CloseTillFormCard(
+              child: CashDrawerSectionCard(
+                padding: EdgeInsets.all(
+                  constraints.maxWidth >= TenantAdminBreakpoints.tablet
+                      ? TenantAdminSpacing.lg
+                      : TenantAdminSpacing.md,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CloseTillPageHeader(onBack: _goBack),
+                    const SizedBox(height: 8),
+                    CloseTillTillInfoBar(summary: summary),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, bodyConstraints) {
+                          final useColumns = bodyConstraints.maxWidth >=
+                              TenantAdminBreakpoints.tablet;
+                          final form = CloseTillFormCard(
                             formKey: _formKey,
                             countedCashController: _countedCashController,
                             notesController: _notesController,
                             expectedCash: expectedCash,
-                          ),
-                          if (showMismatchWarning) ...[
-                            const SizedBox(height: TenantAdminSpacing.lg),
-                            const CloseTillMismatchWarningCard(),
-                          ],
-                          const SizedBox(height: TenantAdminSpacing.lg),
-                          CloseTillSummaryCard(expectedCash: expectedCash),
-                        ],
+                          );
+                          final summaryColumn = Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              CloseTillSummaryCard(expectedCash: expectedCash),
+                              if (showMismatchWarning) ...[
+                                const SizedBox(height: 8),
+                                const CloseTillMismatchWarningCard(),
+                              ],
+                              const Spacer(),
+                            ],
+                          );
+
+                          if (useColumns) {
+                            // Fixed two-column fit — no page scroll.
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(flex: 5, child: form),
+                                const SizedBox(width: 12),
+                                Expanded(flex: 3, child: summaryColumn),
+                              ],
+                            );
+                          }
+
+                          // Narrow: fixed vertical split, no page scroll.
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(flex: 3, child: form),
+                              const SizedBox(height: 8),
+                              Expanded(flex: 2, child: summaryColumn),
+                            ],
+                          );
+                        },
                       ),
                     ),
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  CloseTillBottomActions(
-                    canCloseTill: canCloseTill,
-                    isLoading: isSubmitting,
-                    onSaveDraft: _saveDraft,
-                    onCloseTill: _closeTill,
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    CloseTillBottomActions(
+                      canCloseTill: canCloseTill,
+                      isLoading: isSubmitting,
+                      onCloseTill: _closeTill,
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -215,15 +294,6 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
       return;
     }
     context.go('/pos/cash-drawer');
-  }
-
-  void _saveDraft() {
-    ref.read(closeTillFormProvider.notifier).saveDraft();
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(content: Text('Close till draft saved locally.')),
-      );
   }
 
   Future<void> _closeTill() async {
@@ -297,6 +367,39 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
   }
 }
 
+class _CloseTillLoadError extends StatelessWidget {
+  const _CloseTillLoadError({required this.message, required this.onRetry});
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: CashDrawerSectionCard(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline_rounded,
+                  color: TenantAdminColors.danger, size: 40),
+              const SizedBox(height: TenantAdminSpacing.md),
+              Text(message, textAlign: TextAlign.center),
+              const SizedBox(height: TenantAdminSpacing.lg),
+              FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TillRequiredMessage extends StatelessWidget {
   const _TillRequiredMessage();
 
@@ -306,9 +409,9 @@ class _TillRequiredMessage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(TenantAdminSpacing.lg),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
+        color: TenantAdminColors.warningSurface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        border: Border.all(color: const Color(0xFFFED7AA)),
+        border: Border.all(color: TenantAdminColors.warningBorder),
       ),
       child: Text(
         'An open till session is required before closing the till.',

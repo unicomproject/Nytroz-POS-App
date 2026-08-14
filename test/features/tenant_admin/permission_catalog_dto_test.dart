@@ -71,7 +71,11 @@ void main() {
   group('TenantAdminContextDto', () {
     test('prefers effectivePermissions and enabledFeatures when present', () {
       final dto = TenantAdminContextDto.fromBackendJson({
-        'tenant': {'id': 'tenant-1', 'name': 'Coffee Corner Ltd'},
+        'tenant': {
+          'id': 'tenant-1',
+          'name': 'Coffee Corner Ltd',
+          'logoUrl': '/media/tenant-logo.png',
+        },
         'user': {'id': 'user-1', 'fullName': 'Tenant Admin'},
         'roles': [
           {'id': 'role-1', 'name': 'Tenant Admin'},
@@ -87,6 +91,7 @@ void main() {
       expect(dto.permissions.first.permissionCode, 'roles.permissions.view');
       expect(dto.featureEntitlements.first.featureName, 'tenant.roles');
       expect(dto.roles.first.roleId, 'role-1');
+      expect(dto.tenantLogoUrl, '/media/tenant-logo.png');
     });
   });
 }

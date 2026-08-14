@@ -56,7 +56,7 @@ class PaymentSuccessActions extends ConsumerWidget {
             icon: const Icon(Icons.add_rounded),
             label: const Text('Start New Sale'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: TenantAdminColors.danger,
+              backgroundColor: TenantAdminColors.posHomeAccentOrange,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(
                 vertical: TenantAdminSpacing.lg,

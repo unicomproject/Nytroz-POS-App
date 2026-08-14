@@ -16,8 +16,14 @@ class TenantAdminColors {
   static const primaryHover = Color(0xFFE85F00);
   static const secondary = Color(0xFFFFF3EA);
   static const success = Color(0xFF16A34A);
+  static const successSurface = Color(0xFFEFFAF3);
+  static const successBorder = Color(0xFFBBF7D0);
   static const warning = Color(0xFFF59E0B);
+  static const warningSurface = Color(0xFFFFF7ED);
+  static const warningBorder = Color(0xFFFED7AA);
   static const danger = Color(0xFFDC2626);
+  static const dangerSurface = Color(0xFFFEF2F2);
+  static const dangerBorder = Color(0xFFFECACA);
   static const info = Color(0xFF2563EB);
   static const pending = Color(0xFFF59E0B);
   static const offline = Color(0xFF94A3B8);
@@ -34,6 +40,7 @@ class TenantAdminColors {
   static const posHomeDarkSurface = Color(0xFF101010);
   static const posHomeDarkBorder = Color(0xFF555555);
   static const posHomeAccentOrange = Color(0xFFFF6A00);
+  static const expectedCashSurface = Color(0xFFFFF0E6);
   static const posHomeOrangeStart = Color(0xFFFFC400);
   static const posHomeOrangeEnd = Color(0xFFFF6A00);
   static const posHomeTealStart = Color(0xFF13DCC7);
@@ -48,7 +55,7 @@ class TenantAdminColors {
   static const posHomeRedEnd = Color(0xFFF51F2B);
   static const posHomeProfileBlueStart = Color(0xFF53B5FF);
   static const posHomeProfileBlueEnd = Color(0xFF0752C8);
-  static const posNewSaleAccent = Color(0xFFFF2D1A);
+  static const posNewSaleAccent = Color(0xFFFF6A00);
   static const posNewSaleAccentEnd = Color(0xFFFF6A00);
   static const posOnboardingAccent = Color(0xFFFF5A1F);
   static const posOnboardingHeading = Color(0xFF17191F);

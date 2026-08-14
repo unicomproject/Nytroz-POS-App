@@ -313,6 +313,7 @@ class CurrentStockTable extends ConsumerWidget {
                               items: [
                                 TenantAdminContentTokens.defaultListPageSize,
                               ].map((int value) {
+                              items: [10, 25, 50].map((int value) {
                                 return DropdownMenuItem<int>(
                                   value: value,
                                   child: Text(value.toString(),

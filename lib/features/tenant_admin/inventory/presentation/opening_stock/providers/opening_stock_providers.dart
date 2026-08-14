@@ -11,22 +11,26 @@ import '../../../domain/repositories/opening_stock_repository.dart';
 import 'opening_stock_state.dart';
 import 'opening_stock_notifier.dart';
 
-final openingStockRemoteDatasourceProvider = Provider<OpeningStockRemoteDatasource>((ref) {
+final openingStockRemoteDatasourceProvider =
+    Provider<OpeningStockRemoteDatasource>((ref) {
   return OpeningStockRemoteDatasource(ref.watch(appDioProvider));
 });
 
 final openingStockRepositoryProvider = Provider<OpeningStockRepository>((ref) {
-  return OpeningStockRepositoryImpl(ref.watch(openingStockRemoteDatasourceProvider));
+  return OpeningStockRepositoryImpl(
+      ref.watch(openingStockRemoteDatasourceProvider));
 });
 
-final openingStockProvider = StateNotifierProvider<OpeningStockNotifier, OpeningStockState>((ref) {
+final openingStockProvider =
+    StateNotifierProvider<OpeningStockNotifier, OpeningStockState>((ref) {
   final repository = ref.watch(openingStockRepositoryProvider);
   return OpeningStockNotifier(repository);
 });
 
 final openingStockProductSearchProvider = StateProvider<String>((ref) => '');
 
-final openingStockProductsProvider = FutureProvider.autoDispose<List<TenantProduct>>((ref) async {
+final openingStockProductsProvider =
+    FutureProvider.autoDispose<List<TenantProduct>>((ref) async {
   final getProducts = ref.watch(getProductsProvider);
   final search = ref.watch(openingStockProductSearchProvider);
 
@@ -44,7 +48,8 @@ final openingStockProductsProvider = FutureProvider.autoDispose<List<TenantProdu
 
 final openingStockOutletSearchProvider = StateProvider<String>((ref) => '');
 
-final openingStockOutletsProvider = FutureProvider.autoDispose<List<Outlet>>((ref) async {
+final openingStockOutletsProvider =
+    FutureProvider.autoDispose<List<Outlet>>((ref) async {
   final getOutlets = ref.watch(getOutletsProvider);
   final search = ref.watch(openingStockOutletSearchProvider);
 

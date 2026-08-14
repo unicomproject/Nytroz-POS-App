@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:nytroz_pos/features/device_activation/presentation/providers/device_activation_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
-import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_home_dashboard_provider.dart';
 import 'pos_operational_context_card.dart';
 import 'pos_session_status_chip.dart';
@@ -18,18 +15,10 @@ class PosDashboardTopBarContent extends ConsumerWidget {
 
     final dashboard = dashboardAsync.maybeWhen(
       data: (data) => data,
-      orElse: () {
-        final session = ref.watch(authSessionProvider);
-        final deviceContext = ref.watch(deviceActivationProvider).deviceContext;
-        final tillState = ref.watch(tillProvider);
-
-        return buildPosHomeShellState(
-          userDisplayName: session?.userDisplayName ?? '',
-          isTrustedDevice: deviceContext?.isTrusted == true,
-          hasOpenTillSession: tillState.hasOpenSession,
-          permissionCodes: session?.permissionCodes.toSet() ?? const {},
-        );
-      },
+      orElse: () => buildPosHomeShellDashboard(
+        ref,
+        homeError: dashboardAsync.error,
+      ),
     );
 
     return LayoutBuilder(

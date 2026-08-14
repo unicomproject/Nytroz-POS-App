@@ -24,7 +24,8 @@ class CurrentStockScreen extends ConsumerWidget {
     final accessCheckerState = ref.watch(tenantAdminAccessCheckerProvider);
     final accessChecker = accessCheckerState.valueOrNull;
 
-    if (accessChecker == null || !accessChecker.can(TenantAdminPermissionCodes.tenantStockView)) {
+    if (accessChecker == null ||
+        !accessChecker.can(TenantAdminPermissionCodes.tenantStockView)) {
       return const TenantAdminPageScaffold(
         title: 'Current Stock',
         child: TenantAdminEmptyState(
@@ -57,7 +58,7 @@ class CurrentStockScreen extends ConsumerWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final isCompact = constraints.maxWidth < 800;
-              
+
               final searchField = SizedBox(
                 height: 40,
                 child: TextField(
@@ -67,17 +68,26 @@ class CurrentStockScreen extends ConsumerWidget {
                   },
                   decoration: InputDecoration(
                     hintText: 'Search by product name, SKU or scan barcode',
-                    hintStyle: (Theme.of(context).textTheme.bodySmall ?? const TextStyle()).copyWith(color: TenantAdminColors.mutedText),
-                    prefixIcon: const Icon(Icons.search, size: 20, color: TenantAdminColors.mutedText),
-                    suffixIcon: const Icon(Icons.qr_code_scanner, size: 20, color: TenantAdminColors.mutedText),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md, vertical: 0),
+                    hintStyle: (Theme.of(context).textTheme.bodySmall ??
+                            const TextStyle())
+                        .copyWith(color: TenantAdminColors.mutedText),
+                    prefixIcon: const Icon(Icons.search,
+                        size: 20, color: TenantAdminColors.mutedText),
+                    suffixIcon: const Icon(Icons.qr_code_scanner,
+                        size: 20, color: TenantAdminColors.mutedText),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: TenantAdminSpacing.md, vertical: 0),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(TenantAdminSpacing.sm),
-                      borderSide: const BorderSide(color: TenantAdminColors.border),
+                      borderRadius:
+                          BorderRadius.circular(TenantAdminSpacing.sm),
+                      borderSide:
+                          const BorderSide(color: TenantAdminColors.border),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(TenantAdminSpacing.sm),
-                      borderSide: const BorderSide(color: TenantAdminColors.border),
+                      borderRadius:
+                          BorderRadius.circular(TenantAdminSpacing.sm),
+                      borderSide:
+                          const BorderSide(color: TenantAdminColors.border),
                     ),
                     filled: true,
                     fillColor: TenantAdminColors.surface,
@@ -92,7 +102,8 @@ class CurrentStockScreen extends ConsumerWidget {
                 children: [
                   Container(
                     height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: TenantAdminSpacing.md),
                     decoration: BoxDecoration(
                       color: TenantAdminColors.surface,
                       border: Border.all(color: TenantAdminColors.border),
@@ -103,11 +114,14 @@ class CurrentStockScreen extends ConsumerWidget {
                         value: ref.watch(currentStockStatusFilterProvider),
                         hint: Row(
                           children: [
-                            const Icon(Icons.filter_alt_outlined, size: 18, color: TenantAdminColors.bodyText),
+                            const Icon(Icons.filter_alt_outlined,
+                                size: 18, color: TenantAdminColors.bodyText),
                             const SizedBox(width: TenantAdminSpacing.sm),
                             Text(
                               'All Stock Status',
-                              style: (Theme.of(context).textTheme.labelMedium ?? const TextStyle()).copyWith(
+                              style: (Theme.of(context).textTheme.labelMedium ??
+                                      const TextStyle())
+                                  .copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: TenantAdminColors.bodyText,
                               ),
@@ -116,11 +130,14 @@ class CurrentStockScreen extends ConsumerWidget {
                         ),
                         icon: const Padding(
                           padding: EdgeInsets.only(left: TenantAdminSpacing.sm),
-                          child: Icon(Icons.keyboard_arrow_down, size: 18, color: TenantAdminColors.bodyText),
+                          child: Icon(Icons.keyboard_arrow_down,
+                              size: 18, color: TenantAdminColors.bodyText),
                         ),
                         isDense: true,
                         onChanged: (val) {
-                          ref.read(currentStockStatusFilterProvider.notifier).state = val;
+                          ref
+                              .read(currentStockStatusFilterProvider.notifier)
+                              .state = val;
                           ref.read(currentStockPageProvider.notifier).state = 1;
                         },
                         items: [
@@ -128,9 +145,18 @@ class CurrentStockScreen extends ConsumerWidget {
                             value: null,
                             child: Row(
                               children: [
-                                const Icon(Icons.filter_alt_outlined, size: 18, color: TenantAdminColors.bodyText),
+                                const Icon(Icons.filter_alt_outlined,
+                                    size: 18,
+                                    color: TenantAdminColors.bodyText),
                                 const SizedBox(width: TenantAdminSpacing.sm),
-                                Text('All Stock Status', style: (Theme.of(context).textTheme.labelMedium ?? const TextStyle()).copyWith(fontWeight: FontWeight.w600, color: TenantAdminColors.bodyText)),
+                                Text('All Stock Status',
+                                    style: (Theme.of(context)
+                                                .textTheme
+                                                .labelMedium ??
+                                            const TextStyle())
+                                        .copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: TenantAdminColors.bodyText)),
                               ],
                             ),
                           ),
@@ -138,9 +164,17 @@ class CurrentStockScreen extends ConsumerWidget {
                             value: 'IN_STOCK',
                             child: Row(
                               children: [
-                                const Icon(Icons.circle, size: 10, color: TenantAdminColors.success),
+                                const Icon(Icons.circle,
+                                    size: 10, color: TenantAdminColors.success),
                                 const SizedBox(width: TenantAdminSpacing.sm),
-                                Text('In Stock', style: (Theme.of(context).textTheme.labelMedium ?? const TextStyle()).copyWith(fontWeight: FontWeight.w600, color: TenantAdminColors.bodyText)),
+                                Text('In Stock',
+                                    style: (Theme.of(context)
+                                                .textTheme
+                                                .labelMedium ??
+                                            const TextStyle())
+                                        .copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: TenantAdminColors.bodyText)),
                               ],
                             ),
                           ),
@@ -148,9 +182,17 @@ class CurrentStockScreen extends ConsumerWidget {
                             value: 'LOW_STOCK',
                             child: Row(
                               children: [
-                                const Icon(Icons.circle, size: 10, color: TenantAdminColors.warning),
+                                const Icon(Icons.circle,
+                                    size: 10, color: TenantAdminColors.warning),
                                 const SizedBox(width: TenantAdminSpacing.sm),
-                                Text('Low Stock', style: (Theme.of(context).textTheme.labelMedium ?? const TextStyle()).copyWith(fontWeight: FontWeight.w600, color: TenantAdminColors.bodyText)),
+                                Text('Low Stock',
+                                    style: (Theme.of(context)
+                                                .textTheme
+                                                .labelMedium ??
+                                            const TextStyle())
+                                        .copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: TenantAdminColors.bodyText)),
                               ],
                             ),
                           ),
@@ -158,9 +200,17 @@ class CurrentStockScreen extends ConsumerWidget {
                             value: 'OUT_OF_STOCK',
                             child: Row(
                               children: [
-                                const Icon(Icons.circle, size: 10, color: TenantAdminColors.danger),
+                                const Icon(Icons.circle,
+                                    size: 10, color: TenantAdminColors.danger),
                                 const SizedBox(width: TenantAdminSpacing.sm),
-                                Text('Out of Stock', style: (Theme.of(context).textTheme.labelMedium ?? const TextStyle()).copyWith(fontWeight: FontWeight.w600, color: TenantAdminColors.bodyText)),
+                                Text('Out of Stock',
+                                    style: (Theme.of(context)
+                                                .textTheme
+                                                .labelMedium ??
+                                            const TextStyle())
+                                        .copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: TenantAdminColors.bodyText)),
                               ],
                             ),
                           ),
@@ -170,7 +220,8 @@ class CurrentStockScreen extends ConsumerWidget {
                   ),
                   Container(
                     height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: TenantAdminSpacing.md),
                     decoration: BoxDecoration(
                       color: TenantAdminColors.surface,
                       border: Border.all(color: TenantAdminColors.border),
@@ -182,24 +233,34 @@ class CurrentStockScreen extends ConsumerWidget {
                           return Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.location_on_outlined, size: 18, color: Color(0xFF3B82F6)),
+                              const Icon(Icons.location_on_outlined,
+                                  size: 18, color: Color(0xFF3B82F6)),
                               const SizedBox(width: TenantAdminSpacing.sm),
-                              Text(outlets.first.name, style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF3B82F6))),
+                              Text(outlets.first.name,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF3B82F6))),
                             ],
                           );
                         }
 
-                        final selectedId = ref.watch(currentStockOutletFilterProvider);
+                        final selectedId =
+                            ref.watch(currentStockOutletFilterProvider);
                         return DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: selectedId,
                             hint: Row(
                               children: [
-                                const Icon(Icons.location_on_outlined, size: 18, color: Color(0xFF3B82F6)),
+                                const Icon(Icons.location_on_outlined,
+                                    size: 18, color: Color(0xFF3B82F6)),
                                 const SizedBox(width: TenantAdminSpacing.sm),
                                 Text(
                                   'All Outlets',
-                                  style: (Theme.of(context).textTheme.labelMedium ?? const TextStyle()).copyWith(
+                                  style: (Theme.of(context)
+                                              .textTheme
+                                              .labelMedium ??
+                                          const TextStyle())
+                                      .copyWith(
                                     fontWeight: FontWeight.w600,
                                     color: const Color(0xFF3B82F6),
                                   ),
@@ -207,22 +268,33 @@ class CurrentStockScreen extends ConsumerWidget {
                               ],
                             ),
                             icon: const Padding(
-                              padding: EdgeInsets.only(left: TenantAdminSpacing.sm),
-                              child: Icon(Icons.keyboard_arrow_down, size: 18, color: Color(0xFF1E293B)),
+                              padding:
+                                  EdgeInsets.only(left: TenantAdminSpacing.sm),
+                              child: Icon(Icons.keyboard_arrow_down,
+                                  size: 18, color: Color(0xFF1E293B)),
                             ),
                             isDense: true,
                             onChanged: (val) {
-                              ref.read(currentStockOutletFilterProvider.notifier).state = val;
-                              ref.read(currentStockPageProvider.notifier).state = 1;
+                              ref
+                                  .read(
+                                      currentStockOutletFilterProvider.notifier)
+                                  .state = val;
+                              ref
+                                  .read(currentStockPageProvider.notifier)
+                                  .state = 1;
                             },
                             items: [
                               const DropdownMenuItem<String>(
                                 value: null,
                                 child: Row(
                                   children: [
-                                    Icon(Icons.location_on_outlined, size: 18, color: Color(0xFF3B82F6)),
+                                    Icon(Icons.location_on_outlined,
+                                        size: 18, color: Color(0xFF3B82F6)),
                                     SizedBox(width: TenantAdminSpacing.sm),
-                                    Text('All Outlets', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF3B82F6))),
+                                    Text('All Outlets',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF3B82F6))),
                                   ],
                                 ),
                               ),
@@ -230,9 +302,14 @@ class CurrentStockScreen extends ConsumerWidget {
                                     value: o.id,
                                     child: Row(
                                       children: [
-                                        const Icon(Icons.location_on_outlined, size: 18, color: Color(0xFF3B82F6)),
-                                        const SizedBox(width: TenantAdminSpacing.sm),
-                                        Text(o.name, style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF3B82F6))),
+                                        const Icon(Icons.location_on_outlined,
+                                            size: 18, color: Color(0xFF3B82F6)),
+                                        const SizedBox(
+                                            width: TenantAdminSpacing.sm),
+                                        Text(o.name,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF3B82F6))),
                                       ],
                                     ),
                                   )),
@@ -240,53 +317,78 @@ class CurrentStockScreen extends ConsumerWidget {
                           ),
                         );
                       },
-                      loading: () => const Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))),
-                      error: (_, __) => const Text('Error', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      loading: () => const Center(
+                          child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2))),
+                      error: (_, __) => const Text('Error',
+                          style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ),
                   OutlinedButton.icon(
                     onPressed: () async {
                       final dio = ref.read(appDioProvider);
-                      final selectedOutletId = ref.read(currentStockOutletFilterProvider);
+                      final selectedOutletId =
+                          ref.read(currentStockOutletFilterProvider);
                       final search = ref.read(currentStockSearchProvider);
                       final status = ref.read(currentStockStatusFilterProvider);
-                      
+
                       try {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Exporting current stock...')));
-                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Exporting current stock...')));
+
                         final response = await dio.get(
                           '/api/v1/tenant-admin/inventory/current-stock/export',
                           queryParameters: {
-                            if (selectedOutletId != null) 'outletId': selectedOutletId,
-                            if (search.trim().isNotEmpty) 'search': search.trim(),
+                            if (selectedOutletId != null)
+                              'outletId': selectedOutletId,
+                            if (search.trim().isNotEmpty)
+                              'search': search.trim(),
                             if (status != null) 'stockStatus': status,
                           },
                           options: Options(responseType: ResponseType.plain),
                         );
-                        
+
                         final csvString = response.data.toString();
                         downloadCsvFile(csvString, 'current_stock.csv');
-                        
+
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Export successful!')));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Export successful!')));
                       } catch (e) {
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export failed: $e')));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Export failed: $e')));
                       }
                     },
-                    icon: const Icon(Icons.upload, size: 18, color: TenantAdminColors.bodyText),
-                    label: Text('Export', style: (Theme.of(context).textTheme.labelSmall ?? const TextStyle()).copyWith(fontWeight: FontWeight.bold, color: TenantAdminColors.bodyText)),
+                    icon: const Icon(Icons.upload,
+                        size: 18, color: TenantAdminColors.bodyText),
+                    label: Text('Export',
+                        style: (Theme.of(context).textTheme.labelSmall ??
+                                const TextStyle())
+                            .copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: TenantAdminColors.bodyText)),
                     style: OutlinedButton.styleFrom(
                       backgroundColor: TenantAdminColors.surface,
-                      padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.lg),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(TenantAdminSpacing.sm)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: TenantAdminSpacing.lg),
+                      shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(TenantAdminSpacing.sm)),
                       side: const BorderSide(color: TenantAdminColors.border),
                       minimumSize: const Size(120, 48),
                     ),
                   ),
-                  if (accessChecker.can(TenantAdminPermissionCodes.tenantStockIn)) ...[
+                  if (accessChecker
+                      .can(TenantAdminPermissionCodes.tenantStockIn)) ...[
                     TenantAdminPrimaryButton(
                       label: 'Stock In',
                       icon: Icons.add,
@@ -359,4 +461,3 @@ class CurrentStockScreen extends ConsumerWidget {
     );
   }
 }
-

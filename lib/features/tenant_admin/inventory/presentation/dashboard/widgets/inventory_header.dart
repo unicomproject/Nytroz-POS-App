@@ -16,7 +16,6 @@ class InventoryHeader extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 Text(
                   'Inventory Dashboard',
                   style: TenantAdminTextStyles.pageTitle(context),
@@ -24,15 +23,15 @@ class InventoryHeader extends ConsumerWidget {
                 const SizedBox(height: TenantAdminSpacing.xs),
                 Text(
                   'Monitor inventory health and take action on priority items.',
-                  style: (Theme.of(context).textTheme.bodyMedium ?? const TextStyle()).copyWith(color: TenantAdminColors.mutedText),
+                  style: (Theme.of(context).textTheme.bodyMedium ??
+                          const TextStyle())
+                      .copyWith(color: TenantAdminColors.mutedText),
                 ),
               ],
             ),
           ),
-
         ],
       ),
     );
   }
 }
-

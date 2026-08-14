@@ -6,6 +6,7 @@ extension TenantAdminContextMapper on TenantAdminContextDto {
     return TenantAdminContext(
       tenantId: tenantId,
       tenantName: tenantName,
+      tenantLogoUrl: tenantLogoUrl,
       userId: userId,
       userDisplayName: userDisplayName,
       roles: roles.map((role) => role.toEntity()).toList(),

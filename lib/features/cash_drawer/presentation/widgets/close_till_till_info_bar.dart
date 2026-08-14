@@ -16,10 +16,7 @@ class CloseTillTillInfoBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CashDrawerSectionCard(
-      padding: const EdgeInsets.symmetric(
-        horizontal: TenantAdminSpacing.xl,
-        vertical: TenantAdminSpacing.lg,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final useFourColumns =
@@ -46,7 +43,10 @@ class CloseTillTillInfoBar extends StatelessWidget {
             _TillInfoItem(
               icon: Icons.account_balance_wallet_outlined,
               label: 'Expected Cash',
-              value: formatCashDrawerAmount(summary.currentExpectedCash),
+              value: formatCashDrawerAmount(
+                summary.currentExpectedCash,
+                currencyCode: summary.currencyCode,
+              ),
             ),
           ];
 
@@ -54,7 +54,7 @@ class CloseTillTillInfoBar extends StatelessWidget {
             return Row(
               children: [
                 for (var index = 0; index < items.length; index += 1) ...[
-                  if (index > 0) const SizedBox(width: TenantAdminSpacing.lg),
+                  if (index > 0) const SizedBox(width: 16),
                   Expanded(child: items[index]),
                 ],
               ],
@@ -67,15 +67,15 @@ class CloseTillTillInfoBar extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(child: items[0]),
-                    const SizedBox(width: TenantAdminSpacing.lg),
+                    const SizedBox(width: 10),
                     Expanded(child: items[1]),
                   ],
                 ),
-                const SizedBox(height: TenantAdminSpacing.lg),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(child: items[2]),
-                    const SizedBox(width: TenantAdminSpacing.lg),
+                    const SizedBox(width: 10),
                     Expanded(child: items[3]),
                   ],
                 ),
@@ -86,7 +86,7 @@ class CloseTillTillInfoBar extends StatelessWidget {
           return Column(
             children: [
               for (var index = 0; index < items.length; index += 1) ...[
-                if (index > 0) const SizedBox(height: TenantAdminSpacing.md),
+                if (index > 0) const SizedBox(height: 6),
                 items[index],
               ],
             ],
@@ -116,31 +116,37 @@ class _TillInfoItem extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: TenantAdminColors.secondary,
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            color: TenantAdminColors.expectedCashSurface,
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: TenantAdminColors.info, size: 22),
+          child: Icon(
+            icon,
+            color: TenantAdminColors.posHomeAccentOrange,
+            size: 21,
+          ),
         ),
-        const SizedBox(width: TenantAdminSpacing.md),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: TenantAdminColors.mutedText,
                       fontWeight: FontWeight.w600,
+                      fontSize: 12,
                     ),
               ),
-              const SizedBox(height: TenantAdminSpacing.xs),
+              const SizedBox(height: 4),
               Text(
                 value,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: TenantAdminColors.bodyText,
                       fontWeight: FontWeight.w800,
+                      fontSize: 15,
                     ),
               ),
             ],

@@ -6,16 +6,29 @@ import '../../../application/state/pos_home_dashboard_state.dart';
 import '../../providers/pos_home_dashboard_provider.dart';
 
 class PosBranding extends ConsumerWidget {
-  const PosBranding({super.key, this.dashboard});
+  const PosBranding({
+    super.key,
+    this.dashboard,
+    this.brandName,
+    this.logoUrl,
+  });
 
   final PosHomeDashboardState? dashboard;
+  final String? brandName;
+  final String? logoUrl;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state =
         dashboard ?? ref.watch(posHomeDashboardProvider).asData?.value;
-    final name = state?.businessDisplayName.trim() ?? 'OneVerz POS';
-    final logoUrl = state?.businessLogoUrl;
+    final resolvedName = brandName?.trim().isNotEmpty == true
+        ? brandName!.trim()
+        : state?.businessDisplayName.trim().isNotEmpty == true
+            ? state!.businessDisplayName.trim()
+            : 'OneVerz POS';
+    final resolvedLogoUrl = logoUrl?.trim().isNotEmpty == true
+        ? logoUrl!.trim()
+        : state?.businessLogoUrl;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -23,19 +36,19 @@ class PosBranding extends ConsumerWidget {
           borderRadius: BorderRadius.circular(TenantAdminRadius.md),
           child: SizedBox.square(
             dimension: 52,
-            child: logoUrl?.isNotEmpty == true
+            child: resolvedLogoUrl?.isNotEmpty == true
                 ? Image.network(
-                    logoUrl!,
+                    resolvedLogoUrl!,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => const _LogoFallback(),
                   )
                 : const _LogoFallback(),
           ),
         ),
-        if (name.isNotEmpty) ...[
+        if (resolvedName.isNotEmpty) ...[
           const SizedBox(width: TenantAdminSpacing.sm),
           Flexible(
-            child: _BrandName(name: name),
+            child: _BrandName(name: resolvedName),
           ),
         ],
       ],

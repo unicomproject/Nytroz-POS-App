@@ -89,7 +89,8 @@ class AddTillHardwareStatusCard extends StatelessWidget {
       ),
       color: cardBgColor,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md, vertical: TenantAdminSpacing.sm),
+        padding: const EdgeInsets.symmetric(
+            horizontal: TenantAdminSpacing.md, vertical: TenantAdminSpacing.sm),
         child: Row(
           children: [
             // Image 2 shows actual device images, but we will use icon if we don't have images.
@@ -146,13 +147,16 @@ class AddTillHardwareStatusCard extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: iconColor,
                   side: BorderSide(color: iconColor.withValues(alpha: 0.5)),
-                  backgroundColor: TenantAdminColors.surface.withValues(alpha: 0.5),
+                  backgroundColor:
+                      TenantAdminColors.surface.withValues(alpha: 0.5),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                   ),
                 ),
-                child: Text(actionLabel, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                child: Text(actionLabel,
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.bold)),
               )
             else
               TextButton(

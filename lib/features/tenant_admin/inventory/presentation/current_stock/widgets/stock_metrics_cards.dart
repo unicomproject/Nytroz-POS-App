@@ -12,6 +12,7 @@ class StockMetricsCards extends StatelessWidget {
   });
 
   final ProductStockDetail detail;
+
   /// Sub-label shown under each metric value.
   final String outletLabel;
 
@@ -58,10 +59,13 @@ class StockMetricsCards extends StatelessWidget {
 
         if (width < 600) {
           return Column(
-            children: cards.map((c) => Padding(
-              padding: const EdgeInsets.only(bottom: TenantAdminSpacing.md),
-              child: c,
-            )).toList(),
+            children: cards
+                .map((c) => Padding(
+                      padding:
+                          const EdgeInsets.only(bottom: TenantAdminSpacing.md),
+                      child: c,
+                    ))
+                .toList(),
           );
         }
 
@@ -137,8 +141,7 @@ class _MetricCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius: BorderRadius.circular(12)),
+                color: iconBg, borderRadius: BorderRadius.circular(12)),
             child: Icon(icon, color: iconColor, size: 24),
           ),
           const SizedBox(width: 16),

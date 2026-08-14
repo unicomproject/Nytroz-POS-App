@@ -21,8 +21,10 @@ class OpeningStockLineRequestDto {
       if (variantId != null) 'variantId': variantId,
       'quantity': quantity,
       'unitCost': unitCost,
-      if (batchNumber != null && batchNumber!.isNotEmpty) 'batchNumber': batchNumber,
-      if (expiryDate != null && expiryDate!.isNotEmpty) 'expiryDate': expiryDate,
+      if (batchNumber != null && batchNumber!.isNotEmpty)
+        'batchNumber': batchNumber,
+      if (expiryDate != null && expiryDate!.isNotEmpty)
+        'expiryDate': expiryDate,
     };
   }
 }
@@ -73,7 +75,8 @@ class OpeningStockResponseDto {
       outletId: data['outletId']?.toString() ?? '',
       movementType: data['movementType']?.toString() ?? 'OpeningStock',
       itemCount: (data['itemCount'] as num?)?.toInt() ?? 0,
-      createdAt: data['createdAt']?.toString() ?? DateTime.now().toIso8601String(),
+      createdAt:
+          data['createdAt']?.toString() ?? DateTime.now().toIso8601String(),
     );
   }
 }

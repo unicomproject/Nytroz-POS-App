@@ -10,7 +10,8 @@ class OutletSelectionPanel extends ConsumerStatefulWidget {
   const OutletSelectionPanel({super.key});
 
   @override
-  ConsumerState<OutletSelectionPanel> createState() => _OutletSelectionPanelState();
+  ConsumerState<OutletSelectionPanel> createState() =>
+      _OutletSelectionPanelState();
 }
 
 class _OutletSelectionPanelState extends ConsumerState<OutletSelectionPanel> {
@@ -51,7 +52,6 @@ class _OutletSelectionPanelState extends ConsumerState<OutletSelectionPanel> {
           ),
         ),
         const SizedBox(height: 14),
-
         Row(
           children: [
             Expanded(
@@ -64,17 +64,21 @@ class _OutletSelectionPanelState extends ConsumerState<OutletSelectionPanel> {
                 child: TextField(
                   controller: _searchController,
                   onChanged: (val) {
-                    ref.read(openingStockOutletSearchProvider.notifier).state = val;
+                    ref.read(openingStockOutletSearchProvider.notifier).state =
+                        val;
                   },
                   decoration: const InputDecoration(
                     hintText: 'Search outlet or warehouse',
-                    hintStyle: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                    prefixIcon: Icon(Icons.search, color: Color(0xFF94A3B8), size: 20),
+                    hintStyle:
+                        TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                    prefixIcon:
+                        Icon(Icons.search, color: Color(0xFF94A3B8), size: 20),
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 12),
                   ),
-                  style: const TextStyle(fontSize: 13, color: TenantAdminColors.bodyText),
+                  style: const TextStyle(
+                      fontSize: 13, color: TenantAdminColors.bodyText),
                 ),
               ),
             ),
@@ -90,7 +94,8 @@ class _OutletSelectionPanelState extends ConsumerState<OutletSelectionPanel> {
                 child: DropdownButton<String>(
                   value: _selectedType,
                   isDense: true,
-                  icon: const Icon(Icons.keyboard_arrow_down, size: 18, color: Color(0xFF64748B)),
+                  icon: const Icon(Icons.keyboard_arrow_down,
+                      size: 18, color: Color(0xFF64748B)),
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -101,14 +106,16 @@ class _OutletSelectionPanelState extends ConsumerState<OutletSelectionPanel> {
                       value: 'All Types',
                       child: Row(
                         children: [
-                          Icon(Icons.filter_list, size: 15, color: Color(0xFF64748B)),
+                          Icon(Icons.filter_list,
+                              size: 15, color: Color(0xFF64748B)),
                           SizedBox(width: 4),
                           Text('All Types'),
                         ],
                       ),
                     ),
                     DropdownMenuItem(value: 'Outlet', child: Text('Outlets')),
-                    DropdownMenuItem(value: 'Warehouse', child: Text('Warehouses')),
+                    DropdownMenuItem(
+                        value: 'Warehouse', child: Text('Warehouses')),
                   ],
                   onChanged: (val) {
                     if (val != null) setState(() => _selectedType = val);
@@ -119,7 +126,6 @@ class _OutletSelectionPanelState extends ConsumerState<OutletSelectionPanel> {
           ],
         ),
         const SizedBox(height: 12),
-
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Row(
@@ -147,7 +153,6 @@ class _OutletSelectionPanelState extends ConsumerState<OutletSelectionPanel> {
           ),
         ),
         const SizedBox(height: 6),
-
         Expanded(
           child: outletsAsync.when(
             data: (allOutlets) {
@@ -167,11 +172,13 @@ class _OutletSelectionPanelState extends ConsumerState<OutletSelectionPanel> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
-                      Icon(Icons.storefront_outlined, size: 36, color: Color(0xFFCBD5E1)),
+                      Icon(Icons.storefront_outlined,
+                          size: 36, color: Color(0xFFCBD5E1)),
                       SizedBox(height: 6),
                       Text(
                         'No outlets found',
-                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                        style:
+                            TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
                       ),
                     ],
                   ),
@@ -183,10 +190,12 @@ class _OutletSelectionPanelState extends ConsumerState<OutletSelectionPanel> {
                   Expanded(
                     child: ListView.separated(
                       itemCount: filteredOutlets.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 6),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 6),
                       itemBuilder: (context, index) {
                         final outlet = filteredOutlets[index];
-                        final isSelected = state.selectedOutlet?.id == outlet.id;
+                        final isSelected =
+                            state.selectedOutlet?.id == outlet.id;
 
                         return OutletListTile(
                           outlet: outlet,
@@ -202,7 +211,8 @@ class _OutletSelectionPanelState extends ConsumerState<OutletSelectionPanel> {
                     children: [
                       Text(
                         'Showing ${filteredOutlets.length} of ${allOutlets.length} outlets',
-                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        style: const TextStyle(
+                            fontSize: 11, color: Color(0xFF64748B)),
                       ),
                       const Text(
                         'View all',
@@ -218,7 +228,8 @@ class _OutletSelectionPanelState extends ConsumerState<OutletSelectionPanel> {
               );
             },
             loading: () => const Center(
-              child: CircularProgressIndicator(color: primaryOrange, strokeWidth: 2.5),
+              child: CircularProgressIndicator(
+                  color: primaryOrange, strokeWidth: 2.5),
             ),
             error: (err, stack) => Center(
               child: Text(
@@ -229,13 +240,11 @@ class _OutletSelectionPanelState extends ConsumerState<OutletSelectionPanel> {
           ),
         ),
         const SizedBox(height: 12),
-
         SelectionSummaryCard(
           selectedProduct: state.selectedProduct,
           selectedOutlet: state.selectedOutlet,
         ),
         const SizedBox(height: 8),
-
         const OpeningStockInfoBanner(),
       ],
     );

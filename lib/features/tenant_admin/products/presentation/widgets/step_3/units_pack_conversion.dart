@@ -182,7 +182,9 @@ class _UnitsPackConversionFormState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(
-              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+              isSelected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
               color: isSelected ? activeColor : TenantAdminColors.mutedText,
               size: 24,
             ),

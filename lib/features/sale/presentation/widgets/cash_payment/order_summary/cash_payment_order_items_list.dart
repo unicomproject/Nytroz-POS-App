@@ -14,24 +14,28 @@ class CashPaymentOrderItemsList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: TenantAdminSpacing.lg,
-            vertical: TenantAdminSpacing.sm,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: DefaultTextStyle(
-            style: Theme.of(context).textTheme.bodySmall!.copyWith(
+            style: Theme.of(context).textTheme.labelSmall!.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: TenantAdminColors.primary,
+                  color: TenantAdminColors.posHomeAccentOrange,
+                  fontSize: 10,
                 ),
             child: const Row(
               children: [
                 Expanded(flex: 5, child: Text('Item')),
                 Expanded(
-                    flex: 2, child: Text('Qty', textAlign: TextAlign.center)),
+                  flex: 2,
+                  child: Text('Qty', textAlign: TextAlign.center),
+                ),
                 Expanded(
-                    flex: 3, child: Text('Price', textAlign: TextAlign.right)),
+                  flex: 3,
+                  child: Text('Price', textAlign: TextAlign.right),
+                ),
                 Expanded(
-                    flex: 3, child: Text('Total', textAlign: TextAlign.right)),
+                  flex: 3,
+                  child: Text('Total', textAlign: TextAlign.right),
+                ),
               ],
             ),
           ),
