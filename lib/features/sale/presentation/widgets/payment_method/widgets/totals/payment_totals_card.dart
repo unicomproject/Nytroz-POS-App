@@ -29,7 +29,10 @@ class PaymentTotalsCard extends StatelessWidget {
               colour: PaymentMethodStyle.navy),
           const Divider(height: 10, color: PaymentMethodStyle.border),
           PaymentTotalRow(
-              label: 'Total Amount', value: summary.totalPayable, strong: true),
+              label: 'Total Amount',
+              value: summary.totalPayable,
+              strong: true,
+              colour: PaymentMethodStyle.orange),
         ]),
       );
 }

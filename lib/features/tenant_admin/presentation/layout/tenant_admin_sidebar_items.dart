@@ -48,10 +48,11 @@ class TenantAdminSidebarItem extends StatelessWidget {
           onTap: enabled ? onTap : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
-            margin: const EdgeInsets.only(right: 16),
+            margin:
+                collapsed ? EdgeInsets.zero : const EdgeInsets.only(right: 16),
             padding: EdgeInsets.only(
-              left: compact ? 16 : 24,
-              right: compact ? 10 : 12,
+              left: collapsed ? 0 : (compact ? 16 : 24),
+              right: collapsed ? 0 : (compact ? 10 : 12),
               top: compact ? 10 : 11,
               bottom: compact ? 10 : 11,
             ),
@@ -64,6 +65,9 @@ class TenantAdminSidebarItem extends StatelessWidget {
               ),
             ),
             child: Row(
+              mainAxisAlignment: collapsed
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.start,
               children: [
                 Icon(icon, size: 18, color: iconColor),
                 if (!collapsed) ...[
@@ -213,10 +217,11 @@ class ProductsSidebarParentAlias extends StatelessWidget {
         onTap: onToggle,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          margin: const EdgeInsets.only(right: 16),
+          margin:
+              collapsed ? EdgeInsets.zero : const EdgeInsets.only(right: 16),
           padding: EdgeInsets.only(
-            left: compact ? 16 : 24,
-            right: compact ? 10 : 12,
+            left: collapsed ? 0 : (compact ? 16 : 24),
+            right: collapsed ? 0 : (compact ? 10 : 12),
             top: compact ? 10 : 11,
             bottom: compact ? 10 : 11,
           ),
@@ -229,6 +234,8 @@ class ProductsSidebarParentAlias extends StatelessWidget {
             ),
           ),
           child: Row(
+            mainAxisAlignment:
+                collapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
             children: [
               Icon(icon, size: 18, color: iconColor),
               if (!collapsed) ...[

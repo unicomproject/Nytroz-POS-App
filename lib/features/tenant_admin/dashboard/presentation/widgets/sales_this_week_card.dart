@@ -10,11 +10,15 @@ class SalesThisWeekCard extends StatefulWidget {
     required this.salesSummary,
     this.showTrend = true,
     this.showReportsLink = false,
+    this.expandChart = false,
+    this.compact = false,
   });
 
   final TenantDashboardSalesSummary? salesSummary;
   final bool showTrend;
   final bool showReportsLink;
+  final bool expandChart;
+  final bool compact;
 
   @override
   State<SalesThisWeekCard> createState() => _SalesThisWeekCardState();
@@ -25,54 +29,79 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
 
   @override
   Widget build(BuildContext context) {
+    final padding = widget.compact ? 18.0 : 22.0;
+
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: TenantAdminColors.border),
+        boxShadow: TenantAdminShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final tabs = Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildTab(0, 'Today'),
+                  _buildTab(1, 'This Week'),
+                  _buildTab(2, 'This Month'),
+                ],
+              );
+
+              final title = Text(
                 'Sales Trend',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: widget.compact ? 15 : 16,
                   fontWeight: FontWeight.w700,
                   color: TenantAdminColors.navy,
                 ),
-              ),
-              Row(
+              );
+
+              if (constraints.maxWidth < 480) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    title,
+                    const SizedBox(height: 10),
+                    tabs,
+                  ],
+                );
+              }
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildTab(0, 'Today'),
-                  const SizedBox(width: 8),
-                  _buildTab(1, 'This Week'),
-                  const SizedBox(width: 8),
-                  _buildTab(2, 'This Month'),
+                  Expanded(child: title),
+                  const SizedBox(width: 12),
+                  tabs,
                 ],
-              ),
-            ],
+              );
+            },
           ),
-          const SizedBox(height: 24),
-          const Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          SizedBox(height: widget.compact ? 14 : 20),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.end,
             children: [
               Text(
                 'LKR 125,450.00',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: widget.compact ? 21 : 24,
                   fontWeight: FontWeight.w800,
                   color: TenantAdminColors.navy,
                 ),
               ),
-              SizedBox(width: 8),
-              Padding(
+              const Padding(
                 padding: EdgeInsets.only(bottom: 4),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.arrow_upward,
                         color: TenantAdminColors.success, size: 16),
@@ -90,7 +119,7 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: widget.compact ? 2 : 4),
           const Text(
             'vs Yesterday (LKR 111,400.00)',
             style: TextStyle(
@@ -99,16 +128,19 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
               color: TenantAdminColors.mutedText,
             ),
           ),
-          const SizedBox(height: 24),
-          SizedBox(
-            height: 240,
-            child: _buildChart(),
-          ),
-          const SizedBox(height: 16),
+          SizedBox(height: widget.compact ? 12 : 20),
+          if (widget.expandChart)
+            Expanded(child: _buildChart())
+          else
+            SizedBox(
+              height: widget.compact ? 210 : 240,
+              child: _buildChart(),
+            ),
+          SizedBox(height: widget.compact ? 10 : 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLegendItem(const Color(0xFFFF7A00), 'Today',
+              _buildLegendItem(TenantAdminColors.posHomeAccentOrange, 'Today',
                   isDashed: false),
               const SizedBox(width: 24),
               _buildLegendItem(TenantAdminColors.mutedText, 'Yesterday',
@@ -129,8 +161,9 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           border: Border.all(
-            color:
-                isSelected ? const Color(0xFFFF7A00) : TenantAdminColors.border,
+            color: isSelected
+                ? TenantAdminColors.posHomeAccentOrange
+                : TenantAdminColors.border,
           ),
           borderRadius: BorderRadius.circular(20),
           color: isSelected ? const Color(0xFFFFF7ED) : Colors.transparent,
@@ -141,7 +174,7 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             color: isSelected
-                ? const Color(0xFFFF7A00)
+                ? TenantAdminColors.posHomeAccentOrange
                 : TenantAdminColors.mutedText,
           ),
         ),
@@ -288,7 +321,7 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
               FlSpot(23, 17000),
             ],
             isCurved: true,
-            color: const Color(0xFFFF7A00),
+            color: TenantAdminColors.posHomeAccentOrange,
             barWidth: 2,
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
@@ -296,8 +329,8 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFFFF7A00).withValues(alpha: 0.3),
-                  const Color(0xFFFF7A00).withValues(alpha: 0.0),
+                  TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.3),
+                  TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.0),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,

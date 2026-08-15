@@ -76,7 +76,8 @@ void main() {
         width: 1200,
       );
 
-      expect(find.text('Search users by name, email or phone...'), findsOneWidget);
+      expect(
+          find.text('Search users by name, email or phone...'), findsOneWidget);
       expect(find.text('Till Access'), findsNothing);
       expect(find.text('Reset PIN'), findsNothing);
     });

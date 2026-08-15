@@ -32,8 +32,7 @@ class ProductInfoCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(TenantAdminSpacing.md),
               image: (detail.imageUrl != null && detail.imageUrl!.isNotEmpty)
                   ? DecorationImage(
-                      image: NetworkImage(detail.imageUrl!),
-                      fit: BoxFit.cover)
+                      image: NetworkImage(detail.imageUrl!), fit: BoxFit.cover)
                   : null,
             ),
             child: (detail.imageUrl == null || detail.imageUrl!.isEmpty)
@@ -60,20 +59,17 @@ class ProductInfoCard extends StatelessWidget {
                   Text(
                     'SKU: ${detail.sku ?? 'N/A'}',
                     style: const TextStyle(
-                        fontSize: 14,
-                        color: TenantAdminColors.mutedText),
+                        fontSize: 14, color: TenantAdminColors.mutedText),
                   ),
                   const SizedBox(width: 8),
                   InkWell(
                     onTap: () {
                       if (detail.sku != null) {
-                        Clipboard.setData(
-                            ClipboardData(text: detail.sku!));
+                        Clipboard.setData(ClipboardData(text: detail.sku!));
                       }
                     },
                     child: const Icon(Icons.content_copy_outlined,
-                        size: 15,
-                        color: TenantAdminColors.mutedText),
+                        size: 15, color: TenantAdminColors.mutedText),
                   ),
                 ],
               ),
@@ -88,19 +84,26 @@ class ProductInfoCard extends StatelessWidget {
                       icon: Icons.sell_outlined,
                       label: 'Variant',
                       iconColor: const Color(0xFF3B82F6),
-                      value: (detail.variantName != null && detail.variantName!.isNotEmpty) ? detail.variantName! : 'Default'),
+                      value: (detail.variantName != null &&
+                              detail.variantName!.isNotEmpty)
+                          ? detail.variantName!
+                          : 'Default'),
                   if (!isSmall) const _VerticalDivider(),
                   ProductInfoChip(
                       icon: Icons.grid_view_outlined,
                       label: 'Category',
                       iconColor: const Color(0xFF8B5CF6),
-                      value: (detail.categoryName != null && detail.categoryName!.isNotEmpty) ? detail.categoryName! : 'N/A'),
+                      value: (detail.categoryName != null &&
+                              detail.categoryName!.isNotEmpty)
+                          ? detail.categoryName!
+                          : 'N/A'),
                   if (!isSmall) const _VerticalDivider(),
                   _StatusChip(
                     label: 'Status',
                     value: detail.stockStatus ?? 'Unknown',
-                    isActive: (detail.stockStatus?.toLowerCase() == 'in stock' ||
-                        detail.stockStatus?.toLowerCase() == 'instock'),
+                    isActive:
+                        (detail.stockStatus?.toLowerCase() == 'in stock' ||
+                            detail.stockStatus?.toLowerCase() == 'instock'),
                   ),
                 ],
               ),
@@ -118,7 +121,8 @@ class ProductInfoCard extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFFF97316), // Orange
                   side: const BorderSide(color: Color(0xFFF97316)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   textStyle: const TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600),
                 ),
@@ -130,7 +134,8 @@ class ProductInfoCard extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF97316), // Orange
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   textStyle: const TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600),
                 ),
@@ -236,8 +241,9 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? TenantAdminColors.success : TenantAdminColors.danger;
-    
+    final color =
+        isActive ? TenantAdminColors.success : TenantAdminColors.danger;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -248,7 +254,8 @@ class _StatusChip extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: color, width: 1.5),
           ),
-          child: Icon(isActive ? Icons.check : Icons.close, size: 14, color: color),
+          child: Icon(isActive ? Icons.check : Icons.close,
+              size: 14, color: color),
         ),
         const SizedBox(width: 12),
         Column(
@@ -267,9 +274,7 @@ class _StatusChip extends StatelessWidget {
               ),
               child: Text(value,
                   style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: color)),
+                      fontSize: 11, fontWeight: FontWeight.w600, color: color)),
             ),
           ],
         ),

@@ -589,6 +589,33 @@ class TenantAdminPermissionAliases {
     'notification.read': [
       'notification.read',
     ],
+    'tenant.online_store.view': [
+      'tenant.online_store.view',
+    ],
+    'tenant.online_store.manage': [
+      'tenant.online_store.manage',
+    ],
+    'tenant.online_store.publish': [
+      'tenant.online_store.publish',
+    ],
+    'tenant.online_store.domains.manage': [
+      'tenant.online_store.domains.manage',
+    ],
+    'tenant.online_store.branding.manage': [
+      'tenant.online_store.branding.manage',
+    ],
+    'tenant.online_store.support.manage': [
+      'tenant.online_store.support.manage',
+    ],
+    'tenant.online_store.fulfillment.manage': [
+      'tenant.online_store.fulfillment.manage',
+    ],
+    'tenant.online_store.catalog.manage': [
+      'tenant.online_store.catalog.manage',
+    ],
+    'tenant.online_store.policies.manage': [
+      'tenant.online_store.policies.manage',
+    ],
     'support.view': [
       'support.view',
     ],

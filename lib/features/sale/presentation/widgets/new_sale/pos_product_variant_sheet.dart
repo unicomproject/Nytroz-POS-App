@@ -809,11 +809,13 @@ class _PosProductVariantSheetState
     }
 
     final normalizedNote = _noteController.text.trim();
+    final mainClientLineId = _newUuidV4();
     final cartProduct = toCartProduct(
       summary: detail.summary,
       variant: variant,
       quantity: _quantity,
       lineNote: normalizedNote.isEmpty ? null : normalizedNote,
+      clientLineId: mainClientLineId,
     );
     final notifier = ref.read(posNewSaleCartProvider.notifier);
 
@@ -821,11 +823,15 @@ class _PosProductVariantSheetState
         .where(
             (item) => _selectedRecommendationIds.contains(item.relationshipId))
         .toList(growable: false);
+    final recommendationClientLineIds = <String, String>{
+      for (final recommendation in selectedRecommendations)
+        recommendation.relationshipId: _newUuidV4(),
+    };
     final requestLines = <PosCheckoutLineRequest>[
       PosCheckoutLineRequest(
         variantId: variant.variantId,
         quantity: _quantity,
-        clientLineId: _newUuidV4(),
+        clientLineId: mainClientLineId,
         uomId: variant.salesUomId,
         lineNote: normalizedNote.isEmpty ? null : normalizedNote,
         source: 'product_popup',
@@ -834,7 +840,8 @@ class _PosProductVariantSheetState
         PosCheckoutLineRequest(
           variantId: recommendation.variantId!,
           quantity: 1,
-          clientLineId: _newUuidV4(),
+          clientLineId:
+              recommendationClientLineIds[recommendation.relationshipId],
           source: 'recommendation',
           recommendationParentProductId: detail.summary.productId,
           recommendationRelationshipId: recommendation.relationshipId,
@@ -886,6 +893,8 @@ class _PosProductVariantSheetState
           imageUrl: recommendation.imageUrl,
           stockStatus: recommendation.stockStatus,
           stockLabel: recommendation.stockStatus,
+          clientLineId:
+              recommendationClientLineIds[recommendation.relationshipId],
           source: 'recommendation',
           recommendationParentProductId: detail.summary.productId,
           recommendationRelationshipId: recommendation.relationshipId,

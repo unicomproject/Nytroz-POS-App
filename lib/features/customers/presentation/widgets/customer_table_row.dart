@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../sale/domain/entities/pos_customer.dart';
 import 'customer_status_badge.dart';
+import 'customers_ui_tokens.dart';
 
 class CustomerTableRow extends StatelessWidget {
   const CustomerTableRow({
@@ -36,7 +38,9 @@ class CustomerTableRow extends StatelessWidget {
             border: Border(
               bottom: const BorderSide(color: Color(0xFFE2E6ED)),
               left: BorderSide(
-                color: selected ? const Color(0xFFFF3214) : Colors.transparent,
+                color: selected
+                    ? TenantAdminColors.posHomeAccentOrange
+                    : Colors.transparent,
                 width: 3,
               ),
             ),
@@ -85,7 +89,7 @@ class CustomerTableRow extends StatelessWidget {
                       onPressed: onSelect,
                       style: IconButton.styleFrom(
                         backgroundColor: selected
-                            ? const Color(0xFFFF3214)
+                            ? TenantAdminColors.posHomeAccentOrange
                             : const Color(0xFFF1F5F9),
                         foregroundColor:
                             selected ? Colors.white : const Color(0xFF06235D),
@@ -311,8 +315,9 @@ class CustomerListCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color:
-                  selected ? const Color(0xFFFF3214) : const Color(0xFFE2E6ED),
+              color: selected
+                  ? TenantAdminColors.posHomeAccentOrange
+                  : const Color(0xFFE2E6ED),
               width: selected ? 2 : 1,
             ),
           ),
@@ -387,13 +392,14 @@ class CustomerSourceBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF2FF),
+        color: CustomersUiTokens.lightBlueSurface,
         borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: CustomersUiTokens.lightBlueBorder),
       ),
       child: Text(
         customer.sourceLabel,
         style: const TextStyle(
-          color: Color(0xFF1464F4),
+          color: CustomersUiTokens.accentText,
           fontSize: 11,
           fontWeight: FontWeight.w700,
         ),

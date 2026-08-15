@@ -57,7 +57,18 @@ final posHomeDashboardProvider =
       );
 
   if (!payload.contextResolved) {
-    throw PosHomeException(payload.userFacingErrorMessage);
+    if (shouldClearStaleTillSessionForHomeReason(payload.reasonCode)) {
+      await ref.read(tillProvider.notifier).clear();
+    }
+    throw PosHomeException(
+      payload.userFacingErrorMessage,
+      reasonCode: payload.reasonCode,
+      requiredAction: payload.requiredAction,
+    );
+  }
+
+  if (!payload.isTillOpen && ref.read(tillProvider).hasOpenSession) {
+    await ref.read(tillProvider.notifier).clear();
   }
 
   final sessionPermissions = session.permissionCodes.toSet();
@@ -69,6 +80,62 @@ final posHomeDashboardProvider =
     sessionPermissions: sessionPermissions,
   );
 });
+
+const posHomeTillSessionBlockingReasonCodes = {
+  'NO_OPEN_TILL_SESSION',
+  'TILL_NOT_FOUND',
+  'TILL_INACTIVE',
+  'DEVICE_NOT_ASSIGNED_TO_TILL',
+};
+
+bool shouldClearStaleTillSessionForHomeReason(String? reasonCode) =>
+    reasonCode != null &&
+    posHomeTillSessionBlockingReasonCodes.contains(reasonCode);
+
+bool resolveAuthoritativeTillOpen({
+  required AsyncValue<PosHomeDashboardState> homeAsync,
+  required bool localTillOpen,
+}) {
+  return homeAsync.when(
+    data: (dashboard) => dashboard.isTillOpen,
+    loading: () => homeAsync.hasValue ? homeAsync.value!.isTillOpen : false,
+    error: (error, _) {
+      if (error is PosHomeException && error.shouldClearStaleTillSession) {
+        return false;
+      }
+      return false;
+    },
+  );
+}
+
+PosHomeDashboardState buildPosHomeShellDashboard(
+  WidgetRef ref, {
+  Object? homeError,
+}) {
+  final session = ref.watch(authSessionProvider);
+  final deviceContext = ref.watch(deviceActivationProvider).deviceContext;
+  final tillState = ref.watch(tillProvider);
+  final homeAsync = ref.watch(posHomeDashboardProvider);
+
+  final hasOpenTillSession = homeError != null
+      ? false
+      : resolveAuthoritativeTillOpen(
+          homeAsync: homeAsync,
+          localTillOpen: tillState.hasOpenSession,
+        );
+
+  return buildPosHomeShellState(
+    userDisplayName: session?.userDisplayName ?? '',
+    isTrustedDevice: deviceContext?.isTrusted == true,
+    hasOpenTillSession: hasOpenTillSession,
+    permissionCodes: session?.permissionCodes.toSet() ?? const {},
+  );
+}
+
+Future<void> retryPosHomeDashboard(WidgetRef ref) async {
+  await ref.read(posSessionBootstrapProvider.notifier).bootstrap(force: true);
+  ref.invalidate(posHomeDashboardProvider);
+}
 
 void _ensureAuthorizationHeader(Dio dio, AuthSession session) {
   final currentValue = dio.options.headers['Authorization'];

@@ -143,6 +143,7 @@ class _PosCashDropScreenState extends ConsumerState<PosCashDropScreen> {
                                   flex: 2,
                                   child: CashDropSummaryCard(
                                     currentExpectedCash: availableCash,
+                                    currencyCode: summary.currencyCode,
                                   ),
                                 ),
                               ],
@@ -152,6 +153,7 @@ class _PosCashDropScreenState extends ConsumerState<PosCashDropScreen> {
                               children: [
                                 CashDropSummaryCard(
                                   currentExpectedCash: availableCash,
+                                  currencyCode: summary.currencyCode,
                                 ),
                                 const SizedBox(height: TenantAdminSpacing.lg),
                                 CashDropFormCard(
@@ -238,9 +240,9 @@ class _TillRequiredMessage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(TenantAdminSpacing.lg),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
+        color: TenantAdminColors.warningSurface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        border: Border.all(color: const Color(0xFFFED7AA)),
+        border: Border.all(color: TenantAdminColors.warningBorder),
       ),
       child: Text(
         'An open till session is required before recording a cash drop.',

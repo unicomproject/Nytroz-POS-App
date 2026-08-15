@@ -100,4 +100,3 @@ class _StaticAdapter implements HttpClientAdapter {
     );
   }
 }
-

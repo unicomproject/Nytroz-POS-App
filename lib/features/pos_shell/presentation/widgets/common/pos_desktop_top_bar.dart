@@ -6,6 +6,7 @@ import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
+import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_home_dashboard_provider.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'pos_top_bar_notification_button.dart';
@@ -291,7 +292,11 @@ class _TillStatusChip extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     final tillState = ref.watch(tillProvider);
-    final isOpen = tillState.hasOpenSession;
+    final homeAsync = ref.watch(posHomeDashboardProvider);
+    final isOpen = resolveAuthoritativeTillOpen(
+      homeAsync: homeAsync,
+      localTillOpen: tillState.hasOpenSession,
+    );
     final statusLabel = isOpen ? 'Till Open' : 'Till Closed';
     final statusColor =
         isOpen ? TenantAdminColors.success : TenantAdminColors.mutedText;

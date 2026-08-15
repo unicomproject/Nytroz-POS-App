@@ -35,78 +35,66 @@ class ProductsSidebarParentItem extends StatelessWidget {
 
     final content = Material(
       color: Colors.transparent,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: EdgeInsets.symmetric(
-          horizontal: compact ? 10 : 12,
-          vertical: compact ? 2 : 3,
-        ),
-        decoration: BoxDecoration(
-          color: active
-              ? TenantAdminSidebarTokens.activeBackground
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                borderRadius: BorderRadius.circular(8),
-                onTap: () {
-                  try {
-                    context.go('/tenant-admin/products');
-                  } catch (_) {
-                    // Fallback for tests running outside GoRouter context
-                  }
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      Icon(icon, size: 18, color: iconColor),
-                      if (!collapsed) ...[
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: itemColor,
-                              fontSize: 13,
-                              fontWeight:
-                                  active ? FontWeight.w800 : FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onToggle,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          margin:
+              collapsed ? EdgeInsets.zero : const EdgeInsets.only(right: 16),
+          padding: EdgeInsets.only(
+            left: collapsed ? 0 : (compact ? 16 : 24),
+            right: collapsed ? 0 : (compact ? 10 : 12),
+            top: compact ? 10 : 11,
+            bottom: compact ? 10 : 11,
+          ),
+          decoration: BoxDecoration(
+            color: active
+                ? TenantAdminSidebarTokens.activeBackground
+                : Colors.transparent,
+            borderRadius: const BorderRadius.horizontal(
+              right: Radius.circular(24),
             ),
-            if (!collapsed)
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(999),
-                  onTap: onToggle,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: AnimatedRotation(
-                      turns: expanded ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeInOut,
-                      child: Icon(
-                        Icons.keyboard_arrow_down,
-                        size: 18,
-                        color: iconColor,
+          ),
+          child: Row(
+            mainAxisAlignment:
+                collapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
+            children: [
+              Icon(icon, size: 18, color: iconColor),
+              if (!collapsed) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      try {
+                        context.go('/tenant-admin/products');
+                      } catch (_) {}
+                    },
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: itemColor,
+                        fontSize: compact ? 12.5 : 13,
+                        fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+                AnimatedRotation(
+                  turns: expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 18,
+                    color: iconColor,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -120,7 +108,7 @@ class ProductsSidebarParentItem extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: content,
     );
   }

@@ -7,6 +7,7 @@ import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../../shared/pos_session/pos_session_provider.dart';
+import '../utils/receipt_cashier_display.dart';
 import '../providers/pos_cash_payment_success_provider.dart';
 import '../widgets/print_receipt/print_receipt_actions.dart';
 import '../widgets/print_receipt/print_receipt_bottom_actions.dart';
@@ -33,9 +34,13 @@ class PosPrintReceiptScreen extends ConsumerWidget {
       );
     }
 
-    final cashierName = session?.userDisplayName.trim().isNotEmpty == true
-        ? session!.userDisplayName
-        : sessionContext.userName;
+    final cashierName = resolveReceiptCashierDisplayName(
+      receiptDataJson: successData.receiptDataJson,
+      paymentCashierName: successData.cashierName,
+      sessionDisplayName: session?.userDisplayName.trim().isNotEmpty == true
+          ? session!.userDisplayName
+          : sessionContext.userName,
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {

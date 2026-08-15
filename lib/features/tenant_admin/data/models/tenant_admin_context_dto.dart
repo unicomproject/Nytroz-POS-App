@@ -4,6 +4,7 @@ class TenantAdminContextDto {
   const TenantAdminContextDto({
     required this.tenantId,
     required this.tenantName,
+    this.tenantLogoUrl,
     required this.userId,
     required this.userDisplayName,
     required this.roles,
@@ -51,6 +52,7 @@ class TenantAdminContextDto {
     return TenantAdminContextDto(
       tenantId: tenant['id']?.toString() ?? '',
       tenantName: tenant['name']?.toString() ?? '',
+      tenantLogoUrl: tenant['logoUrl']?.toString(),
       userId: user['id']?.toString() ?? '',
       userDisplayName: user['fullName']?.toString() ?? '',
       roles: [
@@ -110,6 +112,7 @@ class TenantAdminContextDto {
     return TenantAdminContextDto(
       tenantId: json['tenantId'] as String? ?? '',
       tenantName: json['tenantName'] as String? ?? '',
+      tenantLogoUrl: json['tenantLogoUrl'] as String?,
       userId: json['userId'] as String? ?? '',
       userDisplayName: json['userDisplayName'] as String? ?? '',
       roles: _mapList(
@@ -146,6 +149,7 @@ class TenantAdminContextDto {
 
   final String tenantId;
   final String tenantName;
+  final String? tenantLogoUrl;
   final String userId;
   final String userDisplayName;
   final List<TenantAdminRoleScopeDto> roles;
@@ -160,6 +164,28 @@ class TenantAdminContextDto {
   final String? currencyCode;
   final String? locale;
   final List<String> accessibleOutletIds;
+
+  TenantAdminContextDto copyWith({String? tenantLogoUrl}) {
+    return TenantAdminContextDto(
+      tenantId: tenantId,
+      tenantName: tenantName,
+      tenantLogoUrl: tenantLogoUrl ?? this.tenantLogoUrl,
+      userId: userId,
+      userDisplayName: userDisplayName,
+      roles: roles,
+      roleNames: roleNames,
+      outletScope: outletScope,
+      featureEntitlements: featureEntitlements,
+      permissions: permissions,
+      runtimeFlags: runtimeFlags,
+      subscriptionStatus: subscriptionStatus,
+      tenantTimezone: tenantTimezone,
+      currentBusinessDate: currentBusinessDate,
+      currencyCode: currencyCode,
+      locale: locale,
+      accessibleOutletIds: accessibleOutletIds,
+    );
+  }
 }
 
 class TenantAdminRoleScopeDto {

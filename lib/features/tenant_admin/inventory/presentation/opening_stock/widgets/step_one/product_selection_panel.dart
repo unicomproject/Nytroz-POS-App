@@ -9,7 +9,8 @@ class ProductSelectionPanel extends ConsumerStatefulWidget {
   const ProductSelectionPanel({super.key});
 
   @override
-  ConsumerState<ProductSelectionPanel> createState() => _ProductSelectionPanelState();
+  ConsumerState<ProductSelectionPanel> createState() =>
+      _ProductSelectionPanelState();
 }
 
 class _ProductSelectionPanelState extends ConsumerState<ProductSelectionPanel> {
@@ -68,25 +69,30 @@ class _ProductSelectionPanelState extends ConsumerState<ProductSelectionPanel> {
                 child: TextField(
                   controller: _searchController,
                   onChanged: (val) {
-                    ref.read(openingStockProductSearchProvider.notifier).state = val;
+                    ref.read(openingStockProductSearchProvider.notifier).state =
+                        val;
                     setState(() => _currentPage = 1);
                   },
                   decoration: const InputDecoration(
                     hintText: 'Search by product name, SKU or scan barcode',
-                    hintStyle: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                    hintStyle:
+                        TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 12),
                   ),
-                  style: const TextStyle(fontSize: 13, color: TenantAdminColors.bodyText),
+                  style: const TextStyle(
+                      fontSize: 13, color: TenantAdminColors.bodyText),
                 ),
               ),
               if (_searchController.text.isNotEmpty)
                 IconButton(
-                  icon: const Icon(Icons.clear, size: 18, color: Color(0xFF94A3B8)),
+                  icon: const Icon(Icons.clear,
+                      size: 18, color: Color(0xFF94A3B8)),
                   onPressed: () {
                     _searchController.clear();
-                    ref.read(openingStockProductSearchProvider.notifier).state = '';
+                    ref.read(openingStockProductSearchProvider.notifier).state =
+                        '';
                     setState(() => _currentPage = 1);
                   },
                 ),
@@ -98,28 +104,33 @@ class _ProductSelectionPanelState extends ConsumerState<ProductSelectionPanel> {
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
-                child: const Icon(Icons.qr_code_scanner, color: Color(0xFF64748B), size: 18),
+                child: const Icon(Icons.qr_code_scanner,
+                    color: Color(0xFF64748B), size: 18),
               ),
             ],
           ),
         ),
         const SizedBox(height: 14),
-
         productsAsync.when(
           data: (allProducts) {
             final sortedProducts = List<TenantProduct>.from(allProducts);
             if (_selectedSort == 'Product A-Z') {
-              sortedProducts.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+              sortedProducts.sort((a, b) =>
+                  a.name.toLowerCase().compareTo(b.name.toLowerCase()));
             } else if (_selectedSort == 'Product Z-A') {
-              sortedProducts.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+              sortedProducts.sort((a, b) =>
+                  b.name.toLowerCase().compareTo(a.name.toLowerCase()));
             } else if (_selectedSort == 'SKU') {
-              sortedProducts.sort((a, b) => a.sku.toLowerCase().compareTo(b.sku.toLowerCase()));
+              sortedProducts.sort(
+                  (a, b) => a.sku.toLowerCase().compareTo(b.sku.toLowerCase()));
             }
 
             final totalItems = sortedProducts.length;
-            final totalPages = (totalItems / _itemsPerPage).ceil().clamp(1, 999);
+            final totalPages =
+                (totalItems / _itemsPerPage).ceil().clamp(1, 999);
             final startIndex = (_currentPage - 1) * _itemsPerPage;
-            final pageItems = sortedProducts.skip(startIndex).take(_itemsPerPage).toList();
+            final pageItems =
+                sortedProducts.skip(startIndex).take(_itemsPerPage).toList();
 
             return Expanded(
               child: Column(
@@ -136,7 +147,8 @@ class _ProductSelectionPanelState extends ConsumerState<ProductSelectionPanel> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8),
@@ -146,19 +158,27 @@ class _ProductSelectionPanelState extends ConsumerState<ProductSelectionPanel> {
                           child: DropdownButton<String>(
                             value: _selectedSort,
                             isDense: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, size: 18, color: Color(0xFF64748B)),
+                            icon: const Icon(Icons.keyboard_arrow_down,
+                                size: 18, color: Color(0xFF64748B)),
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF334155),
                             ),
                             items: const [
-                              DropdownMenuItem(value: 'Product A-Z', child: Text('Sort by: Product A-Z')),
-                              DropdownMenuItem(value: 'Product Z-A', child: Text('Sort by: Product Z-A')),
-                              DropdownMenuItem(value: 'SKU', child: Text('Sort by: SKU')),
+                              DropdownMenuItem(
+                                  value: 'Product A-Z',
+                                  child: Text('Sort by: Product A-Z')),
+                              DropdownMenuItem(
+                                  value: 'Product Z-A',
+                                  child: Text('Sort by: Product Z-A')),
+                              DropdownMenuItem(
+                                  value: 'SKU', child: Text('Sort by: SKU')),
                             ],
                             onChanged: (val) {
-                              if (val != null) setState(() => _selectedSort = val);
+                              if (val != null) {
+                                setState(() => _selectedSort = val);
+                              }
                             },
                           ),
                         ),
@@ -172,21 +192,25 @@ class _ProductSelectionPanelState extends ConsumerState<ProductSelectionPanel> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: const [
-                                Icon(Icons.inventory_2_outlined, size: 40, color: Color(0xFFCBD5E1)),
+                                Icon(Icons.inventory_2_outlined,
+                                    size: 40, color: Color(0xFFCBD5E1)),
                                 SizedBox(height: 8),
                                 Text(
                                   'No products match your search.',
-                                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                                  style: TextStyle(
+                                      color: Color(0xFF94A3B8), fontSize: 13),
                                 ),
                               ],
                             ),
                           )
                         : ListView.separated(
                             itemCount: pageItems.length,
-                            separatorBuilder: (context, index) => const SizedBox(height: 8),
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(height: 8),
                             itemBuilder: (context, index) {
                               final product = pageItems[index];
-                              final isSelected = state.selectedProduct?.id == product.id;
+                              final isSelected =
+                                  state.selectedProduct?.id == product.id;
 
                               return ProductListTile(
                                 product: product,
@@ -201,7 +225,8 @@ class _ProductSelectionPanelState extends ConsumerState<ProductSelectionPanel> {
                     _PaginationBar(
                       currentPage: _currentPage,
                       totalPages: totalPages,
-                      onPageChanged: (page) => setState(() => _currentPage = page),
+                      onPageChanged: (page) =>
+                          setState(() => _currentPage = page),
                     ),
                 ],
               ),
@@ -209,7 +234,8 @@ class _ProductSelectionPanelState extends ConsumerState<ProductSelectionPanel> {
           },
           loading: () => const Expanded(
             child: Center(
-              child: CircularProgressIndicator(color: primaryOrange, strokeWidth: 2.5),
+              child: CircularProgressIndicator(
+                  color: primaryOrange, strokeWidth: 2.5),
             ),
           ),
           error: (err, stack) => Expanded(
@@ -249,7 +275,10 @@ class _PaginationBar extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         for (int p = 1; p <= totalPages; p++) ...[
-          if (totalPages <= 7 || p == 1 || p == totalPages || (p >= currentPage - 1 && p <= currentPage + 1))
+          if (totalPages <= 7 ||
+              p == 1 ||
+              p == totalPages ||
+              (p >= currentPage - 1 && p <= currentPage + 1))
             _PageNumberButton(
               page: p,
               isActive: p == currentPage,
@@ -258,7 +287,8 @@ class _PaginationBar extends StatelessWidget {
           else if (p == currentPage - 2 || p == currentPage + 2)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 4),
-              child: Text('...', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+              child: Text('...',
+                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
             ),
         ],
         const SizedBox(width: 4),

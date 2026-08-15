@@ -59,41 +59,49 @@ class TenantAdminDataTable extends StatelessWidget {
       child = Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Theme(
-            data: Theme.of(context).copyWith(
-              dataTableTheme: const DataTableThemeData(
-                headingRowHeight: 48,
-                dataRowMinHeight: 60,
-                dataRowMaxHeight: 72,
-                dividerThickness: 1,
-                horizontalMargin: TenantAdminSpacing.xl,
-                columnSpacing: TenantAdminSpacing.xl,
-              ),
-            ),
-            child: LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minWidth: fillAvailableWidth ? constraints.maxWidth : 0.0,
-                  ),
-                  child: DataTable(
-                    headingTextStyle: const TextStyle(
-                      color: TenantAdminColors.mutedText,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                    ),
-                    dataTextStyle: const TextStyle(
-                      color: TenantAdminColors.bodyText,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    showCheckboxColumn: showCheckboxColumn,
-                    columns: columns,
-                    rows: rows,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact =
+                  constraints.maxWidth < TenantAdminBreakpoints.tablet;
+
+              return Theme(
+                data: Theme.of(context).copyWith(
+                  dataTableTheme: DataTableThemeData(
+                    headingRowHeight:
+                        TenantAdminContentTokens.tableHeaderHeight,
+                    dataRowMinHeight: compact ? 56 : 60,
+                    dataRowMaxHeight: compact ? 68 : 72,
+                    dividerThickness: 1,
+                    horizontalMargin:
+                        compact ? TenantAdminSpacing.lg : TenantAdminSpacing.xl,
+                    columnSpacing:
+                        compact ? TenantAdminSpacing.lg : TenantAdminSpacing.xl,
                   ),
                 ),
-              ),
-            ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minWidth: constraints.maxWidth,
+                    ),
+                    child: DataTable(
+                      headingTextStyle: const TextStyle(
+                        color: TenantAdminColors.mutedText,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                      dataTextStyle: const TextStyle(
+                        color: TenantAdminColors.bodyText,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      showCheckboxColumn: showCheckboxColumn,
+                      columns: columns,
+                      rows: rows,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
           if (footer != null) ...[
             const Divider(height: 1, color: TenantAdminColors.border),

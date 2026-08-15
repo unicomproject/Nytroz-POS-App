@@ -64,35 +64,39 @@ class _TillMonitoringToolbarState extends ConsumerState<TillMonitoringToolbar> {
               filled: true,
               fillColor: TenantAdminColors.surface,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+                borderRadius: BorderRadius.circular(14),
                 borderSide: const BorderSide(color: TenantAdminColors.border),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+                borderRadius: BorderRadius.circular(14),
                 borderSide: const BorderSide(color: TenantAdminColors.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(
+                  color: TenantAdminColors.posHomeAccentOrange,
+                  width: 1.4,
+                ),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: TenantAdminSpacing.lg,
-                vertical: TenantAdminSpacing.md,
+                vertical: 14,
               ),
             ),
           ),
-        const SizedBox(height: TenantAdminSpacing.lg),
-        if (widget.visibility.showFilters)
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildFilterChip(TillStatusFilter.all, statusFilter),
-                const SizedBox(width: TenantAdminSpacing.sm),
-                _buildFilterChip(TillStatusFilter.online, statusFilter),
-                const SizedBox(width: TenantAdminSpacing.sm),
-                _buildFilterChip(TillStatusFilter.offline, statusFilter),
-                const SizedBox(width: TenantAdminSpacing.sm),
-                _buildFilterChip(TillStatusFilter.needsAttention, statusFilter),
-              ],
-            ),
+        if (widget.visibility.showFilters) ...[
+          const SizedBox(height: TenantAdminSpacing.md),
+          Wrap(
+            spacing: TenantAdminSpacing.sm,
+            runSpacing: TenantAdminSpacing.sm,
+            children: [
+              _buildFilterChip(TillStatusFilter.all, statusFilter),
+              _buildFilterChip(TillStatusFilter.online, statusFilter),
+              _buildFilterChip(TillStatusFilter.offline, statusFilter),
+              _buildFilterChip(TillStatusFilter.needsAttention, statusFilter),
+            ],
           ),
+        ],
       ],
     );
   }
@@ -103,8 +107,8 @@ class _TillMonitoringToolbarState extends ConsumerState<TillMonitoringToolbar> {
   ) {
     final isSelected = filter == currentFilter;
     final dotColor = switch (filter) {
-      TillStatusFilter.online => Colors.green,
-      TillStatusFilter.offline => Colors.red,
+      TillStatusFilter.online => TenantAdminColors.success,
+      TillStatusFilter.offline => TenantAdminColors.danger,
       TillStatusFilter.needsAttention => Colors.amber.shade700,
       TillStatusFilter.all || TillStatusFilter.inactive => null,
     };
@@ -117,17 +121,17 @@ class _TillMonitoringToolbarState extends ConsumerState<TillMonitoringToolbar> {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: TenantAdminSpacing.lg,
-          vertical: TenantAdminSpacing.md,
+          horizontal: 16,
+          vertical: 10,
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.08)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+              ? TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.10)
+              : TenantAdminColors.surface,
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(
             color: isSelected
-                ? TenantAdminColors.posHomeOrangeEnd
+                ? TenantAdminColors.posHomeAccentOrange
                 : TenantAdminColors.border,
           ),
         ),
@@ -149,9 +153,10 @@ class _TillMonitoringToolbarState extends ConsumerState<TillMonitoringToolbar> {
               filter.label,
               style: TextStyle(
                 color: isSelected
-                    ? TenantAdminColors.posHomeOrangeEnd
-                    : TenantAdminColors.mutedText,
+                    ? TenantAdminColors.posHomeAccentOrange
+                    : TenantAdminColors.bodyText,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 13,
               ),
             ),
           ],

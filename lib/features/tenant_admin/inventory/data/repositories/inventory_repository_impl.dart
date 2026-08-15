@@ -43,7 +43,8 @@ class InventoryRepositoryImpl implements IInventoryRepository {
 
   @override
   Future<CurrentStockSummary> getCurrentStockSummary({String? outletId}) async {
-    final dto = await _remoteDatasource.getCurrentStockSummary(outletId: outletId);
+    final dto =
+        await _remoteDatasource.getCurrentStockSummary(outletId: outletId);
     return dto.toDomain();
   }
 
@@ -54,14 +55,18 @@ class InventoryRepositoryImpl implements IInventoryRepository {
   }
 
   @override
-  Future<ProductStockDetail> getProductStockDetail(String variantId, {String? outletId}) async {
-    final dto = await _remoteDatasource.getProductStockDetail(variantId, outletId: outletId);
+  Future<ProductStockDetail> getProductStockDetail(String variantId,
+      {String? outletId}) async {
+    final dto = await _remoteDatasource.getProductStockDetail(variantId,
+        outletId: outletId);
     return dto.toDomain();
   }
 
   @override
-  Future<StockMovementHistoryPage> getStockMovementHistory(String variantId, StockMovementHistoryQueryDto query) async {
-    final dto = await _remoteDatasource.getStockMovementHistory(variantId, query);
+  Future<StockMovementHistoryPage> getStockMovementHistory(
+      String variantId, StockMovementHistoryQueryDto query) async {
+    final dto =
+        await _remoteDatasource.getStockMovementHistory(variantId, query);
     return dto.toDomain();
   }
 

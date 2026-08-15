@@ -26,7 +26,7 @@ class TillMonitoringSidePanel extends ConsumerWidget {
   /// (for example missing `tenant.hardware.view`).
   final TillMonitoringItem? listItem;
 
-  static const _accent = TenantAdminColors.posHomeOrangeEnd;
+  static const _accent = TenantAdminColors.posHomeAccentOrange;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -307,11 +307,12 @@ class _PanelShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
+      height: double.infinity,
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: TenantAdminColors.border),
-        boxShadow: TenantAdminShadows.card,
       ),
       child: child,
     );
@@ -333,70 +334,99 @@ class _DetailHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-          ),
-          child: const Icon(
-            Icons.point_of_sale_rounded,
-            color: TenantAdminColors.posHomeOrangeEnd,
-          ),
-        ),
-        const SizedBox(width: TenantAdminSpacing.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                tillName,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: TenantAdminColors.bodyText,
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stackHeader = constraints.maxWidth < 360;
+        final titleBlock = Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: TenantAdminColors.posHomeAccentOrange
+                    .withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
               ),
-              if (tillCode.trim().isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Text(
-                  tillCode,
-                  style: const TextStyle(
-                    color: TenantAdminColors.mutedText,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 4),
-              Row(
+              child: const Icon(
+                Icons.point_of_sale_rounded,
+                color: TenantAdminColors.posHomeAccentOrange,
+              ),
+            ),
+            const SizedBox(width: TenantAdminSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.location_on_outlined,
-                    size: 14,
-                    color: TenantAdminColors.mutedText,
+                  Text(
+                    tillName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: TenantAdminColors.bodyText,
+                    ),
                   ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      outletName.isEmpty ? '—' : outletName,
+                  if (tillCode.trim().isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      tillCode,
                       style: const TextStyle(
                         color: TenantAdminColors.mutedText,
-                        fontSize: 14,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
+                  ],
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 15,
+                        color: TenantAdminColors.mutedText,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          outletName.isEmpty ? '-' : outletName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: TenantAdminColors.mutedText,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
+            ),
+          ],
+        );
+
+        if (stackHeader) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              titleBlock,
+              const SizedBox(height: TenantAdminSpacing.md),
+              _OperationalBadge(status: displayStatus),
             ],
-          ),
-        ),
-        _OperationalBadge(status: displayStatus),
-      ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: titleBlock),
+            const SizedBox(width: TenantAdminSpacing.sm),
+            _OperationalBadge(status: displayStatus),
+          ],
+        );
+      },
     );
   }
 }
@@ -442,6 +472,8 @@ class _OperationalBadge extends StatelessWidget {
         ),
         child: Text(
           text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: color,
             fontSize: 11,
@@ -481,12 +513,12 @@ class _CashierSection extends StatelessWidget {
             CircleAvatar(
               radius: 18,
               backgroundColor:
-                  TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.12),
+                  TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.12),
               child: Text(
                 hasCashier ? name[0].toUpperCase() : '—',
                 style: const TextStyle(
                   fontWeight: FontWeight.w700,
-                  color: TenantAdminColors.posHomeOrangeEnd,
+                  color: TenantAdminColors.posHomeAccentOrange,
                 ),
               ),
             ),
@@ -536,7 +568,7 @@ class _LastActivitySection extends StatelessWidget {
             fontWeight: FontWeight.w600,
             color: lastActivityAt == null
                 ? TenantAdminColors.mutedText
-                : TenantAdminColors.success,
+                : TenantAdminColors.bodyText,
           ),
         ),
       ],
@@ -606,16 +638,22 @@ class _PosDeviceSection extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 4),
-          Text(
-            [
-              if (device!.status.trim().isNotEmpty) device!.status,
+          Wrap(
+            spacing: TenantAdminSpacing.sm,
+            runSpacing: TenantAdminSpacing.xs,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (device!.status.trim().isNotEmpty)
+                _DeviceStatusBadge(status: device!.status),
               if (device!.lastSeenAt != null)
-                'Last seen ${_formatSeen(device!.lastSeenAt!)}',
-            ].where((part) => part.trim().isNotEmpty).join(' · '),
-            style: const TextStyle(
-              fontSize: 12,
-              color: TenantAdminColors.mutedText,
-            ),
+                Text(
+                  'Last seen ${_formatSeen(device!.lastSeenAt!)}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: TenantAdminColors.mutedText,
+                  ),
+                ),
+            ],
           ),
         ],
       ],
@@ -624,6 +662,39 @@ class _PosDeviceSection extends StatelessWidget {
 
   static String _formatSeen(DateTime date) {
     return DateFormat('MMM d, h:mm a').format(date.toLocal());
+  }
+}
+
+class _DeviceStatusBadge extends StatelessWidget {
+  const _DeviceStatusBadge({required this.status});
+
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized = status.trim().toUpperCase();
+    final isActive = normalized == 'ACTIVE' || normalized == 'ONLINE';
+    final color =
+        isActive ? TenantAdminColors.success : TenantAdminColors.mutedText;
+    final bg = isActive ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Text(
+        normalized.isEmpty ? 'UNKNOWN' : normalized,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
   }
 }
 

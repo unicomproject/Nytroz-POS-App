@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../sale/domain/entities/pos_customer.dart';
 import 'customer_details_actions.dart';
 import 'customer_recent_orders_section.dart';
@@ -157,7 +158,7 @@ class _SelectedCustomerBody extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 26,
-              backgroundColor: const Color(0xFFFF3214),
+              backgroundColor: TenantAdminColors.posHomeAccentOrange,
               child: Text(
                 customer.initials,
                 style: const TextStyle(
@@ -370,7 +371,9 @@ class _MetricCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: isPrimaryColor ? const Color(0xFFFF3214) : Colors.black,
+              color: isPrimaryColor
+                  ? TenantAdminColors.posHomeAccentOrange
+                  : Colors.black,
               fontWeight: FontWeight.w900,
               fontSize: 15,
             ),

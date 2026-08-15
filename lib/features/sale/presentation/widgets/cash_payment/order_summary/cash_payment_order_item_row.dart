@@ -9,11 +9,14 @@ class CashPaymentOrderItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textStyle = Theme.of(context).textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w500,
+          fontSize: 11,
+          color: TenantAdminColors.bodyText,
+        );
+
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: TenantAdminSpacing.lg,
-        vertical: TenantAdminSpacing.md,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -21,58 +24,48 @@ class CashPaymentOrderItemRow extends StatelessWidget {
             flex: 5,
             child: Row(
               children: [
-                if (item.product.imageUrl != null)
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: TenantAdminColors.background,
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Image.network(
-                      item.product.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(
-                        Icons.image_not_supported_outlined,
-                        color: TenantAdminColors.mutedText,
-                      ),
-                    ),
-                  )
-                else
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: TenantAdminColors.background,
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-                    ),
-                    child: const Icon(
-                      Icons.shopping_bag_outlined,
-                      color: TenantAdminColors.mutedText,
-                    ),
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: TenantAdminColors.subtleBackground,
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                const SizedBox(width: TenantAdminSpacing.sm),
+                  clipBehavior: Clip.antiAlias,
+                  child: item.product.imageUrl != null
+                      ? Image.network(
+                          item.product.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.image_not_supported_outlined,
+                            size: 14,
+                            color: TenantAdminColors.mutedText,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.shopping_bag_outlined,
+                          size: 14,
+                          color: TenantAdminColors.mutedText,
+                        ),
+                ),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         item.product.name,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: TenantAdminColors.bodyText,
-                            ),
-                        maxLines: 2,
+                        style: textStyle?.copyWith(fontWeight: FontWeight.w600),
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (item.product.hasVariants)
                         Text(
                           item.product.variantSummary,
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: TenantAdminColors.mutedText,
-                                  ),
+                          style: textStyle?.copyWith(
+                            fontSize: 9,
+                            color: TenantAdminColors.mutedText,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -87,9 +80,7 @@ class CashPaymentOrderItemRow extends StatelessWidget {
             child: Text(
               '${item.quantity}',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+              style: textStyle,
             ),
           ),
           Expanded(
@@ -97,9 +88,7 @@ class CashPaymentOrderItemRow extends StatelessWidget {
             child: Text(
               formatLkr(item.product.price),
               textAlign: TextAlign.right,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+              style: textStyle,
             ),
           ),
           Expanded(
@@ -107,9 +96,7 @@ class CashPaymentOrderItemRow extends StatelessWidget {
             child: Text(
               formatLkr(item.lineTotal),
               textAlign: TextAlign.right,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: textStyle?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
         ],

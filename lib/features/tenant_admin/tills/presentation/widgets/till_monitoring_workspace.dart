@@ -57,21 +57,45 @@ class _TillMonitoringWorkspaceState
 
     final selectedItem = _findSelectedItem(pendingResult, selectedTillId);
 
-    final leftPane = Column(
+    Widget buildLeftPane({required bool boundedHeight}) {
+      final list = TillMonitoringList(
+        scrollable: boundedHeight,
+        onTillSelected: (tillId) {
+          ref.read(selectedTillIdProvider.notifier).state = tillId;
+          if (!isDesktop && context.mounted) {
+            context.go('/tenant-admin/tills/$tillId');
+          }
+        },
+      );
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TillMonitoringToolbar(visibility: widget.visibility),
+          const SizedBox(height: TenantAdminSpacing.lg),
+          if (widget.visibility.showList)
+            boundedHeight ? Expanded(child: list) : list,
+        ],
+      );
+    }
+
+    final desktopWorkspace = Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TillMonitoringToolbar(visibility: widget.visibility),
-        const SizedBox(height: TenantAdminSpacing.lg),
-        if (widget.visibility.showList)
-          TillMonitoringList(
-            onTillSelected: (tillId) {
-              ref.read(selectedTillIdProvider.notifier).state = tillId;
-              if (!isDesktop && context.mounted) {
-                context.go('/tenant-admin/tills/$tillId');
-              }
-            },
+        Expanded(flex: 65, child: buildLeftPane(boundedHeight: true)),
+        const SizedBox(width: TenantAdminSpacing.xl),
+        Expanded(
+          flex: 35,
+          child: TillMonitoringSidePanel(
+            tillId: selectedTillId,
+            listItem: selectedItem,
           ),
+        ),
       ],
+    );
+
+    final stackedWorkspace = SingleChildScrollView(
+      child: buildLeftPane(boundedHeight: false),
     );
 
     return Column(
@@ -79,25 +103,9 @@ class _TillMonitoringWorkspaceState
       children: [
         if (widget.visibility.showSummarySection) ...[
           const TillMonitoringSummaryCards(),
-          const SizedBox(height: TenantAdminSpacing.xl),
+          const SizedBox(height: TenantAdminSpacing.lg),
         ],
-        if (isDesktop)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(flex: 65, child: leftPane),
-              const SizedBox(width: TenantAdminSpacing.xl),
-              Expanded(
-                flex: 35,
-                child: TillMonitoringSidePanel(
-                  tillId: selectedTillId,
-                  listItem: selectedItem,
-                ),
-              ),
-            ],
-          )
-        else
-          leftPane,
+        Expanded(child: isDesktop ? desktopWorkspace : stackedWorkspace),
       ],
     );
   }

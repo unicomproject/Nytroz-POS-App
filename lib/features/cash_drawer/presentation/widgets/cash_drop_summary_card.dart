@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../providers/cash_drawer_provider.dart';
 import '../providers/cash_drop_provider.dart';
@@ -11,9 +10,11 @@ class CashDropSummaryCard extends ConsumerWidget {
   const CashDropSummaryCard({
     super.key,
     required this.currentExpectedCash,
+    required this.currencyCode,
   });
 
   final double currentExpectedCash;
+  final String currencyCode;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,15 +37,18 @@ class CashDropSummaryCard extends ConsumerWidget {
           _SummaryRow(
             icon: Icons.account_balance_wallet_outlined,
             label: 'Current Expected Cash',
-            value: formatCashDrawerAmount(currentExpectedCash),
+            value: formatCashDrawerAmount(
+              currentExpectedCash,
+              currencyCode: currencyCode,
+            ),
           ),
           const SizedBox(height: TenantAdminSpacing.md),
           _SummaryRow(
             icon: Icons.remove_circle_outline_rounded,
             label: 'Cash Drop Amount',
             value: formState.hasValidAmount
-                ? '- ${formatCashDrawerAmount(dropAmount)}'
-                : '- ${formatLkrInputPrefix()} 0.00',
+                ? '- ${formatCashDrawerAmount(dropAmount, currencyCode: currencyCode)}'
+                : '- ${formatCashDrawerAmount(0, currencyCode: currencyCode)}',
             valueColor: TenantAdminColors.info,
           ),
           const Padding(
@@ -54,7 +58,10 @@ class CashDropSummaryCard extends ConsumerWidget {
           _SummaryRow(
             icon: Icons.payments_outlined,
             label: 'Remaining Expected Cash',
-            value: formatCashDrawerAmount(remaining),
+            value: formatCashDrawerAmount(
+              remaining,
+              currencyCode: currencyCode,
+            ),
             emphasize: true,
           ),
           const SizedBox(height: TenantAdminSpacing.lg),

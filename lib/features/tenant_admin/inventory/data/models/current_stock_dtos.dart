@@ -50,8 +50,10 @@ class CurrentStockSummaryDto {
     return CurrentStockSummaryDto(
       totalItemsInStock: (json['totalItemsInStock'] as num?)?.toInt() ?? 0,
       totalItemsLowStock: (json['totalItemsLowStock'] as num?)?.toInt() ?? 0,
-      totalItemsOutOfStock: (json['totalItemsOutOfStock'] as num?)?.toInt() ?? 0,
-      totalInventoryValue: (json['totalInventoryValue'] as num?)?.toDouble() ?? 0.0,
+      totalItemsOutOfStock:
+          (json['totalItemsOutOfStock'] as num?)?.toInt() ?? 0,
+      totalInventoryValue:
+          (json['totalInventoryValue'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -104,7 +106,8 @@ class CurrentStockItemDto {
       onHandQuantity: (json['onHandQuantity'] as num?)?.toDouble() ?? 0.0,
       reservedQuantity: (json['reservedQuantity'] as num?)?.toDouble() ?? 0.0,
       damagedQuantity: (json['damagedQuantity'] as num?)?.toDouble() ?? 0.0,
-      quarantineQuantity: (json['quarantineQuantity'] as num?)?.toDouble() ?? 0.0,
+      quarantineQuantity:
+          (json['quarantineQuantity'] as num?)?.toDouble() ?? 0.0,
       availableQuantity: (json['availableQuantity'] as num?)?.toDouble() ?? 0.0,
       stockStatus: json['stockStatus'] as String?,
       expiryStatus: json['expiryStatus'] as String?,
@@ -165,7 +168,8 @@ class CurrentStockPageDto {
   factory CurrentStockPageDto.fromJson(Map<String, dynamic> json) {
     return CurrentStockPageDto(
       items: (json['items'] as List<dynamic>?)
-              ?.map((e) => CurrentStockItemDto.fromJson(e as Map<String, dynamic>))
+              ?.map((e) =>
+                  CurrentStockItemDto.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       totalCount: (json['totalCount'] as num?)?.toInt() ?? 0,
@@ -225,7 +229,8 @@ class ProductStockDetailDto {
       totalAvailable: (json['totalAvailable'] as num?)?.toDouble() ?? 0.0,
       totalReorderLevel: (json['totalReorderLevel'] as num?)?.toDouble() ?? 0.0,
       locationBalances: (json['locationBalances'] as List<dynamic>?)
-              ?.map((e) => LocationBalanceDto.fromJson(e as Map<String, dynamic>))
+              ?.map(
+                  (e) => LocationBalanceDto.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );
@@ -324,7 +329,9 @@ class StockMovementHistoryDto {
       movementType: json['movementType'] as String?,
       reference: json['reference'] as String?,
       locationName: json['locationName'] as String?,
-      date: json['date'] != null ? DateTime.tryParse(json['date'] as String) : null,
+      date: json['date'] != null
+          ? DateTime.tryParse(json['date'] as String)
+          : null,
       change: (json['change'] as num?)?.toDouble() ?? 0.0,
     );
   }
@@ -359,7 +366,8 @@ class StockMovementHistoryPageDto {
   factory StockMovementHistoryPageDto.fromJson(Map<String, dynamic> json) {
     return StockMovementHistoryPageDto(
       items: (json['items'] as List<dynamic>?)
-              ?.map((e) => StockMovementHistoryDto.fromJson(e as Map<String, dynamic>))
+              ?.map((e) =>
+                  StockMovementHistoryDto.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       totalCount: (json['totalCount'] as num?)?.toInt() ?? 0,

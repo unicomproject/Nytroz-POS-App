@@ -21,20 +21,24 @@ class CashPaymentOrderTotals extends StatelessWidget {
         _SummaryRow(
           label: 'Subtotal',
           value: formatLkr(subtotal),
+          labelColor: TenantAdminColors.bodyText,
+          valueColor: TenantAdminColors.bodyText,
         ),
-        const SizedBox(height: TenantAdminSpacing.sm),
+        const SizedBox(height: 4),
         _SummaryRow(
           label: 'Discount',
           value: '- ${formatLkr(discount)}',
+          labelColor: TenantAdminColors.bodyText,
           valueColor: TenantAdminColors.danger,
           icon: Icons.local_offer_outlined,
           iconColor: TenantAdminColors.danger,
         ),
-        const SizedBox(height: TenantAdminSpacing.sm),
+        const SizedBox(height: 4),
         _SummaryRow(
           label: 'Tax',
           value: formatLkr(tax),
-          valueColor: TenantAdminColors.primary,
+          labelColor: TenantAdminColors.bodyText,
+          valueColor: TenantAdminColors.info,
         ),
       ],
     );
@@ -45,6 +49,7 @@ class _SummaryRow extends StatelessWidget {
   const _SummaryRow({
     required this.label,
     required this.value,
+    this.labelColor,
     this.valueColor,
     this.icon,
     this.iconColor,
@@ -52,15 +57,17 @@ class _SummaryRow extends StatelessWidget {
 
   final String label;
   final String value;
+  final Color? labelColor;
   final Color? valueColor;
   final IconData? icon;
   final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: TenantAdminColors.bodyText,
+    final style = Theme.of(context).textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+          fontSize: 11,
+          color: labelColor ?? TenantAdminColors.bodyText,
         );
 
     return Row(
@@ -70,9 +77,12 @@ class _SummaryRow extends StatelessWidget {
             children: [
               Text(label, style: style),
               if (icon != null) ...[
-                const SizedBox(width: TenantAdminSpacing.xs),
-                Icon(icon,
-                    size: 16, color: iconColor ?? TenantAdminColors.mutedText),
+                const SizedBox(width: 4),
+                Icon(
+                  icon,
+                  size: 12,
+                  color: iconColor ?? TenantAdminColors.mutedText,
+                ),
               ],
             ],
           ),

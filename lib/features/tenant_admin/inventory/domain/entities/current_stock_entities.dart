@@ -22,7 +22,9 @@ class CurrentStockSummary {
   final int? _lowStockCount;
   final int? _outOfStockCount;
 
-  int get totalProducts => _totalProducts ?? (totalItemsInStock + totalItemsLowStock + totalItemsOutOfStock);
+  int get totalProducts =>
+      _totalProducts ??
+      (totalItemsInStock + totalItemsLowStock + totalItemsOutOfStock);
   int get lowStockCount => _lowStockCount ?? totalItemsLowStock;
   int get outOfStockCount => _outOfStockCount ?? totalItemsOutOfStock;
   int get totalVariants => totalProducts;
@@ -109,7 +111,7 @@ class CurrentStockPage {
     this.pageSize = 10,
     this.totalCount = 0,
   });
-  
+
   final List<CurrentStockItem> items;
   final int page;
   final int pageSize;

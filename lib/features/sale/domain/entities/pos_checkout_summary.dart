@@ -4,12 +4,14 @@ class PosCheckoutSummaryPayload {
     required this.saleDetails,
     required this.paymentMethods,
     required this.validationMessages,
+    this.lines = const [],
   });
 
   final PosCheckoutBillingSummaryPayload billingSummary;
   final PosCheckoutSaleDetailsPayload saleDetails;
   final List<String> paymentMethods;
   final List<String> validationMessages;
+  final List<PosCalculatedCartLinePayload> lines;
 
   factory PosCheckoutSummaryPayload.fromJson(Map<String, dynamic> json) {
     final billing = _map(json['billingSummary'] ?? json['BillingSummary']);
@@ -22,6 +24,7 @@ class PosCheckoutSummaryPayload {
           _stringList(json['paymentMethods'] ?? json['PaymentMethods']),
       validationMessages:
           _stringList(json['validationMessages'] ?? json['ValidationMessages']),
+      lines: _calculatedLines(json['lines'] ?? json['Lines']),
     );
   }
 
@@ -101,6 +104,113 @@ class PosCheckoutSaleDetailsPayload {
       cashierName: json['cashierName']?.toString() ??
           json['CashierName']?.toString() ??
           'Cashier',
+    );
+  }
+}
+
+class PosAppliedPromotionPayload {
+  const PosAppliedPromotionPayload({
+    required this.policyId,
+    required this.policyCode,
+    required this.policyName,
+    required this.calculationMethod,
+    required this.discountValue,
+  });
+
+  final String policyId;
+  final String policyCode;
+  final String policyName;
+  final String calculationMethod;
+  final double discountValue;
+
+  factory PosAppliedPromotionPayload.fromJson(Map<String, dynamic> json) {
+    return PosAppliedPromotionPayload(
+      policyId: _text(json, 'policyId'),
+      policyCode: _text(json, 'policyCode'),
+      policyName: _text(json, 'policyName'),
+      calculationMethod: _text(json, 'calculationMethod'),
+      discountValue: (json['discountValue'] ?? json['DiscountValue'] as num?)
+              ?.toDouble() ??
+          0,
+    );
+  }
+
+  String? get displayLabel {
+    final method = calculationMethod.toLowerCase();
+    if (method.contains('percent')) {
+      final whole = discountValue == discountValue.roundToDouble()
+          ? discountValue.round().toString()
+          : discountValue.toString();
+      return '$whole% OFF';
+    }
+    if (policyName.trim().isNotEmpty) {
+      return policyName.trim();
+    }
+    return null;
+  }
+}
+
+class PosCalculatedCartLinePayload {
+  const PosCalculatedCartLinePayload({
+    required this.variantId,
+    required this.quantity,
+    required this.unitPrice,
+    required this.discount,
+    required this.tax,
+    required this.lineTotal,
+    this.clientLineId,
+    this.uomId,
+    this.lineNote,
+    this.baseUnitPrice,
+    this.automaticDiscount = 0,
+    this.effectiveUnitPrice,
+    this.appliedPromotion,
+  });
+
+  final String? clientLineId;
+  final String variantId;
+  final String? uomId;
+  final String? lineNote;
+  final int quantity;
+  final int unitPrice;
+  final int discount;
+  final int tax;
+  final int lineTotal;
+  final int? baseUnitPrice;
+  final int automaticDiscount;
+  final int? effectiveUnitPrice;
+  final PosAppliedPromotionPayload? appliedPromotion;
+
+  bool get hasAutomaticPromotion =>
+      automaticDiscount > 0 || (appliedPromotion != null && discount > 0);
+
+  bool get hasMeaningfulEffectiveUnitPrice =>
+      effectiveUnitPrice != null &&
+      baseUnitPrice != null &&
+      effectiveUnitPrice! > 0 &&
+      effectiveUnitPrice! < baseUnitPrice!;
+
+  factory PosCalculatedCartLinePayload.fromJson(Map<String, dynamic> json) {
+    final promotionJson = json['appliedPromotion'] ?? json['AppliedPromotion'];
+    return PosCalculatedCartLinePayload(
+      clientLineId: _optionalTextValue(json, 'clientLineId'),
+      variantId: _text(json, 'variantId'),
+      uomId: _optionalTextValue(json, 'uomId'),
+      lineNote: _optionalTextValue(json, 'lineNote'),
+      quantity: _toInt(json['quantity'] ?? json['Quantity']),
+      unitPrice: _toMoney(json['unitPrice'] ?? json['UnitPrice']),
+      discount: _toMoney(json['discount'] ?? json['Discount']),
+      tax: _toMoney(json['tax'] ?? json['Tax']),
+      lineTotal: _toMoney(json['lineTotal'] ?? json['LineTotal']),
+      baseUnitPrice: _optionalMoney(json, 'baseUnitPrice'),
+      automaticDiscount:
+          _toMoney(json['automaticDiscount'] ?? json['AutomaticDiscount']),
+      effectiveUnitPrice: _optionalMoney(json, 'effectiveUnitPrice'),
+      appliedPromotion: promotionJson is Map
+          ? PosAppliedPromotionPayload.fromJson(
+              Map<String, dynamic>.from(promotionJson),
+            )
+          : null,
     );
   }
 }
@@ -503,6 +613,19 @@ List<PosCheckoutCompletedLinePayload> _completedLines(Object? value) {
     return value
         .whereType<Map>()
         .map((item) => PosCheckoutCompletedLinePayload.fromJson(
+              Map<String, dynamic>.from(item),
+            ))
+        .toList(growable: false);
+  }
+
+  return const [];
+}
+
+List<PosCalculatedCartLinePayload> _calculatedLines(Object? value) {
+  if (value is Iterable) {
+    return value
+        .whereType<Map>()
+        .map((item) => PosCalculatedCartLinePayload.fromJson(
               Map<String, dynamic>.from(item),
             ))
         .toList(growable: false);

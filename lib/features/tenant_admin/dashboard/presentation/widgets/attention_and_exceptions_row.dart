@@ -3,7 +3,16 @@ import 'package:flutter/material.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 
 class AttentionAndExceptionsRow extends StatelessWidget {
-  const AttentionAndExceptionsRow({super.key});
+  const AttentionAndExceptionsRow({
+    super.key,
+    this.stretch = false,
+    this.compact = false,
+    this.scrollableWhenConstrained = false,
+  });
+
+  final bool stretch;
+  final bool compact;
+  final bool scrollableWhenConstrained;
 
   @override
   Widget build(BuildContext context) {
@@ -11,8 +20,14 @@ class AttentionAndExceptionsRow extends StatelessWidget {
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 800;
 
-        final needsAttention = _NeedsAttentionSection();
-        final storeExceptions = _StoreExceptionsSection();
+        final needsAttention = _NeedsAttentionSection(
+          compact: compact,
+          scrollableWhenConstrained: scrollableWhenConstrained,
+        );
+        final storeExceptions = _StoreExceptionsSection(
+          compact: compact,
+          scrollableWhenConstrained: scrollableWhenConstrained,
+        );
 
         if (isMobile) {
           return Column(
@@ -25,7 +40,8 @@ class AttentionAndExceptionsRow extends StatelessWidget {
         }
 
         return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              stretch ? CrossAxisAlignment.stretch : CrossAxisAlignment.start,
           children: [
             Expanded(child: needsAttention),
             const SizedBox(width: 24),
@@ -37,96 +53,147 @@ class AttentionAndExceptionsRow extends StatelessWidget {
   }
 }
 
+double _responsiveCardWidth(double maxWidth) {
+  if (maxWidth >= 560) {
+    return (maxWidth - 32) / 3;
+  }
+
+  if (maxWidth >= 440) {
+    return (maxWidth - 16) / 2;
+  }
+
+  return maxWidth;
+}
+
 class _NeedsAttentionSection extends StatelessWidget {
+  const _NeedsAttentionSection({
+    required this.compact,
+    required this.scrollableWhenConstrained,
+  });
+
+  final bool compact;
+  final bool scrollableWhenConstrained;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: TenantAdminColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Needs Attention Today',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: TenantAdminColors.navy,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7ED),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  '3',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFFF7A00),
+    final padding = compact ? 18.0 : 22.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cards = LayoutBuilder(
+          builder: (context, constraints) {
+            final cardWidth = _responsiveCardWidth(constraints.maxWidth);
+
+            return Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                SizedBox(
+                  width: cardWidth,
+                  child: _buildCard(
+                    icon: Icons.receipt_long,
+                    iconColor: TenantAdminColors.danger,
+                    iconBg: const Color(0xFFFEE2E2),
+                    title: '3 failed payments',
+                    subtitle: 'Total LKR 6,750.00',
+                    actionText: 'View Transactions',
+                    actionColor: TenantAdminColors.danger,
                   ),
                 ),
-              ),
-              const Spacer(),
-              TextButton(
-                onPressed: () {},
-                style: TextButton.styleFrom(
-                  foregroundColor: TenantAdminColors.primary,
-                  textStyle: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 13),
+                SizedBox(
+                  width: cardWidth,
+                  child: _buildCard(
+                    icon: Icons.local_shipping_outlined,
+                    iconColor: TenantAdminColors.posHomeAccentOrange,
+                    iconBg: const Color(0xFFFFF7ED),
+                    title: '1 delayed supplier delivery',
+                    subtitle: 'Expected today',
+                    actionText: 'Track Delivery',
+                    actionColor: TenantAdminColors.posHomeAccentOrange,
+                  ),
                 ),
-                child: const Text('View All'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildCard(
-                  icon: Icons.receipt_long,
-                  iconColor: TenantAdminColors.danger,
-                  iconBg: const Color(0xFFFEE2E2),
-                  title: '3 failed payments',
-                  subtitle: 'Total LKR 6,750.00',
-                  actionText: 'View Transactions',
-                  actionColor: TenantAdminColors.danger,
-                ),
-                const SizedBox(width: 16),
-                _buildCard(
-                  icon: Icons.local_shipping_outlined,
-                  iconColor: const Color(0xFFFF7A00),
-                  iconBg: const Color(0xFFFFF7ED),
-                  title: '1 delayed supplier delivery',
-                  subtitle: 'Expected today',
-                  actionText: 'Track Delivery',
-                  actionColor: const Color(0xFFFF7A00),
-                ),
-                const SizedBox(width: 16),
-                _buildCard(
-                  icon: Icons.description_outlined,
-                  iconColor: const Color(0xFF3B82F6),
-                  iconBg: const Color(0xFFEFF6FF),
-                  title: 'VAT summary pending',
-                  subtitle: 'May 2025',
-                  actionText: 'Complete Now',
-                  actionColor: const Color(0xFF3B82F6),
+                SizedBox(
+                  width: cardWidth,
+                  child: _buildCard(
+                    icon: Icons.description_outlined,
+                    iconColor: TenantAdminColors.info,
+                    iconBg: const Color(0xFFEFF6FF),
+                    title: 'VAT summary pending',
+                    subtitle: 'May 2025',
+                    actionText: 'Complete Now',
+                    actionColor: TenantAdminColors.info,
+                  ),
                 ),
               ],
-            ),
+            );
+          },
+        );
+
+        final canScrollInternally =
+            scrollableWhenConstrained && constraints.hasBoundedHeight;
+
+        return Container(
+          padding: EdgeInsets.all(padding),
+          decoration: BoxDecoration(
+            color: TenantAdminColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: TenantAdminColors.border),
+            boxShadow: TenantAdminShadows.card,
           ),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Needs Attention Today',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: compact ? 15 : 16,
+                        fontWeight: FontWeight.w700,
+                        color: TenantAdminColors.navy,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7ED),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '3',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: TenantAdminColors.posHomeAccentOrange,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {},
+                    style: TextButton.styleFrom(
+                      foregroundColor: TenantAdminColors.posHomeAccentOrange,
+                      textStyle: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                    child: const Text('View All'),
+                  ),
+                ],
+              ),
+              SizedBox(height: compact ? 10 : 14),
+              if (canScrollInternally)
+                Expanded(child: SingleChildScrollView(child: cards))
+              else
+                cards,
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -140,7 +207,7 @@ class _NeedsAttentionSection extends StatelessWidget {
     required Color actionColor,
   }) {
     return Container(
-      width: 220,
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
@@ -176,7 +243,7 @@ class _NeedsAttentionSection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             subtitle,
             style: const TextStyle(
@@ -185,7 +252,7 @@ class _NeedsAttentionSection extends StatelessWidget {
               color: TenantAdminColors.mutedText,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           InkWell(
             onTap: () {},
             child: Text(
@@ -204,85 +271,123 @@ class _NeedsAttentionSection extends StatelessWidget {
 }
 
 class _StoreExceptionsSection extends StatelessWidget {
+  const _StoreExceptionsSection({
+    required this.compact,
+    required this.scrollableWhenConstrained,
+  });
+
+  final bool compact;
+  final bool scrollableWhenConstrained;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: TenantAdminColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Store Exceptions',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: TenantAdminColors.navy,
-                ),
-              ),
-              const Spacer(),
-              TextButton(
-                onPressed: () {},
-                style: TextButton.styleFrom(
-                  foregroundColor: TenantAdminColors.primary,
-                  textStyle: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 13),
-                ),
-                child: const Text('View All'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
+    final padding = compact ? 18.0 : 22.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cards = LayoutBuilder(
+          builder: (context, constraints) {
+            final cardWidth = _responsiveCardWidth(constraints.maxWidth);
+
+            return Wrap(
+              spacing: 16,
+              runSpacing: 16,
               children: [
-                _buildCard(
-                  icon: Icons.trending_down,
-                  iconColor: TenantAdminColors.danger,
-                  iconBg: const Color(0xFFFEE2E2),
-                  title: 'Outlet Lake Road',
-                  subtitle: 'Sales down 22%',
-                  statText: 'vs Yesterday',
-                  statColor: TenantAdminColors.danger,
-                  actionText: 'Investigate',
-                  actionColor: TenantAdminColors.danger,
+                SizedBox(
+                  width: cardWidth,
+                  child: _buildCard(
+                    icon: Icons.trending_down,
+                    iconColor: TenantAdminColors.danger,
+                    iconBg: const Color(0xFFFEE2E2),
+                    title: 'Outlet Lake Road',
+                    subtitle: 'Sales down 22%',
+                    statText: 'vs Yesterday',
+                    statColor: TenantAdminColors.danger,
+                    actionText: 'Investigate',
+                    actionColor: TenantAdminColors.danger,
+                  ),
                 ),
-                const SizedBox(width: 16),
-                _buildCard(
-                  icon: Icons.schedule,
-                  iconColor: const Color(0xFFFF7A00),
-                  iconBg: const Color(0xFFFFF7ED),
-                  title: 'Outlet City Center',
-                  subtitle: 'High voids 8.7%',
-                  statText: 'vs Target 3%',
-                  statColor: const Color(0xFFFF7A00),
-                  actionText: 'Review Now',
-                  actionColor: const Color(0xFFFF7A00),
+                SizedBox(
+                  width: cardWidth,
+                  child: _buildCard(
+                    icon: Icons.schedule,
+                    iconColor: TenantAdminColors.posHomeAccentOrange,
+                    iconBg: const Color(0xFFFFF7ED),
+                    title: 'Outlet City Center',
+                    subtitle: 'High voids 8.7%',
+                    statText: 'vs Target 3%',
+                    statColor: TenantAdminColors.posHomeAccentOrange,
+                    actionText: 'Review Now',
+                    actionColor: TenantAdminColors.posHomeAccentOrange,
+                  ),
                 ),
-                const SizedBox(width: 16),
-                _buildCard(
-                  icon: Icons.shopping_cart_outlined,
-                  iconColor: const Color(0xFF3B82F6),
-                  iconBg: const Color(0xFFEFF6FF),
-                  title: 'Outlet Negombo',
-                  subtitle: 'Low sales items',
-                  statText: '18 items',
-                  statColor: TenantAdminColors.navy,
-                  actionText: 'View Items',
-                  actionColor: const Color(0xFF3B82F6),
+                SizedBox(
+                  width: cardWidth,
+                  child: _buildCard(
+                    icon: Icons.shopping_cart_outlined,
+                    iconColor: TenantAdminColors.info,
+                    iconBg: const Color(0xFFEFF6FF),
+                    title: 'Outlet Negombo',
+                    subtitle: 'Low sales items',
+                    statText: '18 items',
+                    statColor: TenantAdminColors.navy,
+                    actionText: 'View Items',
+                    actionColor: TenantAdminColors.info,
+                  ),
                 ),
               ],
-            ),
+            );
+          },
+        );
+
+        final canScrollInternally =
+            scrollableWhenConstrained && constraints.hasBoundedHeight;
+
+        return Container(
+          padding: EdgeInsets.all(padding),
+          decoration: BoxDecoration(
+            color: TenantAdminColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: TenantAdminColors.border),
+            boxShadow: TenantAdminShadows.card,
           ),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Store Exceptions',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: compact ? 15 : 16,
+                        fontWeight: FontWeight.w700,
+                        color: TenantAdminColors.navy,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {},
+                    style: TextButton.styleFrom(
+                      foregroundColor: TenantAdminColors.posHomeAccentOrange,
+                      textStyle: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                    child: const Text('View All'),
+                  ),
+                ],
+              ),
+              SizedBox(height: compact ? 10 : 14),
+              if (canScrollInternally)
+                Expanded(child: SingleChildScrollView(child: cards))
+              else
+                cards,
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -298,7 +403,7 @@ class _StoreExceptionsSection extends StatelessWidget {
     required Color actionColor,
   }) {
     return Container(
-      width: 220,
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
@@ -334,7 +439,7 @@ class _StoreExceptionsSection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             subtitle,
             style: const TextStyle(
@@ -352,7 +457,7 @@ class _StoreExceptionsSection extends StatelessWidget {
               color: statColor,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           InkWell(
             onTap: () {},
             child: Text(

@@ -154,21 +154,21 @@ CloseTillColorPair closeTillDifferenceColors(double difference) {
   if (difference == 0) {
     return const CloseTillColorPair(
       foreground: TenantAdminColors.success,
-      background: Color(0xFFEFFAF3),
-      border: Color(0xFFBBF7D0),
+      background: TenantAdminColors.successSurface,
+      border: TenantAdminColors.successBorder,
     );
   }
   if (difference < 0) {
     return const CloseTillColorPair(
       foreground: TenantAdminColors.danger,
-      background: Color(0xFFFEF2F2),
-      border: Color(0xFFFECACA),
+      background: TenantAdminColors.dangerSurface,
+      border: TenantAdminColors.dangerBorder,
     );
   }
   return const CloseTillColorPair(
     foreground: TenantAdminColors.success,
-    background: Color(0xFFEFFAF3),
-    border: Color(0xFFBBF7D0),
+    background: TenantAdminColors.successSurface,
+    border: TenantAdminColors.successBorder,
   );
 }
 
@@ -177,27 +177,27 @@ CloseTillColorPair closeTillClosingStatusColors(String statusLabel) {
     case 'Balanced':
       return const CloseTillColorPair(
         foreground: TenantAdminColors.success,
-        background: Color(0xFFEFFAF3),
-        border: Color(0xFFBBF7D0),
+        background: TenantAdminColors.successSurface,
+        border: TenantAdminColors.successBorder,
       );
     case 'Short':
       return const CloseTillColorPair(
         foreground: TenantAdminColors.danger,
-        background: Color(0xFFFEF2F2),
-        border: Color(0xFFFECACA),
+        background: TenantAdminColors.dangerSurface,
+        border: TenantAdminColors.dangerBorder,
       );
     case 'Over':
       return const CloseTillColorPair(
         foreground: TenantAdminColors.success,
-        background: Color(0xFFEFFAF3),
-        border: Color(0xFFBBF7D0),
+        background: TenantAdminColors.successSurface,
+        border: TenantAdminColors.successBorder,
       );
     case 'Variance Reason Required':
     default:
       return const CloseTillColorPair(
         foreground: TenantAdminColors.warning,
-        background: Color(0xFFFFF7ED),
-        border: Color(0xFFFED7AA),
+        background: TenantAdminColors.warningSurface,
+        border: TenantAdminColors.warningBorder,
       );
   }
 }

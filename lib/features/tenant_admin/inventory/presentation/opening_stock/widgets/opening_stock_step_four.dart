@@ -71,19 +71,22 @@ class OpeningStockStepFour extends ConsumerWidget {
             if (state.createdMovementId != null) ...[
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   'Movement Ref: ${state.createdMovementId}',
-                  style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: Color(0xFF475569)),
+                  style: const TextStyle(
+                      fontSize: 11,
+                      fontFamily: 'monospace',
+                      color: Color(0xFF475569)),
                 ),
               ),
             ],
             const SizedBox(height: 28),
-
             Row(
               children: [
                 Expanded(
@@ -93,9 +96,11 @@ class OpeningStockStepFour extends ConsumerWidget {
                       foregroundColor: const Color(0xFF475569),
                       side: const BorderSide(color: Color(0xFFCBD5E1)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: const Text('Add Another Stock', style: TextStyle(fontWeight: FontWeight.w600)),
+                    child: const Text('Add Another Stock',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -106,10 +111,12 @@ class OpeningStockStepFour extends ConsumerWidget {
                       backgroundColor: primaryOrange,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                       elevation: 2,
                     ),
-                    child: const Text('View Current Stock', style: TextStyle(fontWeight: FontWeight.w700)),
+                    child: const Text('View Current Stock',
+                        style: TextStyle(fontWeight: FontWeight.w700)),
                   ),
                 ),
               ],

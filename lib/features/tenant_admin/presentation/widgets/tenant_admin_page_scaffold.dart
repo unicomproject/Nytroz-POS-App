@@ -12,6 +12,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
     this.padding,
     this.backgroundColor = TenantAdminColors.background,
     this.scrollable = true,
+    this.fillHeight = true,
     this.showBackButton = false,
     this.onBackButtonPressed,
   });
@@ -23,6 +24,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
   final EdgeInsets? padding;
   final Color backgroundColor;
   final bool scrollable;
+  final bool fillHeight;
   final bool showBackButton;
   final VoidCallback? onBackButtonPressed;
 
@@ -56,15 +58,29 @@ class TenantAdminPageScaffold extends StatelessWidget {
                     showBackButton: showBackButton,
                     onBackButtonPressed: onBackButtonPressed,
                   ),
-                const SizedBox(height: 28),
+                const SizedBox(height: TenantAdminSpacing.xl),
               ],
               if (scrollable) child else Expanded(child: child),
             ],
           );
 
+          final framePadding = fillHeight
+              ? EdgeInsets.all(
+                  isNarrow ? TenantAdminSpacing.sm : TenantAdminSpacing.md)
+              : const EdgeInsets.only(top: 12);
+          final verticalFrameInset =
+              fillHeight ? framePadding.vertical : framePadding.top;
+
           return Padding(
-            padding: const EdgeInsets.only(top: 12.0),
+            padding: framePadding,
             child: Container(
+              width: double.infinity,
+              constraints: fillHeight
+                  ? BoxConstraints(
+                      minHeight: (constraints.maxHeight - verticalFrameInset)
+                          .clamp(0.0, double.infinity),
+                    )
+                  : null,
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: TenantAdminColors.surface,
@@ -74,7 +90,17 @@ class TenantAdminPageScaffold extends StatelessWidget {
               child: scrollable
                   ? SingleChildScrollView(
                       padding: basePadding,
-                      child: content,
+                      child: ConstrainedBox(
+                        constraints: fillHeight
+                            ? BoxConstraints(
+                                minHeight: (constraints.maxHeight -
+                                        verticalFrameInset -
+                                        basePadding.vertical)
+                                    .clamp(0.0, double.infinity),
+                              )
+                            : const BoxConstraints(),
+                        child: content,
+                      ),
                     )
                   : Padding(
                       padding: basePadding,
@@ -109,7 +135,11 @@ class _HorizontalHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: _HeaderText(title: title, subtitle: subtitle, showBackButton: showBackButton, onBackButtonPressed: onBackButtonPressed),
+          child: _HeaderText(
+              title: title,
+              subtitle: subtitle,
+              showBackButton: showBackButton,
+              onBackButtonPressed: onBackButtonPressed),
         ),
         if (actions.isNotEmpty) ...[
           const SizedBox(width: TenantAdminSpacing.lg),
@@ -144,7 +174,11 @@ class _VerticalHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _HeaderText(title: title, subtitle: subtitle, showBackButton: showBackButton, onBackButtonPressed: onBackButtonPressed),
+        _HeaderText(
+            title: title,
+            subtitle: subtitle,
+            showBackButton: showBackButton,
+            onBackButtonPressed: onBackButtonPressed),
         if (actions.isNotEmpty) ...[
           const SizedBox(height: TenantAdminSpacing.lg),
           Wrap(
@@ -193,14 +227,6 @@ class _HeaderText extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (title == 'Dashboard') ...[
-                const Icon(
-                  Icons.menu,
-                  color: TenantAdminColors.bodyText,
-                  size: 22,
-                ),
-                const SizedBox(height: 18),
-              ],
               if (title.isNotEmpty)
                 Text(title, style: TenantAdminTextStyles.pageTitle(context)),
               if (subtitle != null && subtitle!.trim().isNotEmpty) ...[

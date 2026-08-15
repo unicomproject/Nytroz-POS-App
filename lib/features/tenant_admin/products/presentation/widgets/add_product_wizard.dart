@@ -240,9 +240,7 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
             if (success && context.mounted) {
               showProductSaveToast(
                 context,
-                title: isStep8
-                    ? 'Product Created'
-                    : 'Product Saved',
+                title: isStep8 ? 'Product Created' : 'Product Saved',
                 message: isStep8
                     ? 'Product created successfully'
                     : 'Product saved successfully',
@@ -254,9 +252,8 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           },
           isSavingDraft: state.isSavingDraft,
           isSubmitting: state.isSubmitting,
-          saveAndContinueLabel: state.currentStep == 8
-              ? 'Create Product'
-              : 'Save & Continue',
+          saveAndContinueLabel:
+              state.currentStep == 8 ? 'Create Product' : 'Save & Continue',
         ),
       ],
     );

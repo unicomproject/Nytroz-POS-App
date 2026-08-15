@@ -42,7 +42,8 @@ class ProductStockDetailScreen extends ConsumerWidget {
 
     return TenantAdminPageScaffold(
       title: 'Product Stock Detail',
-      subtitle: 'Detailed stock information and movement history for this product.',
+      subtitle:
+          'Detailed stock information and movement history for this product.',
       showBackButton: true,
       onBackButtonPressed: () {
         if (Navigator.of(context).canPop()) {
@@ -60,7 +61,6 @@ class ProductStockDetailScreen extends ConsumerWidget {
         data: (detail) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // ── Product image, name, status chips, action buttons ──
             ProductInfoCard(detail: detail),
             const SizedBox(height: 20),

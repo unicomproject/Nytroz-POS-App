@@ -74,7 +74,7 @@ void main() {
       expect(find.byType(TillMonitoringList), findsOneWidget);
       expect(find.byType(TillMonitoringSidePanel), findsOneWidget);
       expect(find.text('TOTAL TILLS'), findsOneWidget);
-      expect(find.textContaining('Showing 1 to 1 of 1 tills'), findsOneWidget);
+      expect(find.textContaining('Showing 1–1 of 1 tills'), findsOneWidget);
     });
 
     testWidgets('shows hardware permission state without hardware.view',

@@ -19,7 +19,7 @@ class TenantAdminAppHeader extends ConsumerWidget {
 
   final VoidCallback? onMenuPressed;
 
-  static const height = 44.0;
+  static const height = TenantAdminAppHeaderTokens.height;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

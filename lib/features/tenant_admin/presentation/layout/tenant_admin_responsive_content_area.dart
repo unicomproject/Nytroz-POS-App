@@ -23,9 +23,17 @@ class TenantAdminResponsiveContentArea extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final pagePadding = padding ?? TenantAdminInsets.pageForWidth(width);
+        final sidePanel = optionalSidePanel;
+        final pagePadding = padding ?? EdgeInsets.zero;
         final showInlinePanel =
-            optionalSidePanel != null && width >= TenantAdminBreakpoints.tablet;
+            sidePanel != null && width >= TenantAdminBreakpoints.tablet;
+        final sidePanelMaxWidth =
+            (width * TenantAdminContentTokens.detailPanelRatio)
+                .clamp(
+                  TenantAdminContentTokens.minUsablePanelWidth,
+                  TenantAdminContentTokens.sidePanelWidth,
+                )
+                .toDouble();
 
         final content = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -49,9 +57,16 @@ class TenantAdminResponsiveContentArea extends StatelessWidget {
                       Expanded(child: content),
                       const SizedBox(
                           width: TenantAdminContentTokens.contentGap),
-                      SizedBox(
-                        width: TenantAdminContentTokens.sidePanelWidth,
-                        child: optionalSidePanel,
+                      Flexible(
+                        flex: 0,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minWidth:
+                                TenantAdminContentTokens.minUsablePanelWidth,
+                            maxWidth: sidePanelMaxWidth,
+                          ),
+                          child: sidePanel,
+                        ),
                       ),
                     ],
                   )

@@ -65,7 +65,9 @@ void main() {
 
       expect(controller.next(), isFalse);
       expect(
-        container.read(addUserWizardControllerProvider).fieldErrors['outletIds'],
+        container
+            .read(addUserWizardControllerProvider)
+            .fieldErrors['outletIds'],
         'Select at least one outlet.',
       );
     });

@@ -4,6 +4,7 @@ import '../../../../../shared/pos_session/pos_session_context.dart';
 import '../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../providers/pos_cash_payment_success_provider.dart';
+import '../../utils/receipt_cashier_display.dart';
 
 class ThermalReceiptPreview extends StatelessWidget {
   const ThermalReceiptPreview({
@@ -22,6 +23,11 @@ class ThermalReceiptPreview extends StatelessWidget {
     final outletName = _cleanPending(sessionContext.outletName);
     final outletLocation = _cleanPending(sessionContext.outletLocation);
     final terminal = _cleanPending(sessionContext.tillName);
+    final resolvedCashierName = resolveReceiptCashierDisplayName(
+      receiptDataJson: successData.receiptDataJson,
+      paymentCashierName: successData.cashierName,
+      sessionDisplayName: cashierName,
+    );
 
     return Align(
       alignment: Alignment.topCenter,
@@ -59,7 +65,7 @@ class ThermalReceiptPreview extends StatelessWidget {
                   _ReceiptInfoSection(
                     receiptNumber: successData.receiptNumber,
                     completedAt: successData.completedAt,
-                    cashierName: cashierName,
+                    cashierName: resolvedCashierName,
                     customerName: successData.customerName,
                     terminal: terminal,
                   ),

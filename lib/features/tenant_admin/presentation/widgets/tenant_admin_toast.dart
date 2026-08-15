@@ -207,8 +207,10 @@ class _TopRightToastWidgetState extends State<_TopRightToastWidget>
               child: SlideTransition(
                 position: _slideAnimation,
                 child: Container(
-                  constraints: const BoxConstraints(maxWidth: 380, minWidth: 280),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  constraints:
+                      const BoxConstraints(maxWidth: 380, minWidth: 280),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     color: widget.backgroundColor,
                     borderRadius: BorderRadius.circular(12),
