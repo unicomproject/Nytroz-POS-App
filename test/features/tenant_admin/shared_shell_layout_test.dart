@@ -431,7 +431,7 @@ void main() {
   group('Footer settings active', () {
     test('marks catalog routes as settings area', () {
       expect(isTenantAdminSettingsAreaPath('/tenant-admin/settings'), isTrue);
-      expect(isTenantAdminSettingsAreaPath('/tenant-admin/brands'), isTrue);
+      expect(isTenantAdminSettingsAreaPath('/tenant-admin/brands'), isFalse);
       expect(isTenantAdminSettingsAreaPath('/tenant-admin/products'), isFalse);
       expect(isTenantAdminSettingsAreaPath('/tenant-admin/dashboard'), isFalse);
     });

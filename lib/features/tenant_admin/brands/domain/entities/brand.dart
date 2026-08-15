@@ -42,6 +42,8 @@ class BrandListResult {
   final int pageNumber;
   final int pageSize;
   final int totalCount;
+
+  int get totalPages => pageSize <= 0 ? 1 : (totalCount / pageSize).ceil();
 }
 
 class BrandUpsertInput {

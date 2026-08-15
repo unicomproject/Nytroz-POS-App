@@ -15,6 +15,7 @@ class TenantAdminDataTable extends StatelessWidget {
     this.onRetry,
     this.showCheckboxColumn = false,
     this.footer,
+    this.fillAvailableWidth = false,
   });
 
   final List<DataColumn> columns;
@@ -26,6 +27,7 @@ class TenantAdminDataTable extends StatelessWidget {
   final VoidCallback? onRetry;
   final bool showCheckboxColumn;
   final Widget? footer;
+  final bool fillAvailableWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -68,21 +70,28 @@ class TenantAdminDataTable extends StatelessWidget {
                 columnSpacing: TenantAdminSpacing.xl,
               ),
             ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                headingTextStyle: const TextStyle(
-                  color: TenantAdminColors.mutedText,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
+            child: LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: fillAvailableWidth ? constraints.maxWidth : 0.0,
+                  ),
+                  child: DataTable(
+                    headingTextStyle: const TextStyle(
+                      color: TenantAdminColors.mutedText,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                    dataTextStyle: const TextStyle(
+                      color: TenantAdminColors.bodyText,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    showCheckboxColumn: showCheckboxColumn,
+                    columns: columns,
+                    rows: rows,
+                  ),
                 ),
-                dataTextStyle: const TextStyle(
-                  color: TenantAdminColors.bodyText,
-                  fontWeight: FontWeight.w500,
-                ),
-                showCheckboxColumn: showCheckboxColumn,
-                columns: columns,
-                rows: rows,
               ),
             ),
           ),
