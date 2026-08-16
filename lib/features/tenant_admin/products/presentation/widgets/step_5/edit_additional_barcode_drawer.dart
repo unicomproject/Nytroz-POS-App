@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../data/models/step5_barcode_dtos.dart';
 import '../../../domain/entities/step4_variant_configuration_state.dart';
 
@@ -107,7 +107,7 @@ class _EditAdditionalBarcodeDrawerState
                             fontWeight: FontWeight.w600, fontSize: 13)),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: _barcodeType,
+                      initialValue: _barcodeType,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         contentPadding:
@@ -129,7 +129,7 @@ class _EditAdditionalBarcodeDrawerState
                             fontWeight: FontWeight.w600, fontSize: 13)),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String?>(
-                      value: _assignedToVariantId,
+                      initialValue: _assignedToVariantId,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         contentPadding:
@@ -159,7 +159,7 @@ class _EditAdditionalBarcodeDrawerState
                           onChanged: widget.barcodeDto.isPrimary
                               ? null // Cannot unset primary directly from here, must set another as primary
                               : (val) => setState(() => _isPrimary = val),
-                          activeColor: Colors.orange,
+                          activeThumbColor: Colors.orange,
                         )
                       ],
                     )

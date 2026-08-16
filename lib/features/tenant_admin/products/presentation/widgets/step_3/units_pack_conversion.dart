@@ -774,25 +774,45 @@ class _UnitsPackConversionFormState
       ),
       child: Material(
         color: Colors.transparent,
-        child: SwitchListTile(
-          title: const Text(
-            'Allow Decimal Quantity',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: TenantAdminColors.bodyText,
-            ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TenantAdminSpacing.sm,
+            vertical: TenantAdminSpacing.sm,
           ),
-          subtitle: const Text(
-            'Allow fractional quantities when the configured product supports them.',
-            style: TextStyle(
-              fontSize: 12,
-              color: TenantAdminColors.mutedText,
-            ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Text(
+                      'Allow Decimal Quantity',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: TenantAdminColors.bodyText,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Allow fractional quantities when the configured product supports them.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: TenantAdminColors.mutedText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: state.allowDecimalQuantity,
+                activeColor: TenantAdminColors.posHomeAccentOrange,
+                onChanged: (val) => controller.setAllowDecimalQuantity(val),
+              ),
+            ],
           ),
-          value: state.allowDecimalQuantity,
-          activeThumbColor: TenantAdminColors.posHomeAccentOrange,
-          onChanged: (val) => controller.setAllowDecimalQuantity(val),
         ),
       ),
     );

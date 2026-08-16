@@ -18,6 +18,7 @@ class ProductDeleteAction extends ConsumerWidget {
     this.imageUrl,
     this.navigateToListOnSuccess = false,
     this.compact = true,
+    this.isLocalDraft = false,
   });
 
   final String productId;
@@ -26,6 +27,7 @@ class ProductDeleteAction extends ConsumerWidget {
   final String? imageUrl;
   final bool navigateToListOnSuccess;
   final bool compact;
+  final bool isLocalDraft;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,7 +39,9 @@ class ProductDeleteAction extends ConsumerWidget {
     final border = TenantAdminColors.danger.withValues(alpha: 0.3);
 
     return Tooltip(
-      message: isDeleting ? 'Deleting product...' : 'Delete product',
+      message: isDeleting
+          ? (isLocalDraft ? 'Deleting draft...' : 'Deleting product...')
+          : (isLocalDraft ? 'Delete draft' : 'Delete product'),
       child: InkWell(
         onTap: isDeleting ? null : () => _confirmAndDelete(context, ref),
         borderRadius: BorderRadius.circular(compact ? 8 : 4),
@@ -116,6 +120,29 @@ class ProductDeleteAction extends ConsumerWidget {
         );
 
     try {
+      if (isLocalDraft) {
+        await ref
+            .read(productWizardDraftLocalRepositoryProvider)
+            .deleteDraft(productId);
+        ref.invalidate(localProductWizardDraftsProvider);
+        ref.invalidate(productListProvider);
+
+        if (!context.mounted) {
+          return;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Draft "$productName" deleted from this device.'),
+          ),
+        );
+
+        if (navigateToListOnSuccess) {
+          context.go('/tenant-admin/products');
+        }
+        return;
+      }
+
       final result = await ref.read(deleteProductProvider).call(productId);
 
       ref

@@ -138,6 +138,10 @@ class WidgetTestFakeRepository implements TenantProductRepository {
   Future<ProductCreateResult> createProduct(ProductFormData request) =>
       throw UnimplementedError();
   @override
+  Future<ProductCreateResult> createProductFromWizard(
+          Map<String, dynamic> wizardCreatePayload) =>
+      throw UnimplementedError();
+  @override
   Future<TenantProductDetail> updateProduct(
           String productId, ProductFormData request) =>
       throw UnimplementedError();

@@ -19,7 +19,7 @@ class ProductChannelAvailabilityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),

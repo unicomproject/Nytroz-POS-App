@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/storage/secure_storage_provider.dart';
 
 import '../../../../../core/network/dio_provider.dart';
 import '../../../presentation/providers/tenant_admin_access_provider.dart';
@@ -11,14 +12,18 @@ import '../../application/usecases/get_product_summary.dart';
 import '../../application/usecases/get_products.dart';
 import '../../application/usecases/update_product.dart';
 import '../../application/usecases/update_product_status.dart';
+import '../../data/datasources/product_wizard_draft_local_datasource.dart';
 import '../../data/datasources/tenant_product_remote_datasource.dart';
 import '../../data/repositories/tenant_product_repository_impl.dart';
 import '../../domain/entities/add_product_wizard_state.dart';
+import '../../domain/entities/product_wizard_draft.dart';
 import '../../domain/entities/tenant_product.dart';
 import '../../domain/entities/tenant_product_create_options.dart';
 import '../../domain/entities/tenant_product_detail.dart';
 import '../../domain/entities/tenant_product_filter_options.dart';
+import '../../domain/repositories/product_wizard_draft_local_repository.dart';
 import '../../domain/repositories/tenant_product_repository.dart';
+import '../../domain/services/product_list_local_draft_merger.dart';
 import '../controllers/add_product_wizard_controller.dart';
 
 final tenantProductRemoteDatasourceProvider =
@@ -30,6 +35,25 @@ final tenantProductRepositoryProvider =
     Provider<TenantProductRepository>((ref) {
   return TenantProductRepositoryImpl(
       ref.watch(tenantProductRemoteDatasourceProvider));
+});
+
+final productWizardDraftLocalDataSourceProvider =
+    Provider<ProductWizardDraftLocalDataSource>((ref) {
+  return ProductWizardDraftLocalDataSourceImpl(
+    ref.watch(secureStorageProvider),
+  );
+});
+
+final productWizardDraftLocalRepositoryProvider =
+    Provider<ProductWizardDraftLocalRepository>((ref) {
+  return ProductWizardDraftLocalRepositoryImpl(
+    ref.watch(productWizardDraftLocalDataSourceProvider),
+  );
+});
+
+final localProductWizardDraftsProvider =
+    FutureProvider.autoDispose<List<ProductWizardDraft>>((ref) async {
+  return ref.watch(productWizardDraftLocalRepositoryProvider).getAllDrafts();
 });
 
 final getProductsProvider = Provider<GetProducts>((ref) {
@@ -241,7 +265,13 @@ final productListProvider =
   }
 
   final query = ref.watch(productListQueryProvider);
-  return ref.watch(getProductsProvider).call(query: query);
+  final backend = await ref.watch(getProductsProvider).call(query: query);
+  final drafts = await ref.watch(localProductWizardDraftsProvider.future);
+  return ProductListLocalDraftMerger.merge(
+    backend: backend,
+    drafts: drafts,
+    query: query,
+  );
 });
 
 final productSummaryProvider =
@@ -302,5 +332,6 @@ final productEditCreateOptionsProvider =
 final addProductWizardControllerProvider = StateNotifierProvider.autoDispose<
     AddProductWizardController, AddProductWizardState>((ref) {
   final repo = ref.watch(tenantProductRepositoryProvider);
-  return AddProductWizardController(repo);
+  final draftLocal = ref.watch(productWizardDraftLocalRepositoryProvider);
+  return AddProductWizardController(repo, draftLocal: draftLocal);
 });

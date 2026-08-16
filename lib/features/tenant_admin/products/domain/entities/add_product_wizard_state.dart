@@ -28,10 +28,12 @@ class ProductUnitConversionItem {
 }
 
 class AddProductWizardState {
-  final int currentStep; // 1 to 8
+  final int currentStep; // 1 to 7
   final int? targetSetupStep;
   final int? lastCompletedSetupStep;
   final String? productId;
+  /// Frontend-local draft identity (not a backend product id).
+  final String? localDraftId;
   final String status;
   final int rowVersion;
 
@@ -100,11 +102,21 @@ class AddProductWizardState {
   // Step 5 Barcode & SKU State
   final Step5BarcodeSkuState step5State;
 
+  // Step 6 Pricing & Tax State
+  final num? costPrice;
+  final num? standardSellingPrice;
+  final num? discountPrice;
+  final String? taxId;
+  final String? taxName;
+  final num? taxRate;
+  final bool taxExclusive;
+
   const AddProductWizardState({
     this.currentStep = 1,
     this.targetSetupStep,
     this.lastCompletedSetupStep,
     this.productId,
+    this.localDraftId,
     this.status = 'DRAFT',
     this.rowVersion = 0,
     this.productName = '',
@@ -153,6 +165,13 @@ class AddProductWizardState {
     this.createOptions,
     this.step4State = const Step4VariantConfigurationState(),
     this.step5State = const Step5BarcodeSkuState(),
+    this.costPrice,
+    this.standardSellingPrice,
+    this.discountPrice,
+    this.taxId,
+    this.taxName,
+    this.taxRate,
+    this.taxExclusive = true,
   });
 
   bool get isEditMode => productId != null && productId!.isNotEmpty;
@@ -172,6 +191,8 @@ class AddProductWizardState {
     bool clearTargetSetupStep = false,
     int? lastCompletedSetupStep,
     String? productId,
+    String? localDraftId,
+    bool clearLocalDraftId = false,
     String? status,
     int? rowVersion,
     String? productName,
@@ -231,6 +252,19 @@ class AddProductWizardState {
     TenantProductCreateOptions? createOptions,
     Step4VariantConfigurationState? step4State,
     Step5BarcodeSkuState? step5State,
+    num? costPrice,
+    bool clearCostPrice = false,
+    num? standardSellingPrice,
+    bool clearStandardSellingPrice = false,
+    num? discountPrice,
+    bool clearDiscountPrice = false,
+    String? taxId,
+    bool clearTaxId = false,
+    String? taxName,
+    bool clearTaxName = false,
+    num? taxRate,
+    bool clearTaxRate = false,
+    bool? taxExclusive,
   }) {
     return AddProductWizardState(
       currentStep: currentStep ?? this.currentStep,
@@ -240,6 +274,8 @@ class AddProductWizardState {
       lastCompletedSetupStep:
           lastCompletedSetupStep ?? this.lastCompletedSetupStep,
       productId: productId ?? this.productId,
+      localDraftId:
+          clearLocalDraftId ? null : (localDraftId ?? this.localDraftId),
       status: status ?? this.status,
       rowVersion: rowVersion ?? this.rowVersion,
       productName: productName ?? this.productName,
@@ -300,6 +336,15 @@ class AddProductWizardState {
       createOptions: createOptions ?? this.createOptions,
       step4State: step4State ?? this.step4State,
       step5State: step5State ?? this.step5State,
+      costPrice: clearCostPrice ? null : (costPrice ?? this.costPrice),
+      standardSellingPrice: clearStandardSellingPrice
+          ? null
+          : (standardSellingPrice ?? this.standardSellingPrice),
+      discountPrice: clearDiscountPrice ? null : (discountPrice ?? this.discountPrice),
+      taxId: clearTaxId ? null : (taxId ?? this.taxId),
+      taxName: clearTaxName ? null : (taxName ?? this.taxName),
+      taxRate: clearTaxRate ? null : (taxRate ?? this.taxRate),
+      taxExclusive: taxExclusive ?? this.taxExclusive,
     );
   }
 }

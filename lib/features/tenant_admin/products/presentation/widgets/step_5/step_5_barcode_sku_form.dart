@@ -1,22 +1,226 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/tenant_product_providers.dart';
-import 'duplicate_barcode_banner.dart';
-import 'variant_identifier_table.dart';
-import 'additional_barcode_table.dart';
-import 'add_additional_barcode_drawer.dart';
+import '../../../data/models/step5_barcode_dtos.dart';
+import '../../../domain/entities/add_product_wizard_state.dart';
+import '../../../domain/entities/step4_variant_configuration_state.dart';
+import '../../controllers/add_product_wizard_controller.dart';
+import 'step_5_identifier_table.dart';
+import 'edit_variant_identifier_drawer.dart';
 
-class Step5BarcodeSkuForm extends ConsumerWidget {
+class Step5BarcodeSkuForm extends ConsumerStatefulWidget {
   const Step5BarcodeSkuForm({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(addProductWizardControllerProvider);
+  ConsumerState<Step5BarcodeSkuForm> createState() =>
+      _Step5BarcodeSkuFormState();
+}
+
+class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
+  String? _selectedClientKey;
+
+  final _skuController = TextEditingController();
+  final _barcodeController = TextEditingController();
+  final _barcodeFocusNode = FocusNode();
+  bool _syncingFromState = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final state = ref.read(addProductWizardControllerProvider);
+    _skuController.text = state.step5State.baseSku;
+    _barcodeController.text = state.step5State.parentProductBarcode;
+
+    _skuController.addListener(_onSkuChanged);
+    _barcodeController.addListener(_onBarcodeChanged);
+  }
+
+  void _onSkuChanged() {
+    if (_syncingFromState) return;
+    final structure =
+        ref.read(addProductWizardControllerProvider).productStructure;
+    if (structure == 'SIMPLE' || structure == 'BUNDLE') {
+      ref
+          .read(addProductWizardControllerProvider.notifier)
+          .updateSimpleBaseSku(_skuController.text);
+    } else if (structure == 'VARIANT' && _selectedClientKey != null) {
+      _flushVariantDraftFields();
+    }
+  }
+
+  void _onBarcodeChanged() {
+    if (_syncingFromState) return;
+    final structure =
+        ref.read(addProductWizardControllerProvider).productStructure;
+    if (structure == 'SIMPLE' || structure == 'BUNDLE') {
+      ref
+          .read(addProductWizardControllerProvider.notifier)
+          .updateSimpleParentBarcode(_barcodeController.text);
+    } else if (structure == 'VARIANT' && _selectedClientKey != null) {
+      _flushVariantDraftFields();
+    }
+  }
+
+  /// Keeps wizard state current while typing so Save Draft captures values
+  /// even before "Add to List" is pressed.
+  void _flushVariantDraftFields() {
+    final key = _selectedClientKey;
+    if (key == null) return;
+    final sku = _skuController.text.trim();
+    final barcode = _barcodeController.text.trim();
+    ref.read(addProductWizardControllerProvider.notifier).updateBarcodeSkuAssignment(
+          BarcodeSkuAssignmentDto(
+            clientCombinationKey: key,
+            productVariantId: null,
+            sku: sku.isEmpty ? null : sku,
+            barcode: barcode.isEmpty ? null : barcode,
+            isAssigned: sku.isNotEmpty || barcode.isNotEmpty,
+          ),
+        );
+  }
+
+  @override
+  void dispose() {
+    _skuController.removeListener(_onSkuChanged);
+    _barcodeController.removeListener(_onBarcodeChanged);
+    _skuController.dispose();
+    _barcodeController.dispose();
+    _barcodeFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _syncSimpleControllersFromState() {
+    final state = ref.read(addProductWizardControllerProvider);
+    _syncingFromState = true;
+    if (_skuController.text != state.step5State.baseSku) {
+      _skuController.text = state.step5State.baseSku;
+    }
+    if (_barcodeController.text != state.step5State.parentProductBarcode) {
+      _barcodeController.text = state.step5State.parentProductBarcode;
+    }
+    _syncingFromState = false;
+  }
+
+  List<_VariantDropdownItem> _buildDropdownItems({
+    required String productStructure,
+    required String productName,
+    required List<GeneratedVariantRow> generatedVariants,
+  }) {
+    final includedVariants =
+        generatedVariants.where((v) => v.isIncluded).toList();
+    return includedVariants
+        .map((v) => _VariantDropdownItem(
+              clientKey: v.clientCombinationKey,
+              label: v.displayLabel ?? v.combinationLabel,
+              productVariantId: v.productVariantId,
+            ))
+        .toList();
+  }
+
+  Future<void> _onAssignVariant() async {
+    if (_selectedClientKey == null) return;
     final controller = ref.read(addProductWizardControllerProvider.notifier);
 
-    final step5State = state.step5State;
-    final isVariant = state.productStructure == 'VARIANT';
-    final optionsAsync = ref.watch(productCreateOptionsProvider);
+    final sku = _skuController.text.trim();
+    final barcode = _barcodeController.text.trim();
+
+    final success = await controller.assignBarcodeSkuAndSave(
+      BarcodeSkuAssignmentDto(
+        clientCombinationKey: _selectedClientKey!,
+        productVariantId: null,
+        sku: sku.isEmpty ? null : sku,
+        barcode: barcode.isEmpty ? null : barcode,
+        isAssigned: sku.isNotEmpty || barcode.isNotEmpty,
+      ),
+    );
+
+    if (success) {
+      setState(() {
+        _skuController.clear();
+        _barcodeController.clear();
+      });
+    }
+  }
+
+  void _onEditAssignment(
+      BuildContext context, BarcodeSkuAssignmentDto assignment, int index) {
+    final state = ref.read(addProductWizardControllerProvider);
+    final controller = ref.read(addProductWizardControllerProvider.notifier);
+
+    final variant = state.step4State.generatedVariants.firstWhere(
+      (v) => v.clientCombinationKey == assignment.clientCombinationKey,
+      orElse: () => const GeneratedVariantRow(
+        clientCombinationKey: '',
+        combinationLabel: '',
+      ),
+    );
+
+    final label = variant.clientCombinationKey.isNotEmpty
+        ? (variant.displayLabel ?? variant.combinationLabel)
+        : (state.productName.isNotEmpty ? state.productName : 'Base Product');
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close',
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            child: EditVariantIdentifierDrawer(
+              variantDto: Step5VariantIdentifierDto(
+                productVariantId: assignment.productVariantId,
+                sku: assignment.sku,
+                barcode: assignment.barcode,
+              ),
+              displayLabel: label,
+              onUpdate: (updated) {
+                controller.updateBarcodeSkuAssignment(
+                  BarcodeSkuAssignmentDto(
+                    clientCombinationKey: assignment.clientCombinationKey,
+                    productVariantId: updated.productVariantId,
+                    sku: updated.sku,
+                    barcode: updated.barcode,
+                    isAssigned: (updated.sku?.isNotEmpty ?? false) ||
+                        (updated.barcode?.isNotEmpty ?? false),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(addProductWizardControllerProvider);
+    final controller = ref.read(addProductWizardControllerProvider.notifier);
+    final isSimpleOrBundle = state.productStructure == 'SIMPLE' ||
+        state.productStructure == 'BUNDLE';
+
+    ref.listen(addProductWizardControllerProvider, (previous, next) {
+      if (isSimpleOrBundle &&
+          (previous?.step5State.baseSku != next.step5State.baseSku ||
+              previous?.step5State.parentProductBarcode !=
+                  next.step5State.parentProductBarcode)) {
+        _syncSimpleControllersFromState();
+      }
+    });
+
+    if (isSimpleOrBundle) {
+      return _buildSimpleForm(state, controller);
+    }
+    return _buildVariantForm(state, controller);
+  }
+
+  Widget _buildSimpleForm(
+    AddProductWizardState state,
+    AddProductWizardController controller,
+  ) {
+    final productName =
+        state.productName.isNotEmpty ? state.productName : 'Product';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
@@ -25,162 +229,388 @@ class Step5BarcodeSkuForm extends ConsumerWidget {
         children: [
           const Text(
             'Barcode & SKU',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           const Text(
-            'Manage product codes and barcode assignments',
-            style: TextStyle(color: Colors.black54),
+            'Assign the Base SKU and Parent Product Barcode for this product.',
+            style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
           ),
           const SizedBox(height: 24),
-
-          if (step5State.duplicateBarcodeConflict != null)
-            DuplicateBarcodeBanner(
-                conflictDto: step5State.duplicateBarcodeConflict!),
-
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.grey.shade200),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _FieldLabel(label: 'Product'),
+                const SizedBox(height: 6),
+                InputDecorator(
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 12),
+                    suffixIcon: const Icon(Icons.lock_outline,
+                        size: 16, color: Colors.grey),
+                  ),
+                  child: Text(
+                    productName,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Base SKU *',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 13)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            initialValue: step5State.baseSku,
-                            onChanged: controller.updateBaseSku,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _FieldLabel(label: 'Base SKU *'),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _skuController,
                             decoration: InputDecoration(
                               border: const OutlineInputBorder(),
                               contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 12),
-                              errorText: state.fieldErrors['baseSku'] ??
-                                  state.fieldErrors['sku'],
+                              hintText: 'Enter Base SKU',
+                              errorText: state.fieldErrors['sku'],
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        OutlinedButton(
-                          onPressed: controller.autoGenerateSku,
-                          child: const Text('Auto Generate'),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _FieldLabel(label: 'Parent Product Barcode'),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _barcodeController,
+                            focusNode: _barcodeFocusNode,
+                            decoration: InputDecoration(
+                              border: const OutlineInputBorder(),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
+                              hintText: 'Type or scan barcode',
+                              errorText: state.fieldErrors['barcode'],
+                              suffixIcon: IconButton(
+                                icon: const Icon(
+                                  Icons.qr_code_scanner,
+                                  size: 20,
+                                  color: Color(0xFF1D4ED8),
+                                ),
+                                tooltip:
+                                    'Click then scan with hardware scanner',
+                                onPressed: () {
+                                  _barcodeFocusNode.requestFocus();
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Parent Product Barcode (Optional)',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 13)),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      initialValue: step5State.parentProductBarcode,
-                      onChanged: controller.updateParentProductBarcode,
-                      decoration: InputDecoration(
-                          border: const OutlineInputBorder(),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 12),
-                          errorText: state.fieldErrors['parentProductBarcode'],
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.qr_code_scanner),
-                            onPressed: () {},
-                          )),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          if (isVariant) ...[
-            const SizedBox(height: 32),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.info_outline, color: Colors.blue),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'For VARIANT products, ensure each active variant combination receives a valid barcode or SKU.',
-                      style: TextStyle(color: Colors.blue),
-                    ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      controller.generateSimpleIdentifiers();
+                      _syncSimpleControllersFromState();
+                    },
+                    icon: const Icon(Icons.auto_awesome, size: 16),
+                    label: const Text('Generate'),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Generate fills Base SKU from Internal Code when available. '
+                  'Your manually entered SKU is only replaced when you press Generate.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                ),
+              ],
             ),
-            const SizedBox(height: 32),
-            const Text('Variant SKU & Barcode Assignment',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 16),
-            VariantIdentifierTable(
-              activeVariants: state.step4State.generatedVariants
-                  .where((v) => v.isIncluded)
-                  .toList(),
-              variantIdentifiers: step5State.variantIdentifiers,
-              onUpdate: controller.updateVariantIdentifier,
-              fieldErrors: state.fieldErrors,
+          ),
+          const SizedBox(height: 80),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVariantForm(
+    AddProductWizardState state,
+    AddProductWizardController controller,
+  ) {
+    final productName = state.productName;
+    final dropdownItems = _buildDropdownItems(
+      productStructure: state.productStructure,
+      productName: productName,
+      generatedVariants: state.step4State.generatedVariants,
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (state.step5State.assignments.length !=
+          state.step4State.generatedVariants.where((v) => v.isIncluded).length) {
+        controller.ensureVariantStep5Targets();
+      }
+    });
+
+    void selectVariant(String key) {
+      final existing = state.step5State.assignments.where(
+        (a) => a.clientCombinationKey == key,
+      );
+      setState(() {
+        _selectedClientKey = key;
+        _syncingFromState = true;
+        _skuController.text =
+            existing.isNotEmpty ? (existing.first.sku ?? '') : '';
+        _barcodeController.text =
+            existing.isNotEmpty ? (existing.first.barcode ?? '') : '';
+        _syncingFromState = false;
+      });
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Barcode & SKU',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Assign SKU and barcode identifiers to each generated variant.',
+            style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+          ),
+          if (state.fieldErrors['skuDuplicate'] != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              state.fieldErrors['skuDuplicate']!,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
             ),
           ],
-
-          const SizedBox(height: 32),
+          if (state.fieldErrors['barcodeDuplicate'] != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              state.fieldErrors['barcodeDuplicate']!,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ],
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.grey.shade200),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Assign Identifier',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                const _FieldLabel(label: 'Variant *'),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  value: _selectedClientKey,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  ),
+                  items: dropdownItems
+                      .map((item) => DropdownMenuItem<String>(
+                            value: item.clientKey,
+                            child: Text(
+                              item.label,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (val) {
+                    if (val != null) selectVariant(val);
+                  },
+                  hint: const Text('Select variant'),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _FieldLabel(label: 'Base SKU *'),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _skuController,
+                            decoration: InputDecoration(
+                              border: const OutlineInputBorder(),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
+                              hintText: 'Enter SKU',
+                              errorText: state.fieldErrors['sku'],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _FieldLabel(label: 'Barcode'),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _barcodeController,
+                            focusNode: _barcodeFocusNode,
+                            decoration: InputDecoration(
+                              border: const OutlineInputBorder(),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
+                              hintText: 'Type or scan barcode',
+                              errorText: state.fieldErrors['barcode'],
+                              suffixIcon: IconButton(
+                                icon: const Icon(
+                                  Icons.qr_code_scanner,
+                                  size: 20,
+                                  color: Color(0xFF1D4ED8),
+                                ),
+                                onPressed: () {
+                                  _barcodeFocusNode.requestFocus();
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: ElevatedButton.icon(
+                    onPressed:
+                        _selectedClientKey != null ? _onAssignVariant : null,
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Add to List'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1D4ED8),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      disabledBackgroundColor: Colors.grey.shade200,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Additional Barcodes',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Add Additional Barcode'),
-                onPressed: () {
-                  Scaffold.of(context).openEndDrawer();
-                  showGeneralDialog(
-                    context: context,
-                    pageBuilder: (context, animation, secondaryAnimation) {
-                      return Align(
-                          alignment: Alignment.centerRight,
-                          child: Material(
-                            child: AddAdditionalBarcodeDrawer(
-                              activeVariants: state.step4State.generatedVariants
-                                  .where((v) => v.isIncluded)
-                                  .toList(),
-                              onAdd: controller.addAdditionalBarcode,
-                            ),
-                          ));
-                    },
-                  );
-                },
-              )
+              const Text(
+                'Variant SKU & Barcode Assignment',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+              if (state.step5State.assignments.isNotEmpty)
+                _AssignmentSummaryBadge(
+                    assignments: state.step5State.assignments),
             ],
           ),
-          const SizedBox(height: 16),
-          AdditionalBarcodeTable(
-            additionalBarcodes: step5State.additionalBarcodes,
-            activeVariants: state.step4State.generatedVariants
-                .where((v) => v.isIncluded)
-                .toList(),
-            onEdit: controller.editAdditionalBarcode,
-            onDelete: controller.removeAdditionalBarcode,
-            onSetPrimary: controller.setPrimaryBarcode,
+          const SizedBox(height: 12),
+          Step5IdentifierTable(
+            assignments: state.step5State.assignments,
+            allVariants: state.step4State.generatedVariants,
+            productName: productName,
+            productStructure: state.productStructure,
+            onEdit: (assignment, index) =>
+                _onEditAssignment(context, assignment, index),
           ),
-
-          const SizedBox(height: 80), // bottom padding for sticky footer
+          const SizedBox(height: 80),
         ],
+      ),
+    );
+  }
+}
+
+class _VariantDropdownItem {
+  final String clientKey;
+  final String label;
+  final String? productVariantId;
+
+  const _VariantDropdownItem({
+    required this.clientKey,
+    required this.label,
+    this.productVariantId,
+  });
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String label;
+  const _FieldLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: const TextStyle(
+        fontWeight: FontWeight.w600,
+        fontSize: 12,
+        color: Color(0xFF374151),
+      ),
+    );
+  }
+}
+
+class _AssignmentSummaryBadge extends StatelessWidget {
+  final List<BarcodeSkuAssignmentDto> assignments;
+  const _AssignmentSummaryBadge({required this.assignments});
+
+  @override
+  Widget build(BuildContext context) {
+    final complete =
+        assignments.where((a) => a.effectiveStatus == 'COMPLETE').length;
+    final total = assignments.length;
+    final allDone = complete == total;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: allDone ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '$complete / $total assigned',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: allDone
+              ? const Color(0xFF16A34A)
+              : const Color(0xFFB45309),
+        ),
       ),
     );
   }

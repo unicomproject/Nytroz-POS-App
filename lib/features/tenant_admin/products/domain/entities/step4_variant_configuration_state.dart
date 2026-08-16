@@ -54,24 +54,28 @@ class Step4VariantConfigurationState {
 
 @immutable
 class AttributeConfigRow {
+  final String localId;
   final String? templateId;
   final String? templateName;
   final List<SelectedOptionValue> selectedValues;
 
-  const AttributeConfigRow({
+  AttributeConfigRow({
+    String? localId,
     this.templateId,
     this.templateName,
     this.selectedValues = const [],
-  });
+  }) : localId = localId ?? DateTime.now().microsecondsSinceEpoch.toString();
 
   bool get isValid => templateId != null && selectedValues.isNotEmpty;
 
   AttributeConfigRow copyWith({
+    String? localId,
     String? templateId,
     String? templateName,
     List<SelectedOptionValue>? selectedValues,
   }) {
     return AttributeConfigRow(
+      localId: localId ?? this.localId,
       templateId: templateId ?? this.templateId,
       templateName: templateName ?? this.templateName,
       selectedValues: selectedValues ?? this.selectedValues,

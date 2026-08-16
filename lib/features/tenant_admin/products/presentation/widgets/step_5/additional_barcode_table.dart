@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/step5_barcode_dtos.dart';
 import '../../../domain/entities/step4_variant_configuration_state.dart';
-import '../../../domain/entities/tenant_product_create_options.dart';
 import 'edit_additional_barcode_drawer.dart';
 import 'delete_barcode_dialog.dart';
 

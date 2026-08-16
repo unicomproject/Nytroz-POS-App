@@ -311,6 +311,7 @@ class ProductActionColumn extends StatelessWidget {
               productName: product.name,
               sku: product.sku,
               imageUrl: product.imageUrl,
+              isLocalDraft: product.isLocalDraft,
               compact: false,
             ),
         ],

@@ -21,17 +21,13 @@ class Step4VariantConfigurationForm extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final step4State = state.step4State;
-    final options = state.createOptions;
-
-    if (options == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
 
     return Form(
       key: formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Text(
             'Variant Configuration',
             style: const TextStyle(
@@ -41,21 +37,31 @@ class Step4VariantConfigurationForm extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Define attributes (e.g. Size, Color) and generate product variants.',
+            'Create product variants by defining attributes and their values.',
             style: TextStyle(fontSize: 14, color: TenantAdminColors.mutedText),
           ),
           const SizedBox(height: 24),
 
           // --- Attributes Section ---
+          const Text(
+            'Define Attributes',
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: TenantAdminColors.bodyText),
+          ),
+          const SizedBox(height: 16),
           ...step4State.attributeRows.asMap().entries.map((entry) {
             final index = entry.key;
             final row = entry.value;
 
             return Padding(
+              key: Key(row.localId),
               padding: const EdgeInsets.only(bottom: 16.0),
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
+                  color: Colors.white,
                   border: Border.all(color: TenantAdminColors.border),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -64,23 +70,18 @@ class Step4VariantConfigurationForm extends ConsumerWidget {
                   children: [
                     Expanded(
                       flex: 1,
-                      child: DropdownButtonFormField<String>(
-                        initialValue: row.templateId,
-                        decoration: const InputDecoration(
-                          labelText: 'Attribute',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: options.variantOptionTemplates.map((t) {
-                          return DropdownMenuItem(
-                            value: t.id,
-                            child: Text(t.name),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            controller.selectAttribute(index, val);
-                          }
-                        },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Attribute Name', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          _AttributeNameField(
+                            initialValue: row.templateName ?? '',
+                            onChanged: (val) {
+                              controller.updateAttributeName(index, val);
+                            },
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -89,49 +90,67 @@ class Step4VariantConfigurationForm extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Wrap(
-                            spacing: 8,
-                            children: [
-                              ...row.selectedValues.map((v) {
-                                return Chip(
-                                  label: Text(v.valueName),
-                                  onDeleted: () {
-                                    final newValues = row.selectedValues
-                                        .where((x) => x.valueId != v.valueId)
-                                        .map((x) => x.valueId)
-                                        .toList();
-                                    controller.selectValues(index, newValues);
-                                  },
-                                );
-                              }),
-                            ],
-                          ),
-                          TextFormField(
-                            decoration: const InputDecoration(
-                              labelText: 'Add Value',
-                              border: OutlineInputBorder(),
-                              hintText: 'Type and press enter',
+                          const Text('Values', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: TenantAdminColors.border),
+                              borderRadius: BorderRadius.circular(4),
                             ),
-                            onFieldSubmitted: (val) {
-                              final id = val.trim();
-                              if (id.isNotEmpty &&
-                                  !row.selectedValues
-                                      .any((x) => x.valueId == id)) {
-                                final newValues = row.selectedValues
-                                    .map((x) => x.valueId)
-                                    .toList()
-                                  ..add(id);
-                                controller.selectValues(index, newValues);
-                              }
-                            },
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Wrap(
+                                    spacing: 8,
+                                    children: [
+                                      ...row.selectedValues.map((v) {
+                                        return Chip(
+                                          label: Text(v.valueName),
+                                          backgroundColor: Colors.grey[100],
+                                          side: BorderSide(color: Colors.grey[300]!),
+                                          onDeleted: () {
+                                            final newValues = row.selectedValues
+                                                .where((x) => x.valueId != v.valueId)
+                                                .map((x) => x.valueId)
+                                                .toList();
+                                            controller.selectValues(index, newValues);
+                                          },
+                                        );
+                                      }),
+                                      _AddValueField(
+                                        onSubmitted: (val) {
+                                          final id = val.trim();
+                                          if (id.isNotEmpty &&
+                                              !row.selectedValues
+                                                  .any((x) => x.valueId == id)) {
+                                            final newValues = row.selectedValues
+                                                .map((x) => x.valueId)
+                                                .toList()
+                                              ..add(id);
+                                            controller.selectValues(index, newValues);
+                                          }
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete,
-                          color: TenantAdminColors.danger),
-                      onPressed: () => controller.removeAttributeRow(index),
+                    const SizedBox(width: 16),
+                    Column(
+                      children: [
+                        const SizedBox(height: 24),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              color: TenantAdminColors.danger),
+                          onPressed: () => controller.removeAttributeRow(index),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -139,17 +158,37 @@ class Step4VariantConfigurationForm extends ConsumerWidget {
             );
           }).toList(),
 
-          OutlinedButton.icon(
-            onPressed: () => controller.addAttributeRow(),
-            icon: const Icon(Icons.add),
-            label: const Text('Add Attribute'),
-          ),
-
-          const SizedBox(height: 24),
-
-          ElevatedButton(
-            onPressed: () => controller.generateVariants(),
-            child: const Text('Generate Variants'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton.icon(
+                onPressed: () => controller.addAttributeRow(),
+                icon: const Icon(Icons.add),
+                label: const Text('Add Attribute', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: TenantAdminColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                onPressed: state.isSavingDraft
+                    ? null
+                    : () async {
+                        await controller.generateVariants();
+                      },
+                icon: state.isSavingDraft
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
+                    : const Icon(Icons.auto_awesome),
+                label: Text(
+                    state.isSavingDraft ? 'Generating...' : 'Generate Variants',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
           ),
 
           const SizedBox(height: 32),
@@ -157,80 +196,210 @@ class Step4VariantConfigurationForm extends ConsumerWidget {
           // --- Generated Variants Table ---
           if (step4State.generatedVariants.isNotEmpty) ...[
             Text(
-              'Generated Variants (${step4State.includedCount} included)',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              'Generated Variants (${step4State.totalGeneratedCount})',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Container(
               decoration: BoxDecoration(
+                color: Colors.white,
                 border: Border.all(color: TenantAdminColors.border),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: step4State.generatedVariants.length,
-                separatorBuilder: (context, index) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final variant = step4State.generatedVariants[index];
-                  return ListTile(
-                    leading: Checkbox(
-                      value: variant.isIncluded,
-                      onChanged: (val) {
-                        if (val != null) {
-                          controller.toggleVariantInclusion(
-                              variant.clientCombinationKey, val);
-                        }
-                      },
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                      border: Border(bottom: BorderSide(color: TenantAdminColors.border)),
                     ),
-                    title:
-                        Text(variant.displayLabel ?? variant.combinationLabel),
-                    subtitle: Text('Values: ${variant.combinationLabel}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    child: Row(
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder: (context) {
-                                  return Align(
-                                    alignment: Alignment.centerRight,
-                                    child: EditVariantDrawer(
-                                      state: state,
-                                      controller: controller,
-                                      variantKey: variant.clientCombinationKey,
-                                    ),
-                                  );
-                                });
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => DeleteVariantModal(
-                                controller: controller,
-                                variantKey: variant.clientCombinationKey,
-                                variantLabel: variant.displayLabel ??
-                                    variant.combinationLabel,
-                              ),
-                            );
-                          },
-                        ),
+                        const Expanded(flex: 3, child: Text('Variant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                        const Expanded(flex: 2, child: Text('Image', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                        Expanded(flex: 2, child: Container(alignment: Alignment.centerRight, child: const Text('Actions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)))),
                       ],
                     ),
-                  );
-                },
+                  ),
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: step4State.generatedVariants.length,
+                    separatorBuilder: (context, index) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final variant = step4State.generatedVariants[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                variant.displayLabel ?? variant.combinationLabel,
+                                style: const TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Icon(Icons.image_outlined, color: Colors.grey[400]), // Placeholder for image
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.blue),
+                                    onPressed: () {
+                                      showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (context) {
+                                            return Align(
+                                              alignment: Alignment.centerRight,
+                                              child: EditVariantDrawer(
+                                                state: state,
+                                                controller: controller,
+                                                variantKey: variant.clientCombinationKey,
+                                              ),
+                                            );
+                                          });
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline, size: 20, color: TenantAdminColors.danger),
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => DeleteVariantModal(
+                                          controller: controller,
+                                          variantKey: variant.clientCombinationKey,
+                                          variantLabel: variant.displayLabel ??
+                                              variant.combinationLabel,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ]
         ],
       ),
+      ),
     );
   }
 }
+
+class _AttributeNameField extends StatefulWidget {
+  final String initialValue;
+  final ValueChanged<String> onChanged;
+
+  const _AttributeNameField({
+    required this.initialValue,
+    required this.onChanged,
+  });
+
+  @override
+  State<_AttributeNameField> createState() => _AttributeNameFieldState();
+}
+
+class _AttributeNameFieldState extends State<_AttributeNameField> {
+  late TextEditingController _controller;
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+    _focusNode = FocusNode();
+  }
+
+  @override
+  void didUpdateWidget(covariant _AttributeNameField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialValue != oldWidget.initialValue &&
+        widget.initialValue != _controller.text &&
+        !_focusNode.hasFocus) {
+      _controller.text = widget.initialValue;
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: _controller,
+      focusNode: _focusNode,
+      decoration: const InputDecoration(
+        border: OutlineInputBorder(),
+        hintText: 'e.g. Size, Color',
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      ),
+      onChanged: widget.onChanged,
+    );
+  }
+}
+
+class _AddValueField extends StatefulWidget {
+  final ValueChanged<String> onSubmitted;
+
+  const _AddValueField({required this.onSubmitted});
+
+  @override
+  State<_AddValueField> createState() => _AddValueFieldState();
+}
+
+class _AddValueFieldState extends State<_AddValueField> {
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 150,
+      child: TextFormField(
+        controller: _controller,
+        focusNode: _focusNode,
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          hintText: 'Add value',
+          isDense: true,
+          contentPadding: EdgeInsets.zero,
+        ),
+        onFieldSubmitted: (val) {
+          if (val.trim().isNotEmpty) {
+            widget.onSubmitted(val);
+            _controller.clear();
+            _focusNode.requestFocus();
+          }
+        },
+      ),
+    );
+  }
+}
+

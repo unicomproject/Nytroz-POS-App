@@ -121,36 +121,36 @@ class Step1BasicDetails extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Main Form Fields Left Section (with Image Card under Brand)
+                    // Main Form Fields Left Section
                     Expanded(
                       flex: 3,
-                      child: SingleChildScrollView(
-                        child: ProductBasicDetailsForm(
-                          nameController: nameController,
-                          codeController: codeController,
-                          shortDescriptionController: shortDescriptionController,
-                          longDescriptionController: longDescriptionController,
-                          categoryId: state.categoryId,
-                          brandId: state.brandId,
-                          options: options,
-                          fieldErrors: state.fieldErrors,
-                          onCategoryChanged: controller.updateCategory,
-                          onBrandChanged: controller.updateBrand,
-                          imageUploadCard: imageCard,
+                      child: ProductBasicDetailsForm(
+                        nameController: nameController,
+                        codeController: codeController,
+                        shortDescriptionController: shortDescriptionController,
+                        longDescriptionController: longDescriptionController,
+                        categoryId: state.categoryId,
+                        brandId: state.brandId,
+                        options: options,
+                        fieldErrors: state.fieldErrors,
+                        onCategoryChanged: controller.updateCategory,
+                        onBrandChanged: controller.updateBrand,
+                        channelAvailabilityCard: ProductChannelAvailabilityCard(
+                          posSellable: state.posSellable,
+                          allowOnlineSale: state.allowOnlineSale,
+                          onPosSellableChanged: controller.setPosSellable,
+                          onAllowOnlineSaleChanged: controller.setAllowOnlineSale,
                         ),
                       ),
                     ),
 
                   const SizedBox(width: TenantAdminSpacing.xl),
 
-                  // Right Side Cards Section (Channel Availability)
+                  // Right Side Cards Section (Image Upload)
                   SizedBox(
                     width: 340,
-                    child: ProductChannelAvailabilityCard(
-                      posSellable: state.posSellable,
-                      allowOnlineSale: state.allowOnlineSale,
-                      onPosSellableChanged: controller.setPosSellable,
-                      onAllowOnlineSaleChanged: controller.setAllowOnlineSale,
+                    child: SingleChildScrollView(
+                      child: imageCard,
                     ),
                   ),
                 ],
@@ -174,15 +174,15 @@ class Step1BasicDetails extends StatelessWidget {
                         fieldErrors: state.fieldErrors,
                         onCategoryChanged: controller.updateCategory,
                         onBrandChanged: controller.updateBrand,
-                        imageUploadCard: imageCard,
+                        channelAvailabilityCard: ProductChannelAvailabilityCard(
+                          posSellable: state.posSellable,
+                          allowOnlineSale: state.allowOnlineSale,
+                          onPosSellableChanged: controller.setPosSellable,
+                          onAllowOnlineSaleChanged: controller.setAllowOnlineSale,
+                        ),
                       ),
                       const SizedBox(height: TenantAdminSpacing.lg),
-                      ProductChannelAvailabilityCard(
-                        posSellable: state.posSellable,
-                        allowOnlineSale: state.allowOnlineSale,
-                        onPosSellableChanged: controller.setPosSellable,
-                        onAllowOnlineSaleChanged: controller.setAllowOnlineSale,
-                      ),
+                      imageCard,
                     ],
                   ),
                 ),

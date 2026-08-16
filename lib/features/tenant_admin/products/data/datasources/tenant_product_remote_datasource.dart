@@ -96,6 +96,20 @@ class TenantProductRemoteDatasource {
     );
   }
 
+  /// Final Step 7 Create — atomic wizard create (no draft pipeline).
+  Future<ProductCreateResponseDto> createProductFromWizard(
+    Map<String, dynamic> wizardCreatePayload,
+  ) async {
+    final response = await _dio.post<dynamic>(
+      '$_productsPath/wizard-create',
+      data: wizardCreatePayload,
+    );
+
+    return ProductCreateResponseDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
   Future<ProductStatusUpdateResponseDto> updateProductStatus(
     String productId,
     ProductStatusUpdateRequestDto request,
@@ -191,7 +205,7 @@ class TenantProductRemoteDatasource {
     });
 
     final response = await _dio.post<dynamic>(
-      '/api/v1/products/$productId/images',
+      '$_productsPath/$productId/images',
       data: formData,
     );
 
@@ -207,7 +221,7 @@ class TenantProductRemoteDatasource {
     List<Map<String, dynamic>> items,
   ) async {
     final response = await _dio.put<dynamic>(
-      '/api/v1/products/$productId/images/reorder',
+      '$_productsPath/$productId/images/reorder',
       data: {
         'expectedRowVersion': expectedRowVersion,
         if (primaryProductImageId != null)
@@ -226,7 +240,7 @@ class TenantProductRemoteDatasource {
     String productImageId,
   ) async {
     final response = await _dio.delete<dynamic>(
-      '/api/v1/products/$productId/images/$productImageId',
+      '$_productsPath/$productId/images/$productImageId',
     );
 
     return ProductDraftResponseDto.fromJson(
@@ -240,7 +254,7 @@ class TenantProductRemoteDatasource {
     List<String> stagedMediaAssetIds,
   ) async {
     final response = await _dio.post<dynamic>(
-      '/api/v1/products/$productId/images/replace',
+      '$_productsPath/$productId/images/replace',
       data: {
         'expectedRowVersion': expectedRowVersion,
         'stagedMediaAssetIds': stagedMediaAssetIds,

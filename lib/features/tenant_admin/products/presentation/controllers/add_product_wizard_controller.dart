@@ -1,23 +1,29 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:math';
+
 import '../../data/models/product_draft_response_dto.dart';
-import '../../data/models/save_product_draft_request_dto.dart';
 import '../../data/models/step5_barcode_dtos.dart';
-import '../../data/models/duplicate_barcode_conflict_dto.dart';
-import '../utils/product_api_errors.dart';
+import '../../data/mappers/wizard_product_create_mapper.dart';
 import '../../domain/entities/add_product_wizard_state.dart';
+import '../../domain/entities/product_wizard_draft.dart';
 import '../../domain/entities/staged_product_image.dart';
 import '../../domain/entities/tenant_product_create_options.dart';
 import '../../domain/entities/step4_variant_configuration_state.dart';
 import '../../domain/utils/variant_combination_generator.dart';
+import '../../domain/repositories/product_wizard_draft_local_repository.dart';
 import '../../domain/repositories/tenant_product_repository.dart';
 
 class AddProductWizardController extends StateNotifier<AddProductWizardState> {
-  AddProductWizardController(this._repository)
-      : super(const AddProductWizardState());
+  AddProductWizardController(
+    this._repository, {
+    ProductWizardDraftLocalRepository? draftLocal,
+  })  : _draftLocal = draftLocal,
+        super(const AddProductWizardState());
 
   final TenantProductRepository _repository;
+  final ProductWizardDraftLocalRepository? _draftLocal;
 
   @visibleForTesting
   AddProductWizardState get wizardState => state;
@@ -31,14 +37,19 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     state = state.copyWith(clearPageError: true);
   }
 
-  Future<void> initWizard({String? resumeProductId}) async {
+  Future<void> initWizard({
+    String? resumeProductId,
+    String? resumeLocalDraftId,
+  }) async {
     state = state.copyWith(isLoadingOptions: true, clearOptionsError: true);
 
     try {
       final options = await _repository.getCreateOptions();
       state = state.copyWith(createOptions: options, isLoadingOptions: false);
 
-      if (resumeProductId != null && resumeProductId.isNotEmpty) {
+      if (resumeLocalDraftId != null && resumeLocalDraftId.isNotEmpty) {
+        await loadLocalDraft(resumeLocalDraftId);
+      } else if (resumeProductId != null && resumeProductId.isNotEmpty) {
         if (state.productId == resumeProductId && state.currentStep > 1) {
           // Draft already hydrated and active in session, preserve step state
         } else {
@@ -54,6 +65,66 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         optionsError: 'Failed to load product options: ${e.toString()}',
       );
     }
+  }
+
+  /// Hydrates wizard from device-local draft storage (never GET /setup).
+  Future<void> loadLocalDraft(String localDraftId) async {
+    final local = _draftLocal;
+    if (local == null) {
+      state = state.copyWith(
+        pageError: 'Local draft storage is unavailable.',
+      );
+      return;
+    }
+
+    state = state.copyWith(isSubmitting: true, clearPageError: true);
+    try {
+      final draft = await local.getDraft(localDraftId);
+      if (draft == null) {
+        state = state.copyWith(
+          isSubmitting: false,
+          pageError: 'Local draft was not found on this device.',
+        );
+        return;
+      }
+
+      final options = state.createOptions;
+      state = draft.wizardState.copyWith(
+        localDraftId: draft.localDraftId,
+        status: 'DRAFT',
+        createOptions: options,
+        isDirty: false,
+        isSubmitting: false,
+        isSavingDraft: false,
+        isLoadingOptions: false,
+        clearPageError: true,
+        fieldErrors: const {},
+      );
+
+      // Resolve to an applicable step (never VARIANT on 3 / SIMPLE on 4).
+      final step = resolveApplicableResumeStep(state.currentStep);
+      if (step != state.currentStep) {
+        state = state.copyWith(currentStep: step);
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isSubmitting: false,
+        pageError: 'Failed to load local draft: ${_extractErrorMessage(e)}',
+      );
+    }
+  }
+
+  /// Clamps [requestedStep] to an applicable step for the current product type.
+  @visibleForTesting
+  int resolveApplicableResumeStep(int requestedStep) {
+    if (isStepApplicable(requestedStep)) return requestedStep;
+    for (var s = requestedStep - 1; s >= 1; s--) {
+      if (isStepApplicable(s)) return s;
+    }
+    for (var s = requestedStep + 1; s <= 7; s++) {
+      if (isStepApplicable(s)) return s;
+    }
+    return 1;
   }
 
   Future<void> loadExistingDraft(String productId) async {
@@ -513,92 +584,309 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     }
   }
 
-  // --- WIZARD LIFECYCLE: SAVE DRAFT & SAVE AND CONTINUE ---
+  // --- WIZARD LIFECYCLE: LOCAL STATE + APPLICABLE-STEP NAVIGATION ---
 
-  Future<bool> saveDraft() async {
+  /// Chunk 2: Product wizard must not persist products/drafts during Steps 1–6.
+  void _logBlockedProductMutation(String source) {
+    debugPrint(
+      '[ProductWizard] BLOCKED product persistence call from $source '
+      '(frontend-local wizard state only)',
+    );
+  }
+
+  /// SIMPLE: 1→2→3→5→6→7 ; VARIANT/BUNDLE: 1→2→4→5→6→7
+  @visibleForTesting
+  int getNextApplicableStep([int? fromStep]) {
+    final step = fromStep ?? state.currentStep;
+    final structure = state.productStructure.toUpperCase();
+    switch (step) {
+      case 1:
+        return 2;
+      case 2:
+        if (structure == 'VARIANT' || structure == 'BUNDLE') {
+          return 4;
+        }
+        return 3;
+      case 3:
+        return 5;
+      case 4:
+        return 5;
+      case 5:
+        return 6;
+      case 6:
+        return 7;
+      default:
+        return step.clamp(1, 7);
+    }
+  }
+
+  @visibleForTesting
+  int getPreviousApplicableStep([int? fromStep]) {
+    final step = fromStep ?? state.currentStep;
+    final structure = state.productStructure.toUpperCase();
+    switch (step) {
+      case 7:
+        return 6;
+      case 6:
+        return 5;
+      case 5:
+        if (structure == 'VARIANT' || structure == 'BUNDLE') {
+          return 4;
+        }
+        return 3;
+      case 4:
+        return 2;
+      case 3:
+        return 2;
+      case 2:
+        return 1;
+      default:
+        return step.clamp(1, 7);
+    }
+  }
+
+  @visibleForTesting
+  bool isStepApplicable(int step) {
+    if (step < 1 || step > 7) return false;
+    final structure = state.productStructure.toUpperCase();
+    if (step == 3 && (structure == 'VARIANT' || structure == 'BUNDLE')) {
+      return false;
+    }
+    if (step == 4 && structure == 'SIMPLE') {
+      return false;
+    }
+    return true;
+  }
+
+  void goToPreviousApplicableStep() {
+    final prev = getPreviousApplicableStep();
+    if (prev != state.currentStep && prev >= 1) {
+      state = state.copyWith(currentStep: prev);
+    }
+  }
+
+  Future<void> generateVariants() async {
+    // Local-only Cartesian generation — no product draft persistence.
+    _logBlockedProductMutation('generateVariants');
     state = state.copyWith(isSavingDraft: true, clearPageError: true);
 
-    final request = SaveProductDraftRequestDto(
-      productName:
-          state.productName.trim().isEmpty ? null : state.productName.trim(),
-      productCode:
-          state.internalCode.trim().isEmpty ? null : state.internalCode.trim(),
-      categoryId: state.categoryId,
-      brandId: state.brandId,
-      shortDescription: state.shortDescription.trim().isEmpty
-          ? null
-          : state.shortDescription.trim(),
-      longDescription: state.longDescription.trim().isEmpty
-          ? null
-          : state.longDescription.trim(),
-      desiredPublishActive: state.desiredPublishActive,
-      posSellable: state.posSellable,
-      trackInventory: state.trackInventory,
-      allowOnlineSale: state.allowOnlineSale,
-      productStructure: state.productStructure,
-      batchTracking: state.batchTracking,
-      expiryTracking: state.expiryTracking,
-      serialTracking: state.serialTracking,
-      currentSetupStep: state.currentStep,
-      advanceStep: false,
-      wizardAction: 'SAVE_DRAFT',
-      expectedRowVersion: state.isEditMode ? state.rowVersion : null,
-      stagedMediaAssetIds:
-          state.stagedMediaAssets.map((e) => e.mediaAssetId).toList(),
-      unitModel: state.unitModel,
-      productUnitId: state.productUnitId ?? state.baseUnitId,
-      baseUnitId: state.baseUnitId ?? state.productUnitId,
-      sellingUnitId: state.sellingUnitId,
-      purchaseUnitId: state.purchaseUnitId,
-      outerPackUnitId: state.outerPackUnitId,
-      itemsPerPurchaseUnit: state.itemsPerPurchaseUnit,
-      purchaseUnitsPerOuterPack: state.purchaseUnitsPerOuterPack,
-      allowDecimalQuantity: state.allowDecimalQuantity,
-      variantConfiguration: _buildVariantConfigurationDto(),
-      baseSku: state.step5State.baseSku.trim().isEmpty
-          ? null
-          : state.step5State.baseSku.trim(),
-      parentProductBarcode: state.step5State.parentProductBarcode.trim().isEmpty
-          ? null
-          : state.step5State.parentProductBarcode.trim(),
-      variantIdentifiers: state.step5State.variantIdentifiers.isNotEmpty
-          ? state.step5State.variantIdentifiers
-          : null,
-      additionalBarcodes: state.step5State.additionalBarcodes.isNotEmpty
-          ? state.step5State.additionalBarcodes
-          : null,
-    );
-
-    try {
-      final ProductDraftResponseDto response;
-      if (state.productId != null && state.productId!.isNotEmpty) {
-        response = await _repository.updateDraft(state.productId!, request);
-      } else {
-        response = await _repository.saveDraft(request);
-      }
-
-      _hydrateFromDraftResponse(response);
+    final validAttrs =
+        state.step4State.attributeRows.where((a) => a.isValid).toList();
+    if (validAttrs.isEmpty) {
       state = state.copyWith(
         isSavingDraft: false,
+        pageError:
+            'Add at least one attribute with values before generating variants.',
+      );
+      return;
+    }
+
+    final reconciled = VariantCombinationGenerator.reconcileVariants(
+      activeAttributes: state.step4State.attributeRows,
+      existingVariants: state.step4State.generatedVariants,
+      deletedVariants: state.step4State.deletedVariants,
+      productName: state.productName,
+    );
+
+    state = state.copyWith(
+      step4State: state.step4State.copyWith(generatedVariants: reconciled),
+      isSavingDraft: false,
+      isDirty: true,
+      clearPageError: true,
+    );
+    reconcileStep5AssignmentsWithVariants();
+  }
+
+  /// Keeps Step 5 assignments aligned to included Step 4 variants by
+  /// [clientCombinationKey]. Preserves SKU/barcode for retained keys.
+  void reconcileStep5AssignmentsWithVariants() {
+    if (state.productStructure.toUpperCase() != 'VARIANT') return;
+
+    final included = state.step4State.generatedVariants
+        .where((v) => v.isIncluded)
+        .toList();
+    final existingByKey = <String, BarcodeSkuAssignmentDto>{
+      for (final a in state.step5State.assignments) a.clientCombinationKey: a,
+    };
+
+    final next = <BarcodeSkuAssignmentDto>[];
+    for (final variant in included) {
+      final previous = existingByKey[variant.clientCombinationKey];
+      final sku = previous?.sku;
+      final barcode = previous?.barcode;
+      next.add(
+        BarcodeSkuAssignmentDto(
+          clientCombinationKey: variant.clientCombinationKey,
+          // Fresh create: null. Resume/edit may already carry a real id.
+          productVariantId: previous?.productVariantId,
+          sku: sku,
+          barcode: barcode,
+          isAssigned: (sku?.trim().isNotEmpty ?? false) ||
+              (barcode?.trim().isNotEmpty ?? false),
+        ),
+      );
+    }
+
+    state = state.copyWith(
+      step5State: state.step5State.copyWith(assignments: next),
+      isDirty: true,
+    );
+  }
+
+  void ensureVariantStep5Targets() {
+    reconcileStep5AssignmentsWithVariants();
+  }
+
+  /// Persists the current wizard snapshot to device-local storage only.
+  /// Does not create/update a backend product. Allows partial/incomplete data.
+  Future<bool> saveDraft() async {
+    _logBlockedProductMutation('saveDraft');
+    state = state.copyWith(isSavingDraft: true, clearPageError: true);
+
+    final local = _draftLocal;
+    if (local == null) {
+      state = state.copyWith(
+        isSavingDraft: false,
+        pageError: 'Local draft storage is unavailable.',
+      );
+      return false;
+    }
+
+    try {
+      // Commit SIMPLE projection so Step 5 fields are in assignments too.
+      final structure = state.productStructure.toUpperCase();
+      if (structure == 'SIMPLE' || structure == 'BUNDLE') {
+        commitSimpleBarcodeSkuToState();
+      } else if (structure == 'VARIANT') {
+        reconcileStep5AssignmentsWithVariants();
+      }
+
+      final draftId = state.localDraftId ?? _newLocalDraftId();
+      DateTime? createdAt;
+      if (state.localDraftId != null) {
+        final existing = await local.getDraft(draftId);
+        createdAt = existing?.createdAt;
+      }
+
+      final now = DateTime.now().toUtc();
+      final snapshot = state.copyWith(
+        localDraftId: draftId,
+        status: 'DRAFT',
         isDirty: false,
+        isSavingDraft: false,
+        clearPageError: true,
+        fieldErrors: const {},
+      );
+
+      final draft = ProductWizardDraft.fromWizardState(
+        state: snapshot,
+        localDraftId: draftId,
+        createdAt: createdAt,
+        updatedAt: now,
+      );
+
+      await local.saveDraft(draft);
+
+      state = snapshot.copyWith(
+        localDraftId: draftId,
+        createOptions: state.createOptions,
       );
       return true;
     } catch (e) {
-      final rawErrorMsg = _extractErrorMessage(e);
-      final displayError = (rawErrorMsg == 'An unexpected error occurred.' ||
-              rawErrorMsg.toLowerCase().contains('unexpected error'))
-          ? 'An error occurred while saving draft. Please verify form details and retry.'
-          : rawErrorMsg;
       state = state.copyWith(
         isSavingDraft: false,
-        pageError: 'Save Draft failed: $displayError',
+        pageError: 'Failed to save local draft: ${_extractErrorMessage(e)}',
       );
       return false;
     }
   }
 
+  String _newLocalDraftId() {
+    final now = DateTime.now().toUtc().microsecondsSinceEpoch;
+    final rand = Random().nextInt(0xFFFFFF).toRadixString(16).padLeft(6, '0');
+    return 'local-$now-$rand';
+  }
+
+  /// Sole backend Product persistence action (Step 7 Create Product).
+  /// Does not call draft save/update APIs.
+  Future<bool> createProductFromWizard() async {
+    if (state.isSubmitting) {
+      return false;
+    }
+
+    final structure = state.productStructure.toUpperCase();
+    if (structure == 'SIMPLE' || structure == 'BUNDLE') {
+      commitSimpleBarcodeSkuToState();
+    } else if (structure == 'VARIANT') {
+      reconcileStep5AssignmentsWithVariants();
+    }
+
+    final step5Errors = validateStep5Continue();
+    final step6Errors = <String, String>{};
+    if (state.standardSellingPrice == null ||
+        state.standardSellingPrice! <= 0) {
+      step6Errors['standardSellingPrice'] =
+          'Standard selling price is required.';
+    }
+    if (state.taxId == null || state.taxId!.isEmpty) {
+      step6Errors['taxId'] = 'Tax is required.';
+    }
+
+    final errors = {...step5Errors, ...step6Errors};
+    if (errors.isNotEmpty) {
+      state = state.copyWith(
+        fieldErrors: errors,
+        pageError: errors.values.first,
+        isSubmitting: false,
+      );
+      return false;
+    }
+
+    state = state.copyWith(isSubmitting: true, clearPageError: true);
+    final idempotencyKey = state.localDraftId ??
+        'create-${DateTime.now().toUtc().microsecondsSinceEpoch}';
+
+    try {
+      final payload = WizardProductCreateMapper.toWizardCreateJson(
+        state,
+        idempotencyKey: idempotencyKey,
+      );
+      final result = await _repository.createProductFromWizard(payload);
+
+      final draftId = state.localDraftId;
+      if (draftId != null &&
+          draftId.isNotEmpty &&
+          _draftLocal != null) {
+        await _draftLocal!.deleteDraft(draftId);
+      }
+
+      state = state.copyWith(
+        productId: result.id,
+        status: result.status,
+        isSubmitting: false,
+        isDirty: false,
+        clearLocalDraftId: true,
+        clearPageError: true,
+        fieldErrors: const {},
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isSubmitting: false,
+        pageError: 'Failed to create product: ${_extractErrorMessage(e)}',
+      );
+      return false;
+    }
+  }
+
+  /// Validate current step, commit to wizard state, navigate locally.
+  /// Steps 1–6 never call product create/update/draft APIs.
+  /// Step 7 performs the sole backend Product Create (wizard-create).
   Future<bool> saveAndContinue() async {
-    // Validate Step 1 rules: Product Name & Category required
+    if (state.currentStep == 7) {
+      return createProductFromWizard();
+    }
+
     final errors = <String, String>{};
     final trimmedName = state.productName.trim();
 
@@ -630,6 +918,52 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       }
     }
 
+    if (state.currentStep == 4) {
+      final step4Errors = validateStep4Continue();
+      if (step4Errors.isNotEmpty) {
+        errors.addAll(step4Errors);
+      } else {
+        reconcileStep5AssignmentsWithVariants();
+      }
+    }
+
+    if (state.currentStep == 5) {
+      final structure = state.productStructure.toUpperCase();
+      if (structure == 'SIMPLE' || structure == 'BUNDLE') {
+        commitSimpleBarcodeSkuToState();
+      } else if (structure == 'VARIANT') {
+        reconcileStep5AssignmentsWithVariants();
+      }
+      final step5Errors = validateStep5Continue();
+      if (step5Errors.isNotEmpty) {
+        errors.addAll(step5Errors);
+      }
+    }
+
+    if (state.currentStep == 6) {
+      if (state.costPrice == null || state.costPrice! <= 0) {
+        errors['costPrice'] =
+            'Cost Price is required and must be greater than zero.';
+      }
+      if (state.standardSellingPrice == null ||
+          state.standardSellingPrice! <= 0) {
+        errors['standardSellingPrice'] =
+            'Standard Selling Price is required and must be greater than zero.';
+      }
+      if (state.discountPrice != null && state.discountPrice! < 0) {
+        errors['discountPrice'] = 'Discount Price cannot be negative.';
+      }
+      if (state.discountPrice != null &&
+          state.standardSellingPrice != null &&
+          state.discountPrice! > state.standardSellingPrice!) {
+        errors['discountPrice'] =
+            'Discount Price cannot exceed Standard Selling Price.';
+      }
+      if (state.taxId == null || state.taxId!.isEmpty) {
+        errors['taxId'] = 'Tax Name is required.';
+      }
+    }
+
     if (errors.isNotEmpty) {
       state = state.copyWith(
         fieldErrors: errors,
@@ -638,206 +972,38 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       return false;
     }
 
-    state = state.copyWith(
-        isSubmitting: true, clearPageError: true, fieldErrors: const {});
+    _logBlockedProductMutation('saveAndContinue(step${state.currentStep})');
 
-    final request = SaveProductDraftRequestDto(
-      productName: trimmedName,
-      productCode:
-          state.internalCode.trim().isEmpty ? null : state.internalCode.trim(),
-      categoryId: state.categoryId,
-      brandId: state.brandId,
-      shortDescription: state.shortDescription.trim().isEmpty
-          ? null
-          : state.shortDescription.trim(),
-      longDescription: state.longDescription.trim().isEmpty
-          ? null
-          : state.longDescription.trim(),
-      desiredPublishActive: state.desiredPublishActive,
-      posSellable: state.posSellable,
-      trackInventory: state.trackInventory,
-      allowOnlineSale: state.allowOnlineSale,
-      productStructure: state.productStructure,
-      batchTracking: state.batchTracking,
-      expiryTracking: state.expiryTracking,
-      serialTracking: state.serialTracking,
-      currentSetupStep: state.currentStep,
-      advanceStep: true,
-      wizardAction:
-          state.currentStep == 7 ? 'CREATE_PRODUCT' : 'SAVE_AND_CONTINUE',
-      expectedRowVersion: state.isEditMode ? state.rowVersion : null,
-      stagedMediaAssetIds:
-          state.stagedMediaAssets.map((e) => e.mediaAssetId).toList(),
-      unitModel: state.unitModel,
-      productUnitId: state.productUnitId ?? state.baseUnitId,
-      baseUnitId: state.baseUnitId ?? state.productUnitId,
-      sellingUnitId: state.sellingUnitId,
-      purchaseUnitId: state.purchaseUnitId,
-      outerPackUnitId: state.outerPackUnitId,
-      itemsPerPurchaseUnit: state.itemsPerPurchaseUnit,
-      purchaseUnitsPerOuterPack: state.purchaseUnitsPerOuterPack,
-      allowDecimalQuantity: state.allowDecimalQuantity,
-      variantConfiguration: _buildVariantConfigurationDto(),
-      baseSku: state.step5State.baseSku.trim().isEmpty
-          ? null
-          : state.step5State.baseSku.trim(),
-      parentProductBarcode: state.step5State.parentProductBarcode.trim().isEmpty
-          ? null
-          : state.step5State.parentProductBarcode.trim(),
-      variantIdentifiers: state.step5State.variantIdentifiers.isNotEmpty
-          ? state.step5State.variantIdentifiers
-          : null,
-      additionalBarcodes: state.step5State.additionalBarcodes.isNotEmpty
-          ? state.step5State.additionalBarcodes
-          : null,
-    );
-
-    try {
-      final ProductDraftResponseDto response;
-      if (state.productId != null && state.productId!.isNotEmpty) {
-        response = await _repository.updateDraft(state.productId!, request);
-      } else {
-        response = await _repository.saveDraft(request);
-      }
-
-      final initialStep = state.currentStep;
-      _hydrateFromDraftResponse(response);
-      final targetStep = response.targetSetupStep ??
-          (response.currentSetupStep > initialStep
-              ? response.currentSetupStep
-              : (initialStep + 1).clamp(1, 7));
-
-      state = state.copyWith(
-        currentStep: targetStep,
-        isSubmitting: false,
-        isDirty: false,
-      );
-      return true;
-    } catch (e) {
-      final extractedErrors =
-          e is DioException ? productValidationErrors(e) : <String, String>{};
-      final rawErrorMsg = _extractErrorMessage(e);
-
-      // Handle duplicate barcode conflict explicitly
-      if (e is DioException &&
-          e.response?.statusCode == 409 &&
-          e.response?.data != null) {
-        final data = e.response!.data;
-        if (data is Map<String, dynamic> && data.containsKey('barcode')) {
-          // heuristics for duplicate barcode DTO
-          final conflictDto = DuplicateBarcodeConflictDto.fromJson(data);
-
-          // Mark the fields invalid in Step 5 field errors
-          if (conflictDto.barcode != null) {
-            extractedErrors['barcode'] = 'Barcode already in use';
-          }
-          if (conflictDto.sku != null) {
-            extractedErrors['sku'] = 'SKU already in use';
-          }
-
-          state = state.copyWith(
-            isSubmitting: false,
-            fieldErrors: extractedErrors,
-            step5State: state.step5State
-                .copyWith(duplicateBarcodeConflict: conflictDto),
-            pageError: 'Duplicate barcode or SKU detected.',
-          );
-          return false;
-        }
-      }
-
-      final displayError = (rawErrorMsg == 'An unexpected error occurred.' ||
-              rawErrorMsg.toLowerCase().contains('unexpected error'))
-          ? (extractedErrors.isNotEmpty
-              ? extractedErrors.values.join(' ')
-              : 'An error occurred while saving product draft. Please verify form details and retry.')
-          : rawErrorMsg;
-
-      state = state.copyWith(
-        isSubmitting: false,
-        fieldErrors: extractedErrors,
-        pageError: 'Save & Continue failed: $displayError',
-      );
-      return false;
-    }
-  }
-
-  Future<bool> skip() async {
-    if (state.currentStep == 2 && !state.productStructureConfirmed) {
-      state = state.copyWith(
-        pageError:
-            'Please select a Product Structure before skipping tracking configuration.',
-      );
-      return false;
-    }
+    final nextStep = getNextApplicableStep();
+    final completed = state.currentStep;
 
     state = state.copyWith(
-      isSubmitting: true,
+      currentStep: nextStep,
+      lastCompletedSetupStep: completed,
+      targetSetupStep: nextStep,
+      isSubmitting: false,
       clearPageError: true,
       fieldErrors: const {},
+      // Keep dirty so Cancel still warns; values remain in state.
+      isDirty: true,
     );
+    return true;
+  }
 
-    final request = SaveProductDraftRequestDto(
-      productName:
-          state.productName.trim().isEmpty ? null : state.productName.trim(),
-      productCode:
-          state.internalCode.trim().isEmpty ? null : state.internalCode.trim(),
-      categoryId: state.categoryId,
-      brandId: state.brandId,
-      shortDescription: state.shortDescription.trim().isEmpty
-          ? null
-          : state.shortDescription.trim(),
-      longDescription: state.longDescription.trim().isEmpty
-          ? null
-          : state.longDescription.trim(),
-      desiredPublishActive: state.desiredPublishActive,
-      posSellable: state.posSellable,
-      trackInventory: state.trackInventory,
-      allowOnlineSale: state.allowOnlineSale,
-      productStructure: state.productStructure,
-      batchTracking: state.batchTracking,
-      expiryTracking: state.expiryTracking,
-      serialTracking: state.serialTracking,
-      currentSetupStep: state.currentStep,
-      advanceStep: true,
-      wizardAction: 'SKIP',
-      expectedRowVersion: state.isEditMode ? state.rowVersion : null,
-      stagedMediaAssetIds:
-          state.stagedMediaAssets.map((e) => e.mediaAssetId).toList(),
-      variantConfiguration: _buildVariantConfigurationDto(),
+  /// Manual Skip is disabled. Non-applicable steps are skipped by routing.
+  Future<bool> skip() async {
+    _logBlockedProductMutation('skip');
+    state = state.copyWith(
+      pageError:
+          'Skip is not available. Non-applicable steps are skipped automatically.',
     );
-
-    try {
-      final ProductDraftResponseDto response;
-      if (state.isEditMode) {
-        response = await _repository.updateDraft(state.productId!, request);
-      } else {
-        response = await _repository.saveDraft(request);
-      }
-
-      final initialStep = state.currentStep;
-      _hydrateFromDraftResponse(response);
-      final targetStep = response.currentSetupStep > initialStep
-          ? response.currentSetupStep
-          : (initialStep + 1).clamp(1, 7);
-
-      state = state.copyWith(
-        currentStep: targetStep,
-        isSubmitting: false,
-        isDirty: false,
-      );
-      return true;
-    } catch (e) {
-      state = state.copyWith(
-        isSubmitting: false,
-        pageError: 'Skip failed: ${_extractErrorMessage(e)}',
-      );
-      return false;
-    }
+    return false;
   }
 
   void goToStep(int step) {
-    if (step >= 1 && step <= 7) {
+    if (!isStepApplicable(step)) return;
+    // Stepper may only jump back to an earlier applicable step.
+    if (step >= 1 && step < state.currentStep) {
       state = state.copyWith(currentStep: step);
     }
   }
@@ -1053,8 +1219,100 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     return errors;
   }
 
+  Map<String, String> validateStep4Continue() {
+    final errors = <String, String>{};
+    if (state.productStructure.toUpperCase() != 'VARIANT') {
+      return errors;
+    }
+
+    final validAttrs =
+        state.step4State.attributeRows.where((a) => a.isValid).toList();
+    if (validAttrs.isEmpty) {
+      errors['variantAttributes'] =
+          'Add at least one attribute with values before continuing.';
+    }
+
+    final included = state.step4State.generatedVariants
+        .where((v) => v.isIncluded)
+        .toList();
+    if (included.isEmpty) {
+      errors['generatedVariants'] =
+          'Generate and include at least one variant before continuing.';
+    }
+
+    return errors;
+  }
+
+  Map<String, String> validateStep5Continue() {
+    final errors = <String, String>{};
+    final structure = state.productStructure.toUpperCase();
+
+    if (structure == 'SIMPLE' || structure == 'BUNDLE') {
+      if (state.step5State.baseSku.trim().isEmpty) {
+        errors['sku'] = 'Base SKU is required.';
+      } else if (state.step5State.baseSku.trim().length > 80) {
+        errors['sku'] = 'Base SKU must be 80 characters or fewer.';
+      }
+      return errors;
+    }
+
+    if (structure == 'VARIANT') {
+      final includedKeys = state.step4State.generatedVariants
+          .where((v) => v.isIncluded)
+          .map((v) => v.clientCombinationKey)
+          .toSet();
+
+      final activeAssignments = state.step5State.assignments
+          .where((a) => includedKeys.contains(a.clientCombinationKey))
+          .toList();
+
+      if (includedKeys.isEmpty) {
+        errors['sku'] = 'No active variants available for SKU assignment.';
+        return errors;
+      }
+
+      final missingSku = activeAssignments
+          .where((a) => a.sku == null || a.sku!.trim().isEmpty)
+          .toList();
+      // Also catch included variants with no assignment row yet.
+      final assignedKeys =
+          activeAssignments.map((a) => a.clientCombinationKey).toSet();
+      final missingRows =
+          includedKeys.where((k) => !assignedKeys.contains(k)).length;
+
+      if (missingSku.isNotEmpty || missingRows > 0) {
+        errors['sku'] =
+            'Assign a Base SKU to every active variant before continuing.';
+      }
+
+      final skuCounts = <String, int>{};
+      for (final a in activeAssignments) {
+        final sku = a.sku?.trim().toUpperCase();
+        if (sku == null || sku.isEmpty) continue;
+        skuCounts[sku] = (skuCounts[sku] ?? 0) + 1;
+      }
+      if (skuCounts.values.any((c) => c > 1)) {
+        errors['skuDuplicate'] =
+            'Duplicate SKU values are not allowed within this product.';
+      }
+
+      final barcodeCounts = <String, int>{};
+      for (final a in activeAssignments) {
+        final barcode = a.barcode?.trim();
+        if (barcode == null || barcode.isEmpty) continue;
+        barcodeCounts[barcode] = (barcodeCounts[barcode] ?? 0) + 1;
+      }
+      if (barcodeCounts.values.any((c) => c > 1)) {
+        errors['barcodeDuplicate'] =
+            'Duplicate barcode values are not allowed within this product.';
+      }
+    }
+
+    return errors;
+  }
+
   void _hydrateFromDraftResponse(ProductDraftResponseDto draft,
-      {int? forceStep}) {
+      {int? forceStep, bool keepDirtyStatus = false}) {
     final images = draft.images.map((img) {
       return ProductWizardImageItem(
         id: img.productImageId,
@@ -1099,12 +1357,26 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     final step4State =
         _mapVariantConfigState(draft.variantConfiguration, state.createOptions);
 
+    final assignments =
+        draft.barcodeSkuConfiguration?.assignments ??
+            const <BarcodeSkuAssignmentDto>[];
+    BarcodeSkuAssignmentDto? simpleAssignment;
+    for (final a in assignments) {
+      if (a.clientCombinationKey == 'SIMPLE_DEFAULT') {
+        simpleAssignment = a;
+        break;
+      }
+    }
+    simpleAssignment ??= assignments.length == 1 ? assignments.first : null;
+
     final step5State = state.step5State.copyWith(
-      baseSku: draft.baseSku ?? '',
-      parentProductBarcode: draft.parentProductBarcode ?? '',
-      variantIdentifiers: draft.variantIdentifiers ?? const [],
-      additionalBarcodes: draft.additionalBarcodes ?? const [],
-      duplicateBarcodeConflict: null,
+      baseSku: simpleAssignment?.sku ?? state.step5State.baseSku,
+      parentProductBarcode:
+          simpleAssignment?.barcode ?? state.step5State.parentProductBarcode,
+      identifierTargets:
+          draft.barcodeSkuConfiguration?.identifierTargets ?? const [],
+      assignments: assignments,
+      clearDuplicateBarcodeConflict: true,
     );
 
     state = state.copyWith(
@@ -1116,7 +1388,9 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       lastCompletedSetupStep: draft.lastCompletedSetupStep,
       productName:
           draft.productName == 'Untitled Product' ? '' : draft.productName,
-      internalCode: draft.productCode ?? '',
+      internalCode: (draft.productCode != null && draft.productCode!.startsWith('DRF-'))
+          ? state.internalCode
+          : (draft.productCode ?? ''),
       categoryId: draft.categoryId,
       brandId: draft.brandId,
       clearBrandId: draft.brandId == null,
@@ -1176,6 +1450,13 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
               : null),
       step4State: step4State,
       step5State: step5State,
+      costPrice: draft.pricingTaxConfiguration?.costPrice,
+      standardSellingPrice: draft.pricingTaxConfiguration?.standardSellingPrice,
+      discountPrice: draft.pricingTaxConfiguration?.discountPrice,
+      taxId: draft.pricingTaxConfiguration?.taxId,
+      taxRate: draft.pricingTaxConfiguration?.taxRate,
+      taxExclusive: draft.pricingTaxConfiguration?.taxExclusive ?? true,
+      isDirty: keepDirtyStatus ? state.isDirty : false,
     );
   }
 
@@ -1209,7 +1490,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   // --- STEP 4 WIZARD LOGIC ---
   void addAttributeRow() {
     final rows = List<AttributeConfigRow>.from(state.step4State.attributeRows);
-    rows.add(const AttributeConfigRow());
+    rows.add(AttributeConfigRow());
     state = state.copyWith(
       step4State: state.step4State.copyWith(attributeRows: rows),
       isDirty: true,
@@ -1220,6 +1501,20 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     final rows = List<AttributeConfigRow>.from(state.step4State.attributeRows);
     if (index >= 0 && index < rows.length) {
       rows.removeAt(index);
+      state = state.copyWith(
+        step4State: state.step4State.copyWith(attributeRows: rows),
+        isDirty: true,
+      );
+    }
+  }
+
+  void updateAttributeName(int index, String name) {
+    final rows = List<AttributeConfigRow>.from(state.step4State.attributeRows);
+    if (index >= 0 && index < rows.length) {
+      rows[index] = rows[index].copyWith(
+        templateId: name,
+        templateName: name,
+      );
       state = state.copyWith(
         step4State: state.step4State.copyWith(attributeRows: rows),
         isDirty: true,
@@ -1275,19 +1570,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     }
   }
 
-  void generateVariants() {
-    final newVariants = VariantCombinationGenerator.reconcileVariants(
-      activeAttributes: state.step4State.attributeRows,
-      existingVariants: state.step4State.generatedVariants,
-      deletedVariants: state.step4State.deletedVariants,
-      productName: state.productName,
-    );
 
-    state = state.copyWith(
-      step4State: state.step4State.copyWith(generatedVariants: newVariants),
-      isDirty: true,
-    );
-  }
 
   void updateVariantDisplayLabel(String key, String label) {
     final variants =
@@ -1312,6 +1595,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         step4State: state.step4State.copyWith(generatedVariants: variants),
         isDirty: true,
       );
+      reconcileStep5AssignmentsWithVariants();
     }
   }
 
@@ -1340,6 +1624,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       ),
       isDirty: true,
     );
+    reconcileStep5AssignmentsWithVariants();
   }
 
   Step4VariantConfigurationState _mapVariantConfigState(
@@ -1348,22 +1633,26 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     if (dto == null) return const Step4VariantConfigurationState();
 
     final attributeRows = dto.options.map((opt) {
-      final templateName = options?.variantOptionTemplates
-              .firstWhere((t) => t.id == opt.sourceOptionTemplateId,
-                  orElse: () => ProductVariantOptionTemplate(
-                      id: '', code: '', name: '', optionType: ''))
-              .name ??
-          '';
+      final templates = options?.variantOptionTemplates
+          .where((t) => t.id == opt.sourceOptionTemplateId);
+      final template = (templates != null && templates.isNotEmpty) ? templates.first : null;
+      final templateName = opt.optionName ?? template?.name ?? '';
+      
+      // Fallback templateId to optionName if source template is empty
+      final tId = (opt.sourceOptionTemplateId.isNotEmpty) ? opt.sourceOptionTemplateId : (opt.optionName ?? '');
+
       return AttributeConfigRow(
-        templateId: opt.sourceOptionTemplateId,
+        templateId: tId.isNotEmpty ? tId : null,
         templateName: templateName,
         selectedValues: opt.values
-            .map((v) => SelectedOptionValue(
-                  valueId: v.sourceOptionTemplateValueId,
-                  templateId: opt.sourceOptionTemplateId,
-                  valueName: v
-                      .sourceOptionTemplateValueId, // Resolve real name if possible
-                ))
+            .map((v) {
+              final vId = (v.sourceOptionTemplateValueId.isNotEmpty) ? v.sourceOptionTemplateValueId : (v.valueName ?? '');
+              return SelectedOptionValue(
+                  valueId: vId,
+                  templateId: tId.isNotEmpty ? tId : null,
+                  valueName: v.valueName ?? vId,
+                );
+            })
             .toList(),
       );
     }).toList();
@@ -1376,12 +1665,18 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         displayLabel: v.displayLabel,
         isIncluded: v.includeVariant,
         exactImageMediaAssetId: v.exactImageMediaAssetId,
+        optionCombinationHash: v.optionCombinationHash,
         selectedValues: v.selectedValues
-            .map((sv) => SelectedOptionValue(
-                  valueId: sv.sourceOptionTemplateValueId,
-                  templateId: sv.sourceOptionTemplateId,
-                  valueName: sv.sourceOptionTemplateValueId,
-                ))
+            .map((sv) {
+              final tId = (sv.sourceOptionTemplateId != null && sv.sourceOptionTemplateId!.isNotEmpty) ? sv.sourceOptionTemplateId : sv.optionName;
+              final vId = (sv.sourceOptionTemplateValueId != null && sv.sourceOptionTemplateValueId!.isNotEmpty) ? sv.sourceOptionTemplateValueId : sv.valueName;
+              
+              return SelectedOptionValue(
+                  valueId: vId ?? '',
+                  templateId: tId,
+                  valueName: sv.valueName ?? vId ?? '',
+                );
+            })
             .toList(),
       );
     }).toList();
@@ -1392,11 +1687,15 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         productVariantId: d.productVariantId,
         optionCombinationHash: d.optionCombinationHash,
         selectedValues: d.selectedValues
-            .map((sv) => SelectedOptionValue(
-                  valueId: sv.sourceOptionTemplateValueId,
-                  templateId: sv.sourceOptionTemplateId,
-                  valueName: sv.sourceOptionTemplateValueId,
-                ))
+            .map((sv) {
+              final tId = (sv.sourceOptionTemplateId != null && sv.sourceOptionTemplateId!.isNotEmpty) ? sv.sourceOptionTemplateId : sv.optionName;
+              final vId = (sv.sourceOptionTemplateValueId != null && sv.sourceOptionTemplateValueId!.isNotEmpty) ? sv.sourceOptionTemplateValueId : sv.valueName;
+              return SelectedOptionValue(
+                  valueId: vId ?? '',
+                  templateId: tId,
+                  valueName: sv.valueName ?? vId ?? '',
+                );
+            })
             .toList(),
       );
     }).toList();
@@ -1408,208 +1707,182 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     );
   }
 
-  VariantConfigurationDto? _buildVariantConfigurationDto() {
-    if (state.productStructure != 'VARIANT') return null;
+  // --- STEP 6 LOGIC ---
+  void updateCostPrice(num? price) {
+    final updatedErrors = Map<String, String>.from(state.fieldErrors)
+      ..remove('costPrice');
+    state = state.copyWith(
+      costPrice: price,
+      clearCostPrice: price == null,
+      isDirty: true,
+      fieldErrors: updatedErrors,
+    );
+  }
 
-    final options = <VariantConfigurationOptionDto>[];
-    for (int i = 0; i < state.step4State.attributeRows.length; i++) {
-      final row = state.step4State.attributeRows[i];
-      if (row.isValid) {
-        options.add(VariantConfigurationOptionDto(
-          sourceOptionTemplateId: row.templateId,
-          sortOrder: i + 1,
-          values: row.selectedValues.asMap().entries.map((entry) {
-            return VariantConfigurationOptionValueDto(
-              sourceOptionTemplateValueId: entry.value.valueId,
-              sortOrder: entry.key + 1,
-            );
-          }).toList(),
-        ));
-      }
-    }
+  void updateStandardSellingPrice(num? price) {
+    final updatedErrors = Map<String, String>.from(state.fieldErrors)
+      ..remove('standardSellingPrice');
+    state = state.copyWith(
+      standardSellingPrice: price,
+      clearStandardSellingPrice: price == null,
+      isDirty: true,
+      fieldErrors: updatedErrors,
+    );
+  }
 
-    final variants = state.step4State.generatedVariants.map((v) {
-      return VariantConfigurationVariantDto(
-        clientCombinationKey: v.clientCombinationKey,
-        productVariantId: v.productVariantId,
-        displayLabel: v.displayLabel,
-        includeVariant: v.isIncluded,
-        exactImageMediaAssetId: v.exactImageMediaAssetId,
-        selectedValues: v.selectedValues
-            .map((sv) => VariantConfigurationSelectedValueDto(
-                  sourceOptionTemplateId: sv.templateId,
-                  sourceOptionTemplateValueId: sv.valueId,
-                ))
-            .toList(),
-      );
-    }).toList();
+  void updateDiscountPrice(num? price) {
+    final updatedErrors = Map<String, String>.from(state.fieldErrors)
+      ..remove('discountPrice');
+    state = state.copyWith(
+      discountPrice: price,
+      clearDiscountPrice: price == null,
+      isDirty: true,
+      fieldErrors: updatedErrors,
+    );
+  }
 
-    final deleted = state.step4State.deletedVariants.map((tombstone) {
-      return VariantConfigurationDeletedCombinationDto(
-        clientCombinationKey: tombstone.clientCombinationKey,
-        productVariantId: tombstone.productVariantId,
-        optionCombinationHash: tombstone.optionCombinationHash,
-        selectedValues: tombstone.selectedValues
-            .map((sv) => VariantConfigurationSelectedValueDto(
-                  sourceOptionTemplateId: sv.templateId,
-                  sourceOptionTemplateValueId: sv.valueId,
-                ))
-            .toList(),
-      );
-    }).toList();
-
-    return VariantConfigurationDto(
-      options: options,
-      variants: variants,
-      deletedCombinations: deleted,
+  void updateTaxId(String? taxId, {num? taxRate, String? taxName}) {
+    final updatedErrors = Map<String, String>.from(state.fieldErrors)
+      ..remove('taxId');
+    state = state.copyWith(
+      taxId: taxId,
+      clearTaxId: taxId == null,
+      taxName: taxName,
+      clearTaxName: taxId == null,
+      taxRate: taxRate,
+      clearTaxRate: taxRate == null && taxId == null,
+      isDirty: true,
+      fieldErrors: updatedErrors,
     );
   }
 
   // --- STEP 5 LOGIC ---
-  void updateBaseSku(String val) {
+  void updateSimpleBaseSku(String sku) {
     final updatedErrors = Map<String, String>.from(state.fieldErrors)
-      ..remove('baseSku');
+      ..remove('sku');
     state = state.copyWith(
-      step5State: state.step5State.copyWith(baseSku: val),
+      step5State: state.step5State.copyWith(baseSku: sku),
       isDirty: true,
       fieldErrors: updatedErrors,
     );
   }
 
-  void autoGenerateSku() {
-    // Frontend-driven simplified generation for now based on internal code/product name if empty
-    String generated = state.internalCode;
-    if (generated.isEmpty) {
-      generated = state.productName
-          .replaceAll(RegExp(r'[^A-Za-z0-9]'), '')
-          .toUpperCase();
+  void updateSimpleParentBarcode(String barcode) {
+    final updatedErrors = Map<String, String>.from(state.fieldErrors)
+      ..remove('barcode');
+    state = state.copyWith(
+      step5State: state.step5State.copyWith(parentProductBarcode: barcode),
+      isDirty: true,
+      fieldErrors: updatedErrors,
+    );
+  }
+
+  /// Explicit Generate action for SIMPLE — writes only to wizard state.
+  void generateSimpleIdentifiers({bool overwriteSku = true}) {
+    _logBlockedProductMutation('generateSimpleIdentifiers');
+    final generated = generateSkuStringForVariant('SIMPLE_DEFAULT');
+    if (generated == null || generated.isEmpty) {
+      state = state.copyWith(
+        pageError:
+            'Enter an Internal Code in Basic Details before generating a SKU.',
+      );
+      return;
     }
-    if (generated.isEmpty)
-      generated =
-          'SKU-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
 
-    updateBaseSku(generated);
-  }
+    final nextSku = (!overwriteSku && state.step5State.baseSku.trim().isNotEmpty)
+        ? state.step5State.baseSku
+        : generated;
 
-  void updateParentProductBarcode(String val) {
-    final updatedErrors = Map<String, String>.from(state.fieldErrors)
-      ..remove('parentProductBarcode');
     state = state.copyWith(
-      step5State: state.step5State.copyWith(parentProductBarcode: val),
+      step5State: state.step5State.copyWith(baseSku: nextSku),
+      clearPageError: true,
       isDirty: true,
-      fieldErrors: updatedErrors,
+      fieldErrors: Map<String, String>.from(state.fieldErrors)..remove('sku'),
     );
   }
 
-  void updateVariantIdentifier(Step5VariantIdentifierDto updatedVariant) {
-    final list = List<Step5VariantIdentifierDto>.from(
-        state.step5State.variantIdentifiers);
+  /// Commits SIMPLE SKU/barcode into the shared assignment projection (still no variant id).
+  void commitSimpleBarcodeSkuToState() {
+    final sku = state.step5State.baseSku.trim();
+    final barcode = state.step5State.parentProductBarcode.trim();
+    final assignment = BarcodeSkuAssignmentDto(
+      clientCombinationKey: 'SIMPLE_DEFAULT',
+      productVariantId: null,
+      sku: sku.isEmpty ? null : sku,
+      barcode: barcode.isEmpty ? null : barcode,
+      isAssigned: sku.isNotEmpty || barcode.isNotEmpty,
+    );
+    state = state.copyWith(
+      step5State: state.step5State.copyWith(assignments: [assignment]),
+      isDirty: true,
+    );
+  }
+
+  void updateBarcodeSkuAssignment(BarcodeSkuAssignmentDto updatedAssignment) {
+    final list = List<BarcodeSkuAssignmentDto>.from(state.step5State.assignments);
     final idx = list.indexWhere(
-        (e) => e.productVariantId == updatedVariant.productVariantId);
+        (e) => e.clientCombinationKey == updatedAssignment.clientCombinationKey);
+    
     if (idx >= 0) {
-      list[idx] = updatedVariant;
+      list[idx] = updatedAssignment;
     } else {
-      list.add(updatedVariant);
+      list.add(updatedAssignment);
     }
 
     state = state.copyWith(
-      step5State: state.step5State.copyWith(variantIdentifiers: list),
+      step5State: state.step5State.copyWith(assignments: list),
       isDirty: true,
     );
   }
 
-  void addAdditionalBarcode(Step5AdditionalBarcodeDto dto) {
-    final list = List<Step5AdditionalBarcodeDto>.from(
-        state.step5State.additionalBarcodes);
-    // If it's primary, demote others
-    if (dto.isPrimary) {
-      for (int i = 0; i < list.length; i++) {
-        list[i] = Step5AdditionalBarcodeDto(
-          barcodeId: list[i].barcodeId,
-          barcode: list[i].barcode,
-          barcodeType: list[i].barcodeType,
-          productVariantId: list[i].productVariantId,
-          uomId: list[i].uomId,
-          quantityPerScan: list[i].quantityPerScan,
-          isPrimary: false,
-          status: list[i].status,
-        );
-      }
-    }
-    list.add(dto);
-
-    state = state.copyWith(
-      step5State: state.step5State.copyWith(additionalBarcodes: list),
-      isDirty: true,
+  /// Assigns a barcode/SKU entry into wizard state only (no product DB write).
+  Future<bool> assignBarcodeSkuAndSave(BarcodeSkuAssignmentDto newAssignment) async {
+    _logBlockedProductMutation('assignBarcodeSkuAndSave');
+    final fresh = state.productId == null || state.productId!.isEmpty;
+    updateBarcodeSkuAssignment(
+      newAssignment.copyWith(
+        clearProductVariantId: fresh,
+        isAssigned: (newAssignment.sku?.trim().isNotEmpty ?? false) ||
+            (newAssignment.barcode?.trim().isNotEmpty ?? false),
+      ),
     );
-  }
-
-  void editAdditionalBarcode(
-      Step5AdditionalBarcodeDto dto, String? oldBarcodeId, int index) {
-    final list = List<Step5AdditionalBarcodeDto>.from(
-        state.step5State.additionalBarcodes);
-    if (dto.isPrimary) {
-      for (int i = 0; i < list.length; i++) {
-        list[i] = Step5AdditionalBarcodeDto(
-          barcodeId: list[i].barcodeId,
-          barcode: list[i].barcode,
-          barcodeType: list[i].barcodeType,
-          productVariantId: list[i].productVariantId,
-          uomId: list[i].uomId,
-          quantityPerScan: list[i].quantityPerScan,
-          isPrimary: false,
-          status: list[i].status,
-        );
-      }
-    }
-    if (index >= 0 && index < list.length) {
-      list[index] = dto;
-    }
-
-    state = state.copyWith(
-      step5State: state.step5State.copyWith(additionalBarcodes: list),
-      isDirty: true,
-    );
-  }
-
-  void removeAdditionalBarcode(int index) {
-    final list = List<Step5AdditionalBarcodeDto>.from(
-        state.step5State.additionalBarcodes);
-    if (index >= 0 && index < list.length) {
-      list.removeAt(index);
-    }
-    state = state.copyWith(
-      step5State: state.step5State.copyWith(additionalBarcodes: list),
-      isDirty: true,
-    );
-  }
-
-  void setPrimaryBarcode(int index) {
-    final list = List<Step5AdditionalBarcodeDto>.from(
-        state.step5State.additionalBarcodes);
-    if (index >= 0 && index < list.length) {
-      for (int i = 0; i < list.length; i++) {
-        list[i] = Step5AdditionalBarcodeDto(
-          barcodeId: list[i].barcodeId,
-          barcode: list[i].barcode,
-          barcodeType: list[i].barcodeType,
-          productVariantId: list[i].productVariantId,
-          uomId: list[i].uomId,
-          quantityPerScan: list[i].quantityPerScan,
-          isPrimary: i == index,
-          status: list[i].status,
-        );
-      }
-    }
-    state = state.copyWith(
-      step5State: state.step5State.copyWith(additionalBarcodes: list),
-      isDirty: true,
-    );
+    return true;
   }
 
   void clearDuplicateConflict() {
     state = state.copyWith(
-      step5State: state.step5State.copyWith(duplicateBarcodeConflict: null),
+      step5State: state.step5State.copyWith(clearDuplicateBarcodeConflict: true),
     );
+  }
+
+  /// Generates an SKU string for the given variant based on product code.
+  /// Pattern: {ProductCode}-{VariantLabel} or {ProductCode}-001 for simple.
+  /// Returns null if the product code is not yet set.
+  String? generateSkuStringForVariant(String clientCombinationKey) {
+    final code = state.internalCode.trim();
+    if (code.isEmpty || code.startsWith('DRF-')) return null;
+
+    if (state.productStructure == 'SIMPLE' ||
+        state.productStructure == 'BUNDLE') {
+      return code;
+    }
+
+    // VARIANT: use variant label as suffix
+    final variant = state.step4State.generatedVariants.firstWhere(
+      (v) => v.clientCombinationKey == clientCombinationKey,
+      orElse: () => const GeneratedVariantRow(
+        clientCombinationKey: '',
+        combinationLabel: '',
+      ),
+    );
+
+    if (variant.clientCombinationKey.isEmpty) return null;
+
+    final label = (variant.displayLabel ?? variant.combinationLabel)
+        .replaceAll(' / ', '-')
+        .replaceAll(' ', '-')
+        .toUpperCase();
+
+    return '$code-$label';
   }
 }

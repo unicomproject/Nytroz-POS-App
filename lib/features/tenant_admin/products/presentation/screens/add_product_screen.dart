@@ -11,9 +11,11 @@ class AddProductScreen extends ConsumerWidget {
   const AddProductScreen({
     super.key,
     this.resumeProductId,
+    this.resumeLocalDraftId,
   });
 
   final String? resumeProductId;
+  final String? resumeLocalDraftId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -57,6 +59,7 @@ class AddProductScreen extends ConsumerWidget {
             dropdownsEnabled: true,
             canCreate: ref.watch(productAddPageAccessProvider),
             resumeProductId: resumeProductId,
+            resumeLocalDraftId: resumeLocalDraftId,
           );
         },
       ),

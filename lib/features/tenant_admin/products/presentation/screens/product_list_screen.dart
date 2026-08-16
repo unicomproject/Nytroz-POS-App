@@ -350,6 +350,7 @@ class _ProductSearchToolbar extends ConsumerWidget {
               ),
             ],
             onChanged: loading ? null : filterNotifier.setCategory,
+            isExpanded: true,
           );
 
           final brandDropdown = DropdownButtonFormField<String?>(
@@ -389,6 +390,7 @@ class _ProductSearchToolbar extends ConsumerWidget {
               ),
             ],
             onChanged: loading ? null : filterNotifier.setBrand,
+            isExpanded: true,
           );
 
           final statusDropdown = DropdownButtonFormField<String?>(
@@ -428,6 +430,7 @@ class _ProductSearchToolbar extends ConsumerWidget {
               ),
             ],
             onChanged: loading ? null : filterNotifier.setProductStatus,
+            isExpanded: true,
           );
 
           final stockStatusDropdown = DropdownButtonFormField<String?>(
@@ -467,6 +470,7 @@ class _ProductSearchToolbar extends ConsumerWidget {
               ),
             ],
             onChanged: loading ? null : filterNotifier.setStockStatus,
+            isExpanded: true,
           );
 
           if (isWide) {

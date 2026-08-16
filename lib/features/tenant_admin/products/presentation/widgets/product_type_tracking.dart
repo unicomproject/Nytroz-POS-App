@@ -16,8 +16,9 @@ class ProductTypeTracking extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
+    final isDesktop = MediaQuery.sizeOf(context).width >= TenantAdminBreakpoints.desktop;
+
+    final content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Page Header
@@ -117,8 +118,9 @@ class ProductTypeTracking extends StatelessWidget {
           // Dynamic content based on productStructure
           _buildDynamicContent(context),
         ],
-      ),
-    );
+      );
+
+    return isDesktop ? content : SingleChildScrollView(child: content);
   }
 
   Widget _buildDynamicContent(BuildContext context) {
@@ -559,7 +561,7 @@ class ProductStructureCard extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.all(TenantAdminSpacing.md),
-          constraints: const BoxConstraints(minHeight: 96),
+          constraints: const BoxConstraints(minHeight: 88),
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(TenantAdminRadius.md),
@@ -665,7 +667,7 @@ class TrackingRuleTile extends StatelessWidget {
           horizontal: TenantAdminSpacing.md,
           vertical: TenantAdminSpacing.sm,
         ),
-        constraints: const BoxConstraints(minHeight: 56),
+        constraints: const BoxConstraints(minHeight: 48),
         decoration: BoxDecoration(
           color: TenantAdminColors.secondary,
           borderRadius: BorderRadius.circular(TenantAdminRadius.md),
@@ -742,7 +744,7 @@ class TrackingContextHint extends StatelessWidget {
         horizontal: TenantAdminSpacing.md,
         vertical: TenantAdminSpacing.sm,
       ),
-      constraints: const BoxConstraints(minHeight: 56),
+      constraints: const BoxConstraints(minHeight: 48),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
@@ -793,7 +795,7 @@ class BundleInventoryBehaviourCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(TenantAdminSpacing.md),
-      constraints: const BoxConstraints(minHeight: 96),
+      constraints: const BoxConstraints(minHeight: 88),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),

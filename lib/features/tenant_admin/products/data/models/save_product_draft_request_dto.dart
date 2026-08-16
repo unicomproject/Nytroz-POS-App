@@ -1,4 +1,5 @@
 import 'step5_barcode_dtos.dart';
+import 'step6_pricing_tax_dtos.dart';
 
 class SaveProductDraftRequestDto {
   final String? productName;
@@ -38,10 +39,10 @@ class SaveProductDraftRequestDto {
   final VariantConfigurationDto? variantConfiguration;
 
   // Step 5 — Barcode & SKU
-  final String? baseSku;
-  final String? parentProductBarcode;
-  final List<Step5VariantIdentifierDto>? variantIdentifiers;
-  final List<Step5AdditionalBarcodeDto>? additionalBarcodes;
+  final BarcodeSkuConfigurationDto? barcodeSkuConfiguration;
+
+  // Step 6 — Pricing & Tax
+  final PricingTaxConfigurationDto? pricingTaxConfiguration;
 
   const SaveProductDraftRequestDto({
     this.productName,
@@ -74,10 +75,8 @@ class SaveProductDraftRequestDto {
     this.purchaseUnitsPerOuterPack,
     this.allowDecimalQuantity = false,
     this.variantConfiguration,
-    this.baseSku,
-    this.parentProductBarcode,
-    this.variantIdentifiers,
-    this.additionalBarcodes,
+    this.barcodeSkuConfiguration,
+    this.pricingTaxConfiguration,
   });
 
   Map<String, dynamic> toJson() {
@@ -115,15 +114,10 @@ class SaveProductDraftRequestDto {
       'allowDecimalQuantity': allowDecimalQuantity,
       if (variantConfiguration != null)
         'variantConfiguration': variantConfiguration!.toJson(),
-      if (baseSku != null) 'baseSku': baseSku,
-      if (parentProductBarcode != null)
-        'parentProductBarcode': parentProductBarcode,
-      if (variantIdentifiers != null)
-        'variantIdentifiers':
-            variantIdentifiers!.map((e) => e.toJson()).toList(),
-      if (additionalBarcodes != null)
-        'additionalBarcodes':
-            additionalBarcodes!.map((e) => e.toJson()).toList(),
+      if (barcodeSkuConfiguration != null)
+        'barcodeSkuConfiguration': barcodeSkuConfiguration!.toJson(),
+      if (pricingTaxConfiguration != null)
+        'pricingTaxConfiguration': pricingTaxConfiguration!.toJson(),
     };
   }
 }
@@ -145,7 +139,7 @@ class VariantConfigurationDto {
       if (variants != null)
         'variants': variants!.map((e) => e.toJson()).toList(),
       if (deletedCombinations != null)
-        'deletedCombinations':
+        'excludedCombinationHashes':
             deletedCombinations!.map((e) => e.toJson()).toList(),
     };
   }
@@ -154,12 +148,16 @@ class VariantConfigurationDto {
 class VariantConfigurationOptionDto {
   final String? sourceOptionTemplateId;
   final String? productOptionId;
+  final String? optionName;
+  final String? optionCode;
   final int? sortOrder;
   final List<VariantConfigurationOptionValueDto>? values;
 
   const VariantConfigurationOptionDto({
     this.sourceOptionTemplateId,
     this.productOptionId,
+    this.optionName,
+    this.optionCode,
     this.sortOrder,
     this.values,
   });
@@ -169,6 +167,9 @@ class VariantConfigurationOptionDto {
       if (sourceOptionTemplateId != null)
         'sourceOptionTemplateId': sourceOptionTemplateId,
       if (productOptionId != null) 'productOptionId': productOptionId,
+      if (optionName != null) 'optionName': optionName,
+      if (optionCode != null) 'optionCode': optionCode,
+      'optionType': 'TEXT',
       if (sortOrder != null) 'sortOrder': sortOrder,
       if (values != null) 'values': values!.map((e) => e.toJson()).toList(),
     };
@@ -178,12 +179,16 @@ class VariantConfigurationOptionDto {
 class VariantConfigurationOptionValueDto {
   final String? sourceOptionTemplateValueId;
   final String? productOptionValueId;
+  final String? valueName;
+  final String? valueCode;
   final int? sortOrder;
   final String? imageMediaAssetId;
 
   const VariantConfigurationOptionValueDto({
     this.sourceOptionTemplateValueId,
     this.productOptionValueId,
+    this.valueName,
+    this.valueCode,
     this.sortOrder,
     this.imageMediaAssetId,
   });
@@ -194,6 +199,8 @@ class VariantConfigurationOptionValueDto {
         'sourceOptionTemplateValueId': sourceOptionTemplateValueId,
       if (productOptionValueId != null)
         'productOptionValueId': productOptionValueId,
+      if (valueName != null) 'valueName': valueName,
+      if (valueCode != null) 'valueCode': valueCode,
       if (sortOrder != null) 'sortOrder': sortOrder,
       if (imageMediaAssetId != null) 'imageMediaAssetId': imageMediaAssetId,
     };
@@ -224,7 +231,7 @@ class VariantConfigurationVariantDto {
       if (selectedValues != null)
         'selectedValues': selectedValues!.map((e) => e.toJson()).toList(),
       if (displayLabel != null) 'displayLabel': displayLabel,
-      'includeVariant': includeVariant,
+      'included': includeVariant,
       if (exactImageMediaAssetId != null)
         'exactImageMediaAssetId': exactImageMediaAssetId,
     };
@@ -234,10 +241,14 @@ class VariantConfigurationVariantDto {
 class VariantConfigurationSelectedValueDto {
   final String? sourceOptionTemplateId;
   final String? sourceOptionTemplateValueId;
+  final String? optionName;
+  final String? valueName;
 
   const VariantConfigurationSelectedValueDto({
     this.sourceOptionTemplateId,
     this.sourceOptionTemplateValueId,
+    this.optionName,
+    this.valueName,
   });
 
   Map<String, dynamic> toJson() {
@@ -246,6 +257,8 @@ class VariantConfigurationSelectedValueDto {
         'sourceOptionTemplateId': sourceOptionTemplateId,
       if (sourceOptionTemplateValueId != null)
         'sourceOptionTemplateValueId': sourceOptionTemplateValueId,
+      if (optionName != null) 'optionName': optionName,
+      if (valueName != null) 'valueName': valueName,
     };
   }
 }

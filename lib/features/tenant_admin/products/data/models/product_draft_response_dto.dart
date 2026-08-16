@@ -1,4 +1,5 @@
 import 'step5_barcode_dtos.dart';
+import 'step6_pricing_tax_dtos.dart';
 
 class ProductImageResponseDto {
   final String productImageId;
@@ -122,10 +123,10 @@ class ProductDraftResponseDto {
   final VariantConfigurationResponseDto? variantConfiguration;
 
   // Step 5 — Barcode & SKU
-  final String? baseSku;
-  final String? parentProductBarcode;
-  final List<Step5VariantIdentifierDto>? variantIdentifiers;
-  final List<Step5AdditionalBarcodeDto>? additionalBarcodes;
+  final BarcodeSkuConfigurationDto? barcodeSkuConfiguration;
+
+  // Step 6 — Pricing & Tax
+  final PricingTaxConfigurationResponseDto? pricingTaxConfiguration;
 
   const ProductDraftResponseDto({
     required this.productId,
@@ -167,10 +168,8 @@ class ProductDraftResponseDto {
     this.allowDecimalQuantity = false,
     this.unitConversions = const [],
     this.variantConfiguration,
-    this.baseSku,
-    this.parentProductBarcode,
-    this.variantIdentifiers,
-    this.additionalBarcodes,
+    this.barcodeSkuConfiguration,
+    this.pricingTaxConfiguration,
   });
 
   factory ProductDraftResponseDto.fromJson(Map<String, dynamic> json) {
@@ -227,16 +226,14 @@ class ProductDraftResponseDto {
           ? VariantConfigurationResponseDto.fromJson(
               json['variantConfiguration'] as Map<String, dynamic>)
           : null,
-      baseSku: json['baseSku']?.toString(),
-      parentProductBarcode: json['parentProductBarcode']?.toString(),
-      variantIdentifiers: (json['variantIdentifiers'] as List<dynamic>?)
-          ?.map((e) =>
-              Step5VariantIdentifierDto.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      additionalBarcodes: (json['additionalBarcodes'] as List<dynamic>?)
-          ?.map((e) =>
-              Step5AdditionalBarcodeDto.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      barcodeSkuConfiguration: json['barcodeSkuConfiguration'] != null
+          ? BarcodeSkuConfigurationDto.fromJson(
+              json['barcodeSkuConfiguration'] as Map<String, dynamic>)
+          : null,
+      pricingTaxConfiguration: json['pricingTaxConfiguration'] != null
+          ? PricingTaxConfigurationResponseDto.fromJson(
+              json['pricingTaxConfiguration'] as Map<String, dynamic>)
+          : null,
     );
   }
 }
@@ -265,7 +262,7 @@ class VariantConfigurationResponseDto {
                   e as Map<String, dynamic>))
               .toList() ??
           const [],
-      deletedCombinations: (json['deletedCombinations'] as List<dynamic>?)
+      deletedCombinations: (json['excludedCombinationHashes'] as List<dynamic>?)
               ?.map((e) =>
                   VariantConfigurationDeletedCombinationResponseDto.fromJson(
                       e as Map<String, dynamic>))
@@ -278,12 +275,14 @@ class VariantConfigurationResponseDto {
 class VariantConfigurationOptionResponseDto {
   final String sourceOptionTemplateId;
   final String? productOptionId;
+  final String? optionName;
   final int sortOrder;
   final List<VariantConfigurationOptionValueResponseDto> values;
 
   const VariantConfigurationOptionResponseDto({
     required this.sourceOptionTemplateId,
     this.productOptionId,
+    this.optionName,
     this.sortOrder = 0,
     this.values = const [],
   });
@@ -293,6 +292,7 @@ class VariantConfigurationOptionResponseDto {
     return VariantConfigurationOptionResponseDto(
       sourceOptionTemplateId: json['sourceOptionTemplateId']?.toString() ?? '',
       productOptionId: json['productOptionId']?.toString(),
+      optionName: json['optionName']?.toString(),
       sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
       values: (json['values'] as List<dynamic>?)
               ?.map((e) => VariantConfigurationOptionValueResponseDto.fromJson(
@@ -306,12 +306,14 @@ class VariantConfigurationOptionResponseDto {
 class VariantConfigurationOptionValueResponseDto {
   final String sourceOptionTemplateValueId;
   final String? productOptionValueId;
+  final String? valueName;
   final int sortOrder;
   final String? imageMediaAssetId;
 
   const VariantConfigurationOptionValueResponseDto({
     required this.sourceOptionTemplateValueId,
     this.productOptionValueId,
+    this.valueName,
     this.sortOrder = 0,
     this.imageMediaAssetId,
   });
@@ -322,6 +324,7 @@ class VariantConfigurationOptionValueResponseDto {
       sourceOptionTemplateValueId:
           json['sourceOptionTemplateValueId']?.toString() ?? '',
       productOptionValueId: json['productOptionValueId']?.toString(),
+      valueName: json['valueName']?.toString(),
       sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
       imageMediaAssetId: json['imageMediaAssetId']?.toString(),
     );
@@ -336,6 +339,7 @@ class VariantConfigurationVariantResponseDto {
   final String? displayLabel;
   final bool includeVariant;
   final String? exactImageMediaAssetId;
+  final String? optionCombinationHash;
 
   const VariantConfigurationVariantResponseDto({
     required this.clientCombinationKey,
@@ -345,6 +349,7 @@ class VariantConfigurationVariantResponseDto {
     this.displayLabel,
     this.includeVariant = true,
     this.exactImageMediaAssetId,
+    this.optionCombinationHash,
   });
 
   factory VariantConfigurationVariantResponseDto.fromJson(
@@ -362,6 +367,7 @@ class VariantConfigurationVariantResponseDto {
       displayLabel: json['displayLabel']?.toString(),
       includeVariant: json['includeVariant'] as bool? ?? true,
       exactImageMediaAssetId: json['exactImageMediaAssetId']?.toString(),
+      optionCombinationHash: json['optionCombinationHash']?.toString(),
     );
   }
 }
@@ -369,10 +375,14 @@ class VariantConfigurationVariantResponseDto {
 class VariantConfigurationSelectedValueResponseDto {
   final String sourceOptionTemplateId;
   final String sourceOptionTemplateValueId;
+  final String? optionName;
+  final String? valueName;
 
   const VariantConfigurationSelectedValueResponseDto({
     required this.sourceOptionTemplateId,
     required this.sourceOptionTemplateValueId,
+    this.optionName,
+    this.valueName,
   });
 
   factory VariantConfigurationSelectedValueResponseDto.fromJson(
@@ -381,6 +391,8 @@ class VariantConfigurationSelectedValueResponseDto {
       sourceOptionTemplateId: json['sourceOptionTemplateId']?.toString() ?? '',
       sourceOptionTemplateValueId:
           json['sourceOptionTemplateValueId']?.toString() ?? '',
+      optionName: json['optionName']?.toString(),
+      valueName: json['valueName']?.toString(),
     );
   }
 }
