@@ -1,11 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../auth/presentation/providers/session_provider.dart';
-import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../../till/presentation/providers/till_provider.dart';
-import '../../application/state/pos_home_dashboard_state.dart';
 import '../../data/datasources/pos_home_remote_datasource.dart';
 import '../providers/hardware_telemetry_provider.dart';
 import '../providers/pos_home_dashboard_provider.dart';
@@ -17,54 +16,58 @@ class PosHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboardAsync = ref.watch(posHomeDashboardProvider);
-    final shellDashboard = _shellDashboard(ref);
     ref.watch(hardwareTelemetryProvider);
 
     return dashboardAsync.when(
       data: (dashboard) => PosHomeDashboard(dashboard: dashboard),
       loading: () => PosHomeDashboard(
-        dashboard: shellDashboard,
+        dashboard: buildPosHomeShellDashboard(ref),
         status: const _DashboardInlineStatus.loading(),
       ),
-      error: (error, _) => PosHomeDashboard(
-        dashboard: shellDashboard,
-        onSummaryRetry: () => ref.invalidate(posHomeDashboardProvider),
-        status: _DashboardInlineStatus.error(
-          message: error is PosHomeException
-              ? error.message
-              : 'POS home dashboard could not be loaded. Try again.',
-          onRetry: () => ref.invalidate(posHomeDashboardProvider),
-        ),
-      ),
+      error: (error, _) {
+        final message = error is PosHomeException
+            ? error.message
+            : 'POS home dashboard could not be loaded. Try again.';
+        final showOpenTillAction = error is PosHomeException &&
+            error.reasonCode == 'NO_OPEN_TILL_SESSION';
+
+        return PosHomeDashboard(
+          dashboard: buildPosHomeShellDashboard(ref, homeError: error),
+          onSummaryRetry: () => unawaited(retryPosHomeDashboard(ref)),
+          status: _DashboardInlineStatus.error(
+            message: message,
+            onRetry: () => unawaited(retryPosHomeDashboard(ref)),
+            actionLabel: showOpenTillAction ? 'Open Till' : null,
+            onAction: showOpenTillAction ? () => _openTill(context) : null,
+          ),
+        );
+      },
     );
   }
 
-  PosHomeDashboardState _shellDashboard(WidgetRef ref) {
-    final session = ref.watch(authSessionProvider);
-    final deviceContext = ref.watch(deviceActivationProvider).deviceContext;
-    final tillState = ref.watch(tillProvider);
-
-    return buildPosHomeShellState(
-      userDisplayName: session?.userDisplayName ?? '',
-      isTrustedDevice: deviceContext?.isTrusted == true,
-      hasOpenTillSession: tillState.hasOpenSession,
-      permissionCodes: session?.permissionCodes.toSet() ?? const {},
-    );
+  void _openTill(BuildContext context) {
+    context.push('/pos/open-till');
   }
 }
 
 class _DashboardInlineStatus extends StatelessWidget {
   const _DashboardInlineStatus.loading()
       : message = 'Dashboard information is loading.',
-        onRetry = null;
+        onRetry = null,
+        actionLabel = null,
+        onAction = null;
 
   const _DashboardInlineStatus.error({
     required this.message,
     required this.onRetry,
+    this.actionLabel,
+    this.onAction,
   });
 
   final String message;
   final VoidCallback? onRetry;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +102,13 @@ class _DashboardInlineStatus extends StatelessWidget {
                   ),
             ),
           ),
+          if (onAction != null && actionLabel != null) ...[
+            TextButton(
+              onPressed: onAction,
+              child: Text(actionLabel!),
+            ),
+            const SizedBox(width: TenantAdminSpacing.sm),
+          ],
           if (onRetry != null)
             TextButton.icon(
               onPressed: onRetry,

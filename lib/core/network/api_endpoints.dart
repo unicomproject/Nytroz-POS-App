@@ -25,6 +25,81 @@ class ApiEndpoints {
   static const tenantAdminTills = '/api/v1/tenant-admin/tills';
   static String tenantAdminTill(String id) => '/api/v1/tenant-admin/tills/$id';
   static const tenantAdminStaffManagers = '/api/v1/tenant-admin/staff/managers';
+  static const tenantAdminOnlineStore = '/api/v1/tenant-admin/online-store';
+  static const tenantAdminOnlineStoreOverview =
+      '$tenantAdminOnlineStore/overview';
+  static const tenantAdminOnlineStoreReadiness =
+      '$tenantAdminOnlineStore/readiness';
+  static const tenantAdminOnlineStoreActivation =
+      '$tenantAdminOnlineStore/activation';
+  static const tenantAdminOnlineStoreIdentity =
+      '$tenantAdminOnlineStore/identity';
+  static const tenantAdminOnlineStoreUrlDomain =
+      '$tenantAdminOnlineStore/url-domain';
+  static const tenantAdminOnlineStoreUrl = '$tenantAdminOnlineStore/url';
+  static const tenantAdminOnlineStoreDomains =
+      '$tenantAdminOnlineStore/domains';
+  static String tenantAdminOnlineStoreDomain(String id) =>
+      '$tenantAdminOnlineStoreDomains/$id';
+  static String tenantAdminOnlineStoreDomainVerify(String id) =>
+      '${tenantAdminOnlineStoreDomain(id)}/verify';
+  static String tenantAdminOnlineStoreDomainRotateToken(String id) =>
+      '${tenantAdminOnlineStoreDomain(id)}/verification-token/rotate';
+  static String tenantAdminOnlineStoreDomainStatus(String id) =>
+      '${tenantAdminOnlineStoreDomain(id)}/status';
+  static String tenantAdminOnlineStoreDomainProvisionSsl(String id) =>
+      '${tenantAdminOnlineStoreDomain(id)}/ssl/provision';
+  static String tenantAdminOnlineStoreDomainSetPrimary(String id) =>
+      '${tenantAdminOnlineStoreDomain(id)}/set-primary';
+  static const tenantAdminOnlineStoreBranding =
+      '$tenantAdminOnlineStore/branding';
+  static String tenantAdminOnlineStoreMedia(String purpose) =>
+      '$tenantAdminOnlineStore/media/${Uri.encodeComponent(purpose)}';
+  static String tenantAdminOnlineStoreMediaAsset(String id) =>
+      '$tenantAdminOnlineStore/media/$id';
+  static const tenantAdminOnlineStoreBanners =
+      '$tenantAdminOnlineStore/banners';
+  static String tenantAdminOnlineStoreBanner(String id) =>
+      '$tenantAdminOnlineStoreBanners/$id';
+  static String tenantAdminOnlineStoreBannerStatus(String id) =>
+      '${tenantAdminOnlineStoreBanner(id)}/status';
+  static const tenantAdminOnlineStoreBannerOrder =
+      '$tenantAdminOnlineStoreBanners/order';
+  static const tenantAdminOnlineStoreSupport =
+      '$tenantAdminOnlineStore/support';
+  static const tenantAdminOnlineStoreClickCollect =
+      '$tenantAdminOnlineStore/click-collect';
+  static const tenantAdminOnlineStoreClickCollectOutlets =
+      '$tenantAdminOnlineStoreClickCollect/outlets';
+  static String tenantAdminOnlineStoreClickCollectOutlet(String outletId) =>
+      '$tenantAdminOnlineStoreClickCollectOutlets/$outletId';
+  static const tenantAdminOnlineStoreClickCollectBulkApply =
+      '$tenantAdminOnlineStoreClickCollectOutlets/bulk-apply';
+  static const tenantAdminOnlineStoreCatalogSummary =
+      '$tenantAdminOnlineStore/catalog/summary';
+  static const tenantAdminOnlineStoreCatalogProducts =
+      '$tenantAdminOnlineStore/catalog/products';
+  static String tenantAdminOnlineStoreCatalogProductVisibility(String id) =>
+      '$tenantAdminOnlineStoreCatalogProducts/$id/visibility';
+  static String tenantAdminOnlineStoreCatalogVariantVisibility(
+    String productId,
+    String variantId,
+  ) =>
+      '$tenantAdminOnlineStoreCatalogProducts/$productId/variants/$variantId/visibility';
+  static const tenantAdminOnlineStoreCatalogBulkVisibility =
+      '$tenantAdminOnlineStoreCatalogProducts/bulk-visibility';
+  static const tenantAdminOnlineStorePolicies =
+      '$tenantAdminOnlineStore/policies';
+  static String tenantAdminOnlineStorePolicy(String type) =>
+      '$tenantAdminOnlineStorePolicies/${Uri.encodeComponent(type)}';
+  static String tenantAdminOnlineStorePolicyPublish(String type) =>
+      '${tenantAdminOnlineStorePolicy(type)}/publish';
+  static String tenantAdminOnlineStorePolicyVersions(String type) =>
+      '${tenantAdminOnlineStorePolicy(type)}/versions';
+  static String tenantAdminOnlineStorePolicyArchive(String type) =>
+      '${tenantAdminOnlineStorePolicy(type)}/archive';
+  static const tenantAdminOnlineStorePublish =
+      '$tenantAdminOnlineStore/publish';
 
   static const currentTillSession = '/api/v1/tills/current-session';
   static const posHome = '/api/v1/pos/home';
@@ -40,6 +115,8 @@ class ApiEndpoints {
       '/api/v1/pos/hardware/drawer/operations/manual-open';
   static const posDrawerHistory =
       '/api/v1/pos/hardware/drawer/operations/history';
+  static const posCashDrawerSummary = '/api/v1/pos/cash-drawer/summary';
+  static const posCashDrawerMovements = '/api/v1/pos/cash-drawer/movements';
   static const posProducts = '/api/v1/pos/products';
   static const posCatalogCategories = '/api/v1/pos/catalog/categories';
   static const posCheckoutSummary = '/api/v1/pos/checkout/summary';

@@ -11,6 +11,7 @@ import '../../data/datasources/tenant_user_remote_datasource.dart';
 import '../../data/repositories/tenant_user_repository_impl.dart';
 import '../../domain/entities/tenant_user.dart';
 import '../../domain/repositories/tenant_user_repository.dart';
+import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../utils/user_list_filters.dart';
 
 final tenantUserRemoteDatasourceProvider =
@@ -67,7 +68,8 @@ final userStatusFilterProvider =
 
 final userPageProvider = StateProvider<int>((ref) => 1);
 
-final userPageSizeProvider = StateProvider<int>((ref) => 10);
+final userPageSizeProvider =
+    StateProvider<int>((ref) => TenantAdminContentTokens.defaultListPageSize);
 
 final userSortByProvider = StateProvider<String>((ref) => 'name');
 

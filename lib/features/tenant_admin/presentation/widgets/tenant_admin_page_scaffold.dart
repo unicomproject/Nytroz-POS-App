@@ -12,6 +12,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
     this.padding,
     this.backgroundColor = TenantAdminColors.background,
     this.scrollable = true,
+    this.fillHeight = true,
     this.showBackButton = false,
     this.onBackButtonPressed,
   });
@@ -23,6 +24,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
   final EdgeInsets? padding;
   final Color backgroundColor;
   final bool scrollable;
+  final bool fillHeight;
   final bool showBackButton;
   final VoidCallback? onBackButtonPressed;
 
@@ -62,9 +64,23 @@ class TenantAdminPageScaffold extends StatelessWidget {
             ],
           );
 
+          final framePadding = fillHeight
+              ? EdgeInsets.all(
+                  isNarrow ? TenantAdminSpacing.sm : TenantAdminSpacing.md)
+              : const EdgeInsets.only(top: 12);
+          final verticalFrameInset =
+              fillHeight ? framePadding.vertical : framePadding.top;
+
           return Padding(
-            padding: const EdgeInsets.only(top: 12.0),
+            padding: framePadding,
             child: Container(
+              width: double.infinity,
+              constraints: fillHeight
+                  ? BoxConstraints(
+                      minHeight: (constraints.maxHeight - verticalFrameInset)
+                          .clamp(0.0, double.infinity),
+                    )
+                  : null,
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: TenantAdminColors.surface,
@@ -74,7 +90,17 @@ class TenantAdminPageScaffold extends StatelessWidget {
               child: scrollable
                   ? SingleChildScrollView(
                       padding: basePadding,
-                      child: content,
+                      child: ConstrainedBox(
+                        constraints: fillHeight
+                            ? BoxConstraints(
+                                minHeight: (constraints.maxHeight -
+                                        verticalFrameInset -
+                                        basePadding.vertical)
+                                    .clamp(0.0, double.infinity),
+                              )
+                            : const BoxConstraints(),
+                        child: content,
+                      ),
                     )
                   : Padding(
                       padding: basePadding,
@@ -201,14 +227,6 @@ class _HeaderText extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (title == 'Dashboard') ...[
-                const Icon(
-                  Icons.menu,
-                  color: TenantAdminColors.bodyText,
-                  size: 22,
-                ),
-                const SizedBox(height: 18),
-              ],
               if (title.isNotEmpty)
                 Text(title, style: TenantAdminTextStyles.pageTitle(context)),
               if (subtitle != null && subtitle!.trim().isNotEmpty) ...[

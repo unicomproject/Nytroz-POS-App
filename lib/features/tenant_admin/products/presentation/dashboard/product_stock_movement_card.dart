@@ -21,10 +21,10 @@ class ProductStockMovementCard extends StatelessWidget {
   final TenantAdminAccessChecker? access;
 
   static const _segmentColors = [
-    Color(0xFF2563EB),
-    Color(0xFF7C3AED),
-    Color(0xFF059669),
-    Color(0xFFF59E0B),
+    TenantAdminColors.primary,
+    TenantAdminColors.info,
+    TenantAdminColors.success,
+    TenantAdminColors.warning,
   ];
 
   @override

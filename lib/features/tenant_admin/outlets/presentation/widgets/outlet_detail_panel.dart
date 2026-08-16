@@ -8,7 +8,12 @@ import '../providers/selected_outlet_provider.dart';
 import '../../domain/entities/outlet.dart';
 
 class OutletDetailPanel extends ConsumerWidget {
-  const OutletDetailPanel({super.key});
+  const OutletDetailPanel({
+    super.key,
+    this.scrollable = true,
+  });
+
+  final bool scrollable;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -34,7 +39,10 @@ class OutletDetailPanel extends ConsumerWidget {
         onRetry: () =>
             ref.refresh(tenantAdminOutletOverviewProvider(selectedId)),
       ),
-      data: (overview) => _PanelContent(overview: overview),
+      data: (overview) => _PanelContent(
+        overview: overview,
+        scrollable: scrollable,
+      ),
     );
   }
 }
@@ -57,12 +65,17 @@ class _EmptyPanel extends StatelessWidget {
 // ─── Filled panel ──────────────────────────────────────────────────────────
 
 class _PanelContent extends ConsumerWidget {
-  const _PanelContent({required this.overview});
+  const _PanelContent({
+    required this.overview,
+    required this.scrollable,
+  });
+
   final TenantAdminOutletOverview overview;
+  final bool scrollable;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return SingleChildScrollView(
+    final content = Padding(
       padding: const EdgeInsets.all(TenantAdminSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,12 +114,13 @@ class _PanelContent extends ConsumerWidget {
           const SizedBox(height: TenantAdminSpacing.md),
 
           // ── Status / type pills + code ─────────────────────
-          Row(
+          Wrap(
+            spacing: 6,
+            runSpacing: TenantAdminSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _StatusPill(status: overview.status),
-              const SizedBox(width: 6),
               _TypePill(type: overview.type),
-              const Spacer(),
               Text(
                 'Code: ${overview.code}',
                 style: const TextStyle(
@@ -155,6 +169,8 @@ class _PanelContent extends ConsumerWidget {
         ],
       ),
     );
+
+    return scrollable ? SingleChildScrollView(child: content) : content;
   }
 
   String _addressText(TenantAdminOutletOverview o) {
@@ -316,63 +332,71 @@ class _MetricsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: TenantAdminSpacing.sm,
-      mainAxisSpacing: TenantAdminSpacing.sm,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.55,
-      children: [
-        _MetricCard(
-          title: "Today's Sales",
-          value: overview.canViewSales
-              ? '${overview.salesCurrency} ${overview.todayNetSales.toStringAsFixed(2)}'
-              : 'Restricted',
-          subtitle: overview.canViewSales ? '↑ 12.6% vs Yesterday' : null,
-          subtitleColor: const Color(0xFF16A34A),
-          icon: Icons.shopping_bag_outlined,
-          iconColor: TenantAdminColors.posHomeOrangeEnd,
-          iconBg: TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.10),
-          isRestricted: !overview.canViewSales,
-        ),
-        _MetricCard(
-          title: 'Active Tills',
-          value: overview.canViewTills
-              ? '${overview.activeTills} / ${overview.totalTills}'
-              : 'Restricted',
-          subtitle: overview.canViewTills ? '100% Online' : null,
-          subtitleColor: const Color(0xFF16A34A),
-          icon: Icons.point_of_sale_outlined,
-          iconColor: const Color(0xFF7C3AED),
-          iconBg: const Color(0xFF7C3AED).withValues(alpha: 0.1),
-          isRestricted: !overview.canViewTills,
-        ),
-        _MetricCard(
-          title: 'Stock Value',
-          value: overview.canViewInventory
-              ? '${overview.inventoryCurrency} ${overview.stockValue.toStringAsFixed(2)}'
-              : 'Restricted',
-          subtitle: overview.canViewInventory ? '245 Items' : null,
-          subtitleColor: TenantAdminColors.mutedText,
-          icon: Icons.inventory_2_outlined,
-          iconColor: TenantAdminColors.info,
-          iconBg: TenantAdminColors.info.withValues(alpha: 0.1),
-          isRestricted: !overview.canViewInventory,
-        ),
-        _MetricCard(
-          title: 'Open Orders',
-          value: overview.canViewOrders
-              ? '${overview.openOrderCount}'
-              : 'Restricted',
-          subtitle: overview.canViewOrders ? 'View Orders ›' : null,
-          subtitleColor: TenantAdminColors.info,
-          icon: Icons.shopping_cart_outlined,
-          iconColor: const Color(0xFF16A34A),
-          iconBg: const Color(0xFF16A34A).withValues(alpha: 0.1),
-          isRestricted: !overview.canViewOrders,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final useSingleColumn = constraints.maxWidth < 320;
+
+        return GridView.count(
+          crossAxisCount: useSingleColumn ? 1 : 2,
+          crossAxisSpacing: TenantAdminSpacing.sm,
+          mainAxisSpacing: TenantAdminSpacing.sm,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          childAspectRatio: useSingleColumn ? 2.45 : 1.55,
+          children: [
+            _MetricCard(
+              title: "Today's Sales",
+              value: overview.canViewSales
+                  ? '${overview.salesCurrency} ${overview.todayNetSales.toStringAsFixed(2)}'
+                  : 'Restricted',
+              subtitle: overview.canViewSales ? 'Net sales today' : null,
+              subtitleColor: TenantAdminColors.mutedText,
+              icon: Icons.shopping_bag_outlined,
+              iconColor: TenantAdminColors.posHomeOrangeEnd,
+              iconBg:
+                  TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.10),
+              isRestricted: !overview.canViewSales,
+            ),
+            _MetricCard(
+              title: 'Active Tills',
+              value: overview.canViewTills
+                  ? '${overview.activeTills} / ${overview.totalTills}'
+                  : 'Restricted',
+              subtitle: overview.canViewTills ? 'Online tills' : null,
+              subtitleColor: TenantAdminColors.mutedText,
+              icon: Icons.point_of_sale_outlined,
+              iconColor: TenantAdminColors.posHomeAccentOrange,
+              iconBg:
+                  TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.1),
+              isRestricted: !overview.canViewTills,
+            ),
+            _MetricCard(
+              title: 'Stock Value',
+              value: overview.canViewInventory
+                  ? '${overview.inventoryCurrency} ${overview.stockValue.toStringAsFixed(2)}'
+                  : 'Restricted',
+              subtitle: overview.canViewInventory ? 'Inventory value' : null,
+              subtitleColor: TenantAdminColors.mutedText,
+              icon: Icons.inventory_2_outlined,
+              iconColor: TenantAdminColors.info,
+              iconBg: TenantAdminColors.info.withValues(alpha: 0.1),
+              isRestricted: !overview.canViewInventory,
+            ),
+            _MetricCard(
+              title: 'Open Orders',
+              value: overview.canViewOrders
+                  ? '${overview.openOrderCount}'
+                  : 'Restricted',
+              subtitle: overview.canViewOrders ? 'Open order count' : null,
+              subtitleColor: TenantAdminColors.mutedText,
+              icon: Icons.shopping_cart_outlined,
+              iconColor: const Color(0xFF16A34A),
+              iconBg: const Color(0xFF16A34A).withValues(alpha: 0.1),
+              isRestricted: !overview.canViewOrders,
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/access/pos_permission_access.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
-import '../../../sale/presentation/widgets/payment/pos_bottom_action_buttons.dart';
+import '../../../hardware/receipt_printer/presentation/providers/cash_drawer_controller.dart'
+    as hardware;
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../till/presentation/providers/till_provider.dart';
@@ -12,7 +13,9 @@ import '../providers/cash_drawer_provider.dart';
 import '../widgets/cash_drawer_actions_section.dart';
 import '../widgets/cash_drawer_movements_section.dart';
 import '../widgets/cash_drawer_page_header.dart';
+import '../widgets/cash_drawer_section_card.dart';
 import '../widgets/cash_drawer_till_summary_section.dart';
+import '../../domain/entities/cash_drawer_summary.dart';
 
 class PosCashDrawerScreen extends ConsumerStatefulWidget {
   const PosCashDrawerScreen({super.key});
@@ -27,9 +30,7 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       ref.read(cashDrawerProvider.notifier).refresh();
     });
   }
@@ -50,67 +51,59 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
     final tillState = ref.watch(tillProvider);
     final granted = session?.permissionCodes.toSet() ?? const {};
     final drawerState = ref.watch(cashDrawerProvider);
+    final hardwareState = ref.watch(hardware.cashDrawerControllerProvider);
     final summary = drawerState.summary;
 
+    final canOpenDrawer =
+        PosPermissionAccess.canManageCashDrawerActions(granted);
     final canCashIn = PosPermissionAccess.canCreateCashDrawerMovement(granted);
     final canCashOut = PosPermissionAccess.canCreateCashDrawerMovement(granted);
     final canCloseTill = PosPermissionAccess.canCloseTill(granted);
-    final actionsEnabled = tillState.hasOpenSession && summary?.isOpen == true;
+    final actionsEnabled =
+        tillState.hasOpenSession && (summary?.isOpen ?? false);
 
     return ColoredBox(
       color: TenantAdminColors.background,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final padding = TenantAdminInsets.pageForWidth(constraints.maxWidth);
-
-          if (summary == null) {
-            return Padding(
-              padding: padding,
-              child: const Center(child: CircularProgressIndicator()),
-            );
-          }
+          final wide = constraints.maxWidth >= TenantAdminBreakpoints.tablet;
 
           return Padding(
             padding: padding,
-            child: SizedBox.expand(
+            child: CashDrawerSectionCard(
+              expand: true,
+              padding: const EdgeInsets.all(TenantAdminSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  CashDrawerPageHeader(onBack: () => context.go('/pos/home')),
-                  if (!tillState.hasOpenSession) ...[
-                    const SizedBox(height: TenantAdminSpacing.md),
+                  const CashDrawerPageHeader(),
+                  if (!tillState.hasOpenSession ||
+                      (summary != null && !summary.isOpen)) ...[
+                    const SizedBox(height: TenantAdminSpacing.sm),
                     const _TillClosedBanner(),
                   ],
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          CashDrawerTillSummarySection(summary: summary),
-                          const SizedBox(height: TenantAdminSpacing.lg),
-                          CashDrawerActionsSection(
-                            canCashIn: canCashIn,
-                            canCashOut: canCashOut,
-                            canCloseTill: canCloseTill,
-                            actionsEnabled: actionsEnabled,
-                            onCashIn: () => _onCashIn(context),
-                            onCashOut: () => _onCashOut(context),
-                            onCloseTill: () => _onCloseTill(context),
-                          ),
-                          const SizedBox(height: TenantAdminSpacing.lg),
-                          CashDrawerMovementsSection(
-                            movements: drawerState.movements,
-                          ),
-                        ],
-                      ),
+                  if (drawerState.errorMessage != null) ...[
+                    const SizedBox(height: TenantAdminSpacing.sm),
+                    _ErrorBanner(
+                      message: drawerState.errorMessage!,
+                      onRetry: () =>
+                          ref.read(cashDrawerProvider.notifier).refresh(),
                     ),
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  PosBottomFilledButton(
-                    label: 'Continue',
-                    icon: Icons.home_rounded,
-                    onPressed: () => context.go('/pos/home'),
+                  ],
+                  const SizedBox(height: TenantAdminSpacing.md),
+                  Expanded(
+                    child: _buildBody(
+                      drawerState: drawerState,
+                      summary: summary,
+                      wide: wide,
+                      canOpenDrawer: canOpenDrawer,
+                      canCashIn: canCashIn,
+                      canCashOut: canCashOut,
+                      canCloseTill: canCloseTill,
+                      actionsEnabled: actionsEnabled,
+                      openDrawerBusy: hardwareState.isBusy,
+                    ),
                   ),
                 ],
               ),
@@ -118,6 +111,154 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildBody({
+    required CashDrawerState drawerState,
+    required CashDrawerSummary? summary,
+    required bool wide,
+    required bool canOpenDrawer,
+    required bool canCashIn,
+    required bool canCashOut,
+    required bool canCloseTill,
+    required bool actionsEnabled,
+    required bool openDrawerBusy,
+  }) {
+    if (drawerState.isLoading && summary == null) {
+      return Center(
+        child: Semantics(
+          label: 'Loading cash drawer',
+          child: const CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (summary == null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              drawerState.errorMessage ??
+                  'Cash drawer summary is unavailable for this device.',
+              textAlign: TextAlign.center,
+              style: TenantAdminTextStyles.muted(context),
+            ),
+            const SizedBox(height: TenantAdminSpacing.md),
+            FilledButton(
+              onPressed: () => ref.read(cashDrawerProvider.notifier).refresh(),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final actions = CashDrawerActionsSection(
+      compact: wide,
+      canOpenDrawer: canOpenDrawer,
+      canCashIn: canCashIn,
+      canCashOut: canCashOut,
+      canCloseTill: canCloseTill,
+      actionsEnabled: actionsEnabled,
+      openDrawerBusy: openDrawerBusy,
+      onOpenDrawer: () => _onOpenDrawer(context),
+      onCashIn: () => _onCashIn(context),
+      onCashOut: () => _onCashOut(context),
+      onCloseTill: () => _onCloseTill(context),
+    );
+    final movements = CashDrawerMovementsSection(
+      movements: drawerState.movements,
+      currencyCode: summary.currencyCode,
+      compact: wide,
+      maxVisible: wide ? 5 : 8,
+    );
+
+    final summaryCard = CashDrawerSectionCard(
+      padding: EdgeInsets.all(
+        wide ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
+      ),
+      child: CashDrawerTillSummarySection(summary: summary, compact: wide),
+    );
+    final actionsCard = CashDrawerSectionCard(
+      expand: wide,
+      padding: EdgeInsets.all(
+        wide ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
+      ),
+      child: actions,
+    );
+    final movementsCard = CashDrawerSectionCard(
+      expand: wide,
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
+      child: movements,
+    );
+
+    if (wide) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          summaryCard,
+          const SizedBox(height: TenantAdminSpacing.md),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 4, child: actionsCard),
+                const SizedBox(width: TenantAdminSpacing.md),
+                Expanded(flex: 6, child: movementsCard),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          summaryCard,
+          const SizedBox(height: TenantAdminSpacing.md),
+          actionsCard,
+          const SizedBox(height: TenantAdminSpacing.md),
+          movementsCard,
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onOpenDrawer(BuildContext context) async {
+    if (!PosPermissionAccess.canManageCashDrawerActions(
+      ref.read(authSessionProvider)?.permissionCodes.toSet() ?? const {},
+    )) {
+      PosPermissionAccess.showAccessDeniedSnackBar(
+        context,
+        'You do not have permission to open the cash drawer.',
+      );
+      return;
+    }
+
+    final tillState = ref.read(tillProvider);
+    if (!tillState.hasOpenSession) {
+      _showMessage(
+        context,
+        'Till is not open. Open a till session to perform drawer actions.',
+      );
+      return;
+    }
+
+    final ok = await ref
+        .read(hardware.cashDrawerControllerProvider.notifier)
+        .triggerManualNoSaleOpen(reason: 'Manual open from Cash Drawer');
+
+    if (!context.mounted) return;
+    final message = ref.read(hardware.cashDrawerControllerProvider).message;
+    final fallback =
+        ok ? 'Cash drawer open requested.' : 'Cash drawer could not be opened.';
+    _showMessage(
+      context,
+      message.trim().isEmpty ? fallback : message,
     );
   }
 
@@ -131,7 +272,6 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
       );
       return;
     }
-
     context.push('/pos/cash-drawer/cash-in');
   }
 
@@ -145,13 +285,10 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
       );
       return;
     }
-
     context.push('/pos/cash-drawer/cash-drop');
   }
 
-  Future<void> _onCloseTill(
-    BuildContext context,
-  ) async {
+  void _onCloseTill(BuildContext context) {
     if (!PosPermissionAccess.canCloseTill(
       ref.read(authSessionProvider)?.permissionCodes.toSet() ?? const {},
     )) {
@@ -162,21 +299,22 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
       return;
     }
 
-    final tillState = ref.read(tillProvider);
-    if (!tillState.hasOpenSession) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content:
-                Text('An open till session is required to close the till.'),
-          ),
-        );
+    if (!ref.read(tillProvider).hasOpenSession) {
+      _showMessage(
+        context,
+        'An open till session is required to close the till.',
+      );
       return;
     }
 
     ref.read(cashDrawerProvider.notifier).refresh();
     context.push('/pos/cash-drawer/close-till');
+  }
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
@@ -189,9 +327,9 @@ class _TillClosedBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(TenantAdminSpacing.md),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
+        color: TenantAdminColors.warningSurface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        border: Border.all(color: const Color(0xFFFED7AA)),
+        border: Border.all(color: TenantAdminColors.warningBorder),
       ),
       child: Row(
         children: [
@@ -209,6 +347,47 @@ class _TillClosedBanner extends StatelessWidget {
                   ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
+      decoration: BoxDecoration(
+        color: TenantAdminColors.danger.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        border: Border.all(
+          color: TenantAdminColors.danger.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: TenantAdminColors.danger),
+          const SizedBox(width: TenantAdminSpacing.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: TenantAdminColors.bodyText,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );

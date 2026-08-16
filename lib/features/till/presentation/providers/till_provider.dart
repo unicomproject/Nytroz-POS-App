@@ -43,16 +43,19 @@ class TillState {
 
 class TillController extends StateNotifier<TillState> {
   TillController(this._openTill, this._storage) : super(const TillState()) {
-    _restoreTillSession();
+    _hydrationFuture = _hydrateFromStorage();
   }
 
   final OpenTill _openTill;
   final TillSessionStorage _storage;
+  late final Future<void> _hydrationFuture;
 
   Future<bool> refreshCurrentSession({
     required PosDeviceContext deviceContext,
     bool force = false,
   }) async {
+    await ensureHydrated();
+
     if (state.isRefreshing) {
       return state.hasOpenSession;
     }
@@ -101,6 +104,8 @@ class TillController extends StateNotifier<TillState> {
     required double openingFloat,
     required String openingNote,
   }) async {
+    await ensureHydrated();
+
     if (state.isSubmitting) {
       return false;
     }
@@ -140,6 +145,8 @@ class TillController extends StateNotifier<TillState> {
     String? mismatchReason,
     String? closingNote,
   }) async {
+    await ensureHydrated();
+
     if (state.isSubmitting) {
       return null;
     }
@@ -175,24 +182,21 @@ class TillController extends StateNotifier<TillState> {
   }
 
   Future<void> clear() async {
+    await ensureHydrated();
     await _storage.clear();
     state = const TillState();
   }
 
   /// Loads persisted till session into state if not already present.
   Future<void> ensureHydrated() async {
-    if (state.session != null) {
-      return;
-    }
-
-    final session = await _storage.read();
-    if (session != null) {
-      state = TillState(session: session);
-    }
+    await _hydrationFuture;
   }
 
-  Future<void> _restoreTillSession() async {
-    await ensureHydrated();
+  Future<void> _hydrateFromStorage() async {
+    final session = await _storage.read();
+    if (session != null && state.session == null) {
+      state = TillState(session: session);
+    }
   }
 }
 

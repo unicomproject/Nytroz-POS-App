@@ -5,6 +5,7 @@ import 'package:nytroz_pos/features/auth/presentation/providers/session_provider
 import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_product_variant_sheet.dart';
+import 'package:nytroz_pos/features/sale/presentation/providers/pos_checkout_summary_provider.dart';
 
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'pos_cart_header.dart';
@@ -19,6 +20,9 @@ class PosNewSaleCartPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cart = ref.watch(posNewSaleCartProvider);
+    final pricingAsync = cart.hasItems
+        ? ref.watch(posCheckoutSummaryProvider)
+        : const AsyncValue<PosCheckoutSummaryViewData>.loading();
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
@@ -42,14 +46,20 @@ class PosNewSaleCartPanel extends ConsumerWidget {
               Expanded(
                 child: ClipRect(
                   child: cart.hasItems
-                      ? _CartItemList(items: cart.itemList)
+                      ? _CartItemList(
+                          items: cart.itemList,
+                          pricingAsync: pricingAsync,
+                          cart: cart,
+                        )
                       : const PosEmptyCartMessage(),
                 ),
               ),
-              const SizedBox(height: TenantAdminSpacing.md),
-              PosCartSummary(cart: cart),
-              const SizedBox(height: TenantAdminSpacing.md),
-              PosPaymentBar(cart: cart),
+              if (cart.hasItems) ...[
+                const SizedBox(height: TenantAdminSpacing.md),
+                PosCartSummary(cart: cart, pricingAsync: pricingAsync),
+                const SizedBox(height: TenantAdminSpacing.md),
+              ],
+              PosPaymentBar(cart: cart, pricingAsync: pricingAsync),
             ],
           ),
         ),
@@ -59,13 +69,41 @@ class PosNewSaleCartPanel extends ConsumerWidget {
 }
 
 class _CartItemList extends ConsumerWidget {
-  const _CartItemList({required this.items});
+  const _CartItemList({
+    required this.items,
+    required this.pricingAsync,
+    required this.cart,
+  });
 
   final List<PosNewSaleCartItem> items;
+  final AsyncValue<PosCheckoutSummaryViewData> pricingAsync;
+  final PosNewSaleCartState cart;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reversedItems = items.reversed.toList(growable: false);
+    final pricing = pricingAsync.valueOrNull;
+    if (pricing == null) {
+      return ListView.separated(
+        clipBehavior: Clip.hardEdge,
+        padding: const EdgeInsets.only(bottom: TenantAdminSpacing.sm),
+        itemCount: reversedItems.length,
+        separatorBuilder: (_, __) => const Divider(
+          height: TenantAdminSpacing.md,
+        ),
+        itemBuilder: (context, index) {
+          final item = reversedItems[index];
+          return PosCartRow(
+            item: item,
+            onTap: () => _handleCartItemTap(context, ref, item),
+          );
+        },
+      );
+    }
+
+    final isAuthoritative =
+        isCurrentAuthoritativePricing(cart: cart, pricing: pricing);
+    final currency = pricing.currency;
 
     return ListView.separated(
       clipBehavior: Clip.hardEdge,
@@ -76,9 +114,15 @@ class _CartItemList extends ConsumerWidget {
       ),
       itemBuilder: (context, index) {
         final item = reversedItems[index];
+        final linePricing = isAuthoritative
+            ? authoritativeLinePricingFor(item: item, pricing: pricing)
+            : null;
 
         return PosCartRow(
           item: item,
+          linePricing: linePricing,
+          isAuthoritative: isAuthoritative && linePricing != null,
+          currency: currency,
           onTap: () => _handleCartItemTap(context, ref, item),
         );
       },
@@ -130,7 +174,7 @@ class _CartColumnHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: TenantAdminColors.primary,
+          color: TenantAdminColors.posHomeAccentOrange,
           fontWeight: FontWeight.w800,
         );
     return Row(

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../discount/domain/entities/pos_cart_discount.dart';
@@ -79,8 +81,12 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
     }
 
     final existingCartItem = updatedItems[cartKey];
-    updatedItems[cartKey] = PosNewSaleCartItem(
+    final resolvedProduct = _resolveCartLineProduct(
       product: product,
+      existingItem: existingCartItem,
+    );
+    updatedItems[cartKey] = PosNewSaleCartItem(
+      product: resolvedProduct,
       quantity: quantity,
       discount: existingCartItem?.discount,
     );
@@ -89,6 +95,24 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
       items: _withoutItemDiscounts(updatedItems),
       cartDiscountSet: true,
     );
+  }
+
+  PosNewSaleProduct _resolveCartLineProduct({
+    required PosNewSaleProduct product,
+    required PosNewSaleCartItem? existingItem,
+  }) {
+    if (existingItem != null) {
+      final existingLineId = existingItem.product.clientLineId;
+      if (existingLineId?.trim().isNotEmpty == true) {
+        return product.copyWith(clientLineId: existingLineId);
+      }
+    }
+
+    if (product.clientLineId?.trim().isNotEmpty == true) {
+      return product;
+    }
+
+    return product.copyWith(clientLineId: newPosClientLineId());
   }
 
   bool decreaseQuantity(String cartLineKey) {
@@ -432,6 +456,33 @@ class PosNewSaleProduct {
         category.toLowerCase().contains(query) ||
         (sku?.toLowerCase().contains(query) ?? false);
   }
+
+  PosNewSaleProduct copyWith({
+    String? clientLineId,
+  }) {
+    return PosNewSaleProduct(
+      id: id,
+      productId: productId,
+      variantId: variantId,
+      name: name,
+      category: category,
+      price: price,
+      sku: sku,
+      imageUrl: imageUrl,
+      stockLabel: stockLabel,
+      stockStatus: stockStatus,
+      hasVariants: hasVariants,
+      selectedAttributes: selectedAttributes,
+      maxQuantity: maxQuantity,
+      clientLineId: clientLineId ?? this.clientLineId,
+      uomId: uomId,
+      lineNote: lineNote,
+      source: source,
+      recommendationParentProductId: recommendationParentProductId,
+      recommendationRelationshipId: recommendationRelationshipId,
+      authoritativePrice: authoritativePrice,
+    );
+  }
 }
 
 enum PosCartMutationResult {
@@ -451,6 +502,18 @@ String formatLkr(int value) {
 }
 
 String formatLkrInputPrefix() => 'LKR';
+
+String newPosClientLineId() {
+  final random = Random.secure();
+  final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  final hex =
+      bytes.map((value) => value.toRadixString(16).padLeft(2, '0')).join();
+  return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
+      '${hex.substring(12, 16)}-${hex.substring(16, 20)}-'
+      '${hex.substring(20)}';
+}
 
 String _formatNumber(int value) {
   final raw = value.toString();

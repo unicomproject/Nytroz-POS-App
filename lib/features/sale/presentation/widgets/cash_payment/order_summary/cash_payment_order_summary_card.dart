@@ -27,7 +27,7 @@ class CashPaymentOrderSummaryCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         border: Border.all(color: TenantAdminColors.border),
         boxShadow: TenantAdminShadows.card,
       ),
@@ -35,31 +35,33 @@ class CashPaymentOrderSummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'ORDER SUMMARY',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: TenantAdminColors.bodyText,
+                        fontSize: 14,
                       ),
                 ),
-                const SizedBox(height: TenantAdminSpacing.sm),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     const Icon(
                       Icons.shopping_cart_outlined,
-                      size: 20,
+                      size: 14,
                       color: TenantAdminColors.primary,
                     ),
-                    const SizedBox(width: TenantAdminSpacing.xs),
+                    const SizedBox(width: 4),
                     Text(
                       '$itemCount Items',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: TenantAdminColors.primary,
                             fontWeight: FontWeight.w600,
+                            fontSize: 11,
                           ),
                     ),
                   ],
@@ -73,7 +75,7 @@ class CashPaymentOrderSummaryCard extends StatelessWidget {
           ),
           const Divider(height: 1),
           Padding(
-            padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
             child: CashPaymentOrderTotals(
               subtotal: subtotal,
               discount: discount,
@@ -81,32 +83,32 @@ class CashPaymentOrderSummaryCard extends StatelessWidget {
             ),
           ),
           DecoratedBox(
-            decoration: const BoxDecoration(
-              color: TenantAdminColors.posHomeAccentOrange,
-              borderRadius: BorderRadius.vertical(
-                bottom: Radius.circular(TenantAdminRadius.lg),
+            decoration: BoxDecoration(
+              color:
+                  TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.12),
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(TenantAdminRadius.md),
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: TenantAdminSpacing.lg,
-                vertical: TenantAdminSpacing.lg,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'TOTAL DUE',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: TenantAdminColors.bodyText,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
                         ),
                   ),
                   Text(
                     formatLkr(total),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: TenantAdminColors.posHomeAccentOrange,
                           fontWeight: FontWeight.w900,
+                          fontSize: 16,
                         ),
                   ),
                 ],

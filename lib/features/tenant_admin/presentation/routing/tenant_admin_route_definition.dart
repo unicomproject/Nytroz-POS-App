@@ -1,3 +1,5 @@
+import '../../../../core/access/tenant_admin_access_codes.dart';
+
 class TenantAdminRouteDefinition {
   const TenantAdminRouteDefinition({
     required this.path,
@@ -135,6 +137,69 @@ const tenantAdminRouteDefinitions = [
     title: 'Edit User',
     featureCode: 'tenant.users',
     permissionCode: 'tenant.user.manage',
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/online-store',
+    menuKey: 'online-store',
+    title: 'Online Store Overview',
+    featureCode: TenantAdminFeatureCodes.onlineStore,
+    permissionCode: TenantAdminPermissionCodes.onlineStoreView,
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/online-store/activation',
+    menuKey: 'online-store',
+    title: 'Activation & Access',
+    featureCode: TenantAdminFeatureCodes.onlineStore,
+    permissionCode: TenantAdminPermissionCodes.onlineStoreView,
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/online-store/identity',
+    menuKey: 'online-store',
+    title: 'Store Identity',
+    featureCode: TenantAdminFeatureCodes.onlineStore,
+    permissionCode: TenantAdminPermissionCodes.onlineStoreView,
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/online-store/domain',
+    menuKey: 'online-store',
+    title: 'Storefront URL & Domain',
+    featureCode: TenantAdminFeatureCodes.onlineStore,
+    permissionCode: TenantAdminPermissionCodes.onlineStoreView,
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/online-store/branding',
+    menuKey: 'online-store',
+    title: 'Branding & Appearance',
+    featureCode: TenantAdminFeatureCodes.onlineStore,
+    permissionCode: TenantAdminPermissionCodes.onlineStoreView,
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/online-store/support',
+    menuKey: 'online-store',
+    title: 'Contact & Support',
+    featureCode: TenantAdminFeatureCodes.onlineStore,
+    permissionCode: TenantAdminPermissionCodes.onlineStoreView,
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/online-store/click-collect',
+    menuKey: 'online-store',
+    title: 'Click & Collect Configuration',
+    featureCode: TenantAdminFeatureCodes.onlineStore,
+    permissionCode: TenantAdminPermissionCodes.onlineStoreView,
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/online-store/products-policies',
+    menuKey: 'online-store',
+    title: 'Products & Policies',
+    featureCode: TenantAdminFeatureCodes.onlineStore,
+    permissionCode: TenantAdminPermissionCodes.onlineStoreView,
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/online-store/review',
+    menuKey: 'online-store',
+    title: 'Review & Publish',
+    featureCode: TenantAdminFeatureCodes.onlineStore,
+    permissionCode: TenantAdminPermissionCodes.onlineStoreView,
   ),
   TenantAdminRouteDefinition(
     path: '/tenant-admin/roles-permissions',

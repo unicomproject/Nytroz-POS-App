@@ -57,9 +57,15 @@ void main() {
       );
       expect(
         PosPermissionAccess.canCreateCashDrawerMovement(
-          const {'cash_drawer.manage'},
+          const {'cash_drawer.movement.create'},
         ),
         isTrue,
+      );
+      expect(
+        PosPermissionAccess.canCreateCashDrawerMovement(
+          const {'cash_drawer.manage'},
+        ),
+        isFalse,
       );
     });
   });

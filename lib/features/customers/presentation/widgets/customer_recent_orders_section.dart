@@ -36,8 +36,8 @@ class CustomerRecentOrdersSection extends StatelessWidget {
             OutlinedButton(
               onPressed: onViewAll,
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1464F4),
-                side: const BorderSide(color: Color(0xFF1464F4)),
+                foregroundColor: TenantAdminColors.posHomeAccentOrange,
+                side: BorderSide(color: TenantAdminColors.posHomeAccentOrange),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 minimumSize: const Size(60, 28),

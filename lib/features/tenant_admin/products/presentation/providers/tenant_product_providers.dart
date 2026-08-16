@@ -107,7 +107,7 @@ class ProductListFilterState {
     this.sortBy = 'productName',
     this.sortDirection = 'asc',
     this.pageNumber = 1,
-    this.pageSize = 6,
+    this.pageSize = TenantAdminContentTokens.defaultListPageSize,
   });
 
   final String search;

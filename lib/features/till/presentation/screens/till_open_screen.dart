@@ -3,16 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
+import '../../../auth/presentation/providers/pos_login_branding_provider.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../pos_shell/presentation/widgets/common/pos_top_bar.dart';
+import '../../../pos_shell/presentation/widgets/home/pos_dashboard_top_bar_content.dart';
+import '../../../pos_shell/presentation/providers/pos_home_dashboard_provider.dart';
 import '../providers/till_provider.dart';
 import '../../../../shared/pos_session/pos_session_bootstrap_provider.dart';
 import '../../../auth/presentation/providers/post_login_navigation_provider.dart';
 import '../widgets/open_till_form.dart';
 
-const _oneVerzLogoAsset = 'assets/images/logo.png';
 const _maxFormWidth = 1400.0;
-const _contentWidthFraction = 0.96;
 const _scrollFallbackHeight = 420.0;
 
 double _horizontalPaddingFor(double width) {
@@ -28,7 +30,7 @@ double _horizontalPaddingFor(double width) {
 double _contentWidthFor(double maxWidth) {
   final horizontalPadding = _horizontalPaddingFor(maxWidth);
   final available = maxWidth - (horizontalPadding * 2);
-  return (available * _contentWidthFraction).clamp(320, _maxFormWidth);
+  return available.clamp(320, _maxFormWidth);
 }
 
 OpenTillFormDensity _densityForSize(double height, double width) {
@@ -71,7 +73,10 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
     final deviceState = ref.watch(deviceActivationProvider);
     final tillState = ref.watch(tillProvider);
     final authSession = ref.watch(authSessionProvider);
+    final loginBranding = ref.watch(posLoginBrandingProvider);
     final device = deviceState.deviceContext;
+    final brandName = loginBranding.brandDisplayName.trim();
+    final brandLogoUrl = loginBranding.logoUrl?.trim();
 
     if (device != null && !_initializedOpeningFloat) {
       _initializedOpeningFloat = true;
@@ -86,7 +91,12 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const _OneVerzAppHeader(),
+              PosTopBar(
+                brandName: brandName.isEmpty ? null : brandName,
+                brandLogoUrl:
+                    brandLogoUrl?.isNotEmpty == true ? brandLogoUrl : null,
+                content: const PosDashboardTopBarContent(),
+              ),
               Expanded(
                 child: Center(
                   child: _BlockedPanel(
@@ -110,7 +120,12 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _OneVerzAppHeader(),
+            PosTopBar(
+              brandName: brandName.isEmpty ? null : brandName,
+              brandLogoUrl:
+                  brandLogoUrl?.isNotEmpty == true ? brandLogoUrl : null,
+              content: const PosDashboardTopBarContent(),
+            ),
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -136,6 +151,10 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
                     onSubmit: _submitOpenTill,
                   );
 
+                  final cardPadding = density == OpenTillFormDensity.compact
+                      ? const EdgeInsets.all(TenantAdminSpacing.md)
+                      : const EdgeInsets.all(TenantAdminSpacing.lg);
+
                   if (constraints.maxHeight < _scrollFallbackHeight) {
                     return SingleChildScrollView(
                       padding: EdgeInsets.fromLTRB(
@@ -146,8 +165,16 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
                       ),
                       child: Align(
                         alignment: Alignment.topCenter,
-                        child: SizedBox(
+                        child: Container(
                           width: contentWidth,
+                          decoration: BoxDecoration(
+                            color: TenantAdminColors.surface,
+                            borderRadius:
+                                BorderRadius.circular(TenantAdminRadius.lg),
+                            border: Border.all(color: TenantAdminColors.border),
+                            boxShadow: TenantAdminShadows.card,
+                          ),
+                          padding: cardPadding,
                           child: form,
                         ),
                       ),
@@ -163,9 +190,17 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
                     ),
                     child: Align(
                       alignment: Alignment.topCenter,
-                      child: SizedBox(
+                      child: Container(
                         width: contentWidth,
-                        height: constraints.maxHeight,
+                        height: double.infinity,
+                        decoration: BoxDecoration(
+                          color: TenantAdminColors.surface,
+                          borderRadius:
+                              BorderRadius.circular(TenantAdminRadius.lg),
+                          border: Border.all(color: TenantAdminColors.border),
+                          boxShadow: TenantAdminShadows.card,
+                        ),
+                        padding: cardPadding,
                         child: form,
                       ),
                     ),
@@ -204,64 +239,14 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
       if (!mounted) {
         return;
       }
+      // The Open Till screen header also watches the POS Home provider. Before
+      // the till is opened that provider legitimately caches
+      // NO_OPEN_TILL_SESSION. Drop that stale result after the authoritative
+      // open/refresh completes so POS Home resolves the newly-created session.
+      ref.invalidate(posHomeDashboardProvider);
       final route = ref.read(postLoginRouteProvider);
       context.go(route.path);
     }
-  }
-}
-
-class _OneVerzAppHeader extends StatelessWidget {
-  const _OneVerzAppHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final horizontalPadding = _horizontalPaddingFor(screenWidth);
-
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: TenantAdminColors.surface,
-        border: Border(
-          bottom: BorderSide(color: TenantAdminColors.border),
-        ),
-      ),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          horizontalPadding,
-          TenantAdminSpacing.md,
-          horizontalPadding,
-          TenantAdminSpacing.md,
-        ),
-        child: Row(
-          children: [
-            IconButton(
-              tooltip: 'Back',
-              onPressed: Navigator.of(context).canPop()
-                  ? () => Navigator.of(context).maybePop()
-                  : null,
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-              color: TenantAdminColors.navy,
-            ),
-            const SizedBox(width: TenantAdminSpacing.sm),
-            Image.asset(
-              _oneVerzLogoAsset,
-              width: 34,
-              height: 34,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(width: TenantAdminSpacing.sm),
-            Text(
-              'OneVerz',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: TenantAdminColors.navy,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.2,
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

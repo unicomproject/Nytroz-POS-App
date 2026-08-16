@@ -17,8 +17,9 @@ class CurrentStockTable extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final search = ref.watch(currentStockSearchProvider);
-    final currentPage = ref.watch(currentStockPageProvider);
+    final currentPage = stockPage.page;
     final pageSize = ref.watch(currentStockPageSizeProvider);
+    final pageSizeOptions = <int>{pageSize, 10, 25, 50}.toList()..sort();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -141,7 +142,7 @@ class CurrentStockTable extends ConsumerWidget {
                                         width: 36,
                                         height: 36,
                                         decoration: BoxDecoration(
-                                          color: Colors.blue
+                                          color: TenantAdminColors.primary
                                               .withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(
                                               TenantAdminSpacing.sm),
@@ -158,9 +159,11 @@ class CurrentStockTable extends ConsumerWidget {
                                                 item.imageUrl!.isEmpty
                                             ? const Center(
                                                 child: Icon(
-                                                    Icons.inventory_2_outlined,
-                                                    size: 18,
-                                                    color: Colors.blue),
+                                                  Icons.inventory_2_outlined,
+                                                  size: 18,
+                                                  color:
+                                                      TenantAdminColors.primary,
+                                                ),
                                               )
                                             : null,
                                       ),
@@ -308,7 +311,7 @@ class CurrentStockTable extends ConsumerWidget {
                               value: pageSize,
                               icon: const Icon(Icons.keyboard_arrow_down,
                                   size: 16),
-                              items: [10, 25, 50].map((int value) {
+                              items: pageSizeOptions.map((int value) {
                                 return DropdownMenuItem<int>(
                                   value: value,
                                   child: Text(value.toString(),

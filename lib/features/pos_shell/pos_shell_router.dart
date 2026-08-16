@@ -53,6 +53,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
               state.uri.path != '/pos/new-sale' &&
               state.uri.path != '/pos/customers' &&
               state.uri.path != '/pos/parked-sales' &&
+              !state.uri.path.startsWith('/pos/cash-drawer') &&
               state.uri.path != '/pos/new-sale/payment' &&
               !state.uri.path.startsWith('/pos/new-sale/payment/') &&
               !state.uri.path.startsWith('/pos/home/'),
@@ -64,6 +65,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
           isDashboard: state.uri.path == '/pos/home' ||
               state.uri.path == '/pos/customers' ||
               state.uri.path == '/pos/parked-sales' ||
+              state.uri.path.startsWith('/pos/cash-drawer') ||
               state.uri.path == '/pos/new-sale/payment/cash' ||
               state.uri.path == '/pos/new-sale/payment/cash/success',
           child: child,
@@ -392,6 +394,10 @@ bool shouldShowPosCashierBottomNavigation(
   String path,
   AuthSession? session,
 ) {
+  if (path.startsWith('/pos/cash-drawer')) {
+    return _canViewCashDrawer(session);
+  }
+
   return switch (path) {
     '/pos/home' => _canViewPosHome(session),
     '/pos/new-sale' => _canStartNewSale(session),

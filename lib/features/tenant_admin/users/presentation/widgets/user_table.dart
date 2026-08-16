@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/widgets/tenant_admin_row_action.dart';
 import '../../domain/entities/tenant_user.dart';
 import '../config/user_row_action_configs.dart';
 import '../utils/user_api_errors.dart';
@@ -140,18 +141,21 @@ class _UserRow extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (canView)
-                          _TextAction(
+                          TenantAdminRowAction(
+                            icon: Icons.visibility_outlined,
                             label: 'View',
                             onPressed: () => onView(user),
                           ),
                         if (canEdit)
-                          _TextAction(
+                          TenantAdminRowAction(
+                            icon: Icons.edit_outlined,
                             label: 'Edit',
                             onPressed: () => onEdit(user),
                           ),
                         if (canDeactivate)
-                          _TextAction(
-                            label: 'Deactivate',
+                          TenantAdminRowAction(
+                            icon: Icons.block_outlined,
+                            label: 'Disable',
                             destructive: true,
                             onPressed: () => onDeactivate(user),
                           ),

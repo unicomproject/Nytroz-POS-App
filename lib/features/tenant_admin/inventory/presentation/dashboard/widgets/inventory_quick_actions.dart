@@ -13,7 +13,7 @@ class InventoryQuickActions extends StatelessWidget {
         title: 'Current Stock',
         subtitle: 'View stock levels across outlets',
         iconData: Icons.inventory_2_outlined,
-        color: Colors.blue,
+        color: TenantAdminColors.primary,
         onTap: () => context.go(InventoryRoutes.currentStock),
       ),
       _ActionCard(

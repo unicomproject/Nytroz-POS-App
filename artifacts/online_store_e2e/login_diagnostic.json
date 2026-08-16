@@ -1,0 +1,20 @@
+{
+  "url": "http://localhost:8080/tenant-login",
+  "inputCount": 0,
+  "responses": [],
+  "consoleMessages": [
+    "Injecting <script> tag. Using callback.",
+    "DDC is about to load 1/2 scripts with pool size = 1000",
+    "DDC is about to load 1813/1813 scripts with pool size = 1000",
+    "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
+    "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
+    "Starting application from main method in: org-dartlang-app:/web_entrypoint.dart.",
+    "Failed to load resource: net::ERR_NETWORK_ACCESS_DENIED",
+    "Failed to load font Roboto at https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2",
+    "Flutter Web engine failed to complete HTTP request to fetch \"https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2\": TypeError: Failed to fetch"
+  ],
+  "screenshots": [
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e\\login_before_submit.png",
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e\\login_after_submit.png"
+  ]
+}

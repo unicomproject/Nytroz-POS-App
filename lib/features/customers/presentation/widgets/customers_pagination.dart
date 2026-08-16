@@ -150,11 +150,13 @@ class _PageNumberButton extends StatelessWidget {
           height: 32,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFFF3214) : Colors.white,
+            color:
+                selected ? TenantAdminColors.posHomeAccentOrange : Colors.white,
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color:
-                  selected ? const Color(0xFFFF3214) : const Color(0xFFE2E6ED),
+              color: selected
+                  ? TenantAdminColors.posHomeAccentOrange
+                  : const Color(0xFFE2E6ED),
             ),
           ),
           child: Text(

@@ -39,17 +39,25 @@ class InventorySidebarParentItem extends StatelessWidget {
         onTap: onToggle,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 10 : 12,
-            vertical: compact ? 10 : 11,
+          margin:
+              collapsed ? EdgeInsets.zero : const EdgeInsets.only(right: 16),
+          padding: EdgeInsets.only(
+            left: collapsed ? 0 : (compact ? 16 : 24),
+            right: collapsed ? 0 : (compact ? 10 : 12),
+            top: compact ? 10 : 11,
+            bottom: compact ? 10 : 11,
           ),
           decoration: BoxDecoration(
             color: active
                 ? TenantAdminSidebarTokens.activeBackground
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: const BorderRadius.horizontal(
+              right: Radius.circular(24),
+            ),
           ),
           child: Row(
+            mainAxisAlignment:
+                collapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
             children: [
               Icon(icon, size: 18, color: iconColor),
               if (!collapsed) ...[
@@ -61,7 +69,7 @@ class InventorySidebarParentItem extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: itemColor,
-                      fontSize: 13,
+                      fontSize: compact ? 12.5 : 13,
                       fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                     ),
                   ),
@@ -82,7 +90,7 @@ class InventorySidebarParentItem extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: content,
     );
   }
