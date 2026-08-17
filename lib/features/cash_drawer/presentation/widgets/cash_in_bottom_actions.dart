@@ -22,18 +22,34 @@ class CashInBottomActions extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: PosBottomOutlinedButton(
-            label: 'Cancel',
+          flex: 5,
+          child: OutlinedButton(
             onPressed: isLoading ? null : onCancel,
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(0, PosPrimaryActionTokens.height),
+              foregroundColor: TenantAdminColors.posHomeAccentOrange,
+              side: const BorderSide(
+                color: TenantAdminColors.posHomeAccentOrange,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              ),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
         ),
         const SizedBox(width: TenantAdminSpacing.md),
         Expanded(
-          flex: 2,
+          flex: 3,
           child: PosBottomFilledButton(
             label: 'Confirm Cash In',
             onPressed: canConfirm && !isLoading ? onConfirm : null,
             isLoading: isLoading,
+            icon: Icons.point_of_sale_outlined,
+            backgroundColor: TenantAdminColors.posHomeAccentOrange,
           ),
         ),
       ],

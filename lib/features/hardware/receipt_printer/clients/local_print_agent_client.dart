@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
 
 import '../config/local_print_agent_config.dart';
@@ -9,9 +11,30 @@ import '../models/local_print_agent_models.dart';
 import '../models/pos_device_printer_config.dart';
 
 class LocalPrintAgentClient {
-  LocalPrintAgentClient({Dio? dio}) : _dio = dio ?? Dio();
+  LocalPrintAgentClient({Dio? dio}) : _dio = dio ?? _createDefaultDio();
 
   final Dio _dio;
+
+  static Dio _createDefaultDio() {
+    final dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 15),
+        sendTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+      ),
+    );
+    if (!kIsWeb) {
+      dio.httpClientAdapter = IOHttpClientAdapter(
+        createHttpClient: () {
+          final client = HttpClient();
+          // Local Print Agent is loopback/private-LAN; never route via system proxy.
+          client.findProxy = (_) => 'DIRECT';
+          return client;
+        },
+      );
+    }
+    return dio;
+  }
 
   Future<LocalPrintAgentHealth> health(
     PosDevicePrinterConfig config,
@@ -22,19 +45,22 @@ class LocalPrintAgentClient {
     _debugHealth('request endpoint=$endpoint '
         'selectedPrinter=${config.agentPrinterName ?? ''}');
     try {
+      final timeout = Duration(milliseconds: config.connectionTimeoutMs);
       final response = await _dio
           .get<Object?>(
             endpoint,
             options: Options(
               responseType: ResponseType.json,
               headers: {'X-Local-Print-Key': config.localApiKey},
+              sendTimeout: timeout,
+              receiveTimeout: timeout,
               validateStatus: (status) =>
                   status != null && status >= 200 && status < 600,
             ),
             queryParameters: const {},
             cancelToken: null,
           )
-          .timeout(Duration(milliseconds: config.connectionTimeoutMs));
+          .timeout(timeout);
       final body = _map(response.data);
       _debugHealth(
         'response status=${response.statusCode} fields=${body.keys.toList()..sort()}',
@@ -61,10 +87,9 @@ class LocalPrintAgentClient {
       if ((health.apiVersion != null &&
               health.apiVersion !=
                   LocalPrintAgentReceiptRequest.supportedApiVersion) ||
-          (health.receiptContractVersion != null &&
-              health.receiptContractVersion !=
-                  LocalPrintAgentReceiptRequest
-                      .supportedReceiptContractVersion)) {
+          !LocalPrintAgentReceiptRequest.isCompatibleReceiptContractVersion(
+            health.receiptContractVersion,
+          )) {
         throw const LocalPrintAgentException(
           LocalPrintAgentFailureType.updateRequired,
           'The Windows Print Agent version is incompatible. Update the agent before printing.',
@@ -100,19 +125,46 @@ class LocalPrintAgentClient {
     LocalPrintAgentReceiptRequest request,
   ) async {
     _validate(config);
+    final preferred = Map<String, dynamic>.from(request.toJson());
     try {
+      return await _postPrintReceipt(config, preferred);
+    } on LocalPrintAgentException catch (error) {
+      if (error.code != 'unsupported_contract_version') rethrow;
+      // Older installed agents may only accept v1/v2 wire contracts.
+      for (final fallback in const ['2', '1']) {
+        if (preferred['receiptContractVersion'] == fallback) continue;
+        final retry = Map<String, dynamic>.from(preferred)
+          ..['receiptContractVersion'] = fallback;
+        try {
+          return await _postPrintReceipt(config, retry);
+        } on LocalPrintAgentException catch (retryError) {
+          if (retryError.code != 'unsupported_contract_version') rethrow;
+        }
+      }
+      rethrow;
+    }
+  }
+
+  Future<LocalPrintAgentPrintResult> _postPrintReceipt(
+    PosDevicePrinterConfig config,
+    Map<String, dynamic> payload,
+  ) async {
+    try {
+      final timeout = Duration(milliseconds: config.connectionTimeoutMs);
       final response = await _dio
           .post<Object?>(
             '${normalizeLocalPrintAgentUrl(config.agentBaseUrl!)}/api/print/receipt',
-            data: request.toJson(),
+            data: payload,
             options: Options(
               responseType: ResponseType.json,
               headers: {'X-Local-Print-Key': config.localApiKey},
+              sendTimeout: timeout,
+              receiveTimeout: timeout,
               validateStatus: (status) =>
                   status != null && status >= 200 && status < 600,
             ),
           )
-          .timeout(Duration(milliseconds: config.connectionTimeoutMs));
+          .timeout(timeout);
       final body = _map(response.data);
       if (response.statusCode == 401) {
         throw const LocalPrintAgentException(
@@ -192,6 +244,7 @@ class LocalPrintAgentClient {
   ) async {
     _validate(config);
     try {
+      final timeout = Duration(milliseconds: config.connectionTimeoutMs);
       final response = await _dio
           .post<Object?>(
             '${normalizeLocalPrintAgentUrl(config.agentBaseUrl!)}/api/drawer/open',
@@ -199,11 +252,13 @@ class LocalPrintAgentClient {
             options: Options(
               responseType: ResponseType.json,
               headers: {'X-Local-Print-Key': config.localApiKey},
+              sendTimeout: timeout,
+              receiveTimeout: timeout,
               validateStatus: (status) =>
                   status != null && status >= 200 && status < 600,
             ),
           )
-          .timeout(Duration(milliseconds: config.connectionTimeoutMs));
+          .timeout(timeout);
       final body = _map(response.data);
       if (response.statusCode == 401 || response.statusCode == 429) {
         throw const LocalPrintAgentException(
@@ -213,13 +268,20 @@ class LocalPrintAgentClient {
         );
       }
       final result = LocalPrintAgentDrawerOpenResult.fromJson(body);
+      // Idempotent re-delivery: Agent already accepted this requestId.
       if (response.statusCode == 409 || result.duplicate) {
-        throw LocalPrintAgentException(
-          LocalPrintAgentFailureType.duplicate,
-          result.message.isEmpty
-              ? 'This drawer operation was already accepted.'
+        return LocalPrintAgentDrawerOpenResult(
+          success: true,
+          code: result.code.isEmpty ? 'drawer_pulse_accepted' : result.code,
+          message: result.message.isEmpty
+              ? 'Drawer pulse was already accepted; no second pulse sent.'
               : result.message,
-          code: result.code,
+          requestId: result.requestId,
+          drawerOperationId: result.drawerOperationId,
+          duplicate: true,
+          printerName: result.printerName,
+          physicalOpenConfirmed: result.physicalOpenConfirmed,
+          bytesWritten: result.bytesWritten,
         );
       }
       if (response.statusCode == 400) {
@@ -354,7 +416,8 @@ class LocalPrintAgentClient {
     }
     return const LocalPrintAgentException(
       LocalPrintAgentFailureType.unreachable,
-      'Print agent unreachable. Confirm the agent is running, the phone and laptop use the same private Wi-Fi, and Windows Firewall allows port 9101.',
+      'Print agent unavailable. Confirm the Windows Local Print Agent service is running, the agent URL is correct, and the device can reach the store LAN.',
+      code: 'AGENT_UNAVAILABLE',
     );
   }
 }

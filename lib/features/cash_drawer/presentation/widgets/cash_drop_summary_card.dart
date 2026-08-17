@@ -11,10 +11,16 @@ class CashDropSummaryCard extends ConsumerWidget {
     super.key,
     required this.currentExpectedCash,
     required this.currencyCode,
+    this.expand = false,
+    this.compact = false,
+    this.tight = false,
   });
 
   final double currentExpectedCash;
   final String currencyCode;
+  final bool expand;
+  final bool compact;
+  final bool tight;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,14 +32,50 @@ class CashDropSummaryCard extends ConsumerWidget {
     );
 
     return CashDrawerSectionCard(
+      expand: expand,
+      padding: EdgeInsets.all(
+        tight
+            ? TenantAdminSpacing.sm
+            : compact
+                ? TenantAdminSpacing.lg
+                : TenantAdminSpacing.xl,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Cash Drop Summary',
-            style: TenantAdminTextStyles.sectionTitle(context),
+          Row(
+            children: [
+              Container(
+                width: tight ? 28 : 36,
+                height: tight ? 28 : 36,
+                decoration: BoxDecoration(
+                  color: TenantAdminColors.expectedCashSurface,
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+                ),
+                child: Icon(
+                  Icons.calculate_outlined,
+                  color: TenantAdminColors.posHomeAccentOrange,
+                  size: tight ? 17 : 21,
+                ),
+              ),
+              SizedBox(
+                width: tight ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
+              ),
+              Text(
+                'Cash Drop Summary',
+                style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+                  fontSize: tight ? 14 : null,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: TenantAdminSpacing.lg),
+          SizedBox(
+            height: tight
+                ? TenantAdminSpacing.xs
+                : compact
+                    ? TenantAdminSpacing.md
+                    : TenantAdminSpacing.lg,
+          ),
           _SummaryRow(
             icon: Icons.account_balance_wallet_outlined,
             label: 'Current Expected Cash',
@@ -41,19 +83,34 @@ class CashDropSummaryCard extends ConsumerWidget {
               currentExpectedCash,
               currencyCode: currencyCode,
             ),
+            compact: tight,
           ),
-          const SizedBox(height: TenantAdminSpacing.md),
+          SizedBox(
+            height: tight
+                ? TenantAdminSpacing.xs
+                : compact
+                    ? TenantAdminSpacing.sm
+                    : TenantAdminSpacing.md,
+          ),
           _SummaryRow(
             icon: Icons.remove_circle_outline_rounded,
             label: 'Cash Drop Amount',
             value: formState.hasValidAmount
                 ? '- ${formatCashDrawerAmount(dropAmount, currencyCode: currencyCode)}'
                 : '- ${formatCashDrawerAmount(0, currencyCode: currencyCode)}',
-            valueColor: TenantAdminColors.info,
+            valueColor: TenantAdminColors.danger,
+            compact: tight,
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: TenantAdminSpacing.lg),
-            child: Divider(color: TenantAdminColors.border),
+          if (expand) const Spacer(),
+          Padding(
+            padding: EdgeInsets.symmetric(
+              vertical: tight
+                  ? TenantAdminSpacing.xs
+                  : compact
+                      ? TenantAdminSpacing.md
+                      : TenantAdminSpacing.lg,
+            ),
+            child: const Divider(color: TenantAdminColors.border),
           ),
           _SummaryRow(
             icon: Icons.payments_outlined,
@@ -63,9 +120,17 @@ class CashDropSummaryCard extends ConsumerWidget {
               currencyCode: currencyCode,
             ),
             emphasize: true,
+            highlighted: true,
+            compact: tight,
           ),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          const _CashDropInfoBanner(),
+          SizedBox(
+            height: tight
+                ? TenantAdminSpacing.xs
+                : compact
+                    ? TenantAdminSpacing.sm
+                    : TenantAdminSpacing.md,
+          ),
+          _CashDropInfoBanner(compact: tight || compact),
         ],
       ),
     );
@@ -73,33 +138,40 @@ class CashDropSummaryCard extends ConsumerWidget {
 }
 
 class _CashDropInfoBanner extends StatelessWidget {
-  const _CashDropInfoBanner();
+  const _CashDropInfoBanner({this.compact = false});
+
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(TenantAdminSpacing.md),
+      padding: EdgeInsets.all(
+        compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
+      ),
       decoration: BoxDecoration(
-        color: TenantAdminColors.secondary,
+        color: TenantAdminColors.expectedCashSurface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         border: Border.all(
-          color: TenantAdminColors.info.withValues(alpha: .2),
+          color: TenantAdminColors.posHomeAccentOrange.withValues(alpha: .25),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.info_outline_rounded,
-            color: TenantAdminColors.info,
-            size: 20,
+            color: TenantAdminColors.posHomeAccentOrange,
+            size: compact ? 16 : 20,
           ),
-          const SizedBox(width: TenantAdminSpacing.sm),
+          SizedBox(width: compact ? TenantAdminSpacing.xs : TenantAdminSpacing.sm),
           Expanded(
             child: Text(
-              'A cash movement slip will be printed after you confirm the cash drop.',
+              compact
+                  ? 'Slip printing is not enabled. The drop is recorded on confirm.'
+                  : 'Cash movement slip printing is not enabled in this release. The cash drop is recorded when confirmed.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: compact ? 11 : null,
                     color: TenantAdminColors.bodyText,
                     fontWeight: FontWeight.w600,
                     height: 1.35,
@@ -119,6 +191,8 @@ class _SummaryRow extends StatelessWidget {
     required this.value,
     this.valueColor,
     this.emphasize = false,
+    this.highlighted = false,
+    this.compact = false,
   });
 
   final IconData icon;
@@ -126,53 +200,78 @@ class _SummaryRow extends StatelessWidget {
   final String value;
   final Color? valueColor;
   final bool emphasize;
+  final bool highlighted;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 36,
-          height: 36,
+          width: compact ? 28 : 36,
+          height: compact ? 28 : 36,
           decoration: BoxDecoration(
             color: emphasize
-                ? TenantAdminColors.secondary
-                : TenantAdminColors.background,
+                ? TenantAdminColors.expectedCashSurface
+                : TenantAdminColors.subtleBackground,
             borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
           ),
           child: Icon(
             icon,
-            size: 20,
+            size: compact ? 16 : 20,
             color: emphasize
-                ? TenantAdminColors.info
+                ? TenantAdminColors.posHomeAccentOrange
                 : TenantAdminColors.mutedText,
           ),
         ),
-        const SizedBox(width: TenantAdminSpacing.md),
+        SizedBox(
+          width: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
+        ),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: TenantAdminColors.mutedText,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: TenantAdminSpacing.xs),
-              Text(
-                value,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: valueColor ?? TenantAdminColors.bodyText,
-                      fontWeight: emphasize ? FontWeight.w900 : FontWeight.w800,
-                    ),
-              ),
-            ],
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: compact ? 11 : null,
+                  color: TenantAdminColors.bodyText,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontSize: compact ? 12 : null,
+                  color: valueColor ??
+                      (emphasize
+                          ? TenantAdminColors.posHomeAccentOrange
+                          : TenantAdminColors.bodyText),
+                  fontWeight: emphasize ? FontWeight.w900 : FontWeight.w800,
+                ),
           ),
         ),
       ],
+    );
+
+    if (!highlighted) {
+      return row;
+    }
+
+    return Container(
+      padding: EdgeInsets.all(compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+      decoration: BoxDecoration(
+        color: TenantAdminColors.expectedCashSurface,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        border: Border.all(
+          color: TenantAdminColors.posHomeAccentOrange.withValues(alpha: .2),
+        ),
+      ),
+      child: row,
     );
   }
 }

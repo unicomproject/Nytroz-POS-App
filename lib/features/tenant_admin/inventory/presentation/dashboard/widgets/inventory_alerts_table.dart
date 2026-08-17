@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../../presentation/widgets/tenant_admin_status_badge.dart';
 import '../../../data/models/inventory_dashboard_models.dart';
 
 class InventoryAlertsTable extends StatelessWidget {
@@ -14,16 +15,10 @@ class InventoryAlertsTable extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: TenantAdminColors.surface,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        border: Border.all(color: TenantAdminColors.border),
+        boxShadow: TenantAdminShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,25 +26,28 @@ class InventoryAlertsTable extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
-                  children: [
-                    Icon(Icons.warning_amber_rounded,
-                        color: Colors.red, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Priority Alerts',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1E293B),
-                      ),
-                    ),
-                  ],
+                const Icon(Icons.warning_amber_rounded,
+                    color: Colors.red, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Priority Alerts',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TenantAdminTextStyles.sectionTitle(context),
+                  ),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Alerts workspace is not available in this phase (ALERTS_VIEW_ALL_DEFERRED).',
+                        ),
+                      ),
+                    );
+                  },
                   child: const Row(
                     children: [
                       Text(
@@ -57,12 +55,12 @@ class InventoryAlertsTable extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF3B82F6),
+                          color: TenantAdminColors.primary,
                         ),
                       ),
                       SizedBox(width: 4),
                       Icon(Icons.chevron_right,
-                          size: 16, color: Color(0xFF3B82F6)),
+                          size: 16, color: TenantAdminColors.primary),
                     ],
                   ),
                 ),
@@ -84,7 +82,7 @@ class InventoryAlertsTable extends StatelessWidget {
             Column(
               children: [
                 for (int i = 0; i < alerts.length; i++) ...[
-                  if (i > 0) const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  if (i > 0) const Divider(height: 1, color: TenantAdminColors.border),
                   _AlertRow(alert: alerts[i]),
                 ]
               ],
@@ -103,8 +101,6 @@ class _AlertRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color severityColor = Colors.grey;
-    Color badgeColor = Colors.grey;
-    Color badgeBg = Colors.grey.withValues(alpha: 0.1);
     String badgeText = alert.severity;
     Color buttonColor = const Color(0xFFF97316); // Default orange
     String buttonText = 'View';
@@ -112,19 +108,13 @@ class _AlertRow extends StatelessWidget {
     if (alert.severity.toLowerCase() == 'critical' ||
         alert.severity.toLowerCase() == 'high') {
       severityColor = const Color(0xFFEF4444); // Red
-      badgeColor = const Color(0xFFEF4444);
-      badgeBg = const Color(0xFFFEE2E2);
       badgeText = 'High';
     } else if (alert.severity.toLowerCase() == 'warning' ||
         alert.severity.toLowerCase() == 'medium') {
       severityColor = const Color(0xFFF97316); // Orange
-      badgeColor = const Color(0xFFF97316);
-      badgeBg = const Color(0xFFFFEDD5);
       badgeText = 'Medium';
     } else if (alert.severity.toLowerCase() == 'low') {
       severityColor = const Color(0xFFA855F7); // Purple
-      badgeColor = const Color(0xFFA855F7);
-      badgeBg = const Color(0xFFF3E8FF);
       badgeText = 'Low';
       buttonColor = const Color(0xFFA855F7);
       buttonText = 'Resolve';
@@ -209,23 +199,15 @@ class _AlertRow extends StatelessWidget {
                   ),
 
                   // Badge
-                  Container(
-                    width: 70,
-                    alignment: Alignment.center,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: badgeBg,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      badgeText,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: badgeColor,
-                      ),
-                    ),
+                  TenantAdminStatusBadge(
+                    label: badgeText,
+                    status: alert.severity.toLowerCase() == 'critical' ||
+                            alert.severity.toLowerCase() == 'high'
+                        ? TenantAdminStatusType.danger
+                        : alert.severity.toLowerCase() == 'warning' ||
+                                alert.severity.toLowerCase() == 'medium'
+                            ? TenantAdminStatusType.warning
+                            : TenantAdminStatusType.pending,
                   ),
                   const SizedBox(width: 24),
 

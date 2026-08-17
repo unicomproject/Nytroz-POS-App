@@ -9,16 +9,18 @@ class CashInTillInfoBar extends StatelessWidget {
   const CashInTillInfoBar({
     super.key,
     required this.summary,
+    this.compact = false,
   });
 
   final CashDrawerSummary summary;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return CashDrawerSectionCard(
       padding: const EdgeInsets.symmetric(
-        horizontal: TenantAdminSpacing.xl,
-        vertical: TenantAdminSpacing.lg,
+        horizontal: TenantAdminSpacing.lg,
+        vertical: TenantAdminSpacing.md,
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -29,6 +31,7 @@ class CashInTillInfoBar extends StatelessWidget {
               icon: Icons.point_of_sale_outlined,
               label: 'Till',
               value: summary.tillName,
+              compact: compact,
             ),
             _TillInfoItem(
               icon: Icons.account_balance_wallet_outlined,
@@ -37,6 +40,8 @@ class CashInTillInfoBar extends StatelessWidget {
                 summary.currentExpectedCash,
                 currencyCode: summary.currencyCode,
               ),
+              emphasize: true,
+              compact: compact,
             ),
             _TillInfoItem(
               icon: Icons.savings_outlined,
@@ -45,6 +50,8 @@ class CashInTillInfoBar extends StatelessWidget {
                 summary.openingCash,
                 currencyCode: summary.currencyCode,
               ),
+              emphasize: true,
+              compact: compact,
             ),
           ];
 
@@ -52,7 +59,18 @@ class CashInTillInfoBar extends StatelessWidget {
             return Row(
               children: [
                 for (var index = 0; index < items.length; index += 1) ...[
-                  if (index > 0) const SizedBox(width: TenantAdminSpacing.lg),
+                  if (index > 0) ...[
+                    const SizedBox(width: TenantAdminSpacing.md),
+                    const SizedBox(
+                      height: 48,
+                      child: VerticalDivider(
+                        width: 1,
+                        thickness: 1,
+                        color: TenantAdminColors.border,
+                      ),
+                    ),
+                    const SizedBox(width: TenantAdminSpacing.md),
+                  ],
                   Expanded(child: items[index]),
                 ],
               ],
@@ -78,26 +96,36 @@ class _TillInfoItem extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    this.emphasize = false,
+    this.compact = false,
   });
 
   final IconData icon;
   final String label;
   final String value;
+  final bool emphasize;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Container(
-          width: 40,
-          height: 40,
+          width: compact ? 32 : 40,
+          height: compact ? 32 : 40,
           decoration: BoxDecoration(
-            color: TenantAdminColors.secondary,
+            color: TenantAdminColors.expectedCashSurface,
             borderRadius: BorderRadius.circular(TenantAdminRadius.md),
           ),
-          child: Icon(icon, color: TenantAdminColors.info, size: 22),
+          child: Icon(
+            icon,
+            color: TenantAdminColors.posHomeAccentOrange,
+            size: compact ? 18 : 22,
+          ),
         ),
-        const SizedBox(width: TenantAdminSpacing.md),
+        SizedBox(
+          width: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
+        ),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,13 +137,16 @@ class _TillInfoItem extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
               ),
-              const SizedBox(height: TenantAdminSpacing.xs),
+              SizedBox(height: compact ? 2 : TenantAdminSpacing.xs),
               Text(
                 value,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: TenantAdminColors.bodyText,
+                      fontSize: compact ? 13 : null,
+                      color: emphasize
+                          ? TenantAdminColors.posHomeAccentOrange
+                          : TenantAdminColors.bodyText,
                       fontWeight: FontWeight.w800,
                     ),
               ),

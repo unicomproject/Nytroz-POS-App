@@ -31,28 +31,36 @@ class RecentMovementsTable extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.history,
-                        size: 20, color: TenantAdminColors.bodyText),
-                    SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Recent Movements',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: TenantAdminColors.bodyText)),
-                        SizedBox(height: 2),
-                        Text('Latest stock movements for this product',
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: TenantAdminColors.mutedText)),
-                      ],
-                    ),
-                  ],
+                const Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.history,
+                          size: 20, color: TenantAdminColors.bodyText),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Recent Movements',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: TenantAdminColors.bodyText)),
+                            SizedBox(height: 2),
+                            Text(
+                              'Latest stock movements for this product',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: TenantAdminColors.mutedText),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 TextButton(
                   onPressed: () {},

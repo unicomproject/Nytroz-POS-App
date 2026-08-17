@@ -42,6 +42,7 @@ import 'package:nytroz_pos/features/pos/data/datasources/remote/pos_barcode_remo
 import 'package:nytroz_pos/features/pos/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/pos/presentation/providers/pos_new_sale_search_coordinator.dart';
+import 'package:nytroz_pos/features/pos/presentation/widgets/new_sale/actions/pos_new_sale_action_bar.dart';
 import 'package:nytroz_pos/features/cash_drawer/presentation/screens/pos_close_till_screen.dart';
 import 'package:nytroz_pos/features/pos/presentation/providers/new_sale/pos_barcode_scan_controller.dart';
 import 'package:nytroz_pos/features/pos/presentation/providers/new_sale/pos_camera_scanner_provider.dart';
@@ -405,10 +406,8 @@ void main() {
       expect(find.text('Discount'), findsNothing);
       expect(find.text('Tax'), findsNothing);
 
-      await tester.tap(find.text('More Categories'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Tickets'));
-      await tester.pumpAndSettle();
+      expect(find.text('More Categories'), findsNothing);
+      expect(find.text('Custom Item'), findsNothing);
 
       await tester.tap(find.byType(PosProductCard).first);
       await tester.pumpAndSettle();
@@ -763,7 +762,7 @@ void main() {
       expect(find.text('Qty 1'), findsOneWidget);
     });
 
-    testWidgets('New Sale category chips filter product grid', (tester) async {
+    testWidgets('New Sale hides secondary category action', (tester) async {
       await _pumpPosHome(
         tester,
         size: posTabletViewport,
@@ -781,9 +780,15 @@ void main() {
       expect(find.text('General Admission'), findsOneWidget);
       expect(find.text('Snack Combo'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(OutlinedButton, 'More Categories'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Tickets'));
+      expect(find.text('More Categories'), findsNothing);
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(PosNewSaleScreen)),
+      );
+      container.read(posNewSaleSelectedSegmentProvider.notifier).state =
+          'popular';
+      container.read(posNewSaleSelectedCategoryIdProvider.notifier).state =
+          testTicketsCategoryId;
       await tester.pumpAndSettle();
 
       expect(find.text('General Admission'), findsOneWidget);
@@ -791,9 +796,8 @@ void main() {
       expect(find.text('Snack Combo'), findsNothing);
       expect(find.text('Popular Tickets Products'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(OutlinedButton, 'More Categories'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(ChoiceChip, 'All').last);
+      container.read(posNewSaleSelectedCategoryIdProvider.notifier).state =
+          null;
       await tester.pumpAndSettle();
 
       expect(find.text('General Admission'), findsOneWidget);
@@ -1089,19 +1093,17 @@ void main() {
 
         final productGrid = find.byType(GridView);
         final cartList = find.byType(ListView).last;
-        final customItemButton = find.widgetWithText(
-          FilledButton,
-          'Custom Item',
-        );
+        final actionBar = find.byType(PosNewSaleActionBar);
         final paymentButton = find.widgetWithText(
           FilledButton,
           'Proceed to Payment',
         );
 
         expect(productGrid, findsOneWidget);
+        expect(find.text('Custom Item'), findsNothing);
         expect(paymentButton, findsOneWidget);
         expect(tester.getBottomLeft(productGrid).dy,
-            lessThanOrEqualTo(tester.getTopLeft(customItemButton).dy));
+            lessThanOrEqualTo(tester.getTopLeft(actionBar).dy));
         expect(
           tester.getBottomLeft(cartList).dy,
           lessThanOrEqualTo(tester.getTopLeft(paymentButton).dy),

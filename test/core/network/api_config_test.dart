@@ -24,7 +24,7 @@ void main() {
         isReleaseMode: false,
       );
 
-      expect(result, 'http://192.168.18.8:5150');
+      expect(result, 'http://192.168.18.8:$kBackendHttpPort');
     });
 
     test('Android emulator uses the emulator development fallback', () async {
@@ -34,7 +34,7 @@ void main() {
         isReleaseMode: false,
       );
 
-      expect(result, 'http://10.0.2.2:5150');
+      expect(result, 'http://10.0.2.2:$kBackendHttpPort');
     });
 
     test('Windows desktop uses localhost development fallback', () async {
@@ -43,7 +43,7 @@ void main() {
         isReleaseMode: false,
       );
 
-      expect(result, 'http://localhost:5150');
+      expect(result, 'http://localhost:$kBackendHttpPort');
     });
 
     test('invalid API_BASE_URL is rejected', () async {

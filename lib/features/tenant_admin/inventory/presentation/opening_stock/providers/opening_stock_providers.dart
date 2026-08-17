@@ -7,6 +7,7 @@ import '../../../../outlets/domain/entities/outlet_list_query.dart';
 import '../../../../outlets/presentation/providers/outlet_providers.dart';
 import '../../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../data/datasources/opening_stock_remote_datasource.dart';
+import '../../../data/mock/inventory_frontend_mock.dart';
 import '../../../data/repositories/opening_stock_repository_impl.dart';
 import '../../../domain/repositories/opening_stock_repository.dart';
 import 'opening_stock_state.dart';
@@ -18,6 +19,9 @@ final openingStockRemoteDatasourceProvider =
 });
 
 final openingStockRepositoryProvider = Provider<OpeningStockRepository>((ref) {
+  if (ref.watch(inventoryFrontendMockEnabledProvider)) {
+    return const InventoryOpeningStockMockRepository();
+  }
   return OpeningStockRepositoryImpl(
       ref.watch(openingStockRemoteDatasourceProvider));
 });
@@ -32,8 +36,17 @@ final openingStockProductSearchProvider = StateProvider<String>((ref) => '');
 
 final openingStockProductsProvider =
     FutureProvider.autoDispose<List<TenantProduct>>((ref) async {
-  final getProducts = ref.watch(getProductsProvider);
   final search = ref.watch(openingStockProductSearchProvider);
+  if (ref.watch(inventoryFrontendMockEnabledProvider)) {
+    final q = search.trim().toLowerCase();
+    return InventoryFrontendMock.tenantProducts
+        .where((p) =>
+            q.isEmpty ||
+            p.name.toLowerCase().contains(q) ||
+            p.sku.toLowerCase().contains(q))
+        .toList();
+  }
+  final getProducts = ref.watch(getProductsProvider);
 
   final query = TenantProductListQuery(
     search: search,
@@ -51,8 +64,17 @@ final openingStockOutletSearchProvider = StateProvider<String>((ref) => '');
 
 final openingStockOutletsProvider =
     FutureProvider.autoDispose<List<Outlet>>((ref) async {
-  final getOutlets = ref.watch(getOutletsProvider);
   final search = ref.watch(openingStockOutletSearchProvider);
+  if (ref.watch(inventoryFrontendMockEnabledProvider)) {
+    final q = search.trim().toLowerCase();
+    return InventoryFrontendMock.tenantOutlets
+        .where((o) =>
+            q.isEmpty ||
+            o.name.toLowerCase().contains(q) ||
+            o.code.toLowerCase().contains(q))
+        .toList();
+  }
+  final getOutlets = ref.watch(getOutletsProvider);
 
   final query = OutletListQuery(
     search: search,

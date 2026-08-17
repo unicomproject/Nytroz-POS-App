@@ -19,49 +19,51 @@ class CashDropBottomActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final stackVertically =
-            constraints.maxWidth < TenantAdminBreakpoints.mobile;
-
-        if (stackVertically) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              PosBottomOutlinedButton(
-                label: 'Cancel',
-                onPressed: isLoading ? null : onCancel,
+    return Row(
+      children: [
+        Expanded(
+          flex: 5,
+          child: Semantics(
+            button: true,
+            label: 'Cancel cash drop',
+            child: OutlinedButton(
+              onPressed: isLoading ? null : onCancel,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(0, PosPrimaryActionTokens.height),
+                foregroundColor: TenantAdminColors.posHomeAccentOrange,
+                side: const BorderSide(
+                  color: TenantAdminColors.posHomeAccentOrange,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                ),
               ),
-              const SizedBox(height: TenantAdminSpacing.md),
-              PosBottomFilledButton(
-                label: 'Confirm Cash Drop',
-                onPressed: canConfirm && !isLoading ? onConfirm : null,
-                isLoading: isLoading,
-              ),
-            ],
-          );
-        }
-
-        return Row(
-          children: [
-            Expanded(
-              child: PosBottomOutlinedButton(
-                label: 'Cancel',
-                onPressed: isLoading ? null : onCancel,
+              child: const Text(
+                'Cancel',
+                style: TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
-            const SizedBox(width: TenantAdminSpacing.md),
-            Expanded(
-              flex: 2,
-              child: PosBottomFilledButton(
-                label: 'Confirm Cash Drop',
-                onPressed: canConfirm && !isLoading ? onConfirm : null,
-                isLoading: isLoading,
-              ),
+          ),
+        ),
+        const SizedBox(width: TenantAdminSpacing.md),
+        Expanded(
+          flex: 3,
+          child: Semantics(
+            button: true,
+            label: isLoading
+                ? 'Confirming cash drop'
+                : 'Confirm cash drop',
+            child: PosBottomFilledButton(
+              label: 'Confirm Cash Drop',
+              onPressed: canConfirm && !isLoading ? onConfirm : null,
+              isLoading: isLoading,
+              icon: Icons.point_of_sale_outlined,
+              backgroundColor: TenantAdminColors.posHomeAccentOrange,
+              fullWidth: true,
             ),
-          ],
-        );
-      },
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,17 +1,9 @@
-/// Cash In reason options for the till drawer form.
+/// Historical local reason labels.
 ///
+/// Production Cash In reasons are loaded from
+/// `GET /api/v1/pos/cash-movement-types?direction=IN` and selected by
+/// `movementTypeId`. Do not restore a hardcoded production reason catalog.
+@Deprecated('Use CashMovementTypeOption from the backend catalog')
 class CashInReason {
   const CashInReason._();
-
-  static const floatAdded = 'Float Added';
-  static const pettyCashAdded = 'Petty Cash Added';
-  static const cashCorrection = 'Cash Correction';
-  static const other = 'Other';
-
-  static const List<String> options = [
-    floatAdded,
-    pettyCashAdded,
-    cashCorrection,
-    other,
-  ];
 }

@@ -127,15 +127,84 @@ class CashDrawerController extends StateNotifier<CashDrawerState> {
 
   Future<bool> recordCashIn({
     required double amount,
-    String? reason,
+    required String movementTypeId,
+    required String requestId,
     String? note,
   }) async {
-    return _recordMovement(
-      type: CashMovementType.cashIn,
-      amount: amount,
-      reason: reason,
-      note: note,
-    );
+    final summary = state.summary;
+    if (summary == null || !summary.isOpen) {
+      state = state.copyWith(
+        errorMessage: 'An open till session is required for cash movements.',
+      );
+      return false;
+    }
+
+    if (amount <= 0) {
+      state = state.copyWith(
+        errorMessage: 'Amount must be greater than zero.',
+      );
+      return false;
+    }
+
+    final typeId = movementTypeId.trim();
+    if (typeId.isEmpty) {
+      state = state.copyWith(
+        errorMessage: 'A reason is required for cash movements.',
+      );
+      return false;
+    }
+
+    if (state.isSubmitting) {
+      return false;
+    }
+
+    final device = _ref.read(deviceActivationProvider).deviceContext;
+    final deviceId = device?.deviceId.trim() ?? '';
+    if (deviceId.isEmpty) {
+      state = state.copyWith(
+        errorMessage: 'Device context is required for cash movements.',
+      );
+      return false;
+    }
+
+    final authSession = _ref.read(authSessionProvider);
+    if (authSession == null || authSession.accessToken.trim().isEmpty) {
+      state = state.copyWith(
+        errorMessage: 'Sign in is required for cash movements.',
+      );
+      return false;
+    }
+
+    _ensureAuthorizationHeader(
+        _ref.read(appDioProvider), authSession.accessToken);
+    state = state.copyWith(isSubmitting: true, clearError: true);
+
+    try {
+      await _ref.read(cashDrawerRepositoryProvider).createCashInMovement(
+            requestId: requestId,
+            deviceId: deviceId,
+            movementTypeId: typeId,
+            amount: amount,
+            note: note?.trim().isEmpty == true ? null : note?.trim(),
+          );
+      await refresh();
+      state = state.copyWith(isSubmitting: false, clearError: true);
+      return true;
+    } on CashDrawerException catch (error) {
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: error.code == 'cash_drawer.idempotency_conflict'
+            ? 'This cash in request conflicts with a previous submission. Review the details and start a new cash in if needed.'
+            : error.message,
+      );
+      return false;
+    } catch (error) {
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: 'Cash movement could not be saved. $error',
+      );
+      return false;
+    }
   }
 
   Future<bool> recordCashOut({
@@ -161,11 +230,35 @@ class CashDrawerController extends StateNotifier<CashDrawerState> {
 
   Future<bool> recordCashDrop({
     required double amount,
-    String? reason,
+    required String movementTypeId,
+    required String requestId,
     String? note,
   }) async {
-    final expected = state.summary?.currentExpectedCash ?? 0;
-    final currency = state.summary?.currencyCode ?? '';
+    final summary = state.summary;
+    if (summary == null || !summary.isOpen) {
+      state = state.copyWith(
+        errorMessage: 'An open till session is required for cash movements.',
+      );
+      return false;
+    }
+
+    if (amount <= 0) {
+      state = state.copyWith(
+        errorMessage: 'Amount must be greater than zero.',
+      );
+      return false;
+    }
+
+    final typeId = movementTypeId.trim();
+    if (typeId.isEmpty) {
+      state = state.copyWith(
+        errorMessage: 'A reason is required for cash movements.',
+      );
+      return false;
+    }
+
+    final expected = summary.currentExpectedCash;
+    final currency = summary.currencyCode;
     if (amount > expected) {
       state = state.copyWith(
         errorMessage:
@@ -174,12 +267,64 @@ class CashDrawerController extends StateNotifier<CashDrawerState> {
       return false;
     }
 
-    return _recordMovement(
-      type: CashMovementType.cashDrop,
-      amount: amount,
-      reason: reason,
-      note: note,
-    );
+    if (state.isSubmitting) {
+      return false;
+    }
+
+    final device = _ref.read(deviceActivationProvider).deviceContext;
+    final deviceId = device?.deviceId.trim() ?? '';
+    if (deviceId.isEmpty) {
+      state = state.copyWith(
+        errorMessage: 'Device context is required for cash movements.',
+      );
+      return false;
+    }
+
+    final authSession = _ref.read(authSessionProvider);
+    if (authSession == null || authSession.accessToken.trim().isEmpty) {
+      state = state.copyWith(
+        errorMessage: 'Sign in is required for cash movements.',
+      );
+      return false;
+    }
+
+    _ensureAuthorizationHeader(
+        _ref.read(appDioProvider), authSession.accessToken);
+    state = state.copyWith(isSubmitting: true, clearError: true);
+
+    try {
+      await _ref.read(cashDrawerRepositoryProvider).createCashDropMovement(
+            requestId: requestId,
+            deviceId: deviceId,
+            movementTypeId: typeId,
+            amount: amount,
+            note: note?.trim().isEmpty == true ? null : note?.trim(),
+          );
+      await refresh();
+      state = state.copyWith(isSubmitting: false, clearError: true);
+      return true;
+    } on CashDrawerException catch (error) {
+      final insufficient =
+          error.code == 'cash_drawer.insufficient_expected_cash';
+      if (insufficient) {
+        await refresh();
+      }
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: error.code == 'cash_drawer.idempotency_conflict'
+            ? 'This cash drop request conflicts with a previous submission. Review the details and start a new cash drop if needed.'
+            : insufficient
+                ? 'Amount exceeds available cash. The drawer balance was refreshed.'
+                : error.message,
+      );
+      return false;
+    } catch (error) {
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: 'Cash movement could not be saved. $error',
+      );
+      return false;
+    }
   }
 
   Future<bool> submitCloseTill({
@@ -215,7 +360,6 @@ class CashDrawerController extends StateNotifier<CashDrawerState> {
     final closedSession = await _ref.read(tillProvider.notifier).closeTill(
           deviceContext: device,
           countedCash: countedCash,
-          expectedCash: summary.currentExpectedCash,
           mismatchReason: mismatchReason,
           closingNote: note,
         );
@@ -354,7 +498,8 @@ final cashDrawerProvider =
 
 String formatCashDrawerAmount(double value, {String currencyCode = ''}) {
   final currency = currencyCode.trim().isEmpty ? '' : currencyCode.trim();
-  final parts = value.toStringAsFixed(2).split('.');
+  final isNegative = value < 0;
+  final parts = value.abs().toStringAsFixed(2).split('.');
   final whole = parts.first;
   final buffer = StringBuffer();
   for (var i = 0; i < whole.length; i++) {
@@ -364,7 +509,7 @@ String formatCashDrawerAmount(double value, {String currencyCode = ''}) {
       buffer.write(',');
     }
   }
-  final amount = '${buffer.toString()}.${parts.last}';
+  final amount = '${isNegative ? '-' : ''}${buffer.toString()}.${parts.last}';
   return currency.isEmpty ? amount : '$currency $amount';
 }
 

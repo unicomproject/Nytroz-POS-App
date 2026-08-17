@@ -13,6 +13,7 @@ import 'esc_pos/esc_pos_receipt_generator.dart';
 import 'models/pos_device_printer_config.dart';
 import 'models/printer_exception.dart';
 import 'clients/local_print_agent_client.dart';
+import 'mappers/canonical_receipt_presentation_mapper.dart';
 import 'models/completed_sale_receipt.dart';
 import 'models/local_print_agent_models.dart';
 
@@ -373,37 +374,44 @@ class PosReceiptPrinterService {
     String requestId,
     PosDevicePrinterConfig config,
   ) {
+    final presentation =
+        const CanonicalReceiptPresentationMapper().fromCompletedSale(receipt);
     return LocalPrintAgentReceiptRequest(
       requestId: requestId,
-      receiptNumber: receipt.receiptNumber,
-      printedAt: receipt.completedAt,
-      merchantName: receipt.merchantName,
-      outletName: receipt.outletName,
-      tillName: receipt.tillName,
-      cashierName: receipt.cashierName,
-      currency: receipt.currency,
-      items: receipt.items
+      receiptNumber: presentation.receiptNumber,
+      printedAt: presentation.issuedAtUtc,
+      merchantName: presentation.merchantName,
+      outletName: presentation.outletName,
+      tillName: presentation.terminalName,
+      cashierName: presentation.cashierName,
+      currency: presentation.currency,
+      items: presentation.items
           .map(
             (line) => LocalPrintAgentReceiptLine(
-              name: line.variantOrSku?.trim().isNotEmpty == true
-                  ? '${line.name} (${line.variantOrSku})'
-                  : line.name,
+              name: line.name,
               quantity: line.quantity,
-              unitPrice: line.unitPrice,
+              unitPrice: line.valueUnitPrice,
               lineTotal: line.lineTotal,
-              saleLineId: line.saleLineId,
+              sku: line.sku.isEmpty ? null : line.sku,
+              valueUnitPrice: line.valueUnitPrice,
+              rateUnitPrice: line.rateUnitPrice,
             ),
           )
           .toList(growable: false),
-      subtotal: receipt.subtotal,
-      discountTotal: receipt.discountTotal,
-      taxTotal: receipt.taxTotal,
-      total: receipt.total,
-      paymentMethod: receipt.paymentSummary,
-      amountTendered: receipt.amountTendered,
-      change: receipt.change,
-      barcodeValue: receipt.barcodeValue,
-      footerLines: receipt.footerLines,
+      subtotal: presentation.subtotal,
+      discountTotal: presentation.discountTotal,
+      taxTotal: presentation.taxTotal,
+      total: presentation.total,
+      paymentMethod: presentation.paymentMethodDisplay,
+      amountTendered: presentation.amountTendered,
+      change: presentation.changeDue,
+      barcodeValue: presentation.barcodeValue,
+      footerLines: presentation.footerLines,
+      brandSubtitle: presentation.brandSubtitle,
+      outletLocation: presentation.outletLocation,
+      customerName: presentation.customerDisplayName,
+      issuedAtDisplay: presentation.issuedAtDisplay,
+      itemCount: presentation.itemCount,
       tenders: receipt.tenders
           .map(
             (line) => LocalPrintAgentTenderLine(
@@ -423,18 +431,7 @@ class PosReceiptPrinterService {
             ),
           )
           .toList(growable: false),
-      discountLines: receipt.discountLines
-          .map(
-            (line) => LocalPrintAgentDiscountLine(
-              scope: line.scope,
-              saleLineId: line.saleLineId,
-              name: line.name,
-              code: line.code,
-              promotionReference: line.promotionReference,
-              amount: line.amount,
-            ),
-          )
-          .toList(growable: false),
+      discountLines: const [],
       taxLines: receipt.taxLines
           .map(
             (line) => LocalPrintAgentTaxLine(

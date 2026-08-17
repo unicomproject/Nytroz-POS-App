@@ -108,8 +108,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(Dialog), findsNothing);
+    // Provider not seeded with authoritative checkout payload in this widget
+    // harness; first-print mapping correctly refuses instead of opening a dialog.
     expect(
-      find.text('No completed-sale print operation is available.'),
+      find.text('Completed sale receipt data is unavailable for printing.'),
       findsOneWidget,
     );
   });

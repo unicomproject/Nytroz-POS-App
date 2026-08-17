@@ -7,6 +7,8 @@ import 'package:nytroz_pos/features/pos/presentation/providers/pos_catalog_provi
 
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
+const bool _showMoreCategoriesAction = false;
+
 class PosProductCategoryChips extends ConsumerWidget {
   const PosProductCategoryChips({super.key});
 
@@ -91,19 +93,21 @@ class PosProductCategoryChips extends ConsumerWidget {
                   },
                 ),
               ),
-              const SizedBox(width: TenantAdminSpacing.md),
-              Expanded(
-                child: _QuickFilterButton(
-                  icon: Icons.grid_view_rounded,
-                  label: 'More Categories',
-                  selected: !allSelected,
-                  activeColor: const Color(0xFF7C3AED),
-                  inactiveColor: const Color(0xFF7C3AED),
-                  onPressed: categories.length > 1
-                      ? () => _showCategories(context, ref, categories)
-                      : null,
+              if (_showMoreCategoriesAction) ...[
+                const SizedBox(width: TenantAdminSpacing.md),
+                Expanded(
+                  child: _QuickFilterButton(
+                    icon: Icons.grid_view_rounded,
+                    label: 'More Categories',
+                    selected: !allSelected,
+                    activeColor: const Color(0xFF7C3AED),
+                    inactiveColor: const Color(0xFF7C3AED),
+                    onPressed: categories.length > 1
+                        ? () => _showCategories(context, ref, categories)
+                        : null,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         );

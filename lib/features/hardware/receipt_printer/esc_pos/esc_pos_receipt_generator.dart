@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import '../../../returns_refunds/domain/entities/return_receipt.dart';
+import '../mappers/canonical_receipt_presentation_mapper.dart';
+import '../models/canonical_receipt_presentation.dart';
 import '../models/completed_sale_receipt.dart';
 import '../models/pos_device_printer_config.dart';
 
@@ -283,59 +285,192 @@ class EscPosReceiptGenerator {
     required CompletedSaleReceipt receipt,
     required PosDevicePrinterConfig config,
   }) {
+    final presentation =
+        const CanonicalReceiptPresentationMapper().fromCompletedSale(receipt);
+    return generateCanonical(presentation: presentation, config: config);
+  }
+
+  /// Renders the shared [CanonicalReceiptPresentation] to ESC/POS bytes.
+  List<int> generateCanonical({
+    required CanonicalReceiptPresentation presentation,
+    required PosDevicePrinterConfig config,
+  }) {
     final width = config.paperWidth == PrinterPaperWidth.mm58 ? 32 : 48;
     final out = <int>[..._init, ..._alignCenter, ..._boldOn];
-    _writeLine(out, receipt.merchantName);
+    _writeLine(out, presentation.merchantName);
     out.addAll(_boldOff);
-    if (receipt.outletName.isNotEmpty) _writeLine(out, receipt.outletName);
-    _writeLine(out, 'SALE RECEIPT');
+    if (presentation.brandSubtitle.isNotEmpty) {
+      _writeLine(out, presentation.brandSubtitle);
+    }
+    if (presentation.outletName.isNotEmpty) {
+      _writeLine(out, presentation.outletName);
+    }
+    if (presentation.outletLocation.isNotEmpty) {
+      _writeLine(out, presentation.outletLocation);
+    }
+    if (presentation.isReprint) {
+      out.addAll(_boldOn);
+      _writeLine(out, 'REPRINT');
+      out.addAll(_boldOff);
+    }
     out.addAll(_alignLeft);
     _writeLine(out, _divider(width));
-    _writeLine(out, 'Receipt: ${receipt.receiptNumber}');
-    _writeLine(out, 'Completed: ${receipt.completedAt.toLocal()}');
-    if (receipt.cashierName.isNotEmpty) {
-      _writeLine(out, 'Cashier: ${receipt.cashierName}');
-    }
-    if (receipt.tillName.isNotEmpty) {
-      _writeLine(out, 'Till: ${receipt.tillName}');
-    }
-    _writeLine(out, _divider(width));
-    for (final item in receipt.items) {
-      _writeWrapped(out, item.name, width);
-      if (item.variantOrSku?.trim().isNotEmpty == true) {
-        _writeWrapped(out, '  ${item.variantOrSku!.trim()}', width);
-      }
-      _writeColumns(
+    _writeLabelValue(
+      out,
+      CanonicalReceiptPresentation.receiptNoLabel,
+      presentation.receiptNumber,
+      width,
+    );
+    _writeLabelValue(
+      out,
+      CanonicalReceiptPresentation.dateTimeLabel,
+      presentation.issuedAtDisplay,
+      width,
+    );
+    _writeLabelValue(out, 'Cashier', presentation.cashierName, width);
+    _writeLabelValue(out, 'Customer', presentation.customerDisplayName, width);
+    if (presentation.terminalName.isNotEmpty) {
+      _writeLabelValue(
         out,
-        '${item.quantity} x ${_money(receipt.currency, item.unitPrice.toDouble())}',
-        _money(receipt.currency, item.lineTotal.toDouble()),
+        CanonicalReceiptPresentation.terminalFieldLabel,
+        presentation.terminalName,
         width,
       );
     }
+    _writeLabelValue(out, 'Payment', presentation.paymentMethodDisplay, width);
     _writeLine(out, _divider(width));
-    _writeColumns(out, 'Subtotal',
-        _money(receipt.currency, receipt.subtotal.toDouble()), width);
-    _writeColumns(out, 'Discount',
-        _money(receipt.currency, receipt.discountTotal.toDouble()), width);
-    _writeColumns(out, 'Tax',
-        _money(receipt.currency, receipt.taxTotal.toDouble()), width);
-    out.addAll(_boldOn);
-    _writeColumns(out, 'TOTAL',
-        _money(receipt.currency, receipt.total.toDouble()), width);
-    out.addAll(_boldOff);
-    _writeLine(out, 'Payment: ${receipt.paymentSummary}');
-    _writeColumns(out, 'Tendered',
-        _money(receipt.currency, receipt.amountTendered.toDouble()), width);
-    _writeColumns(out, 'Change',
-        _money(receipt.currency, receipt.change.toDouble()), width);
-    _writeCode39Barcode(out, receipt.barcodeValue);
-    for (final line in receipt.footerLines.where((line) => line.isNotEmpty)) {
-      out.addAll(_alignCenter);
-      _writeWrapped(out, line, width);
-      out.addAll(_alignLeft);
+
+    if (width >= 48) {
+      _writeItemTable80(out, presentation, width);
+    } else {
+      _writeItemTable58(out, presentation, width);
     }
+
+    _writeLine(out, _divider(width));
+    _writeColumns(out, 'No. of Items', '${presentation.itemCount}', width);
+    _writeColumns(
+      out,
+      'Subtotal',
+      presentation.formatMoney(presentation.subtotal),
+      width,
+    );
+    if (presentation.discountTotal > 0) {
+      _writeColumns(
+        out,
+        'Discount',
+        '-${presentation.formatMoney(presentation.discountTotal)}',
+        width,
+      );
+    }
+    if (presentation.taxTotal > 0) {
+      _writeColumns(
+        out,
+        'Tax',
+        presentation.formatMoney(presentation.taxTotal),
+        width,
+      );
+    }
+    out.addAll(_boldOn);
+    _writeColumns(
+      out,
+      'TOTAL',
+      presentation.formatMoney(presentation.total),
+      width,
+    );
+    out.addAll(_boldOff);
+    _writeColumns(
+      out,
+      presentation.paidByLabel,
+      presentation.formatMoney(presentation.amountTendered),
+      width,
+    );
+    _writeColumns(
+      out,
+      'Change Due',
+      presentation.formatMoney(presentation.changeDue),
+      width,
+    );
+    _writeLine(out, _divider(width));
+    out.addAll(_alignCenter);
+    _writeWrapped(out, presentation.thankYouText, width);
+    if (presentation.policyText.trim().isNotEmpty) {
+      _writeWrapped(out, presentation.policyText.trim(), width);
+    }
+    out.addAll(_alignLeft);
+    _writeCode39Barcode(out, presentation.barcodeValue);
     _finishReceipt(out, config);
     return out;
+  }
+
+  void _writeItemTable80(
+    List<int> out,
+    CanonicalReceiptPresentation presentation,
+    int width,
+  ) {
+    // ITEM(18) QTY(4) VALUE(12) RATE(12) ≈ 48 with spaces
+    _writeLine(out, _padColumns80('ITEM', 'QTY', 'VALUE', 'RATE'));
+    for (final item in presentation.items) {
+      _writeWrapped(out, item.name, width);
+      if (item.sku.isNotEmpty) {
+        _writeWrapped(out, item.sku, width);
+      }
+      _writeLine(
+        out,
+        _padColumns80(
+          '',
+          '${item.quantity}',
+          presentation.formatMoneyAmountOnly(item.valueUnitPrice),
+          presentation.formatMoneyAmountOnly(item.rateUnitPrice),
+        ),
+      );
+    }
+  }
+
+  void _writeItemTable58(
+    List<int> out,
+    CanonicalReceiptPresentation presentation,
+    int width,
+  ) {
+    for (final item in presentation.items) {
+      _writeWrapped(out, 'ITEM', width);
+      _writeWrapped(out, item.name, width);
+      if (item.sku.isNotEmpty) {
+        _writeWrapped(out, item.sku, width);
+      }
+      _writeLine(
+        out,
+        'QTY ${item.quantity}  VALUE ${presentation.formatMoneyAmountOnly(item.valueUnitPrice)}',
+      );
+      _writeLine(
+        out,
+        'RATE ${presentation.formatMoneyAmountOnly(item.rateUnitPrice)}',
+      );
+    }
+  }
+
+  String _padColumns80(String item, String qty, String value, String rate) {
+    String fit(String text, int size, {bool right = false}) {
+      if (text.length > size) return text.substring(0, size);
+      return right ? text.padLeft(size) : text.padRight(size);
+    }
+
+    return '${fit(item, 18)}${fit(qty, 4, right: true)} '
+        '${fit(value, 12, right: true)} ${fit(rate, 12, right: true)}';
+  }
+
+  void _writeLabelValue(
+    List<int> out,
+    String label,
+    String value,
+    int width,
+  ) {
+    final left = '$label:';
+    if (left.length + 1 + value.length <= width) {
+      _writeColumns(out, left, value, width);
+      return;
+    }
+    _writeLine(out, left);
+    _writeWrapped(out, value, width);
   }
 
   void _writeCode39Barcode(List<int> out, String value) {

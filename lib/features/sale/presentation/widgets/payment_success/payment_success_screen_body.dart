@@ -164,7 +164,7 @@ class _ReceiptCard extends StatelessWidget {
           child: SingleChildScrollView(
             key: const Key('payment-success-receipt-scroll'),
             padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-            child: ThermalReceiptPreview(
+            child: ThermalReceiptPreview.fromPaymentSuccess(
               successData: successData,
               cashierName: cashierName,
               sessionContext: sessionContext,

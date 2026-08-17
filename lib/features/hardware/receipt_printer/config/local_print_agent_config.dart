@@ -18,10 +18,24 @@ List<String> validateLocalPrintAgentConfig(PosDevicePrinterConfig config) {
     errors.add('Agent URL must be a valid http or https URL.');
   } else if (uri.path.toLowerCase().endsWith('/api/print/receipt')) {
     errors.add('Enter the agent base URL, not the receipt endpoint.');
-  } else if (kReleaseMode && uri.scheme != 'https') {
-    errors.add(
-      'Production release requires a trusted HTTPS Print Agent URL.',
-    );
+  } else {
+    final host = uri.host.toLowerCase();
+    final privateLan = isPrivateLanOrLoopbackHost(host);
+    final androidReleaseRequiresHttps = kReleaseMode &&
+        !kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android;
+
+    if (androidReleaseRequiresHttps && uri.scheme != 'https') {
+      errors.add(
+        'Production Android requires a trusted HTTPS Print Agent URL.',
+      );
+    } else if (kReleaseMode &&
+        uri.scheme == 'http' &&
+        !privateLan) {
+      errors.add(
+        'Production HTTP is only allowed for private LAN or loopback agent URLs.',
+      );
+    }
   }
   if ((config.localApiKey ?? '').length < localPrintAgentMinimumApiKeyLength) {
     errors.add('API key must contain at least 24 characters.');
@@ -33,12 +47,19 @@ List<String> validateLocalPrintAgentConfig(PosDevicePrinterConfig config) {
   return errors;
 }
 
+/// Emulator localhost remapping is development-only.
+/// Physical Android devices must use the store LAN IP / HTTPS hostname.
 String normalizeLocalPrintAgentUrl(String value) {
   var normalized = value.trim();
   while (normalized.endsWith('/')) {
     normalized = normalized.substring(0, normalized.length - 1);
   }
-  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+  // Emulator-only remap. Physical Android devices must use the store LAN IP.
+  // Guard with debugDefaultTargetPlatformOverride so Windows host tests do not
+  // accidentally rewrite 127.0.0.1 → 10.0.2.2.
+  if (kDebugMode &&
+      !kIsWeb &&
+      defaultTargetPlatform == TargetPlatform.android) {
     final uri = Uri.tryParse(normalized);
     if (uri != null) {
       final host = uri.host.toLowerCase();
@@ -57,6 +78,24 @@ String normalizeLocalPrintAgentUrl(String value) {
 bool isLoopbackAgentUrl(String value) {
   final host = Uri.tryParse(value.trim())?.host.toLowerCase();
   return host == 'localhost' || host == '127.0.0.1' || host == '::1';
+}
+
+bool isPrivateLanOrLoopbackHost(String host) {
+  final h = host.toLowerCase();
+  if (h == 'localhost' || h == '127.0.0.1' || h == '::1') return true;
+  final parts = h.split('.');
+  if (parts.length == 4) {
+    final a = int.tryParse(parts[0]);
+    final b = int.tryParse(parts[1]);
+    final c = int.tryParse(parts[2]);
+    final d = int.tryParse(parts[3]);
+    if (a == null || b == null || c == null || d == null) return false;
+    if ([a, b, c, d].any((octet) => octet < 0 || octet > 255)) return false;
+    if (a == 10) return true;
+    if (a == 192 && b == 168) return true;
+    if (a == 172 && b >= 16 && b <= 31) return true;
+  }
+  return false;
 }
 
 String maskLocalPrintAgentApiKey(String? value) {

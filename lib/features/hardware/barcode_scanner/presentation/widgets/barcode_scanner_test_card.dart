@@ -111,10 +111,15 @@ class _BarcodeScannerTestCardState
                         child: Text('USB HID'),
                       ),
                       DropdownMenuItem(
+                        value: 'bluetoothHid',
+                        child: Text('Bluetooth HID'),
+                      ),
+                      DropdownMenuItem(
                         value: 'camera',
                         child: Text('Android camera'),
                       ),
                     ],
+                    isExpanded: true,
                     onChanged: state.isBusy
                         ? null
                         : (value) => setState(() => _mode = value ?? 'usbHid'),

@@ -217,6 +217,9 @@ class PosHardwareApiException implements Exception {
 
   final String code;
   final String message;
+
+  @override
+  String toString() => message;
 }
 
 String? _optional(Object? value) {

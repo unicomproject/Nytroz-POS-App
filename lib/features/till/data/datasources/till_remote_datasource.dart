@@ -85,7 +85,6 @@ class TillRemoteDatasource {
           'deviceId': form.deviceContext.deviceId,
           'tillId': form.deviceContext.tillId,
           'countedCash': form.countedCash,
-          'expectedCash': form.expectedCash,
           'mismatchReason': form.mismatchReason?.trim().isEmpty == true
               ? null
               : form.mismatchReason?.trim(),
@@ -117,11 +116,15 @@ class TillRemoteDatasource {
 
     return ClosedTillSession(
       sessionId: _string(session['id']),
+      outletId: _string(session['outletId']),
       tillId: _string(session['tillId']),
-      openingFloat: _double(session['openingFloat'], 0),
-      expectedCash: _double(session['expectedCash'], 0),
-      countedCash: _double(session['countedCash'], 0),
-      cashDifference: _double(session['cashDifference'], 0),
+      openingFloat: _requiredDouble(session['openingFloat'], 'openingFloat'),
+      expectedCash: _requiredDouble(session['expectedCash'], 'expectedCash'),
+      countedCash: _requiredDouble(session['countedCash'], 'countedCash'),
+      cashDifference: _requiredDouble(
+        session['cashDifference'],
+        'cashDifference',
+      ),
       status: _string(session['status'], fallback: 'closed'),
       openedAt:
           DateTime.tryParse(_string(session['openedAt'])) ?? DateTime.now(),
@@ -154,7 +157,7 @@ class TillRemoteDatasource {
       outletName: device.outletName,
       tillId: _string(session['tillId'], fallback: device.tillId),
       tillCode: device.tillCode,
-      tillName: device.tillName,
+      tillName: _string(session['tillName'], fallback: device.tillName),
       openedDeviceId: _string(
         session['openedDeviceId'],
         fallback: device.deviceId,
@@ -164,6 +167,12 @@ class TillRemoteDatasource {
       openedAt:
           DateTime.tryParse(_string(session['openedAt'])) ?? DateTime.now(),
       openingNote: session['openingNote']?.toString(),
+      currencyCode: _string(
+        session['currencyCode'],
+        fallback: device.currencyCode,
+      ),
+      expectedCash: _requiredDouble(session['expectedCash'], 'expectedCash'),
+      openedByName: session['openedByName']?.toString(),
     );
   }
 
@@ -190,6 +199,13 @@ class TillRemoteDatasource {
     }
 
     return double.tryParse(value?.toString() ?? '') ?? fallback;
+  }
+
+  double _requiredDouble(Object? value, String fieldName) {
+    if (value is num) return value.toDouble();
+    final parsed = double.tryParse(value?.toString() ?? '');
+    if (parsed != null) return parsed;
+    throw FormatException('Till response is missing $fieldName.');
   }
 
   String _messageFromDio(DioException error) {

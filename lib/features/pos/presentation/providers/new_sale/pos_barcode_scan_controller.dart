@@ -5,11 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/network/dio_provider.dart';
 import '../../../../auth/presentation/providers/session_provider.dart';
-import '../../../data/datasources/remote/pos_barcode_remote_datasource.dart';
 import '../../../../cart/domain/entities/pos_resolved_sale_item.dart';
 import '../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../../cart/presentation/providers/pos_resolved_variant_cart_action.dart';
 import '../../../../device_activation/presentation/providers/device_activation_provider.dart';
+import '../../../../hardware/barcode_scanner/presentation/providers/barcode_scanner_configuration_provider.dart';
+import '../../../data/datasources/remote/pos_barcode_remote_datasource.dart';
 
 final posBarcodeLookupGatewayProvider = Provider<PosBarcodeLookupGateway>(
   (ref) => PosBarcodeRemoteDatasource(ref.watch(appDioProvider)),
@@ -63,6 +64,8 @@ class PosBarcodeScanController
   bool _draining = false;
   bool _disposed = false;
   int _feedbackSequence = 0;
+  String? _lastAcceptedBarcode;
+  DateTime? _lastAcceptedAt;
 
   @override
   PosBarcodeScanState build() {
@@ -80,6 +83,23 @@ class PosBarcodeScanController
       state = state.copyWith(lastOutcome: PosBarcodeScanOutcome.invalidBarcode);
       return;
     }
+
+    final allowRapid = ref
+            .read(barcodeScannerConfigurationProvider)
+            .asData
+            ?.value
+            ?.allowRapidScan ??
+        true;
+    if (!allowRapid &&
+        _lastAcceptedBarcode == normalized &&
+        _lastAcceptedAt != null &&
+        DateTime.now().difference(_lastAcceptedAt!) <
+            const Duration(milliseconds: 400)) {
+      // Accidental double-fire suppression when rapid scan is disabled.
+      // Deliberate repeats after the debounce window still increment quantity.
+      return;
+    }
+
     _queue.add(normalized);
     state = state.copyWith(pendingCount: _queue.length);
     _drain();
@@ -98,6 +118,8 @@ class PosBarcodeScanController
           clearCurrentBarcode: false,
         );
         final result = await _process(barcode);
+        _lastAcceptedBarcode = barcode;
+        _lastAcceptedAt = DateTime.now();
         if (!_disposed) {
           state = state.copyWith(
             lastOutcome: result.outcome,

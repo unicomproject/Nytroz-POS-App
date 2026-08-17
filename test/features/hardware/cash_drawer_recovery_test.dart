@@ -267,7 +267,7 @@ void main() {
       expect(printAgentClient.lastRequest?.requestId,
           'op-1'); // Idempotency key reused!
       expect(fakeDio.finalizeCallCount, 1);
-      expect(fakeDio.lastFinalizeStatus, 'OPENED');
+      expect(fakeDio.lastFinalizeStatus, 'AGENT_ACCEPTED');
       expect(fakeDio.lastFinalizeAgentAccepted, true);
 
       final storeOps =
@@ -275,7 +275,7 @@ void main() {
       expect(
           storeOps.any((x) =>
               x.operationId == 'op-1' &&
-              x.state == DrawerOperationState.opened),
+              x.state == DrawerOperationState.agentAccepted),
           true);
     });
 

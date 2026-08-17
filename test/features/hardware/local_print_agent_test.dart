@@ -45,6 +45,14 @@ void main() {
       );
     });
 
+    test('classifies private LAN hosts', () {
+      expect(isPrivateLanOrLoopbackHost('192.168.1.8'), isTrue);
+      expect(isPrivateLanOrLoopbackHost('10.0.0.5'), isTrue);
+      expect(isPrivateLanOrLoopbackHost('172.16.0.1'), isTrue);
+      expect(isPrivateLanOrLoopbackHost('8.8.8.8'), isFalse);
+      expect(isLoopbackAgentUrl('http://127.0.0.1:9101'), isTrue);
+    });
+
     test('round-trips Local Print Agent device configuration', () {
       final restored = PosDevicePrinterConfig.fromJson(_config().toJson());
       expect(restored.connectionType, PrinterConnectionType.localPrintAgent);
@@ -81,7 +89,7 @@ void main() {
           'ready': true,
           'agentVersion': '1.0.0',
           'apiVersion': '1',
-          'receiptContractVersion': '2',
+          'receiptContractVersion': '3',
         },
       );
       final health = await _client(adapter).health(_config());
@@ -108,7 +116,7 @@ void main() {
             'detail': 'Windows spooler reports no blocking status.',
             'agentVersion': '1.0.0.0',
             'apiVersion': '1',
-            'receiptContractVersion': '2',
+            'receiptContractVersion': '3',
           },
         ),
       ).health(_config());
@@ -177,7 +185,7 @@ void main() {
       expect(adapter.lastBody['items'], isA<List<dynamic>>());
       expect(adapter.lastBody['total'], 0);
       expect(adapter.lastBody['apiVersion'], '1');
-      expect(adapter.lastBody['receiptContractVersion'], '2');
+      expect(adapter.lastBody['receiptContractVersion'], '3');
     });
 
     test('serializes authoritative v2 tender discount tax and copy fields', () {
@@ -218,6 +226,24 @@ void main() {
       expect(json['copyIndex'], 1);
     });
 
+    test('accepts installed agent receipt contracts v1/v2/v3', () async {
+      for (final version in const ['1', '2', '3']) {
+        final adapter = _AgentHttpAdapter(
+          statusCode: 200,
+          response: {
+            'agentStatus': 'running',
+            'printerName': 'POSPrinter POS80',
+            'printerExists': true,
+            'ready': true,
+            'apiVersion': '1',
+            'receiptContractVersion': version,
+          },
+        );
+        final health = await _client(adapter).health(_config());
+        expect(health.receiptContractVersion, version);
+      }
+    });
+
     test('rejects explicitly unsupported agent contract version', () async {
       final adapter = _AgentHttpAdapter(
         statusCode: 200,
@@ -226,8 +252,8 @@ void main() {
           'printerName': 'POSPrinter POS80',
           'printerExists': true,
           'ready': true,
-          'apiVersion': '99',
-          'receiptContractVersion': '1',
+          'apiVersion': '1',
+          'receiptContractVersion': '99',
         },
       );
 
