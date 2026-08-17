@@ -31,6 +31,7 @@ class ProductTable extends StatelessWidget {
         builder: (context, constraints) {
           return SingleChildScrollView(
             scrollDirection: Axis.vertical,
+            physics: const NeverScrollableScrollPhysics(),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: ConstrainedBox(

@@ -62,7 +62,7 @@ class ProductTypeTracking extends StatelessWidget {
                   description:
                       'Single standalone product with one price and SKU.',
                   icon: Icons.inventory_2_outlined,
-                  selected: state.productStructure == 'SIMPLE',
+                  selected: state.productStructure == 'SIMPLE' && state.productStructureConfirmed,
                   onSelected: () => controller.setProductStructure('SIMPLE'),
                 ),
                 ProductStructureCard(
@@ -71,7 +71,7 @@ class ProductTypeTracking extends StatelessWidget {
                   description:
                       'Product with options like size, color, or material.',
                   icon: Icons.dashboard_customize_outlined,
-                  selected: state.productStructure == 'VARIANT',
+                  selected: state.productStructure == 'VARIANT' && state.productStructureConfirmed,
                   onSelected: () => controller.setProductStructure('VARIANT'),
                 ),
                 ProductStructureCard(
@@ -79,7 +79,7 @@ class ProductTypeTracking extends StatelessWidget {
                   title: 'Bundle / Kit',
                   description: 'Collection of existing items sold together.',
                   icon: Icons.inventory_outlined,
-                  selected: state.productStructure == 'BUNDLE',
+                  selected: state.productStructure == 'BUNDLE' && state.productStructureConfirmed,
                   enabled: false,
                   onSelected: () => controller.setProductStructure('BUNDLE'),
                 ),
@@ -120,7 +120,7 @@ class ProductTypeTracking extends StatelessWidget {
         ],
       );
 
-    return isDesktop ? content : SingleChildScrollView(child: content);
+    return SingleChildScrollView(child: content);
   }
 
   Widget _buildDynamicContent(BuildContext context) {

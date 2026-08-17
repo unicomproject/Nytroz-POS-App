@@ -95,9 +95,10 @@ class _UnitsPackConversionFormState
     final options = state.createOptions;
     final unitOptions = options?.units ?? const [];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
         // Header
         const Text(
           'Units & Pack Conversion',
@@ -151,8 +152,9 @@ class _UnitsPackConversionFormState
         else
           _buildMultipleUnitsSection(state, controller, unitOptions),
       ],
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildUnitModelCard({
     required String title,

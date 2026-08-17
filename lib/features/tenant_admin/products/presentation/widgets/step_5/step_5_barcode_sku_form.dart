@@ -24,12 +24,17 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
   final _barcodeFocusNode = FocusNode();
   bool _syncingFromState = false;
 
+  String _appliedSku = '';
+  String _appliedBarcode = '';
+
   @override
   void initState() {
     super.initState();
     final state = ref.read(addProductWizardControllerProvider);
     _skuController.text = state.step5State.baseSku;
     _barcodeController.text = state.step5State.parentProductBarcode;
+    _appliedSku = state.step5State.baseSku;
+    _appliedBarcode = state.step5State.parentProductBarcode;
 
     _skuController.addListener(_onSkuChanged);
     _barcodeController.addListener(_onBarcodeChanged);
@@ -43,9 +48,8 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
       ref
           .read(addProductWizardControllerProvider.notifier)
           .updateSimpleBaseSku(_skuController.text);
-    } else if (structure == 'VARIANT' && _selectedClientKey != null) {
-      _flushVariantDraftFields();
     }
+    // VARIANT: table updates only on Apply button press (_onAssignVariant)
   }
 
   void _onBarcodeChanged() {
@@ -56,9 +60,8 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
       ref
           .read(addProductWizardControllerProvider.notifier)
           .updateSimpleParentBarcode(_barcodeController.text);
-    } else if (structure == 'VARIANT' && _selectedClientKey != null) {
-      _flushVariantDraftFields();
     }
+    // VARIANT: table updates only on Apply button press (_onAssignVariant)
   }
 
   /// Keeps wizard state current while typing so Save Draft captures values
@@ -136,6 +139,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
 
     if (success) {
       setState(() {
+        _selectedClientKey = null;
         _skuController.clear();
         _barcodeController.clear();
       });
@@ -163,6 +167,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Close',
+      useRootNavigator: false,
       pageBuilder: (context, animation, secondaryAnimation) {
         return Align(
           alignment: Alignment.centerRight,
@@ -247,28 +252,37 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _FieldLabel(label: 'Product'),
-                const SizedBox(height: 6),
-                InputDecorator(
-                  decoration: InputDecoration(
-                    border: const OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Colors.grey.shade50,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 12),
-                    suffixIcon: const Icon(Icons.lock_outline,
-                        size: 16, color: Colors.grey),
-                  ),
-                  child: Text(
-                    productName,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-                const SizedBox(height: 16),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _FieldLabel(label: 'Product'),
+                          const SizedBox(height: 6),
+                          InputDecorator(
+                            decoration: InputDecoration(
+                              border: const OutlineInputBorder(),
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
+                              suffixIcon: const Icon(Icons.lock_outline,
+                                  size: 16, color: Colors.grey),
+                            ),
+                            child: Text(
+                              productName,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 2,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -289,6 +303,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                     ),
                     const SizedBox(width: 16),
                     Expanded(
+                      flex: 2,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -320,30 +335,69 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                         ],
                       ),
                     ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                            controller.generateSimpleIdentifiers(overwriteSku: false);
+                            _syncSimpleControllersFromState();
+                            setState(() {
+                              _appliedSku = ref.read(addProductWizardControllerProvider).step5State.baseSku;
+                              _appliedBarcode = ref.read(addProductWizardControllerProvider).step5State.parentProductBarcode;
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF6A00),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text('Apply'),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      controller.generateSimpleIdentifiers();
-                      _syncSimpleControllersFromState();
-                    },
-                    icon: const Icon(Icons.auto_awesome, size: 16),
-                    label: const Text('Generate'),
-                  ),
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 const Text(
-                  'Generate fills Base SKU from Internal Code when available. '
-                  'Your manually entered SKU is only replaced when you press Generate.',
+                  'Click Apply to update the assignment table below. '
+                  'If left empty, Apply will auto-fill Base SKU from Internal Code.',
                   style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 80),
+          const SizedBox(height: 24),
+          if (_appliedSku.isNotEmpty || _appliedBarcode.isNotEmpty) ...[
+            const Text(
+              'Barcode & SKU Assignment',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            ),
+            const SizedBox(height: 12),
+            Step5IdentifierTable(
+              assignments: [
+                BarcodeSkuAssignmentDto(
+                  clientCombinationKey: 'SIMPLE_DEFAULT',
+                  productVariantId: null,
+                  sku: _appliedSku.isNotEmpty ? _appliedSku : null,
+                  barcode: _appliedBarcode.isNotEmpty ? _appliedBarcode : null,
+                  isAssigned: true,
+                )
+              ],
+              allVariants: const [],
+              productName: productName,
+              productStructure: state.productStructure,
+              onEdit: (assignment, index) {},
+            ),
+            const SizedBox(height: 80),
+          ] else
+            const SizedBox(height: 80),
         ],
       ),
     );
@@ -427,35 +481,44 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                 ),
                 const SizedBox(height: 16),
-                const _FieldLabel(label: 'Variant *'),
-                const SizedBox(height: 6),
-                DropdownButtonFormField<String>(
-                  value: _selectedClientKey,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  ),
-                  items: dropdownItems
-                      .map((item) => DropdownMenuItem<String>(
-                            value: item.clientKey,
-                            child: Text(
-                              item.label,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: (val) {
-                    if (val != null) selectVariant(val);
-                  },
-                  hint: const Text('Select variant'),
-                ),
-                const SizedBox(height: 16),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _FieldLabel(label: 'Variant *'),
+                          const SizedBox(height: 6),
+                          DropdownButtonFormField<String>(
+                            value: _selectedClientKey,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding:
+                                  EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                            ),
+                            items: dropdownItems
+                                .map((item) => DropdownMenuItem<String>(
+                                      value: item.clientKey,
+                                      child: Text(
+                                        item.label,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ))
+                                .toList(),
+                            onChanged: (val) {
+                              if (val != null) selectVariant(val);
+                            },
+                            hint: const Text('Select variant'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 2,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -476,6 +539,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                     ),
                     const SizedBox(width: 16),
                     Expanded(
+                      flex: 2,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -505,50 +569,80 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                         ],
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: ElevatedButton.icon(
-                    onPressed:
-                        _selectedClientKey != null ? _onAssignVariant : null,
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('Add to List'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1D4ED8),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 12),
-                      disabledBackgroundColor: Colors.grey.shade200,
+                    const SizedBox(width: 16),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 24.0),
+                      child: ElevatedButton(
+                        onPressed:
+                            _selectedClientKey != null ? _onAssignVariant : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF6A00),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
+                          disabledBackgroundColor: Colors.grey.shade200,
+                        ),
+                        child: const Text('Apply'),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Variant SKU & Barcode Assignment',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              ),
-              if (state.step5State.assignments.isNotEmpty)
-                _AssignmentSummaryBadge(
-                    assignments: state.step5State.assignments),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Step5IdentifierTable(
-            assignments: state.step5State.assignments,
-            allVariants: state.step4State.generatedVariants,
-            productName: productName,
-            productStructure: state.productStructure,
-            onEdit: (assignment, index) =>
-                _onEditAssignment(context, assignment, index),
-          ),
+          Builder(builder: (context) {
+            final appliedAssignments = state.step5State.assignments
+                .where((a) => a.isAssigned)
+                .toList();
+            final totalVariants = state.step4State.generatedVariants
+                .where((v) => v.isIncluded)
+                .length;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                  'Variant SKU & Barcode Assignment',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                    if (appliedAssignments.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: appliedAssignments.length == totalVariants
+                              ? const Color(0xFFDCFCE7)
+                              : const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${appliedAssignments.length} / $totalVariants applied',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: appliedAssignments.length == totalVariants
+                                ? const Color(0xFF16A34A)
+                                : const Color(0xFFB45309),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Step5IdentifierTable(
+                  assignments: appliedAssignments,
+                  allVariants: state.step4State.generatedVariants,
+                  productName: productName,
+                  productStructure: state.productStructure,
+                  onEdit: (assignment, index) =>
+                      _onEditAssignment(context, assignment, index),
+                ),
+              ],
+            );
+          }),
           const SizedBox(height: 80),
         ],
       ),

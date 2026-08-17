@@ -179,7 +179,7 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
                 children: [
                   Expanded(
                     child: ProductOptionDropdown(
-                      label: 'Tax Name *',
+                      label: 'Tax Name (Optional)',
                       hint: 'Select Tax',
                       icon: Icons.receipt_long_outlined,
                       value: state.taxId,
@@ -234,7 +234,7 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
                             hintText: 'Auto-filled',
                             prefixIcon: const Icon(Icons.percent, size: 19),
                             filled: true,
-                            fillColor: TenantAdminColors.background,
+                            fillColor: TenantAdminColors.subtleBackground,
                             border: OutlineInputBorder(
                               borderRadius:
                                   BorderRadius.circular(TenantAdminRadius.md),
@@ -265,7 +265,7 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
           Container(
             padding: const EdgeInsets.all(TenantAdminSpacing.md),
             decoration: BoxDecoration(
-              color: TenantAdminColors.background,
+              color: TenantAdminColors.subtleBackground,
               borderRadius: BorderRadius.circular(TenantAdminRadius.md),
               border: Border.all(color: TenantAdminColors.border),
             ),

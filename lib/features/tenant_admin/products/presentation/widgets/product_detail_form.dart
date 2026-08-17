@@ -95,8 +95,11 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
   }
 
   String _calculateStockStatus(TenantProductDetail detail) {
-    if (!detail.trackInventory || detail.stock == null) {
+    if (!detail.trackInventory) {
       return 'NOT_TRACKED';
+    }
+    if (detail.stock == null) {
+      return 'OUT_OF_STOCK';
     }
     final onHand = detail.stock!.onHandQuantity;
     final minAlert = detail.stock!.minimumStockAlertQuantity;

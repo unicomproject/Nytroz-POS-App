@@ -166,9 +166,9 @@ class Step4VariantConfigurationForm extends ConsumerWidget {
                 icon: const Icon(Icons.add),
                 label: const Text('Add Attribute', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
-              ElevatedButton.icon(
+              ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: TenantAdminColors.primary,
+                  backgroundColor: TenantAdminColors.posHomeAccentOrange,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
@@ -177,16 +177,15 @@ class Step4VariantConfigurationForm extends ConsumerWidget {
                     : () async {
                         await controller.generateVariants();
                       },
-                icon: state.isSavingDraft
+                child: state.isSavingDraft
                     ? const SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
-                    : const Icon(Icons.auto_awesome),
-                label: Text(
-                    state.isSavingDraft ? 'Generating...' : 'Generate Variants',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                    : const Text(
+                        'Apply',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -217,9 +216,11 @@ class Step4VariantConfigurationForm extends ConsumerWidget {
                     ),
                     child: Row(
                       children: [
-                        const Expanded(flex: 3, child: Text('Variant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                        const Expanded(flex: 2, child: Text('Image', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                        Expanded(flex: 2, child: Container(alignment: Alignment.centerRight, child: const Text('Actions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)))),
+                        const Expanded(child: Text('Variant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                        const SizedBox(
+                          width: 100,
+                          child: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12), textAlign: TextAlign.center),
+                        ),
                       ],
                     ),
                   ),
@@ -235,20 +236,15 @@ class Step4VariantConfigurationForm extends ConsumerWidget {
                         child: Row(
                           children: [
                             Expanded(
-                              flex: 3,
                               child: Text(
                                 variant.displayLabel ?? variant.combinationLabel,
                                 style: const TextStyle(fontWeight: FontWeight.w500),
                               ),
                             ),
-                            Expanded(
-                              flex: 2,
-                              child: Icon(Icons.image_outlined, color: Colors.grey[400]), // Placeholder for image
-                            ),
-                            Expanded(
-                              flex: 2,
+                            SizedBox(
+                              width: 100,
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   IconButton(
                                     icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.blue),
@@ -372,7 +368,28 @@ class _AddValueFieldState extends State<_AddValueField> {
   final FocusNode _focusNode = FocusNode();
 
   @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    if (!_focusNode.hasFocus) {
+      _submitCurrentText();
+    }
+  }
+
+  void _submitCurrentText() {
+    final val = _controller.text.trim();
+    if (val.isNotEmpty) {
+      widget.onSubmitted(val);
+      _controller.clear();
+    }
+  }
+
+  @override
   void dispose() {
+    _focusNode.removeListener(_onFocusChange);
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -391,12 +408,19 @@ class _AddValueFieldState extends State<_AddValueField> {
           isDense: true,
           contentPadding: EdgeInsets.zero,
         ),
-        onFieldSubmitted: (val) {
-          if (val.trim().isNotEmpty) {
-            widget.onSubmitted(val);
+        onChanged: (val) {
+          if (val.endsWith(',') || val.endsWith(' ')) {
+            final text = val.substring(0, val.length - 1).trim();
+            if (text.isNotEmpty) {
+              widget.onSubmitted(text);
+            }
             _controller.clear();
             _focusNode.requestFocus();
           }
+        },
+        onFieldSubmitted: (val) {
+          _submitCurrentText();
+          _focusNode.requestFocus();
         },
       ),
     );

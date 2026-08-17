@@ -828,9 +828,6 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       step6Errors['standardSellingPrice'] =
           'Standard selling price is required.';
     }
-    if (state.taxId == null || state.taxId!.isEmpty) {
-      step6Errors['taxId'] = 'Tax is required.';
-    }
 
     final errors = {...step5Errors, ...step6Errors};
     if (errors.isNotEmpty) {
@@ -958,9 +955,6 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           state.discountPrice! > state.standardSellingPrice!) {
         errors['discountPrice'] =
             'Discount Price cannot exceed Standard Selling Price.';
-      }
-      if (state.taxId == null || state.taxId!.isEmpty) {
-        errors['taxId'] = 'Tax Name is required.';
       }
     }
 

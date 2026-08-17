@@ -131,7 +131,7 @@ class _FakeAddProductWizardController extends AddProductWizardController {
   }
 
   @override
-  Future<void> initWizard({String? resumeProductId}) async {
+  Future<void> initWizard({String? resumeLocalDraftId, String? resumeProductId}) async {
     // override so it doesn't try to fetch options and overwrite state
   }
 }
