@@ -22,18 +22,20 @@ class InventoryDashboardPage extends ConsumerWidget {
         builder: (context, constraints) {
           final width = constraints.maxWidth;
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const InventoryHeader(),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              _buildMetrics(ref, width),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              const InventoryQuickActions(),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              _buildTables(ref, width),
-              const SizedBox(height: 24.0), // Bottom padding
-            ],
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const InventoryHeader(),
+                const SizedBox(height: TenantAdminSpacing.lg),
+                _buildMetrics(ref, width),
+                const SizedBox(height: TenantAdminSpacing.lg),
+                const InventoryQuickActions(),
+                const SizedBox(height: TenantAdminSpacing.lg),
+                _buildTables(ref, width),
+                const SizedBox(height: 24.0), // Bottom padding
+              ],
+            ),
           );
         },
       ),
