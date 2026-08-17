@@ -3,9 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../presentation/providers/tenant_admin_access_provider.dart';
+import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_pagination.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
+import '../../../presentation/widgets/tenant_admin_stepper_header.dart';
+import '../../../presentation/widgets/tenant_admin_metric_card.dart';
+import '../../../presentation/widgets/tenant_admin_status_badge.dart';
+import '../../../presentation/widgets/tenant_admin_data_table.dart';
+import '../../../presentation/widgets/tenant_admin_search_field.dart';
+import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../data/mock/inventory_frontend_mock.dart';
 import '../navigation/inventory_routes.dart';
 import '../widgets/inventory_shared_widgets.dart';
@@ -218,10 +225,10 @@ class ReceivingDashboardScreen extends ConsumerWidget {
 
     return TenantAdminPageScaffold(
       title: 'Stock Receiving',
-      subtitle: 'Receive stock into an inventory location. Stock increases only on confirm.',
+      subtitle: 'Receive and track incoming stock from suppliers.',
       actions: [
         if (canManage)
-          InventoryPrimaryButton(
+          TenantAdminPrimaryButton(
             label: 'New Stock Receipt',
             onPressed: () {
               ref.read(receivingSessionProvider.notifier).reset();
@@ -232,8 +239,41 @@ class ReceivingDashboardScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          InventorySearchField(
+          InventoryMetricStrip(
+            cards: const [
+              TenantAdminMetricCard(
+                title: "Today's Receipts",
+                value: '8',
+                subtitle: '24 units',
+                icon: Icons.receipt_long_outlined,
+                status: TenantAdminStatusType.online,
+              ),
+              TenantAdminMetricCard(
+                title: 'Pending Review',
+                value: '3',
+                subtitle: '1,250 units',
+                icon: Icons.hourglass_top_outlined,
+                status: TenantAdminStatusType.warning,
+              ),
+              TenantAdminMetricCard(
+                title: 'Received Qty',
+                value: '5,842',
+                subtitle: 'This month',
+                icon: Icons.inventory_2_outlined,
+                status: TenantAdminStatusType.success,
+              ),
+              TenantAdminMetricCard(
+                title: 'Recent Suppliers',
+                value: '12',
+                subtitle: 'Active suppliers',
+                icon: Icons.local_shipping_outlined,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          TenantAdminSearchField(
             value: search,
+            hint: 'Search by receipt, product or outlet',
             onChanged: (v) {
               ref.read(receivingSearchProvider.notifier).state = v;
               ref.read(receivingPageProvider.notifier).state = 1;
@@ -246,20 +286,157 @@ class ReceivingDashboardScreen extends ConsumerWidget {
               message: 'Try another search or create a new stock receipt.',
             )
           else
-            InventorySectionCard(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  for (final row in filtered.sublist(start, end))
-                    ListTile(
-                      title: Text(row.$1,
-                          style: const TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: Text('${row.$2} · ${row.$4}'),
-                      trailing: InventoryStatusBadge(label: row.$3),
-                      onTap: () => context.go(InventoryRoutes.receivingNew),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final table = Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'Recent Receipts',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                ],
-              ),
+                    TenantAdminDataTable(
+                      columns: const [
+                        DataColumn(label: Text('Receipt No.')),
+                        DataColumn(label: Text('Product')),
+                        DataColumn(label: Text('Outlet')),
+                        DataColumn(label: Text('Status')),
+                        DataColumn(label: Text('Action')),
+                      ],
+                      rows: [
+                        for (final row in filtered.sublist(start, end))
+                          DataRow(
+                            cells: [
+                              DataCell(Text(row.$1,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: TenantAdminColors.info))),
+                              DataCell(Text(row.$2,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis)),
+                              DataCell(Text(row.$4)),
+                              DataCell(
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: TenantAdminStatusBadge(
+                                    label: row.$3 == 'POSTED'
+                                        ? 'Received'
+                                        : 'Draft',
+                                    status: row.$3 == 'POSTED'
+                                        ? TenantAdminStatusType.success
+                                        : TenantAdminStatusType.pending,
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                TextButton(
+                                  onPressed: () =>
+                                      context.go(InventoryRoutes.receivingNew),
+                                  child: const Text('View'),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ],
+                );
+                if (constraints.maxWidth < 980) {
+                  return table;
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: table),
+                    const SizedBox(width: 15),
+                    SizedBox(
+                      width: 260,
+                      child: Column(
+                        children: [
+                          InventorySectionCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Quick Actions',
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 8),
+                                if (canManage)
+                                  ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: const CircleAvatar(
+                                      backgroundColor:
+                                          InventoryWorkspaceTokens.orangeFill,
+                                      child: Icon(Icons.add,
+                                          color: InventoryWorkspaceTokens
+                                              .iconOrange),
+                                    ),
+                                    title: const Text('Start New Receipt',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14)),
+                                    subtitle: const Text('Create a stock receipt'),
+                                    trailing: const Icon(Icons.chevron_right),
+                                    onTap: () {
+                                      ref
+                                          .read(receivingSessionProvider
+                                              .notifier)
+                                          .reset();
+                                      context.go(InventoryRoutes.receivingNew);
+                                    },
+                                  ),
+                                ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: const CircleAvatar(
+                                    backgroundColor:
+                                        InventoryWorkspaceTokens.redFill,
+                                    child: Icon(Icons.warning_amber_outlined,
+                                        color:
+                                            InventoryWorkspaceTokens.iconRed),
+                                  ),
+                                  title: const Text('Low Stock Alerts',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14)),
+                                  subtitle:
+                                      const Text('Items that need attention'),
+                                  trailing: const Icon(Icons.chevron_right),
+                                  onTap: () =>
+                                      context.go(InventoryRoutes.dashboard),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const InventorySectionCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Today's Summary",
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700)),
+                                InventorySummaryRow(
+                                    label: 'Total Receipts', value: '8'),
+                                InventorySummaryRow(
+                                    label: 'Total Quantity',
+                                    value: '3,256 units'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           const SizedBox(height: 12),
           TenantAdminPaginationBar(
@@ -306,7 +483,7 @@ class ReceivingWizardScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          InventoryStepper(steps: steps, currentIndex: session.step),
+          TenantAdminStepperHeader(steps: steps, currentStep: session.step),
           const SizedBox(height: 16),
           if (session.error != null)
             Padding(
@@ -379,43 +556,47 @@ class _SelectStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            for (final loc in InventoryFrontendMock.locations)
-              ChoiceChip(
-                label: Text(loc.name),
-                selected: session.locationId == loc.id,
-                onSelected: (_) => notifier.selectLocation(loc.id),
-              ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final cardWidth = constraints.maxWidth < 720
+                ? constraints.maxWidth
+                : (constraints.maxWidth - 36) / 4;
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (final loc in InventoryFrontendMock.locations)
+                  SizedBox(
+                    width: cardWidth.clamp(140, 220),
+                    child: InventoryLocationCard(
+                      name: loc.name,
+                      selected: session.locationId == loc.id,
+                      onTap: () => notifier.selectLocation(loc.id),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 16),
         Expanded(
-          child: Material(
-            color: Colors.transparent,
-            child: RadioGroup<String>(
-              groupValue: session.productId,
-              onChanged: (v) {
-                if (v != null) notifier.selectProduct(v);
-              },
-              child: ListView(
-                children: [
-                  for (final p in InventoryFrontendMock.products)
-                    RadioListTile<String>(
-                      value: p.id,
-                      title: Text(p.name),
-                      subtitle: Text(p.sku),
-                    ),
-                ],
-              ),
-            ),
+          child: ListView(
+            children: [
+              for (final p in InventoryFrontendMock.products)
+                InventoryProductPickRow(
+                  name: p.name,
+                  sku: p.sku,
+                  selected: session.productId == p.id,
+                  stockLabel:
+                      'On Hand ${p.onHand.toStringAsFixed(0)}',
+                  onTap: () => notifier.selectProduct(p.id),
+                ),
+            ],
           ),
         ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: InventoryPrimaryButton(
+        InventoryFooterBar(
+          leading: const SizedBox.shrink(),
+          trailing: InventoryPrimaryButton(
             label: 'Continue',
             onPressed: () {
               if (notifier.validateSelect()) notifier.setStep(1);
@@ -476,37 +657,54 @@ class _DetailsStepState extends State<_DetailsStep> {
             children: [
               Text('Product: ${widget.session.product?.name ?? ''}'),
               const SizedBox(height: 12),
+              InventoryNoteBanner(
+                message:
+                    'Stock increases only when Confirm Receive succeeds. Review does not change physical stock.',
+              ),
+              const SizedBox(height: 12),
+              const SizedBox(height: 12),
               TextField(
-                  controller: _qty,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Quantity')),
+                controller: _qty,
+                keyboardType: TextInputType.number,
+                decoration: inventoryInputDecoration(label: 'Quantity'),
+              ),
+              const SizedBox(height: 12),
               TextField(
-                  controller: _cost,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Unit cost')),
+                controller: _cost,
+                keyboardType: TextInputType.number,
+                decoration: inventoryInputDecoration(label: 'Unit cost'),
+              ),
+              const SizedBox(height: 12),
               TextField(
-                  controller: _supplier,
-                  decoration:
-                      const InputDecoration(labelText: 'Supplier name')),
+                controller: _supplier,
+                decoration: inventoryInputDecoration(label: 'Supplier name'),
+              ),
+              const SizedBox(height: 12),
               TextField(
-                  controller: _invoice,
-                  decoration:
-                      const InputDecoration(labelText: 'Invoice number')),
+                controller: _invoice,
+                decoration: inventoryInputDecoration(label: 'Invoice number'),
+              ),
+              const SizedBox(height: 12),
               TextField(
-                  controller: _po,
-                  decoration:
-                      const InputDecoration(labelText: 'PO / reference')),
+                controller: _po,
+                decoration: inventoryInputDecoration(label: 'PO / reference'),
+              ),
+              const SizedBox(height: 12),
               TextField(
-                  controller: _notes,
-                  decoration: const InputDecoration(labelText: 'Notes')),
-              if (serial)
+                controller: _notes,
+                decoration: inventoryInputDecoration(label: 'Notes'),
+              ),
+              if (serial) ...[
+                const SizedBox(height: 12),
                 TextField(
                   controller: _serials,
                   minLines: 3,
                   maxLines: 6,
-                  decoration: const InputDecoration(
-                      labelText: 'Serial numbers (one per unit)'),
+                  decoration: inventoryInputDecoration(
+                    label: 'Serial numbers (one per unit)',
+                  ),
                 ),
+              ],
             ],
           ),
         ),

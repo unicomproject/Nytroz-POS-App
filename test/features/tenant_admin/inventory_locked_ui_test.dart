@@ -119,7 +119,7 @@ void main() {
       expect(find.text('RCV-10013'), findsOneWidget);
 
       await tester.enterText(find.byType(TextField).first, 'no-such-receipt');
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('No receipts found'), findsOneWidget);
     });
 

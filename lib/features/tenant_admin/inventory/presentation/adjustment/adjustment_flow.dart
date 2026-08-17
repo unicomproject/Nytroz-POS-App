@@ -3,9 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../presentation/providers/tenant_admin_access_provider.dart';
+import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_pagination.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
+import '../../../presentation/widgets/tenant_admin_stepper_header.dart';
+import '../../../presentation/widgets/tenant_admin_metric_card.dart';
+import '../../../presentation/widgets/tenant_admin_status_badge.dart';
+import '../../../presentation/widgets/tenant_admin_data_table.dart';
+import '../../../presentation/widgets/tenant_admin_search_field.dart';
+import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../data/mock/inventory_frontend_mock.dart';
 import '../navigation/inventory_routes.dart';
 import '../widgets/inventory_shared_widgets.dart';
@@ -193,10 +200,10 @@ class AdjustmentDashboardScreen extends ConsumerWidget {
 
     return TenantAdminPageScaffold(
       title: 'Stock Adjustment',
-      subtitle: 'Increase or decrease on-hand stock. Negative stock is not allowed.',
+      subtitle: 'View and manage stock adjustments across your outlets.',
       actions: [
         if (canCreate)
-          InventoryPrimaryButton(
+          TenantAdminPrimaryButton(
             label: 'New Stock Adjustment',
             onPressed: () {
               ref.read(adjustmentSessionProvider.notifier).reset();
@@ -206,23 +213,38 @@ class AdjustmentDashboardScreen extends ConsumerWidget {
       ],
       child: Column(
         children: [
-          InventorySearchField(
+          TenantAdminSearchField(
             value: search,
+            hint: 'Search by reference, product, outlet or reason...',
             onChanged: (v) {
               ref.read(adjustmentSearchProvider.notifier).state = v;
               ref.read(adjustmentPageProvider.notifier).state = 1;
             },
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: const [
-              Expanded(child: InventoryStatCard(label: 'Draft', value: '1')),
-              SizedBox(width: 12),
-              Expanded(
-                  child: InventoryStatCard(
-                      label: 'Pending Approval', value: '0')),
-              SizedBox(width: 12),
-              Expanded(child: InventoryStatCard(label: 'Posted', value: '2')),
+          const SizedBox(height: 14),
+          InventoryMetricStrip(
+            cards: const [
+              TenantAdminMetricCard(
+                title: 'Pending Approval',
+                value: '0',
+                subtitle: 'Needs review',
+                icon: Icons.hourglass_top_outlined,
+                status: TenantAdminStatusType.warning,
+              ),
+              TenantAdminMetricCard(
+                title: 'Draft Adjustments',
+                value: '1',
+                subtitle: 'Not yet submitted',
+                icon: Icons.edit_note_outlined,
+                status: TenantAdminStatusType.pending,
+              ),
+              TenantAdminMetricCard(
+                title: 'Posted Today',
+                value: '2',
+                subtitle: 'Across all outlets',
+                icon: Icons.check_circle_outline,
+                status: TenantAdminStatusType.success,
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -232,19 +254,46 @@ class AdjustmentDashboardScreen extends ConsumerWidget {
               message: 'Create a new stock adjustment to get started.',
             )
           else
-            InventorySectionCard(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  for (final row in filtered.sublist(start, end))
-                    ListTile(
-                      title: Text(row.$1,
-                          style: const TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: Text('${row.$2} · ${row.$4}'),
-                      trailing: InventoryStatusBadge(label: row.$3),
-                    ),
-                ],
-              ),
+            TenantAdminDataTable(
+              columns: const [
+                DataColumn(label: Text('Reference')),
+                DataColumn(label: Text('Product')),
+                DataColumn(label: Text('Direction')),
+                DataColumn(label: Text('Status')),
+                DataColumn(label: Text('Action')),
+              ],
+              rows: [
+                for (final row in filtered.sublist(start, end))
+                  DataRow(
+                    cells: [
+                      DataCell(Text(row.$1,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: TenantAdminColors.info))),
+                      DataCell(Text(row.$2,
+                          maxLines: 1, overflow: TextOverflow.ellipsis)),
+                      DataCell(Text(row.$4 == 'DECREASE' ? '- qty' : '+ qty',
+                          style: const TextStyle(fontWeight: FontWeight.w700))),
+                      DataCell(
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TenantAdminStatusBadge(
+                            label: row.$3,
+                            status: row.$3 == 'POSTED'
+                                ? TenantAdminStatusType.success
+                                : TenantAdminStatusType.pending,
+                          ),
+                        ),
+                      ),
+                      DataCell(
+                        TextButton(
+                          onPressed: () {},
+                          child: const Text('View'),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
             ),
           TenantAdminPaginationBar(
             currentPage: page,
@@ -282,7 +331,7 @@ class AdjustmentWizardScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          InventoryStepper(steps: steps, currentIndex: session.step),
+          TenantAdminStepperHeader(steps: steps, currentStep: session.step),
           const SizedBox(height: 16),
           if (session.error != null)
             Text(session.error!,
@@ -303,30 +352,23 @@ class AdjustmentWizardScreen extends ConsumerWidget {
         return Column(
           children: [
             Expanded(
-              child: Material(
-                color: Colors.transparent,
-                child: RadioGroup<String>(
-                  groupValue: session.productId,
-                  onChanged: (v) {
-                    if (v != null) notifier.selectProduct(v);
-                  },
-                  child: ListView(
-                    children: [
-                      for (final p in InventoryFrontendMock.products)
-                        RadioListTile<String>(
-                          value: p.id,
-                          title: Text(p.name),
-                          subtitle: Text(
-                              'SKU ${p.sku} · On Hand ${p.onHand.toStringAsFixed(0)} · Available ${p.available.toStringAsFixed(0)}'),
-                        ),
-                    ],
-                  ),
-                ),
+              child: ListView(
+                children: [
+                  for (final p in InventoryFrontendMock.products)
+                    InventoryProductPickRow(
+                      name: p.name,
+                      sku: p.sku,
+                      selected: session.productId == p.id,
+                      stockLabel:
+                          'On Hand ${p.onHand.toStringAsFixed(0)} · Available ${p.available.toStringAsFixed(0)}',
+                      onTap: () => notifier.selectProduct(p.id),
+                    ),
+                ],
               ),
             ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: InventoryPrimaryButton(
+            InventoryFooterBar(
+              leading: const SizedBox.shrink(),
+              trailing: InventoryPrimaryButton(
                 label: 'Continue',
                 onPressed: () {
                   if (notifier.validateSelect()) notifier.setStep(1);
@@ -465,21 +507,24 @@ class _EnterStepState extends State<_EnterStep> {
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _reasonId,
-                decoration: const InputDecoration(labelText: 'Reason'),
+                decoration: inventoryInputDecoration(label: 'Reason'),
                 items: [
                   for (final r in reasons)
                     DropdownMenuItem(value: r.id, child: Text(r.name)),
                 ],
                 onChanged: (v) => setState(() => _reasonId = v),
               ),
+              const SizedBox(height: 12),
               TextField(
                 controller: _qty,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Quantity'),
+                decoration: inventoryInputDecoration(label: 'Quantity'),
               ),
+              const SizedBox(height: 12),
               TextField(
                 controller: _notes,
-                decoration: const InputDecoration(labelText: 'Notes (optional)'),
+                decoration:
+                    inventoryInputDecoration(label: 'Notes (optional)'),
               ),
             ],
           ),

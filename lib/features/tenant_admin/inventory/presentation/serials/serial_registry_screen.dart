@@ -30,6 +30,11 @@ class SerialRegistryScreen extends ConsumerWidget {
     const pageSize = TenantAdminPaginationDefaults.pageSize;
     final start = ((page - 1) * pageSize).clamp(0, filtered.length);
     final end = (start + pageSize).clamp(0, filtered.length);
+    final inStock =
+        InventoryFrontendMock.serials.where((s) => s.status == 'IN_STOCK').length;
+    final reserved = InventoryFrontendMock.serials
+        .where((s) => s.status == 'RESERVED')
+        .length;
 
     return TenantAdminPageScaffold(
       title: 'Serial Number Registry',
@@ -38,8 +43,42 @@ class SerialRegistryScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          InventoryMetricStrip(
+            cards: [
+              InventoryStatCard(
+                label: 'Total Serials',
+                value: '${InventoryFrontendMock.serials.length}',
+                subtitle: 'Across all outlets',
+                icon: Icons.pin_outlined,
+                iconColor: InventoryWorkspaceTokens.iconBlue,
+              ),
+              InventoryStatCard(
+                label: 'In Stock',
+                value: '$inStock',
+                subtitle: 'Available units',
+                icon: Icons.check_circle_outline,
+                iconColor: InventoryWorkspaceTokens.iconGreen,
+              ),
+              InventoryStatCard(
+                label: 'Reserved',
+                value: '$reserved',
+                subtitle: 'Held for orders',
+                icon: Icons.hourglass_top_outlined,
+                iconColor: InventoryWorkspaceTokens.iconOrange,
+              ),
+              const InventoryStatCard(
+                label: 'Sold',
+                value: '0',
+                subtitle: 'Visual only in this phase',
+                icon: Icons.shopping_bag_outlined,
+                iconColor: InventoryWorkspaceTokens.iconPurple,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           InventorySearchField(
             value: search,
+            hint: 'Search serial number, product, or SKU...',
             onChanged: (v) {
               ref.read(serialSearchProvider.notifier).state = v;
               ref.read(serialPageProvider.notifier).state = 1;
@@ -55,8 +94,8 @@ class SerialRegistryScreen extends ConsumerWidget {
                 TextField(
                   onChanged: (v) =>
                       ref.read(serialDraftProvider.notifier).state = v,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter a serial to validate',
+                  decoration: inventoryInputDecoration(
+                    hint: 'Enter a serial to validate',
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -93,15 +132,43 @@ class SerialRegistryScreen extends ConsumerWidget {
           else
             InventorySectionCard(
               padding: EdgeInsets.zero,
-              child: Column(
-                children: [
+              child: InventoryWorkspaceTable(
+                headers: const [
+                  'Serial Number',
+                  'Product',
+                  'Outlet',
+                  'Stock Status',
+                  'Actions',
+                ],
+                rows: [
                   for (final s in filtered.sublist(start, end))
-                    ListTile(
-                      title: Text(s.serial,
+                    [
+                      Text(s.serial,
                           style: const TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: Text('${s.productName} · ${s.locationName}'),
-                      trailing: InventoryStatusBadge(label: s.status),
-                    ),
+                      Text(s.productName,
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(s.locationName),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: InventoryStatusBadge(
+                          label: s.status == 'RESERVED'
+                              ? 'Reserved'
+                              : 'In Stock',
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Mark as Sold is not available in this phase (SERIAL_MARK_AS_SOLD_DEFERRED).',
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text('Mark as Sold'),
+                      ),
+                    ],
                 ],
               ),
             ),

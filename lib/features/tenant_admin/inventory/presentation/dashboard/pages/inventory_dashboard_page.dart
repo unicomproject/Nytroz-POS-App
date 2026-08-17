@@ -5,11 +5,11 @@ import '../../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../../presentation/widgets/tenant_admin_states.dart';
 import '../../../../presentation/providers/tenant_admin_access_provider.dart';
+import '../../../../presentation/widgets/tenant_admin_metric_card.dart';
+import '../../../../presentation/widgets/tenant_admin_status_badge.dart';
 import '../providers/inventory_dashboard_providers.dart';
 import '../widgets/inventory_activities_table.dart';
 import '../widgets/inventory_alerts_table.dart';
-import '../widgets/inventory_header.dart';
-import '../widgets/inventory_metric_cards.dart';
 import '../widgets/inventory_quick_actions.dart';
 
 class InventoryDashboardPage extends ConsumerWidget {
@@ -18,7 +18,8 @@ class InventoryDashboardPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return TenantAdminPageScaffold(
-      title: '',
+      title: 'Inventory Dashboard',
+      subtitle: 'Get a quick overview of your inventory health and take action on priority items.',
       child: LayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.maxWidth;
@@ -26,8 +27,6 @@ class InventoryDashboardPage extends ConsumerWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const InventoryHeader(),
-              const SizedBox(height: TenantAdminSpacing.lg),
               _buildMetrics(ref, width),
               const SizedBox(height: TenantAdminSpacing.lg),
               const InventoryQuickActions(),
@@ -47,33 +46,33 @@ class InventoryDashboardPage extends ConsumerWidget {
     return metricsState.when(
       data: (metrics) {
         final cards = [
-          InventoryMetricCard(
+          TenantAdminMetricCard(
             title: 'Low Stock Items',
             value: metrics.lowStockCount.toString(),
-            subtitle: 'Below reorder level',
-            iconData: Icons.warning_amber_rounded,
-            color: Colors.red,
+            subtitle: 'Reorder soon',
+            icon: Icons.warning_amber_rounded,
+            status: TenantAdminStatusType.danger,
           ),
-          InventoryMetricCard(
-            title: 'Out of Stock Items',
+          TenantAdminMetricCard(
+            title: 'Out of Stock',
             value: metrics.outOfStockCount.toString(),
-            subtitle: 'No sellable stock',
-            iconData: Icons.remove_shopping_cart_outlined,
-            color: Colors.red,
+            subtitle: 'Needs attention',
+            icon: Icons.remove_shopping_cart_outlined,
+            status: TenantAdminStatusType.danger,
           ),
-          InventoryMetricCard(
-            title: 'Near Expiry Items',
+          TenantAdminMetricCard(
+            title: 'Near Expiry',
             value: metrics.nearExpiryCount.toString(),
             subtitle: 'Within 30 days',
-            iconData: Icons.hourglass_empty_outlined,
-            color: Colors.orange,
+            icon: Icons.hourglass_empty_outlined,
+            status: TenantAdminStatusType.warning,
           ),
-          InventoryMetricCard(
+          TenantAdminMetricCard(
             title: 'Active Stock Counts',
             value: metrics.activeStockCounts.toString(),
-            subtitle: 'In progress',
-            iconData: Icons.fact_check_outlined,
-            color: Colors.green,
+            subtitle: 'Across all outlets',
+            icon: Icons.fact_check_outlined,
+            status: TenantAdminStatusType.success,
           ),
         ];
 
@@ -89,7 +88,7 @@ class InventoryDashboardPage extends ConsumerWidget {
           );
         }
 
-        if (width < 1100) {
+        if (width < 1200) {
           return Column(
             children: [
               Row(
@@ -161,7 +160,7 @@ class InventoryDashboardPage extends ConsumerWidget {
       error: (error, stack) => const Text('Failed to load activities'),
     );
 
-    if (width < 1100) {
+    if (width < 1280) {
       return Column(
         children: [
           if (showAlerts) ...[

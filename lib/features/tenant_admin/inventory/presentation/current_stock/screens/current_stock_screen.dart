@@ -10,6 +10,7 @@ import '../../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../../presentation/widgets/tenant_admin_states.dart';
 import '../../../../presentation/widgets/tenant_admin_buttons.dart';
+import '../../../../presentation/widgets/tenant_admin_search_field.dart';
 import '../../../../presentation/providers/tenant_admin_access_provider.dart';
 import '../../navigation/inventory_routes.dart';
 import '../providers/current_stock_providers.dart';
@@ -57,42 +58,15 @@ class CurrentStockScreen extends ConsumerWidget {
           // Search & Actions Row
           LayoutBuilder(
             builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 800;
+              final isCompact = constraints.maxWidth < 1100;
 
-              final searchField = SizedBox(
-                height: 40,
-                child: TextField(
-                  onChanged: (val) {
-                    ref.read(currentStockSearchProvider.notifier).state = val;
-                    ref.read(currentStockPageProvider.notifier).state = 1;
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Search by product name, SKU or scan barcode',
-                    hintStyle: (Theme.of(context).textTheme.bodySmall ??
-                            const TextStyle())
-                        .copyWith(color: TenantAdminColors.mutedText),
-                    prefixIcon: const Icon(Icons.search,
-                        size: 20, color: TenantAdminColors.mutedText),
-                    suffixIcon: const Icon(Icons.qr_code_scanner,
-                        size: 20, color: TenantAdminColors.mutedText),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: TenantAdminSpacing.md, vertical: 0),
-                    border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminSpacing.sm),
-                      borderSide:
-                          const BorderSide(color: TenantAdminColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminSpacing.sm),
-                      borderSide:
-                          const BorderSide(color: TenantAdminColors.border),
-                    ),
-                    filled: true,
-                    fillColor: TenantAdminColors.surface,
-                  ),
-                ),
+              final searchField = TenantAdminSearchField(
+                value: ref.watch(currentStockSearchProvider),
+                hint: 'Search by product name, SKU or scan barcode',
+                onChanged: (val) {
+                  ref.read(currentStockSearchProvider.notifier).state = val;
+                  ref.read(currentStockPageProvider.notifier).state = 1;
+                },
               );
 
               final actionButtons = Wrap(

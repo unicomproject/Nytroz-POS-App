@@ -22,7 +22,7 @@ class ProductInfoCard extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isSmall = constraints.maxWidth < 600;
+          final isSmall = constraints.maxWidth < 900;
 
           final productImage = Container(
             width: 100,
@@ -56,10 +56,14 @@ class ProductInfoCard extends StatelessWidget {
               // SKU row
               Row(
                 children: [
-                  Text(
-                    'SKU: ${detail.sku ?? 'N/A'}',
-                    style: const TextStyle(
-                        fontSize: 14, color: TenantAdminColors.mutedText),
+                  Flexible(
+                    child: Text(
+                      'SKU: ${detail.sku ?? 'N/A'}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 14, color: TenantAdminColors.mutedText),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   InkWell(
@@ -163,7 +167,7 @@ class ProductInfoCard extends StatelessWidget {
               const SizedBox(width: TenantAdminSpacing.xl),
               Expanded(child: productDetails),
               const SizedBox(width: TenantAdminSpacing.lg),
-              actionButtons,
+              Flexible(child: actionButtons),
             ],
           );
         },
@@ -202,28 +206,37 @@ class ProductInfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Icon(icon, size: 24, color: iconColor ?? const Color(0xFF64748B)),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: TenantAdminColors.mutedText)),
-            const SizedBox(height: 2),
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: TenantAdminColors.bodyText)),
-          ],
-        ),
-      ],
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 180),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, size: 24, color: iconColor ?? const Color(0xFF64748B)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 11, color: TenantAdminColors.mutedText)),
+                const SizedBox(height: 2),
+                Text(value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: TenantAdminColors.bodyText)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -244,41 +257,53 @@ class _StatusChip extends StatelessWidget {
     final color =
         isActive ? TenantAdminColors.success : TenantAdminColors.danger;
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: color, width: 1.5),
-          ),
-          child: Icon(isActive ? Icons.check : Icons.close,
-              size: 14, color: color),
-        ),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: TenantAdminColors.mutedText)),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(value,
-                  style: TextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 180),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: color, width: 1.5),
             ),
-          ],
-        ),
-      ],
+            child: Icon(isActive ? Icons.check : Icons.close,
+                size: 14, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 11, color: TenantAdminColors.mutedText)),
+                const SizedBox(height: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: color)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

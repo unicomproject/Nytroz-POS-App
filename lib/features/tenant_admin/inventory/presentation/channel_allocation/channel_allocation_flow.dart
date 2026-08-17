@@ -3,9 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../presentation/providers/tenant_admin_access_provider.dart';
+import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_pagination.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
+import '../../../presentation/widgets/tenant_admin_stepper_header.dart';
+import '../../../presentation/widgets/tenant_admin_metric_card.dart';
+import '../../../presentation/widgets/tenant_admin_status_badge.dart';
+import '../../../presentation/widgets/tenant_admin_data_table.dart';
+import '../../../presentation/widgets/tenant_admin_search_field.dart';
+import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../data/mock/inventory_frontend_mock.dart';
 import '../navigation/inventory_routes.dart';
 import '../widgets/inventory_shared_widgets.dart';
@@ -197,10 +204,10 @@ class ChannelAllocationDashboardScreen extends ConsumerWidget {
     return TenantAdminPageScaffold(
       title: 'Channel Stock Allocation',
       subtitle:
-          'Set channel promise limits. Allocation does not move physical on-hand stock.',
+          'Allocate available stock from outlets or warehouse to sales channels.',
       actions: [
         if (canManage)
-          InventoryPrimaryButton(
+          TenantAdminPrimaryButton(
             label: 'New Allocation',
             onPressed: () {
               ref.read(channelSessionProvider.notifier).reset();
@@ -210,36 +217,154 @@ class ChannelAllocationDashboardScreen extends ConsumerWidget {
       ],
       child: Column(
         children: [
-          InventorySearchField(
+          InventoryMetricStrip(
+            cards: const [
+              TenantAdminMetricCard(
+                title: 'Total Allocated Today',
+                value: '1,248',
+                subtitle: 'Units',
+                icon: Icons.layers_outlined,
+                status: TenantAdminStatusType.online,
+              ),
+              TenantAdminMetricCard(
+                title: 'Pending Review',
+                value: '7',
+                subtitle: 'Allocations',
+                icon: Icons.hourglass_top_outlined,
+                status: TenantAdminStatusType.warning,
+              ),
+              TenantAdminMetricCard(
+                title: 'Active Channels',
+                value: '6',
+                subtitle: 'Channels',
+                icon: Icons.hub_outlined,
+                status: TenantAdminStatusType.success,
+              ),
+              TenantAdminMetricCard(
+                title: 'Low Buffer Alerts',
+                value: '3',
+                subtitle: 'Alerts',
+                icon: Icons.warning_amber_outlined,
+                status: TenantAdminStatusType.danger,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          TenantAdminSearchField(
             value: search,
+            hint: 'Search products, allocation ref...',
             onChanged: (v) {
               ref.read(channelSearchProvider.notifier).state = v;
               ref.read(channelPageProvider.notifier).state = 1;
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           if (filtered.isEmpty)
             const TenantAdminEmptyState(
               title: 'No allocations found',
               message: 'Create a channel allocation to publish promise limits.',
             )
           else
-            InventorySectionCard(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  for (final row in filtered.sublist(start, end))
-                    ListTile(
-                      title: Text(row.$1,
-                          style: const TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: Text('${row.$2} · ${row.$3}'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => context.go(
-                        InventoryRoutes.channelDetailPath(row.$1),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final table = Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'Recent Allocations',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                ],
-              ),
+                    TenantAdminDataTable(
+                      columns: const [
+                        DataColumn(label: Text('Allocation Ref')),
+                        DataColumn(label: Text('Product')),
+                        DataColumn(label: Text('Channels')),
+                        DataColumn(label: Text('Status')),
+                        DataColumn(label: Text('Action')),
+                      ],
+                      rows: [
+                        for (final row in filtered.sublist(start, end))
+                          DataRow(
+                            cells: [
+                              DataCell(Text(row.$1,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: TenantAdminColors.info))),
+                              DataCell(Text(row.$2,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis)),
+                              DataCell(Text(row.$3,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis)),
+                              DataCell(
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: TenantAdminStatusBadge(
+                                    label: 'Completed',
+                                    status: TenantAdminStatusType.success,
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                IconButton(
+                                  onPressed: () => context.go(
+                                    InventoryRoutes.channelDetailPath(row.$1),
+                                  ),
+                                  icon: const Icon(Icons.chevron_right),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ],
+                );
+                if (constraints.maxWidth < 980) return table;
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: table),
+                    const SizedBox(width: 15),
+                    const SizedBox(
+                      width: 230,
+                      child: Column(
+                        children: [
+                          InventorySectionCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Allocation Summary',
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700)),
+                                InventorySummaryRow(
+                                    label: 'Completed', value: '12'),
+                                InventorySummaryRow(
+                                    label: 'Pending', value: '3'),
+                                InventorySummaryRow(
+                                    label: 'Draft', value: '2'),
+                                InventorySummaryRow(
+                                    label: 'Total Allocations', value: '20'),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                          InventoryNoteBanner(
+                            message:
+                                'Channel allocation does not move physical on-hand stock. It publishes promise limits for each sales channel (Model B).',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           TenantAdminPaginationBar(
             currentPage: page,
@@ -287,7 +412,7 @@ class ChannelAllocationWizardScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          InventoryStepper(steps: steps, currentIndex: session.step),
+          TenantAdminStepperHeader(steps: steps, currentStep: session.step),
           const SizedBox(height: 16),
           if (session.error != null)
             Text(session.error!,
@@ -311,17 +436,27 @@ class ChannelAllocationWizardScreen extends ConsumerWidget {
           onContinue: () {
             if (notifier.validate(0)) notifier.setStep(1);
           },
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              for (final loc in InventoryFrontendMock.locations)
-                ChoiceChip(
-                  label: Text(loc.name),
-                  selected: session.locationId == loc.id,
-                  onSelected: (_) => notifier.selectLocation(loc.id),
-                ),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final cardWidth = constraints.maxWidth < 720
+                  ? constraints.maxWidth
+                  : (constraints.maxWidth - 36) / 4;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  for (final loc in InventoryFrontendMock.locations)
+                    SizedBox(
+                      width: cardWidth.clamp(140, 220),
+                      child: InventoryLocationCard(
+                        name: loc.name,
+                        selected: session.locationId == loc.id,
+                        onTap: () => notifier.selectLocation(loc.id),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         );
       case 1:
@@ -345,24 +480,18 @@ class ChannelAllocationWizardScreen extends ConsumerWidget {
                       title: 'No products found',
                       message: 'Try another name or SKU.',
                     )
-                  : Material(
-                      color: Colors.transparent,
-                      child: RadioGroup<String>(
-                        groupValue: session.productId,
-                        onChanged: (v) {
-                          if (v != null) notifier.selectProduct(v);
-                        },
-                        child: ListView(
-                          children: [
-                            for (final p in products)
-                              RadioListTile<String>(
-                                value: p.id,
-                                title: Text(p.name),
-                                subtitle: Text(p.sku),
-                              ),
-                          ],
-                        ),
-                      ),
+                  : ListView(
+                      children: [
+                        for (final p in products)
+                          InventoryProductPickRow(
+                            name: p.name,
+                            sku: p.sku,
+                            selected: session.productId == p.id,
+                            stockLabel:
+                                'Available ${p.available.toStringAsFixed(0)}',
+                            onTap: () => notifier.selectProduct(p.id),
+                          ),
+                      ],
                     ),
             ),
             Row(
@@ -414,17 +543,28 @@ class ChannelAllocationWizardScreen extends ConsumerWidget {
           onContinue: () {
             if (notifier.validate(3)) notifier.setStep(4);
           },
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              for (final ch in InventoryFrontendMock.channels)
-                FilterChip(
-                  label: Text('${ch.name}\n${ch.subtitle}'),
-                  selected: session.selectedChannelIds.contains(ch.id),
-                  onSelected: (_) => notifier.toggleChannel(ch.id),
-                ),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final cardWidth = constraints.maxWidth < 700
+                  ? constraints.maxWidth
+                  : (constraints.maxWidth - 36) / 4;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  for (final ch in InventoryFrontendMock.channels)
+                    SizedBox(
+                      width: cardWidth.clamp(150, 220),
+                      child: InventoryChannelPickCard(
+                        name: ch.name,
+                        subtitle: ch.subtitle,
+                        selected: session.selectedChannelIds.contains(ch.id),
+                        onTap: () => notifier.toggleChannel(ch.id),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         );
       case 4:
@@ -598,17 +738,20 @@ class _QuantityStepState extends State<_QuantityStep> {
               TextField(
                 controller: _buffer,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Safety buffer'),
+                decoration:
+                    inventoryInputDecoration(label: 'Safety buffer'),
               ),
-              for (final id in widget.session.selectedChannelIds)
+              for (final id in widget.session.selectedChannelIds) ...[
+                const SizedBox(height: 12),
                 TextField(
                   controller: _limitControllers[id],
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText:
+                  decoration: inventoryInputDecoration(
+                    label:
                         '${InventoryFrontendMock.channels.firstWhere((c) => c.id == id).name} allocation limit',
                   ),
                 ),
+              ],
             ],
           ),
         ),
@@ -652,25 +795,22 @@ class ChannelAllocationDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(id,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 8),
+            Text(
+              id,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
             const Text(
               'Selected channels use sales channel names, not outlet names.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF65758D)),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             for (final ch in InventoryFrontendMock.channels.take(3))
-              ListTile(
-                title: Text(ch.name),
-                subtitle: Text(ch.subtitle),
-                trailing: const Text('40',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
-              ),
-            const Divider(),
-            const Text(
-              'Physical on-hand was not changed by this allocation (Model B).',
-              style: TextStyle(color: Color(0xFFA75100)),
+              InventorySummaryRow(label: ch.name, value: '40'),
+            const Divider(height: 20),
+            const InventoryNoteBanner(
+              message:
+                  'Physical on-hand was not changed by this allocation (Model B).',
             ),
           ],
         ),

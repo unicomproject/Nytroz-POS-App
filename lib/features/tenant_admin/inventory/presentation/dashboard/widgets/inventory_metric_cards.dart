@@ -19,33 +19,23 @@ class InventoryMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      constraints: const BoxConstraints(minHeight: 112),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFDDE4EE)),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 58,
+            height: 58,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              border: Border.all(color: color.withValues(alpha: 0.3)),
-              borderRadius: BorderRadius.circular(12),
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(13),
             ),
-            child: Center(
-              child: Icon(iconData, color: color, size: 24),
-            ),
+            child: Icon(iconData, color: color, size: 30),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -55,25 +45,31 @@ class InventoryMetricCard extends StatelessWidget {
               children: [
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF52617C),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.black,
-                    height: 1.1,
+                    fontSize: 23,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0C1833),
+                    height: 1.05,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -82,12 +78,6 @@ class InventoryMetricCard extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          const Icon(
-            Icons.chevron_right,
-            color: Colors.black,
-            size: 24,
-            weight: 800,
           ),
         ],
       ),

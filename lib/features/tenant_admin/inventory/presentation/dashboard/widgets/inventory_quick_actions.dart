@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../../presentation/widgets/tenant_admin_quick_action_card.dart';
 import '../../navigation/inventory_routes.dart';
 
 class InventoryQuickActions extends StatelessWidget {
@@ -9,32 +10,28 @@ class InventoryQuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cards = [
-      _ActionCard(
+      TenantAdminQuickActionCard(
         title: 'Current Stock',
         subtitle: 'View stock levels across outlets',
-        iconData: Icons.inventory_2_outlined,
-        color: TenantAdminColors.primary,
+        icon: Icons.inventory_2_outlined,
         onTap: () => context.go(InventoryRoutes.currentStock),
       ),
-      _ActionCard(
+      TenantAdminQuickActionCard(
         title: 'Opening Stock',
-        subtitle: 'Add opening stock for products',
-        iconData: Icons.add_box_outlined,
-        color: TenantAdminColors.info,
+        subtitle: 'Manage opening stock entries',
+        icon: Icons.add_box_outlined,
         onTap: () => context.go(InventoryRoutes.openingStock),
       ),
-      _ActionCard(
+      TenantAdminQuickActionCard(
         title: 'Stock Adjustment',
-        subtitle: 'Adjust stock for damage, missing or other reasons',
-        iconData: Icons.swap_vert_outlined,
-        color: TenantAdminColors.warning,
+        subtitle: 'Adjust stock manually',
+        icon: Icons.swap_vert_outlined,
         onTap: () => context.go(InventoryRoutes.adjustment),
       ),
-      _ActionCard(
+      TenantAdminQuickActionCard(
         title: 'Stock Count',
         subtitle: 'Perform physical stock count',
-        iconData: Icons.fact_check_outlined,
-        color: TenantAdminColors.success,
+        icon: Icons.fact_check_outlined,
         onTap: () {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -61,7 +58,7 @@ class InventoryQuickActions extends StatelessWidget {
           );
         }
 
-        if (constraints.maxWidth < 1100) {
+        if (constraints.maxWidth < 1200) {
           return Column(
             children: [
               Row(
@@ -95,96 +92,6 @@ class InventoryQuickActions extends StatelessWidget {
           ],
         );
       },
-    );
-  }
-}
-
-class _ActionCard extends StatelessWidget {
-  const _ActionCard({
-    required this.title,
-    required this.subtitle,
-    required this.iconData,
-    required this.color,
-    this.onTap,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData iconData;
-  final Color color;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap ?? () {},
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                border: Border.all(color: color.withValues(alpha: 0.3)),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Icon(iconData, color: color, size: 24),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF64748B),
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.chevron_right,
-              color: Colors.black,
-              size: 24,
-              weight: 800,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
