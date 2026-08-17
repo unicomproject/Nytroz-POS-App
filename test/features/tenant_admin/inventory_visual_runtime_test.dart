@@ -60,7 +60,7 @@ void main() {
           FlutterError.onError = (details) {
             final message = details.exceptionAsString();
             if (message.contains('overflowed')) {
-              overflows.add(message.split('\n').first); print("PADDING TOP: ${MediaQueryData.fromView(tester.view).padding.top}"); print(details.toString());
+              overflows.add(message.split('\n').first);
             } else {
               previousOnError?.call(details);
             }
