@@ -29,6 +29,8 @@ class CashMovement {
     required this.amount,
     required this.dateTime,
     required this.userName,
+    this.direction = '',
+    this.currencyCode = '',
     this.reason,
     this.note,
   });
@@ -38,6 +40,8 @@ class CashMovement {
   final double amount;
   final DateTime dateTime;
   final String userName;
+  final String direction;
+  final String currencyCode;
   final String? reason;
   final String? note;
 }

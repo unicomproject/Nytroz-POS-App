@@ -42,6 +42,7 @@ class ApiEndpoints {
       '/api/v1/pos/hardware/drawer/operations/history';
   static const posCashDrawerSummary = '/api/v1/pos/cash-drawer/summary';
   static const posCashDrawerMovements = '/api/v1/pos/cash-drawer/movements';
+  static const posCashMovementTypes = '/api/v1/pos/cash-movement-types';
   static const posProducts = '/api/v1/pos/products';
   static const posCatalogCategories = '/api/v1/pos/catalog/categories';
   static const posCheckoutSummary = '/api/v1/pos/checkout/summary';

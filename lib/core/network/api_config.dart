@@ -78,7 +78,7 @@ class ApiConfig {
             'A physical Android device cannot use the emulator address '
             '10.0.2.2. Start Flutter with '
             '--dart-define=PC_LAN_IP=<PC_LAN_IP> or '
-            '--dart-define=API_BASE_URL=http://<PC_LAN_IP>:5150.',
+            '--dart-define=API_BASE_URL=http://<PC_LAN_IP>:$kBackendHttpPort.',
           );
         }
         return _androidEmulatorDevelopmentBaseUrl;

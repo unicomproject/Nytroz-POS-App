@@ -118,7 +118,7 @@ class _PrintReceiptDialogState extends ConsumerState<PrintReceiptDialog> {
               padding: const EdgeInsets.symmetric(
                 horizontal: TenantAdminSpacing.md,
               ),
-              child: ThermalReceiptPreview(
+              child: ThermalReceiptPreview.fromPaymentSuccess(
                 successData: successData,
                 cashierName: cashierName,
                 sessionContext: sessionContext,

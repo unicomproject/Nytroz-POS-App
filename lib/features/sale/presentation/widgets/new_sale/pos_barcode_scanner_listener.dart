@@ -12,6 +12,7 @@ class PosBarcodeScannerListener extends StatefulWidget {
     this.minimumBarcodeLength = 4,
     this.maximumBarcodeLength = 128,
     this.maximumInterKeyDelay = const Duration(milliseconds: 120),
+    this.inputSuffix = PosScannerSuffix.enter,
     this.barcodeValidator,
     this.onRejectedBarcode,
     this.onScanRejected,
@@ -25,6 +26,7 @@ class PosBarcodeScannerListener extends StatefulWidget {
   final int minimumBarcodeLength;
   final int maximumBarcodeLength;
   final Duration maximumInterKeyDelay;
+  final PosScannerSuffix inputSuffix;
   final bool Function(String barcode)? barcodeValidator;
   final ValueChanged<String>? onRejectedBarcode;
   final void Function(PosHidScanRejection reason, String value)? onScanRejected;
@@ -52,7 +54,8 @@ class _PosBarcodeScannerListenerState extends State<PosBarcodeScannerListener> {
       _scanner.attach();
     } else if (oldWidget.minimumBarcodeLength != widget.minimumBarcodeLength ||
         oldWidget.maximumBarcodeLength != widget.maximumBarcodeLength ||
-        oldWidget.maximumInterKeyDelay != widget.maximumInterKeyDelay) {
+        oldWidget.maximumInterKeyDelay != widget.maximumInterKeyDelay ||
+        oldWidget.inputSuffix != widget.inputSuffix) {
       _scanner.dispose();
       _createScanner();
     }
@@ -61,6 +64,7 @@ class _PosBarcodeScannerListenerState extends State<PosBarcodeScannerListener> {
   void _createScanner() {
     _scanner = PosHidScannerInputService(
       configuration: PosHidScannerConfiguration(
+        inputSuffix: widget.inputSuffix,
         minimumBarcodeLength: widget.minimumBarcodeLength,
         maximumBarcodeLength: widget.maximumBarcodeLength,
         interCharacterTimeout: widget.maximumInterKeyDelay,

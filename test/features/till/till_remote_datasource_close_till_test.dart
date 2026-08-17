@@ -21,6 +21,7 @@ void main() {
                   'data': {
                     'tillSession': {
                       'id': 'session-1',
+                      'outletId': 'outlet-1',
                       'tillId': 'till-1',
                       'openingFloat': 0,
                       'expectedCash': 100,
@@ -40,11 +41,10 @@ void main() {
       );
     final datasource = TillRemoteDatasource(dio);
 
-    await datasource.closeTill(
+    final result = await datasource.closeTill(
       CloseTillForm(
         deviceContext: _deviceContext(),
         countedCash: 90,
-        expectedCash: 100,
         mismatchReason: 'Cash short',
         closingNote: 'End of shift',
       ),
@@ -55,12 +55,58 @@ void main() {
       'deviceId',
       'tillId',
       'countedCash',
-      'expectedCash',
       'mismatchReason',
       'closingNote',
     });
     expect(capturedPayload!.containsKey('managerPin'), isFalse);
     expect(capturedPayload!.containsKey('pin'), isFalse);
+    expect(capturedPayload!.containsKey('expectedCash'), isFalse);
+    expect(result.outletId, 'outlet-1');
+  });
+
+  test('current session maps backend financial and display fields', () async {
+    final dio = Dio(BaseOptions(baseUrl: 'http://localhost'))
+      ..interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) => handler.resolve(
+            Response<Map<String, dynamic>>(
+              requestOptions: options,
+              statusCode: 200,
+              data: {
+                'data': {
+                  'tillSession': {
+                    'id': 'session-1',
+                    'outletId': 'outlet-1',
+                    'tillId': 'till-1',
+                    'openedDeviceId': 'device-1',
+                    'openingFloat': 25,
+                    'expectedCash': 125,
+                    'currencyCode': 'USD',
+                    'tillName': 'Backend Till',
+                    'openedByName': 'Backend Cashier',
+                    'status': 'open',
+                    'openedAt': '2026-07-13T08:00:00Z',
+                  },
+                },
+              },
+            ),
+          ),
+        ),
+      );
+
+    final result = await TillRemoteDatasource(dio).getCurrentSession(
+      OpenTillForm(
+        deviceContext: _deviceContext(),
+        openingFloat: 0,
+        openingNote: '',
+      ),
+    );
+
+    expect(result, isNotNull);
+    expect(result!.currencyCode, 'USD');
+    expect(result.expectedCash, 125);
+    expect(result.tillName, 'Backend Till');
+    expect(result.openedByName, 'Backend Cashier');
   });
 }
 

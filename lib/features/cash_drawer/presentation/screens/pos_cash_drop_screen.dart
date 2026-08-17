@@ -9,6 +9,7 @@ import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../till/presentation/providers/till_provider.dart';
 import '../providers/cash_drawer_provider.dart';
 import '../providers/cash_drop_provider.dart';
+import '../widgets/cash_drawer_section_card.dart';
 import '../widgets/cash_drop_bottom_actions.dart';
 import '../widgets/cash_drop_form_card.dart';
 import '../widgets/cash_drop_page_header.dart';
@@ -36,6 +37,8 @@ class _PosCashDropScreenState extends ConsumerState<PosCashDropScreen> {
       _amountController.clear();
       _noteController.clear();
       _managerPinController.clear();
+      ref.read(cashDropCatalogProvider.notifier).load();
+      ref.read(cashDrawerProvider.notifier).refresh();
     });
   }
 
@@ -80,28 +83,33 @@ class _PosCashDropScreenState extends ConsumerState<PosCashDropScreen> {
         child: Padding(
           padding:
               TenantAdminInsets.pageForWidth(MediaQuery.sizeOf(context).width),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              CashDropPageHeader(onBack: _goBack),
-              const SizedBox(height: TenantAdminSpacing.xl),
-              const _TillRequiredMessage(),
-              const Spacer(),
-              CashDropBottomActions(
-                canConfirm: false,
-                isLoading: false,
-                onCancel: _goBack,
-                onConfirm: () {},
-              ),
-            ],
+          child: CashDrawerSectionCard(
+            expand: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const CashDropPageHeader(),
+                const SizedBox(height: TenantAdminSpacing.xl),
+                const _TillRequiredMessage(),
+                const Spacer(),
+                CashDropBottomActions(
+                  canConfirm: false,
+                  isLoading: false,
+                  onCancel: _goBack,
+                  onConfirm: () {},
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
     final availableCash = summary.currentExpectedCash;
+    final catalog = ref.watch(cashDropCatalogProvider);
     final canConfirm = formState.hasValidAmount &&
-        (formState.reason?.isNotEmpty == true) &&
+        formState.hasSelectedMovementType &&
+        catalog.status == CashDropCatalogStatus.ready &&
         (formState.parsedAmount ?? 0) <= availableCash;
 
     return ColoredBox(
@@ -111,70 +119,119 @@ class _PosCashDropScreenState extends ConsumerState<PosCashDropScreen> {
           final padding = TenantAdminInsets.pageForWidth(constraints.maxWidth);
           final useSideBySide =
               constraints.maxWidth >= TenantAdminBreakpoints.tablet;
+          final useTightTabletLayout =
+              useSideBySide && constraints.maxHeight < 650;
+          final sectionGap = useTightTabletLayout
+              ? TenantAdminSpacing.sm
+              : TenantAdminSpacing.md;
 
           return Padding(
-            padding: padding,
+            padding: EdgeInsets.fromLTRB(
+              padding.left > 16 ? 16 : padding.left,
+              padding.top > 12 ? 12 : padding.top,
+              padding.right > 16 ? 16 : padding.right,
+              padding.bottom > 12 ? 12 : padding.bottom,
+            ),
             child: SizedBox.expand(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  CashDropPageHeader(onBack: _goBack),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  CashDropTillInfoBar(summary: summary),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: useSideBySide
-                          ? Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+              child: CashDrawerSectionCard(
+                padding: EdgeInsets.all(
+                  useTightTabletLayout
+                      ? TenantAdminSpacing.md
+                      : constraints.maxWidth >= TenantAdminBreakpoints.tablet
+                          ? TenantAdminSpacing.lg
+                          : TenantAdminSpacing.md,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const CashDropPageHeader(),
+                    SizedBox(height: sectionGap),
+                    CashDropTillInfoBar(
+                      summary: summary,
+                      compact: useTightTabletLayout,
+                    ),
+                    SizedBox(height: sectionGap),
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, bodyConstraints) {
+                          if (useSideBySide) {
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Expanded(
-                                  flex: 3,
+                                  flex: 5,
                                   child: CashDropFormCard(
                                     formKey: _formKey,
                                     amountController: _amountController,
                                     noteController: _noteController,
                                     managerPinController: _managerPinController,
                                     availableCash: availableCash,
+                                    currencyCode: summary.currencyCode,
+                                    expand: true,
+                                    compact: true,
+                                    tight: useTightTabletLayout,
                                   ),
                                 ),
-                                const SizedBox(width: TenantAdminSpacing.lg),
+                                const SizedBox(width: TenantAdminSpacing.md),
                                 Expanded(
-                                  flex: 2,
+                                  flex: 3,
                                   child: CashDropSummaryCard(
                                     currentExpectedCash: availableCash,
                                     currencyCode: summary.currencyCode,
+                                    expand: true,
+                                    compact: true,
+                                    tight: useTightTabletLayout,
                                   ),
                                 ),
                               ],
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                CashDropSummaryCard(
-                                  currentExpectedCash: availableCash,
-                                  currencyCode: summary.currencyCode,
+                            );
+                          }
+
+                          return ClipRect(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.topCenter,
+                              child: SizedBox(
+                                width: bodyConstraints.maxWidth,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    CashDropSummaryCard(
+                                      currentExpectedCash: availableCash,
+                                      currencyCode: summary.currencyCode,
+                                      compact: true,
+                                    ),
+                                    const SizedBox(
+                                      height: TenantAdminSpacing.md,
+                                    ),
+                                    CashDropFormCard(
+                                      formKey: _formKey,
+                                      amountController: _amountController,
+                                      noteController: _noteController,
+                                      managerPinController:
+                                          _managerPinController,
+                                      availableCash: availableCash,
+                                      currencyCode: summary.currencyCode,
+                                      compact: true,
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: TenantAdminSpacing.lg),
-                                CashDropFormCard(
-                                  formKey: _formKey,
-                                  amountController: _amountController,
-                                  noteController: _noteController,
-                                  managerPinController: _managerPinController,
-                                  availableCash: availableCash,
-                                ),
-                              ],
+                              ),
                             ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  CashDropBottomActions(
-                    canConfirm: canConfirm,
-                    isLoading: isSubmitting,
-                    onCancel: _goBack,
-                    onConfirm: _submit,
-                  ),
-                ],
+                    SizedBox(height: sectionGap),
+                    CashDropBottomActions(
+                      canConfirm: canConfirm,
+                      isLoading: isSubmitting,
+                      onCancel: _goBack,
+                      onConfirm: _submit,
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -196,15 +253,23 @@ class _PosCashDropScreenState extends ConsumerState<PosCashDropScreen> {
       return;
     }
 
+    final formController = ref.read(cashDropFormProvider.notifier);
     final formState = ref.read(cashDropFormProvider);
     final amount = formState.parsedAmount;
-    if (amount == null || amount <= 0) {
+    final movementTypeId = formState.selectedMovementTypeId?.trim();
+    if (amount == null || amount <= 0 || movementTypeId == null) {
       return;
     }
 
+    if (ref.read(cashDrawerProvider).isSubmitting) {
+      return;
+    }
+
+    final requestId = formController.ensurePendingRequestId();
     final success = await ref.read(cashDrawerProvider.notifier).recordCashDrop(
           amount: amount,
-          reason: formState.reason,
+          movementTypeId: movementTypeId,
+          requestId: requestId,
           note: formState.note,
         );
 
@@ -213,6 +278,10 @@ class _PosCashDropScreenState extends ConsumerState<PosCashDropScreen> {
     }
 
     if (success) {
+      formController.reset();
+      _amountController.clear();
+      _noteController.clear();
+      _managerPinController.clear();
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(

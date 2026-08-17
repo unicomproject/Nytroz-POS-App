@@ -89,6 +89,10 @@ class CompletedSalePrintController
   int _auditSubmissionCount = 0;
   bool _recovering = false;
 
+  /// Exactly-once **original** print for a completed sale.
+  ///
+  /// Used by checkout auto-print and Payment Success "Print Receipt".
+  /// Safe against duplicate triggers/rebuilds for the same `saleId`.
   Future<void> printAutomatically(CompletedSaleReceipt receipt) async {
     if (!_automaticOperations.add(receipt.saleId)) {
       developer.log(
@@ -132,6 +136,21 @@ class CompletedSalePrintController
     final receipt = state.receipt;
     if (receipt == null || !state.canRetryPrint) return;
     await _print(receipt, requestId: _newRequestId(), isRetry: true);
+  }
+
+  /// Deliberate second physical print from Payment Success after original
+  /// succeeded. Uses a new reprint request identity (not original).
+  Future<void> printAgainFromPaymentSuccess() async {
+    final receipt = state.receipt;
+    if (receipt == null || state.status != CompletedSalePrintStatus.printed) {
+      return;
+    }
+    await printAuthorizedReprint(
+      receipt: receipt,
+      reprintOperationId: _newRequestId(),
+      reasonCode: 'payment_success_print_again',
+      reasonNote: 'Cashier requested another copy from Payment Success.',
+    );
   }
 
   Future<void> printAuthorizedReprint({

@@ -8,8 +8,11 @@ import '../../../../device_activation/presentation/providers/device_activation_p
 import '../../../device_configuration/models/pos_hardware_models.dart';
 import '../../config/pos_device_printer_config_store.dart';
 import '../../models/local_print_agent_models.dart';
+import '../../models/pos_device_printer_config.dart';
+import '../../models/printer_exception.dart';
 import '../../recovery/drawer_operation.dart';
 import '../../recovery/drawer_operation_store.dart';
+import '../../transports/cash_drawer_transport.dart';
 import 'dart:developer' as developer;
 import 'local_print_agent_controller.dart';
 
@@ -90,6 +93,8 @@ class CashDrawerState {
 }
 
 class CashDrawerController extends Notifier<CashDrawerState> {
+  final Set<String> _inFlightAutoOpenIds = <String>{};
+
   String get _deviceId =>
       ref.read(deviceActivationProvider).deviceContext?.deviceId.trim() ?? '';
 
@@ -269,57 +274,109 @@ class CashDrawerController extends Notifier<CashDrawerState> {
     );
 
     try {
-      // 1. Create Hardware Test Operation in backend
+      final config = state.config;
+      final authoritative = state.authoritativeConfiguration;
+      if (config == null || authoritative == null) {
+        state = state.copyWith(
+          status: CashDrawerUiStatus.error,
+          message:
+              'Save an authoritative cash drawer configuration before testing.',
+        );
+        return;
+      }
+
+      // 1. Create Hardware Test Operation in backend (typed contract)
       final repo = ref.read(posHardwareRepositoryProvider);
+      final testRequestId = GuidGenerator.generate();
       final testOp = await repo.createTest({
+        'requestId': testRequestId,
         'posDeviceId': _deviceId,
+        'hardwareConfigurationId': authoritative.configurationId,
         'hardwareType': 'cashDrawer',
         'testType': 'drawerPulse',
+        'configurationVersion': authoritative.configurationVersion,
       });
 
-      // 2. Register Drawer Operation in backend
+      // 2. Register Drawer Operation in backend (non-financial hardwareTest)
       final dio = ref.read(appDioProvider);
-      final registerRes = await dio.post<Map<String, dynamic>>(
-        ApiEndpoints.posDrawerOperations,
-        data: {
-          'requestId': testOp.requestId,
-          'posDeviceId': _deviceId,
-          'drawerPurpose': 'hardwareTest',
-          'reason': 'Hardware test pulse',
-        },
-      );
+      Map<String, dynamic>? drawerOp;
+      try {
+        final registerRes = await dio.post<Map<String, dynamic>>(
+          ApiEndpoints.posDrawerOperations,
+          data: {
+            'requestId': testOp.requestId,
+            'posDeviceId': _deviceId,
+            'drawerPurpose': 'hardwareTest',
+            'reason': 'Hardware test pulse',
+          },
+        );
+        drawerOp = registerRes.data?['data'] as Map<String, dynamic>?;
+      } on DioException catch (error) {
+        final code = error.response?.data is Map
+            ? (error.response!.data as Map)['code']?.toString()
+            : null;
+        if (code == 'pos_drawer.till_session_not_open' ||
+            code == 'pos_drawer.till_not_assigned') {
+          throw const PosHardwareApiException(
+            'pos_drawer.till_session_not_open',
+            'Open an active till session before running the cash drawer hardware test.',
+          );
+        }
+        rethrow;
+      }
 
-      final drawerOp = registerRes.data?['data'] as Map<String, dynamic>;
-      final drawerOpId = drawerOp['operationId']?.toString() ?? '';
+      final drawerOpId = drawerOp?['operationId']?.toString() ?? '';
+      if (drawerOpId.isEmpty) {
+        throw const PosHardwareApiException(
+          'pos_drawer.register_failed',
+          'Cash drawer test could not be registered.',
+        );
+      }
+
+      final recoveryOp = DrawerOperation(
+        operationId: drawerOpId,
+        requestId: testOp.requestId,
+        posDeviceId: _deviceId,
+        drawerPurpose: 'hardwareTest',
+        state: DrawerOperationState.opening,
+        createdAt: DateTime.now().toUtc(),
+        updatedAt: DateTime.now().toUtc(),
+        reason: 'Hardware test pulse',
+        drawerPort: config.drawerPort,
+        pulseOnMilliseconds: config.pulseOnMilliseconds,
+        pulseOffMilliseconds: config.pulseOffMilliseconds,
+        linkedReceiptPrinterId: config.linkedReceiptPrinterId,
+      );
+      await _persist(recoveryOp);
 
       state = state.copyWith(
         status: CashDrawerUiStatus.opening,
-        message: 'Sending pulse to Local Print Agent…',
+        message: 'Sending drawer pulse…',
         activeTest: testOp,
         activeDrawerOpId: drawerOpId,
         activeTestSet: true,
         activeDrawerOpIdSet: true,
       );
 
-      // 3. Load linked printer config to get Agent URL/Key
+      // 3. Load linked printer config (USB / Bluetooth / LocalPrintAgent)
       final printerConfig =
           await ref.read(posDevicePrinterConfigStoreProvider).load(_deviceId);
-      if (printerConfig == null ||
-          printerConfig.agentBaseUrl == null ||
-          printerConfig.localApiKey == null) {
-        throw Exception(
-            'Linked printer is not configured or missing Agent URL/Key.');
+      if (!_printerSupportsDrawerPulse(printerConfig)) {
+        throw const PosHardwareApiException(
+          'pos_drawer.printer_unavailable',
+          'Linked receipt printer is not configured for cash drawer pulse.',
+        );
       }
 
-      // 4. Pulse the drawer via Local Print Agent client
-      final client = ref.read(localPrintAgentClientProvider);
-      await client.openDrawer(
-        printerConfig,
-        LocalPrintAgentDrawerOpenRequest(
+      // 4. Pulse via typed CashDrawerTransport (never via receipt print)
+      await _pulseConfiguredDrawer(
+        printerConfig: printerConfig!,
+        request: CashDrawerPulseRequest(
           requestId: testOp.requestId,
           drawerOperationId: drawerOpId,
           purpose: LocalPrintAgentDrawerPurpose.hardwareTest,
-          printerName: printerConfig.agentPrinterName ?? 'POSPrinter',
+          printerName:
+              printerConfig.agentPrinterName ?? printerConfig.displayName,
           drawerPort: config.drawerPort,
           pulseOnMilliseconds: config.pulseOnMilliseconds,
           pulseOffMilliseconds: config.pulseOffMilliseconds,
@@ -330,16 +387,21 @@ class CashDrawerController extends Notifier<CashDrawerState> {
         ),
       );
 
-      state = state.copyWith(
-        status: CashDrawerUiStatus.agentAccepted,
-        message: 'Agent accepted request. Did the drawer physically open?',
+      await _persist(
+        recoveryOp.copyWith(state: DrawerOperationState.agentAccepted),
       );
 
-      // 5. Finalize Cash Drawer Operation on backend
+      state = state.copyWith(
+        status: CashDrawerUiStatus.agentAccepted,
+        message:
+            'Transport accepted pulse. Did the cash drawer physically open?',
+      );
+
+      // 5. Non-terminal finalize — physical confirmation still required
       await dio.put<dynamic>(
         ApiEndpoints.posDrawerFinalize(drawerOpId),
         data: {
-          'status': 'OPENED',
+          'status': 'AGENT_ACCEPTED',
           'resultCategory': 'SUCCESS',
           'agentAccepted': true,
           'physicalConfirmation': null,
@@ -348,12 +410,45 @@ class CashDrawerController extends Notifier<CashDrawerState> {
 
       state = state.copyWith(
         status: CashDrawerUiStatus.awaitingPhysicalConfirmation,
-        message: 'Awaiting user physical confirmation…',
+        message: 'Awaiting operator physical confirmation…',
       );
     } catch (e) {
+      final drawerOpId = state.activeDrawerOpId;
+      final activeTest = state.activeTest;
+      if (drawerOpId != null && drawerOpId.isNotEmpty) {
+        try {
+          final dio = ref.read(appDioProvider);
+          final failureState = _durableFailureState(e);
+          await dio.put<dynamic>(
+            ApiEndpoints.posDrawerFinalize(drawerOpId),
+            data: {
+              'status': failureState == DrawerOperationState.unknown
+                  ? 'UNKNOWN'
+                  : 'FAILED',
+              'resultCategory': 'FAILED',
+              'agentAccepted': false,
+              'physicalConfirmation': null,
+              'failureCategory': _safeFailureCategory(e),
+            },
+          );
+        } catch (_) {}
+      }
+      if (activeTest != null) {
+        try {
+          await ref.read(posHardwareRepositoryProvider).submitResult(
+            activeTest.testId,
+            {
+              'status': 'FAILED',
+              'resultCategory': 'drawer_unknown',
+              'safeMessage': _safeApiError(e),
+              'physicalConfirmation': false,
+            },
+          );
+        } catch (_) {}
+      }
       state = state.copyWith(
         status: CashDrawerUiStatus.error,
-        message: 'Test pulse failed: $e',
+        message: 'Test pulse failed: ${_safeApiError(e)}',
       );
     }
   }
@@ -364,10 +459,73 @@ class CashDrawerController extends Notifier<CashDrawerState> {
     state = state.copyWith(recoveryOperations: list);
   }
 
+  String _safeApiError(Object error) {
+    if (error is PosHardwareApiException) {
+      return error.message.trim().isEmpty
+          ? 'Cash drawer hardware request failed.'
+          : error.message;
+    }
+    if (error is LocalPrintAgentException) return error.message;
+    if (error is PrinterException) return error.message;
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map) {
+        final code = data['code']?.toString();
+        final message = data['message']?.toString();
+        if (message != null && message.trim().isNotEmpty) {
+          return code == null || code.isEmpty ? message : '$code: $message';
+        }
+      }
+      final status = error.response?.statusCode;
+      if (status == 400) {
+        return 'Drawer request was rejected. Check configuration and try again.';
+      }
+      if (status == 403) {
+        return 'Permission denied for cash drawer operation.';
+      }
+      if (status == 409) {
+        return 'This drawer operation was already completed.';
+      }
+      if (status == 422) {
+        return 'Drawer operation is not allowed for the current till/policy.';
+      }
+      return 'Drawer request failed (HTTP $status).';
+    }
+    return error.toString();
+  }
+
+  Future<CashDrawerPulseResult> _pulseConfiguredDrawer({
+    required PosDevicePrinterConfig printerConfig,
+    required CashDrawerPulseRequest request,
+  }) {
+    final transport = CashDrawerTransport(
+      localPrintAgentClient: ref.read(localPrintAgentClientProvider),
+    );
+    return transport.open(printerConfig, request);
+  }
+
+  bool _printerSupportsDrawerPulse(PosDevicePrinterConfig? config) {
+    if (config == null || !config.enabled) return false;
+    return switch (config.connectionType) {
+      PrinterConnectionType.localPrintAgent =>
+        (config.agentBaseUrl?.trim().isNotEmpty ?? false) &&
+            (config.localApiKey?.trim().isNotEmpty ?? false),
+      PrinterConnectionType.usb =>
+        config.usbVendorId != null && config.usbProductId != null,
+      PrinterConnectionType.bluetooth =>
+        (config.bluetoothAddress?.trim().isNotEmpty ?? false),
+      _ => false,
+    };
+  }
+
   DrawerOperationState _durableFailureState(Object error) {
     if (error is LocalPrintAgentException &&
         (error.type == LocalPrintAgentFailureType.timeout ||
             error.type == LocalPrintAgentFailureType.unknown)) {
+      return DrawerOperationState.unknown;
+    }
+    if (error is PrinterException &&
+        (error.code == 'TIMEOUT' || error.code == 'PARTIAL_WRITE')) {
       return DrawerOperationState.unknown;
     }
     return DrawerOperationState.failed;
@@ -375,13 +533,22 @@ class CashDrawerController extends Notifier<CashDrawerState> {
 
   String _safeFailureCategory(Object? error) {
     if (error is LocalPrintAgentException) return error.type.name;
+    if (error is PrinterException) return error.code;
     return error == null ? 'none' : 'unknown';
   }
 
   String _messageFor(Object? error) {
     if (error is LocalPrintAgentException) return error.message;
+    if (error is PrinterException) return error.message;
     return error?.toString() ?? 'Drawer pulse failed.';
   }
+
+  bool _isTerminalPulseState(DrawerOperationState state) =>
+      state == DrawerOperationState.opened ||
+      state == DrawerOperationState.agentAccepted ||
+      state == DrawerOperationState.cancelled ||
+      state == DrawerOperationState.unknown ||
+      state == DrawerOperationState.failed;
 
   Future<void> confirmPhysicalOpen(bool success) async {
     final activeTest = state.activeTest;
@@ -409,10 +576,10 @@ class CashDrawerController extends Notifier<CashDrawerState> {
         },
       );
 
-      // 2. Submit hardware test log result
+      // 2. Submit hardware test log result (canonical result categories)
       await repo.submitResult(activeTest.testId, {
         'status': success ? 'PASSED' : 'FAILED',
-        'resultCategory': success ? 'SUCCESS' : 'FAILURE',
+        'resultCategory': success ? 'drawer_opened' : 'drawer_did_not_open',
         'safeMessage':
             success ? 'Physical open confirmed.' : 'Physical open failed.',
         'physicalConfirmation': success,
@@ -430,7 +597,7 @@ class CashDrawerController extends Notifier<CashDrawerState> {
     } catch (e) {
       state = state.copyWith(
         status: CashDrawerUiStatus.error,
-        message: 'Failed to submit physical confirmation: $e',
+        message: 'Failed to submit physical confirmation: ${_safeApiError(e)}',
       );
     }
   }
@@ -497,17 +664,14 @@ class CashDrawerController extends Notifier<CashDrawerState> {
       state = state.copyWith(
           status: CashDrawerUiStatus.opening, message: 'Opening drawer…');
 
-      // Load printer config
       final printerConfig =
           await ref.read(posDevicePrinterConfigStoreProvider).load(_deviceId);
       final config = state.config;
 
-      if (config == null ||
-          printerConfig == null ||
-          printerConfig.agentBaseUrl == null ||
-          printerConfig.localApiKey == null) {
+      if (config == null || !_printerSupportsDrawerPulse(printerConfig)) {
         throw Exception(
-            'Receipt printer or cash drawer configuration missing.');
+          'Receipt printer or cash drawer configuration missing.',
+        );
       }
 
       var operation = DrawerOperation(
@@ -525,15 +689,14 @@ class CashDrawerController extends Notifier<CashDrawerState> {
       );
       await _persist(operation);
 
-      // Pulse drawer via Print Agent
-      final client = ref.read(localPrintAgentClientProvider);
-      await client.openDrawer(
-        printerConfig,
-        LocalPrintAgentDrawerOpenRequest(
+      await _pulseConfiguredDrawer(
+        printerConfig: printerConfig!,
+        request: CashDrawerPulseRequest(
           requestId: requestId,
           drawerOperationId: drawerOpId,
           purpose: LocalPrintAgentDrawerPurpose.manualNoSale,
-          printerName: printerConfig.agentPrinterName ?? 'POSPrinter',
+          printerName:
+              printerConfig.agentPrinterName ?? printerConfig.displayName,
           drawerPort: config.drawerPort,
           pulseOnMilliseconds: config.pulseOnMilliseconds,
           pulseOffMilliseconds: config.pulseOffMilliseconds,
@@ -544,58 +707,95 @@ class CashDrawerController extends Notifier<CashDrawerState> {
         ),
       );
 
-      operation = operation.copyWith(state: DrawerOperationState.opened);
+      // Transport accept ≠ physical open confirmation.
+      operation = operation.copyWith(state: DrawerOperationState.agentAccepted);
       await _persist(operation);
 
-      // Finalize Cash Drawer Operation on backend
       await dio.put<dynamic>(
         ApiEndpoints.posDrawerFinalize(drawerOpId),
         data: {
-          'status': 'OPENED',
+          'status': 'AGENT_ACCEPTED',
           'resultCategory': 'SUCCESS',
           'agentAccepted': true,
-          'physicalConfirmation': true,
+          'physicalConfirmation': null,
         },
       );
 
       state = state.copyWith(
-          status: CashDrawerUiStatus.success,
-          message: 'Drawer opened successfully.');
+        status: CashDrawerUiStatus.success,
+        message:
+            'Drawer pulse accepted by transport. Confirm physical open if required.',
+      );
       await load();
       return true;
     } on DioException catch (e) {
-      final body = e.response?.data;
-      final map = body is Map ? Map<String, dynamic>.from(body) : const {};
-      final message = map['message']?.toString() ?? 'Failed to open drawer: $e';
-      state =
-          state.copyWith(status: CashDrawerUiStatus.error, message: message);
+      state = state.copyWith(
+          status: CashDrawerUiStatus.error, message: _safeApiError(e));
       return false;
     } catch (e) {
       state = state.copyWith(
           status: CashDrawerUiStatus.error,
-          message: 'Failed to open drawer: $e');
+          message: 'Failed to open drawer: ${_safeApiError(e)}');
       return false;
     }
   }
 
-  // Trigger auto-open drawer for completed cash checkout
   Future<void> triggerAutoOpenForCheckout({
     required String drawerOperationId,
     required String purposeStr,
     required Map<String, dynamic> drawerSettingsJson,
     required String businessReferenceId,
+    String? drawerRequestId,
+  }) async {
+    if (!_inFlightAutoOpenIds.add(drawerOperationId)) {
+      developer.log(
+        'Cash drawer auto-trigger already in flight. operationId=$drawerOperationId',
+        name: 'pos.drawer',
+      );
+      return;
+    }
+
+    try {
+      await _triggerAutoOpenForCheckoutBody(
+        drawerOperationId: drawerOperationId,
+        drawerRequestId: drawerRequestId,
+        purposeStr: purposeStr,
+        drawerSettingsJson: drawerSettingsJson,
+        businessReferenceId: businessReferenceId,
+      );
+    } finally {
+      _inFlightAutoOpenIds.remove(drawerOperationId);
+    }
+  }
+
+  Future<void> _triggerAutoOpenForCheckoutBody({
+    required String drawerOperationId,
+    required String purposeStr,
+    required Map<String, dynamic> drawerSettingsJson,
+    required String businessReferenceId,
+    String? drawerRequestId,
   }) async {
     final store = ref.read(drawerOperationStoreProvider);
     final existing =
         (await store.load()).where((x) => x.operationId == drawerOperationId);
     if (existing.isNotEmpty) {
       final localState = existing.first.state;
-      if (localState == DrawerOperationState.opened ||
-          localState == DrawerOperationState.cancelled ||
-          localState == DrawerOperationState.unknown) {
+      if (_isTerminalPulseState(localState)) {
         developer.log(
             'Cash drawer auto-trigger already processed. operationId=$drawerOperationId, state=${localState.name}',
             name: 'pos.drawer');
+        return;
+      }
+      if (localState == DrawerOperationState.opening) {
+        // Prior attempt left uncertain state — never blind replay.
+        await _persist(
+          existing.first.copyWith(
+            state: DrawerOperationState.unknown,
+            failureCategory: 'uncertain_inflight',
+            failureMessage:
+                'Prior drawer pulse outcome unknown after restart. Confirm physically; do not auto-replay.',
+          ),
+        );
         return;
       }
     }
@@ -614,9 +814,14 @@ class CashDrawerController extends Notifier<CashDrawerState> {
         ? (drawerSettingsJson['pulseOffMilliseconds'] as num).toInt()
         : 200;
 
+    final pulseRequestId =
+        (drawerRequestId != null && drawerRequestId.trim().isNotEmpty)
+            ? drawerRequestId.trim()
+            : drawerOperationId;
+
     var operation = DrawerOperation(
       operationId: drawerOperationId,
-      requestId: drawerOperationId, // Idempotent!
+      requestId: pulseRequestId,
       posDeviceId: _deviceId,
       drawerPurpose: purposeStr,
       state: DrawerOperationState.opening,
@@ -632,41 +837,39 @@ class CashDrawerController extends Notifier<CashDrawerState> {
     try {
       final printerConfig =
           await ref.read(posDevicePrinterConfigStoreProvider).load(_deviceId);
-      if (printerConfig == null ||
-          printerConfig.agentBaseUrl == null ||
-          printerConfig.localApiKey == null) {
+      if (!_printerSupportsDrawerPulse(printerConfig)) {
         throw const LocalPrintAgentException(
           LocalPrintAgentFailureType.invalidConfiguration,
           'Receipt printer or cash drawer configuration missing.',
         );
       }
 
-      final client = ref.read(localPrintAgentClientProvider);
-      await client.openDrawer(
-        printerConfig,
-        LocalPrintAgentDrawerOpenRequest(
-          requestId: drawerOperationId, // Idempotent!
+      await _pulseConfiguredDrawer(
+        printerConfig: printerConfig!,
+        request: CashDrawerPulseRequest(
+          requestId: pulseRequestId,
           drawerOperationId: drawerOperationId,
           purpose: purpose,
-          printerName: printerConfig.agentPrinterName ?? 'POSPrinter',
+          printerName:
+              printerConfig.agentPrinterName ?? printerConfig.displayName,
           drawerPort: drawerPort,
           pulseOnMilliseconds: pulseOn,
           pulseOffMilliseconds: pulseOff,
           posDeviceId: _deviceId,
         ),
       );
-
-      operation = operation.copyWith(state: DrawerOperationState.opened);
+      // Transport accept is not physical confirmation.
+      operation = operation.copyWith(state: DrawerOperationState.agentAccepted);
       await _persist(operation);
 
       final dio = ref.read(appDioProvider);
       await dio.put<dynamic>(
         ApiEndpoints.posDrawerFinalize(drawerOperationId),
         data: {
-          'status': 'OPENED',
+          'status': 'AGENT_ACCEPTED',
           'resultCategory': 'SUCCESS',
           'agentAccepted': true,
-          'physicalConfirmation': true,
+          'physicalConfirmation': null,
         },
       );
     } catch (error) {
@@ -727,10 +930,8 @@ class GuidGenerator {
     final bytes = List<int>.generate(16, (i) => random.nextInt(256));
     bytes[6] = (bytes[6] & 0x0f) | 0x40; // Version 4
     bytes[8] = (bytes[8] & 0x3f) | 0x80; // Variant is 10xxxxxx
-    return bytes
-        .map((b) => b.toRadixString(16).padLeft(2, '0'))
-        .join()
-        .replaceFirst(
-            RegExp(r'^(.{8})(.{4})(.{4})(.{4})(.{12})$'), r'$1-$2-$3-$4-$5');
+    final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
+        '${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
   }
 }

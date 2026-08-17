@@ -1,5 +1,6 @@
 import '../../../auth/domain/entities/auth_session.dart';
 import '../../../device_activation/domain/entities/pos_device_context.dart';
+import '../../../hardware/receipt_printer/models/canonical_receipt_presentation.dart';
 import '../../../hardware/receipt_printer/models/completed_sale_receipt.dart';
 import '../../domain/entities/pos_checkout_summary.dart';
 
@@ -10,6 +11,8 @@ class CompletedSaleReceiptMapper {
     required PosCheckoutStartPaymentPayload payment,
     required PosDeviceContext device,
     required AuthSession session,
+    String? customerNameOverride,
+    String? customerPhoneOverride,
   }) {
     if (!_isCompleted(payment)) {
       throw const FormatException(
@@ -25,6 +28,14 @@ class CompletedSaleReceiptMapper {
     }
 
     final receiptId = payment.receiptId?.trim();
+    final customerName = _firstNonEmpty(
+          payment.customerName,
+          customerNameOverride,
+        );
+    final customerPhone = _firstNonEmpty(
+          payment.customerPhone,
+          customerPhoneOverride,
+        );
     return CompletedSaleReceipt(
       receiptId:
           receiptId?.isNotEmpty == true ? receiptId! : payment.saleId.trim(),
@@ -37,12 +48,8 @@ class CompletedSaleReceiptMapper {
       tillName: _fallback(payment.tillName, device.tillName),
       cashierId: _fallback(payment.cashierId, session.userId),
       cashierName: _fallback(payment.cashierName, session.userDisplayName),
-      customerName: payment.customerName?.trim().isNotEmpty == true
-          ? payment.customerName!.trim()
-          : null,
-      customerPhone: payment.customerPhone?.trim().isNotEmpty == true
-          ? payment.customerPhone!.trim()
-          : null,
+      customerName: customerName,
+      customerPhone: customerPhone,
       deviceId: device.deviceId,
       currency: payment.currency.trim().toUpperCase(),
       items: payment.items
@@ -65,7 +72,10 @@ class CompletedSaleReceiptMapper {
       amountTendered: payment.cashReceived,
       change: payment.changeDue,
       barcodeValue: _fallback(payment.barcodeValue, payment.receiptNumber),
-      footerLines: const ['Thank you for shopping with us.'],
+      footerLines: const [
+        CanonicalReceiptPresentation.defaultThankYouText,
+        CanonicalReceiptPresentation.defaultPolicyText,
+      ],
       tenders: payment.tenders
           .map(
             (line) => CompletedSaleTender(
@@ -132,5 +142,13 @@ class CompletedSaleReceiptMapper {
   String _fallback(String? preferred, String fallback) {
     final value = preferred?.trim() ?? '';
     return value.isNotEmpty ? value : fallback.trim();
+  }
+
+  String? _firstNonEmpty(String? preferred, String? fallback) {
+    final a = preferred?.trim();
+    if (a != null && a.isNotEmpty) return a;
+    final b = fallback?.trim();
+    if (b != null && b.isNotEmpty) return b;
+    return null;
   }
 }

@@ -16,6 +16,7 @@ import '../../../barcode_scanner/presentation/widgets/barcode_scanner_test_card.
 import '../providers/local_print_agent_controller.dart';
 import '../widgets/hardware_capability_card.dart';
 import '../widgets/cash_drawer_test_card.dart';
+import '../widgets/android_direct_printer_test_card.dart';
 
 class PosHardwareTestingScreen extends ConsumerStatefulWidget {
   const PosHardwareTestingScreen({super.key});
@@ -119,37 +120,77 @@ class _PosHardwareTestingScreenState
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 920),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Hardware Testing',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+                decoration: BoxDecoration(
+                  color: TenantAdminColors.surface,
+                  borderRadius:
+                      BorderRadius.circular(TenantAdminRadius.md),
+                  border: Border.all(color: TenantAdminColors.border),
+                  boxShadow: TenantAdminShadows.card,
+                ),
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    brightness: Brightness.light,
+                    colorScheme: ColorScheme.fromSeed(
+                      seedColor: TenantAdminColors.primary,
+                      brightness: Brightness.light,
+                    ),
+                    textTheme: Theme.of(context).textTheme.apply(
+                          bodyColor: TenantAdminColors.bodyText,
+                          displayColor: TenantAdminColors.bodyText,
                         ),
+                    cardTheme: CardThemeData(
+                      color: TenantAdminColors.subtleBackground,
+                      elevation: 0,
+                      margin: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
+                        side: const BorderSide(color: TenantAdminColors.border),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: TenantAdminSpacing.xs),
-                  Text(
-                    'Configure the Windows Local Print Agent for this POS device.',
-                    style: TenantAdminTextStyles.muted(context),
-                  ),
-                  if (state.authoritativeConfiguration != null) ...[
+                  child: DefaultTextStyle.merge(
+                    style: const TextStyle(color: TenantAdminColors.bodyText),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                    Text(
+                      'Hardware Testing',
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: TenantAdminColors.bodyText,
+                              ),
+                    ),
                     const SizedBox(height: TenantAdminSpacing.xs),
                     Text(
-                      'Configuration version '
-                      '${state.authoritativeConfiguration!.configurationVersion}'
-                      '${state.authoritativeConfiguration!.activeShift ? ' · Active till session' : ''}',
+                      'Configure receipt printing for this POS device. '
+                      'Android tablets use USB-C/Bluetooth directly; '
+                      'Windows-connected printers use the optional Local Print Agent.',
                       style: TenantAdminTextStyles.muted(context),
                     ),
-                  ],
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  LocalPrintAgentStatusCard(state: state),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  Card(
-                    margin: EdgeInsets.zero,
-                    child: Padding(
-                      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-                      child: Form(
+                    if (state.authoritativeConfiguration != null) ...[
+                      const SizedBox(height: TenantAdminSpacing.xs),
+                      Text(
+                        'Configuration version '
+                        '${state.authoritativeConfiguration!.configurationVersion}'
+                        '${state.authoritativeConfiguration!.activeShift ? ' · Active till session' : ''}',
+                        style: TenantAdminTextStyles.muted(context),
+                      ),
+                    ],
+                    const SizedBox(height: TenantAdminSpacing.lg),
+                    LocalPrintAgentStatusCard(state: state),
+                    const SizedBox(height: TenantAdminSpacing.lg),
+                    const AndroidDirectPrinterTestCard(),
+                    const SizedBox(height: TenantAdminSpacing.lg),
+                    Card(
+                      margin: EdgeInsets.zero,
+                      child: Padding(
+                        padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+                        child: Form(
                         key: _formKey,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -610,7 +651,10 @@ class _PosHardwareTestingScreenState
                   const _PrintRecoveryCard(),
                   const SizedBox(height: TenantAdminSpacing.lg),
                   const _DrawerRecoveryCard(),
-                ],
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
