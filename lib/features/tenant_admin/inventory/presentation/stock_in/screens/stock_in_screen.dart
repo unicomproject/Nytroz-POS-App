@@ -1,12 +1,6 @@
-import 'package:flutter/material.dart';
+import '../../receiving/receiving_flow.dart';
 
-class StockInScreen extends StatelessWidget {
+/// Legacy Stock In route. Locked Inventory uses the receiving workspace.
+class StockInScreen extends ReceivingDashboardScreen {
   const StockInScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Stock In (Coming Soon)')),
-    );
-  }
 }

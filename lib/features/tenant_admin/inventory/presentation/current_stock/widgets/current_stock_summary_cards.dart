@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../domain/entities/current_stock_entities.dart';
 import '../../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../../presentation/widgets/tenant_admin_metric_card.dart';
+import '../../../../presentation/widgets/tenant_admin_status_badge.dart';
 
 class CurrentStockSummaryCards extends StatelessWidget {
   const CurrentStockSummaryCards({
@@ -10,102 +12,29 @@ class CurrentStockSummaryCards extends StatelessWidget {
 
   final CurrentStockSummary summary;
 
-  Widget _buildCard(BuildContext context, String value, String title,
-      Widget icon, Color color) {
-    return Container(
-      height: 86,
-      decoration: BoxDecoration(
-        color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminSpacing.md),
-        border: Border.all(color: TenantAdminColors.border),
-      ),
-      padding: const EdgeInsets.only(left: TenantAdminSpacing.xl),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(TenantAdminSpacing.sm),
-            decoration: BoxDecoration(
-              shape: BoxShape.rectangle,
-              borderRadius: BorderRadius.circular(TenantAdminSpacing.sm),
-              border: Border.all(color: color.withValues(alpha: 0.2)),
-            ),
-            child: icon,
-          ),
-          const SizedBox(width: TenantAdminSpacing.lg),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: TenantAdminColors.bodyText),
-              ),
-              Text(
-                title,
-                style: (Theme.of(context).textTheme.labelSmall ??
-                        const TextStyle())
-                    .copyWith(
-                        color: TenantAdminColors.mutedText,
-                        fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final cards = [
-      _buildCard(
-        context,
-        summary.totalProducts.toString(),
-        'Products',
-        const Icon(
-          Icons.view_in_ar_outlined,
-          color: TenantAdminColors.primary,
-          size: 28,
-        ),
-        TenantAdminColors.primary,
+      TenantAdminMetricCard(
+        title: 'On Hand',
+        value: summary.totalUnits.toString(),
+        icon: Icons.inventory_2_outlined,
+        status: TenantAdminStatusType.online,
+        subtitle: 'Total stock in hand',
       ),
-      _buildCard(
-        context,
-        summary.totalItemsInStock.toString(),
-        'In Stock',
-        const Icon(
-          Icons.check_circle_outline,
-          color: TenantAdminColors.success,
-          size: 28,
-        ),
-        TenantAdminColors.success,
+      TenantAdminMetricCard(
+        title: 'Available',
+        value: summary.totalItemsInStock.toString(),
+        icon: Icons.check_circle_outline,
+        status: TenantAdminStatusType.success,
+        subtitle: 'Ready to sell',
       ),
-      _buildCard(
-        context,
-        summary.totalItemsLowStock.toString(),
-        'Low Stock',
-        const Icon(
-          Icons.error_outline,
-          color: TenantAdminColors.warning,
-          size: 28,
-        ),
-        TenantAdminColors.warning,
-      ),
-      _buildCard(
-        context,
-        summary.totalItemsOutOfStock.toString(),
-        'Out of Stock',
-        const Icon(
-          Icons.error_outline,
-          color: TenantAdminColors.danger,
-          size: 28,
-        ),
-        TenantAdminColors.danger,
+      TenantAdminMetricCard(
+        title: 'Low Stock',
+        value: summary.lowStockCount.toString(),
+        icon: Icons.error_outline,
+        status: TenantAdminStatusType.warning,
+        subtitle: 'Reorder soon',
       ),
     ];
 
@@ -125,37 +54,12 @@ class CurrentStockSummaryCards extends StatelessWidget {
           );
         }
 
-        if (width < 1100) {
-          return Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(child: cards[0]),
-                  const SizedBox(width: TenantAdminSpacing.md),
-                  Expanded(child: cards[1]),
-                ],
-              ),
-              const SizedBox(height: TenantAdminSpacing.md),
-              Row(
-                children: [
-                  Expanded(child: cards[2]),
-                  const SizedBox(width: TenantAdminSpacing.md),
-                  Expanded(child: cards[3]),
-                ],
-              ),
-            ],
-          );
-        }
-
         return Row(
           children: [
-            Expanded(child: cards[0]),
-            const SizedBox(width: TenantAdminSpacing.lg),
-            Expanded(child: cards[1]),
-            const SizedBox(width: TenantAdminSpacing.lg),
-            Expanded(child: cards[2]),
-            const SizedBox(width: TenantAdminSpacing.lg),
-            Expanded(child: cards[3]),
+            for (var i = 0; i < cards.length; i++) ...[
+              if (i > 0) const SizedBox(width: TenantAdminSpacing.lg),
+              Expanded(child: cards[i]),
+            ],
           ],
         );
       },

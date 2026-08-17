@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../../core/network/dio_provider.dart';
+import '../../../data/mock/inventory_frontend_mock.dart';
 import '../../../data/models/inventory_dashboard_models.dart';
 import '../../../data/repositories/inventory_repository_impl.dart';
 import '../../../data/datasources/inventory_remote_datasource.dart';
@@ -26,6 +27,9 @@ final inventoryDashboardOutletIdProvider =
 // Metrics
 final inventoryDashboardMetricsProvider =
     FutureProvider.autoDispose<InventoryDashboardMetricsDto>((ref) {
+  if (ref.watch(inventoryFrontendMockEnabledProvider)) {
+    return InventoryFrontendMock.metrics;
+  }
   final outletId = ref.watch(inventoryDashboardOutletIdProvider);
   final repository = ref.watch(inventoryRepositoryProvider);
 
@@ -35,6 +39,9 @@ final inventoryDashboardMetricsProvider =
 // Alerts
 final inventoryDashboardAlertsProvider =
     FutureProvider.autoDispose<InventoryDashboardAlertsResponseDto>((ref) {
+  if (ref.watch(inventoryFrontendMockEnabledProvider)) {
+    return InventoryFrontendMock.alerts;
+  }
   final outletId = ref.watch(inventoryDashboardOutletIdProvider);
   final repository = ref.watch(inventoryRepositoryProvider);
 
@@ -44,6 +51,9 @@ final inventoryDashboardAlertsProvider =
 // Activities
 final inventoryDashboardActivitiesProvider =
     FutureProvider.autoDispose<InventoryDashboardActivitiesResponseDto>((ref) {
+  if (ref.watch(inventoryFrontendMockEnabledProvider)) {
+    return InventoryFrontendMock.activities;
+  }
   final outletId = ref.watch(inventoryDashboardOutletIdProvider);
   final repository = ref.watch(inventoryRepositoryProvider);
 

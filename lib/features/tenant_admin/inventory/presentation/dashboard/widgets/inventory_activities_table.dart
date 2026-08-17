@@ -14,16 +14,10 @@ class InventoryActivitiesTable extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: TenantAdminColors.surface,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        border: Border.all(color: TenantAdminColors.border),
+        boxShadow: TenantAdminShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,21 +25,16 @@ class InventoryActivitiesTable extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
-                  children: [
-                    Icon(Icons.history, color: Color(0xFF64748B), size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Recent Activity',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1E293B),
-                      ),
-                    ),
-                  ],
+                const Icon(Icons.history, color: Color(0xFF64748B), size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Recent Activity',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TenantAdminTextStyles.sectionTitle(context),
+                  ),
                 ),
                 TextButton(
                   onPressed: () {},
@@ -56,12 +45,12 @@ class InventoryActivitiesTable extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF3B82F6),
+                          color: TenantAdminColors.primary,
                         ),
                       ),
                       SizedBox(width: 4),
                       Icon(Icons.chevron_right,
-                          size: 16, color: Color(0xFF3B82F6)),
+                          size: 16, color: TenantAdminColors.primary),
                     ],
                   ),
                 ),
@@ -83,7 +72,7 @@ class InventoryActivitiesTable extends StatelessWidget {
             Column(
               children: [
                 for (int i = 0; i < activities.length; i++) ...[
-                  if (i > 0) const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  if (i > 0) const Divider(height: 1, color: TenantAdminColors.border),
                   _ActivityRow(activity: activities[i]),
                 ]
               ],
