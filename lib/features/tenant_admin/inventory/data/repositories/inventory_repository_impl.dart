@@ -19,7 +19,7 @@ class InventoryRepositoryImpl implements IInventoryRepository {
   Future<InventoryDashboardAlertsResponseDto> getDashboardAlerts({
     String? outletId,
     int page = 1,
-    int pageSize = 10,
+    int pageSize = 5,
   }) {
     return _remoteDatasource.getDashboardAlerts(
       outletId: outletId,
@@ -32,7 +32,7 @@ class InventoryRepositoryImpl implements IInventoryRepository {
   Future<InventoryDashboardActivitiesResponseDto> getDashboardActivities({
     String? outletId,
     int page = 1,
-    int pageSize = 10,
+    int pageSize = 5,
   }) {
     return _remoteDatasource.getDashboardActivities(
       outletId: outletId,

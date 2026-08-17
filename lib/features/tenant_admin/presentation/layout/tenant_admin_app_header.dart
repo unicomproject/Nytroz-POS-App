@@ -27,7 +27,6 @@ class TenantAdminAppHeader extends ConsumerWidget {
     final tillState = ref.watch(tillProvider);
     final session = ref.watch(authSessionProvider);
     final tillSession = tillState.session;
-    final isOpen = tillState.hasOpenSession;
 
     final outletLabel = _resolveOutletLabel(
       tillSession?.outletName,
@@ -43,14 +42,12 @@ class TenantAdminAppHeader extends ConsumerWidget {
       tillSession?.tillCode,
     );
 
-    return Material(
-      color: TenantAdminColors.posHomeDarkBackground,
-      child: SafeArea(
-        bottom: false,
-        child: SizedBox(
-          height: height,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
+    return SizedBox(
+      height: height,
+      child: Material(
+        color: TenantAdminColors.posHomeDarkBackground,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
               final compact = constraints.maxWidth < 900;
               final veryCompact = constraints.maxWidth < 700;
 
@@ -73,7 +70,11 @@ class TenantAdminAppHeader extends ConsumerWidget {
                       ),
                       const SizedBox(width: TenantAdminSpacing.xs),
                     ],
-                    _BrandMark(compact: veryCompact),
+                    _BrandMark(
+                      compact: veryCompact,
+                      logoUrl: tenantContext?.tenantLogoUrl,
+                      brandName: tenantContext?.tenantName,
+                    ),
                     SizedBox(
                       width: veryCompact
                           ? TenantAdminSpacing.sm
@@ -81,11 +82,6 @@ class TenantAdminAppHeader extends ConsumerWidget {
                     ),
                     const Spacer(),
                     if (!veryCompact) ...[
-                      _TillSessionChip(
-                        isOpen: isOpen,
-                        compact: compact,
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.sm),
                       _ContextChip(
                         icon: Icons.location_on_outlined,
                         label: outletLabel,
@@ -110,7 +106,6 @@ class TenantAdminAppHeader extends ConsumerWidget {
               );
             },
           ),
-        ),
       ),
     );
   }
@@ -149,115 +144,100 @@ class TenantAdminAppHeader extends ConsumerWidget {
 }
 
 class _BrandMark extends StatelessWidget {
-  const _BrandMark({required this.compact});
+  const _BrandMark({
+    required this.compact,
+    this.logoUrl,
+    this.brandName,
+  });
 
   final bool compact;
+  final String? logoUrl;
+  final String? brandName;
 
   @override
   Widget build(BuildContext context) {
+    final resolvedName = brandName?.trim().isNotEmpty == true
+        ? brandName!.trim()
+        : 'OneVerz POS';
+
+    final resolvedLogoUrl = logoUrl?.trim().isNotEmpty == true ? logoUrl!.trim() : null;
+
+    final baseStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: TenantAdminColors.surface,
+              fontWeight: FontWeight.w800,
+            ) ??
+        const TextStyle(
+          fontSize: 16,
+          color: TenantAdminColors.surface,
+          fontWeight: FontWeight.w800,
+        );
+
+    final match = RegExp(r'^(.*?)(\s+POS)$', caseSensitive: false).firstMatch(resolvedName);
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Image.asset(
-          'assets/images/logo.png',
-          width: compact ? 28 : 34,
-          height: compact ? 28 : 34,
-          fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => Icon(
-            Icons.shopping_bag_rounded,
-            color: TenantAdminColors.posHomeOrangeStart,
-            size: compact ? 26 : 30,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+          child: SizedBox.square(
+            dimension: compact ? 28 : 34,
+            child: resolvedLogoUrl != null
+                ? Image.network(
+                    resolvedLogoUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _LogoFallback(compact: compact),
+                  )
+                : _LogoFallback(compact: compact),
           ),
         ),
         const SizedBox(width: TenantAdminSpacing.sm),
         Flexible(
-          child: RichText(
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            text: TextSpan(
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: TenantAdminColors.surface,
-                    fontWeight: FontWeight.w800,
+          child: match == null
+              ? Text(
+                  resolvedName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: baseStyle,
+                )
+              : Text.rich(
+                  TextSpan(
+                    style: baseStyle,
+                    children: [
+                      TextSpan(text: match.group(1)),
+                      TextSpan(
+                        text: match.group(2),
+                        style: baseStyle.copyWith(
+                          color: TenantAdminColors.posHomeOrangeStart,
+                        ),
+                      ),
+                    ],
                   ),
-              children: const [
-                TextSpan(text: 'OneVerz '),
-                TextSpan(
-                  text: 'POS',
-                  style: TextStyle(color: TenantAdminColors.posHomeOrangeStart),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
-            ),
-          ),
         ),
       ],
     );
   }
 }
 
-class _TillSessionChip extends StatelessWidget {
-  const _TillSessionChip({
-    required this.isOpen,
-    required this.compact,
-  });
+class _LogoFallback extends StatelessWidget {
+  const _LogoFallback({required this.compact});
 
-  final bool isOpen;
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(minHeight: compact ? 40 : 44),
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
-        vertical: TenantAdminSpacing.xs,
-      ),
-      decoration: BoxDecoration(
+  Widget build(BuildContext context) => ColoredBox(
         color: TenantAdminColors.posHomeDarkBackground,
-        border: Border.all(
-            color: TenantAdminColors.surface.withValues(alpha: 0.55)),
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.circle,
-            size: 10,
-            color:
-                isOpen ? TenantAdminColors.success : TenantAdminColors.danger,
-          ),
-          const SizedBox(width: TenantAdminSpacing.sm),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                isOpen ? 'OPEN' : 'CLOSED',
-                style: TextStyle(
-                  color: isOpen
-                      ? TenantAdminColors.success
-                      : TenantAdminColors.danger,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                  height: 1.1,
-                ),
-              ),
-              if (!compact)
-                const Text(
-                  'Till Session',
-                  style: TextStyle(
-                    color: TenantAdminColors.surface,
-                    fontSize: 10,
-                    height: 1.1,
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+        child: Icon(
+          Icons.shopping_bag_rounded,
+          color: TenantAdminColors.posHomeAccentOrange,
+          size: compact ? 18 : 22,
+        ),
+      );
 }
+
+
 
 class _ContextChip extends StatelessWidget {
   const _ContextChip({
@@ -272,24 +252,31 @@ class _ContextChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (label.trim().isEmpty) return const SizedBox.shrink();
     return Container(
+      height: 44,
       constraints: BoxConstraints(
-        minHeight: compact ? 40 : 44,
         maxWidth: compact ? 140 : 180,
       ),
       padding: EdgeInsets.symmetric(
         horizontal: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
       ),
       decoration: BoxDecoration(
-        color: TenantAdminColors.posHomeDarkBackground,
+        color: Colors.black,
         border: Border.all(
-            color: TenantAdminColors.surface.withValues(alpha: 0.55)),
+          color: const Color(0xFF2E3138),
+          width: 1,
+        ),
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: TenantAdminColors.surface),
+          Icon(
+            icon,
+            size: 20,
+            color: const Color(0xFF94A3B8),
+          ),
           const SizedBox(width: TenantAdminSpacing.sm),
           Flexible(
             child: Text(
@@ -297,17 +284,11 @@ class _ContextChip extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: TenantAdminColors.surface,
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
             ),
-          ),
-          const SizedBox(width: 4),
-          const Icon(
-            Icons.keyboard_arrow_down_rounded,
-            size: 18,
-            color: TenantAdminColors.surface,
           ),
         ],
       ),

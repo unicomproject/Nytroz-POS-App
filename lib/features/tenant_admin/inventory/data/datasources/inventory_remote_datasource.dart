@@ -24,7 +24,7 @@ class InventoryRemoteDatasource {
   Future<InventoryDashboardAlertsResponseDto> getDashboardAlerts({
     String? outletId,
     int page = 1,
-    int pageSize = 10,
+    int pageSize = 5,
   }) async {
     final response = await _dio.get<dynamic>(
       InventoryApiPaths.dashboardAlerts,
@@ -43,7 +43,7 @@ class InventoryRemoteDatasource {
   Future<InventoryDashboardActivitiesResponseDto> getDashboardActivities({
     String? outletId,
     int page = 1,
-    int pageSize = 10,
+    int pageSize = 5,
   }) async {
     final response = await _dio.get<dynamic>(
       InventoryApiPaths.dashboardActivities,

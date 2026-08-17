@@ -260,7 +260,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
                 TenantAdminPrimaryButton(
                   label: _submitting ? 'Saving...' : 'Save Changes',
                   loading: _submitting,
-                  backgroundColor: const Color(0xFFFF5200),
+                  backgroundColor: TenantAdminColors.primary,
                   onPressed: _inputsEnabled ? _saveChanges : null,
                 ),
               ],

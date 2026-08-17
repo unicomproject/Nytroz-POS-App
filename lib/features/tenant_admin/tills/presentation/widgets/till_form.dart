@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
+import '../../../presentation/widgets/tenant_admin_responsive_form_grid.dart';
 import '../../domain/entities/till.dart';
 import 'till_review_section.dart';
 import 'till_wizard_stepper.dart';
@@ -541,27 +542,8 @@ class _TillFormState extends State<TillForm> {
   }
 
   Widget _twoColumnRow(Widget first, Widget second) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 720) {
-          return Column(
-            children: [
-              first,
-              const SizedBox(height: TenantAdminSpacing.lg),
-              second,
-            ],
-          );
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: first),
-            const SizedBox(width: TenantAdminSpacing.xl),
-            Expanded(child: second),
-          ],
-        );
-      },
+    return TenantAdminResponsiveFormGrid(
+      children: [first, second],
     );
   }
 

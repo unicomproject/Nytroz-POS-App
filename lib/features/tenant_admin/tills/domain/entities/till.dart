@@ -2,7 +2,7 @@ class TillListQuery {
   const TillListQuery({
     this.search,
     this.page = 1,
-    this.pageSize = 10,
+    this.pageSize = 5,
     this.status,
     this.sortBy = 'name',
     this.sortDirection = 'asc',

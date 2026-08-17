@@ -7,6 +7,7 @@ import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_search_field.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
+import '../../../presentation/widgets/tenant_admin_pagination.dart';
 import '../providers/brand_providers.dart';
 import '../providers/brand_visibility_provider.dart';
 import '../widgets/brand_details_side_panel.dart';
@@ -51,13 +52,15 @@ class BrandListScreen extends ConsumerWidget {
           subtitle: visibility.showSubtitle
               ? 'Manage product brands for your catalog.'
               : null,
+          scrollable: false,
+          fillHeight: true,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _BrandToolbar(visibility: visibility),
               if (visibility.showSearch || visibility.showAddBrand)
                 const SizedBox(height: TenantAdminSpacing.lg),
-              if (visibility.showList) const _BrandListBody(),
+              if (visibility.showList) const Expanded(child: _BrandListBody()),
             ],
           ),
         );
@@ -172,10 +175,25 @@ class _BrandListBody extends ConsumerWidget {
           );
         }
 
-        return BrandTable(
-          brands: result.items,
-          canEdit: visibility.showEditBrand,
-          canDelete: visibility.showDeleteBrand,
+        return Column(
+          children: [
+            Expanded(
+              child: BrandTable(
+                brands: result.items,
+                canEdit: visibility.showEditBrand,
+                canDelete: visibility.showDeleteBrand,
+              ),
+            ),
+            if (result.totalCount > 0)
+              TenantAdminPaginationBar(
+                currentPage: result.pageNumber,
+                pageSize: result.pageSize,
+                totalCount: result.totalCount,
+                itemLabel: 'brands',
+                onPageChanged: (nextPage) =>
+                    ref.read(brandPageProvider.notifier).state = nextPage,
+              ),
+          ],
         );
       },
     );

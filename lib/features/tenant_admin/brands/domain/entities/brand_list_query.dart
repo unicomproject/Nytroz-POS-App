@@ -2,7 +2,7 @@ class BrandListQuery {
   const BrandListQuery({
     this.search = '',
     this.pageNumber = 1,
-    this.pageSize = 50,
+    this.pageSize = 5,
   });
 
   final String search;

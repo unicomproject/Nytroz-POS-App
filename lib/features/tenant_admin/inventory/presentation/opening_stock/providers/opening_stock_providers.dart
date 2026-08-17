@@ -5,6 +5,7 @@ import '../../../../products/presentation/providers/tenant_product_providers.dar
 import '../../../../outlets/domain/entities/outlet.dart';
 import '../../../../outlets/domain/entities/outlet_list_query.dart';
 import '../../../../outlets/presentation/providers/outlet_providers.dart';
+import '../../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../data/datasources/opening_stock_remote_datasource.dart';
 import '../../../data/mock/inventory_frontend_mock.dart';
 import '../../../data/repositories/opening_stock_repository_impl.dart';
@@ -49,7 +50,7 @@ final openingStockProductsProvider =
 
   final query = TenantProductListQuery(
     search: search,
-    pageSize: 50,
+    pageSize: TenantAdminContentTokens.defaultListPageSize,
     pageNumber: 1,
     sortBy: 'productName',
     sortDirection: 'asc',
@@ -77,7 +78,7 @@ final openingStockOutletsProvider =
 
   final query = OutletListQuery(
     search: search,
-    pageSize: 50,
+    pageSize: TenantAdminContentTokens.defaultListPageSize,
     page: 1,
     sortBy: 'name',
     sortDirection: 'asc',

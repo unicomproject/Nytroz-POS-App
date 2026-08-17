@@ -111,6 +111,7 @@ class OutletImageUploadController
         status: OutletImageUploadStatus.selecting, clearError: true);
     try {
       final input = await _picker.pickImage();
+      if (!mounted) return;
       if (input == null) {
         state = state.copyWith(
             status: state.mediaAssetId == null
@@ -120,6 +121,7 @@ class OutletImageUploadController
       }
       await _uploadInput(input, replacing: false);
     } catch (_) {
+      if (!mounted) return;
       state = state.copyWith(
           status: OutletImageUploadStatus.failed,
           errorMessage: 'We could not read the selected image.');
@@ -132,12 +134,14 @@ class OutletImageUploadController
         status: OutletImageUploadStatus.selecting, clearError: true);
     try {
       final input = await _picker.pickImage();
+      if (!mounted) return;
       if (input == null) {
         state = old;
         return;
       }
       await _uploadInput(input, replacing: true, previousId: old.mediaAssetId);
     } catch (_) {
+      if (!mounted) return;
       state = old.copyWith(
           status: OutletImageUploadStatus.failed,
           errorMessage: 'We could not read the selected image.');
@@ -160,8 +164,10 @@ class OutletImageUploadController
         status: OutletImageUploadStatus.deleting, clearError: true);
     try {
       await _delete(id);
+      if (!mounted) return;
       reset();
     } catch (_) {
+      if (!mounted) return;
       state = old.copyWith(
           status: OutletImageUploadStatus.failed,
           errorMessage:
@@ -211,8 +217,10 @@ class OutletImageUploadController
         clearError: true);
     try {
       final uploaded = await _upload(input, onProgress: (sent, total) {
+        if (!mounted) return;
         if (total > 0) state = state.copyWith(progress: sent / total);
       });
+      if (!mounted) return;
       state = state.copyWith(
           status: OutletImageUploadStatus.uploaded,
           mediaAssetId: uploaded.mediaAssetId,
@@ -227,6 +235,7 @@ class OutletImageUploadController
         } catch (_) {}
       }
     } catch (_) {
+      if (!mounted) return;
       state = state.copyWith(
           status: OutletImageUploadStatus.failed,
           errorMessage: 'We could not upload the outlet image. Try again.');

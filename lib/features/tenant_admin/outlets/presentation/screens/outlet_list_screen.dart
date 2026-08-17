@@ -87,7 +87,7 @@ class OutletListScreen extends ConsumerWidget {
             return LayoutBuilder(
               builder: (context, constraints) {
                 final isMobile = constraints.maxWidth < 700;
-                final isDesktop = constraints.maxWidth >= 1000;
+                final isDesktop = constraints.maxWidth >= 750;
 
                 // ── Summary metrics (always above the split) ──────────
                 Widget? summarySection;

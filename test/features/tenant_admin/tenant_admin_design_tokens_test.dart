@@ -11,7 +11,7 @@ void main() {
     });
 
     test('keeps tablet-friendly control and header heights', () {
-      expect(TenantAdminAppHeaderTokens.height, 44);
+      expect(TenantAdminAppHeaderTokens.height, 74.0);
       expect(TenantAdminContentTokens.buttonHeight, 44);
       expect(TenantAdminContentTokens.tabletButtonHeight, 48);
       expect(TenantAdminContentTokens.defaultListPageSize, 5);

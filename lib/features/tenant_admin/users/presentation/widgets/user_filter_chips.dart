@@ -47,7 +47,6 @@ class _UserStatusFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const accent = TenantAdminColors.posHomeAccentOrange;
     return Semantics(
       button: true,
       selected: selected,
@@ -62,15 +61,15 @@ class _UserStatusFilterChip extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color:
-                selected ? const Color(0xFFFFF2E8) : TenantAdminColors.surface,
+                selected ? TenantAdminColors.secondary : TenantAdminColors.surface,
             borderRadius: BorderRadius.circular(10),
             border:
-                Border.all(color: selected ? accent : TenantAdminColors.border),
+                Border.all(color: selected ? TenantAdminColors.primary : TenantAdminColors.border),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: selected ? accent : TenantAdminColors.bodyText,
+              color: selected ? TenantAdminColors.primary : TenantAdminColors.bodyText,
               fontWeight: FontWeight.w700,
             ),
           ),

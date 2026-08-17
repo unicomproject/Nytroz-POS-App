@@ -193,6 +193,20 @@ class CreateOutletRequestDto {
       return '$trimmed:00';
     }
 
+    final lower = trimmed.toLowerCase();
+    if (lower.contains('am') || lower.contains('pm')) {
+      try {
+        final isPm = lower.contains('pm');
+        final timePart = lower.replaceAll('am', '').replaceAll('pm', '').trim();
+        final parts = timePart.split(':');
+        int hours = int.parse(parts[0].trim());
+        final minutes = parts[1].trim();
+        if (isPm && hours < 12) hours += 12;
+        if (!isPm && hours == 12) hours = 0;
+        return '${hours.toString().padLeft(2, '0')}:$minutes:00';
+      } catch (_) {}
+    }
+
     return trimmed;
   }
 

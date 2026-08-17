@@ -27,6 +27,5 @@ final brandListScreenProvider =
     return null;
   }
 
-  final query = ref.watch(brandListQueryProvider);
-  return ref.watch(brandRepositoryProvider).listBrands(query: query);
+  return ref.watch(brandListProvider.future);
 });

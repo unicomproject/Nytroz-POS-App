@@ -13,6 +13,13 @@ import 'outlets/presentation/screens/add_outlet_screen.dart';
 import 'outlets/presentation/screens/edit_outlet_screen.dart';
 import 'outlets/presentation/screens/outlet_details_screen.dart';
 import 'outlets/presentation/screens/outlet_list_screen.dart';
+import 'role_permissions/presentation/screens/edit_role_screen.dart';
+import 'role_permissions/presentation/screens/role_setup_step1_role_screen.dart';
+import 'role_permissions/presentation/screens/role_setup_step2_modules_screen.dart';
+import 'role_permissions/presentation/screens/role_setup_step3_permissions_screen.dart';
+import 'role_permissions/presentation/screens/role_setup_step4_assignments_screen.dart';
+import 'role_permissions/presentation/screens/role_setup_step5_review_screen.dart';
+import 'role_permissions/presentation/screens/roles_screen.dart';
 import 'tills/presentation/screens/add_till_screen.dart';
 import 'tills/presentation/screens/edit_till_screen.dart';
 import 'tills/presentation/screens/till_details_screen.dart';
@@ -101,11 +108,11 @@ List<RouteBase> tenantAdminRoutes(Ref ref) {
         ),
         GoRoute(
           path: '/tenant-admin/roles-access',
-          redirect: (context, state) => '/tenant-admin/roles-permissions',
+          redirect: (context, state) => '/tenant-admin/roles',
         ),
         GoRoute(
-          path: '/tenant-admin/roles',
-          redirect: (context, state) => '/tenant-admin/roles-permissions',
+          path: '/tenant-admin/roles-permissions',
+          redirect: (context, state) => '/tenant-admin/roles',
         ),
         // stockRoot is handled dynamically for access control, but we add a redirect
         // just in case it's navigated to directly.
@@ -214,10 +221,34 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     );
   }
 
-  if (definition.path == '/tenant-admin/roles-permissions') {
-    return RolePermissionsScreen(
-      initialRoleId: state.uri.queryParameters['roleId'],
+  if (definition.path == '/tenant-admin/roles') {
+    return const RolesScreen();
+  }
+
+  if (definition.path == '/tenant-admin/roles/:id/edit') {
+    return EditRoleScreen(
+      roleId: state.pathParameters['id'] ?? '',
     );
+  }
+
+  if (definition.path == '/tenant-admin/roles-permissions/create/select-role') {
+    return const RoleSetupStep1RoleScreen();
+  }
+
+  if (definition.path == '/tenant-admin/roles-permissions/create/modules') {
+    return const RoleSetupStep2ModulesScreen();
+  }
+
+  if (definition.path == '/tenant-admin/roles-permissions/create/permissions') {
+    return const RoleSetupStep3PermissionsScreen();
+  }
+
+  if (definition.path == '/tenant-admin/roles-permissions/create/assignments') {
+    return const RoleSetupStep4AssignmentsScreen();
+  }
+
+  if (definition.path == '/tenant-admin/roles-permissions/create/review') {
+    return const RoleSetupStep5ReviewScreen();
   }
 
   if (definition.path == '/tenant-admin/roles-permissions/:roleId') {

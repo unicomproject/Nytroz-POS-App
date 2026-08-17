@@ -29,7 +29,7 @@ class TillMonitoringWorkspace extends ConsumerStatefulWidget {
 
   final TillListVisibility visibility;
 
-  static const double desktopBreakpoint = 1000;
+  static const double desktopBreakpoint = 750;
 
   @override
   ConsumerState<TillMonitoringWorkspace> createState() =>
