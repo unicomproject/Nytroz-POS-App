@@ -1,5 +1,5 @@
+import 'dart:developer';
 import 'package:dio/dio.dart';
-
 import '../../../../../core/network/media_url_resolver.dart';
 
 import '../../domain/entities/outlet_list_query.dart';
@@ -81,7 +81,7 @@ class OutletRemoteDatasource {
         _unwrapApiPayload(response.data, response.requestOptions),
       );
     } on DioException catch (e) {
-      print('UPDATE OUTLET 400 ERROR RESPONSE: ${e.response?.data}');
+      log('UPDATE OUTLET 400 ERROR RESPONSE: ${e.response?.data}');
       rethrow;
     }
   }

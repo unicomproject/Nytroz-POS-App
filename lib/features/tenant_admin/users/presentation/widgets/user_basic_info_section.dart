@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_widgets.dart';
 import '../../domain/entities/tenant_user.dart';
 
