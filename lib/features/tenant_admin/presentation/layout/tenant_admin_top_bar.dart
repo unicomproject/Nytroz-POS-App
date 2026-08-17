@@ -20,7 +20,7 @@ class TenantAdminTopBar extends ConsumerWidget implements PreferredSizeWidget {
     final contextState = ref.watch(tenantAdminContextProvider);
 
     return AppBar(
-      backgroundColor: TenantAdminColors.navy,
+      backgroundColor: TenantAdminColors.posHomeDarkBackground,
       foregroundColor: Colors.white,
       leading: onMenuPressed == null
           ? null

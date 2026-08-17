@@ -51,14 +51,14 @@ class TenantUserListResultDto {
   const TenantUserListResultDto({
     required this.items,
     this.page = 1,
-    this.pageSize = 10,
+    this.pageSize = 5,
     this.totalCount = 0,
   });
 
   factory TenantUserListResultDto.fromJson(Map<String, dynamic> json) {
     final items = _mapList(json['items'], TenantUserListItemDto.fromJson);
     final page = _intValue(json['page'], fallback: 1);
-    final pageSize = _intValue(json['pageSize'], fallback: 10);
+    final pageSize = _intValue(json['pageSize'], fallback: 5);
     final totalCount = _intValue(json['totalCount'], fallback: items.length);
 
     return TenantUserListResultDto(

@@ -52,7 +52,7 @@ class OutletListResultDto {
     required this.summary,
     required this.items,
     this.page = 1,
-    this.pageSize = 10,
+    this.pageSize = 5,
     this.totalCount = 0,
   });
 
@@ -60,7 +60,7 @@ class OutletListResultDto {
     final rawItems = json['items'] ?? json['outlets'];
     final items = _mapList(rawItems, OutletDto.fromJson);
     final page = _intValue(json['page'] ?? json['pageNumber'], fallback: 1);
-    final pageSize = _intValue(json['pageSize'], fallback: 10);
+    final pageSize = _intValue(json['pageSize'], fallback: 5);
     final totalCount = _intValue(json['totalCount'], fallback: items.length);
 
     return OutletListResultDto(

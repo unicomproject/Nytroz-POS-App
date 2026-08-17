@@ -102,6 +102,9 @@ class AddTillDetailsSection extends StatelessWidget {
                     if (value == null || value.trim().isEmpty) {
                       return 'Till Name is required';
                     }
+                    if (backendErrors['tillName'] != null) {
+                      return backendErrors['tillName'];
+                    }
                     return null;
                   },
                 ),
@@ -125,6 +128,9 @@ class AddTillDetailsSection extends StatelessWidget {
                     if (value == null || value.trim().isEmpty) {
                       return 'Till Code is required';
                     }
+                    if (backendErrors['tillCode'] != null) {
+                      return backendErrors['tillCode'];
+                    }
                     return null;
                   },
                 ),
@@ -142,6 +148,7 @@ class AddTillDetailsSection extends StatelessWidget {
                 isRequired: true,
                 child: DropdownButtonFormField<String>(
                   key: const ValueKey('outlet_dropdown'),
+                  isExpanded: true,
                   initialValue: safeOutletId,
                   decoration: _buildInputDecoration(
                     hintText: 'Select outlet',
@@ -160,6 +167,9 @@ class AddTillDetailsSection extends StatelessWidget {
                     if (value == null || value.isEmpty) {
                       return 'Please select an outlet';
                     }
+                    if (backendErrors['outletId'] != null) {
+                      return backendErrors['outletId'];
+                    }
                     return null;
                   },
                 ),
@@ -172,6 +182,7 @@ class AddTillDetailsSection extends StatelessWidget {
                 isRequired: true,
                 child: DropdownButtonFormField<String>(
                   key: const ValueKey('status_dropdown'),
+                  isExpanded: true,
                   initialValue: safeStatus,
                   decoration: _buildInputDecoration(
                     hintText: 'Select status',
@@ -195,6 +206,9 @@ class AddTillDetailsSection extends StatelessWidget {
                     if (value == null || value.isEmpty) {
                       return 'Please select a status';
                     }
+                    if (backendErrors['status'] != null) {
+                      return backendErrors['status'];
+                    }
                     return null;
                   },
                 ),
@@ -212,6 +226,7 @@ class AddTillDetailsSection extends StatelessWidget {
                 isRequired: true,
                 child: DropdownButtonFormField<String>(
                   key: ValueKey('cashier_dropdown_$selectedOutletId'),
+                  isExpanded: true,
                   initialValue: safeCashierId,
                   decoration: _buildInputDecoration(
                     hintText: 'Select cashier',
@@ -230,6 +245,9 @@ class AddTillDetailsSection extends StatelessWidget {
                     if (value == null || value.isEmpty) {
                       return 'Please select a default cashier';
                     }
+                    if (backendErrors['defaultCashierTenantUserId'] != null) {
+                      return backendErrors['defaultCashierTenantUserId'];
+                    }
                     return null;
                   },
                 ),
@@ -247,7 +265,7 @@ class AddTillDetailsSection extends StatelessWidget {
                       controller: floatController,
                       decoration: InputDecoration(
                         hintText: 'Enter opening float amount',
-                        prefixText: '${options.currencyCode} ',
+                        prefixText: options.currencyCode == 'LKR' ? 'Rs. ' : '${options.currencyCode} ',
                         errorText: backendErrors['defaultOpeningFloatAmount'],
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 16),
@@ -281,6 +299,9 @@ class AddTillDetailsSection extends StatelessWidget {
                         }
                         if (double.tryParse(value) == null) {
                           return 'Please enter a valid amount';
+                        }
+                        if (backendErrors['defaultOpeningFloatAmount'] != null) {
+                          return backendErrors['defaultOpeningFloatAmount'];
                         }
                         return null;
                       },

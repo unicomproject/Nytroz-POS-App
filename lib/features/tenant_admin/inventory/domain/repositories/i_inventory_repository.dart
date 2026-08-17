@@ -9,13 +9,13 @@ abstract class IInventoryRepository {
   Future<InventoryDashboardAlertsResponseDto> getDashboardAlerts({
     String? outletId,
     int page = 1,
-    int pageSize = 10,
+    int pageSize = 5,
   });
 
   Future<InventoryDashboardActivitiesResponseDto> getDashboardActivities({
     String? outletId,
     int page = 1,
-    int pageSize = 10,
+    int pageSize = 5,
   });
 
   Future<CurrentStockSummary> getCurrentStockSummary({String? outletId});

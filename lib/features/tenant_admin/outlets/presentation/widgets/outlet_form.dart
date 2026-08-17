@@ -6,8 +6,8 @@ import '../../domain/entities/outlet_details.dart';
 import '../utils/outlet_api_errors.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
+import '../../../presentation/widgets/tenant_admin_responsive_form_grid.dart';
 import 'business_hours_editor.dart';
-import 'outlet_wizard_stepper.dart';
 import 'outlet_image_upload_card.dart';
 import 'outlet_location_guidance_panel.dart';
 import '../providers/outlet_image_upload_provider.dart';
@@ -151,12 +151,6 @@ class _OutletFormState extends State<OutletForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          OutletWizardStepper(
-            steps: _steps,
-            currentStep: _step,
-            onStepSelected: (step) => setState(() => _step = step),
-          ),
-          const SizedBox(height: TenantAdminSpacing.xl),
           _buildStep(),
           const SizedBox(height: TenantAdminSpacing.xl),
           _OutletWizardActions(
@@ -308,6 +302,16 @@ class _OutletFormState extends State<OutletForm> {
   }
 
   OutletFormData _formData() {
+    OutletImageOperation imageOperation = OutletImageOperation.keep;
+    final initialImageId = widget.initialValue?.imageMediaAssetId;
+    if (_imageMediaAssetId != initialImageId) {
+      if (_imageMediaAssetId == null) {
+        imageOperation = OutletImageOperation.remove;
+      } else {
+        imageOperation = OutletImageOperation.replace;
+      }
+    }
+
     return OutletFormData(
       outletName: _outletName.text.trim(),
       outletType: _outletType,
@@ -318,6 +322,7 @@ class _OutletFormState extends State<OutletForm> {
       contactPhone: _nullable(_contactPhone.text),
       contactEmail: _nullable(_contactEmail.text),
       imageMediaAssetId: _imageMediaAssetId,
+      imageOperation: imageOperation,
       isDefaultOutlet: _isDefaultOutlet,
       addressLine1: _addressLine1.text.trim(),
       addressLine2: _nullable(_addressLine2.text),
@@ -1879,27 +1884,8 @@ Widget _field(
 }
 
 Widget _twoColumnRow(Widget first, Widget second) {
-  return LayoutBuilder(
-    builder: (context, constraints) {
-      if (constraints.maxWidth < 720) {
-        return Column(
-          children: [
-            first,
-            const SizedBox(height: TenantAdminSpacing.lg),
-            second,
-          ],
-        );
-      }
-
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(child: first),
-          const SizedBox(width: TenantAdminSpacing.xl),
-          Expanded(child: second),
-        ],
-      );
-    },
+  return TenantAdminResponsiveFormGrid(
+    children: [first, second],
   );
 }
 

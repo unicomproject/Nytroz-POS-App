@@ -74,7 +74,13 @@ class RolePermissionsScreen extends ConsumerWidget {
       title: 'Roles & Permissions',
       subtitle: 'Assign tenant-entitled permissions to a role.',
       actions: [
-        if (canUpdate)
+        if (canUpdate) ...[
+          TenantAdminSecondaryButton(
+            label: 'Create Role',
+            icon: Icons.add,
+            onPressed: () => context.go('/tenant-admin/roles-permissions/create/select-role'),
+          ),
+          const SizedBox(width: TenantAdminSpacing.md),
           TenantAdminPrimaryButton(
             label: 'Save changes',
             loading: uiState.isSaving,
@@ -87,6 +93,7 @@ class RolePermissionsScreen extends ConsumerWidget {
                     )
                     .save(selectedRoleId),
           ),
+        ]
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

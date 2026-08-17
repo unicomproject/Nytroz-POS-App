@@ -6,7 +6,7 @@ class TenantAdminColors {
   static const navy = Color(0xFF071A33);
   static const navySoft = Color(0xFF0E2748);
   static const startSaleHero = Color(0xFF001C38);
-  static const background = Color(0xFF030303);
+  static const background = Color(0xFF000000);
   static const subtleBackground = Color(0xFFF8FAFC);
   static const surface = Colors.white;
   static const border = Color(0xFFE5EAF4);
@@ -36,7 +36,7 @@ class TenantAdminColors {
   static const posHomeHeldCard = Color(0xFFFFF7D9);
   static const posHomeEndShiftCard = Color(0xFFFFE9ED);
   static const posHomeDot = Color(0x29081B3A);
-  static const posHomeDarkBackground = Color(0xFF030303);
+  static const posHomeDarkBackground = Color(0xFF000000);
   static const posHomeDarkSurface = Color(0xFF101010);
   static const posHomeDarkBorder = Color(0xFF555555);
   static const posHomeAccentOrange = Color(0xFFFF6A00);
@@ -172,7 +172,7 @@ class TenantAdminAppHeaderTokens {
   const TenantAdminAppHeaderTokens._();
 
   /// Height of the shared black Tenant Admin application header.
-  static const height = 44.0;
+  static const height = 74.0;
 }
 
 class TenantAdminSidebarTokens {

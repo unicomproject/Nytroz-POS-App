@@ -89,50 +89,36 @@ class _AddUserWizardBody extends ConsumerWidget {
           await _confirmDiscard(context, ref);
         }
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: TenantAdminColors.surface,
-          borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-          border: Border.all(color: TenantAdminColors.border),
-          boxShadow: TenantAdminShadows.card,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
-              child: _WizardStepper(currentStep: state.currentStep),
-            ),
-            const SizedBox(height: TenantAdminSpacing.xl),
-            const Divider(height: 1, color: TenantAdminColors.border),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: _StepContent(
-                state: state,
-                options: options,
-                canInvite: canInvite,
-                canOverride: canOverride,
-              ),
-            ),
-            const Divider(height: 1, color: TenantAdminColors.border),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: _WizardActions(
-                state: state,
-                onCancel: () => _handleCancel(context, ref),
-                onBack: state.currentStep == AddUserWizardStep.basicInformation
-                    ? null
-                    : controller.back,
-                onNext: state.currentStep == AddUserWizardStep.securityReview
-                    ? null
-                    : controller.next,
-                onCreate: state.currentStep == AddUserWizardStep.securityReview
-                    ? () => _submit(context, ref)
-                    : null,
-              ),
-            ),
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _WizardStepper(currentStep: state.currentStep),
+          const SizedBox(height: TenantAdminSpacing.xl),
+          const Divider(height: 1, color: TenantAdminColors.border),
+          const SizedBox(height: TenantAdminSpacing.lg),
+          _StepContent(
+            state: state,
+            options: options,
+            canInvite: canInvite,
+            canOverride: canOverride,
+          ),
+          const SizedBox(height: TenantAdminSpacing.lg),
+          const Divider(height: 1, color: TenantAdminColors.border),
+          const SizedBox(height: TenantAdminSpacing.lg),
+          _WizardActions(
+            state: state,
+            onCancel: () => _handleCancel(context, ref),
+            onBack: state.currentStep == AddUserWizardStep.basicInformation
+                ? null
+                : controller.back,
+            onNext: state.currentStep == AddUserWizardStep.securityReview
+                ? null
+                : controller.next,
+            onCreate: state.currentStep == AddUserWizardStep.securityReview
+                ? () => _submit(context, ref)
+                : null,
+          ),
+        ],
       ),
     );
   }
@@ -1377,10 +1363,10 @@ class _OutletAccessModeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderColor = selected
-        ? TenantAdminColors.posHomeAccentOrange
+        ? TenantAdminColors.primary
         : TenantAdminColors.border;
     final backgroundColor =
-        selected ? const Color(0xFFFFF4EC) : TenantAdminColors.surface;
+        selected ? TenantAdminColors.secondary : TenantAdminColors.surface;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: TenantAdminSpacing.sm),
@@ -1402,7 +1388,7 @@ class _OutletAccessModeTile extends StatelessWidget {
                     ? Icons.radio_button_checked
                     : Icons.radio_button_unchecked,
                 color: selected
-                    ? TenantAdminColors.posHomeAccentOrange
+                    ? TenantAdminColors.primary
                     : TenantAdminColors.mutedText,
               ),
               const SizedBox(width: TenantAdminSpacing.md),

@@ -17,7 +17,7 @@ import '../widgets/user_list_panel.dart';
 class UserListScreen extends ConsumerWidget {
   const UserListScreen({super.key});
 
-  static const _detailPanelBreakpoint = 1000.0;
+  static const _detailPanelBreakpoint = 1200.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/widgets/tenant_admin_widgets.dart';
 import '../../domain/entities/tenant_user.dart';
 
 class UserBasicInfoSection extends StatelessWidget {
@@ -33,91 +34,90 @@ class UserBasicInfoSection extends StatelessWidget {
         _sectionHeader(context,
             icon: Icons.badge_outlined, title: 'Basic Information'),
         const SizedBox(height: TenantAdminSpacing.lg),
-        _twoColumnRow(
-          TextFormField(
-            controller: fullNameController,
-            enabled: enabled,
-            decoration: InputDecoration(
-              labelText: 'Full Name',
-              hintText: 'Enter full name',
-              prefixIcon: const Icon(Icons.person_outline, size: 18),
-              errorText: backendErrors['fullName'],
+        TenantAdminResponsiveFormGrid(
+          children: [
+            TextFormField(
+              controller: fullNameController,
+              enabled: enabled,
+              decoration: InputDecoration(
+                labelText: 'Full Name',
+                hintText: 'Enter full name',
+                prefixIcon: const Icon(Icons.person_outline, size: 18),
+                errorText: backendErrors['fullName'],
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Full name is required.';
+                }
+                if (value.trim().length > 120) {
+                  return 'Full name must be 120 characters or less.';
+                }
+                return null;
+              },
             ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Full name is required.';
-              }
-              if (value.trim().length > 120) {
-                return 'Full name must be 120 characters or less.';
-              }
-              return null;
-            },
-          ),
-          TextFormField(
-            controller: emailController,
-            enabled: enabled,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              labelText: 'Email',
-              hintText: 'Enter email address',
-              prefixIcon: const Icon(Icons.email_outlined, size: 18),
-              errorText: backendErrors['email'],
+            TextFormField(
+              controller: emailController,
+              enabled: enabled,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                hintText: 'Enter email address',
+                prefixIcon: const Icon(Icons.email_outlined, size: 18),
+                errorText: backendErrors['email'],
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Email is required.';
+                }
+                final valid =
+                    RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim());
+                if (!valid) {
+                  return 'Enter a valid email address.';
+                }
+                return null;
+              },
             ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Email is required.';
-              }
-              final valid =
-                  RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim());
-              if (!valid) {
-                return 'Enter a valid email address.';
-              }
-              return null;
-            },
-          ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.lg),
-        _twoColumnRow(
-          TextFormField(
-            controller: phoneController,
-            enabled: enabled,
-            keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              labelText: 'Phone',
-              hintText: 'Enter phone number',
-              prefixIcon: const Icon(Icons.phone_outlined, size: 18),
-              errorText: backendErrors['phone'],
+            TextFormField(
+              controller: phoneController,
+              enabled: enabled,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                labelText: 'Phone',
+                hintText: 'Enter phone number',
+                prefixIcon: const Icon(Icons.phone_outlined, size: 18),
+                errorText: backendErrors['phone'],
+              ),
+              validator: (value) {
+                if (value != null && value.trim().length > 20) {
+                  return 'Phone number must be 20 characters or less.';
+                }
+                return null;
+              },
             ),
-            validator: (value) {
-              if (value != null && value.trim().length > 20) {
-                return 'Phone number must be 20 characters or less.';
-              }
-              return null;
-            },
-          ),
-          DropdownButtonFormField<String>(
-            initialValue: selectedRoleId,
-            decoration: InputDecoration(
-              labelText: 'Role',
-              hintText: 'Select role',
-              prefixIcon: const Icon(Icons.shield_outlined, size: 18),
-              errorText: backendErrors['roleId'],
+            DropdownButtonFormField<String>(
+              initialValue: selectedRoleId,
+              decoration: InputDecoration(
+                labelText: 'Role',
+                hintText: 'Select role',
+                prefixIcon: const Icon(Icons.shield_outlined, size: 18),
+                errorText: backendErrors['roleId'],
+              ),
+              items: [
+                for (final role in roles)
+                  DropdownMenuItem<String>(
+                    value: role.id,
+                    child: Text(role.name),
+                  ),
+              ],
+              onChanged: enabled ? onRoleChanged : null,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Role is required.';
+                }
+                return null;
+              },
             ),
-            items: [
-              for (final role in roles)
-                DropdownMenuItem<String>(
-                  value: role.id,
-                  child: Text(role.name),
-                ),
-            ],
-            onChanged: enabled ? onRoleChanged : null,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Role is required.';
-              }
-              return null;
-            },
-          ),
+          ],
         ),
       ],
     );
@@ -142,31 +142,6 @@ class UserBasicInfoSection extends StatelessWidget {
         const SizedBox(width: TenantAdminSpacing.sm),
         Text(title, style: TenantAdminTextStyles.sectionTitle(context)),
       ],
-    );
-  }
-
-  Widget _twoColumnRow(Widget first, Widget second) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 720) {
-          return Column(
-            children: [
-              first,
-              const SizedBox(height: TenantAdminSpacing.lg),
-              second,
-            ],
-          );
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: first),
-            const SizedBox(width: TenantAdminSpacing.xl),
-            Expanded(child: second),
-          ],
-        );
-      },
     );
   }
 }

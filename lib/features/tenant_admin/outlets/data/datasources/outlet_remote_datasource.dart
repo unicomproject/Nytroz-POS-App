@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 
+import '../../../../../core/network/media_url_resolver.dart';
+
 import '../../domain/entities/outlet_list_query.dart';
 import '../../domain/entities/outlet_image_upload.dart';
 import '../models/create_outlet_request_dto.dart';
@@ -70,13 +72,18 @@ class OutletRemoteDatasource {
     String id,
     CreateOutletRequestDto request,
   ) async {
-    final response = await _dio.put<dynamic>(
-      '$_outletBase/$id',
-      data: request.toUpdateJson(),
-    );
-    return OutletDetailsDto.fromJson(
-      _unwrapApiPayload(response.data, response.requestOptions),
-    );
+    try {
+      final response = await _dio.put<dynamic>(
+        '$_outletBase/$id',
+        data: request.toUpdateJson(),
+      );
+      return OutletDetailsDto.fromJson(
+        _unwrapApiPayload(response.data, response.requestOptions),
+      );
+    } on DioException catch (e) {
+      print('UPDATE OUTLET 400 ERROR RESPONSE: ${e.response?.data}');
+      rethrow;
+    }
   }
 
   Future<void> deleteOutlet(String id) async {
@@ -159,6 +166,8 @@ class OutletRemoteDatasource {
           ? Map<String, dynamic>.from(root['data'] as Map)
           : root;
 
+      _resolvePayloadMediaUrls(payload);
+
       return TenantAdminOutletListResponseDto.fromJson(payload);
     }
 
@@ -193,10 +202,44 @@ class OutletRemoteDatasource {
     }
 
     if (root['data'] is Map) {
-      return Map<String, dynamic>.from(root['data'] as Map);
+      final payload = Map<String, dynamic>.from(root['data'] as Map);
+      _resolvePayloadMediaUrls(payload);
+      return payload;
     }
 
+    _resolvePayloadMediaUrls(root);
     return root;
+  }
+
+  void _resolvePayloadMediaUrls(Map<String, dynamic> payload) {
+    void resolve(Map map, String key) {
+      if (map[key] != null) {
+        map[key] = MediaUrlResolver.resolve(
+          map[key]?.toString(),
+          apiBaseUrl: _dio.options.baseUrl,
+        ) ?? map[key];
+      }
+    }
+
+    if (payload['items'] is List) {
+      for (final item in payload['items']) {
+        if (item is Map) {
+          resolve(item, 'imageUrl');
+          if (item['manager'] is Map) {
+            resolve(item['manager'], 'avatarUrl');
+          }
+        }
+      }
+    }
+
+    if (payload['outlet'] is Map) {
+      resolve(payload['outlet'], 'imageUrl');
+    }
+    if (payload['manager'] is Map) {
+      resolve(payload['manager'], 'avatarUrl');
+    }
+
+    resolve(payload, 'imageUrl');
   }
 
   Future<OutletDetailDto> getOutletDetail(String id) async {

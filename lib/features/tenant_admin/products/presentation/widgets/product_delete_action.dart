@@ -353,7 +353,7 @@ class _DeleteConfirmationDialog extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(true),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF2D1A),
+                      backgroundColor: TenantAdminColors.danger,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,

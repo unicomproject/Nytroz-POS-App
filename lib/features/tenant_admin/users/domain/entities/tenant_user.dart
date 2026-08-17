@@ -32,7 +32,7 @@ class TenantUserListResult {
   const TenantUserListResult({
     required this.items,
     this.page = 1,
-    this.pageSize = 10,
+    this.pageSize = 5,
     this.totalCount = 0,
   });
 
@@ -70,7 +70,7 @@ class TenantUserListQuery {
   const TenantUserListQuery({
     this.search,
     this.page = 1,
-    this.pageSize = 10,
+    this.pageSize = 5,
     this.status,
     this.roleId,
     this.outletId,
