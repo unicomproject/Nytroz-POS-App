@@ -66,8 +66,14 @@ class BrandRemoteDatasource {
     Uint8List bytes,
     String fileName,
   ) async {
+    final extension = fileName.split('.').last.toLowerCase();
+    final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
     final formData = FormData.fromMap({
-      'file': MultipartFile.fromBytes(bytes, filename: fileName),
+      'file': MultipartFile.fromBytes(
+        bytes,
+        filename: fileName,
+        contentType: DioMediaType.parse(mimeType),
+      ),
     });
 
     final response = await _dio.post<dynamic>(

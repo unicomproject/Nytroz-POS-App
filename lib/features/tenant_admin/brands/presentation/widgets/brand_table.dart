@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nytroz_pos/shared/presentation/app_modal.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/brand.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
@@ -9,6 +10,7 @@ import '../../../presentation/widgets/tenant_admin_mobile_list_card.dart';
 import '../../../presentation/widgets/tenant_admin_status_badge.dart';
 import '../providers/brand_providers.dart';
 import 'brand_details_side_panel.dart';
+import '../../../products/presentation/navigation/products_sidebar_routes.dart';
 
 const double _brandDesktopViewportBreakpoint = 1024;
 
@@ -117,7 +119,7 @@ class _Actions extends ConsumerWidget {
         children: [
           if (canEdit)
             IconButton(
-              tooltip: 'Edit brand (page implementation deferred)',
+              tooltip: 'Edit brand',
               style: IconButton.styleFrom(
                 fixedSize: const Size(34, 34),
                 minimumSize: const Size(34, 34),
@@ -128,10 +130,8 @@ class _Actions extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
                 ),
               ),
-              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Edit Brand page implementation deferred.')),
-              ),
+              onPressed: () =>
+                  context.go(ProductsSidebarRoutes.editBrand(brand.id)),
               icon: const Icon(Icons.edit_outlined),
             ),
           if (canEdit && canDelete) const SizedBox(width: 8),

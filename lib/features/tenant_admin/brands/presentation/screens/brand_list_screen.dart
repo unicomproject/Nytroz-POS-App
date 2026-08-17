@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/layout/tenant_admin_breadcrumb.dart';
@@ -13,6 +14,7 @@ import '../providers/brand_providers.dart';
 import '../providers/brand_visibility_provider.dart';
 import '../widgets/brand_details_side_panel.dart';
 import '../widgets/brand_table.dart';
+import '../../../products/presentation/navigation/products_sidebar_routes.dart';
 
 const double _brandInlineDetailViewportBreakpoint = 1024;
 
@@ -137,12 +139,7 @@ class _BrandListWorkspace extends ConsumerWidget {
                     label: 'Add Brand',
                     icon: Icons.add,
                     backgroundColor: TenantAdminColors.posHomeOrangeEnd,
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content:
-                            Text('Add Brand page implementation deferred.'),
-                      ),
-                    ),
+                    onPressed: () => context.go(ProductsSidebarRoutes.addBrand),
                   ),
               ],
             ),

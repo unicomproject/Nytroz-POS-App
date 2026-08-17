@@ -11,6 +11,7 @@ class Brand {
     this.productCount = 0,
     this.createdAt,
     this.updatedAt,
+    this.rowVersion = 1,
   });
 
   final String id;
@@ -24,6 +25,7 @@ class Brand {
   final int productCount;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final int rowVersion;
 
   bool get isActive => status.toUpperCase() == 'ACTIVE';
 
@@ -54,6 +56,7 @@ class BrandUpsertInput {
     this.description,
     this.sortOrder = 0,
     this.logoUrl,
+    this.expectedRowVersion,
   });
 
   final String code;
@@ -62,4 +65,5 @@ class BrandUpsertInput {
   final String? description;
   final int sortOrder;
   final String? logoUrl;
+  final int? expectedRowVersion;
 }

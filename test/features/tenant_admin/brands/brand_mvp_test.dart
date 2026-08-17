@@ -227,8 +227,7 @@ void main() {
       expect(find.byKey(const Key('brand-details-region')), findsOneWidget);
       expect(find.byType(BottomSheet), findsNothing);
       expect(find.byKey(const Key('brand-data-table')), findsOneWidget);
-      expect(find.byTooltip('Edit brand (page implementation deferred)'),
-          findsWidgets);
+      expect(find.byTooltip('Edit brand'), findsWidgets);
       expect(find.byTooltip('Delete brand'), findsWidgets);
       expect(container.read(selectedBrandIdProvider), 'samsung');
 
@@ -411,7 +410,7 @@ void main() {
           find.descendant(
             of: find.byKey(const Key('brand-data-table')),
             matching: find.byTooltip(
-              'Edit brand (page implementation deferred)',
+              'Edit brand',
             ),
           ),
           findsWidgets,

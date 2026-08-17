@@ -307,6 +307,20 @@ const tenantAdminRouteDefinitions = [
     permissionCode: 'tenant.brands.view',
   ),
   TenantAdminRouteDefinition(
+    path: '/tenant-admin/brands/add',
+    menuKey: 'products',
+    title: 'Add Brand',
+    featureCode: 'catalog.product',
+    permissionCode: 'catalog.brands.create',
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/brands/:brandId/edit',
+    menuKey: 'products',
+    title: 'Edit Brand',
+    featureCode: 'catalog.product',
+    permissionCode: 'catalog.brands.update',
+  ),
+  TenantAdminRouteDefinition(
     path: '/tenant-admin/variant-templates',
     menuKey: 'products',
     title: 'Variant Templates',
