@@ -248,9 +248,44 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
       return;
     }
 
-    final ok = await ref
-        .read(hardware.cashDrawerControllerProvider.notifier)
-        .triggerManualNoSaleOpen(reason: 'Manual open from Cash Drawer');
+    // Ensure drawer config/policy is loaded for approval gating.
+    final hardwareNotifier =
+        ref.read(hardware.cashDrawerControllerProvider.notifier);
+    var hardwareState = ref.read(hardware.cashDrawerControllerProvider);
+    if (hardwareState.config == null) {
+      await hardwareNotifier.load();
+      if (!context.mounted) return;
+      hardwareState = ref.read(hardware.cashDrawerControllerProvider);
+    }
+
+    final config = hardwareState.config;
+    if (config == null || !config.manualOpenEnabled) {
+      _showMessage(
+        context,
+        'Manual cash drawer open is disabled for this device.',
+      );
+      return;
+    }
+
+    final reason = await _promptManualOpenReason(context);
+    if (!context.mounted || reason == null || reason.trim().isEmpty) return;
+
+    String? managerEmail;
+    String? managerPassword;
+    final requiresApproval =
+        config.policy.toLowerCase().contains('approval');
+    if (requiresApproval) {
+      final credentials = await _promptManagerApproval(context);
+      if (!context.mounted || credentials == null) return;
+      managerEmail = credentials.$1;
+      managerPassword = credentials.$2;
+    }
+
+    final ok = await hardwareNotifier.triggerManualNoSaleOpen(
+      reason: reason.trim(),
+      managerEmail: managerEmail,
+      managerPassword: managerPassword,
+    );
 
     if (!context.mounted) return;
     final message = ref.read(hardware.cashDrawerControllerProvider).message;
@@ -260,6 +295,136 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
       context,
       message.trim().isEmpty ? fallback : message,
     );
+  }
+
+  Future<String?> _promptManualOpenReason(BuildContext context) async {
+    const reasons = <String>[
+      'Provide change',
+      'Till check',
+      'Cash count',
+      'Manager operation',
+      'Other',
+    ];
+    String selected = reasons.first;
+    final otherController = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setLocal) {
+            return AlertDialog(
+              title: const Text('Open cash drawer'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Column(
+                    children: [
+                      for (final r in reasons)
+                        ListTile(
+                          dense: true,
+                          title: Text(r),
+                          trailing: selected == r
+                              ? const Icon(Icons.check_circle_outline)
+                              : const Icon(Icons.circle_outlined),
+                          onTap: () => setLocal(() => selected = r),
+                        ),
+                    ],
+                  ),
+                  if (selected == 'Other') ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: otherController,
+                      maxLength: 120,
+                      decoration: const InputDecoration(
+                        labelText: 'Note (required for Other)',
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    if (selected == 'Other' &&
+                        otherController.text.trim().isEmpty) {
+                      return;
+                    }
+                    Navigator.of(dialogContext).pop(true);
+                  },
+                  child: const Text('Continue'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    final otherNote = otherController.text.trim();
+    otherController.dispose();
+    if (confirmed != true) return null;
+    if (selected == 'Other') return 'Other: $otherNote';
+    return selected;
+  }
+
+  Future<(String, String)?> _promptManagerApproval(BuildContext context) async {
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Manager approval required'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emailController,
+                autofillHints: const [AutofillHints.email],
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(labelText: 'Manager email'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                autofillHints: const [AutofillHints.password],
+                decoration:
+                    const InputDecoration(labelText: 'Manager password'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (emailController.text.trim().isEmpty ||
+                    passwordController.text.isEmpty) {
+                  return;
+                }
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Approve'),
+            ),
+          ],
+        );
+      },
+    );
+
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+    emailController.dispose();
+    passwordController.dispose();
+    if (confirmed != true) return null;
+    return (email, password);
   }
 
   void _onCashIn(BuildContext context) {

@@ -10,6 +10,7 @@ import 'package:nytroz_pos/features/auth/presentation/providers/session_provider
 import 'package:nytroz_pos/features/cash_drawer/data/datasources/cash_drawer_remote_datasource.dart';
 import 'package:nytroz_pos/features/cash_drawer/domain/entities/cash_drawer_summary.dart';
 import 'package:nytroz_pos/features/cash_drawer/domain/entities/cash_movement.dart';
+import 'package:nytroz_pos/features/cash_drawer/domain/entities/cash_movement_type.dart';
 import 'package:nytroz_pos/features/cash_drawer/domain/repositories/cash_drawer_repository.dart';
 import 'package:nytroz_pos/features/cash_drawer/presentation/providers/cash_drawer_provider.dart';
 import 'package:nytroz_pos/features/device_activation/application/usecases/activate_device.dart';
@@ -49,6 +50,24 @@ void main() {
         userDisplayName: 'Kavin',
         permissionCodes: ['cash_drawer.view', 'cash_drawer.movement.create'],
       );
+
+  test('cash drawer amount formatter groups negative values after the sign',
+      () {
+    expect(formatCashDrawerAmount(0, currencyCode: 'LKR'), 'LKR 0.00');
+    expect(formatCashDrawerAmount(100, currencyCode: 'LKR'), 'LKR 100.00');
+    expect(formatCashDrawerAmount(1000, currencyCode: 'LKR'), 'LKR 1,000.00');
+    expect(formatCashDrawerAmount(940.5), '940.50');
+    expect(
+      formatCashDrawerAmount(-940, currencyCode: 'LKR'),
+      'LKR -940.00',
+    );
+    expect(formatCashDrawerAmount(-940.5), '-940.50');
+    expect(formatCashDrawerAmount(1234567.89), '1,234,567.89');
+    expect(
+      formatCashDrawerAmount(-1234567.89, currencyCode: 'LKR'),
+      'LKR -1,234,567.89',
+    );
+  });
 
   test('cash in success refreshes summary and movements from backend',
       () async {
@@ -93,12 +112,20 @@ void main() {
 
     final ok = await controller.recordCashIn(
       amount: 500,
-      reason: 'Float top-up',
+      movementTypeId: 'type-float',
+      requestId: '11111111-1111-4111-8111-111111111111',
+      note: 'Float top-up',
     );
 
     expect(ok, isTrue);
     expect(container.read(cashDrawerProvider).errorMessage, isNull);
-    expect(repository.createCalls, 1);
+    expect(repository.createCashInCalls, 1);
+    expect(repository.lastCreatePayload!['movementTypeId'], 'type-float');
+    expect(repository.lastCreatePayload!['requestId'],
+        '11111111-1111-4111-8111-111111111111');
+    expect(repository.lastCreatePayload!.containsKey('managerPin'), isFalse);
+    expect(repository.lastCreatePayload!.containsKey('currencyCode'), isFalse);
+    expect(repository.lastCreatePayload!.containsKey('tenantId'), isFalse);
     expect(repository.summaryCalls, greaterThan(summaryCallsBefore));
     expect(repository.movementCalls, greaterThan(movementCallsBefore));
     expect(
@@ -155,7 +182,9 @@ void main() {
 
     final ok = await controller.recordCashIn(
       amount: 500,
-      reason: 'Float top-up',
+      movementTypeId: 'type-float',
+      requestId: '22222222-2222-4222-8222-222222222222',
+      note: 'Float top-up',
     );
 
     expect(ok, isFalse);
@@ -165,15 +194,67 @@ void main() {
     expect(after.movements.length, beforeMovements.length);
     expect(after.movements.map((m) => m.id), beforeMovements.map((m) => m.id));
   });
+
+  test('cash in double submit while submitting is ignored', () async {
+    final repository = _FakeCashDrawerRepository(delayCreate: true);
+    final container = ProviderContainer(
+      overrides: [
+        cashDrawerRepositoryProvider.overrideWithValue(repository),
+        appDioProvider.overrideWithValue(Dio()),
+        authSessionProvider.overrideWith(
+          (ref) => _PresetAuthSessionNotifier(session()),
+        ),
+        activateDeviceProvider.overrideWithValue(
+          ActivateDevice(_FakeDeviceActivationRepository(device)),
+        ),
+        deviceContextStorageProvider.overrideWithValue(
+          _TestDeviceContextStorage(device),
+        ),
+        deviceActivationProvider.overrideWith(
+          (ref) => _PresetDeviceActivationController(
+            ref.watch(activateDeviceProvider),
+            ref.watch(deviceContextStorageProvider),
+            device,
+          ),
+        ),
+        openTillProvider.overrideWithValue(OpenTill(_FakeTillRepository())),
+        tillSessionStorageProvider.overrideWithValue(_TestTillSessionStorage()),
+        tillProvider.overrideWith((ref) => _OpenTillController()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(cashDrawerProvider.notifier);
+    await controller.refresh();
+
+    final first = controller.recordCashIn(
+      amount: 100,
+      movementTypeId: 'type-float',
+      requestId: '33333333-3333-4333-8333-333333333333',
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(container.read(cashDrawerProvider).isSubmitting, isTrue);
+    final second = await controller.recordCashIn(
+      amount: 100,
+      movementTypeId: 'type-float',
+      requestId: '33333333-3333-4333-8333-333333333333',
+    );
+    expect(second, isFalse);
+    expect(await first, isTrue);
+    expect(repository.createCashInCalls, 1);
+  });
 }
 
 class _FakeCashDrawerRepository implements CashDrawerRepository {
-  _FakeCashDrawerRepository({this.failCreate = false});
+  _FakeCashDrawerRepository({this.failCreate = false, this.delayCreate = false});
 
   final bool failCreate;
+  final bool delayCreate;
   int summaryCalls = 0;
   int movementCalls = 0;
+  int createCashInCalls = 0;
   int createCalls = 0;
+  Map<String, dynamic>? lastCreatePayload;
   double expectedCash = 68000;
   final List<CashMovement> _movements = [
     CashMovement(
@@ -214,6 +295,113 @@ class _FakeCashDrawerRepository implements CashDrawerRepository {
   }) async {
     movementCalls += 1;
     return List<CashMovement>.from(_movements);
+  }
+
+  @override
+  Future<List<CashMovementTypeOption>> getCashInMovementTypes() async {
+    return const [
+      CashMovementTypeOption(
+        movementTypeId: 'type-float',
+        code: 'FLOAT_ADDED',
+        name: 'Float Added',
+        direction: 'IN',
+        requiresReason: false,
+        affectsExpectedCash: true,
+      ),
+    ];
+  }
+
+  @override
+  Future<List<CashMovementTypeOption>> getCashDropMovementTypes() async {
+    return const [
+      CashMovementTypeOption(
+        movementTypeId: 'type-drop',
+        code: 'CASH_DROP',
+        name: 'Safe Drop',
+        direction: 'OUT',
+        requiresReason: false,
+        affectsExpectedCash: true,
+      ),
+    ];
+  }
+
+  @override
+  Future<CashMovement> createCashInMovement({
+    required String requestId,
+    required String deviceId,
+    required String movementTypeId,
+    required double amount,
+    String? note,
+  }) async {
+    createCashInCalls += 1;
+    lastCreatePayload = {
+      'requestId': requestId,
+      'deviceId': deviceId,
+      'movementTypeId': movementTypeId,
+      'amount': amount,
+      if (note != null) 'note': note,
+    };
+    if (delayCreate) {
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+    }
+    if (failCreate) {
+      throw const CashDrawerException('Backend unavailable');
+    }
+    expectedCash += amount;
+    final movement = CashMovement(
+      id: 'backend-$createCashInCalls',
+      type: CashMovementType.cashIn,
+      amount: amount,
+      dateTime: DateTime.utc(2026, 8, 13, 12),
+      userName: 'Kavin',
+      currencyCode: 'USD',
+      reason: note,
+    );
+    _movements.insert(0, movement);
+    return movement;
+  }
+
+  @override
+  Future<CashMovement> createCashDropMovement({
+    required String requestId,
+    required String deviceId,
+    required String movementTypeId,
+    required double amount,
+    String? note,
+  }) async {
+    createCalls += 1;
+    lastCreatePayload = {
+      'requestId': requestId,
+      'deviceId': deviceId,
+      'movementTypeId': movementTypeId,
+      'amount': amount,
+      if (note != null) 'note': note,
+    };
+    if (delayCreate) {
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+    }
+    if (failCreate) {
+      throw const CashDrawerException('Backend unavailable');
+    }
+    if (amount > expectedCash) {
+      throw const CashDrawerException(
+        'Insufficient cash',
+        code: 'cash_drawer.insufficient_expected_cash',
+      );
+    }
+    expectedCash -= amount;
+    final movement = CashMovement(
+      id: 'backend-drop-$createCalls',
+      type: CashMovementType.cashDrop,
+      amount: amount,
+      dateTime: DateTime.utc(2026, 8, 13, 12),
+      userName: 'Kavin',
+      direction: 'OUT',
+      currencyCode: 'USD',
+      reason: note,
+    );
+    _movements.insert(0, movement);
+    return movement;
   }
 
   @override

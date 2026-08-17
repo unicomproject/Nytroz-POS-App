@@ -191,6 +191,7 @@ class PosBottomFilledButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.isLoading = false,
+    this.fullWidth = false,
     this.backgroundColor,
     this.disabledBackgroundColor,
   });
@@ -199,6 +200,7 @@ class PosBottomFilledButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final IconData? icon;
   final bool isLoading;
+  final bool fullWidth;
   final Color? backgroundColor;
   final Color? disabledBackgroundColor;
 
@@ -208,6 +210,7 @@ class PosBottomFilledButton extends StatelessWidget {
         onPressed: onPressed,
         icon: icon,
         isLoading: isLoading,
+        fullWidth: fullWidth,
         backgroundColor: backgroundColor,
         disabledBackgroundColor: disabledBackgroundColor,
       );

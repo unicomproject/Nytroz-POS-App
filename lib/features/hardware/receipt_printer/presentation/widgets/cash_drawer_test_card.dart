@@ -117,6 +117,7 @@ class _CashDrawerTestCardState extends ConsumerState<CashDrawerTestCard> {
                   width: 260,
                   child: DropdownButtonFormField<String>(
                     initialValue: _drawerPort,
+                    isExpanded: true,
                     decoration: const InputDecoration(labelText: 'Drawer port'),
                     items: const [
                       DropdownMenuItem(
@@ -156,22 +157,45 @@ class _CashDrawerTestCardState extends ConsumerState<CashDrawerTestCard> {
                 ),
                 SizedBox(
                   width: 260,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _policy,
-                    decoration:
-                        const InputDecoration(labelText: 'Open drawer policy'),
-                    items: const [
-                      DropdownMenuItem(value: 'never', child: Text('Never')),
-                      DropdownMenuItem(
-                          value: 'always', child: Text('Always (No sale)')),
-                      DropdownMenuItem(
-                          value: 'approvalRequired',
-                          child: Text('Manager approval required')),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      DropdownButtonFormField<String>(
+                        initialValue: _policy,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                            labelText: 'Open drawer policy'),
+                        items: const [
+                          DropdownMenuItem(
+                              value: 'never',
+                              child: Text(
+                                'Never (no manager approval)',
+                                overflow: TextOverflow.ellipsis,
+                              )),
+                          DropdownMenuItem(
+                              value: 'always',
+                              child: Text('Always (No sale)')),
+                          DropdownMenuItem(
+                              value: 'approvalRequired',
+                              child: Text(
+                                'Manager approval required',
+                                overflow: TextOverflow.ellipsis,
+                              )),
+                        ],
+                        onChanged: state.isBusy || linkedPrinterId == null
+                            ? null
+                            : (val) => setState(
+                                () => _policy = val ?? 'approvalRequired'),
+                      ),
+                      const SizedBox(height: TenantAdminSpacing.xs),
+                      Text(
+                        'Policy controls manager approval for manual open. '
+                        'Automatic cash/split/refund open uses the toggles below.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: TenantAdminColors.mutedText,
+                            ),
+                      ),
                     ],
-                    onChanged: state.isBusy || linkedPrinterId == null
-                        ? null
-                        : (val) =>
-                            setState(() => _policy = val ?? 'approvalRequired'),
                   ),
                 ),
               ],

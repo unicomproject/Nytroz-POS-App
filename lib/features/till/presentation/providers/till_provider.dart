@@ -141,7 +141,6 @@ class TillController extends StateNotifier<TillState> {
   Future<ClosedTillSession?> closeTill({
     required PosDeviceContext deviceContext,
     required double countedCash,
-    required double expectedCash,
     String? mismatchReason,
     String? closingNote,
   }) async {
@@ -158,7 +157,6 @@ class TillController extends StateNotifier<TillState> {
         CloseTillForm(
           deviceContext: deviceContext,
           countedCash: countedCash,
-          expectedCash: expectedCash,
           mismatchReason: mismatchReason,
           closingNote: closingNote,
         ),

@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../domain/entities/cash_in_reason.dart';
 import '../providers/cash_in_provider.dart';
 import 'cash_drawer_section_card.dart';
 
@@ -15,81 +13,222 @@ class CashInFormCard extends ConsumerWidget {
     required this.amountController,
     required this.noteController,
     required this.managerPinController,
+    this.currencyCode = '',
+    this.expand = false,
+    this.compact = false,
+    this.tight = false,
   });
 
   final GlobalKey<FormState> formKey;
   final TextEditingController amountController;
   final TextEditingController noteController;
   final TextEditingController managerPinController;
+  final String currencyCode;
+  final bool expand;
+  final bool compact;
+  final bool tight;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final formState = ref.watch(cashInFormProvider);
+    final catalog = ref.watch(cashInCatalogProvider);
+    final prefix = currencyInputPrefix(currencyCode);
+    final reasonEnabled = catalog.status == CashInCatalogStatus.ready &&
+        catalog.types.isNotEmpty;
 
     return CashDrawerSectionCard(
+      expand: expand,
+      padding: EdgeInsets.all(
+        tight
+            ? TenantAdminSpacing.sm
+            : compact
+                ? TenantAdminSpacing.lg
+                : TenantAdminSpacing.xl,
+      ),
       child: Form(
         key: formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Cash In Details',
-              style: TenantAdminTextStyles.sectionTitle(context),
+            _SectionHeading(
+              icon: Icons.point_of_sale_outlined,
+              label: 'Cash In Details',
+              compact: tight,
             ),
-            const SizedBox(height: TenantAdminSpacing.lg),
-            TextFormField(
-              controller: amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-              ],
-              onChanged: ref.read(cashInFormProvider.notifier).setAmountText,
-              decoration: InputDecoration(
-                labelText: 'Amount *',
-                prefixText: '${formatLkrInputPrefix()} ',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                ),
-              ),
-              validator: validateCashInAmount,
+            SizedBox(
+              height: tight
+                  ? TenantAdminSpacing.xs
+                  : compact
+                      ? TenantAdminSpacing.md
+                      : TenantAdminSpacing.lg,
             ),
-            const SizedBox(height: TenantAdminSpacing.lg),
-            DropdownButtonFormField<String>(
-              key: ValueKey(formState.reason),
-              initialValue: formState.reason,
-              decoration: InputDecoration(
-                labelText: 'Reason *',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            if (catalog.isLoading)
+              Padding(
+                padding: EdgeInsets.only(
+                  bottom: tight
+                      ? TenantAdminSpacing.xs
+                      : TenantAdminSpacing.md,
                 ),
+                child: const LinearProgressIndicator(minHeight: 2),
               ),
-              items: [
-                for (final reason in CashInReason.options)
-                  DropdownMenuItem(
-                    value: reason,
-                    child: Text(reason),
+            if (catalog.status == CashInCatalogStatus.empty)
+              Padding(
+                padding: EdgeInsets.only(
+                  bottom: tight
+                      ? TenantAdminSpacing.xs
+                      : TenantAdminSpacing.md,
+                ),
+                child: Text(
+                  'No Cash In reasons are available. Contact your administrator.',
+                  style: TenantAdminTextStyles.muted(context).copyWith(
+                    color: TenantAdminColors.danger,
+                    fontSize: tight ? 10 : 12,
                   ),
+                ),
+              ),
+            if (catalog.status == CashInCatalogStatus.failure)
+              Padding(
+                padding: EdgeInsets.only(
+                  bottom: tight
+                      ? TenantAdminSpacing.xs
+                      : TenantAdminSpacing.md,
+                ),
+                child: Text(
+                  catalog.errorMessage ??
+                      'Cash In reasons could not be loaded.',
+                  style: TenantAdminTextStyles.muted(context).copyWith(
+                    color: TenantAdminColors.danger,
+                    fontSize: tight ? 10 : 12,
+                  ),
+                ),
+              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: amountController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d*\.?\d{0,2}'),
+                      ),
+                    ],
+                    onChanged:
+                        ref.read(cashInFormProvider.notifier).setAmountText,
+                    decoration: InputDecoration(
+                      labelText: 'Amount *',
+                      prefixText: prefix.isEmpty ? null : '$prefix ',
+                      helperText: 'Enter amount greater than zero',
+                      helperStyle: tight ? const TextStyle(fontSize: 9) : null,
+                      isDense: compact,
+                      contentPadding: compact
+                          ? EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: tight ? 7 : 12,
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
+                      ),
+                    ),
+                    validator: validateCashInAmount,
+                  ),
+                ),
+                const SizedBox(width: TenantAdminSpacing.lg),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    key: ValueKey(
+                      '${catalog.status.name}-${formState.selectedMovementTypeId}',
+                    ),
+                    isExpanded: true,
+                    initialValue: reasonEnabled
+                        ? formState.selectedMovementTypeId
+                        : null,
+                    decoration: InputDecoration(
+                      labelText: 'Reason *',
+                      isDense: compact,
+                      contentPadding: compact
+                          ? EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: tight ? 7 : 12,
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
+                      ),
+                    ),
+                    items: [
+                      for (final type in catalog.types)
+                        DropdownMenuItem(
+                          value: type.movementTypeId,
+                          child: Text(
+                            type.name,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                    ],
+                    selectedItemBuilder: (context) => [
+                      for (final type in catalog.types)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            type.name,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                    ],
+                    onChanged: reasonEnabled
+                        ? ref
+                            .read(cashInFormProvider.notifier)
+                            .setSelectedMovementTypeId
+                        : null,
+                    validator: (value) => validateCashInMovementType(
+                      value,
+                      availableTypes: catalog.types,
+                    ),
+                  ),
+                ),
               ],
-              onChanged: ref.read(cashInFormProvider.notifier).setReason,
-              validator: validateCashInReason,
             ),
-            const SizedBox(height: TenantAdminSpacing.lg),
+            SizedBox(
+              height: tight
+                  ? TenantAdminSpacing.xs
+                  : compact
+                      ? TenantAdminSpacing.md
+                      : TenantAdminSpacing.lg,
+            ),
             TextFormField(
               controller: noteController,
-              maxLines: 4,
+              maxLines: tight ? 1 : (compact ? 2 : 4),
               maxLength: 500,
               onChanged: ref.read(cashInFormProvider.notifier).setNote,
               decoration: InputDecoration(
-                labelText: 'Note',
+                labelText: 'Note (optional)',
                 hintText: 'Add note for this cash in.',
                 alignLabelWithHint: true,
+                isDense: compact,
+                contentPadding: tight
+                    ? const EdgeInsets.symmetric(horizontal: 12, vertical: 8)
+                    : null,
+                counterStyle: tight ? const TextStyle(fontSize: 9) : null,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                 ),
               ),
             ),
-            const SizedBox(height: TenantAdminSpacing.lg),
+            SizedBox(
+              height: tight
+                  ? TenantAdminSpacing.xs
+                  : compact
+                      ? TenantAdminSpacing.md
+                      : TenantAdminSpacing.lg,
+            ),
             TextFormField(
               controller: managerPinController,
               obscureText: formState.obscureManagerPin,
@@ -101,6 +240,13 @@ class CashInFormCard extends ConsumerWidget {
               onChanged: ref.read(cashInFormProvider.notifier).setManagerPin,
               decoration: InputDecoration(
                 labelText: 'Manager PIN (optional)',
+                isDense: compact,
+                contentPadding: compact
+                    ? EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: tight ? 7 : 12,
+                      )
+                    : null,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                 ),
@@ -116,16 +262,58 @@ class CashInFormCard extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: TenantAdminSpacing.sm),
+            SizedBox(height: tight ? 2 : TenantAdminSpacing.sm),
             Text(
               'Manager PIN is collected for future approval workflows only.',
               style: TenantAdminTextStyles.muted(context).copyWith(
-                fontSize: 12,
+                fontSize: tight ? 9 : (compact ? 10 : 12),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading({
+    required this.icon,
+    required this.label,
+    this.compact = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: compact ? 28 : 36,
+          height: compact ? 28 : 36,
+          decoration: BoxDecoration(
+            color: TenantAdminColors.expectedCashSurface,
+            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+          ),
+          child: Icon(
+            icon,
+            color: TenantAdminColors.posHomeAccentOrange,
+            size: compact ? 17 : 21,
+          ),
+        ),
+        SizedBox(
+          width: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
+        ),
+        Text(
+          label,
+          style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+            fontSize: compact ? 14 : null,
+          ),
+        ),
+      ],
     );
   }
 }

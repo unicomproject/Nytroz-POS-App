@@ -1,5 +1,6 @@
 import '../../domain/entities/cash_drawer_summary.dart';
 import '../../domain/entities/cash_movement.dart';
+import '../../domain/entities/cash_movement_type.dart';
 import '../../domain/repositories/cash_drawer_repository.dart';
 import '../datasources/cash_drawer_remote_datasource.dart';
 
@@ -42,6 +43,62 @@ class CashDrawerRepositoryImpl implements CashDrawerRepository {
   }
 
   @override
+  Future<List<CashMovementTypeOption>> getCashInMovementTypes() async {
+    final rows = await _remote.getMovementTypes(direction: 'IN');
+    return rows.map(_movementType).toList();
+  }
+
+  @override
+  Future<List<CashMovementTypeOption>> getCashDropMovementTypes() async {
+    final rows = await _remote.getMovementTypes(direction: 'OUT');
+    return rows.map(_movementType).toList();
+  }
+
+  @override
+  Future<CashMovement> createCashInMovement({
+    required String requestId,
+    required String deviceId,
+    required String movementTypeId,
+    required double amount,
+    String? note,
+  }) async {
+    final payload = <String, dynamic>{
+      'requestId': requestId,
+      'deviceId': deviceId,
+      'movementTypeId': movementTypeId,
+      'amount': amount,
+    };
+    final trimmedNote = note?.trim();
+    if (trimmedNote != null && trimmedNote.isNotEmpty) {
+      payload['note'] = trimmedNote;
+    }
+    final json = await _remote.createCashInMovement(payload);
+    return _movement(json);
+  }
+
+  @override
+  Future<CashMovement> createCashDropMovement({
+    required String requestId,
+    required String deviceId,
+    required String movementTypeId,
+    required double amount,
+    String? note,
+  }) async {
+    final payload = <String, dynamic>{
+      'requestId': requestId,
+      'deviceId': deviceId,
+      'movementTypeId': movementTypeId,
+      'amount': amount,
+    };
+    final trimmedNote = note?.trim();
+    if (trimmedNote != null && trimmedNote.isNotEmpty) {
+      payload['note'] = trimmedNote;
+    }
+    final json = await _remote.createCashDropMovement(payload);
+    return _movement(json);
+  }
+
+  @override
   Future<CashMovement> createMovement(
       {required String requestId,
       required String deviceId,
@@ -62,12 +119,24 @@ class CashDrawerRepositoryImpl implements CashDrawerRepository {
     return _movement(json);
   }
 
+  CashMovementTypeOption _movementType(Map<String, dynamic> json) =>
+      CashMovementTypeOption(
+        movementTypeId: _text(json['movementTypeId']),
+        code: _text(json['code']),
+        name: _text(json['name']),
+        direction: _text(json['direction']),
+        requiresReason: json['requiresReason'] == true,
+        affectsExpectedCash: json['affectsExpectedCash'] == true,
+      );
+
   CashMovement _movement(Map<String, dynamic> json) => CashMovement(
         id: _text(json['movementId']),
         type: _type(_text(json['movementType'])),
         amount: _number(json['amount']),
         dateTime: DateTime.parse(_text(json['performedAt'])),
         userName: _text(json['performedBy']),
+        direction: _text(json['direction']),
+        currencyCode: _text(json['currencyCode']),
         reason: json['reason']?.toString(),
         note: json['reference']?.toString(),
       );

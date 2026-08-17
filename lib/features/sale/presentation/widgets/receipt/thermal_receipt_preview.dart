@@ -1,34 +1,43 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../shared/pos_session/pos_session_context.dart';
-import '../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import '../../../../hardware/receipt_printer/mappers/canonical_receipt_presentation_mapper.dart';
+import '../../../../hardware/receipt_printer/models/canonical_receipt_presentation.dart';
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../providers/pos_cash_payment_success_provider.dart';
-import '../../utils/receipt_cashier_display.dart';
 
+/// Flutter renderer of [CanonicalReceiptPresentation].
+///
+/// Semantic content must match ESC/POS renderers; pixel parity is not required.
 class ThermalReceiptPreview extends StatelessWidget {
   const ThermalReceiptPreview({
     super.key,
-    required this.successData,
-    required this.cashierName,
-    required this.sessionContext,
+    required this.presentation,
   });
 
-  final PosCashPaymentSuccessData successData;
-  final String cashierName;
-  final PosSessionContext sessionContext;
+  factory ThermalReceiptPreview.fromPaymentSuccess({
+    Key? key,
+    required PosCashPaymentSuccessData successData,
+    required String cashierName,
+    required PosSessionContext sessionContext,
+    String? outletTimezoneId,
+  }) {
+    return ThermalReceiptPreview(
+      key: key,
+      presentation: const CanonicalReceiptPresentationMapper().fromPaymentSuccess(
+        success: successData,
+        session: sessionContext,
+        cashierFallback: cashierName,
+        outletTimezoneId: outletTimezoneId,
+      ),
+    );
+  }
+
+  final CanonicalReceiptPresentation presentation;
 
   @override
   Widget build(BuildContext context) {
-    final outletName = _cleanPending(sessionContext.outletName);
-    final outletLocation = _cleanPending(sessionContext.outletLocation);
-    final terminal = _cleanPending(sessionContext.tillName);
-    final resolvedCashierName = resolveReceiptCashierDisplayName(
-      receiptDataJson: successData.receiptDataJson,
-      paymentCashierName: successData.cashierName,
-      sessionDisplayName: cashierName,
-    );
-
+    final p = presentation;
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -54,39 +63,37 @@ class ThermalReceiptPreview extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _ReceiptHeader(
-                    businessName: sessionContext.brandName,
-                    subtitle: sessionContext.brandSubtitle,
-                    outletName: outletName,
-                    outletLocation: outletLocation,
+                    businessName: p.merchantName,
+                    subtitle: p.brandSubtitle,
+                    outletName: p.outletName.isEmpty ? null : p.outletName,
+                    outletLocation:
+                        p.outletLocation.isEmpty ? null : p.outletLocation,
                   ),
                   const SizedBox(height: TenantAdminSpacing.md),
                   const _DashedDivider(),
                   const SizedBox(height: TenantAdminSpacing.md),
-                  _ReceiptInfoSection(
-                    receiptNumber: successData.receiptNumber,
-                    completedAt: successData.completedAt,
-                    cashierName: resolvedCashierName,
-                    customerName: successData.customerName,
-                    terminal: terminal,
-                  ),
+                  _ReceiptInfoSection(presentation: p),
                   const SizedBox(height: TenantAdminSpacing.md),
                   const _DashedDivider(),
                   const SizedBox(height: TenantAdminSpacing.md),
                   const _ItemTableHeader(),
                   const SizedBox(height: TenantAdminSpacing.sm),
-                  for (final item in successData.items) ...[
-                    _ItemTableRow(item: item),
+                  for (final item in p.items) ...[
+                    _ItemTableRow(item: item, presentation: p),
                     const SizedBox(height: TenantAdminSpacing.sm),
                   ],
                   const _DashedDivider(),
                   const SizedBox(height: TenantAdminSpacing.md),
-                  _SummarySection(successData: successData),
+                  _SummarySection(presentation: p),
                   const SizedBox(height: TenantAdminSpacing.md),
                   const _DashedDivider(),
                   const SizedBox(height: TenantAdminSpacing.md),
-                  const _ReceiptFooter(),
+                  _ReceiptFooter(
+                    thankYouText: p.thankYouText,
+                    policyText: p.policyText,
+                  ),
                   const SizedBox(height: TenantAdminSpacing.md),
-                  _ReceiptBarcode(value: successData.barcodeValue),
+                  _ReceiptBarcode(value: p.barcodeValue),
                 ],
               ),
             ),
@@ -94,17 +101,6 @@ class ThermalReceiptPreview extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String? _cleanPending(String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty ||
-        trimmed.toLowerCase().contains('pending') ||
-        trimmed.toLowerCase().contains('unpaired')) {
-      return null;
-    }
-
-    return trimmed;
   }
 }
 
@@ -136,11 +132,7 @@ class _ReceiptHeader extends StatelessWidget {
 
     return Column(
       children: [
-        Text(
-          businessName,
-          textAlign: TextAlign.center,
-          style: titleStyle,
-        ),
+        Text(businessName, textAlign: TextAlign.center, style: titleStyle),
         if (subtitle.trim().isNotEmpty) ...[
           const SizedBox(height: TenantAdminSpacing.xs),
           Text(subtitle, textAlign: TextAlign.center, style: mutedStyle),
@@ -151,11 +143,7 @@ class _ReceiptHeader extends StatelessWidget {
         ],
         if (outletLocation != null) ...[
           const SizedBox(height: TenantAdminSpacing.xs),
-          Text(
-            outletLocation!,
-            textAlign: TextAlign.center,
-            style: mutedStyle,
-          ),
+          Text(outletLocation!, textAlign: TextAlign.center, style: mutedStyle),
         ],
       ],
     );
@@ -163,47 +151,38 @@ class _ReceiptHeader extends StatelessWidget {
 }
 
 class _ReceiptInfoSection extends StatelessWidget {
-  const _ReceiptInfoSection({
-    required this.receiptNumber,
-    required this.completedAt,
-    required this.cashierName,
-    this.customerName,
-    this.terminal,
-  });
+  const _ReceiptInfoSection({required this.presentation});
 
-  final String receiptNumber;
-  final DateTime completedAt;
-  final String cashierName;
-  final String? customerName;
-  final String? terminal;
+  final CanonicalReceiptPresentation presentation;
 
   @override
   Widget build(BuildContext context) {
-    final customerDisplay = customerName?.trim().isNotEmpty == true
-        ? customerName!.trim()
-        : 'Walk-in Customer';
-
+    final p = presentation;
     return Column(
       children: [
-        _InfoLine(label: 'Receipt No', value: receiptNumber),
         _InfoLine(
-          label: 'Date & Time',
-          value: formatReceiptDateTime(completedAt),
+          label: CanonicalReceiptPresentation.receiptNoLabel,
+          value: p.receiptNumber,
         ),
-        _InfoLine(label: 'Cashier', value: cashierName),
-        _InfoLine(label: 'Customer', value: customerDisplay),
-        if (terminal != null) _InfoLine(label: 'Terminal', value: terminal!),
-        const _InfoLine(label: 'Payment', value: 'Cash'),
+        _InfoLine(
+          label: CanonicalReceiptPresentation.dateTimeLabel,
+          value: p.issuedAtDisplay,
+        ),
+        _InfoLine(label: 'Cashier', value: p.cashierName),
+        _InfoLine(label: 'Customer', value: p.customerDisplayName),
+        if (p.terminalName.isNotEmpty)
+          _InfoLine(
+            label: CanonicalReceiptPresentation.terminalFieldLabel,
+            value: p.terminalName,
+          ),
+        _InfoLine(label: 'Payment', value: p.paymentMethodDisplay),
       ],
     );
   }
 }
 
 class _InfoLine extends StatelessWidget {
-  const _InfoLine({
-    required this.label,
-    required this.value,
-  });
+  const _InfoLine({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -271,9 +250,13 @@ class _ItemTableHeader extends StatelessWidget {
 }
 
 class _ItemTableRow extends StatelessWidget {
-  const _ItemTableRow({required this.item});
+  const _ItemTableRow({
+    required this.item,
+    required this.presentation,
+  });
 
-  final PosCashPaymentSuccessLineItem item;
+  final CanonicalReceiptItemPresentation item;
+  final CanonicalReceiptPresentation presentation;
 
   @override
   Widget build(BuildContext context) {
@@ -313,7 +296,7 @@ class _ItemTableRow extends StatelessWidget {
             Expanded(
               flex: 2,
               child: Text(
-                _amount(item.unitPrice),
+                presentation.formatMoneyAmountOnly(item.valueUnitPrice),
                 textAlign: TextAlign.end,
                 style: itemStyle,
               ),
@@ -321,57 +304,53 @@ class _ItemTableRow extends StatelessWidget {
             Expanded(
               flex: 2,
               child: Text(
-                _amount(item.lineTotal),
+                presentation.formatMoneyAmountOnly(item.rateUnitPrice),
                 textAlign: TextAlign.end,
                 style: itemStyle,
               ),
             ),
           ],
         ),
-        if (item.variantSummary != null && item.variantSummary!.isNotEmpty)
+        if (item.sku.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 2),
-            child: Text(item.variantSummary!, style: metaStyle),
+            child: Text(item.sku, style: metaStyle),
           ),
       ],
     );
   }
-
-  String _amount(int value) => formatLkr(value).replaceFirst('LKR ', '');
 }
 
 class _SummarySection extends StatelessWidget {
-  const _SummarySection({required this.successData});
+  const _SummarySection({required this.presentation});
 
-  final PosCashPaymentSuccessData successData;
+  final CanonicalReceiptPresentation presentation;
 
   @override
   Widget build(BuildContext context) {
+    final p = presentation;
     return Column(
       children: [
-        _TotalLine(label: 'No. of Items', value: '${successData.itemCount}'),
-        _TotalLine(label: 'Subtotal', value: formatLkr(successData.subtotal)),
-        if (successData.discount > 0)
+        _TotalLine(label: 'No. of Items', value: '${p.itemCount}'),
+        _TotalLine(label: 'Subtotal', value: p.formatMoney(p.subtotal)),
+        if (p.discountTotal > 0)
           _TotalLine(
             label: 'Discount',
-            value: '- ${formatLkr(successData.discount)}',
+            value: '- ${p.formatMoney(p.discountTotal)}',
           ),
-        if (successData.tax > 0)
-          _TotalLine(label: 'Tax', value: formatLkr(successData.tax)),
+        if (p.taxTotal > 0)
+          _TotalLine(label: 'Tax', value: p.formatMoney(p.taxTotal)),
         const SizedBox(height: TenantAdminSpacing.xs),
         _TotalLine(
           label: 'Total',
-          value: formatLkr(successData.total),
+          value: p.formatMoney(p.total),
           emphasized: true,
         ),
         const SizedBox(height: TenantAdminSpacing.xs),
-        _TotalLine(
-          label: 'Paid by Cash',
-          value: formatLkr(successData.cashReceived),
-        ),
+        _TotalLine(label: p.paidByLabel, value: p.formatMoney(p.amountTendered)),
         _TotalLine(
           label: 'Change Due',
-          value: formatLkr(successData.changeDue),
+          value: p.formatMoney(p.changeDue),
         ),
       ],
     );
@@ -413,7 +392,13 @@ class _TotalLine extends StatelessWidget {
 }
 
 class _ReceiptFooter extends StatelessWidget {
-  const _ReceiptFooter();
+  const _ReceiptFooter({
+    required this.thankYouText,
+    required this.policyText,
+  });
+
+  final String thankYouText;
+  final String policyText;
 
   @override
   Widget build(BuildContext context) {
@@ -430,17 +415,11 @@ class _ReceiptFooter extends StatelessWidget {
 
     return Column(
       children: [
-        Text(
-          'Thank you for your purchase',
-          textAlign: TextAlign.center,
-          style: bodyStyle,
-        ),
-        const SizedBox(height: TenantAdminSpacing.xs),
-        Text(
-          'Goods once sold can be exchanged with the original receipt.',
-          textAlign: TextAlign.center,
-          style: mutedStyle,
-        ),
+        Text(thankYouText, textAlign: TextAlign.center, style: bodyStyle),
+        if (policyText.trim().isNotEmpty) ...[
+          const SizedBox(height: TenantAdminSpacing.xs),
+          Text(policyText, textAlign: TextAlign.center, style: mutedStyle),
+        ],
       ],
     );
   }

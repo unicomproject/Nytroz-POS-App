@@ -18,6 +18,8 @@ import '../providers/pos_cash_payment_success_provider.dart';
 import '../providers/pos_checkout_summary_provider.dart';
 import '../../../hardware/receipt_printer/presentation/providers/cash_drawer_controller.dart';
 import '../widgets/cash_payment/cash_payment_screen_body.dart';
+import '../widgets/print_receipt/print_receipt_actions.dart';
+import 'dart:developer' as developer;
 
 class PosCashPaymentScreen extends ConsumerStatefulWidget {
   const PosCashPaymentScreen({super.key});
@@ -197,20 +199,55 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
             payload,
             customerName: cart.selectedCustomer?.fullName,
             customerPhone: cart.selectedCustomer?.phone,
+            customerId: cart.selectedCustomer?.customerId,
           );
+      // Trigger receipt auto-print + drawer async — never blocks payment success.
+      unawaited(
+        triggerCheckoutReceiptAutoPrint(
+          ref.read,
+          saleId: payload.saleId,
+        ),
+      );
 
-      // Trigger drawer async — isolated from payment success.
+      final drawerPurpose =
+          payload.paymentMethod.toUpperCase().contains('SPLIT')
+              ? 'splitPaymentCash'
+              : 'cashSale';
       if (payload.drawerOperationId != null &&
           payload.cashDrawerSettings != null) {
-        unawaited(
-          ref
-              .read(cashDrawerControllerProvider.notifier)
-              .triggerAutoOpenForCheckout(
-                drawerOperationId: payload.drawerOperationId!,
-                purposeStr: 'cashSale',
-                drawerSettingsJson: payload.cashDrawerSettings!,
-                businessReferenceId: payload.saleId,
-              ),
+        final openOnSale =
+            payload.cashDrawerSettings!['openOnCashSale'] != false &&
+                payload.cashDrawerSettings!['OpenOnCashSale'] != false;
+        final openOnSplit =
+            payload.cashDrawerSettings!['openOnCashSplit'] != false &&
+                payload.cashDrawerSettings!['OpenOnCashSplit'] != false;
+        final shouldOpen =
+            drawerPurpose == 'splitPaymentCash' ? openOnSplit : openOnSale;
+        if (shouldOpen) {
+          unawaited(
+            ref
+                .read(cashDrawerControllerProvider.notifier)
+                .triggerAutoOpenForCheckout(
+                  drawerOperationId: payload.drawerOperationId!,
+                  drawerRequestId: payload.drawerRequestId,
+                  purposeStr: drawerPurpose,
+                  drawerSettingsJson: payload.cashDrawerSettings!,
+                  businessReferenceId: payload.saleId,
+                ),
+          );
+        } else {
+          developer.log(
+            'Cash drawer auto-open suppressed by configuration. '
+            'saleId=${payload.saleId} purpose=$drawerPurpose',
+            name: 'pos.drawer',
+          );
+        }
+      } else {
+        developer.log(
+          'Cash drawer auto-open skipped: missing operation/settings on payment response. '
+          'saleId=${payload.saleId} drawerOperationId=${payload.drawerOperationId} '
+          'hasSettings=${payload.cashDrawerSettings != null}',
+          name: 'pos.drawer',
         );
       }
 

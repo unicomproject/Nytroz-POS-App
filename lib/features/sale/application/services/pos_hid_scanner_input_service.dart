@@ -70,8 +70,11 @@ class PosHidScannerInputService {
     }
     if (event is! KeyDownEvent) return false;
     if (_isTerminator(event)) {
+      final shouldConsume =
+          _buffer.length >= configuration.minimumBarcodeLength;
       _complete();
-      return false;
+      // Consume terminator so sale forms / search fields do not submit.
+      return shouldConsume;
     }
 
     final character = event.character;
@@ -102,6 +105,8 @@ class PosHidScannerInputService {
       return false;
     }
     _restartTimeout();
+    // Do not consume printable keys — focused text fields must remain usable;
+    // New Sale clears scanner pollution via clearForScanner after a completed scan.
     return false;
   }
 
@@ -114,9 +119,17 @@ class PosHidScannerInputService {
 
   void dispose() => detach();
 
-  bool _isTerminator(KeyEvent event) =>
-      event.logicalKey == LogicalKeyboardKey.enter ||
-      event.logicalKey == LogicalKeyboardKey.numpadEnter;
+  bool _isTerminator(KeyEvent event) {
+    if (event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+      return configuration.inputSuffix == PosScannerSuffix.enter ||
+          configuration.inputSuffix == PosScannerSuffix.newline;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.tab) {
+      return configuration.inputSuffix == PosScannerSuffix.newline;
+    }
+    return false;
+  }
 
   bool _isPrintable(String value) =>
       value.runes.every((rune) => rune >= 0x20 && rune != 0x7f);

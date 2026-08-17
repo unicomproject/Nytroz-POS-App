@@ -13,6 +13,8 @@ import '../../../../../../core/access/pos_permission_access.dart';
 import '../../../../../auth/presentation/providers/session_provider.dart';
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
+const bool _showCustomItemAction = false;
+
 class PosNewSaleActionBar extends ConsumerWidget {
   const PosNewSaleActionBar({super.key});
 
@@ -79,13 +81,14 @@ class PosNewSaleActionBar extends ConsumerWidget {
               ? () => showPosDiscountDialog(context: context, ref: ref)
               : null,
         ),
-      const _ActionButton(
-        icon: Icons.add_box_outlined,
-        label: 'Custom Item',
-        backgroundColor: TenantAdminColors.posNewSaleCustomAction,
-        tooltip: 'Custom items are not available in the current POS contract',
-        onPressed: null,
-      ),
+      if (_showCustomItemAction)
+        const _ActionButton(
+          icon: Icons.add_box_outlined,
+          label: 'Custom Item',
+          backgroundColor: TenantAdminColors.posNewSaleCustomAction,
+          tooltip: 'Custom items are not available in the current POS contract',
+          onPressed: null,
+        ),
     ];
 
     if (actions.isEmpty) {
