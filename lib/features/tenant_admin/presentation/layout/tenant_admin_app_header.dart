@@ -42,14 +42,12 @@ class TenantAdminAppHeader extends ConsumerWidget {
       tillSession?.tillCode,
     );
 
-    return Material(
-      color: TenantAdminColors.posHomeDarkBackground,
-      child: SafeArea(
-        bottom: false,
-        child: SizedBox(
-          height: height,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
+    return SizedBox(
+      height: height,
+      child: Material(
+        color: TenantAdminColors.posHomeDarkBackground,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
               final compact = constraints.maxWidth < 900;
               final veryCompact = constraints.maxWidth < 700;
 
@@ -108,7 +106,6 @@ class TenantAdminAppHeader extends ConsumerWidget {
               );
             },
           ),
-        ),
       ),
     );
   }
