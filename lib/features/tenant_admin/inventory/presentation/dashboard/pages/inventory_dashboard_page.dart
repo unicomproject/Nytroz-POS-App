@@ -28,8 +28,6 @@ class InventoryDashboardPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const InventoryHeader(),
-                const SizedBox(height: TenantAdminSpacing.lg),
                 _buildMetrics(ref, width),
                 const SizedBox(height: TenantAdminSpacing.lg),
                 const InventoryQuickActions(),
