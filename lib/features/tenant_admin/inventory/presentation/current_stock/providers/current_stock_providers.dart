@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../core/network/dio_provider.dart';
+import '../../../data/mock/inventory_frontend_mock.dart';
 import '../../../data/models/current_stock_dtos.dart';
 import '../../../domain/entities/current_stock_entities.dart';
 import '../../../../presentation/theme/tenant_admin_theme.dart';
@@ -20,6 +21,11 @@ class InventoryOutletOption {
 
 final inventoryOutletsProvider =
     FutureProvider.autoDispose<List<InventoryOutletOption>>((ref) async {
+  if (ref.watch(inventoryFrontendMockEnabledProvider)) {
+    return InventoryFrontendMock.locations
+        .map((l) => InventoryOutletOption(id: l.id, name: l.name))
+        .toList();
+  }
   final dio = ref.watch(appDioProvider);
   final response = await dio.get('/api/v1/tenant-admin/outlets/options');
   final data = response.data['data'] as List;
@@ -33,6 +39,9 @@ final inventoryOutletsProvider =
 
 final currentStockSummaryProvider =
     FutureProvider.autoDispose<CurrentStockSummary>((ref) async {
+  if (ref.watch(inventoryFrontendMockEnabledProvider)) {
+    return InventoryFrontendMock.stockSummary;
+  }
   final outletId = ref.watch(currentStockOutletFilterProvider);
   final repository = ref.watch(inventoryRepositoryProvider);
 
@@ -46,6 +55,36 @@ final currentStockListProvider =
   final outletId = ref.watch(currentStockOutletFilterProvider);
   final page = ref.watch(currentStockPageProvider);
   final pageSize = ref.watch(currentStockPageSizeProvider);
+  if (ref.watch(inventoryFrontendMockEnabledProvider)) {
+    var pageData = InventoryFrontendMock.stockPage(
+      search: search,
+      page: page,
+      pageSize: pageSize,
+    );
+    if (stockStatus != null && stockStatus.isNotEmpty) {
+      final filtered = pageData.items
+          .where((e) => e.stockStatus.toLowerCase() == stockStatus.toLowerCase())
+          .toList();
+      pageData = CurrentStockPage(
+        items: filtered,
+        page: page,
+        pageSize: pageSize,
+        totalCount: filtered.length,
+      );
+    }
+    if (outletId != null && outletId.isNotEmpty) {
+      final filtered = pageData.items
+          .where((e) => e.outletId == outletId)
+          .toList();
+      pageData = CurrentStockPage(
+        items: filtered,
+        page: page,
+        pageSize: pageSize,
+        totalCount: filtered.length,
+      );
+    }
+    return pageData;
+  }
   final repository = ref.watch(inventoryRepositoryProvider);
 
   final query = CurrentStockQueryDto(
@@ -61,6 +100,9 @@ final currentStockListProvider =
 
 final productStockDetailProvider = FutureProvider.autoDispose
     .family<ProductStockDetail, String>((ref, variantId) async {
+  if (ref.watch(inventoryFrontendMockEnabledProvider)) {
+    return InventoryFrontendMock.productDetail(variantId);
+  }
   final outletId = ref.watch(currentStockOutletFilterProvider);
   final repository = ref.watch(inventoryRepositoryProvider);
 
@@ -73,6 +115,9 @@ final stockMovementHistoryPageSizeProvider =
 
 final stockMovementHistoryProvider = FutureProvider.autoDispose
     .family<StockMovementHistoryPage, String>((ref, variantId) async {
+  if (ref.watch(inventoryFrontendMockEnabledProvider)) {
+    return InventoryFrontendMock.movements(variantId);
+  }
   final outletId = ref.watch(currentStockOutletFilterProvider);
   final page = ref.watch(stockMovementHistoryPageProvider);
   final pageSize = ref.watch(stockMovementHistoryPageSizeProvider);

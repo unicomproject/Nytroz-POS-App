@@ -16,9 +16,10 @@ class OpeningStockStepFour extends ConsumerWidget {
     final notifier = ref.read(openingStockProvider.notifier);
 
     return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 520),
-        margin: const EdgeInsets.all(24),
+      child: SingleChildScrollView(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 520),
+          margin: const EdgeInsets.all(24),
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -122,6 +123,7 @@ class OpeningStockStepFour extends ConsumerWidget {
               ],
             ),
           ],
+        ),
         ),
       ),
     );

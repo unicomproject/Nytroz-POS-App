@@ -821,6 +821,7 @@ class TenantAdminPermissionAliases {
       'inventory.stock.view',
       'inventory.view',
       'tenant.stock.view',
+      'tenant.stock.dashboard.view',
       'dashboard.stock_alerts.view',
       'inventory.stock_alerts.view',
     ],
@@ -828,17 +829,64 @@ class TenantAdminPermissionAliases {
       'tenant.stock.view',
       'inventory.stock.view',
       'inventory.view',
+      'tenant.stock.dashboard.view',
       'dashboard.stock_alerts.view',
       'inventory.stock_alerts.view',
     ],
+    'tenant.stock.dashboard.view': [
+      'tenant.stock.dashboard.view',
+      'inventory.stock.view',
+      'tenant.stock.view',
+    ],
     'tenant.stock.in': [
+      'tenant.stock.in',
+      'inventory.receiving.manage',
+    ],
+    'inventory.receiving.manage': [
+      'inventory.receiving.manage',
       'tenant.stock.in',
     ],
     'tenant.stock.opening': [
       'tenant.stock.opening',
+      'inventory.opening_stock.manage',
       'inventory.opening_stock',
       'tenant.stock.in',
       'tenant.stock.view',
+    ],
+    'inventory.opening_stock.manage': [
+      'inventory.opening_stock.manage',
+      'tenant.stock.opening',
+      'inventory.opening_stock',
+      'tenant.stock.in',
+    ],
+    'inventory.serials.view': [
+      'inventory.serials.view',
+      'inventory.stock.view',
+      'tenant.stock.view',
+    ],
+    'inventory.channel_allocation.view': [
+      'inventory.channel_allocation.view',
+      'inventory.channel_allocation.manage',
+      'inventory.stock.view',
+      'tenant.stock.view',
+    ],
+    'inventory.channel_allocation.manage': [
+      'inventory.channel_allocation.manage',
+    ],
+    'inventory.stock.adjust': [
+      'inventory.stock.adjust',
+      'inventory.adjust',
+      'tenant.stock.adjustments.view',
+    ],
+    'inventory.alerts.view': [
+      'inventory.alerts.view',
+      'inventory.alert.view',
+      'inventory.stock_alerts.view',
+      'dashboard.stock_alerts.view',
+    ],
+    'inventory.movements.view': [
+      'inventory.movements.view',
+      'tenant.stock.movements.view',
     ],
     'tenant.stock.out': [
       'tenant.stock.out',
@@ -857,6 +905,13 @@ class TenantAdminPermissionAliases {
     'tenant.stock.adjustments.view': [
       'tenant.stock.adjustments.view',
       'inventory.adjust',
+      'inventory.stock.adjust',
+    ],
+    'inventory.adjust': [
+      'inventory.adjust',
+      'inventory.stock.adjust',
+      'tenant.stock.adjustments.view',
+      'inventory.view',
     ],
     'tenant.stock.transfers.view': [
       'tenant.stock.transfers.view',
@@ -873,10 +928,6 @@ class TenantAdminPermissionAliases {
       'outlet.view',
       'outlets.update',
       'outlet.update',
-    ],
-    'inventory.adjust': [
-      'inventory.view',
-      'inventory.adjust',
     ],
     'tenant.product.import': [
       'products.view',

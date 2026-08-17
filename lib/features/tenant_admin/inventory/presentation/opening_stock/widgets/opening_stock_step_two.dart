@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../presentation/theme/tenant_admin_theme.dart';
+import '../../widgets/inventory_shared_widgets.dart';
 import '../providers/opening_stock_providers.dart';
 import 'opening_stock_action_bar.dart';
 
@@ -157,11 +158,8 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                                   notifier.setQuantity(q);
                                   setState(() {});
                                 },
-                                decoration: InputDecoration(
-                                  hintText: 'e.g. 100',
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8)),
-                                  isDense: true,
+                                decoration: inventoryInputDecoration(
+                                  hint: 'e.g. 100',
                                 ),
                               ),
                             ],
@@ -191,11 +189,8 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                                   final c = double.tryParse(val) ?? 0;
                                   notifier.setUnitCost(c);
                                 },
-                                decoration: InputDecoration(
-                                  hintText: '0.00',
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8)),
-                                  isDense: true,
+                                decoration: inventoryInputDecoration(
+                                  hint: '0.00',
                                 ),
                               ),
                             ],
@@ -224,11 +219,8 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                                 controller: _batchController,
                                 onChanged: (val) =>
                                     notifier.setBatchNumber(val),
-                                decoration: InputDecoration(
-                                  hintText: 'e.g. BATCH-001',
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8)),
-                                  isDense: true,
+                                decoration: inventoryInputDecoration(
+                                  hint: 'e.g. BATCH-001',
                                 ),
                               ),
                             ],
@@ -264,14 +256,16 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                                     notifier.setExpiryDate(picked);
                                   }
                                 },
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(7),
                                 child: Container(
+                                  height: InventoryWorkspaceTokens.inputHeight,
+                                  alignment: Alignment.center,
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 12),
+                                      horizontal: 12),
                                   decoration: BoxDecoration(
                                     border: Border.all(
-                                        color: const Color(0xFFCBD5E1)),
-                                    borderRadius: BorderRadius.circular(8),
+                                        color: const Color(0xFFD8E0EB)),
+                                    borderRadius: BorderRadius.circular(7),
                                   ),
                                   child: Row(
                                     mainAxisAlignment:
@@ -317,12 +311,9 @@ class _OpeningStockStepTwoState extends ConsumerState<OpeningStockStepTwo> {
                           controller: _notesController,
                           maxLines: 2,
                           onChanged: (val) => notifier.setNotes(val),
-                          decoration: InputDecoration(
-                            hintText:
+                          decoration: inventoryInputDecoration(
+                            hint:
                                 'e.g. Initial inventory count from store setup',
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                            isDense: true,
                           ),
                         ),
                       ],

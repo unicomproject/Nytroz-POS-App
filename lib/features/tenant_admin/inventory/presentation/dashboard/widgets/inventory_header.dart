@@ -22,7 +22,7 @@ class InventoryHeader extends ConsumerWidget {
                 ),
                 const SizedBox(height: TenantAdminSpacing.xs),
                 Text(
-                  'Monitor inventory health and take action on priority items.',
+                  'Get a quick overview of your inventory health and take action on priority items.',
                   style: (Theme.of(context).textTheme.bodyMedium ??
                           const TextStyle())
                       .copyWith(color: TenantAdminColors.mutedText),

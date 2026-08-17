@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/access/tenant_admin_access_codes.dart';
 import '../../../presentation/providers/tenant_admin_access_provider.dart';
 import 'inventory_sidebar_parent_item.dart';
 
@@ -31,18 +30,29 @@ class InventorySidebarMenu extends ConsumerWidget {
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
       data: (accessChecker) {
-        final canViewDashboard = accessChecker
-            .can(TenantAdminPermissionCodes.tenantStockDashboardView);
-        final canViewCurrentStock =
-            accessChecker.can(TenantAdminPermissionCodes.tenantStockView);
+        final canViewDashboard = accessChecker.canAccessInventoryDashboard();
+        final canViewCurrentStock = accessChecker.canAccessCurrentStockPage();
+        final canViewOpening = accessChecker.canAccessOpeningStockPage();
+        final canViewReceiving = accessChecker.canAccessReceivingPage();
+        final canViewSerials = accessChecker.canAccessSerialsPage();
+        final canViewAdjustment = accessChecker.canAccessAdjustmentPage();
+        final canViewChannel = accessChecker.canAccessChannelAllocationPage();
 
-        final hasVisibleChildren = canViewDashboard || canViewCurrentStock;
+        final hasVisibleChildren = canViewDashboard ||
+            canViewCurrentStock ||
+            canViewOpening ||
+            canViewReceiving ||
+            canViewSerials ||
+            canViewAdjustment ||
+            canViewChannel;
 
         if (!hasVisibleChildren) {
           return const SizedBox.shrink();
         }
 
-        final parentSelected = currentPath.startsWith('/tenant-admin/stock');
+        final parentSelected =
+            currentPath.startsWith('/tenant-admin/stock') ||
+                currentPath.startsWith('/tenant-admin/inventory');
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -88,16 +98,7 @@ class InventorySidebarMenu extends ConsumerWidget {
                               compact: compact,
                               onNavigate: onNavigate,
                             ),
-                          // Placeholder for Stock Adjustment
-                          _InventorySidebarChild(
-                            label: 'Stock Adjustment',
-                            route: '/tenant-admin/stock/adjust',
-                            currentPath: currentPath,
-                            compact: compact,
-                            onNavigate: onNavigate,
-                            enabled: false,
-                          ),
-                          if (accessChecker.canAccessOpeningStockPage())
+                          if (canViewOpening)
                             _InventorySidebarChild(
                               label: 'Opening Stock',
                               route: '/tenant-admin/stock/opening',
@@ -105,7 +106,39 @@ class InventorySidebarMenu extends ConsumerWidget {
                               compact: compact,
                               onNavigate: onNavigate,
                             ),
-                          // Placeholder for Stock Transfer
+                          if (canViewReceiving)
+                            _InventorySidebarChild(
+                              label: 'Stock Receiving',
+                              route: '/tenant-admin/stock/receiving',
+                              currentPath: currentPath,
+                              compact: compact,
+                              onNavigate: onNavigate,
+                            ),
+                          if (canViewSerials)
+                            _InventorySidebarChild(
+                              label: 'Serial Registry',
+                              route: '/tenant-admin/stock/serials',
+                              currentPath: currentPath,
+                              compact: compact,
+                              onNavigate: onNavigate,
+                            ),
+                          if (canViewAdjustment)
+                            _InventorySidebarChild(
+                              label: 'Stock Adjustment',
+                              route: '/tenant-admin/stock/adjust',
+                              currentPath: currentPath,
+                              compact: compact,
+                              onNavigate: onNavigate,
+                            ),
+                          if (canViewChannel)
+                            _InventorySidebarChild(
+                              label: 'Channel Allocation',
+                              route: '/tenant-admin/stock/channel-allocations',
+                              currentPath: currentPath,
+                              compact: compact,
+                              onNavigate: onNavigate,
+                            ),
+                          // Deferred: Stock Transfer remains visible but locked.
                           _InventorySidebarChild(
                             label: 'Stock Transfer',
                             route: '/tenant-admin/stock/transfer',

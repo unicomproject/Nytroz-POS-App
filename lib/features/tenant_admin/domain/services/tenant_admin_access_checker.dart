@@ -954,22 +954,86 @@ class TenantAdminAccessChecker {
   }
 
   bool canViewCurrentStock() {
-    return can(TenantAdminPermissionCodes.tenantStockView);
+    return canAny([
+      TenantAdminPermissionCodes.inventoryStockView,
+      TenantAdminPermissionCodes.tenantStockView,
+    ]);
   }
 
   bool canStockIn() {
-    return can(TenantAdminPermissionCodes.tenantStockIn);
+    return canAny([
+      TenantAdminPermissionCodes.inventoryReceivingManage,
+      TenantAdminPermissionCodes.tenantStockIn,
+    ]);
   }
 
   bool canAccessCurrentStockPage() => canViewCurrentStock();
 
   bool canAccessStockInPage() => canStockIn();
 
+  bool canAccessInventoryDashboard() {
+    return canAny([
+      TenantAdminPermissionCodes.inventoryStockView,
+      TenantAdminPermissionCodes.tenantStockDashboardView,
+      TenantAdminPermissionCodes.tenantStockView,
+    ]);
+  }
+
   bool canAccessOpeningStockPage() {
     return canAny([
+      TenantAdminPermissionCodes.inventoryOpeningStockManage,
       TenantAdminPermissionCodes.tenantStockOpening,
       TenantAdminPermissionCodes.tenantStockIn,
       TenantAdminPermissionCodes.tenantStockView,
+    ]);
+  }
+
+  bool canAccessReceivingPage() => canStockIn();
+
+  bool canManageReceiving() => canStockIn();
+
+  bool canAccessSerialsPage() {
+    return canAny([
+      TenantAdminPermissionCodes.inventorySerialsView,
+      TenantAdminPermissionCodes.inventoryStockView,
+      TenantAdminPermissionCodes.tenantStockView,
+    ]);
+  }
+
+  bool canAccessAdjustmentPage() {
+    return canAny([
+      TenantAdminPermissionCodes.inventoryStockView,
+      TenantAdminPermissionCodes.inventoryStockAdjust,
+      TenantAdminPermissionCodes.tenantStockAdjustmentsView,
+      TenantAdminPermissionCodes.tenantStockView,
+    ]);
+  }
+
+  bool canCreateStockAdjustment() {
+    return canAny([
+      TenantAdminPermissionCodes.inventoryStockAdjust,
+      TenantAdminPermissionCodes.tenantStockAdjustmentsView,
+    ]);
+  }
+
+  bool canAccessChannelAllocationPage() {
+    return canAny([
+      TenantAdminPermissionCodes.inventoryChannelAllocationView,
+      TenantAdminPermissionCodes.inventoryChannelAllocationManage,
+      TenantAdminPermissionCodes.inventoryStockView,
+      TenantAdminPermissionCodes.tenantStockView,
+    ]);
+  }
+
+  bool canManageChannelAllocation() {
+    return can(TenantAdminPermissionCodes.inventoryChannelAllocationManage);
+  }
+
+  bool canViewInventoryAlerts() {
+    return canAny([
+      TenantAdminPermissionCodes.inventoryAlertsView,
+      TenantAdminPermissionCodes.inventoryAlertView,
+      TenantAdminPermissionCodes.inventoryStockAlertsView,
     ]);
   }
 

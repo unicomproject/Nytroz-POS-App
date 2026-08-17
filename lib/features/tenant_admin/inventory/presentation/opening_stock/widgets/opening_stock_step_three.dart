@@ -50,7 +50,7 @@ class OpeningStockStepThree extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     const Text(
-                      'Please verify all details before submitting to the backend.',
+                      'Review does not change physical stock. Verify details before posting.',
                       style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                     ),
                     const SizedBox(height: 20),
