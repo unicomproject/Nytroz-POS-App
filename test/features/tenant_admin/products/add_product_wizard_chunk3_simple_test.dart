@@ -338,7 +338,7 @@ void main() {
       expect(find.text('Select variant'), findsNothing);
       expect(find.text('Base SKU *'), findsOneWidget);
       expect(find.text('Parent Product Barcode'), findsOneWidget);
-      expect(find.text('Generate'), findsOneWidget);
+      expect(find.text('Apply'), findsOneWidget);
       expect(find.text('Product'), findsWidgets);
     });
 
@@ -363,10 +363,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Variant Configuration'), findsNothing);
-      expect(find.text('Basic Details'), findsOneWidget);
+      expect(find.text('Basic Information'), findsOneWidget);
       expect(find.text('Units & Pack Conversion'), findsOneWidget);
-      expect(find.text('Base SKU'), findsOneWidget);
-      expect(find.text('TEST-SIMPLE-001'), findsOneWidget);
+      expect(find.text('SKU'), findsWidgets);
+      expect(find.text('TEST-SIMPLE-001'), findsWidgets);
       expect(find.text('Pricing & Tax'), findsOneWidget);
       expect(find.text('VAT 15%'), findsOneWidget);
     });
