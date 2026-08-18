@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
@@ -434,10 +434,11 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
                     child: ElevatedButton(
                       onPressed: _isSubmitting ? null : _submit,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6A00),
+                        backgroundColor: TenantAdminColors.posHomeAccentOrange,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor:
-                            const Color(0xFFFF6A00).withValues(alpha: 0.45),
+                        disabledBackgroundColor: TenantAdminColors
+                            .posHomeAccentOrange
+                            .withValues(alpha: 0.45),
                         padding: const EdgeInsets.symmetric(
                           vertical: TenantAdminSpacing.md,
                         ),
