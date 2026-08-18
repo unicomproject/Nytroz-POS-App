@@ -1662,8 +1662,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         optionCombinationHash: v.optionCombinationHash,
         selectedValues: v.selectedValues
             .map((sv) {
-              final tId = (sv.sourceOptionTemplateId != null && sv.sourceOptionTemplateId!.isNotEmpty) ? sv.sourceOptionTemplateId : sv.optionName;
-              final vId = (sv.sourceOptionTemplateValueId != null && sv.sourceOptionTemplateValueId!.isNotEmpty) ? sv.sourceOptionTemplateValueId : sv.valueName;
+              final tId = sv.sourceOptionTemplateId.isNotEmpty ? sv.sourceOptionTemplateId : sv.optionName;
+              final vId = sv.sourceOptionTemplateValueId.isNotEmpty ? sv.sourceOptionTemplateValueId : sv.valueName;
               
               return SelectedOptionValue(
                   valueId: vId ?? '',
@@ -1682,8 +1682,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         optionCombinationHash: d.optionCombinationHash,
         selectedValues: d.selectedValues
             .map((sv) {
-              final tId = (sv.sourceOptionTemplateId != null && sv.sourceOptionTemplateId!.isNotEmpty) ? sv.sourceOptionTemplateId : sv.optionName;
-              final vId = (sv.sourceOptionTemplateValueId != null && sv.sourceOptionTemplateValueId!.isNotEmpty) ? sv.sourceOptionTemplateValueId : sv.valueName;
+              final tId = sv.sourceOptionTemplateId.isNotEmpty ? sv.sourceOptionTemplateId : sv.optionName;
+              final vId = sv.sourceOptionTemplateValueId.isNotEmpty ? sv.sourceOptionTemplateValueId : sv.valueName;
               return SelectedOptionValue(
                   valueId: vId ?? '',
                   templateId: tId,

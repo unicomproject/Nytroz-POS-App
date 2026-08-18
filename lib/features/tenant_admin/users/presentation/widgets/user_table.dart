@@ -287,25 +287,8 @@ class _TwoLineCell extends StatelessWidget {
       );
 }
 
-class _TextAction extends StatelessWidget {
-  const _TextAction(
-      {required this.label, required this.onPressed, this.destructive = false});
-  final String label;
-  final VoidCallback onPressed;
-  final bool destructive;
-  @override
-  Widget build(BuildContext context) => TextButton(
-        onPressed: onPressed,
-        style: TextButton.styleFrom(
-          foregroundColor:
-              destructive ? TenantAdminColors.danger : TenantAdminColors.info,
-          minimumSize: const Size(0, 30),
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-        ),
-        child: Text(label),
-      );
-}
+
+
 
 String? _nonEmpty(String? value) =>
     value?.trim().isNotEmpty == true ? value!.trim() : null;

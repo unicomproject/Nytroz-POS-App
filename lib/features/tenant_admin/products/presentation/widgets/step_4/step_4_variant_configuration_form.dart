@@ -156,7 +156,7 @@ class Step4VariantConfigurationForm extends ConsumerWidget {
                 ),
               ),
             );
-          }).toList(),
+          }),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -215,7 +215,7 @@ class Step4VariantConfigurationForm extends ConsumerWidget {
                       border: Border(bottom: BorderSide(color: TenantAdminColors.border)),
                     ),
                     child: Row(
-                      children: [
+                      children: const [
                         const Expanded(child: Text('Variant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
                         const SizedBox(
                           width: 100,

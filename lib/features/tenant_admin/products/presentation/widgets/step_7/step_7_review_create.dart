@@ -49,7 +49,6 @@ class Step7ReviewCreate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSimple = state.productStructure.toUpperCase() == 'SIMPLE';
     final isVariant = state.productStructure.toUpperCase() == 'VARIANT';
 
     return SingleChildScrollView(

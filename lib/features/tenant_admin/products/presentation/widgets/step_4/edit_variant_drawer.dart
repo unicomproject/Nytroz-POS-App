@@ -137,6 +137,7 @@ class _EditVariantDrawerState extends ConsumerState<EditVariantDrawer> {
                   ),
                   const SizedBox(height: 16),
                   const Text('Apply Image To:'),
+                  // ignore: deprecated_member_use
                   RadioListTile<String>(
                     title: const Text('Only this variant'),
                     value: 'ONLY_THIS',
@@ -147,6 +148,7 @@ class _EditVariantDrawerState extends ConsumerState<EditVariantDrawer> {
                       });
                     },
                   ),
+                  // ignore: deprecated_member_use
                   RadioListTile<String>(
                     title: Text(
                         'All ${variant.selectedValues.isNotEmpty ? variant.selectedValues.last.valueName : 'group'} variants'),

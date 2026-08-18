@@ -16,7 +16,8 @@ class ProductTypeTracking extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.sizeOf(context).width >= TenantAdminBreakpoints.desktop;
+
+
 
     final content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,

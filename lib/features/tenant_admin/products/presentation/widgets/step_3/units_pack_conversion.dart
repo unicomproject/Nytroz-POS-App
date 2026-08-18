@@ -810,7 +810,7 @@ class _UnitsPackConversionFormState
               ),
               Switch(
                 value: state.allowDecimalQuantity,
-                activeColor: TenantAdminColors.posHomeAccentOrange,
+                activeThumbColor: TenantAdminColors.posHomeAccentOrange,
                 onChanged: (val) => controller.setAllowDecimalQuantity(val),
               ),
             ],

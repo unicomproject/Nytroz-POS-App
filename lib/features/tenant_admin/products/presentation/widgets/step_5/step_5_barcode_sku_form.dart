@@ -64,23 +64,6 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
     // VARIANT: table updates only on Apply button press (_onAssignVariant)
   }
 
-  /// Keeps wizard state current while typing so Save Draft captures values
-  /// even before "Add to List" is pressed.
-  void _flushVariantDraftFields() {
-    final key = _selectedClientKey;
-    if (key == null) return;
-    final sku = _skuController.text.trim();
-    final barcode = _barcodeController.text.trim();
-    ref.read(addProductWizardControllerProvider.notifier).updateBarcodeSkuAssignment(
-          BarcodeSkuAssignmentDto(
-            clientCombinationKey: key,
-            productVariantId: null,
-            sku: sku.isEmpty ? null : sku,
-            barcode: barcode.isEmpty ? null : barcode,
-            isAssigned: sku.isNotEmpty || barcode.isNotEmpty,
-          ),
-        );
-  }
 
   @override
   void dispose() {
@@ -492,7 +475,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                           const _FieldLabel(label: 'Variant *'),
                           const SizedBox(height: 6),
                           DropdownButtonFormField<String>(
-                            value: _selectedClientKey,
+                            initialValue: _selectedClientKey,
                             isExpanded: true,
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
@@ -679,33 +662,3 @@ class _FieldLabel extends StatelessWidget {
   }
 }
 
-class _AssignmentSummaryBadge extends StatelessWidget {
-  final List<BarcodeSkuAssignmentDto> assignments;
-  const _AssignmentSummaryBadge({required this.assignments});
-
-  @override
-  Widget build(BuildContext context) {
-    final complete =
-        assignments.where((a) => a.effectiveStatus == 'COMPLETE').length;
-    final total = assignments.length;
-    final allDone = complete == total;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: allDone ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        '$complete / $total assigned',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: allDone
-              ? const Color(0xFF16A34A)
-              : const Color(0xFFB45309),
-        ),
-      ),
-    );
-  }
-}
