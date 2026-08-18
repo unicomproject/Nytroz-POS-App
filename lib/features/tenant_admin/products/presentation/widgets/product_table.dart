@@ -5,7 +5,7 @@ import 'package:nytroz_pos/core/network/media_url_resolver.dart';
 
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
-import '../../../presentation/widgets/tenant_admin_row_action.dart';
+
 import '../../domain/entities/tenant_product.dart';
 import 'product_delete_action.dart';
 import 'product_status_badge.dart';
@@ -31,14 +31,15 @@ class ProductTable extends StatelessWidget {
         builder: (context, constraints) {
           return SingleChildScrollView(
             scrollDirection: Axis.vertical,
+            physics: const NeverScrollableScrollPhysics(),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: ConstrainedBox(
                 constraints: BoxConstraints(minWidth: constraints.maxWidth),
                 child: DataTable(
                   headingRowHeight: 52,
-                  dataRowMinHeight: 68,
-                  dataRowMaxHeight: 68,
+                  dataRowMinHeight: 80,
+                  dataRowMaxHeight: 120,
                   columnSpacing: TenantAdminSpacing.xl,
                   horizontalMargin: TenantAdminSpacing.lg,
                   headingRowColor:
@@ -95,35 +96,11 @@ class ProductTable extends StatelessWidget {
                           DataCell(
                               StockStatusBadge(status: product.stockStatus)),
                           DataCell(
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (visibility.showViewAction)
-                                  TenantAdminRowAction(
-                                    icon: Icons.visibility_outlined,
-                                    label: 'View',
-                                    onPressed: () => onView(product),
-                                  ),
-                                if (visibility.showEditAction) ...[
-                                  const SizedBox(width: TenantAdminSpacing.sm),
-                                  TenantAdminRowAction(
-                                    icon: Icons.edit_outlined,
-                                    label: 'Edit',
-                                    onPressed: () => onEdit(product),
-                                  ),
-                                ],
-                                if (visibility.showDeleteAction ||
-                                    visibility.showEditAction ||
-                                    visibility.showViewAction) ...[
-                                  const SizedBox(width: TenantAdminSpacing.sm),
-                                  ProductDeleteAction(
-                                    productId: product.id,
-                                    productName: product.name,
-                                    sku: product.sku,
-                                    imageUrl: product.imageUrl,
-                                  ),
-                                ],
-                              ],
+                            ProductActionColumn(
+                              product: product,
+                              visibility: visibility,
+                              onView: () => onView(product),
+                              onEdit: () => onEdit(product),
                             ),
                           ),
                         ],
@@ -283,5 +260,104 @@ class _PlainCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(value);
+  }
+}
+
+class ProductActionColumn extends StatelessWidget {
+  const ProductActionColumn({
+    super.key,
+    required this.product,
+    required this.visibility,
+    required this.onView,
+    required this.onEdit,
+  });
+
+  final TenantProduct product;
+  final ProductListVisibility visibility;
+  final VoidCallback onView;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final showDelete = visibility.showDeleteAction ||
+        visibility.showEditAction ||
+        visibility.showViewAction;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (visibility.showViewAction) ...[
+            _ActionRowButton(
+              icon: Icons.visibility_outlined,
+              label: 'View',
+              onPressed: onView,
+            ),
+            if (visibility.showEditAction || showDelete)
+              const SizedBox(height: 8),
+          ],
+          if (visibility.showEditAction) ...[
+            _ActionRowButton(
+              icon: Icons.edit_outlined,
+              label: 'Edit',
+              onPressed: onEdit,
+            ),
+            if (showDelete) const SizedBox(height: 8),
+          ],
+          if (showDelete)
+            ProductDeleteAction(
+              productId: product.id,
+              productName: product.name,
+              sku: product.sku,
+              imageUrl: product.imageUrl,
+              isLocalDraft: product.isLocalDraft,
+              compact: false,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionRowButton extends StatelessWidget {
+  const _ActionRowButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    const color = Color(0xFF1890FF);
+
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: color,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

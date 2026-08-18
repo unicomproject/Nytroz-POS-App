@@ -90,7 +90,9 @@ class AdjustmentSession {
 class AdjustmentSessionNotifier extends StateNotifier<AdjustmentSession> {
   AdjustmentSessionNotifier() : super(const AdjustmentSession());
 
-  void setStep(int step) => state = state.copyWith(step: step, clearError: true);
+  void setStep(int step) =>
+    state = state.copyWith(step: step, clearError: true);
+  
   void back() {
     if (state.step > 0 && !state.posted) {
       state = state.copyWith(step: state.step - 1, clearError: true);
@@ -311,7 +313,12 @@ class AdjustmentDashboardScreen extends ConsumerWidget {
 class AdjustmentWizardScreen extends ConsumerWidget {
   const AdjustmentWizardScreen({super.key});
 
-  static const steps = ['Select Product', 'Enter Adjustment', 'Review', 'Success'];
+  static const steps = [
+    'Select Product', 
+    'Enter Adjustment', 
+    'Review', 
+    'Success'
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

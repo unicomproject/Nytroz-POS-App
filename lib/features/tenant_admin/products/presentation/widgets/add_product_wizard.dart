@@ -8,12 +8,16 @@ import 'package:nytroz_pos/features/tenant_admin/products/presentation/controlle
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/providers/tenant_product_providers.dart';
 
 import 'package:nytroz_pos/features/tenant_admin/presentation/widgets/tenant_admin_toast.dart';
-import 'add_product_footer.dart';
 import 'add_product_stepper.dart';
 import 'product_type_tracking.dart';
 import 'product_wizard_summary.dart';
 import 'step_1/step_1_basic_details.dart';
 import 'step_3/units_pack_conversion.dart';
+import 'step_4/step_4_variant_configuration_form.dart';
+import 'step_5/step_5_barcode_sku_form.dart';
+import 'step_6/step_6_pricing_tax_form.dart';
+import 'step_7/step_7_review_create.dart';
+import 'wizard_actions_footer.dart';
 
 class AddProductWizard extends ConsumerStatefulWidget {
   const AddProductWizard({
@@ -22,12 +26,14 @@ class AddProductWizard extends ConsumerStatefulWidget {
     required this.dropdownsEnabled,
     required this.canCreate,
     this.resumeProductId,
+    this.resumeLocalDraftId,
   });
 
   final TenantProductCreateOptions options;
   final bool dropdownsEnabled;
   final bool canCreate;
   final String? resumeProductId;
+  final String? resumeLocalDraftId;
 
   @override
   ConsumerState<AddProductWizard> createState() => _AddProductWizardState();
@@ -38,6 +44,7 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
   late final TextEditingController _codeController;
   late final TextEditingController _shortDescriptionController;
   late final TextEditingController _longDescriptionController;
+  final GlobalKey<FormState> _step4FormKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -81,7 +88,10 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final controller = ref.read(addProductWizardControllerProvider.notifier);
-      controller.initWizard(resumeProductId: widget.resumeProductId);
+      controller.initWizard(
+        resumeProductId: widget.resumeProductId,
+        resumeLocalDraftId: widget.resumeLocalDraftId,
+      );
     });
   }
 
@@ -171,89 +181,96 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           onStepTapped: (step) => controller.goToStep(step),
         ),
 
-        const SizedBox(height: TenantAdminSpacing.xl),
+        const SizedBox(height: TenantAdminSpacing.lg),
 
         // Content + Conditional Summary Rail
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final showSummary =
-                (state.isEditMode || state.productStructureConfirmed) &&
-                    constraints.maxWidth >= 1000;
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(TenantAdminSpacing.xl),
-                    decoration: BoxDecoration(
-                      color: TenantAdminColors.surface,
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-                      border: Border.all(color: TenantAdminColors.border),
-                      boxShadow: TenantAdminShadows.card,
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final showSummary =
+                  (widget.resumeProductId != null ||
+                      widget.resumeLocalDraftId != null) &&
+                  state.status.toUpperCase() == 'DRAFT' &&
+                  constraints.maxWidth >= 1000;
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+                      decoration: BoxDecoration(
+                        color: TenantAdminColors.surface,
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.lg),
+                        border: Border.all(color: TenantAdminColors.border),
+                        boxShadow: TenantAdminShadows.card,
+                      ),
+                      child: _buildStepContent(state, controller),
                     ),
-                    child: _buildStepContent(state, controller),
                   ),
-                ),
-                if (showSummary) ...[
-                  const SizedBox(width: TenantAdminSpacing.xl),
-                  ProductWizardSummary(state: state),
+                  if (showSummary) ...[
+                    const SizedBox(width: TenantAdminSpacing.lg),
+                    ProductWizardSummary(state: state),
+                  ],
                 ],
-              ],
-            );
-          },
+              );
+            },
+          ),
         ),
 
-        const SizedBox(height: TenantAdminSpacing.xl),
+        const SizedBox(height: TenantAdminSpacing.lg),
 
-        // Wizard Bottom Actions Footer (shared CTAs — do not duplicate in steps)
-        AddProductFooter(
+        // Wizard Bottom Actions Footer (authoritative shared CTAs)
+        WizardActionsFooter(
           onBack: state.currentStep > 1
-              ? () => controller.goToStep(state.currentStep - 1)
+              ? () => controller.goToPreviousApplicableStep()
               : null,
           onCancel: _handleCancel,
           onSaveDraft: () async {
             final success = await controller.saveDraft();
             if (success && context.mounted) {
+              ref.invalidate(localProductWizardDraftsProvider);
+              ref.invalidate(productListProvider);
               showProductSaveToast(
                 context,
                 title: 'Draft Saved',
-                message: 'Draft saved successfully',
+                message: 'Draft saved locally on this device',
               );
+              context.go('/tenant-admin/products');
             }
           },
-          onSkip: state.currentStep == 2
-              ? () async {
-                  final success = await controller.skip();
-                  if (success && context.mounted) {
-                    showProductSaveToast(
-                      context,
-                      title: 'Step Skipped',
-                      message: 'Tracking configuration skipped with defaults',
-                    );
-                  }
-                }
-              : null,
-          showSkip: state.currentStep == 2,
+          onSkip: null,
+          showSkip: false,
           onSaveAndContinue: () async {
-            final isStep8 = state.currentStep == 8;
+            final isStep7 = state.currentStep == 7;
+            if (isStep7 && state.isSubmitting) {
+              return;
+            }
             final success = await controller.saveAndContinue();
             if (success && context.mounted) {
-              showProductSaveToast(
-                context,
-                title: isStep8 ? 'Product Created' : 'Product Saved',
-                message: isStep8
-                    ? 'Product created successfully'
-                    : 'Product saved successfully',
-              );
-              if (isStep8) {
+              if (isStep7) {
+                ref.invalidate(localProductWizardDraftsProvider);
+                ref.invalidate(productListProvider);
+                ref.invalidate(productSummaryProvider);
+                showProductSaveToast(
+                  context,
+                  title: 'Product Created',
+                  message: 'Product created successfully',
+                );
                 context.go('/tenant-admin/products');
+              } else {
+                showProductSaveToast(
+                  context,
+                  title: 'Step Saved',
+                  message: 'Progress saved. Continue to the next step.',
+                );
               }
             }
           },
           isSavingDraft: state.isSavingDraft,
           isSubmitting: state.isSubmitting,
           saveAndContinueLabel:
-              state.currentStep == 8 ? 'Create Product' : 'Save & Continue',
+              state.currentStep == 7 ? 'Create Product' : 'Save & Continue',
         ),
       ],
     );
@@ -284,15 +301,25 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           controller: controller,
         );
       case 4:
-        return _buildStepPlaceholder('Step 4 — Product Configuration');
+        switch (state.productStructure.toUpperCase()) {
+          case 'VARIANT':
+            return Step4VariantConfigurationForm(
+              state: state,
+              controller: controller,
+              formKey: _step4FormKey,
+            );
+          case 'BUNDLE':
+            return _buildStepPlaceholder('Bundle / Kit Composition');
+          case 'SIMPLE':
+          default:
+            return _buildStepPlaceholder('Simple Product Configuration');
+        }
       case 5:
-        return _buildStepPlaceholder('Step 5 — Barcode & SKU');
+        return const Step5BarcodeSkuForm();
       case 6:
-        return _buildStepPlaceholder('Step 6 — Pricing & Tax');
+        return const Step6PricingTaxForm();
       case 7:
-        return _buildStepPlaceholder('Step 7 — Channel Visibility');
-      case 8:
-        return _buildStepPlaceholder('Step 8 — Review & Create');
+        return Step7ReviewCreate(state: state);
       default:
         return Step1BasicDetails(
           state: state,
@@ -327,7 +354,7 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
             ),
             const SizedBox(height: TenantAdminSpacing.sm),
             const Text(
-              '8-Step Wizard Foundation Active. Business logic for this step will be pre-populated.',
+              'Review & Create will finalize the product in a later release.',
               style: TextStyle(
                 fontSize: 14,
                 color: TenantAdminColors.mutedText,

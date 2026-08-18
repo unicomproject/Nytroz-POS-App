@@ -71,14 +71,22 @@ class ProductListPanel extends ConsumerWidget {
               products: result.items,
               visibility: visibility,
               onView: (product) {
-                if (product.status == 'DRAFT') {
+                if (product.isLocalDraft) {
+                  context.go(
+                    '/tenant-admin/products/local-draft/${product.id}',
+                  );
+                } else if (product.status == 'DRAFT') {
                   context.go('/tenant-admin/products/draft/${product.id}');
                 } else {
                   context.go('/tenant-admin/products/${product.id}');
                 }
               },
               onEdit: (product) {
-                if (product.status == 'DRAFT') {
+                if (product.isLocalDraft) {
+                  context.go(
+                    '/tenant-admin/products/local-draft/${product.id}',
+                  );
+                } else if (product.status == 'DRAFT') {
                   context.go('/tenant-admin/products/draft/${product.id}');
                 } else {
                   context.go('/tenant-admin/products/${product.id}/edit');

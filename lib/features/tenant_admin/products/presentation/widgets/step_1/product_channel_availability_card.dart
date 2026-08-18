@@ -1,33 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
-class ProductStatusOptionsCard extends StatelessWidget {
-  const ProductStatusOptionsCard({
+class ProductChannelAvailabilityCard extends StatelessWidget {
+  const ProductChannelAvailabilityCard({
     super.key,
-    required this.desiredPublishActive,
     required this.posSellable,
-    required this.trackInventory,
     required this.allowOnlineSale,
-    required this.onDesiredPublishActiveChanged,
     required this.onPosSellableChanged,
-    required this.onTrackInventoryChanged,
     required this.onAllowOnlineSaleChanged,
   });
 
-  final bool desiredPublishActive;
   final bool posSellable;
-  final bool trackInventory;
   final bool allowOnlineSale;
 
-  final ValueChanged<bool> onDesiredPublishActiveChanged;
   final ValueChanged<bool> onPosSellableChanged;
-  final ValueChanged<bool> onTrackInventoryChanged;
   final ValueChanged<bool> onAllowOnlineSaleChanged;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
@@ -37,7 +29,7 @@ class ProductStatusOptionsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Status & Options',
+            'Channel Availability',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -46,28 +38,14 @@ class ProductStatusOptionsCard extends StatelessWidget {
           ),
           const SizedBox(height: TenantAdminSpacing.md),
           _buildToggleTile(
-            title: 'Active Status',
-            subtitle: 'Product will be available for sale',
-            value: desiredPublishActive,
-            onChanged: onDesiredPublishActiveChanged,
-          ),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          _buildToggleTile(
-            title: 'POS Sellable',
+            title: 'In-Store POS',
             subtitle: 'Enable to sell in POS',
             value: posSellable,
             onChanged: onPosSellableChanged,
           ),
           const Divider(height: 1, color: Color(0xFFF1F5F9)),
           _buildToggleTile(
-            title: 'Track Inventory',
-            subtitle: 'Track stock quantity for this product',
-            value: trackInventory,
-            onChanged: onTrackInventoryChanged,
-          ),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          _buildToggleTile(
-            title: 'Allow Online Sale',
+            title: 'Online Store',
             subtitle: 'Make product available online',
             value: allowOnlineSale,
             onChanged: onAllowOnlineSaleChanged,

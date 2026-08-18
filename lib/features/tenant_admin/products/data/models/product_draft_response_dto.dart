@@ -1,3 +1,6 @@
+import 'step5_barcode_dtos.dart';
+import 'step6_pricing_tax_dtos.dart';
+
 class ProductImageResponseDto {
   final String productImageId;
   final String? mediaAssetId;
@@ -116,6 +119,15 @@ class ProductDraftResponseDto {
   final bool allowDecimalQuantity;
   final List<ProductUnitConversionResponseDto> unitConversions;
 
+  // Step 4 — Variant Configuration
+  final VariantConfigurationResponseDto? variantConfiguration;
+
+  // Step 5 — Barcode & SKU
+  final BarcodeSkuConfigurationDto? barcodeSkuConfiguration;
+
+  // Step 6 — Pricing & Tax
+  final PricingTaxConfigurationResponseDto? pricingTaxConfiguration;
+
   const ProductDraftResponseDto({
     required this.productId,
     required this.productName,
@@ -155,6 +167,9 @@ class ProductDraftResponseDto {
     this.purchaseUnitsPerOuterPack,
     this.allowDecimalQuantity = false,
     this.unitConversions = const [],
+    this.variantConfiguration,
+    this.barcodeSkuConfiguration,
+    this.pricingTaxConfiguration,
   });
 
   factory ProductDraftResponseDto.fromJson(Map<String, dynamic> json) {
@@ -205,6 +220,206 @@ class ProductDraftResponseDto {
       unitConversions: (json['unitConversions'] as List<dynamic>?)
               ?.map((e) => ProductUnitConversionResponseDto.fromJson(
                   Map<String, dynamic>.from(e as Map)))
+              .toList() ??
+          const [],
+      variantConfiguration: json['variantConfiguration'] != null
+          ? VariantConfigurationResponseDto.fromJson(
+              json['variantConfiguration'] as Map<String, dynamic>)
+          : null,
+      barcodeSkuConfiguration: json['barcodeSkuConfiguration'] != null
+          ? BarcodeSkuConfigurationDto.fromJson(
+              json['barcodeSkuConfiguration'] as Map<String, dynamic>)
+          : null,
+      pricingTaxConfiguration: json['pricingTaxConfiguration'] != null
+          ? PricingTaxConfigurationResponseDto.fromJson(
+              json['pricingTaxConfiguration'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+}
+
+class VariantConfigurationResponseDto {
+  final List<VariantConfigurationOptionResponseDto> options;
+  final List<VariantConfigurationVariantResponseDto> variants;
+  final List<VariantConfigurationDeletedCombinationResponseDto>
+      deletedCombinations;
+
+  const VariantConfigurationResponseDto({
+    this.options = const [],
+    this.variants = const [],
+    this.deletedCombinations = const [],
+  });
+
+  factory VariantConfigurationResponseDto.fromJson(Map<String, dynamic> json) {
+    return VariantConfigurationResponseDto(
+      options: (json['options'] as List<dynamic>?)
+              ?.map((e) => VariantConfigurationOptionResponseDto.fromJson(
+                  e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      variants: (json['variants'] as List<dynamic>?)
+              ?.map((e) => VariantConfigurationVariantResponseDto.fromJson(
+                  e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      deletedCombinations: (json['excludedCombinationHashes'] as List<dynamic>?)
+              ?.map((e) =>
+                  VariantConfigurationDeletedCombinationResponseDto.fromJson(
+                      e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+    );
+  }
+}
+
+class VariantConfigurationOptionResponseDto {
+  final String sourceOptionTemplateId;
+  final String? productOptionId;
+  final String? optionName;
+  final int sortOrder;
+  final List<VariantConfigurationOptionValueResponseDto> values;
+
+  const VariantConfigurationOptionResponseDto({
+    required this.sourceOptionTemplateId,
+    this.productOptionId,
+    this.optionName,
+    this.sortOrder = 0,
+    this.values = const [],
+  });
+
+  factory VariantConfigurationOptionResponseDto.fromJson(
+      Map<String, dynamic> json) {
+    return VariantConfigurationOptionResponseDto(
+      sourceOptionTemplateId: json['sourceOptionTemplateId']?.toString() ?? '',
+      productOptionId: json['productOptionId']?.toString(),
+      optionName: json['optionName']?.toString(),
+      sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
+      values: (json['values'] as List<dynamic>?)
+              ?.map((e) => VariantConfigurationOptionValueResponseDto.fromJson(
+                  e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+    );
+  }
+}
+
+class VariantConfigurationOptionValueResponseDto {
+  final String sourceOptionTemplateValueId;
+  final String? productOptionValueId;
+  final String? valueName;
+  final int sortOrder;
+  final String? imageMediaAssetId;
+
+  const VariantConfigurationOptionValueResponseDto({
+    required this.sourceOptionTemplateValueId,
+    this.productOptionValueId,
+    this.valueName,
+    this.sortOrder = 0,
+    this.imageMediaAssetId,
+  });
+
+  factory VariantConfigurationOptionValueResponseDto.fromJson(
+      Map<String, dynamic> json) {
+    return VariantConfigurationOptionValueResponseDto(
+      sourceOptionTemplateValueId:
+          json['sourceOptionTemplateValueId']?.toString() ?? '',
+      productOptionValueId: json['productOptionValueId']?.toString(),
+      valueName: json['valueName']?.toString(),
+      sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
+      imageMediaAssetId: json['imageMediaAssetId']?.toString(),
+    );
+  }
+}
+
+class VariantConfigurationVariantResponseDto {
+  final String clientCombinationKey;
+  final String? productVariantId;
+  final List<VariantConfigurationSelectedValueResponseDto> selectedValues;
+  final String combinationLabel;
+  final String? displayLabel;
+  final bool includeVariant;
+  final String? exactImageMediaAssetId;
+  final String? optionCombinationHash;
+
+  const VariantConfigurationVariantResponseDto({
+    required this.clientCombinationKey,
+    this.productVariantId,
+    this.selectedValues = const [],
+    required this.combinationLabel,
+    this.displayLabel,
+    this.includeVariant = true,
+    this.exactImageMediaAssetId,
+    this.optionCombinationHash,
+  });
+
+  factory VariantConfigurationVariantResponseDto.fromJson(
+      Map<String, dynamic> json) {
+    return VariantConfigurationVariantResponseDto(
+      clientCombinationKey: json['clientCombinationKey']?.toString() ?? '',
+      productVariantId: json['productVariantId']?.toString(),
+      selectedValues: (json['selectedValues'] as List<dynamic>?)
+              ?.map((e) =>
+                  VariantConfigurationSelectedValueResponseDto.fromJson(
+                      e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      combinationLabel: json['combinationLabel']?.toString() ?? '',
+      displayLabel: json['displayLabel']?.toString(),
+      includeVariant: json['includeVariant'] as bool? ?? true,
+      exactImageMediaAssetId: json['exactImageMediaAssetId']?.toString(),
+      optionCombinationHash: json['optionCombinationHash']?.toString(),
+    );
+  }
+}
+
+class VariantConfigurationSelectedValueResponseDto {
+  final String sourceOptionTemplateId;
+  final String sourceOptionTemplateValueId;
+  final String? optionName;
+  final String? valueName;
+
+  const VariantConfigurationSelectedValueResponseDto({
+    required this.sourceOptionTemplateId,
+    required this.sourceOptionTemplateValueId,
+    this.optionName,
+    this.valueName,
+  });
+
+  factory VariantConfigurationSelectedValueResponseDto.fromJson(
+      Map<String, dynamic> json) {
+    return VariantConfigurationSelectedValueResponseDto(
+      sourceOptionTemplateId: json['sourceOptionTemplateId']?.toString() ?? '',
+      sourceOptionTemplateValueId:
+          json['sourceOptionTemplateValueId']?.toString() ?? '',
+      optionName: json['optionName']?.toString(),
+      valueName: json['valueName']?.toString(),
+    );
+  }
+}
+
+class VariantConfigurationDeletedCombinationResponseDto {
+  final String clientCombinationKey;
+  final String? productVariantId;
+  final String? optionCombinationHash;
+  final List<VariantConfigurationSelectedValueResponseDto> selectedValues;
+
+  const VariantConfigurationDeletedCombinationResponseDto({
+    required this.clientCombinationKey,
+    this.productVariantId,
+    this.optionCombinationHash,
+    this.selectedValues = const [],
+  });
+
+  factory VariantConfigurationDeletedCombinationResponseDto.fromJson(
+      Map<String, dynamic> json) {
+    return VariantConfigurationDeletedCombinationResponseDto(
+      clientCombinationKey: json['clientCombinationKey']?.toString() ?? '',
+      productVariantId: json['productVariantId']?.toString(),
+      optionCombinationHash: json['optionCombinationHash']?.toString(),
+      selectedValues: (json['selectedValues'] as List<dynamic>?)
+              ?.map((e) =>
+                  VariantConfigurationSelectedValueResponseDto.fromJson(
+                      e as Map<String, dynamic>))
               .toList() ??
           const [],
     );

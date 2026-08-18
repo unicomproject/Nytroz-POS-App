@@ -52,6 +52,15 @@ class TenantProductRepositoryImpl implements TenantProductRepository {
   }
 
   @override
+  Future<ProductCreateResult> createProductFromWizard(
+    Map<String, dynamic> wizardCreatePayload,
+  ) async {
+    final dto =
+        await _remoteDatasource.createProductFromWizard(wizardCreatePayload);
+    return TenantProductMapper.toCreateResult(dto);
+  }
+
+  @override
   Future<TenantProductDetail> updateProduct(
     String productId,
     ProductFormData request,

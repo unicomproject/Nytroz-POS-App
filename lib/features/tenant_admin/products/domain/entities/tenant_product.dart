@@ -18,6 +18,8 @@ class TenantProduct {
     this.currencyCode,
     this.imageUrl,
     this.rowVersion = 1,
+    this.isLocalDraft = false,
+    this.productStructure,
   });
 
   final String id;
@@ -38,6 +40,13 @@ class TenantProduct {
   final String status;
   final String? imageUrl;
   final int rowVersion;
+
+  /// True when this row is a device-local wizard draft (not a backend Product).
+  /// When true, [id] is [localDraftId], never a ProductId.
+  final bool isLocalDraft;
+
+  /// Product type when known (SIMPLE / VARIANT / BUNDLE). Local drafts only.
+  final String? productStructure;
 }
 
 class TenantProductListResult {

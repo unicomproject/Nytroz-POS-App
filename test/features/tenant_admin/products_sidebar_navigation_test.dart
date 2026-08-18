@@ -52,7 +52,7 @@ void main() {
       );
 
       expect(visibility.showParent, isTrue);
-      expect(visibility.visibleChildren, isEmpty);
+      expect(visibility.visibleChildren.map((item) => item.label), ['Tax']);
     });
 
     test('shows only Add Product with create permission', () {
@@ -86,21 +86,21 @@ void main() {
     test('approved child order when all visible', () {
       final visibility = ProductsSidebarVisibility.resolve(
         access: _accessFor([
-          TenantAdminPermissionCodes.tenantProductsView,
           TenantAdminPermissionCodes.tenantProductsCreate,
           TenantAdminPermissionCodes.tenantCategoriesView,
           TenantAdminPermissionCodes.tenantBrandsView,
-          TenantAdminPermissionCodes.tenantStockView,
-          TenantAdminPermissionCodes.tenantProductImport,
+          TenantAdminPermissionCodes.tenantProductsView,
         ]),
       );
 
+      expect(visibility.showParent, isTrue);
       expect(
         visibility.visibleChildren.map((item) => item.label).toList(),
         [
           'Add Product',
           'Categories & Subcategories',
           'Brand',
+          'Tax',
         ],
       );
     });

@@ -226,9 +226,8 @@ class _DrawerActionCard extends StatelessWidget {
                           ),
                   ),
                   SizedBox(
-                    width: compact
-                        ? TenantAdminSpacing.sm
-                        : TenantAdminSpacing.md,
+                    width:
+                        compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
                   ),
                   Expanded(
                     child: Column(
