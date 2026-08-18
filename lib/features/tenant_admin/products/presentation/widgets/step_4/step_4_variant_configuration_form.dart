@@ -216,8 +216,8 @@ class Step4VariantConfigurationForm extends ConsumerWidget {
                     ),
                     child: Row(
                       children: const [
-                        const Expanded(child: Text('Variant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                        const SizedBox(
+                        Expanded(child: Text('Variant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                        SizedBox(
                           width: 100,
                           child: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12), textAlign: TextAlign.center),
                         ),

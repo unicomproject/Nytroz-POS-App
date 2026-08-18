@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../controllers/add_product_wizard_controller.dart';
@@ -137,7 +138,6 @@ class _EditVariantDrawerState extends ConsumerState<EditVariantDrawer> {
                   ),
                   const SizedBox(height: 16),
                   const Text('Apply Image To:'),
-                  // ignore: deprecated_member_use
                   RadioListTile<String>(
                     title: const Text('Only this variant'),
                     value: 'ONLY_THIS',
@@ -148,7 +148,6 @@ class _EditVariantDrawerState extends ConsumerState<EditVariantDrawer> {
                       });
                     },
                   ),
-                  // ignore: deprecated_member_use
                   RadioListTile<String>(
                     title: Text(
                         'All ${variant.selectedValues.isNotEmpty ? variant.selectedValues.last.valueName : 'group'} variants'),
