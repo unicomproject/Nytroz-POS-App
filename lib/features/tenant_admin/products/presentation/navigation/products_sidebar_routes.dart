@@ -11,7 +11,7 @@ class ProductsSidebarRoutes {
   static const import = '/tenant-admin/products/import';
 
   static const tax = '/tenant-admin/tax';
-
+  
   /// Product-specific inventory setup — route not available yet.
   /// Must not alias to the top-level Inventory/Stock module.
   static const productInventory = '';

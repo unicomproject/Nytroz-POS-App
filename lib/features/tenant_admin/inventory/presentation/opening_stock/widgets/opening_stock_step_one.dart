@@ -21,8 +21,7 @@ class OpeningStockStepOne extends ConsumerWidget {
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final isNarrow =
-                  constraints.maxWidth < 900 || constraints.maxHeight < 680;
+              final isNarrow = constraints.maxWidth < 900 || constraints.maxHeight < 680;
 
               if (isNarrow) {
                 return SingleChildScrollView(

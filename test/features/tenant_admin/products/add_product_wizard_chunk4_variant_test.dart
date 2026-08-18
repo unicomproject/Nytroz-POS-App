@@ -286,7 +286,8 @@ void main() {
         BarcodeSkuAssignmentDto(clientCombinationKey: keys[3], sku: 'D'),
       );
       expect(await controller.saveAndContinue(), isFalse);
-      expect(controller.wizardState.fieldErrors.containsKey('barcodeDuplicate'),
+      expect(
+          controller.wizardState.fieldErrors.containsKey('barcodeDuplicate'),
           isTrue);
     });
 
@@ -344,15 +345,14 @@ void main() {
       final blueSmall = controller.wizardState.step4State.generatedVariants
           .firstWhere((v) => v.combinationLabel == 'Blue / Small');
       final keptSku = controller.wizardState.step5State.assignments
-          .firstWhere(
-              (a) => a.clientCombinationKey == redSmall.clientCombinationKey)
+          .firstWhere((a) => a.clientCombinationKey == redSmall.clientCombinationKey)
           .sku;
 
       controller.goToPreviousApplicableStep(); // Step 4
       controller.confirmDeleteVariant(blueSmall.clientCombinationKey);
       expect(
-        controller.wizardState.step5State.assignments.any(
-            (a) => a.clientCombinationKey == blueSmall.clientCombinationKey),
+        controller.wizardState.step5State.assignments
+            .any((a) => a.clientCombinationKey == blueSmall.clientCombinationKey),
         isFalse,
       );
       expect(

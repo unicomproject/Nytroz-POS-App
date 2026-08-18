@@ -626,6 +626,7 @@ bool _canAccessRoute(
     return ProductsRouteGuard.canAccessPath(accessChecker, definition.path);
   }
 
+
   if (definition.path == '/tenant-admin/products') {
     return accessChecker.canViewProductListNav();
   }

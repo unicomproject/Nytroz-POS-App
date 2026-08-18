@@ -48,8 +48,7 @@ class _TrackingRepo implements TenantProductRepository {
   Future<ProductDraftResponseDto> updateDraft(
       String productId, SaveProductDraftRequestDto request) async {
     updateDraftCallCount++;
-    throw StateError(
-        'updateDraft must not be called during Chunk 2 navigation');
+    throw StateError('updateDraft must not be called during Chunk 2 navigation');
   }
 
   @override
@@ -62,8 +61,7 @@ class _TrackingRepo implements TenantProductRepository {
   Future<ProductCreateResult> createProductFromWizard(
       Map<String, dynamic> wizardCreatePayload) async {
     createProductCallCount++;
-    throw StateError(
-        'createProductFromWizard must not be called during Chunk 2');
+    throw StateError('createProductFromWizard must not be called during Chunk 2');
   }
 
   @override

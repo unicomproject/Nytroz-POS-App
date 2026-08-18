@@ -229,8 +229,7 @@ class InventoryNoteBanner extends StatelessWidget {
         message,
         style: TextStyle(
           fontSize: 12,
-          color:
-              warning ? TenantAdminColors.warning : TenantAdminColors.success,
+          color: warning ? TenantAdminColors.warning : TenantAdminColors.success,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -345,8 +344,7 @@ class InventoryWorkspaceTable extends StatelessWidget {
                 TableRow(
                   decoration: const BoxDecoration(color: Color(0xFFFBFEFE)),
                   children: [
-                    for (final header in headers)
-                      cell(Text(header), header: true),
+                    for (final header in headers) cell(Text(header), header: true),
                   ],
                 ),
                 for (final row in rows)
@@ -515,9 +513,7 @@ class InventoryLocationCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(11),
           border: Border.all(
-            color: selected
-                ? TenantAdminColors.info
-                : InventoryWorkspaceTokens.line,
+            color: selected ? TenantAdminColors.info : InventoryWorkspaceTokens.line,
             width: selected ? 2 : 1,
           ),
         ),
@@ -584,9 +580,7 @@ class InventoryChannelPickCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected
-                ? TenantAdminColors.info
-                : InventoryWorkspaceTokens.line,
+            color: selected ? TenantAdminColors.info : InventoryWorkspaceTokens.line,
             width: selected ? 2 : 1,
           ),
         ),
@@ -942,31 +936,15 @@ class InventoryStatusBadge extends StatelessWidget {
     final t = (tone ?? label).toLowerCase();
     TenantAdminStatusType status = TenantAdminStatusType.offline;
 
-    if (t.contains('high') ||
-        t.contains('out') ||
-        t.contains('sold') ||
-        t.contains('danger') ||
-        t.contains('critical')) {
+    if (t.contains('high') || t.contains('out') || t.contains('sold') || t.contains('danger') || t.contains('critical')) {
       status = TenantAdminStatusType.danger;
-    } else if (t.contains('pending') ||
-        t.contains('under review') ||
-        t.contains('medium') ||
-        t.contains('draft') ||
-        t.contains('reserved') ||
-        t.contains('warning')) {
+    } else if (t.contains('pending') || t.contains('under review') || t.contains('medium') || t.contains('draft') || t.contains('reserved') || t.contains('warning')) {
       status = TenantAdminStatusType.warning;
     } else if (t.contains('low') && !t.contains('below')) {
       status = TenantAdminStatusType.pending;
-    } else if (t.contains('posted') ||
-        t.contains('received') ||
-        t.contains('completed') ||
-        t.contains('in stock') ||
-        t.contains('success') ||
-        t.contains('active')) {
+    } else if (t.contains('posted') || t.contains('received') || t.contains('completed') || t.contains('in stock') || t.contains('success') || t.contains('active')) {
       status = TenantAdminStatusType.success;
-    } else if (t.contains('review') ||
-        t.contains('blue') ||
-        t.contains('online')) {
+    } else if (t.contains('review') || t.contains('blue') || t.contains('online')) {
       status = TenantAdminStatusType.online;
     }
 

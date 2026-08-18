@@ -9,8 +9,7 @@ final taxRepositoryProvider = Provider<TaxRepository>((ref) {
   return TaxRepositoryImpl(apiClient);
 });
 
-final taxListProvider =
-    FutureProvider.autoDispose<TaxAggregateListResult>((ref) {
+final taxListProvider = FutureProvider.autoDispose<TaxAggregateListResult>((ref) {
   final repository = ref.watch(taxRepositoryProvider);
   return repository.getTaxes();
 });

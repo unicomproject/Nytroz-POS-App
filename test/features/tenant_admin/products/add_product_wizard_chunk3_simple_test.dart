@@ -213,8 +213,8 @@ void main() {
       expect(controller.wizardState.productUnitId, 'unit-1');
       expect(await controller.saveAndContinue(), isTrue); // → 5
       expect(controller.wizardState.step5State.baseSku, 'TEST-SIMPLE-001');
-      expect(controller.wizardState.step5State.parentProductBarcode,
-          '8901234567890');
+      expect(
+          controller.wizardState.step5State.parentProductBarcode, '8901234567890');
     });
 
     test('10. Tax selection populates rate and name', () async {
@@ -256,8 +256,7 @@ void main() {
       expect(controller.wizardState.taxRate, 15);
     });
 
-    test(
-        '14. Save & Continue across Step 3/5/6 triggers zero Product mutations',
+    test('14. Save & Continue across Step 3/5/6 triggers zero Product mutations',
         () async {
       await goToStep5Simple();
       controller.updateSimpleBaseSku('TEST-SIMPLE-001');
@@ -339,7 +338,7 @@ void main() {
       expect(find.text('Select variant'), findsNothing);
       expect(find.text('Base SKU *'), findsOneWidget);
       expect(find.text('Parent Product Barcode'), findsOneWidget);
-      expect(find.text('Apply'), findsWidgets); // Used instead of Generate
+      expect(find.text('Generate'), findsOneWidget);
       expect(find.text('Product'), findsWidgets);
     });
 
@@ -364,10 +363,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Variant Configuration'), findsNothing);
-      expect(find.text('Basic Information'), findsOneWidget); // Used instead of Basic Details
+      expect(find.text('Basic Details'), findsOneWidget);
       expect(find.text('Units & Pack Conversion'), findsOneWidget);
-      expect(find.text('Base SKU'), findsNothing); // Base SKU text was removed from titles/rows if it changed, but let's see. Wait, in step 7, it renders SKUs.
-      expect(find.text('TEST-SIMPLE-001'), findsNWidgets(2));
+      expect(find.text('Base SKU'), findsOneWidget);
+      expect(find.text('TEST-SIMPLE-001'), findsOneWidget);
       expect(find.text('Pricing & Tax'), findsOneWidget);
       expect(find.text('VAT 15%'), findsOneWidget);
     });

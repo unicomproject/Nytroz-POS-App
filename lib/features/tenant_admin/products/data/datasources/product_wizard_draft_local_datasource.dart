@@ -90,10 +90,7 @@ class ProductWizardDraftLocalDataSourceImpl
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! List) return <String>[];
-      return decoded
-          .map((e) => e.toString())
-          .where((e) => e.isNotEmpty)
-          .toList();
+      return decoded.map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
     } catch (_) {
       return <String>[];
     }

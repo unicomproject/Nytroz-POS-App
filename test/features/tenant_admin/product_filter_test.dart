@@ -104,7 +104,7 @@ void main() {
       expect(state.productStatus, isNull);
       expect(state.stockStatus, isNull);
       expect(state.pageNumber, 1);
-      expect(state.pageSize, 6);
+      expect(state.pageSize, 5);
     });
 
     test('Filter changes reset page to 1', () {

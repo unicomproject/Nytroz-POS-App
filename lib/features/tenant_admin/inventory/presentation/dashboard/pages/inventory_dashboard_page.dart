@@ -19,8 +19,7 @@ class InventoryDashboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return TenantAdminPageScaffold(
       title: 'Inventory Dashboard',
-      subtitle:
-          'Get a quick overview of your inventory health and take action on priority items.',
+      subtitle: 'Get a quick overview of your inventory health and take action on priority items.',
       child: LayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.maxWidth;

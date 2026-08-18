@@ -77,7 +77,7 @@ class Step5IdentifierTable extends StatelessWidget {
         child: Table(
           columnWidths: const {
             0: FlexColumnWidth(2.5), // Variant
-            1: FlexColumnWidth(2), // SKU
+            1: FlexColumnWidth(2),   // SKU
             2: FlexColumnWidth(2.5), // Barcode
             3: IntrinsicColumnWidth(), // Scan
             4: IntrinsicColumnWidth(), // Status
@@ -89,8 +89,8 @@ class Step5IdentifierTable extends StatelessWidget {
           children: [
             _buildHeaderRow(),
             ...assignments.asMap().entries.map(
-                  (entry) => _buildDataRow(context, entry.value, entry.key),
-                ),
+              (entry) => _buildDataRow(context, entry.value, entry.key),
+            ),
           ],
         ),
       ),
@@ -163,8 +163,7 @@ class Step5IdentifierTable extends StatelessWidget {
               Expanded(
                 child: Text(
                   variantLabel,
-                  style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w500),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -178,12 +177,9 @@ class Step5IdentifierTable extends StatelessWidget {
             assignment.sku ?? '—',
             style: TextStyle(
               fontSize: 13,
-              color: assignment.sku != null
-                  ? const Color(0xFFEA580C)
-                  : Colors.grey,
+              color: assignment.sku != null ? const Color(0xFFEA580C) : Colors.grey,
               fontFamily: 'monospace',
-              fontWeight:
-                  assignment.sku != null ? FontWeight.w500 : FontWeight.normal,
+              fontWeight: assignment.sku != null ? FontWeight.w500 : FontWeight.normal,
             ),
           ),
         ),

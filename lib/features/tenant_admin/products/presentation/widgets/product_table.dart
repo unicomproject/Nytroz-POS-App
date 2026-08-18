@@ -5,7 +5,7 @@ import 'package:nytroz_pos/core/network/media_url_resolver.dart';
 
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
-
+import '../../../presentation/widgets/tenant_admin_row_action.dart';
 import '../../domain/entities/tenant_product.dart';
 import 'product_delete_action.dart';
 import 'product_status_badge.dart';

@@ -99,62 +99,62 @@ class _UnitsPackConversionFormState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header
-          const Text(
-            'Units & Pack Conversion',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: TenantAdminColors.bodyText,
-            ),
+        // Header
+        const Text(
+          'Units & Pack Conversion',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: TenantAdminColors.bodyText,
           ),
-          const SizedBox(height: TenantAdminSpacing.xs),
-          const Text(
-            'Configure the unit of measure used to manage this product.',
-            style: TextStyle(
-              fontSize: 14,
-              color: TenantAdminColors.mutedText,
-            ),
+        ),
+        const SizedBox(height: TenantAdminSpacing.xs),
+        const Text(
+          'Configure the unit of measure used to manage this product.',
+          style: TextStyle(
+            fontSize: 14,
+            color: TenantAdminColors.mutedText,
           ),
-          const SizedBox(height: TenantAdminSpacing.xl),
+        ),
+        const SizedBox(height: TenantAdminSpacing.xl),
 
-          // Unit Model Card Selector
-          Row(
-            children: [
-              Expanded(
-                child: _buildUnitModelCard(
-                  title: 'Single Unit Only',
-                  description:
-                      'Use one unit for purchase, selling and stock counting.',
-                  icon: Icons.inventory_2_outlined,
-                  isSelected: state.unitModel == 'SINGLE_UNIT',
-                  onTap: () => controller.selectUnitModel('SINGLE_UNIT'),
-                ),
+        // Unit Model Card Selector
+        Row(
+          children: [
+            Expanded(
+              child: _buildUnitModelCard(
+                title: 'Single Unit Only',
+                description:
+                    'Use one unit for purchase, selling and stock counting.',
+                icon: Icons.inventory_2_outlined,
+                isSelected: state.unitModel == 'SINGLE_UNIT',
+                onTap: () => controller.selectUnitModel('SINGLE_UNIT'),
               ),
-              const SizedBox(width: TenantAdminSpacing.md),
-              Expanded(
-                child: _buildUnitModelCard(
-                  title: 'Multiple Units & Pack Conversion',
-                  description:
-                      'Use different units and set conversion between them.',
-                  icon: Icons.layers_outlined,
-                  isSelected: state.unitModel == 'MULTIPLE_UNITS',
-                  onTap: () => controller.selectUnitModel('MULTIPLE_UNITS'),
-                ),
+            ),
+            const SizedBox(width: TenantAdminSpacing.md),
+            Expanded(
+              child: _buildUnitModelCard(
+                title: 'Multiple Units & Pack Conversion',
+                description:
+                    'Use different units and set conversion between them.',
+                icon: Icons.layers_outlined,
+                isSelected: state.unitModel == 'MULTIPLE_UNITS',
+                onTap: () => controller.selectUnitModel('MULTIPLE_UNITS'),
               ),
-            ],
-          ),
-          const SizedBox(height: TenantAdminSpacing.xl),
+            ),
+          ],
+        ),
+        const SizedBox(height: TenantAdminSpacing.xl),
 
-          // Form Section (State A or State B)
-          if (state.unitModel == 'SINGLE_UNIT')
-            _buildSingleUnitSection(state, controller, unitOptions)
-          else
-            _buildMultipleUnitsSection(state, controller, unitOptions),
-        ],
-      ),
-    );
-  }
+        // Form Section (State A or State B)
+        if (state.unitModel == 'SINGLE_UNIT')
+          _buildSingleUnitSection(state, controller, unitOptions)
+        else
+          _buildMultipleUnitsSection(state, controller, unitOptions),
+      ],
+    ),
+  );
+}
 
   Widget _buildUnitModelCard({
     required String title,
@@ -810,7 +810,7 @@ class _UnitsPackConversionFormState
               ),
               Switch(
                 value: state.allowDecimalQuantity,
-                activeThumbColor: TenantAdminColors.posHomeAccentOrange,
+                activeColor: TenantAdminColors.posHomeAccentOrange,
                 onChanged: (val) => controller.setAllowDecimalQuantity(val),
               ),
             ],

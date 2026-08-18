@@ -98,10 +98,10 @@ class _EditVariantIdentifierDrawerState
                             EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
                       validator: (val) {
-                        if (val == null || val.trim().isEmpty) {
-                          return 'SKU is required';
-                        }
-                        return null;
+                         if (val == null || val.trim().isEmpty) {
+                            return 'SKU is required';
+                         }
+                         return null;
                       },
                     ),
                     const SizedBox(height: 20),
@@ -123,10 +123,10 @@ class _EditVariantIdentifierDrawerState
                             },
                           )),
                       validator: (val) {
-                        if (val == null || val.trim().isEmpty) {
-                          return 'Barcode is required';
-                        }
-                        return null;
+                         if (val == null || val.trim().isEmpty) {
+                            return 'Barcode is required';
+                         }
+                         return null;
                       },
                     ),
                   ],

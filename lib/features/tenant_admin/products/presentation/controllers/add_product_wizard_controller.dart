@@ -702,8 +702,9 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   void reconcileStep5AssignmentsWithVariants() {
     if (state.productStructure.toUpperCase() != 'VARIANT') return;
 
-    final included =
-        state.step4State.generatedVariants.where((v) => v.isIncluded).toList();
+    final included = state.step4State.generatedVariants
+        .where((v) => v.isIncluded)
+        .toList();
     final existingByKey = <String, BarcodeSkuAssignmentDto>{
       for (final a in state.step5State.assignments) a.clientCombinationKey: a,
     };
@@ -850,7 +851,9 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       final result = await _repository.createProductFromWizard(payload);
 
       final draftId = state.localDraftId;
-      if (draftId != null && draftId.isNotEmpty && _draftLocal != null) {
+      if (draftId != null &&
+          draftId.isNotEmpty &&
+          _draftLocal != null) {
         await _draftLocal!.deleteDraft(draftId);
       }
 
@@ -1223,8 +1226,9 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           'Add at least one attribute with values before continuing.';
     }
 
-    final included =
-        state.step4State.generatedVariants.where((v) => v.isIncluded).toList();
+    final included = state.step4State.generatedVariants
+        .where((v) => v.isIncluded)
+        .toList();
     if (included.isEmpty) {
       errors['generatedVariants'] =
           'Generate and include at least one variant before continuing.';
@@ -1347,8 +1351,9 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     final step4State =
         _mapVariantConfigState(draft.variantConfiguration, state.createOptions);
 
-    final assignments = draft.barcodeSkuConfiguration?.assignments ??
-        const <BarcodeSkuAssignmentDto>[];
+    final assignments =
+        draft.barcodeSkuConfiguration?.assignments ??
+            const <BarcodeSkuAssignmentDto>[];
     BarcodeSkuAssignmentDto? simpleAssignment;
     for (final a in assignments) {
       if (a.clientCombinationKey == 'SIMPLE_DEFAULT') {
@@ -1377,10 +1382,9 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       lastCompletedSetupStep: draft.lastCompletedSetupStep,
       productName:
           draft.productName == 'Untitled Product' ? '' : draft.productName,
-      internalCode:
-          (draft.productCode != null && draft.productCode!.startsWith('DRF-'))
-              ? state.internalCode
-              : (draft.productCode ?? ''),
+      internalCode: (draft.productCode != null && draft.productCode!.startsWith('DRF-'))
+          ? state.internalCode
+          : (draft.productCode ?? ''),
       categoryId: draft.categoryId,
       brandId: draft.brandId,
       clearBrandId: draft.brandId == null,
@@ -1560,6 +1564,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     }
   }
 
+
+
   void updateVariantDisplayLabel(String key, String label) {
     final variants =
         List<GeneratedVariantRow>.from(state.step4State.generatedVariants);
@@ -1623,28 +1629,25 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     final attributeRows = dto.options.map((opt) {
       final templates = options?.variantOptionTemplates
           .where((t) => t.id == opt.sourceOptionTemplateId);
-      final template =
-          (templates != null && templates.isNotEmpty) ? templates.first : null;
+      final template = (templates != null && templates.isNotEmpty) ? templates.first : null;
       final templateName = opt.optionName ?? template?.name ?? '';
-
+      
       // Fallback templateId to optionName if source template is empty
-      final tId = (opt.sourceOptionTemplateId.isNotEmpty)
-          ? opt.sourceOptionTemplateId
-          : (opt.optionName ?? '');
+      final tId = (opt.sourceOptionTemplateId.isNotEmpty) ? opt.sourceOptionTemplateId : (opt.optionName ?? '');
 
       return AttributeConfigRow(
         templateId: tId.isNotEmpty ? tId : null,
         templateName: templateName,
-        selectedValues: opt.values.map((v) {
-          final vId = (v.sourceOptionTemplateValueId.isNotEmpty)
-              ? v.sourceOptionTemplateValueId
-              : (v.valueName ?? '');
-          return SelectedOptionValue(
-            valueId: vId,
-            templateId: tId.isNotEmpty ? tId : null,
-            valueName: v.valueName ?? vId,
-          );
-        }).toList(),
+        selectedValues: opt.values
+            .map((v) {
+              final vId = (v.sourceOptionTemplateValueId.isNotEmpty) ? v.sourceOptionTemplateValueId : (v.valueName ?? '');
+              return SelectedOptionValue(
+                  valueId: vId,
+                  templateId: tId.isNotEmpty ? tId : null,
+                  valueName: v.valueName ?? vId,
+                );
+            })
+            .toList(),
       );
     }).toList();
 
@@ -1657,20 +1660,18 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         isIncluded: v.includeVariant,
         exactImageMediaAssetId: v.exactImageMediaAssetId,
         optionCombinationHash: v.optionCombinationHash,
-        selectedValues: v.selectedValues.map((sv) {
-          final tId = sv.sourceOptionTemplateId.isNotEmpty
-              ? sv.sourceOptionTemplateId
-              : sv.optionName;
-          final vId = sv.sourceOptionTemplateValueId.isNotEmpty
-              ? sv.sourceOptionTemplateValueId
-              : sv.valueName;
-
-          return SelectedOptionValue(
-            valueId: vId ?? '',
-            templateId: tId,
-            valueName: sv.valueName ?? vId ?? '',
-          );
-        }).toList(),
+        selectedValues: v.selectedValues
+            .map((sv) {
+              final tId = (sv.sourceOptionTemplateId != null && sv.sourceOptionTemplateId!.isNotEmpty) ? sv.sourceOptionTemplateId : sv.optionName;
+              final vId = (sv.sourceOptionTemplateValueId != null && sv.sourceOptionTemplateValueId!.isNotEmpty) ? sv.sourceOptionTemplateValueId : sv.valueName;
+              
+              return SelectedOptionValue(
+                  valueId: vId ?? '',
+                  templateId: tId,
+                  valueName: sv.valueName ?? vId ?? '',
+                );
+            })
+            .toList(),
       );
     }).toList();
 
@@ -1679,19 +1680,17 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         clientCombinationKey: d.clientCombinationKey,
         productVariantId: d.productVariantId,
         optionCombinationHash: d.optionCombinationHash,
-        selectedValues: d.selectedValues.map((sv) {
-          final tId = sv.sourceOptionTemplateId.isNotEmpty
-              ? sv.sourceOptionTemplateId
-              : sv.optionName;
-          final vId = sv.sourceOptionTemplateValueId.isNotEmpty
-              ? sv.sourceOptionTemplateValueId
-              : sv.valueName;
-          return SelectedOptionValue(
-            valueId: vId ?? '',
-            templateId: tId,
-            valueName: sv.valueName ?? vId ?? '',
-          );
-        }).toList(),
+        selectedValues: d.selectedValues
+            .map((sv) {
+              final tId = (sv.sourceOptionTemplateId != null && sv.sourceOptionTemplateId!.isNotEmpty) ? sv.sourceOptionTemplateId : sv.optionName;
+              final vId = (sv.sourceOptionTemplateValueId != null && sv.sourceOptionTemplateValueId!.isNotEmpty) ? sv.sourceOptionTemplateValueId : sv.valueName;
+              return SelectedOptionValue(
+                  valueId: vId ?? '',
+                  templateId: tId,
+                  valueName: sv.valueName ?? vId ?? '',
+                );
+            })
+            .toList(),
       );
     }).toList();
 
@@ -1784,10 +1783,9 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       return;
     }
 
-    final nextSku =
-        (!overwriteSku && state.step5State.baseSku.trim().isNotEmpty)
-            ? state.step5State.baseSku
-            : generated;
+    final nextSku = (!overwriteSku && state.step5State.baseSku.trim().isNotEmpty)
+        ? state.step5State.baseSku
+        : generated;
 
     state = state.copyWith(
       step5State: state.step5State.copyWith(baseSku: nextSku),
@@ -1815,11 +1813,10 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   }
 
   void updateBarcodeSkuAssignment(BarcodeSkuAssignmentDto updatedAssignment) {
-    final list =
-        List<BarcodeSkuAssignmentDto>.from(state.step5State.assignments);
-    final idx = list.indexWhere((e) =>
-        e.clientCombinationKey == updatedAssignment.clientCombinationKey);
-
+    final list = List<BarcodeSkuAssignmentDto>.from(state.step5State.assignments);
+    final idx = list.indexWhere(
+        (e) => e.clientCombinationKey == updatedAssignment.clientCombinationKey);
+    
     if (idx >= 0) {
       list[idx] = updatedAssignment;
     } else {
@@ -1833,8 +1830,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   }
 
   /// Assigns a barcode/SKU entry into wizard state only (no product DB write).
-  Future<bool> assignBarcodeSkuAndSave(
-      BarcodeSkuAssignmentDto newAssignment) async {
+  Future<bool> assignBarcodeSkuAndSave(BarcodeSkuAssignmentDto newAssignment) async {
     _logBlockedProductMutation('assignBarcodeSkuAndSave');
     final fresh = state.productId == null || state.productId!.isEmpty;
     updateBarcodeSkuAssignment(
@@ -1849,8 +1845,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
 
   void clearDuplicateConflict() {
     state = state.copyWith(
-      step5State:
-          state.step5State.copyWith(clearDuplicateBarcodeConflict: true),
+      step5State: state.step5State.copyWith(clearDuplicateBarcodeConflict: true),
     );
   }
 

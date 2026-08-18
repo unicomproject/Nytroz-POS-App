@@ -50,8 +50,9 @@ class InventorySidebarMenu extends ConsumerWidget {
           return const SizedBox.shrink();
         }
 
-        final parentSelected = currentPath.startsWith('/tenant-admin/stock') ||
-            currentPath.startsWith('/tenant-admin/inventory');
+        final parentSelected =
+            currentPath.startsWith('/tenant-admin/stock') ||
+                currentPath.startsWith('/tenant-admin/inventory');
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

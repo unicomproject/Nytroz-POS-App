@@ -37,9 +37,7 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
     _costPriceController.addListener(() {
       if (_syncingFromState) return;
       final val = num.tryParse(_costPriceController.text);
-      ref
-          .read(addProductWizardControllerProvider.notifier)
-          .updateCostPrice(val);
+      ref.read(addProductWizardControllerProvider.notifier).updateCostPrice(val);
     });
     _sellingPriceController.addListener(() {
       if (_syncingFromState) return;
@@ -175,8 +173,7 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
           const SizedBox(height: TenantAdminSpacing.md),
           taxListResult.when(
             data: (data) {
-              final taxes =
-                  data.items.where((t) => t.status == 'ACTIVE').toList();
+              final taxes = data.items.where((t) => t.status == 'ACTIVE').toList();
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

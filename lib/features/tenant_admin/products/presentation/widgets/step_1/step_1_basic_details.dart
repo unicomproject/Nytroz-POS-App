@@ -139,22 +139,21 @@ class Step1BasicDetails extends StatelessWidget {
                           posSellable: state.posSellable,
                           allowOnlineSale: state.allowOnlineSale,
                           onPosSellableChanged: controller.setPosSellable,
-                          onAllowOnlineSaleChanged:
-                              controller.setAllowOnlineSale,
+                          onAllowOnlineSaleChanged: controller.setAllowOnlineSale,
                         ),
                       ),
                     ),
 
-                    const SizedBox(width: TenantAdminSpacing.xl),
+                  const SizedBox(width: TenantAdminSpacing.xl),
 
-                    // Right Side Cards Section (Image Upload)
-                    SizedBox(
-                      width: 340,
-                      child: SingleChildScrollView(
-                        child: imageCard,
-                      ),
+                  // Right Side Cards Section (Image Upload)
+                  SizedBox(
+                    width: 340,
+                    child: SingleChildScrollView(
+                      child: imageCard,
                     ),
-                  ],
+                  ),
+                ],
                 ),
               )
             else
@@ -179,8 +178,7 @@ class Step1BasicDetails extends StatelessWidget {
                           posSellable: state.posSellable,
                           allowOnlineSale: state.allowOnlineSale,
                           onPosSellableChanged: controller.setPosSellable,
-                          onAllowOnlineSaleChanged:
-                              controller.setAllowOnlineSale,
+                          onAllowOnlineSaleChanged: controller.setAllowOnlineSale,
                         ),
                       ),
                       const SizedBox(height: TenantAdminSpacing.lg),

@@ -46,84 +46,70 @@ void main() {
   }
 
   group('AddProductWizard Step 4 UI Matrix Tests', () {
-    testWidgets(
-        'Test 1: Given Product Structure = VARIANT, When Step 4 is opened, Then Variant Configuration is visible',
-        (tester) async {
+    testWidgets('Test 1: Given Product Structure = VARIANT, When Step 4 is opened, Then Variant Configuration is visible', (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
         currentStep: 4,
         productStructure: 'VARIANT',
       )));
-
+      
       expect(find.byType(Step4VariantConfigurationForm), findsOneWidget);
       expect(find.text('Bundle / Kit Composition'), findsNothing);
     });
 
-    testWidgets(
-        'Test 2: Given Product Structure = BUNDLE, When Step 4 is opened, Then Bundle / Kit Composition is visible',
-        (tester) async {
+    testWidgets('Test 2: Given Product Structure = BUNDLE, When Step 4 is opened, Then Bundle / Kit Composition is visible', (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
         currentStep: 4,
         productStructure: 'BUNDLE',
       )));
-
+      
       expect(find.text('Bundle / Kit Composition'), findsOneWidget);
       expect(find.byType(Step4VariantConfigurationForm), findsNothing);
     });
 
-    testWidgets(
-        'Test 3: Given a saved VARIANT draft When reopened Then Product Structure restores as VARIANT And Step 4 renders Variant Configuration',
-        (tester) async {
+    testWidgets('Test 3: Given a saved VARIANT draft When reopened Then Product Structure restores as VARIANT And Step 4 renders Variant Configuration', (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
         currentStep: 4,
         productStructure: 'VARIANT',
       )));
-
+      
       expect(find.byType(Step4VariantConfigurationForm), findsOneWidget);
     });
 
-    testWidgets(
-        'Test 4: Given a saved BUNDLE draft When reopened Then Product Structure restores as BUNDLE And Step 4 renders Bundle / Kit Composition',
-        (tester) async {
+    testWidgets('Test 4: Given a saved BUNDLE draft When reopened Then Product Structure restores as BUNDLE And Step 4 renders Bundle / Kit Composition', (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
         currentStep: 4,
         productStructure: 'BUNDLE',
       )));
-
+      
       expect(find.text('Bundle / Kit Composition'), findsOneWidget);
     });
 
-    testWidgets(
-        'Test 5: Given VARIANT is changed to BUNDLE When Step 4 is revisited Then stale Variant Configuration is not rendered',
-        (tester) async {
+    testWidgets('Test 5: Given VARIANT is changed to BUNDLE When Step 4 is revisited Then stale Variant Configuration is not rendered', (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
         currentStep: 4,
         productStructure: 'BUNDLE',
       )));
-
+      
       expect(find.byType(Step4VariantConfigurationForm), findsNothing);
       expect(find.text('Bundle / Kit Composition'), findsOneWidget);
     });
 
-    testWidgets(
-        'Test 6: Given BUNDLE is changed to VARIANT When Step 4 is revisited Then stale Bundle / Kit Composition is not rendered',
-        (tester) async {
+    testWidgets('Test 6: Given BUNDLE is changed to VARIANT When Step 4 is revisited Then stale Bundle / Kit Composition is not rendered', (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
         currentStep: 4,
         productStructure: 'VARIANT',
       )));
-
+      
       expect(find.text('Bundle / Kit Composition'), findsNothing);
       expect(find.byType(Step4VariantConfigurationForm), findsOneWidget);
     });
 
-    testWidgets(
-        'Test 7: Missing/unknown Product Structure must not silently fall back to VARIANT',
-        (tester) async {
+    testWidgets('Test 7: Missing/unknown Product Structure must not silently fall back to VARIANT', (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
         currentStep: 4,
         productStructure: 'UNKNOWN',
       )));
-
+      
       expect(find.byType(Step4VariantConfigurationForm), findsNothing);
       expect(find.text('Simple Product Configuration'), findsOneWidget);
     });
@@ -133,8 +119,7 @@ void main() {
 class _FakeAddProductWizardController extends AddProductWizardController {
   _FakeAddProductWizardController(AddProductWizardState initialState)
       : super(_DummyRepository()) {
-    state = initialState.copyWith(
-        createOptions: const TenantProductCreateOptions(
+    state = initialState.copyWith(createOptions: const TenantProductCreateOptions(
       categories: [],
       subCategories: [],
       brands: [],
@@ -146,8 +131,7 @@ class _FakeAddProductWizardController extends AddProductWizardController {
   }
 
   @override
-  Future<void> initWizard(
-      {String? resumeLocalDraftId, String? resumeProductId}) async {
+  Future<void> initWizard({String? resumeLocalDraftId, String? resumeProductId}) async {
     // override so it doesn't try to fetch options and overwrite state
   }
 }

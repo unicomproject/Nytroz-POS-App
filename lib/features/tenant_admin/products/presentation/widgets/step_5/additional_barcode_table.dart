@@ -16,6 +16,7 @@ class AdditionalBarcodeTable extends StatelessWidget {
     super.key,
     required this.additionalBarcodes,
     required this.activeVariants,
+
     required this.onEdit,
     required this.onDelete,
     required this.onSetPrimary,
@@ -152,6 +153,7 @@ class AdditionalBarcodeTable extends StatelessWidget {
                               child: EditAdditionalBarcodeDrawer(
                                 barcodeDto: barcode,
                                 activeVariants: activeVariants,
+
                                 onUpdate: (updated) =>
                                     onEdit(updated, barcode.barcodeId, index),
                               ),

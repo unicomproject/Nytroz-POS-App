@@ -103,8 +103,7 @@ extension _FirstWhereOrElse<T> on Iterable<T> {
 class ReceivingSessionNotifier extends StateNotifier<ReceivingSession> {
   ReceivingSessionNotifier() : super(const ReceivingSession());
 
-  void setStep(int step) =>
-      state = state.copyWith(step: step, clearError: true);
+  void setStep(int step) => state = state.copyWith(step: step, clearError: true);
 
   void back() {
     if (state.step > 0 && !state.posted) {
@@ -154,21 +153,19 @@ class ReceivingSessionNotifier extends StateNotifier<ReceivingSession> {
     }
     if (state.supplierName.trim().isEmpty ||
         state.invoiceNumber.trim().isEmpty) {
-      state = state.copyWith(
-          error: 'Supplier name and invoice number are required.');
+      state = state.copyWith(error: 'Supplier name and invoice number are required.');
       return false;
     }
     final product = state.product;
     if (product?.serialTracked == true &&
         state.serials.length != state.quantity.round()) {
-      state =
-          state.copyWith(error: 'Serial count must equal received quantity.');
+      state = state.copyWith(
+          error: 'Serial count must equal received quantity.');
       return false;
     }
     final unique = state.serials.map((e) => e.trim().toLowerCase()).toSet();
     if (unique.length != state.serials.length) {
-      state =
-          state.copyWith(error: 'Duplicate serial numbers are not allowed.');
+      state = state.copyWith(error: 'Duplicate serial numbers are not allowed.');
       return false;
     }
     return true;
@@ -385,13 +382,12 @@ class ReceivingDashboardScreen extends ConsumerWidget {
                                         style: TextStyle(
                                             fontWeight: FontWeight.w700,
                                             fontSize: 14)),
-                                    subtitle:
-                                        const Text('Create a stock receipt'),
+                                    subtitle: const Text('Create a stock receipt'),
                                     trailing: const Icon(Icons.chevron_right),
                                     onTap: () {
                                       ref
-                                          .read(
-                                              receivingSessionProvider.notifier)
+                                          .read(receivingSessionProvider
+                                              .notifier)
                                           .reset();
                                       context.go(InventoryRoutes.receivingNew);
                                     },
@@ -512,8 +508,7 @@ class ReceivingWizardScreen extends ConsumerWidget {
       case 1:
         return _DetailsStep(session: session, notifier: notifier);
       case 2:
-        return _ReviewStep(
-            session: session, notifier: notifier, confirm: false);
+        return _ReviewStep(session: session, notifier: notifier, confirm: false);
       case 3:
         return _ReviewStep(session: session, notifier: notifier, confirm: true);
       default:
@@ -526,8 +521,9 @@ class ReceivingWizardScreen extends ConsumerWidget {
             'Quantity': session.quantity.toStringAsFixed(0),
             'Previous On Hand':
                 (session.product?.onHand ?? 0).toStringAsFixed(0),
-            'New On Hand': ((session.product?.onHand ?? 0) + session.quantity)
-                .toStringAsFixed(0),
+            'New On Hand':
+                ((session.product?.onHand ?? 0) + session.quantity)
+                    .toStringAsFixed(0),
           },
           actions: [
             InventoryGhostButton(
@@ -591,7 +587,8 @@ class _SelectStep extends StatelessWidget {
                   name: p.name,
                   sku: p.sku,
                   selected: session.productId == p.id,
-                  stockLabel: 'On Hand ${p.onHand.toStringAsFixed(0)}',
+                  stockLabel:
+                      'On Hand ${p.onHand.toStringAsFixed(0)}',
                   onTap: () => notifier.selectProduct(p.id),
                 ),
             ],
@@ -713,8 +710,7 @@ class _DetailsStepState extends State<_DetailsStep> {
         ),
         Row(
           children: [
-            InventoryGhostButton(
-                label: 'Back', onPressed: widget.notifier.back),
+            InventoryGhostButton(label: 'Back', onPressed: widget.notifier.back),
             const Spacer(),
             InventoryPrimaryButton(
               label: 'Continue to Review',
@@ -808,9 +804,7 @@ class _ReviewStep extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
           children: [
-            Expanded(
-                child:
-                    Text(k, style: const TextStyle(color: Color(0xFF64748B)))),
+            Expanded(child: Text(k, style: const TextStyle(color: Color(0xFF64748B)))),
             Text(v, style: const TextStyle(fontWeight: FontWeight.w700)),
           ],
         ),

@@ -176,9 +176,8 @@ class _ProductSelectionPanelState extends ConsumerState<ProductSelectionPanel> {
                                   value: 'SKU', child: Text('Sort by: SKU')),
                             ],
                             onChanged: (val) {
-                              if (val != null) {
+                              if (val != null)
                                 setState(() => _selectedSort = val);
-                              }
                             },
                           ),
                         ),

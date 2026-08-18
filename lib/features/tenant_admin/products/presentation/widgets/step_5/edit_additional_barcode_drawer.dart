@@ -32,7 +32,8 @@ class _EditAdditionalBarcodeDrawerState
   @override
   void initState() {
     super.initState();
-    _barcodeController = TextEditingController(text: widget.barcodeDto.barcode);
+    _barcodeController =
+        TextEditingController(text: widget.barcodeDto.barcode);
     _barcodeType = widget.barcodeDto.barcodeType;
     if (_barcodeType == null || !_barcodeTypes.contains(_barcodeType)) {
       _barcodeType = _barcodeTypes.first; // Fallback
@@ -113,12 +114,12 @@ class _EditAdditionalBarcodeDrawerState
                             EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       ),
                       items: _barcodeTypes
-                          .map(
-                              (t) => DropdownMenuItem(value: t, child: Text(t)))
+                          .map((t) => DropdownMenuItem(
+                              value: t, child: Text(t)))
                           .toList(),
                       onChanged: (val) {
                         if (val != null) {
-                          setState(() => _barcodeType = val);
+                           setState(() => _barcodeType = val);
                         }
                       },
                     ),

@@ -25,7 +25,8 @@ class CurrentStockScreen extends ConsumerWidget {
     final accessCheckerState = ref.watch(tenantAdminAccessCheckerProvider);
     final accessChecker = accessCheckerState.valueOrNull;
 
-    if (accessChecker == null || !accessChecker.canAccessCurrentStockPage()) {
+    if (accessChecker == null ||
+        !accessChecker.canAccessCurrentStockPage()) {
       return const TenantAdminPageScaffold(
         title: 'Current Stock',
         child: TenantAdminEmptyState(

@@ -234,9 +234,8 @@ class _ProductImageUploadCardState
                                         gaplessPlayback: true,
                                         loadingBuilder:
                                             (context, child, loadingProgress) {
-                                          if (loadingProgress == null) {
+                                          if (loadingProgress == null)
                                             return child;
-                                          }
                                           return Container(
                                             color: const Color(0xFFF1F5F9),
                                             child: Center(

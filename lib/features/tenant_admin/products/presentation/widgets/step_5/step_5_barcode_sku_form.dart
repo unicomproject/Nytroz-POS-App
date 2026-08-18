@@ -64,6 +64,24 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
     // VARIANT: table updates only on Apply button press (_onAssignVariant)
   }
 
+  /// Keeps wizard state current while typing so Save Draft captures values
+  /// even before "Add to List" is pressed.
+  void _flushVariantDraftFields() {
+    final key = _selectedClientKey;
+    if (key == null) return;
+    final sku = _skuController.text.trim();
+    final barcode = _barcodeController.text.trim();
+    ref.read(addProductWizardControllerProvider.notifier).updateBarcodeSkuAssignment(
+          BarcodeSkuAssignmentDto(
+            clientCombinationKey: key,
+            productVariantId: null,
+            sku: sku.isEmpty ? null : sku,
+            barcode: barcode.isEmpty ? null : barcode,
+            isAssigned: sku.isNotEmpty || barcode.isNotEmpty,
+          ),
+        );
+  }
+
   @override
   void dispose() {
     _skuController.removeListener(_onSkuChanged);
@@ -256,8 +274,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                             ),
                             child: Text(
                               productName,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ),
                         ],
@@ -325,25 +342,17 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                         const SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () {
-                            controller.generateSimpleIdentifiers(
-                                overwriteSku: false);
+                            controller.generateSimpleIdentifiers(overwriteSku: false);
                             _syncSimpleControllersFromState();
                             setState(() {
-                              _appliedSku = ref
-                                  .read(addProductWizardControllerProvider)
-                                  .step5State
-                                  .baseSku;
-                              _appliedBarcode = ref
-                                  .read(addProductWizardControllerProvider)
-                                  .step5State
-                                  .parentProductBarcode;
+                              _appliedSku = ref.read(addProductWizardControllerProvider).step5State.baseSku;
+                              _appliedBarcode = ref.read(addProductWizardControllerProvider).step5State.parentProductBarcode;
                             });
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFF6A00),
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -408,9 +417,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (state.step5State.assignments.length !=
-          state.step4State.generatedVariants
-              .where((v) => v.isIncluded)
-              .length) {
+          state.step4State.generatedVariants.where((v) => v.isIncluded).length) {
         controller.ensureVariantStep5Targets();
       }
     });
@@ -484,32 +491,27 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                         children: [
                           const _FieldLabel(label: 'Variant *'),
                           const SizedBox(height: 6),
-                          InputDecorator(
+                          DropdownButtonFormField<String>(
+                            value: _selectedClientKey,
+                            isExpanded: true,
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 0),
+                              contentPadding:
+                                  EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                             ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _selectedClientKey,
-                                isExpanded: true,
-                                hint: const Text('Select variant'),
-                                icon: const Icon(Icons.arrow_drop_down),
-                                items: dropdownItems
-                                    .map((item) => DropdownMenuItem<String>(
-                                          value: item.clientKey,
-                                          child: Text(
-                                            item.label,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ))
-                                    .toList(),
-                                onChanged: (val) {
-                                  if (val != null) selectVariant(val);
-                                },
-                              ),
-                            ),
+                            items: dropdownItems
+                                .map((item) => DropdownMenuItem<String>(
+                                      value: item.clientKey,
+                                      child: Text(
+                                        item.label,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ))
+                                .toList(),
+                            onChanged: (val) {
+                              if (val != null) selectVariant(val);
+                            },
+                            hint: const Text('Select variant'),
                           ),
                         ],
                       ),
@@ -571,9 +573,8 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                     Padding(
                       padding: const EdgeInsets.only(top: 24.0),
                       child: ElevatedButton(
-                        onPressed: _selectedClientKey != null
-                            ? _onAssignVariant
-                            : null,
+                        onPressed:
+                            _selectedClientKey != null ? _onAssignVariant : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFFF6A00),
                           foregroundColor: Colors.white,
@@ -604,9 +605,8 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Variant SKU & Barcode Assignment',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  'Variant SKU & Barcode Assignment',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                     if (appliedAssignments.isNotEmpty)
                       Container(
@@ -674,6 +674,37 @@ class _FieldLabel extends StatelessWidget {
         fontWeight: FontWeight.w600,
         fontSize: 12,
         color: Color(0xFF374151),
+      ),
+    );
+  }
+}
+
+class _AssignmentSummaryBadge extends StatelessWidget {
+  final List<BarcodeSkuAssignmentDto> assignments;
+  const _AssignmentSummaryBadge({required this.assignments});
+
+  @override
+  Widget build(BuildContext context) {
+    final complete =
+        assignments.where((a) => a.effectiveStatus == 'COMPLETE').length;
+    final total = assignments.length;
+    final allDone = complete == total;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: allDone ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '$complete / $total assigned',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: allDone
+              ? const Color(0xFF16A34A)
+              : const Color(0xFFB45309),
+        ),
       ),
     );
   }

@@ -31,7 +31,8 @@ class Step5BarcodeSkuState {
   }) {
     return Step5BarcodeSkuState(
       baseSku: baseSku ?? this.baseSku,
-      parentProductBarcode: parentProductBarcode ?? this.parentProductBarcode,
+      parentProductBarcode:
+          parentProductBarcode ?? this.parentProductBarcode,
       identifierTargets: identifierTargets ?? this.identifierTargets,
       assignments: assignments ?? this.assignments,
       duplicateBarcodeConflict: clearDuplicateBarcodeConflict

@@ -21,8 +21,7 @@ class ProductsRouteGuard {
       case ProductsSidebarRoutes.brands:
         return access.canViewBrandsNav();
       case ProductsSidebarRoutes.tax:
-        return access
-            .canAccessProductListPage(); // Using same permission as Product List for now
+        return access.canAccessProductListPage(); // Using same permission as Product List for now
       case ProductsSidebarRoutes.variantTemplates:
         return access.canViewVariantTemplatesNav();
       case ProductsSidebarRoutes.popular:

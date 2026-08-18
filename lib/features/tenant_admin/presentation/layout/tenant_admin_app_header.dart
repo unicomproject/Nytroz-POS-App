@@ -19,7 +19,7 @@ class TenantAdminAppHeader extends ConsumerWidget {
 
   final VoidCallback? onMenuPressed;
 
-  static const height = 44.0;
+  static const height = TenantAdminAppHeaderTokens.height;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,6 +28,7 @@ class TenantAdminAppHeader extends ConsumerWidget {
     final session = ref.watch(authSessionProvider);
     final tillSession = tillState.session;
     final isOpen = tillState.hasOpenSession;
+
     final outletLabel = _resolveOutletLabel(
       tillSession?.outletName,
       tenantContext?.outletScope
@@ -37,10 +38,6 @@ class TenantAdminAppHeader extends ConsumerWidget {
       tenantContext?.outletScope.firstOrNull?.outletName,
     );
 
-    final tillLabel = _resolveTillLabel(
-      tillSession?.tillName,
-      tillSession?.tillCode,
-    );
 
     return Material(
       color: TenantAdminColors.posHomeDarkBackground,
@@ -80,20 +77,9 @@ class TenantAdminAppHeader extends ConsumerWidget {
                     ),
                     const Spacer(),
                     if (!veryCompact) ...[
-                      _TillSessionChip(
-                        isOpen: isOpen,
-                        compact: compact,
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.sm),
                       _ContextChip(
                         icon: Icons.location_on_outlined,
                         label: outletLabel,
-                        compact: compact,
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.sm),
-                      _ContextChip(
-                        icon: Icons.point_of_sale_outlined,
-                        label: tillLabel,
                         compact: compact,
                       ),
                       const SizedBox(width: TenantAdminSpacing.sm),
@@ -132,18 +118,6 @@ class TenantAdminAppHeader extends ConsumerWidget {
       return fromFirst;
     }
     return 'No outlet';
-  }
-
-  static String _resolveTillLabel(String? tillName, String? tillCode) {
-    final name = tillName?.trim();
-    if (name != null && name.isNotEmpty) {
-      return name;
-    }
-    final code = tillCode?.trim();
-    if (code != null && code.isNotEmpty) {
-      return code;
-    }
-    return 'No till';
   }
 }
 
@@ -193,69 +167,6 @@ class _BrandMark extends StatelessWidget {
   }
 }
 
-class _TillSessionChip extends StatelessWidget {
-  const _TillSessionChip({
-    required this.isOpen,
-    required this.compact,
-  });
-
-  final bool isOpen;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
-        vertical: TenantAdminSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: TenantAdminColors.posHomeDarkBackground,
-        border: Border.all(
-            color: TenantAdminColors.surface.withValues(alpha: 0.55)),
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.circle,
-            size: 10,
-            color:
-                isOpen ? TenantAdminColors.success : TenantAdminColors.danger,
-          ),
-          const SizedBox(width: TenantAdminSpacing.sm),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                isOpen ? 'OPEN' : 'CLOSED',
-                style: TextStyle(
-                  color: isOpen
-                      ? TenantAdminColors.success
-                      : TenantAdminColors.danger,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                  height: 1.1,
-                ),
-              ),
-              if (!compact)
-                const Text(
-                  'Till Session',
-                  style: TextStyle(
-                    color: TenantAdminColors.surface,
-                    fontSize: 10,
-                    height: 1.1,
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _ContextChip extends StatelessWidget {
   const _ContextChip({
@@ -272,6 +183,7 @@ class _ContextChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       constraints: BoxConstraints(
+        minHeight: compact ? 40 : 44,
         maxWidth: compact ? 140 : 180,
       ),
       padding: EdgeInsets.symmetric(
