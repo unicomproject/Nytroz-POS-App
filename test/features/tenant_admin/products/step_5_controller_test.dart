@@ -1,7 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/presentation/providers/tenant_product_providers.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/step5_barcode_dtos.dart';
 
 void main() {
   group('AddProductWizardController Step 5 Tests', () {

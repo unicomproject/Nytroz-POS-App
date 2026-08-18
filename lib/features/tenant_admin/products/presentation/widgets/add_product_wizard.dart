@@ -187,8 +187,7 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final showSummary =
-                  (widget.resumeProductId != null ||
+              final showSummary = (widget.resumeProductId != null ||
                       widget.resumeLocalDraftId != null) &&
                   state.status.toUpperCase() == 'DRAFT' &&
                   constraints.maxWidth >= 1000;

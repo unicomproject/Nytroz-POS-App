@@ -42,8 +42,7 @@ class CashDrawerTillSummarySection extends StatelessWidget {
                         : width >= TenantAdminBreakpoints.mobile
                             ? 2
                             : 1;
-            final gap =
-                compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md;
+            final gap = compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md;
             final tileWidth = columns == 1
                 ? width
                 : ((width - gap * (columns - 1)) / columns).floorToDouble();

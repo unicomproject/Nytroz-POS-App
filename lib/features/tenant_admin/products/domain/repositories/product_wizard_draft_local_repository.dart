@@ -23,8 +23,7 @@ class ProductWizardDraftLocalRepositoryImpl
       _dataSource.getDraft(localDraftId);
 
   @override
-  Future<List<ProductWizardDraft>> getAllDrafts() =>
-      _dataSource.getAllDrafts();
+  Future<List<ProductWizardDraft>> getAllDrafts() => _dataSource.getAllDrafts();
 
   @override
   Future<void> deleteDraft(String localDraftId) =>

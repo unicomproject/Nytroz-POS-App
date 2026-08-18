@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
-import '../../../presentation/widgets/tenant_admin_row_action.dart';
+
 import '../../domain/entities/product_delete_result.dart';
 import '../dashboard/product_dashboard_providers.dart';
 import '../providers/tenant_product_providers.dart';
@@ -77,7 +77,8 @@ class ProductDeleteAction extends ConsumerWidget {
                         ? const SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: color),
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: color),
                           )
                         : const Icon(
                             Icons.delete_outline,

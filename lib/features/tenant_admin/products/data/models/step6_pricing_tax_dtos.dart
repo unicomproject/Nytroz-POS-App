@@ -29,7 +29,8 @@ class PricingTaxConfigurationDto {
   Map<String, dynamic> toJson() {
     return {
       if (costPrice != null) 'costPrice': costPrice,
-      if (standardSellingPrice != null) 'standardSellingPrice': standardSellingPrice,
+      if (standardSellingPrice != null)
+        'standardSellingPrice': standardSellingPrice,
       if (discountPrice != null) 'discountPrice': discountPrice,
       if (taxId != null) 'taxId': taxId,
       if (taxRate != null) 'taxRate': taxRate,
@@ -55,7 +56,8 @@ class PricingTaxConfigurationResponseDto {
     this.taxExclusive = true,
   });
 
-  factory PricingTaxConfigurationResponseDto.fromJson(Map<String, dynamic> json) {
+  factory PricingTaxConfigurationResponseDto.fromJson(
+      Map<String, dynamic> json) {
     return PricingTaxConfigurationResponseDto(
       costPrice: json['costPrice'] as num?,
       standardSellingPrice: json['standardSellingPrice'] as num?,

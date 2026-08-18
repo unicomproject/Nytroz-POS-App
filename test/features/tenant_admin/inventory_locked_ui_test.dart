@@ -169,7 +169,8 @@ void main() {
       await tester.enterText(_field(tester, 'Invoice number'), 'INV-88');
       await tester.tap(find.text('Continue to Review'));
       await tester.pumpAndSettle();
-      expect(find.text('Review does not change physical stock.'), findsOneWidget);
+      expect(
+          find.text('Review does not change physical stock.'), findsOneWidget);
 
       await tester.tap(find.text('Continue to Confirm'));
       await tester.pumpAndSettle();
@@ -263,7 +264,8 @@ void main() {
       await tester.enterText(_field(tester, 'Quantity'), '2');
       await tester.tap(find.text('Continue to Review'));
       await tester.pumpAndSettle();
-      expect(find.text('Review does not change physical stock.'), findsOneWidget);
+      expect(
+          find.text('Review does not change physical stock.'), findsOneWidget);
       await tester.tap(find.text('Post Adjustment'));
       await tester.pumpAndSettle();
       expect(find.text('Stock Adjustment Posted'), findsOneWidget);
@@ -342,7 +344,8 @@ void main() {
       await tester.tap(find.text('Confirm Allocation'));
       await tester.pumpAndSettle();
       expect(find.text('Allocation Completed Successfully'), findsOneWidget);
-      expect(find.textContaining('Physical on-hand did not change'), findsOneWidget);
+      expect(find.textContaining('Physical on-hand did not change'),
+          findsOneWidget);
     });
 
     testWidgets('hides new allocation without manage permission',

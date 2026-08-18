@@ -407,7 +407,8 @@ void main() {
       // No category — Save & Continue would fail; Save Draft must succeed.
       expect(await controller.saveDraft(), isTrue);
       expect(controller.wizardState.currentStep, 1);
-      final draft = await localStore.getDraft(controller.wizardState.localDraftId!);
+      final draft =
+          await localStore.getDraft(controller.wizardState.localDraftId!);
       expect(draft!.productName, 'Early Draft');
     });
 

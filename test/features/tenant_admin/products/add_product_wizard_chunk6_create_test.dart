@@ -58,7 +58,7 @@ class _CreateTrackingRepo implements TenantProductRepository {
       throw StateError(failMessage ?? 'create failed');
     }
     return ProductCreateResult(
-      id: 'prod-${createFromWizardCallCount}',
+      id: 'prod-$createFromWizardCallCount',
       productName: wizardCreatePayload['productName']?.toString() ?? '',
       sku: 'SKU',
       status: 'ACTIVE',

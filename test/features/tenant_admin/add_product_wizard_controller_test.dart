@@ -226,6 +226,7 @@ class FakeTenantProductRepository implements TenantProductRepository {
     updateProductCallCount++;
     throw UnimplementedError();
   }
+
   @override
   Future<ProductStatusUpdateResult> updateProductStatus(
           String productId, String status) =>

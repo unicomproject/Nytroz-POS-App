@@ -87,7 +87,8 @@ class ChannelSession {
 class ChannelSessionNotifier extends StateNotifier<ChannelSession> {
   ChannelSessionNotifier() : super(const ChannelSession());
 
-  void setStep(int step) => state = state.copyWith(step: step, clearError: true);
+  void setStep(int step) =>
+      state = state.copyWith(step: step, clearError: true);
   void back() {
     if (state.step > 0 && !state.posted) {
       state = state.copyWith(step: state.step - 1, clearError: true);
@@ -139,7 +140,8 @@ class ChannelSessionNotifier extends StateNotifier<ChannelSession> {
         if (state.allocatedTotal + state.safetyBuffer >
             (state.product?.available ?? 0)) {
           state = state.copyWith(
-              error: 'Channel limits plus safety buffer cannot exceed Available.');
+              error:
+                  'Channel limits plus safety buffer cannot exceed Available.');
           return false;
         }
         return true;
@@ -347,8 +349,7 @@ class ChannelAllocationDashboardScreen extends ConsumerWidget {
                                     label: 'Completed', value: '12'),
                                 InventorySummaryRow(
                                     label: 'Pending', value: '3'),
-                                InventorySummaryRow(
-                                    label: 'Draft', value: '2'),
+                                InventorySummaryRow(label: 'Draft', value: '2'),
                                 InventorySummaryRow(
                                     label: 'Total Allocations', value: '20'),
                               ],
@@ -676,9 +677,11 @@ class ChannelAllocationWizardScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: Color(0xFF64748B), fontSize: 11)),
+            Text(label,
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 11)),
             Text(value.toStringAsFixed(0),
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
           ],
         ),
       );
@@ -688,7 +691,8 @@ class ChannelAllocationWizardScreen extends ConsumerWidget {
         child: Row(
           children: [
             Expanded(
-                child: Text(k, style: const TextStyle(color: Color(0xFF64748B)))),
+                child:
+                    Text(k, style: const TextStyle(color: Color(0xFF64748B)))),
             Text(v, style: const TextStyle(fontWeight: FontWeight.w700)),
           ],
         ),
@@ -738,8 +742,7 @@ class _QuantityStepState extends State<_QuantityStep> {
               TextField(
                 controller: _buffer,
                 keyboardType: TextInputType.number,
-                decoration:
-                    inventoryInputDecoration(label: 'Safety buffer'),
+                decoration: inventoryInputDecoration(label: 'Safety buffer'),
               ),
               for (final id in widget.session.selectedChannelIds) ...[
                 const SizedBox(height: 12),

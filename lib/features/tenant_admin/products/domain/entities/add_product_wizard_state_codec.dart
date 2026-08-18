@@ -75,8 +75,7 @@ class AddProductWizardStateCodec {
     return AddProductWizardState(
       currentStep: (json['currentStep'] as num?)?.toInt() ?? 1,
       targetSetupStep: (json['targetSetupStep'] as num?)?.toInt(),
-      lastCompletedSetupStep:
-          (json['lastCompletedSetupStep'] as num?)?.toInt(),
+      lastCompletedSetupStep: (json['lastCompletedSetupStep'] as num?)?.toInt(),
       productId: json['productId']?.toString(),
       localDraftId: json['localDraftId']?.toString(),
       status: json['status']?.toString() ?? 'DRAFT',
@@ -111,8 +110,8 @@ class AddProductWizardStateCodec {
       purchaseUnitsPerOuterPack: json['purchaseUnitsPerOuterPack'] as num?,
       allowDecimalQuantity: json['allowDecimalQuantity'] as bool? ?? false,
       unitConversions: (json['unitConversions'] as List<dynamic>?)
-              ?.map((e) => _unitConversionFromJson(
-                  Map<String, dynamic>.from(e as Map)))
+              ?.map((e) =>
+                  _unitConversionFromJson(Map<String, dynamic>.from(e as Map)))
               .toList() ??
           const [],
       stagedMediaAssets: (json['stagedMediaAssets'] as List<dynamic>?)
@@ -283,8 +282,8 @@ class AddProductWizardStateCodec {
       templateId: json['templateId']?.toString(),
       templateName: json['templateName']?.toString(),
       selectedValues: (json['selectedValues'] as List<dynamic>?)
-              ?.map((e) => _selectedValueFromJson(
-                  Map<String, dynamic>.from(e as Map)))
+              ?.map((e) =>
+                  _selectedValueFromJson(Map<String, dynamic>.from(e as Map)))
               .toList() ??
           const [],
     );
@@ -332,8 +331,8 @@ class AddProductWizardStateCodec {
       exactImageMediaAssetId: json['exactImageMediaAssetId']?.toString(),
       effectiveImageUrl: json['effectiveImageUrl']?.toString(),
       selectedValues: (json['selectedValues'] as List<dynamic>?)
-              ?.map((e) => _selectedValueFromJson(
-                  Map<String, dynamic>.from(e as Map)))
+              ?.map((e) =>
+                  _selectedValueFromJson(Map<String, dynamic>.from(e as Map)))
               .toList() ??
           const [],
       optionCombinationHash: json['optionCombinationHash']?.toString(),
@@ -355,8 +354,8 @@ class AddProductWizardStateCodec {
       productVariantId: json['productVariantId']?.toString(),
       optionCombinationHash: json['optionCombinationHash']?.toString(),
       selectedValues: (json['selectedValues'] as List<dynamic>?)
-              ?.map((e) => _selectedValueFromJson(
-                  Map<String, dynamic>.from(e as Map)))
+              ?.map((e) =>
+                  _selectedValueFromJson(Map<String, dynamic>.from(e as Map)))
               .toList() ??
           const [],
     );
@@ -366,8 +365,7 @@ class AddProductWizardStateCodec {
     return {
       'baseSku': s.baseSku,
       'parentProductBarcode': s.parentProductBarcode,
-      'identifierTargets':
-          s.identifierTargets.map((e) => e.toJson()).toList(),
+      'identifierTargets': s.identifierTargets.map((e) => e.toJson()).toList(),
       'assignments': s.assignments.map((e) => e.toJson()).toList(),
     };
   }

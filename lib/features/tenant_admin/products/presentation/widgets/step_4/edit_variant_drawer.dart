@@ -137,26 +137,29 @@ class _EditVariantDrawerState extends ConsumerState<EditVariantDrawer> {
                   ),
                   const SizedBox(height: 16),
                   const Text('Apply Image To:'),
-                  RadioListTile<String>(
-                    title: const Text('Only this variant'),
-                    value: 'ONLY_THIS',
+                  RadioGroup<String>(
                     groupValue: _applyImageTo,
                     onChanged: (val) {
-                      setState(() {
-                        _applyImageTo = val!;
-                      });
+                      if (val != null) {
+                        setState(() {
+                          _applyImageTo = val;
+                        });
+                      }
                     },
-                  ),
-                  RadioListTile<String>(
-                    title: Text(
-                        'All ${variant.selectedValues.isNotEmpty ? variant.selectedValues.last.valueName : 'group'} variants'),
-                    value: 'ALL_GROUP',
-                    groupValue: _applyImageTo,
-                    onChanged: (val) {
-                      setState(() {
-                        _applyImageTo = val!;
-                      });
-                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        RadioListTile<String>(
+                          title: const Text('Only this variant'),
+                          value: 'ONLY_THIS',
+                        ),
+                        RadioListTile<String>(
+                          title: Text(
+                              'All ${variant.selectedValues.isNotEmpty ? variant.selectedValues.last.valueName : 'group'} variants'),
+                          value: 'ALL_GROUP',
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
                   TextFormField(

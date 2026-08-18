@@ -13,6 +13,7 @@ import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/pos_shell/application/state/pos_home_dashboard_state.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_home_dashboard_provider.dart';
+import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/data/catalog/tenant_admin_menu_catalog.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_context.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_access_checker.dart';
@@ -381,6 +382,9 @@ List<Override> _shellOverrides(TenantAdminAccessChecker access) {
         statusMessage: 'Session Closed',
       ),
     ),
+    tillProvider.overrideWith(
+      (ref) => _PresetTillController(),
+    ),
     tenantAdminAccessCheckerProvider.overrideWith((ref) async => access),
     tenantAdminContextProvider.overrideWith((ref) async => access.context),
     tenantAdminMenuProvider.overrideWith((ref) async {
@@ -391,6 +395,13 @@ List<Override> _shellOverrides(TenantAdminAccessChecker access) {
     }),
     productsSidebarManualExpandedProvider.overrideWith((ref) => true),
   ];
+}
+
+class _PresetTillController extends StateNotifier<TillState> implements TillController {
+  _PresetTillController() : super(const TillState());
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 Future<void> _capture(WidgetTester tester, String name) async {

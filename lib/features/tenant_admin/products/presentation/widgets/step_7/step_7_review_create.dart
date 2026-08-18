@@ -16,8 +16,7 @@ class Step7ReviewCreate extends StatelessWidget {
       return '—';
     }
     try {
-      final unit =
-          state.createOptions!.units.firstWhere((u) => u.id == unitId);
+      final unit = state.createOptions!.units.firstWhere((u) => u.id == unitId);
       return '${unit.name} (${unit.code})';
     } catch (_) {
       return unitId;
@@ -49,7 +48,6 @@ class Step7ReviewCreate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSimple = state.productStructure.toUpperCase() == 'SIMPLE';
     final isVariant = state.productStructure.toUpperCase() == 'VARIANT';
 
     return SingleChildScrollView(
@@ -86,14 +84,35 @@ class Step7ReviewCreate extends StatelessWidget {
                       icon: Icons.info_outline,
                       iconColor: Colors.blue,
                       rows: [
-                        _Row('Product Name', state.productName.isEmpty ? '—' : state.productName),
-                        _Row('SKU', state.step5State.baseSku.isEmpty ? '—' : state.step5State.baseSku),
-                        _Row('Internal Product Code', state.internalCode.isEmpty ? '—' : state.internalCode),
-                        _Row('Barcode', state.step5State.parentProductBarcode.isEmpty ? '—' : state.step5State.parentProductBarcode),
+                        _Row(
+                            'Product Name',
+                            state.productName.isEmpty
+                                ? '—'
+                                : state.productName),
+                        _Row(
+                            'SKU',
+                            state.step5State.baseSku.isEmpty
+                                ? '—'
+                                : state.step5State.baseSku),
+                        _Row(
+                            'Internal Product Code',
+                            state.internalCode.isEmpty
+                                ? '—'
+                                : state.internalCode),
+                        _Row(
+                            'Barcode',
+                            state.step5State.parentProductBarcode.isEmpty
+                                ? '—'
+                                : state.step5State.parentProductBarcode),
                         _Row('Category', _categoryLabel()),
                         _Row('Brand', _brandLabel()),
-                        _Row('Product Type', _formatProductType(state.productStructure)),
-                        _Row('Description', state.shortDescription.isEmpty ? '—' : state.shortDescription),
+                        _Row('Product Type',
+                            _formatProductType(state.productStructure)),
+                        _Row(
+                            'Description',
+                            state.shortDescription.isEmpty
+                                ? '—'
+                                : state.shortDescription),
                       ],
                     ),
                     const SizedBox(height: TenantAdminSpacing.lg),
@@ -104,14 +123,18 @@ class Step7ReviewCreate extends StatelessWidget {
                       rows: [
                         _Row(
                           'Base Unit',
-                          state.unitModel == 'MULTIPLE_UNITS' ? _unitLabel(state.baseUnitId) : _unitLabel(state.productUnitId ?? state.baseUnitId),
+                          state.unitModel == 'MULTIPLE_UNITS'
+                              ? _unitLabel(state.baseUnitId)
+                              : _unitLabel(
+                                  state.productUnitId ?? state.baseUnitId),
                         ),
                         if (state.unitModel == 'MULTIPLE_UNITS') ...[
-                           _Row('Selling Unit', _unitLabel(state.sellingUnitId)),
-                           _Row('Purchase Unit', _unitLabel(state.purchaseUnitId)),
+                          _Row('Selling Unit', _unitLabel(state.sellingUnitId)),
+                          _Row('Purchase Unit',
+                              _unitLabel(state.purchaseUnitId)),
                         ] else ...[
-                           const _Row('Pack Units', 'No additional packs'),
-                           const _Row('Pack Conversion', '—'),
+                          const _Row('Pack Units', 'No additional packs'),
+                          const _Row('Pack Conversion', '—'),
                         ],
                       ],
                     ),
@@ -121,9 +144,21 @@ class Step7ReviewCreate extends StatelessWidget {
                       icon: Icons.barcode_reader,
                       iconColor: Colors.blue,
                       rows: [
-                        _Row('SKU', state.step5State.baseSku.isEmpty ? '—' : state.step5State.baseSku),
-                        _Row('Internal Code', state.internalCode.isEmpty ? '—' : state.internalCode),
-                        _Row('Barcode', state.step5State.parentProductBarcode.isEmpty ? '—' : state.step5State.parentProductBarcode),
+                        _Row(
+                            'SKU',
+                            state.step5State.baseSku.isEmpty
+                                ? '—'
+                                : state.step5State.baseSku),
+                        _Row(
+                            'Internal Code',
+                            state.internalCode.isEmpty
+                                ? '—'
+                                : state.internalCode),
+                        _Row(
+                            'Barcode',
+                            state.step5State.parentProductBarcode.isEmpty
+                                ? '—'
+                                : state.step5State.parentProductBarcode),
                       ],
                     ),
                     const SizedBox(height: TenantAdminSpacing.lg),
@@ -132,9 +167,15 @@ class Step7ReviewCreate extends StatelessWidget {
                       icon: Icons.language,
                       iconColor: Colors.blue,
                       rows: [
-                        _Row('In-Store POS', state.posSellable ? 'Visible' : 'Hidden', isBadge: true, isPositiveBadge: state.posSellable),
-                        _Row('Online Store', state.allowOnlineSale ? 'Visible' : 'Hidden', isBadge: true, isPositiveBadge: state.allowOnlineSale),
-                        _Row('Available for Click & Collect', 'Yes', isBadge: true, isPositiveBadge: true),
+                        _Row('In-Store POS',
+                            state.posSellable ? 'Visible' : 'Hidden',
+                            isBadge: true, isPositiveBadge: state.posSellable),
+                        _Row('Online Store',
+                            state.allowOnlineSale ? 'Visible' : 'Hidden',
+                            isBadge: true,
+                            isPositiveBadge: state.allowOnlineSale),
+                        _Row('Available for Click & Collect', 'Yes',
+                            isBadge: true, isPositiveBadge: true),
                       ],
                     ),
                   ],
@@ -150,25 +191,43 @@ class Step7ReviewCreate extends StatelessWidget {
                       icon: Icons.local_offer_outlined,
                       iconColor: Colors.green,
                       rows: [
-                        _Row('Product Type', _formatProductType(state.productStructure)),
-                        _Row('Track Inventory', state.trackInventory ? 'Yes' : 'No', isBadge: true, isPositiveBadge: state.trackInventory),
-                        _Row('POS Sellable', state.posSellable ? 'Yes' : 'No', isBadge: true, isPositiveBadge: state.posSellable),
-                        _Row('Allow Online Sale', state.allowOnlineSale ? 'Yes' : 'No', isBadge: true, isPositiveBadge: state.allowOnlineSale),
-                        _Row('Active Status', state.status == 'ACTIVE' || state.status.isEmpty ? 'Active' : state.status, isBadge: true, isPositiveBadge: true),
+                        _Row('Product Type',
+                            _formatProductType(state.productStructure)),
+                        _Row('Track Inventory',
+                            state.trackInventory ? 'Yes' : 'No',
+                            isBadge: true,
+                            isPositiveBadge: state.trackInventory),
+                        _Row('POS Sellable', state.posSellable ? 'Yes' : 'No',
+                            isBadge: true, isPositiveBadge: state.posSellable),
+                        _Row('Allow Online Sale',
+                            state.allowOnlineSale ? 'Yes' : 'No',
+                            isBadge: true,
+                            isPositiveBadge: state.allowOnlineSale),
+                        _Row(
+                            'Active Status',
+                            state.status == 'ACTIVE' || state.status.isEmpty
+                                ? 'Active'
+                                : state.status,
+                            isBadge: true,
+                            isPositiveBadge: true),
                       ],
                     ),
                     const SizedBox(height: TenantAdminSpacing.lg),
                     _ReviewSectionCard(
-                      title: isVariant ? 'Product Configuration' : 'Product Configuration',
+                      title: isVariant
+                          ? 'Product Configuration'
+                          : 'Product Configuration',
                       icon: Icons.grid_view,
                       iconColor: Colors.purple,
                       rows: [
-                         if (isVariant) ...[
-                            _Row('Attributes', '${state.step4State.attributeRows.where((a) => a.isValid).length}'),
-                            _Row('Variants Created', '${state.step4State.generatedVariants.where((v) => v.isIncluded).length}'),
-                         ] else ...[
-                            const _Row('Configuration Type', 'Simple'),
-                         ]
+                        if (isVariant) ...[
+                          _Row('Attributes',
+                              '${state.step4State.attributeRows.where((a) => a.isValid).length}'),
+                          _Row('Variants Created',
+                              '${state.step4State.generatedVariants.where((v) => v.isIncluded).length}'),
+                        ] else ...[
+                          const _Row('Configuration Type', 'Simple'),
+                        ]
                       ],
                     ),
                     const SizedBox(height: TenantAdminSpacing.lg),
@@ -177,10 +236,22 @@ class Step7ReviewCreate extends StatelessWidget {
                       icon: Icons.attach_money,
                       iconColor: Colors.blue,
                       rows: [
-                        _Row('Selling Price (LKR)', state.standardSellingPrice != null ? _formatCurrency(state.standardSellingPrice!.toDouble()) : '—'),
-                        _Row('Cost Price (LKR)', state.costPrice != null ? _formatCurrency(state.costPrice!.toDouble()) : '—'),
-                        _Row('Tax Class', state.taxName ?? state.taxId ?? 'Standard'),
-                        _Row('Tax Included', !state.taxExclusive ? 'Yes' : 'No', isBadge: true, isPositiveBadge: !state.taxExclusive),
+                        _Row(
+                            'Selling Price (LKR)',
+                            state.standardSellingPrice != null
+                                ? _formatCurrency(
+                                    state.standardSellingPrice!.toDouble())
+                                : '—'),
+                        _Row(
+                            'Cost Price (LKR)',
+                            state.costPrice != null
+                                ? _formatCurrency(state.costPrice!.toDouble())
+                                : '—'),
+                        _Row('Tax Class',
+                            state.taxName ?? state.taxId ?? 'Standard'),
+                        _Row('Tax Included', !state.taxExclusive ? 'Yes' : 'No',
+                            isBadge: true,
+                            isPositiveBadge: !state.taxExclusive),
                       ],
                     ),
                     const SizedBox(height: TenantAdminSpacing.lg),
@@ -193,30 +264,43 @@ class Step7ReviewCreate extends StatelessWidget {
                           ? const Center(
                               child: Padding(
                                 padding: EdgeInsets.all(TenantAdminSpacing.md),
-                                child: Text('No images added.', style: TextStyle(color: TenantAdminColors.mutedText)),
+                                child: Text('No images added.',
+                                    style: TextStyle(
+                                        color: TenantAdminColors.mutedText)),
                               ),
                             )
                           : Wrap(
                               spacing: TenantAdminSpacing.sm,
                               runSpacing: TenantAdminSpacing.sm,
                               children: [
-                                ...state.productImages.take(5).map((img) => _buildImageThumbnail(img)),
+                                ...state.productImages
+                                    .take(5)
+                                    .map((img) => _buildImageThumbnail(img)),
                                 if (state.productImages.length > 5)
                                   Container(
                                     width: 64,
                                     height: 64,
                                     decoration: BoxDecoration(
                                       color: TenantAdminColors.secondary,
-                                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                                      border: Border.all(color: TenantAdminColors.border),
+                                      borderRadius: BorderRadius.circular(
+                                          TenantAdminRadius.md),
+                                      border: Border.all(
+                                          color: TenantAdminColors.border),
                                     ),
                                     alignment: Alignment.center,
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        const Icon(Icons.cloud_upload_outlined, size: 20, color: Colors.blue),
+                                        const Icon(Icons.cloud_upload_outlined,
+                                            size: 20, color: Colors.blue),
                                         const SizedBox(height: 4),
-                                        Text('+${state.productImages.length - 5} More', style: const TextStyle(fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold)),
+                                        Text(
+                                            '+${state.productImages.length - 5} More',
+                                            style: const TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.blue,
+                                                fontWeight: FontWeight.bold)),
                                       ],
                                     ),
                                   ),
@@ -247,7 +331,8 @@ class Step7ReviewCreate extends StatelessWidget {
   }
 
   String _formatCurrency(double amount) {
-    return amount.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},');
+    return amount.toStringAsFixed(2).replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},');
   }
 
   Widget _buildImageThumbnail(dynamic img) {
@@ -264,9 +349,12 @@ class Step7ReviewCreate extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            child: img.bytes != null 
-              ? Image.memory(img.bytes, fit: BoxFit.cover)
-              : (img.imageUrl.isNotEmpty ? Image.network(img.imageUrl, fit: BoxFit.cover) : const Icon(Icons.image, color: TenantAdminColors.mutedText)),
+            child: img.bytes != null
+                ? Image.memory(img.bytes, fit: BoxFit.cover)
+                : (img.imageUrl.isNotEmpty
+                    ? Image.network(img.imageUrl, fit: BoxFit.cover)
+                    : const Icon(Icons.image,
+                        color: TenantAdminColors.mutedText)),
           ),
           if (img.isPrimary)
             Positioned(
@@ -276,10 +364,17 @@ class Step7ReviewCreate extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.green,
-                  borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(TenantAdminRadius.md - 1), bottomRight: Radius.circular(TenantAdminRadius.md - 1)),
+                  borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(TenantAdminRadius.md - 1),
+                      bottomRight: Radius.circular(TenantAdminRadius.md - 1)),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 2),
-                child: const Text('Primary', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                child: const Text('Primary',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold)),
               ),
             ),
         ],
@@ -331,11 +426,13 @@ class _ReviewSectionCard extends StatelessWidget {
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: () {}, // For visual completeness matching the design
+                  onPressed:
+                      () {}, // For visual completeness matching the design
                   icon: const Icon(Icons.edit_outlined, size: 16),
                   label: const Text('Edit'),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     foregroundColor: Colors.blue,
@@ -398,7 +495,9 @@ class _ReviewSectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: isPositive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
+        color: isPositive
+            ? Colors.green.withValues(alpha: 0.1)
+            : Colors.red.withValues(alpha: 0.1),
         border: Border.all(color: isPositive ? Colors.green : Colors.red),
         borderRadius: BorderRadius.circular(4),
       ),
@@ -415,7 +514,8 @@ class _ReviewSectionCard extends StatelessWidget {
 }
 
 class _Row {
-  const _Row(this.label, this.value, {this.isBadge = false, this.isPositiveBadge = true});
+  const _Row(this.label, this.value,
+      {this.isBadge = false, this.isPositiveBadge = true});
   final String label;
   final String value;
   final bool isBadge;

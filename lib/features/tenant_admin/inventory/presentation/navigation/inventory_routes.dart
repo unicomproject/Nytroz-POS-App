@@ -23,7 +23,8 @@ class InventoryRoutes {
 
   static const inventoryDashboard = '$inventoryRoot/dashboard';
   static const inventoryCurrentStock = '$inventoryRoot/current';
-  static const inventoryCurrentStockDetail = '$inventoryRoot/current/:variantId';
+  static const inventoryCurrentStockDetail =
+      '$inventoryRoot/current/:variantId';
   static const inventoryOpeningStock = '$inventoryRoot/opening';
   static const inventoryReceiving = '$inventoryRoot/receiving';
   static const inventoryReceivingNew = '$inventoryRoot/receiving/new';

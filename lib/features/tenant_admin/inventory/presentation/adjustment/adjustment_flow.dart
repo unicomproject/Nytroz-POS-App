@@ -90,7 +90,8 @@ class AdjustmentSession {
 class AdjustmentSessionNotifier extends StateNotifier<AdjustmentSession> {
   AdjustmentSessionNotifier() : super(const AdjustmentSession());
 
-  void setStep(int step) => state = state.copyWith(step: step, clearError: true);
+  void setStep(int step) =>
+      state = state.copyWith(step: step, clearError: true);
   void back() {
     if (state.step > 0 && !state.posted) {
       state = state.copyWith(step: state.step - 1, clearError: true);
@@ -311,7 +312,12 @@ class AdjustmentDashboardScreen extends ConsumerWidget {
 class AdjustmentWizardScreen extends ConsumerWidget {
   const AdjustmentWizardScreen({super.key});
 
-  static const steps = ['Select Product', 'Enter Adjustment', 'Review', 'Success'];
+  static const steps = [
+    'Select Product',
+    'Enter Adjustment',
+    'Review',
+    'Success'
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -449,7 +455,8 @@ class AdjustmentWizardScreen extends ConsumerWidget {
         child: Row(
           children: [
             Expanded(
-                child: Text(k, style: const TextStyle(color: Color(0xFF64748B)))),
+                child:
+                    Text(k, style: const TextStyle(color: Color(0xFF64748B)))),
             Text(v, style: const TextStyle(fontWeight: FontWeight.w700)),
           ],
         ),
@@ -491,7 +498,8 @@ class _EnterStepState extends State<_EnterStep> {
         Expanded(
           child: ListView(
             children: [
-              Text('On Hand ${(widget.session.product?.onHand ?? 0).toStringAsFixed(0)} · Reserved ${(widget.session.product?.reserved ?? 0).toStringAsFixed(0)} · Available ${(widget.session.product?.available ?? 0).toStringAsFixed(0)}'),
+              Text(
+                  'On Hand ${(widget.session.product?.onHand ?? 0).toStringAsFixed(0)} · Reserved ${(widget.session.product?.reserved ?? 0).toStringAsFixed(0)} · Available ${(widget.session.product?.available ?? 0).toStringAsFixed(0)}'),
               const SizedBox(height: 12),
               SegmentedButton<String>(
                 segments: const [
@@ -523,15 +531,15 @@ class _EnterStepState extends State<_EnterStep> {
               const SizedBox(height: 12),
               TextField(
                 controller: _notes,
-                decoration:
-                    inventoryInputDecoration(label: 'Notes (optional)'),
+                decoration: inventoryInputDecoration(label: 'Notes (optional)'),
               ),
             ],
           ),
         ),
         Row(
           children: [
-            InventoryGhostButton(label: 'Back', onPressed: widget.notifier.back),
+            InventoryGhostButton(
+                label: 'Back', onPressed: widget.notifier.back),
             const Spacer(),
             InventoryPrimaryButton(
               label: 'Continue to Review',
