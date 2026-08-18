@@ -96,25 +96,27 @@ class Step7ReviewCreate extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: TenantAdminSpacing.lg),
-                    _ReviewSectionCard(
-                      title: 'Units & Pack Conversion',
-                      icon: Icons.balance,
-                      iconColor: Colors.blue,
-                      rows: [
-                        _Row(
-                          'Base Unit',
-                          state.unitModel == 'MULTIPLE_UNITS' ? _unitLabel(state.baseUnitId) : _unitLabel(state.productUnitId ?? state.baseUnitId),
-                        ),
-                        if (state.unitModel == 'MULTIPLE_UNITS') ...[
-                           _Row('Selling Unit', _unitLabel(state.sellingUnitId)),
-                           _Row('Purchase Unit', _unitLabel(state.purchaseUnitId)),
-                        ] else ...[
-                           const _Row('Pack Units', 'No additional packs'),
-                           const _Row('Pack Conversion', '—'),
+                    if (!isVariant) ...[
+                      _ReviewSectionCard(
+                        title: 'Units & Pack Conversion',
+                        icon: Icons.balance,
+                        iconColor: Colors.blue,
+                        rows: [
+                          _Row(
+                            'Base Unit',
+                            state.unitModel == 'MULTIPLE_UNITS' ? _unitLabel(state.baseUnitId) : _unitLabel(state.productUnitId ?? state.baseUnitId),
+                          ),
+                          if (state.unitModel == 'MULTIPLE_UNITS') ...[
+                             _Row('Selling Unit', _unitLabel(state.sellingUnitId)),
+                             _Row('Purchase Unit', _unitLabel(state.purchaseUnitId)),
+                          ] else ...[
+                             const _Row('Pack Units', 'No additional packs'),
+                             const _Row('Pack Conversion', '—'),
+                          ],
                         ],
-                      ],
-                    ),
-                    const SizedBox(height: TenantAdminSpacing.lg),
+                      ),
+                      const SizedBox(height: TenantAdminSpacing.lg),
+                    ],
                     _ReviewSectionCard(
                       title: 'Barcode & SKU',
                       icon: Icons.barcode_reader,

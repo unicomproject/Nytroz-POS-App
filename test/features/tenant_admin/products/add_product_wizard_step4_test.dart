@@ -23,20 +23,18 @@ void main() {
             child: SizedBox(
               width: 1200,
               height: 1000,
-              child: SingleChildScrollView(
-                child: AddProductWizard(
-                  options: const TenantProductCreateOptions(
-                    categories: [],
-                    subCategories: [],
-                    brands: [],
-                    units: [],
-                    taxes: [],
-                    outlets: [],
-                    variantOptionTemplates: [],
-                  ),
-                  dropdownsEnabled: true,
-                  canCreate: true,
+              child: AddProductWizard(
+                options: const TenantProductCreateOptions(
+                  categories: [],
+                  subCategories: [],
+                  brands: [],
+                  units: [],
+                  taxes: [],
+                  outlets: [],
+                  variantOptionTemplates: [],
                 ),
+                dropdownsEnabled: true,
+                canCreate: true,
               ),
             ),
           ),
@@ -46,6 +44,18 @@ void main() {
   }
 
   group('AddProductWizard Step 4 UI Matrix Tests', () {
+    setUp(() {
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      binding.window.physicalSizeTestValue = const Size(1920, 1080);
+      binding.window.devicePixelRatioTestValue = 1.0;
+    });
+
+    tearDown(() {
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      binding.window.clearPhysicalSizeTestValue();
+      binding.window.clearDevicePixelRatioTestValue();
+    });
+
     testWidgets('Test 1: Given Product Structure = VARIANT, When Step 4 is opened, Then Variant Configuration is visible', (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
         currentStep: 4,

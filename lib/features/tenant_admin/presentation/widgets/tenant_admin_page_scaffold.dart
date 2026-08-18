@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../theme/tenant_admin_theme.dart';
@@ -75,7 +76,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
             padding: framePadding,
             child: Container(
               width: double.infinity,
-              constraints: fillHeight
+              constraints: fillHeight && constraints.maxHeight.isFinite && constraints.maxHeight < 10000
                   ? BoxConstraints(
                       minHeight: (constraints.maxHeight - verticalFrameInset)
                           .clamp(0.0, double.infinity),
@@ -91,7 +92,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
                   ? SingleChildScrollView(
                       padding: basePadding,
                       child: ConstrainedBox(
-                        constraints: fillHeight
+                        constraints: fillHeight && constraints.maxHeight.isFinite && constraints.maxHeight < 10000
                             ? BoxConstraints(
                                 minHeight: (constraints.maxHeight -
                                         verticalFrameInset -

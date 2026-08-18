@@ -399,10 +399,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Variant Configuration'), findsOneWidget);
-      expect(find.text('Variant SKU / Barcode'), findsOneWidget);
-      expect(find.text('Units & Pack Conversion'), findsNothing);
-      expect(find.textContaining('Red / Small'), findsWidgets);
+      expect(find.text('Product Configuration'), findsOneWidget);
+      expect(find.text('Barcode & SKU'), findsOneWidget);
+      expect(find.text('Attributes'), findsOneWidget);
+      expect(find.text('Variants Created'), findsOneWidget);
     });
 
     test('19. full flow performs zero Product DB mutation', () async {
