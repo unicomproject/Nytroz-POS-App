@@ -6,6 +6,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dio/dio.dart';
+import 'package:nytroz_pos/core/network/dio_provider.dart';
 import 'package:nytroz_pos/core/access/tenant_admin_access_codes.dart';
 import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
 import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.dart';
@@ -59,6 +61,7 @@ void main() {
           final previousOnError = FlutterError.onError;
           FlutterError.onError = (details) {
             final message = details.exceptionAsString();
+            print("FLUTTER ERROR: $message");
             if (message.contains('overflowed')) {
               overflows.add(message.split('\n').first);
             } else {
@@ -358,7 +361,9 @@ class _PresetAuthSessionNotifier extends AuthSessionNotifier {
 }
 
 List<Override> _shellOverrides(TenantAdminAccessChecker access) {
+  final dummyDio = Dio();
   return [
+    appDioProvider.overrideWithValue(dummyDio),
     authSessionProvider.overrideWith(
       (ref) => _PresetAuthSessionNotifier(
         const AuthSession(
@@ -465,3 +470,4 @@ TenantAdminAccessChecker _checker() {
     ),
   );
 }
+
