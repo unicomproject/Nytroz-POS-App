@@ -55,6 +55,9 @@ void main() {
       );
 
       expect(find.byType(TillMonitoringList), findsOneWidget);
+      await tester.tap(find.text('Front Till 01').first);
+      await tester.pumpAndSettle();
+      
       expect(find.byType(TillMonitoringSidePanel), findsOneWidget);
       expect(find.text('Cashier'), findsOneWidget);
       expect(find.text('Hardware Connections'), findsOneWidget);
@@ -80,6 +83,9 @@ void main() {
 
     testWidgets('selected till row uses orange visual state', (tester) async {
       await _pumpTillScreen(tester, size: const Size(1280, 800));
+
+      await tester.tap(find.text('Front Till 01').first);
+      await tester.pumpAndSettle();
 
       final hasOrangeSelectedBorder = tester
           .widgetList<AnimatedContainer>(find.byType(AnimatedContainer))

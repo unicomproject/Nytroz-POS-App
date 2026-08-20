@@ -257,14 +257,18 @@ class _NeedsAttentionSection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                InkWell(
-                  onTap: () {},
-                  child: Text(
-                    actionText,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: actionColor,
+                Flexible(
+                  child: InkWell(
+                    onTap: () {},
+                    child: Text(
+                      actionText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: actionColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
@@ -510,12 +514,16 @@ class _StoreExceptionsSection extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Text(
-                            statText,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: statColor,
+                          Flexible(
+                            child: Text(
+                              statText,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: statColor,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -524,14 +532,18 @@ class _StoreExceptionsSection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                InkWell(
-                  onTap: () {},
-                  child: Text(
-                    actionText,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: actionColor,
+                Flexible(
+                  child: InkWell(
+                    onTap: () {},
+                    child: Text(
+                      actionText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: actionColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),

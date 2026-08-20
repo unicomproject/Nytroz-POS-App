@@ -287,6 +287,7 @@ class AddTillHardwareSection extends StatelessWidget {
             DropdownButtonFormField<String>(
               key: ValueKey('${label}_$outletId'),
               value: safeValue,
+              isExpanded: true,
               decoration: InputDecoration(
                 hintText: hintText ?? 'Select $label',
                 hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14, fontWeight: FontWeight.w400),

@@ -154,6 +154,7 @@ class _OutletFormState extends ConsumerState<OutletForm> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(outletImageUploadControllerProvider);
     return Form(
       key: _formKey,
       autovalidateMode: _submitted
@@ -539,14 +540,17 @@ class _OutletDetailsStep extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: TenantAdminColors.bodyText,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: TenantAdminColors.bodyText,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Switch.adaptive(
                 value: value,
                 onChanged: onChanged,

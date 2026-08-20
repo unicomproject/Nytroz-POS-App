@@ -136,7 +136,6 @@ class _OutletCard extends StatelessWidget {
                 border: Border.all(
                   color: isSelected
                       ? TenantAdminColors.posHomeAccentOrange
-                          .withValues(alpha: 0.5)
                       : TenantAdminColors.border.withValues(alpha: 0.6),
                   width: isSelected ? 1.5 : 1,
                 ),
@@ -548,12 +547,16 @@ class _StatusBadge extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: TenantAdminColors.mutedText,
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: TenantAdminColors.mutedText,
+            ),
           ),
         ),
       ],

@@ -307,10 +307,12 @@ class _SectionHeading extends StatelessWidget {
         SizedBox(
           width: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
         ),
-        Text(
-          label,
-          style: TenantAdminTextStyles.sectionTitle(context).copyWith(
-            fontSize: compact ? 14 : null,
+        Expanded(
+          child: Text(
+            label,
+            style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+              fontSize: compact ? 14 : null,
+            ),
           ),
         ),
       ],

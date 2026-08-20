@@ -217,7 +217,7 @@ class TillMonitoringRow extends ConsumerWidget {
 
     if (!hasCashier) {
       return const Text(
-        '—',
+        'Unassigned',
         style: TextStyle(
           color: TenantAdminColors.mutedText,
           fontWeight: FontWeight.w500,
@@ -467,12 +467,16 @@ class _ActionTextBtn extends StatelessWidget {
           children: [
             Icon(icon, size: 18, color: color),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: color,
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
               ),
             ),
           ],
