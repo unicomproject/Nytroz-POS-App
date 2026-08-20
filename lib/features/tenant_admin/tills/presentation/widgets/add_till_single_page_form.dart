@@ -5,7 +5,6 @@ import 'package:dio/dio.dart';
 import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../domain/entities/till_create_options.dart';
 import '../../domain/entities/till.dart';
 import '../providers/till_providers.dart';

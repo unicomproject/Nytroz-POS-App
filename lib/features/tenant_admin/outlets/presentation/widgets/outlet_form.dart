@@ -713,54 +713,7 @@ class _OutletDetailsStep extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoItem({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            color: TenantAdminColors.posHomeOrangeEnd,
-            size: 24,
-          ),
-        ),
-        const SizedBox(width: TenantAdminSpacing.md),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: TenantAdminColors.bodyText,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                description,
-                style: const TextStyle(
-                  color: TenantAdminColors.mutedText,
-                  fontSize: 12,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+
 
   Widget _outletTypeDropdown() {
     final options = outletTypes.isEmpty && outletType.trim().isNotEmpty
@@ -1236,7 +1189,7 @@ class _OutletReviewStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final imageState = ref.watch(outletImageUploadControllerProvider);
+
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1319,7 +1272,7 @@ class _OutletReviewStep extends ConsumerWidget {
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
+                      children: const [
                         const Icon(
                           Icons.edit_outlined,
                           size: 14,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
-import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../domain/entities/outlet.dart';
 import '../providers/selected_outlet_provider.dart';
 
