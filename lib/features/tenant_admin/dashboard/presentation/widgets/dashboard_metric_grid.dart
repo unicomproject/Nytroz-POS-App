@@ -29,7 +29,7 @@ class DashboardMetricGrid extends StatelessWidget {
             ? constraints.maxWidth >= 520
                 ? 2
                 : 1
-            : constraints.maxWidth >= 1080
+            : constraints.maxWidth >= 900
                 ? 4
                 : constraints.maxWidth >= 520
                     ? 2
@@ -49,8 +49,10 @@ class DashboardMetricGrid extends StatelessWidget {
             mainAxisExtent: cardHeight ?? (compact ? 142 : 150),
           ),
           itemBuilder: (context, index) {
-            final metric = metrics[index];
-            return _NewDashboardMetricCard(metric: metric);
+            return _NewDashboardMetricCard(
+              metric: metrics[index],
+              compact: compact,
+            );
           },
         );
       },
@@ -59,9 +61,13 @@ class DashboardMetricGrid extends StatelessWidget {
 }
 
 class _NewDashboardMetricCard extends StatelessWidget {
-  const _NewDashboardMetricCard({required this.metric});
+  const _NewDashboardMetricCard({
+    required this.metric,
+    this.compact = false,
+  });
 
   final TenantDashboardMetric metric;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +84,7 @@ class _NewDashboardMetricCard extends StatelessWidget {
         : (isUp ? TenantAdminColors.success : TenantAdminColors.danger);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(compact ? 12 : 14),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -88,101 +94,107 @@ class _NewDashboardMetricCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: compact ? 36 : 42,
+                  height: compact ? 36 : 42,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: Colors.white, size: compact ? 18 : 22),
                 ),
-                child: Icon(icon, color: Colors.white, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      metric.title.toUpperCase(),
-                      style: const TextStyle(
-                        color: TenantAdminColors.navy,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      metric.value,
-                      style: const TextStyle(
-                        color: TenantAdminColors.navy,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    if (metric.trend != null)
-                      Row(
-                        children: [
-                          Icon(isUp ? Icons.arrow_upward : Icons.arrow_downward,
-                              color: trendColor, size: 14),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              metric.trend!,
-                              style: TextStyle(
-                                color: trendColor,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                SizedBox(width: compact ? 10 : 14),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          metric.title.toUpperCase(),
+                          style: const TextStyle(
+                            color: TenantAdminColors.navy,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                           ),
-                        ],
-                      )
-                    else if (metric.status != null || metric.subtitle != null)
-                      Row(
-                        children: [
-                          if (metric.status != null) ...[
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(
-                                color: TenantAdminColors.success,
-                                shape: BoxShape.circle,
-                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            metric.value,
+                            style: TextStyle(
+                              color: TenantAdminColors.navy,
+                              fontSize: compact ? 18 : 22,
+                              fontWeight: FontWeight.w800,
                             ),
-                            const SizedBox(width: 6),
-                          ],
-                          Expanded(
-                            child: Text(
-                              (metric.status ?? metric.subtitle)!,
-                              style: const TextStyle(
-                                color: TenantAdminColors.success,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            maxLines: 1,
                           ),
-                        ],
-                      ),
-                  ],
+                        ),
+                        const SizedBox(height: 4),
+                        if (metric.trend != null)
+                          Row(
+                            children: [
+                              Icon(isUp ? Icons.arrow_upward : Icons.arrow_downward,
+                                  color: trendColor, size: 14),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  metric.trend!,
+                                  style: TextStyle(
+                                    color: trendColor,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          )
+                        else if (metric.status != null || metric.subtitle != null)
+                          Row(
+                            children: [
+                              if (metric.status != null) ...[
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: TenantAdminColors.success,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  (metric.status ?? metric.subtitle)!,
+                                  style: const TextStyle(
+                                    color: TenantAdminColors.success,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const Spacer(),
           const Divider(height: 1),
-          const SizedBox(height: 10),
+          SizedBox(height: compact ? 8 : 10),
           Text(
             'View ${metric.title.replaceAll("TODAY'S ", "")} >',
             style: const TextStyle(

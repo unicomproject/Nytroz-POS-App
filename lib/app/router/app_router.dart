@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -16,7 +17,17 @@ import '../../shared/pos_session/pos_session_boot_screen.dart';
 import '../../shared/pos_session/pos_session_bootstrap_provider.dart';
 
 class RouterRefreshNotifier extends ChangeNotifier {
-  void refresh() => notifyListeners();
+  bool _isScheduled = false;
+
+  void refresh() {
+    if (!_isScheduled) {
+      _isScheduled = true;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        _isScheduled = false;
+        notifyListeners();
+      });
+    }
+  }
 }
 
 final routerRefreshProvider = Provider<RouterRefreshNotifier>((ref) {

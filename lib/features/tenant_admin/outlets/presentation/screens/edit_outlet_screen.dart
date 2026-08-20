@@ -139,6 +139,8 @@ OutletFormData _initialForm(OutletDetails outlet) {
     status: outlet.status,
     mainPhoneNumber: outlet.phone ?? outlet.managerPhone ?? '',
     emailAddress: outlet.email ?? '',
+    imageUrl: outlet.imageUrl,
+    imageMediaAssetId: outlet.imageMediaAssetId,
     isDefaultOutlet: outlet.isDefaultOutlet,
     addressLine1: outlet.addressLine1 ?? outlet.address,
     addressLine2: outlet.addressLine2,

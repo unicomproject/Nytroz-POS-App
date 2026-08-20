@@ -14,8 +14,8 @@ class OperationalRisksCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final padding = compact ? 18.0 : 22.0;
-    final dividerHeight = compact ? 16.0 : 22.0;
+    final padding = compact ? 12.0 : 22.0;
+    final dividerHeight = compact ? 6.0 : 22.0;
 
     final riskItems = Column(
       children: [
@@ -119,7 +119,7 @@ class OperationalRisksCard extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: compact ? 10 : 14),
+              SizedBox(height: compact ? 8 : 14),
               if (canScrollInternally)
                 Expanded(
                   child: SingleChildScrollView(child: riskItems),
@@ -183,7 +183,7 @@ class OperationalRisksCard extends StatelessWidget {
             side: BorderSide(color: buttonColor.withValues(alpha: 0.3)),
             padding: EdgeInsets.symmetric(
               horizontal: compact ? 8 : 12,
-              vertical: compact ? 7 : 8,
+              vertical: compact ? 4 : 8,
             ),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -200,7 +200,7 @@ class OperationalRisksCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               iconBadge,
-              SizedBox(width: compact ? 12 : 14),
+              SizedBox(width: compact ? 8 : 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,7 +213,7 @@ class OperationalRisksCard extends StatelessWidget {
                         color: TenantAdminColors.navy,
                       ),
                     ),
-                    SizedBox(height: compact ? 3 : 5),
+                    SizedBox(height: compact ? 2 : 5),
                     severityBadge,
                     SizedBox(height: compact ? 6 : 8),
                     Text(
@@ -224,7 +224,7 @@ class OperationalRisksCard extends StatelessWidget {
                         color: TenantAdminColors.mutedText,
                       ),
                     ),
-                    SizedBox(height: compact ? 8 : 10),
+                    SizedBox(height: compact ? 4 : 10),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: actionButton,
@@ -240,7 +240,7 @@ class OperationalRisksCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             iconBadge,
-            SizedBox(width: compact ? 12 : 14),
+            SizedBox(width: compact ? 8 : 14),
             Expanded(
               flex: 5,
               child: Column(
@@ -259,7 +259,7 @@ class OperationalRisksCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
             Expanded(
               flex: 3,
               child: Column(
@@ -284,8 +284,8 @@ class OperationalRisksCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            SizedBox(width: compact ? 96 : 108, child: actionButton),
+            const SizedBox(width: 4),
+            SizedBox(width: compact ? 92 : 108, child: actionButton),
           ],
         );
       },

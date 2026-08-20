@@ -24,7 +24,7 @@ class TenantAdminResponsiveContentArea extends StatelessWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final sidePanel = optionalSidePanel;
-        final pagePadding = padding ?? EdgeInsets.zero;
+        final pagePadding = padding ?? TenantAdminInsets.pageForWidth(width);
         final showInlinePanel =
             sidePanel != null && width >= TenantAdminBreakpoints.tablet;
         final sidePanelMaxWidth =
@@ -47,7 +47,7 @@ class TenantAdminResponsiveContentArea extends StatelessWidget {
         );
 
         return ColoredBox(
-          color: TenantAdminColors.background,
+          color: TenantAdminColors.subtleBackground,
           child: Padding(
             padding: pagePadding,
             child: showInlinePanel

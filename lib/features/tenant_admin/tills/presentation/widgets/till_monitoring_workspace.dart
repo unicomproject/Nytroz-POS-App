@@ -79,20 +79,22 @@ class _TillMonitoringWorkspaceState
       );
     }
 
-    final desktopWorkspace = Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(flex: 65, child: buildLeftPane(boundedHeight: true)),
-        const SizedBox(width: TenantAdminSpacing.xl),
-        Expanded(
-          flex: 35,
-          child: TillMonitoringSidePanel(
-            tillId: selectedTillId,
-            listItem: selectedItem,
-          ),
-        ),
-      ],
-    );
+    final desktopWorkspace = selectedTillId != null
+        ? Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(flex: 65, child: buildLeftPane(boundedHeight: true)),
+              const SizedBox(width: TenantAdminSpacing.xl),
+              Expanded(
+                flex: 35,
+                child: TillMonitoringSidePanel(
+                  tillId: selectedTillId,
+                  listItem: selectedItem,
+                ),
+              ),
+            ],
+          )
+        : buildLeftPane(boundedHeight: true);
 
     final stackedWorkspace = SingleChildScrollView(
       child: buildLeftPane(boundedHeight: false),
@@ -145,7 +147,7 @@ class _TillMonitoringWorkspaceState
         selectedId != null && result.items.any((item) => item.id == selectedId);
 
     if (!stillVisible) {
-      ref.read(selectedTillIdProvider.notifier).state = result.items.first.id;
+      ref.read(selectedTillIdProvider.notifier).state = null;
     }
   }
 }

@@ -115,39 +115,7 @@ class _BusinessHoursEditorState extends State<BusinessHoursEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      if (constraints.maxWidth >= 1250) {
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(flex: 5, child: _buildMainForm(context)),
-            const SizedBox(width: TenantAdminSpacing.xl),
-            const Expanded(flex: 2, child: _InfoSidePanel()),
-          ],
-        );
-      }
-      if (constraints.maxWidth >= 900) {
-        return Column(
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(flex: 3, child: _buildMainForm(context)),
-                const SizedBox(width: TenantAdminSpacing.xl),
-                const Expanded(flex: 2, child: _InfoSidePanel()),
-              ],
-            ),
-          ],
-        );
-      }
-      return Column(
-        children: [
-          _buildMainForm(context),
-          const SizedBox(height: TenantAdminSpacing.xl),
-          const _InfoSidePanel(),
-        ],
-      );
-    });
+    return _buildMainForm(context);
   }
 
   Widget _buildMainForm(BuildContext context) {
@@ -669,67 +637,4 @@ String _formatTimeAmPm(String value) {
   final now = DateTime.now();
   final dt = DateTime(now.year, now.month, now.day, t.hour, t.minute);
   return DateFormat('hh:mm a').format(dt);
-}
-
-class _InfoSidePanel extends StatelessWidget {
-  const _InfoSidePanel();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF9F5), // Light orange tint
-        border:
-            Border.all(color: const Color(0xFFFFE0CC)), // Light orange border
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      ),
-      child: const Column(
-        children: [
-          _Guidance(Icons.access_time, 'Set your regular store hours',
-              'Define when your outlet is open for customers each day.'),
-          Divider(color: Color(0xFFFFE0CC), height: 32),
-          _Guidance(Icons.event_available, 'Add public holidays',
-              'Set different opening hours for holidays and special occasions.'),
-          Divider(color: Color(0xFFFFE0CC), height: 32),
-          _Guidance(Icons.av_timer, 'Open 24 hours',
-              'Use the 24 hours option to keep your outlet open all day.'),
-          Divider(color: Color(0xFFFFE0CC), height: 32),
-          _Guidance(Icons.visibility_outlined, 'Visible to customers',
-              'These hours will be shown to customers on receipts, online store and location pages.'),
-        ],
-      ),
-    );
-  }
-}
-
-class _Guidance extends StatelessWidget {
-  const _Guidance(this.icon, this.title, this.body);
-  final IconData icon;
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) =>
-      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        CircleAvatar(
-            backgroundColor: Colors.white,
-            radius: 20,
-            child: Icon(icon,
-                color: TenantAdminColors.posHomeOrangeEnd, size: 20)),
-        const SizedBox(width: TenantAdminSpacing.md),
-        Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: TenantAdminColors.bodyText,
-                  fontSize: 13)),
-          const SizedBox(height: 4),
-          Text(body,
-              style:
-                  TenantAdminTextStyles.muted(context).copyWith(fontSize: 12))
-        ]))
-      ]);
 }

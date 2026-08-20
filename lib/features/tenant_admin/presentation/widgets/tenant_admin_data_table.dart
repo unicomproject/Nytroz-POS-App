@@ -107,15 +107,8 @@ class _TenantAdminDataTableState extends State<TenantAdminDataTable> {
                               : constraints.maxWidth,
                         ),
                         child: DataTable(
-                          headingTextStyle: const TextStyle(
-                            color: TenantAdminColors.mutedText,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 13,
-                          ),
-                          dataTextStyle: const TextStyle(
-                            color: TenantAdminColors.bodyText,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          headingTextStyle: TenantAdminTextStyles.tableHeader(context),
+                          dataTextStyle: TenantAdminTextStyles.tableRow(context),
                           showCheckboxColumn: widget.showCheckboxColumn,
                           columns: widget.columns,
                           rows: widget.rows,

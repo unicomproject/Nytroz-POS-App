@@ -18,6 +18,7 @@ extension OutletMapper on OutletDto {
       todaysSales: todaysSales,
       outletType: outletType,
       city: city,
+      imageUrl: imageUrl,
     );
   }
 }
@@ -244,6 +245,8 @@ extension OutletDetailsMapper on OutletDetailsDto {
       address: address,
       status: status,
       outletType: outletType,
+      imageUrl: imageUrl,
+      imageMediaAssetId: imageMediaAssetId,
       isDefaultOutlet: isDefaultOutlet,
       addressLine1: addressLine1,
       addressLine2: addressLine2,

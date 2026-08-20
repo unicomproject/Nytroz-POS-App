@@ -19,10 +19,29 @@ class NytrozPosApp extends ConsumerStatefulWidget {
 
 class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
     with WidgetsBindingObserver {
+  late final ThemeData _themeData;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _themeData = ThemeData(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: TenantAdminColors.primary,
+      ),
+      scaffoldBackgroundColor: TenantAdminColors.background,
+      useMaterial3: true,
+      textTheme: GoogleFonts.interTextTheme().copyWith(
+        displayLarge: GoogleFonts.poppins(),
+        displayMedium: GoogleFonts.poppins(),
+        displaySmall: GoogleFonts.poppins(),
+        headlineLarge: GoogleFonts.poppins(),
+        headlineMedium: GoogleFonts.poppins(),
+        headlineSmall: GoogleFonts.poppins(),
+        titleLarge: GoogleFonts.poppins(),
+        titleMedium: GoogleFonts.poppins(),
+        titleSmall: GoogleFonts.poppins(),
+      ),
+    );
   }
 
   @override
@@ -50,24 +69,7 @@ class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
     return MaterialApp.router(
       title: 'Nytroz POS',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: TenantAdminColors.primary,
-        ),
-        scaffoldBackgroundColor: TenantAdminColors.background,
-        useMaterial3: true,
-        textTheme: GoogleFonts.interTextTheme().copyWith(
-          displayLarge: GoogleFonts.poppins(),
-          displayMedium: GoogleFonts.poppins(),
-          displaySmall: GoogleFonts.poppins(),
-          headlineLarge: GoogleFonts.poppins(),
-          headlineMedium: GoogleFonts.poppins(),
-          headlineSmall: GoogleFonts.poppins(),
-          titleLarge: GoogleFonts.poppins(),
-          titleMedium: GoogleFonts.poppins(),
-          titleSmall: GoogleFonts.poppins(),
-        ),
-      ),
+      theme: _themeData,
       routerConfig: router,
     );
   }

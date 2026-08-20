@@ -174,18 +174,29 @@ class AddTillHardwareSection extends StatelessWidget {
         Row(
           children: [
             Container(
-              width: 24,
-              height: 24,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFF6A00),
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF8C42), Color(0xFFFF6A00)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF6A00).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ],
               ),
               alignment: Alignment.center,
               child: const Text('2',
                   style: TextStyle(
                       color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold)),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800)),
             ),
             const SizedBox(width: TenantAdminSpacing.sm),
             Text(
@@ -265,53 +276,54 @@ class AddTillHardwareSection extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
+            Text(label,
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  letterSpacing: 0.2,
+                )),
             const SizedBox(height: 8),
-            DropdownMenu<String>(
+            DropdownButtonFormField<String>(
               key: ValueKey('${label}_$outletId'),
-              width: constraints.maxWidth,
-              controller: controller,
-              initialSelection: safeValue,
-              hintText: hintText ?? 'Select $label',
-              leadingIcon: Icon(icon, color: TenantAdminColors.mutedText),
-              inputDecorationTheme: InputDecorationTheme(
+              value: safeValue,
+              isExpanded: true,
+              decoration: InputDecoration(
+                hintText: hintText ?? 'Select $label',
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14, fontWeight: FontWeight.w400),
+                prefixIcon: Icon(icon, color: Colors.grey.shade400, size: 20),
+                filled: true,
+                fillColor: const Color(0xFFF8F9FA),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 16,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: TenantAdminColors.border.withValues(alpha: 0.5),
-                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: TenantAdminColors.border.withValues(alpha: 0.5),
-                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFFF6A00)),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFFF6A00), width: 1.5),
                 ),
               ),
-              dropdownMenuEntries: uniqueItems
-                  .map(
-                    (item) => DropdownMenuEntry<String>(
-                      value: (item as dynamic).id as String,
-                      label: item.name as String,
-                    ),
-                  )
-                  .toList(),
-              onSelected: (String? selectedId) {
-                onChanged(selectedId);
+              items: uniqueItems.map((item) {
+                return DropdownMenuItem<String>(
+                  value: (item as dynamic).id as String,
+                  child: Text((item as dynamic).name as String),
+                );
+              }).toList(),
+              onChanged: (String? selectedId) {
+                if (selectedId != null) {
+                  controller.text = (uniqueItems.firstWhere(
+                          (e) => (e as dynamic).id == selectedId) as dynamic)
+                      .name;
+                  onChanged(selectedId);
+                }
               },
             ),
           ],

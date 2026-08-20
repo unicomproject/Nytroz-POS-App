@@ -115,20 +115,20 @@ class TenantAdminSharedShell extends ConsumerWidget {
 
             if (showInlineSidebar) {
               return Scaffold(
-                body: Column(
+                body: Row(
                   children: [
-                    const TenantAdminAppHeader(),
+                    TenantAdminSidebar(
+                      items: items,
+                      currentPath: currentRoute,
+                      selectedSidebarKey: selectedSidebarKey,
+                      tenantContext: contextState.asData?.value,
+                      accessChecker: access,
+                      compact: isSmallTablet || isTablet,
+                    ),
                     Expanded(
-                      child: Row(
+                      child: Column(
                         children: [
-                          TenantAdminSidebar(
-                            items: items,
-                            currentPath: currentRoute,
-                            selectedSidebarKey: selectedSidebarKey,
-                            tenantContext: contextState.asData?.value,
-                            accessChecker: access,
-                            compact: isSmallTablet || isTablet,
-                          ),
+                          const TenantAdminAppHeader(),
                           Expanded(child: content),
                         ],
                       ),

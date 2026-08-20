@@ -48,6 +48,8 @@ void main() {
       expect(find.byType(TenantAdminLoadingSkeleton), findsNothing);
       expect(find.byType(TillMonitoringRow), findsWidgets);
       expect(find.text('Front Counter Till'), findsWidgets);
+      await tester.tap(find.text('Front Counter Till'));
+      await tester.pumpAndSettle();
       expect(find.byType(TillMonitoringSidePanel), findsOneWidget);
       expect(find.text('Hardware Connections'), findsOneWidget);
       expect(find.text('Cashier'), findsOneWidget);
@@ -72,6 +74,8 @@ void main() {
       );
 
       expect(find.byType(TillMonitoringList), findsOneWidget);
+      await tester.tap(find.text('Front Counter Till'));
+      await tester.pumpAndSettle();
       expect(find.byType(TillMonitoringSidePanel), findsOneWidget);
       expect(find.text('TOTAL TILLS'), findsOneWidget);
       expect(find.textContaining('Showing 1–1 of 1 tills'), findsOneWidget);
@@ -88,6 +92,8 @@ void main() {
       );
 
       expect(find.text('Front Counter Till'), findsWidgets);
+      await tester.tap(find.text('Front Counter Till'));
+      await tester.pumpAndSettle();
       expect(
         find.text('You do not have permission to view hardware.'),
         findsOneWidget,
@@ -143,7 +149,10 @@ void main() {
         ),
       );
 
-      expect(find.text('Unassigned'), findsOneWidget);
+      await tester.tap(find.text('Front Counter Till'));
+      await tester.pumpAndSettle();
+      
+      expect(find.text('Unassigned'), findsWidgets);
       expect(find.text('No recent activity'), findsOneWidget);
       expect(find.text('View Alerts (2)'), findsOneWidget);
       expect(find.text('Needs Attention'), findsWidgets);

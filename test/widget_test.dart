@@ -1254,7 +1254,9 @@ Future<void> _pumpPosHome(
     await tester.pumpAndSettle();
   } else {
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(milliseconds: 10));
+    await tester.pump(const Duration(milliseconds: 10));
+    await tester.pump(const Duration(milliseconds: 10));
   }
 }
 

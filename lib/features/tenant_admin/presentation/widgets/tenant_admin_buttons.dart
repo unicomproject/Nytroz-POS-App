@@ -164,9 +164,8 @@ class _ButtonContent extends StatelessWidget {
         ],
         Text(
           label,
-          style: TextStyle(
+          style: TenantAdminTextStyles.buttonLabel(context).copyWith(
             fontSize: fontSize,
-            fontWeight: FontWeight.bold,
           ),
         ),
       ],
