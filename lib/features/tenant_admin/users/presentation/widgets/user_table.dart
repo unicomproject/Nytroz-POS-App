@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_row_action.dart';
+import '../../../presentation/widgets/tenant_admin_data_table.dart';
 import '../../domain/entities/tenant_user.dart';
 import '../config/user_row_action_configs.dart';
 import '../utils/user_api_errors.dart';
@@ -35,139 +36,64 @@ class UserTable extends StatelessWidget {
     final canDeactivate = visibility.visibleRowActions
         .any((action) => action.actionId == UserRowActionId.delete);
 
-    return Column(
-      children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(20, 10, 20, 8),
-          child: _UserRowHeader(),
-        ),
-        for (final user in users)
-          _UserRow(
-            user: user,
-            selected: user.id == selectedUserId,
-            canView: canView,
-            canEdit: canEdit,
-            canDeactivate: canDeactivate,
-            onView: onView,
-            onEdit: onEdit,
-            onDeactivate: onDelete,
-          ),
+    return TenantAdminDataTable(
+      showCheckboxColumn: false,
+      emptyTitle: 'No users found',
+      emptyMessage: 'Add a new user or adjust your search.',
+      minWidth: 1000.0,
+      columns: const [
+        DataColumn(label: Text('USER')),
+        DataColumn(label: Text('ROLE')),
+        DataColumn(label: Text('OUTLET ACCESS')),
+        DataColumn(label: Text('LAST ACTIVE')),
+        DataColumn(label: Text('STATUS')),
+        DataColumn(label: Text('ACTIONS')),
       ],
-    );
-  }
-}
-
-class _UserRowHeader extends StatelessWidget {
-  const _UserRowHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    const style = TextStyle(
-      color: TenantAdminColors.mutedText,
-      fontSize: 10,
-      fontWeight: FontWeight.w800,
-    );
-    return const Row(
-      children: [
-        Expanded(flex: 25, child: Text('USER', style: style)),
-        Expanded(flex: 16, child: Text('ROLE', style: style)),
-        Expanded(flex: 17, child: Text('OUTLET ACCESS', style: style)),
-        Expanded(flex: 13, child: Text('LAST ACTIVE', style: style)),
-        Expanded(flex: 12, child: Text('STATUS', style: style)),
-        Expanded(flex: 17, child: Text('ACTIONS', style: style)),
-      ],
-    );
-  }
-}
-
-class _UserRow extends StatelessWidget {
-  const _UserRow({
-    required this.user,
-    required this.selected,
-    required this.canView,
-    required this.canEdit,
-    required this.canDeactivate,
-    required this.onView,
-    required this.onEdit,
-    required this.onDeactivate,
-  });
-
-  final TenantUser user;
-  final bool selected;
-  final bool canView;
-  final bool canEdit;
-  final bool canDeactivate;
-  final ValueChanged<TenantUser> onView;
-  final ValueChanged<TenantUser> onEdit;
-  final ValueChanged<TenantUser> onDeactivate;
-
-  @override
-  Widget build(BuildContext context) {
-    final outline = selected
-        ? TenantAdminColors.posHomeAccentOrange
-        : TenantAdminColors.border;
-
-    return Semantics(
-      selected: selected,
-      button: canView,
-      label: 'User ${user.fullName}',
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-        child: Material(
-          color: TenantAdminColors.surface,
-          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-          child: InkWell(
-            onTap: canView ? () => onView(user) : null,
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            child: Container(
-              padding: const EdgeInsets.all(TenantAdminSpacing.md),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                border: Border.all(color: outline, width: selected ? 1.5 : 1),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(flex: 25, child: _Identity(user: user)),
-                  Expanded(flex: 16, child: _Role(user: user)),
-                  Expanded(flex: 17, child: _OutletAccess(user: user)),
-                  Expanded(flex: 13, child: _LastActive(user: user)),
-                  Expanded(
-                      flex: 12, child: UserStatusBadge(status: user.status)),
-                  Expanded(
-                    flex: 17,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (canView)
-                          TenantAdminRowAction(
-                            icon: Icons.visibility_outlined,
-                            label: 'View',
-                            onPressed: () => onView(user),
-                          ),
-                        if (canEdit)
-                          TenantAdminRowAction(
-                            icon: Icons.edit_outlined,
-                            label: 'Edit',
-                            onPressed: () => onEdit(user),
-                          ),
-                        if (canDeactivate)
-                          TenantAdminRowAction(
-                            icon: Icons.block_outlined,
-                            label: 'Disable',
-                            destructive: true,
-                            onPressed: () => onDeactivate(user),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
+      rows: users.map((user) {
+        return DataRow(
+          selected: user.id == selectedUserId,
+          onSelectChanged: (_) => canView ? onView(user) : null,
+          cells: [
+            DataCell(_Identity(user: user)),
+            DataCell(_Role(user: user)),
+            DataCell(_OutletAccess(user: user)),
+            DataCell(_LastActive(user: user)),
+            DataCell(UserStatusBadge(status: user.status)),
+            DataCell(
+              Align(
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (canView)
+                      TenantAdminRowAction(
+                        icon: Icons.visibility_outlined,
+                        label: 'View',
+                        onPressed: () => onView(user),
+                      ),
+                    if (canEdit) const SizedBox(width: TenantAdminSpacing.sm),
+                    if (canEdit)
+                      TenantAdminRowAction(
+                        icon: Icons.edit_outlined,
+                        label: 'Edit',
+                        onPressed: () => onEdit(user),
+                      ),
+                    if (canEdit && canDeactivate)
+                      const SizedBox(width: TenantAdminSpacing.sm),
+                    if (canDeactivate)
+                      TenantAdminRowAction(
+                        icon: Icons.block_outlined,
+                        label: 'Disable',
+                        destructive: true,
+                        onPressed: () => onDelete(user),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ),
-      ),
+          ],
+        );
+      }).toList(),
     );
   }
 }
@@ -179,43 +105,46 @@ class _Identity extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 19,
-          backgroundColor: TenantAdminColors.secondary,
-          child: Text(_initials(user.fullName),
-              style: const TextStyle(
-                  color: TenantAdminColors.posHomeAccentOrange,
-                  fontWeight: FontWeight.w800)),
-        ),
-        const SizedBox(width: TenantAdminSpacing.sm),
-        Expanded(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(user.fullName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: TenantAdminColors.bodyText)),
-              Text(user.email,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TenantAdminTextStyles.muted(context)
-                      .copyWith(fontSize: 11)),
-              if ((user.phone ?? '').trim().isNotEmpty)
-                Text(user.phone!,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 19,
+            backgroundColor: TenantAdminColors.secondary,
+            child: Text(_initials(user.fullName),
+                style: const TextStyle(
+                    color: TenantAdminColors.posHomeAccentOrange,
+                    fontWeight: FontWeight.w800)),
+          ),
+          const SizedBox(width: TenantAdminSpacing.md),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(user.fullName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: TenantAdminColors.bodyText)),
+                Text(user.email,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TenantAdminTextStyles.muted(context)
-                        .copyWith(fontSize: 11)),
-            ],
+                        .copyWith(fontSize: 12)),
+                if ((user.phone ?? '').trim().isNotEmpty)
+                  Text(user.phone!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TenantAdminTextStyles.muted(context)
+                          .copyWith(fontSize: 12)),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -266,24 +195,27 @@ class _TwoLineCell extends StatelessWidget {
   final String primary;
   final String? secondary;
   @override
-  Widget build(BuildContext context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(primary,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                  color: TenantAdminColors.bodyText,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12)),
-          if (secondary != null)
-            Text(secondary!,
-                maxLines: 2,
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(primary,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TenantAdminTextStyles.muted(context)
-                    .copyWith(fontSize: 11)),
-        ],
+                style: const TextStyle(
+                    color: TenantAdminColors.bodyText,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13)),
+            if (secondary != null)
+              Text(secondary!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TenantAdminTextStyles.muted(context)
+                      .copyWith(fontSize: 12)),
+          ],
+        ),
       );
 }
 

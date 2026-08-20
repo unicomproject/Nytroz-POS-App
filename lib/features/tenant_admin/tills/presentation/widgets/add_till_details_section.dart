@@ -60,18 +60,29 @@ class AddTillDetailsSection extends StatelessWidget {
         Row(
           children: [
             Container(
-              width: 24,
-              height: 24,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFF6A00),
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF8C42), Color(0xFFFF6A00)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF6A00).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ],
               ),
               alignment: Alignment.center,
               child: const Text('1',
                   style: TextStyle(
                       color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold)),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800)),
             ),
             const SizedBox(width: TenantAdminSpacing.sm),
             Text(
@@ -343,12 +354,16 @@ class AddTillDetailsSection extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(label,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  letterSpacing: 0.2,
+                )),
             if (isRequired)
               const Text(' *',
                   style: TextStyle(
-                      color: Colors.red,
+                      color: Colors.redAccent,
                       fontWeight: FontWeight.bold,
                       fontSize: 14)),
           ],
@@ -367,23 +382,32 @@ class AddTillDetailsSection extends StatelessWidget {
       String? errorText}) {
     return InputDecoration(
       hintText: hintText,
+      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14, fontWeight: FontWeight.w400),
       prefixIcon: Icon(icon,
-          color: iconColor ?? TenantAdminColors.mutedText, size: iconSize),
+          color: iconColor ?? Colors.grey.shade400, size: iconSize ?? 20),
       errorText: errorText,
+      filled: true,
+      fillColor: const Color(0xFFF8F9FA),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide:
-            BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade200),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide:
-            BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade200),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFFFF6A00)),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFFF6A00), width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
       ),
     );
   }

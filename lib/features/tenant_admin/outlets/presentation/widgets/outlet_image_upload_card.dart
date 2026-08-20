@@ -37,15 +37,7 @@ class OutletImageUploadCard extends StatelessWidget {
         Text('Upload an image to easily identify this outlet.',
             style: TenantAdminTextStyles.muted(context)),
         const SizedBox(height: TenantAdminSpacing.lg),
-        _buildUploadBox(context, busy),
-        const SizedBox(height: TenantAdminSpacing.lg),
-        const Text('Image Preview',
-            style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: TenantAdminColors.bodyText,
-                fontSize: 13)),
-        const SizedBox(height: TenantAdminSpacing.sm),
-        _preview(context),
+        if (hasImage) _preview(context) else _buildUploadBox(context, busy),
         if (state.status == OutletImageUploadStatus.uploading) ...[
           const SizedBox(height: TenantAdminSpacing.md),
           LinearProgressIndicator(

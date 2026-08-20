@@ -70,92 +70,105 @@ void main() {
                       maxLength: 200,
                       icon: Icons.storefront_outlined,
                     ),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: _buildOutletCode(context),
-                  ),
-                ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('General Information'),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _field(
+                'outletName',
+                'Outlet Name',
+                outletName,
+                errors: errors,
+                isRequired: true,
+                maxLength: 200,
+                icon: Icons.storefront_outlined,
               ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _outletTypeDropdown(),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: _statusSelector(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _buildManagerField(context),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: _field(
-                      'contactPhone',
-                      'Outlet Phone (optional)',
-                      outletPhone,
-                      errors: errors,
-                      icon: Icons.phone_outlined,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _field(
-                      'contactEmail',
-                      'Outlet Email (optional)',
-                      outletEmail,
-                      errors: errors,
-                      icon: Icons.mail_outline,
-                    ),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: _timezoneField(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _buildSwitchOption(
-                      title: 'Main / Central Outlet',
-                      subtitle: 'Designate this outlet as the main or central outlet. Only one central outlet is allowed per tenant.',
-                      value: false,
-                      onChanged: (v) {},
-                    ),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: _buildSwitchOption(
-                      title: 'Default for New Tills',
-                      subtitle: 'Newly created tills will be assigned to this outlet by default.',
-                      value: isDefaultOutlet,
-                      onChanged: onDefaultChanged,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(width: TenantAdminSpacing.lg),
+            Expanded(
+              child: _buildOutletCode(context),
+            ),
+          ],
         ),
-        const SizedBox(width: TenantAdminSpacing.xl),
-        _buildInfoSidePanel(context),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _outletTypeDropdown(),
+            ),
+            const SizedBox(width: TenantAdminSpacing.lg),
+            Expanded(
+              child: _statusSelector(context),
+            ),
+          ],
+        ),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _buildManagerField(context),
+            ),
+            const SizedBox(width: TenantAdminSpacing.lg),
+            Expanded(
+              child: _field(
+                'contactPhone',
+                'Outlet Phone (optional)',
+                outletPhone,
+                errors: errors,
+                icon: Icons.phone_outlined,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _field(
+                'contactEmail',
+                'Outlet Email (optional)',
+                outletEmail,
+                errors: errors,
+                icon: Icons.mail_outline,
+              ),
+            ),
+            const SizedBox(width: TenantAdminSpacing.lg),
+            Expanded(
+              child: _timezoneField(),
+            ),
+          ],
+        ),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _buildSwitchOption(
+                title: 'Main / Central Outlet',
+                subtitle: 'Designate this outlet as the main or central outlet. Only one central outlet is allowed per tenant.',
+                value: false,
+                onChanged: (v) {},
+              ),
+            ),
+            const SizedBox(width: TenantAdminSpacing.lg),
+            Expanded(
+              child: _buildSwitchOption(
+                title: 'Default for New Tills',
+                subtitle: 'Newly created tills will be assigned to this outlet by default.',
+                value: isDefaultOutlet,
+                onChanged: onDefaultChanged,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -320,45 +333,6 @@ void main() {
     );
   }
 
-  Widget _buildInfoSidePanel(BuildContext context) {
-    return Container(
-      width: 320,
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFA),
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-        border: Border.all(color: TenantAdminColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildInfoItem(
-            icon: Icons.storefront_outlined,
-            title: 'What is an outlet?',
-            description: 'Outlets represent your physical business locations where sales and operations take place.',
-          ),
-          const SizedBox(height: TenantAdminSpacing.xl),
-          _buildInfoItem(
-            icon: Icons.bar_chart,
-            title: 'Sales & reporting separation',
-            description: 'Each outlet keeps sales, stock, customers and reports separate and organised.',
-          ),
-          const SizedBox(height: TenantAdminSpacing.xl),
-          _buildInfoItem(
-            icon: Icons.business_outlined,
-            title: 'Central outlet',
-            description: 'The central outlet is used for company-wide settings, reporting, and system-level configurations.',
-          ),
-          const SizedBox(height: TenantAdminSpacing.xl),
-          _buildInfoItem(
-            icon: Icons.point_of_sale_outlined,
-            title: 'Till assignment defaults',
-            description: 'New tills will be assigned to this outlet by default, saving you time during setup.',
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildInfoItem({
     required IconData icon,

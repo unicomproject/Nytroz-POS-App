@@ -11,6 +11,7 @@ import '../../../presentation/widgets/tenant_admin_search_field.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/outlet.dart';
 import '../providers/outlet_providers.dart';
+import '../providers/outlet_visibility_provider.dart';
 import '../utils/outlet_list_filters.dart';
 import 'outlet_mobile_list.dart';
 import 'outlet_card_list.dart';
@@ -67,30 +68,10 @@ class OutletListPanel extends ConsumerWidget {
                 );
 
                 final addButton = visibility.showAddOutlet
-                    ? ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              TenantAdminColors.posHomeAccentOrange,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          minimumSize:
-                              Size(stackHeader ? double.infinity : 0, 44),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 12,
-                          ),
-                          textStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: Text(isMobile ? 'Add' : 'Add Outlet'),
-                        onPressed: () =>
-                            context.go('/tenant-admin/outlets/add'),
+                    ? TenantAdminPrimaryButton(
+                        label: isMobile ? 'Add' : 'Add Outlet',
+                        icon: Icons.add,
+                        onPressed: () => context.go('/tenant-admin/outlets/add'),
                       )
                     : null;
 
@@ -167,7 +148,7 @@ class OutletListPanel extends ConsumerWidget {
   }
 }
 
-class _ListSection extends StatelessWidget {
+class _ListSection extends ConsumerWidget {
   const _ListSection({
     required this.result,
     required this.visibility,
@@ -189,7 +170,7 @@ class _ListSection extends StatelessWidget {
   final ValueChanged<int> onPageChanged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (result.items.isEmpty) {
       final emptyState = Padding(
         padding: const EdgeInsets.all(TenantAdminSpacing.xl),
@@ -248,12 +229,9 @@ class _ListSection extends StatelessWidget {
     final cardList = OutletCardList(
       outlets: result.items,
       scrollable: scrollable,
-      onView: (outlet) {
-        // View is handled by row selection in the master-detail layout.
-      },
       onEdit: (outlet) => context.go('/tenant-admin/outlets/${outlet.id}/edit'),
       onDisable: (outlet) {
-        // Existing lifecycle behavior remains unchanged in this UI pass.
+        _confirmDisable(context, ref, outlet);
       },
     );
 
@@ -273,6 +251,60 @@ class _ListSection extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _confirmDisable(
+    BuildContext context,
+    WidgetRef ref,
+    Outlet outlet,
+  ) async {
+    final confirmed = await showAppDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('${outlet.status.toUpperCase() == 'ACTIVE' ? 'Disable' : 'Activate'} outlet'),
+          content: Text(
+            'Are you sure you want to ${outlet.status.toUpperCase() == 'ACTIVE' ? 'disable' : 'activate'} "${outlet.name}"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: outlet.status.toUpperCase() == 'ACTIVE' ? TenantAdminColors.danger : TenantAdminColors.success,
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(outlet.status.toUpperCase() == 'ACTIVE' ? 'Disable' : 'Activate'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
+
+    try {
+      // Assuming deleteOutletProvider acts as toggle/disable for this MVP
+      await ref.read(deleteOutletProvider).call(outlet.id);
+      ref.invalidate(outletListProvider);
+      
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${outlet.name} updated successfully')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update outlet: $e'),
+          backgroundColor: TenantAdminColors.danger,
+        ),
+      );
+    }
   }
 }
 
@@ -427,17 +459,27 @@ class _FilterPill extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.10)
+              ? TenantAdminColors.posHomeAccentOrange
               : TenantAdminColors.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isSelected
                 ? TenantAdminColors.posHomeAccentOrange
                 : TenantAdminColors.border,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: TenantAdminColors.posHomeAccentOrange
+                        .withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -447,7 +489,7 @@ class _FilterPill extends StatelessWidget {
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: dotColor,
+                  color: isSelected ? Colors.white : dotColor,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -457,10 +499,8 @@ class _FilterPill extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isSelected
-                    ? TenantAdminColors.posHomeAccentOrange
-                    : TenantAdminColors.bodyText,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected ? Colors.white : TenantAdminColors.bodyText,
               ),
             ),
           ],

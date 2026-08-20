@@ -35,30 +35,50 @@ class PosLoginBrandingController extends StateNotifier<PosLoginBranding> {
   final PosLoginBrandingRepository _repository;
   final Future<String> Function() _readTenantSlug;
   bool _loading = false;
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   Future<void> load() async {
-    if (_loading) return;
+    if (_loading || _disposed) return;
     _loading = true;
-    final slug = (await _readTenantSlug()).trim().toLowerCase();
-    if (slug.isEmpty) {
-      // No tenant identity → keep unloaded shell (no local artwork fallback).
-      state = PosLoginBranding.unloaded;
-      _loading = false;
-      return;
-    }
-    final cached = await _repository.readCached(slug);
-    if (cached != null) {
-      state = cached;
-    }
+    
     try {
-      state = await _repository.refresh(slug);
-    } catch (_) {
-      // Keep tenant cache only. Never substitute packaged local artwork.
+      final slug = (await _readTenantSlug()).trim().toLowerCase();
+      if (_disposed) return;
+      
+      if (slug.isEmpty) {
+        // No tenant identity → keep unloaded shell (no local artwork fallback).
+        state = PosLoginBranding.unloaded;
+        return;
+      }
+      
+      final cached = await _repository.readCached(slug);
+      if (_disposed) return;
+      
       if (cached != null) {
         state = cached;
       }
+      
+      try {
+        final refreshed = await _repository.refresh(slug);
+        if (_disposed) return;
+        state = refreshed;
+      } catch (_) {
+        if (_disposed) return;
+        // Keep tenant cache only. Never substitute packaged local artwork.
+        if (cached != null) {
+          state = cached;
+        }
+      }
     } finally {
-      _loading = false;
+      if (!_disposed) {
+        _loading = false;
+      }
     }
   }
 }

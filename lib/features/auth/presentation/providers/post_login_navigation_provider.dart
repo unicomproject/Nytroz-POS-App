@@ -30,6 +30,32 @@ final postLoginRouteProvider = Provider<PostLoginRoute>((ref) {
   final device = deviceState.deviceContext;
   final deviceTrusted = device?.isTrusted == true;
 
+  final isPosCashier = authSession?.canOpenPosTill == true;
+
+  if (isPosCashier) {
+    if (!deviceTrusted) {
+      developer.log(
+        'Post-login navigation: Cashier requires device activation. route=${PostLoginRoute.deviceActivation.path}',
+        name: 'auth.navigation',
+      );
+      return PostLoginRoute.deviceActivation;
+    }
+
+    if (!tillState.hasOpenSession) {
+      developer.log(
+        'Post-login navigation: Cashier open till required. route=${PostLoginRoute.openTill.path}',
+        name: 'auth.navigation',
+      );
+      return PostLoginRoute.openTill;
+    }
+
+    developer.log(
+      'Post-login navigation: Cashier till is open. route=${PostLoginRoute.posHome.path}',
+      name: 'auth.navigation',
+    );
+    return PostLoginRoute.posHome;
+  }
+
   if (authSession?.canAccessTenantAdminDashboard == true) {
     developer.log(
       'Post-login navigation: tenant admin dashboard. route=${PostLoginRoute.tenantAdminDashboard.path}',
@@ -44,24 +70,6 @@ final postLoginRouteProvider = Provider<PostLoginRoute>((ref) {
       name: 'auth.navigation',
     );
     return PostLoginRoute.deviceActivation;
-  }
-
-  if (authSession?.canOpenPosTill == true) {
-    if (!tillState.hasOpenSession) {
-      developer.log(
-        'Post-login navigation: open till required. '
-        'deviceTrusted=$deviceTrusted hasOpenSession=${tillState.hasOpenSession} '
-        'route=${PostLoginRoute.openTill.path}',
-        name: 'auth.navigation',
-      );
-      return PostLoginRoute.openTill;
-    }
-
-    developer.log(
-      'Post-login navigation: till is open. route=${PostLoginRoute.posHome.path}',
-      name: 'auth.navigation',
-    );
-    return PostLoginRoute.posHome;
   }
 
   developer.log(

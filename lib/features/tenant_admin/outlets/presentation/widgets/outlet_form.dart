@@ -9,10 +9,9 @@ import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_responsive_form_grid.dart';
 import 'business_hours_editor.dart';
 import 'outlet_image_upload_card.dart';
-import 'outlet_location_guidance_panel.dart';
 import '../providers/outlet_image_upload_provider.dart';
 
-class OutletForm extends StatefulWidget {
+class OutletForm extends ConsumerStatefulWidget {
   const OutletForm({
     super.key,
     required this.onSubmit,
@@ -31,10 +30,10 @@ class OutletForm extends StatefulWidget {
   final Future<void> Function(String? mediaAssetId)? onDiscard;
 
   @override
-  State<OutletForm> createState() => _OutletFormState();
+  ConsumerState<OutletForm> createState() => _OutletFormState();
 }
 
-class _OutletFormState extends State<OutletForm> {
+class _OutletFormState extends ConsumerState<OutletForm> {
   static const _steps = [
     'Outlet Details',
     'Location & Contact',
@@ -65,7 +64,6 @@ class _OutletFormState extends State<OutletForm> {
   String _outletType = 'STORE';
   String _status = 'ACTIVE';
   bool _isDefaultOutlet = false;
-  String? _imageMediaAssetId;
   late String _initialSignature;
 
   @override
@@ -102,6 +100,19 @@ class _OutletFormState extends State<OutletForm> {
     );
     _isDefaultOutlet = initial?.isDefaultOutlet ?? false;
     _openingHours = _initialOpeningHours(initial?.openingHours);
+    
+    if (initial?.imageMediaAssetId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(outletImageUploadControllerProvider.notifier)
+            .initializeExistingImage(
+              mediaAssetId: initial!.imageMediaAssetId!,
+              imageUrl: initial.imageUrl,
+            );
+        }
+      });
+    }
+
     _initialSignature = _signature();
   }
 
@@ -187,13 +198,6 @@ class _OutletFormState extends State<OutletForm> {
           final imageState = ref.watch(outletImageUploadControllerProvider);
           final imageController =
               ref.read(outletImageUploadControllerProvider.notifier);
-          if (imageState.mediaAssetId != _imageMediaAssetId) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                setState(() => _imageMediaAssetId = imageState.mediaAssetId);
-              }
-            });
-          }
           return _OutletLocationContactStep(
             addressLine1: _addressLine1,
             addressLine2: _addressLine2,
@@ -302,10 +306,13 @@ class _OutletFormState extends State<OutletForm> {
   }
 
   OutletFormData _formData() {
+    final imageState = ref.read(outletImageUploadControllerProvider);
+    final currentImageId = imageState.mediaAssetId;
+
     OutletImageOperation imageOperation = OutletImageOperation.keep;
     final initialImageId = widget.initialValue?.imageMediaAssetId;
-    if (_imageMediaAssetId != initialImageId) {
-      if (_imageMediaAssetId == null) {
+    if (currentImageId != initialImageId) {
+      if (currentImageId == null) {
         imageOperation = OutletImageOperation.remove;
       } else {
         imageOperation = OutletImageOperation.replace;
@@ -321,7 +328,7 @@ class _OutletFormState extends State<OutletForm> {
       contactName: _nullable(_contactName.text),
       contactPhone: _nullable(_contactPhone.text),
       contactEmail: _nullable(_contactEmail.text),
-      imageMediaAssetId: _imageMediaAssetId,
+      imageMediaAssetId: currentImageId,
       imageOperation: imageOperation,
       isDefaultOutlet: _isDefaultOutlet,
       addressLine1: _addressLine1.text.trim(),
@@ -344,8 +351,9 @@ class _OutletFormState extends State<OutletForm> {
   }
 
   Future<void> _confirmDiscard() async {
+    final currentImageId = ref.read(outletImageUploadControllerProvider).mediaAssetId;
     if (_signature() == _initialSignature) {
-      await widget.onDiscard?.call(_imageMediaAssetId);
+      await widget.onDiscard?.call(currentImageId);
       return;
     }
     final discard = await showDialog<bool>(
@@ -366,7 +374,7 @@ class _OutletFormState extends State<OutletForm> {
       ),
     );
     if (discard == true && mounted) {
-      await widget.onDiscard?.call(_imageMediaAssetId);
+      await widget.onDiscard?.call(currentImageId);
     }
   }
 
@@ -387,7 +395,7 @@ class _OutletFormState extends State<OutletForm> {
         _postalCode.text,
         _timezone.text,
         _isDefaultOutlet.toString(),
-        _imageMediaAssetId ?? '',
+        ref.read(outletImageUploadControllerProvider).mediaAssetId ?? '',
         for (final hour in _openingHours)
           '${hour.dayOfWeek}|${hour.openTime.text}|${hour.closeTime.text}|${hour.closed}',
       ].join('\u001f');
@@ -500,29 +508,7 @@ class _OutletDetailsStep extends StatelessWidget {
       ],
     );
 
-    return LayoutBuilder(builder: (context, constraints) {
-      if (constraints.maxWidth >= 950) {
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: form),
-            const SizedBox(width: TenantAdminSpacing.xl),
-            _buildInfoSidePanel(context),
-          ],
-        );
-      }
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          form,
-          const SizedBox(height: TenantAdminSpacing.xl),
-          SizedBox(
-            width: double.infinity,
-            child: _buildInfoSidePanel(context),
-          ),
-        ],
-      );
-    });
+    return form;
   }
 
   Widget _buildSwitchOption({
@@ -531,36 +517,57 @@ class _OutletDetailsStep extends StatelessWidget {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: TenantAdminColors.bodyText,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
-            Switch.adaptive(
-              value: value,
-              onChanged: onChanged,
-              activeThumbColor: TenantAdminColors.posHomeOrangeEnd,
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+      decoration: BoxDecoration(
+        color: TenantAdminColors.surface,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        border: Border.all(
+          color: value ? TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.3) : TenantAdminColors.border,
         ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: const TextStyle(
-            color: TenantAdminColors.mutedText,
-            fontSize: 12,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-        ),
-      ],
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: TenantAdminColors.bodyText,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+              Switch.adaptive(
+                value: value,
+                onChanged: onChanged,
+                activeColor: Colors.white,
+                activeTrackColor: TenantAdminColors.posHomeOrangeEnd,
+                inactiveThumbColor: Colors.white,
+                inactiveTrackColor: const Color(0xFFE2E8F0),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              color: TenantAdminColors.mutedText,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -652,82 +659,57 @@ class _OutletDetailsStep extends StatelessWidget {
           ],
         ),
         const SizedBox(height: TenantAdminSpacing.sm),
-        TextFormField(
-          initialValue: 'OUT-2025-0005',
-          enabled: false,
-          style: const TextStyle(color: TenantAdminColors.mutedText),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: const Color(0xFFF8FAFC),
-            suffixIcon: const Icon(Icons.lock_outline,
-                size: 16, color: TenantAdminColors.mutedText),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-              borderSide: const BorderSide(color: TenantAdminColors.border),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-              borderSide: const BorderSide(color: TenantAdminColors.border),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: TenantAdminSpacing.lg,
-              vertical: TenantAdminSpacing.md,
-            ),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TenantAdminSpacing.lg,
+            vertical: TenantAdminSpacing.md,
+          ),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9), // subtle slate
+            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.lock_outline, size: 18, color: TenantAdminColors.mutedText),
+              const SizedBox(width: TenantAdminSpacing.sm),
+              const Expanded(
+                child: Text(
+                  'OUT-2025-0005',
+                  style: TextStyle(
+                    color: Color(0xFF475569),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'Auto-Generated',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         const Text(
-          'Auto-generated and cannot be changed.',
+          'This unique code cannot be changed.',
           style: TextStyle(
             color: TenantAdminColors.mutedText,
             fontSize: 11,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildInfoSidePanel(BuildContext context) {
-    return Container(
-      width: 320,
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFA),
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-        border: Border.all(color: TenantAdminColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildInfoItem(
-            icon: Icons.storefront_outlined,
-            title: 'What is an outlet?',
-            description:
-                'Outlets represent your physical business locations where sales and operations take place.',
-          ),
-          const SizedBox(height: TenantAdminSpacing.xl),
-          _buildInfoItem(
-            icon: Icons.bar_chart,
-            title: 'Sales & reporting separation',
-            description:
-                'Each outlet keeps sales, stock, customers and reports separate and organised.',
-          ),
-          const SizedBox(height: TenantAdminSpacing.xl),
-          _buildInfoItem(
-            icon: Icons.business_outlined,
-            title: 'Central outlet',
-            description:
-                'The central outlet is used for company-wide settings, reporting, and system-level configurations.',
-          ),
-          const SizedBox(height: TenantAdminSpacing.xl),
-          _buildInfoItem(
-            icon: Icons.point_of_sale_outlined,
-            title: 'Till assignment defaults',
-            description:
-                'New tills will be assigned to this outlet by default, saving you time during setup.',
-          ),
-        ],
-      ),
     );
   }
 
@@ -962,28 +944,35 @@ class _OutletDetailsStep extends StatelessWidget {
           ],
         ),
         const SizedBox(height: TenantAdminSpacing.sm),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatusOption(
-                label: 'Active',
-                value: 'ACTIVE',
-                icon: Icons.check,
-                isSelected: status == 'ACTIVE',
-                onTap: () => onStatusChanged('ACTIVE'),
+        Container(
+          height: 48,
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildStatusOption(
+                  label: 'Active',
+                  value: 'ACTIVE',
+                  icon: Icons.check_circle_outline,
+                  isSelected: status == 'ACTIVE',
+                  onTap: () => onStatusChanged('ACTIVE'),
+                ),
               ),
-            ),
-            const SizedBox(width: TenantAdminSpacing.md),
-            Expanded(
-              child: _buildStatusOption(
-                label: 'Inactive',
-                value: 'INACTIVE',
-                icon: Icons.circle_outlined,
-                isSelected: status == 'INACTIVE',
-                onTap: () => onStatusChanged('INACTIVE'),
+              Expanded(
+                child: _buildStatusOption(
+                  label: 'Inactive',
+                  value: 'INACTIVE',
+                  icon: Icons.highlight_off,
+                  isSelected: status == 'INACTIVE',
+                  onTap: () => onStatusChanged('INACTIVE'),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         if (errors['status'] != null) ...[
           const SizedBox(height: TenantAdminSpacing.xs),
@@ -1003,50 +992,42 @@ class _OutletDetailsStep extends StatelessWidget {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      child: Container(
-        height: 48,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected
-              ? TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-          border: Border.all(
-            color: isSelected
-                ? TenantAdminColors.posHomeOrangeEnd
-                : TenantAdminColors.border,
-          ),
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected
+                  ? (value == 'ACTIVE' ? Colors.green[600] : Colors.grey[700])
+                  : TenantAdminColors.mutedText,
+            ),
+            const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
-                color: isSelected
-                    ? TenantAdminColors.posHomeOrangeEnd
-                    : TenantAdminColors.mutedText,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? TenantAdminColors.bodyText : TenantAdminColors.mutedText,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 13,
               ),
             ),
-            if (isSelected) ...[
-              const SizedBox(width: TenantAdminSpacing.sm),
-              Icon(
-                icon,
-                size: 18,
-                color: TenantAdminColors.posHomeOrangeEnd,
-              ),
-            ],
-            if (!isSelected) ...[
-              const SizedBox(width: TenantAdminSpacing.sm),
-              const Icon(
-                Icons.circle_outlined,
-                size: 18,
-                color: TenantAdminColors.border,
-              ),
-            ],
           ],
         ),
       ),
@@ -1155,45 +1136,14 @@ class _OutletLocationContactStep extends StatelessWidget {
       onRetry: onRetryImageUpload,
     );
 
-    return LayoutBuilder(builder: (context, constraints) {
-      if (constraints.maxWidth >= 1250) {
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(flex: 5, child: form),
-            const SizedBox(width: TenantAdminSpacing.xl),
-            Expanded(flex: 3, child: image),
-            const SizedBox(width: TenantAdminSpacing.xl),
-            const Expanded(flex: 3, child: OutletLocationGuidancePanel()),
-          ],
-        );
-      }
-      if (constraints.maxWidth >= 900) {
-        return Column(
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(flex: 3, child: form),
-                const SizedBox(width: TenantAdminSpacing.xl),
-                Expanded(flex: 2, child: image),
-              ],
-            ),
-            const SizedBox(height: TenantAdminSpacing.xl),
-            const OutletLocationGuidancePanel(),
-          ],
-        );
-      }
-      return Column(
-        children: [
-          form,
-          const SizedBox(height: TenantAdminSpacing.xl),
-          image,
-          const SizedBox(height: TenantAdminSpacing.xl),
-          const OutletLocationGuidancePanel(),
-        ],
-      );
-    });
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        image,
+        const SizedBox(height: TenantAdminSpacing.xl),
+        form,
+      ],
+    );
   }
 
   Widget _countryCodeInput() {
@@ -1288,76 +1238,39 @@ class _OutletReviewStep extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final imageState = ref.watch(outletImageUploadControllerProvider);
 
-    return LayoutBuilder(builder: (context, constraints) {
-      final isWide = constraints.maxWidth >= 1250;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        LayoutBuilder(builder: (context, gridConstraints) {
+          final isGridWide = gridConstraints.maxWidth >= 700;
+          return Wrap(
+            spacing: TenantAdminSpacing.lg,
+            runSpacing: TenantAdminSpacing.lg,
+            children: [
+              SizedBox(
+                width: isGridWide
+                    ? (gridConstraints.maxWidth - TenantAdminSpacing.lg) / 2
+                    : gridConstraints.maxWidth,
+                child: _buildDetailsCard(),
+              ),
+              SizedBox(
+                width: isGridWide
+                    ? (gridConstraints.maxWidth - TenantAdminSpacing.lg) / 2
+                    : gridConstraints.maxWidth,
+                child: _buildLocationContactCard(),
+              ),
+              SizedBox(
+                width: isGridWide
+                    ? (gridConstraints.maxWidth - TenantAdminSpacing.lg) / 2
+                    : gridConstraints.maxWidth,
+                child: _buildBusinessHoursCard(),
+              ),
 
-      final leftContent = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Create Outlet',
-              style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: TenantAdminColors.bodyText)),
-          const SizedBox(height: 4),
-          Text('Review your information before creating the outlet.',
-              style: TenantAdminTextStyles.muted(context)),
-          const SizedBox(height: TenantAdminSpacing.xl),
-          LayoutBuilder(builder: (context, gridConstraints) {
-            final isGridWide = gridConstraints.maxWidth >= 700;
-            return Wrap(
-              spacing: TenantAdminSpacing.lg,
-              runSpacing: TenantAdminSpacing.lg,
-              children: [
-                SizedBox(
-                  width: isGridWide
-                      ? (gridConstraints.maxWidth - TenantAdminSpacing.lg) / 2
-                      : gridConstraints.maxWidth,
-                  child: _buildDetailsCard(),
-                ),
-                SizedBox(
-                  width: isGridWide
-                      ? (gridConstraints.maxWidth - TenantAdminSpacing.lg) / 2
-                      : gridConstraints.maxWidth,
-                  child: _buildLocationContactCard(),
-                ),
-                SizedBox(
-                  width: isGridWide
-                      ? (gridConstraints.maxWidth - TenantAdminSpacing.lg) / 2
-                      : gridConstraints.maxWidth,
-                  child: _buildBusinessHoursCard(),
-                ),
-                SizedBox(
-                  width: isGridWide
-                      ? (gridConstraints.maxWidth - TenantAdminSpacing.lg) / 2
-                      : gridConstraints.maxWidth,
-                  child: _buildImagePreviewCard(context, imageState),
-                ),
-              ],
-            );
-          }),
-        ],
-      );
-
-      if (isWide) {
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(flex: 7, child: leftContent),
-            const SizedBox(width: TenantAdminSpacing.xl),
-            const Expanded(flex: 3, child: _ReviewInfoPanel()),
-          ],
-        );
-      }
-
-      return Column(
-        children: [
-          leftContent,
-          const SizedBox(height: TenantAdminSpacing.xl),
-          const _ReviewInfoPanel(),
-        ],
-      );
-    });
+            ],
+          );
+        }),
+      ],
+    );
   }
 
   Widget _buildCard(
@@ -1365,41 +1278,72 @@ class _OutletReviewStep extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: TenantAdminColors.border),
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: const Color(0xFFE2E8F0).withValues(alpha: 0.5),
+            blurRadius: 2,
+            offset: const Offset(0, 0),
+          )
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(TenantAdminSpacing.md),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 14)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
                 InkWell(
                   onTap: () => onEdit(step),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.edit_outlined,
-                          size: 14, color: TenantAdminColors.posHomeOrangeEnd),
-                      SizedBox(width: 4),
-                      Text('Edit step',
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.edit_outlined,
+                          size: 14,
+                          color: TenantAdminColors.posHomeOrangeEnd,
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'Edit',
                           style: TextStyle(
-                              color: TenantAdminColors.posHomeOrangeEnd,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600)),
-                    ],
+                            color: TenantAdminColors.posHomeOrangeEnd,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               ],
             ),
           ),
-          const Divider(height: 1, color: TenantAdminColors.border),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
           Padding(
-            padding: const EdgeInsets.all(TenantAdminSpacing.md),
+            padding: const EdgeInsets.all(20),
             child: child,
           ),
         ],
@@ -1411,40 +1355,43 @@ class _OutletReviewStep extends ConsumerWidget {
     Widget row(String label, String value,
         {bool isBadge = false, bool badgeSuccess = true}) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Row(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-                width: 140,
-                child: Text(label,
-                    style: const TextStyle(
-                        fontSize: 13, color: TenantAdminColors.mutedText))),
-            Expanded(
-              child: isBadge
-                  ? Align(
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
+            Text(label.toUpperCase(),
+                style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF94A3B8),
+                    letterSpacing: 0.8)),
+            const SizedBox(height: 8),
+            isBadge
+                ? Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                        color: badgeSuccess
+                            ? const Color(0xFFF0FDF4)
+                            : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
                             color: badgeSuccess
-                                ? Colors.green[50]
-                                : Colors.grey[100],
-                            borderRadius: BorderRadius.circular(12)),
-                        child: Text(value,
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: badgeSuccess
-                                    ? Colors.green
-                                    : Colors.grey[700])),
-                      ),
-                    )
-                  : Text(value,
-                      style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w500)),
-            ),
+                                ? const Color(0xFFBBF7D0)
+                                : const Color(0xFFE2E8F0))),
+                    child: Text(value,
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: badgeSuccess
+                                ? const Color(0xFF16A34A)
+                                : const Color(0xFF64748B))),
+                  )
+                : Text(value,
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B))),
           ],
         ),
       );
@@ -1453,24 +1400,46 @@ class _OutletReviewStep extends ConsumerWidget {
     return _buildCard(
       title: 'Outlet Details',
       step: 0,
-      child: Column(
+      child: Wrap(
+        spacing: 24,
+        runSpacing: 4,
         children: [
-          row('Outlet Name',
-              form.outletName.isNotEmpty ? form.outletName : '-'),
-          row('Outlet Code', 'Generated by backend'),
-          row('Outlet Type', _displayOutletType(form.outletType)),
-          row('Status', _displayStatus(form.status),
-              isBadge: true, badgeSuccess: form.status == 'ACTIVE'),
-          row('Outlet Manager', form.contactName ?? '-'),
-          row('Outlet Email',
-              form.emailAddress.isNotEmpty ? form.emailAddress : '-'),
-          row('Outlet Phone',
-              form.mainPhoneNumber.isNotEmpty ? form.mainPhoneNumber : '-'),
-          row('Timezone', form.timezone.isNotEmpty ? form.timezone : '-'),
-          row('Main / Central Outlet', 'No',
-              isBadge: true, badgeSuccess: false),
-          row('Default for New Tills', form.isDefaultOutlet ? 'Yes' : 'No',
-              isBadge: true, badgeSuccess: form.isDefaultOutlet),
+          SizedBox(
+              width: 160,
+              child: row('Outlet Name',
+                  form.outletName.isNotEmpty ? form.outletName : '-')),
+          SizedBox(
+              width: 160, child: row('Outlet Code', 'Generated automatically')),
+          SizedBox(
+              width: 160,
+              child: row('Outlet Type', _displayOutletType(form.outletType))),
+          SizedBox(
+              width: 160,
+              child: row('Status', _displayStatus(form.status),
+                  isBadge: true, badgeSuccess: form.status == 'ACTIVE')),
+          SizedBox(
+              width: 160, child: row('Manager', form.contactName ?? '-')),
+          SizedBox(
+              width: 160,
+              child: row('Phone',
+                  form.mainPhoneNumber.isNotEmpty ? form.mainPhoneNumber : '-')),
+          SizedBox(
+              width: 160,
+              child: row('Email',
+                  form.emailAddress.isNotEmpty ? form.emailAddress : '-')),
+          SizedBox(
+              width: 160,
+              child: row('Timezone',
+                  form.timezone.isNotEmpty ? form.timezone : '-')),
+          SizedBox(
+              width: 160,
+              child: row('Main Outlet', 'No',
+                  isBadge: true, badgeSuccess: false)),
+          SizedBox(
+              width: 160,
+              child: row('Default for Tills',
+                  form.isDefaultOutlet ? 'Yes' : 'No',
+                  isBadge: true, badgeSuccess: form.isDefaultOutlet)),
         ],
       ),
     );
@@ -1489,43 +1458,53 @@ class _OutletReviewStep extends ConsumerWidget {
       if (form.country.isNotEmpty) form.country,
     ];
 
+    Widget section(String label, String value) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label.toUpperCase(),
+                style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF94A3B8),
+                    letterSpacing: 0.8)),
+            const SizedBox(height: 8),
+            Text(value,
+                style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 1.5,
+                    color: Color(0xFF1E293B))),
+          ],
+        ),
+      );
+    }
+
     return _buildCard(
       title: 'Location & Contact',
       step: 1,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Wrap(
+        spacing: 24,
+        runSpacing: 4,
         children: [
-          const Text('Address',
-              style:
-                  TextStyle(fontSize: 13, color: TenantAdminColors.mutedText)),
-          const SizedBox(height: 4),
-          Text(address.isEmpty ? '-' : address.join('\n'),
-              style:
-                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 16),
-          const Text('Contact Person',
-              style:
-                  TextStyle(fontSize: 13, color: TenantAdminColors.mutedText)),
-          const SizedBox(height: 4),
-          Text(form.contactName?.isNotEmpty == true ? form.contactName! : '-',
-              style:
-                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 16),
-          const Text('Phone Number',
-              style:
-                  TextStyle(fontSize: 13, color: TenantAdminColors.mutedText)),
-          const SizedBox(height: 4),
-          Text(form.contactPhone?.isNotEmpty == true ? form.contactPhone! : '-',
-              style:
-                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 16),
-          const Text('Email Address',
-              style:
-                  TextStyle(fontSize: 13, color: TenantAdminColors.mutedText)),
-          const SizedBox(height: 4),
-          Text(form.contactEmail?.isNotEmpty == true ? form.contactEmail! : '-',
-              style:
-                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+          SizedBox(
+              width: 160,
+              child: section('Address',
+                  address.isEmpty ? '-' : address.join('\n'))),
+          SizedBox(
+              width: 160,
+              child: section('Contact Person',
+                  form.contactName?.isNotEmpty == true ? form.contactName! : '-')),
+          SizedBox(
+              width: 160,
+              child: section('Phone Number',
+                  form.contactPhone?.isNotEmpty == true ? form.contactPhone! : '-')),
+          SizedBox(
+              width: 160,
+              child: section('Email Address',
+                  form.contactEmail?.isNotEmpty == true ? form.contactEmail! : '-')),
         ],
       ),
     );
@@ -1534,31 +1513,51 @@ class _OutletReviewStep extends ConsumerWidget {
   Widget _buildBusinessHoursCard() {
     Widget hourRow(OutletOpeningHour hour) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Row(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-                width: 80,
-                child: Text(hour.day,
-                    style: const TextStyle(
-                        fontSize: 13, color: TenantAdminColors.mutedText))),
-            Expanded(
-              child: Text(
-                hour.closed ? 'Closed' : '${hour.openTime} - ${hour.closeTime}',
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color:
-                        hour.closed ? Colors.red : TenantAdminColors.bodyText),
-              ),
+            Text(hour.day.toUpperCase(),
+                style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF94A3B8),
+                    letterSpacing: 0.8)),
+            const SizedBox(height: 8),
+            Text(
+              hour.closed ? 'Closed' : '${hour.openTime} - ${hour.closeTime}',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: hour.closed ? const Color(0xFFEF4444) : const Color(0xFF1E293B)),
             ),
           ],
         ),
       );
     }
 
-    final col1 = form.openingHours.take(4).toList();
-    final col2 = form.openingHours.skip(4).toList();
+    Widget specialDayRow(String day, String hours) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(day.toUpperCase(),
+                style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF94A3B8),
+                    letterSpacing: 0.8)),
+            const SizedBox(height: 8),
+            Text(hours,
+                style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1E293B))),
+          ],
+        ),
+      );
+    }
 
     return _buildCard(
       title: 'Business Hours',
@@ -1566,166 +1565,67 @@ class _OutletReviewStep extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Regular Hours (Timezone: ${form.timezone})',
-              style:
-                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC), // Slate 50
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFF1F5F9)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.language, size: 16, color: Color(0xFF64748B)),
+                const SizedBox(width: 8),
+                Text(
+                  'Timezone: ${form.timezone.isNotEmpty ? form.timezone : '-'}',
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF475569)), // Slate 600
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text('Regular Hours',
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B))),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 24,
+            runSpacing: 4,
+            children: form.openingHours.map((hour) => SizedBox(width: 140, child: hourRow(hour))).toList(),
+          ),
+          const SizedBox(height: 24),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 24),
+          const Text('Special Days / Holiday Hours',
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B))),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 24,
+            runSpacing: 4,
             children: [
-              Expanded(child: Column(children: col1.map(hourRow).toList())),
-              Expanded(child: Column(children: col2.map(hourRow).toList())),
+              SizedBox(
+                  width: 180,
+                  child: specialDayRow('Christmas Day (Dec 25)', '09:00 AM - 06:00 PM')),
+              SizedBox(
+                  width: 180,
+                  child: specialDayRow("New Year's Day (Jan 01)", '10:00 AM - 08:00 PM')),
             ],
           ),
-          const SizedBox(height: 16),
-          const Text('Special Days / Holiday Hours',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 12),
-          const Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                SizedBox(
-                    width: 140,
-                    child: Text('Christmas Day (Dec 25)',
-                        style: TextStyle(
-                            fontSize: 13, color: TenantAdminColors.mutedText))),
-                Expanded(
-                    child: Text('09:00 AM - 06:00 PM',
-                        style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w500))),
-              ],
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                SizedBox(
-                    width: 140,
-                    child: Text("New Year's Day (Jan 01)",
-                        style: TextStyle(
-                            fontSize: 13, color: TenantAdminColors.mutedText))),
-                Expanded(
-                    child: Text('10:00 AM - 08:00 PM',
-                        style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w500))),
-              ],
-            ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildImagePreviewCard(
-      BuildContext context, OutletImageUploadState imageState) {
-    final hasImage =
-        imageState.previewBytes != null || imageState.remoteImageUrl != null;
 
-    return _buildCard(
-      title: 'Outlet Image Preview',
-      step: 1,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            child: AspectRatio(
-              aspectRatio: 1.6,
-              child: hasImage
-                  ? (imageState.previewBytes != null
-                      ? Image.memory(imageState.previewBytes!,
-                          fit: BoxFit.cover)
-                      : Image.network(imageState.remoteImageUrl!,
-                          fit: BoxFit.cover))
-                  : Container(
-                      color: const Color(0xFFF5F5F5),
-                      child: const Center(
-                        child: Icon(Icons.storefront_outlined,
-                            size: 48, color: TenantAdminColors.mutedText),
-                      ),
-                    ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text('This image will represent your outlet across the system.',
-              style:
-                  TenantAdminTextStyles.muted(context).copyWith(fontSize: 12)),
-        ],
-      ),
-    );
-  }
-}
-
-class _ReviewInfoPanel extends StatelessWidget {
-  const _ReviewInfoPanel();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFA),
-        border: Border.all(color: TenantAdminColors.border),
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      ),
-      child: const Column(
-        children: [
-          _PanelItem(Icons.storefront_outlined, 'Outlet will be created',
-              'The outlet will be created with the information shown on this review page once you confirm.'),
-          Divider(height: 1, color: TenantAdminColors.border),
-          _PanelItem(Icons.point_of_sale_outlined, 'Till assignment',
-              'New tills will be assigned to this outlet by default.'),
-          Divider(height: 1, color: TenantAdminColors.border),
-          _PanelItem(Icons.bar_chart_outlined, 'Sales & reporting',
-              'This outlet will be included in sales, stock, and performance reports immediately.'),
-          Divider(height: 1, color: TenantAdminColors.border),
-          _PanelItem(Icons.group_outlined, 'Access & permissions',
-              'Access is managed through user roles and outlet assignments.'),
-        ],
-      ),
-    );
-  }
-}
-
-class _PanelItem extends StatelessWidget {
-  const _PanelItem(this.icon, this.title, this.desc);
-  final IconData icon;
-  final String title;
-  final String desc;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            backgroundColor: const Color(0xFFFFF0E6),
-            radius: 20,
-            child:
-                Icon(icon, color: TenantAdminColors.posHomeOrangeEnd, size: 20),
-          ),
-          const SizedBox(width: TenantAdminSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 13)),
-                const SizedBox(height: 4),
-                Text(desc,
-                    style: const TextStyle(
-                        color: TenantAdminColors.mutedText, fontSize: 12)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _OutletWizardActions extends StatelessWidget {
@@ -1814,10 +1714,6 @@ Widget _field(
     children: [
       Row(
         children: [
-          if (icon != null) ...[
-            Icon(icon, size: 16, color: TenantAdminColors.mutedText),
-            const SizedBox(width: TenantAdminSpacing.sm),
-          ],
           Expanded(
             child: Text.rich(
               TextSpan(
@@ -1840,44 +1736,68 @@ Widget _field(
         ],
       ),
       const SizedBox(height: TenantAdminSpacing.sm),
-      TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        maxLength: maxLength,
-        decoration: InputDecoration(
-          hintText: 'Enter ${label.toLowerCase()}',
-          hintStyle: const TextStyle(
-              color: TenantAdminColors.mutedText,
-              fontWeight: FontWeight.normal),
-          errorText: errors[key],
-          counterText: '',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            borderSide: const BorderSide(color: TenantAdminColors.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            borderSide: const BorderSide(color: TenantAdminColors.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            borderSide: const BorderSide(color: TenantAdminColors.primary),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: TenantAdminSpacing.lg,
-            vertical: TenantAdminSpacing.md,
-          ),
+      Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.01),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        validator: (value) {
-          final trimmed = value?.trim() ?? '';
-          if (isRequired && trimmed.isEmpty) {
-            return '$label is required.';
-          }
-          if (maxLength != null && trimmed.length > maxLength) {
-            return '$label must be $maxLength characters or less.';
-          }
-          return validator?.call(value);
-        },
+        child: TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLength: maxLength,
+          style: const TextStyle(
+            color: TenantAdminColors.bodyText,
+            fontWeight: FontWeight.w500,
+          ),
+          decoration: InputDecoration(
+            hintText: 'Enter ${label.toLowerCase().replaceAll(RegExp(r'\(optional\)'), '').trim()}',
+            hintStyle: const TextStyle(
+                color: TenantAdminColors.mutedText,
+                fontWeight: FontWeight.normal),
+            errorText: errors[key],
+            counterText: '',
+            filled: true,
+            fillColor: Colors.white,
+            prefixIcon: icon != null 
+                ? Icon(icon, size: 20, color: const Color(0xFF94A3B8))
+                : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              borderSide: const BorderSide(color: TenantAdminColors.posHomeOrangeEnd, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              borderSide: const BorderSide(color: TenantAdminColors.danger),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: TenantAdminSpacing.lg,
+              vertical: TenantAdminSpacing.md,
+            ),
+          ),
+          validator: (value) {
+            final trimmed = value?.trim() ?? '';
+            if (isRequired && trimmed.isEmpty) {
+              return '$label is required.';
+            }
+            if (maxLength != null && trimmed.length > maxLength) {
+              return '$label must be $maxLength characters or less.';
+            }
+            return validator?.call(value);
+          },
+        ),
       ),
     ],
   );

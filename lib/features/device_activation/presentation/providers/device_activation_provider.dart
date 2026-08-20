@@ -46,11 +46,12 @@ class DeviceActivationState {
 class DeviceActivationController extends StateNotifier<DeviceActivationState> {
   DeviceActivationController(this._activateDevice, this._storage)
       : super(const DeviceActivationState()) {
-    _restoreDeviceContext();
+    _hydrationFuture = _restoreDeviceContext();
   }
 
   final ActivateDevice _activateDevice;
   final DeviceContextStorage _storage;
+  Future<void>? _hydrationFuture;
 
   Future<bool> refreshCurrentDevice({required String deviceName}) async {
     if (state.isRefreshing) {
@@ -195,6 +196,19 @@ class DeviceActivationController extends StateNotifier<DeviceActivationState> {
       return;
     }
 
+    if (_hydrationFuture != null) {
+      return _hydrationFuture;
+    }
+
+    _hydrationFuture = _performHydration();
+    try {
+      await _hydrationFuture;
+    } finally {
+      _hydrationFuture = null;
+    }
+  }
+
+  Future<void> _performHydration() async {
     try {
       final device = await _storage.read();
       if (device != null) {

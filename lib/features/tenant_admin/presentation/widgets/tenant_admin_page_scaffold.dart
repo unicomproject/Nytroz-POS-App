@@ -65,7 +65,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
                     showBackButton: showBackButton,
                     onBackButtonPressed: onBackButtonPressed,
                   ),
-                const SizedBox(height: TenantAdminSpacing.xl),
+                SizedBox(height: constraints.maxHeight < 720 ? TenantAdminSpacing.sm : TenantAdminSpacing.xl),
               ],
               if (scrollable) child else Expanded(child: child),
             ],
