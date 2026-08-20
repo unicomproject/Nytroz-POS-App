@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../layout/tenant_admin_breadcrumb.dart';
@@ -66,6 +67,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
                     onBackButtonPressed: onBackButtonPressed,
                   ),
                 SizedBox(height: constraints.maxHeight < 720 ? TenantAdminSpacing.sm : TenantAdminSpacing.xl),
+                const SizedBox(height: 20),
               ],
               if (scrollable) child else Expanded(child: child),
             ],
@@ -85,7 +87,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
             padding: framePadding,
             child: Container(
               width: double.infinity,
-              constraints: fillHeight
+              constraints: fillHeight && constraints.maxHeight.isFinite && constraints.maxHeight < 10000
                   ? BoxConstraints(
                       minHeight: (constraints.maxHeight - verticalFrameInset)
                           .clamp(0.0, double.infinity),
@@ -103,7 +105,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
                   ? SingleChildScrollView(
                       padding: basePadding,
                       child: ConstrainedBox(
-                        constraints: fillHeight
+                        constraints: fillHeight && constraints.maxHeight.isFinite && constraints.maxHeight < 10000
                             ? BoxConstraints(
                                 minHeight: (constraints.maxHeight -
                                         verticalFrameInset -
@@ -242,7 +244,7 @@ class _HeaderText extends StatelessWidget {
               if (title.isNotEmpty)
                 Text(title, style: TenantAdminTextStyles.pageTitle(context)),
               if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
-                const SizedBox(height: TenantAdminSpacing.xs),
+                const SizedBox(height: 6),
                 Text(subtitle!, style: TenantAdminTextStyles.muted(context)),
               ],
             ],

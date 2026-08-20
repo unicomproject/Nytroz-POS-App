@@ -219,6 +219,9 @@ class _TwoLineCell extends StatelessWidget {
       );
 }
 
+
+
+
 String? _nonEmpty(String? value) =>
     value?.trim().isNotEmpty == true ? value!.trim() : null;
 String _dash(String value) => value.trim().isEmpty ? '—' : value.trim();

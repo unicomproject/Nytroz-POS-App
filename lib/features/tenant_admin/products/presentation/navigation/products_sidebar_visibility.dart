@@ -63,6 +63,13 @@ class ProductsSidebarVisibility {
         permissionCode: TenantAdminPermissionCodes.tenantBrandsView,
         isVisible: access.canViewBrandsNav(),
       ),
+      ProductsSidebarChildVisibility(
+        key: 'tax',
+        label: 'Tax',
+        route: ProductsSidebarRoutes.tax,
+        permissionCode: TenantAdminPermissionCodes.tenantProductsView,
+        isVisible: access.canAccessProductListPage(),
+      ),
     ];
 
     final visibleChildren =

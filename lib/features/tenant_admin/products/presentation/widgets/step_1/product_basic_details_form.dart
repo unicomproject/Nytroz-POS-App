@@ -16,7 +16,7 @@ class ProductBasicDetailsForm extends StatelessWidget {
     required this.fieldErrors,
     required this.onCategoryChanged,
     required this.onBrandChanged,
-    this.imageUploadCard,
+    this.channelAvailabilityCard,
   });
 
   final TextEditingController nameController;
@@ -32,7 +32,7 @@ class ProductBasicDetailsForm extends StatelessWidget {
   final ValueChanged<String?> onCategoryChanged;
   final ValueChanged<String?> onBrandChanged;
 
-  final Widget? imageUploadCard;
+  final Widget? channelAvailabilityCard;
 
   @override
   Widget build(BuildContext context) {
@@ -50,9 +50,9 @@ class ProductBasicDetailsForm extends StatelessWidget {
           _buildCategoryDropdown(),
           const SizedBox(height: TenantAdminSpacing.md),
           _buildBrandDropdown(),
-          if (imageUploadCard != null) ...[
+          if (channelAvailabilityCard != null) ...[
             const SizedBox(height: TenantAdminSpacing.md),
-            imageUploadCard!,
+            channelAvailabilityCard!,
           ],
           const SizedBox(height: TenantAdminSpacing.md),
           _buildShortDescriptionField(),
@@ -91,9 +91,9 @@ class ProductBasicDetailsForm extends StatelessWidget {
               _buildCodeField(),
               const SizedBox(height: TenantAdminSpacing.md),
               _buildBrandDropdown(),
-              if (imageUploadCard != null) ...[
+              if (channelAvailabilityCard != null) ...[
                 const SizedBox(height: TenantAdminSpacing.md),
-                imageUploadCard!,
+                channelAvailabilityCard!,
               ],
             ],
           ),
@@ -114,7 +114,7 @@ class ProductBasicDetailsForm extends StatelessWidget {
 
   Widget _buildCodeField() {
     return ProductFormTextField(
-      label: 'Short Name / Internal Code',
+      label: 'Short Name / Product Code',
       hint: 'e.g. MERCH-TSHIRT-01',
       icon: Icons.qr_code_2_outlined,
       controller: codeController,

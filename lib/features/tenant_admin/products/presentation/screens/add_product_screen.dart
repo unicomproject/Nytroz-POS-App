@@ -11,9 +11,11 @@ class AddProductScreen extends ConsumerWidget {
   const AddProductScreen({
     super.key,
     this.resumeProductId,
+    this.resumeLocalDraftId,
   });
 
   final String? resumeProductId;
+  final String? resumeLocalDraftId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,6 +37,7 @@ class AddProductScreen extends ConsumerWidget {
     return TenantAdminPageScaffold(
       title: 'Add Product',
       subtitle: 'Enter the basic information for the product.',
+      scrollable: false,
       child: optionsState.when(
         loading: () => const TenantAdminLoadingSkeleton(rowCount: 8),
         error: (error, stackTrace) => TenantAdminErrorState(
@@ -56,6 +59,7 @@ class AddProductScreen extends ConsumerWidget {
             dropdownsEnabled: true,
             canCreate: ref.watch(productAddPageAccessProvider),
             resumeProductId: resumeProductId,
+            resumeLocalDraftId: resumeLocalDraftId,
           );
         },
       ),

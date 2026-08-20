@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'wizard_actions_footer.dart';
 
-/// Product wizard footer — thin wrapper over [WizardActionsFooter].
+/// Thin legacy alias over [WizardActionsFooter].
 ///
-/// Prefer this (or [WizardActionsFooter] directly) from the Product Flow shell.
-/// Do not re-implement Save & Continue / Back / Save Draft / Skip in step UIs.
+/// Prefer [WizardActionsFooter] from the Product Wizard shell.
+/// Kept so older imports keep compiling until a cleanup chunk removes them.
 class AddProductFooter extends StatelessWidget {
   const AddProductFooter({
     super.key,
