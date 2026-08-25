@@ -547,8 +547,6 @@ class TenantAdminPermissionAliases {
       'tenant.settings.manage',
     ],
     'tenant.settings.manage': [
-      'tenant_settings.view',
-      'settings.view',
       'tenant.settings.manage',
     ],
     'activity_log.view': [

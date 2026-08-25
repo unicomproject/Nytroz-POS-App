@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/widgets/tenant_admin_stepper_header.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Step Progress Indicator – 5 numbered circles with connecting lines
@@ -26,117 +27,15 @@ class RoleSetupProgressIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: TenantAdminSpacing.lg,
-        horizontal: TenantAdminSpacing.xl,
-      ),
-      child: Row(
-        children: List.generate(totalSteps * 2 - 1, (index) {
-          if (index.isOdd) {
-            // Connector line
-            final stepBefore = (index ~/ 2) + 1;
-            final isCompleted = stepBefore < currentStep;
-            return Expanded(
-              child: Container(
-                height: 2,
-                color: isCompleted
-                    ? TenantAdminColors.primary
-                    : TenantAdminColors.border,
-              ),
-            );
-          }
-
-          final step = (index ~/ 2) + 1;
-          final isActive = step == currentStep;
-          final isCompleted = step < currentStep;
-          final label =
-              step <= _stepLabels.length ? _stepLabels[step - 1] : 'Step $step';
-
-          return _StepCircle(
-            step: step,
-            label: label,
-            isActive: isActive,
-            isCompleted: isCompleted,
-          );
-        }),
-      ),
+    final labels = List<String>.generate(
+      totalSteps,
+      (index) => index < _stepLabels.length
+          ? _stepLabels[index]
+          : 'Step ${index + 1}',
     );
-  }
-}
-
-class _StepCircle extends StatelessWidget {
-  const _StepCircle({
-    required this.step,
-    required this.label,
-    required this.isActive,
-    required this.isCompleted,
-  });
-
-  final int step;
-  final String label;
-  final bool isActive;
-  final bool isCompleted;
-
-  @override
-  Widget build(BuildContext context) {
-    Color bgColor;
-    Color textColor;
-    Color borderColor;
-
-    if (isActive) {
-      bgColor = TenantAdminColors.primary;
-      textColor = Colors.white;
-      borderColor = TenantAdminColors.primary;
-    } else if (isCompleted) {
-      bgColor = TenantAdminColors.primary;
-      textColor = Colors.white;
-      borderColor = TenantAdminColors.primary;
-    } else {
-      bgColor = TenantAdminColors.surface;
-      textColor = TenantAdminColors.mutedText;
-      borderColor = TenantAdminColors.border;
-    }
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: bgColor,
-            shape: BoxShape.circle,
-            border: Border.all(color: borderColor, width: 2),
-          ),
-          child: Center(
-            child: isCompleted
-                ? const Icon(Icons.check, color: Colors.white, size: 18)
-                : Text(
-                    '$step',
-                    style: TextStyle(
-                      color: textColor,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
-          ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.xs),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-            color: isActive
-                ? TenantAdminColors.primary
-                : isCompleted
-                    ? TenantAdminColors.bodyText
-                    : TenantAdminColors.mutedText,
-          ),
-        ),
-      ],
+    return TenantAdminStepperHeader(
+      steps: labels,
+      currentStep: (currentStep - 1).clamp(0, totalSteps - 1).toInt(),
     );
   }
 }
@@ -186,14 +85,13 @@ class RoleSetupStepHeader extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Footer Actions – Cancel/Back | Save Draft | Continue / Create Role
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Shared navigation and submission actions for the five-step setup flow.
 class RoleSetupFooterActions extends StatelessWidget {
   const RoleSetupFooterActions({
     super.key,
     this.onBack,
-    this.onSaveDraft,
     this.onContinue,
     this.backLabel,
     this.continueLabel = 'Continue →',
@@ -202,7 +100,6 @@ class RoleSetupFooterActions extends StatelessWidget {
   });
 
   final VoidCallback? onBack;
-  final VoidCallback? onSaveDraft;
   final VoidCallback? onContinue;
   final String? backLabel;
   final String continueLabel;
@@ -211,6 +108,53 @@ class RoleSetupFooterActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final backButton = OutlinedButton(
+      onPressed: onBack,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: TenantAdminColors.bodyText,
+        side: const BorderSide(color: TenantAdminColors.border),
+        padding: const EdgeInsets.symmetric(
+          horizontal: TenantAdminSpacing.xl,
+          vertical: TenantAdminSpacing.md,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        ),
+        minimumSize: const Size(44, TenantAdminContentTokens.buttonHeight),
+      ),
+      child: Text(
+        backLabel ?? 'Cancel',
+        style: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+    );
+    final continueButton = ElevatedButton(
+      onPressed: canContinue && !isContinuing ? onContinue : null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: TenantAdminColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(
+          horizontal: TenantAdminSpacing.xl,
+          vertical: TenantAdminSpacing.md,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        ),
+        minimumSize: const Size(120, TenantAdminContentTokens.buttonHeight),
+        textStyle: const TextStyle(fontWeight: FontWeight.w800),
+      ),
+      child: isContinuing
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : Text(continueLabel),
+    );
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -221,85 +165,30 @@ class RoleSetupFooterActions extends StatelessWidget {
               top: BorderSide(color: TenantAdminColors.border),
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (onBack != null)
-                OutlinedButton(
-                  onPressed: onBack,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: TenantAdminColors.bodyText,
-                    side: const BorderSide(color: TenantAdminColors.border),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: TenantAdminSpacing.xl,
-                      vertical: TenantAdminSpacing.md,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                    ),
-                    minimumSize: const Size(44, TenantAdminContentTokens.buttonHeight),
-                  ),
-                  child: Text(
-                    backLabel ?? 'Cancel',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                )
-              else
-                const SizedBox.shrink(),
-              Row(
-                children: [
-                  if (onSaveDraft != null) ...[
-                    OutlinedButton(
-                      onPressed: onSaveDraft,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: TenantAdminColors.primary,
-                        side: const BorderSide(color: TenantAdminColors.primary),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: TenantAdminSpacing.xl,
-                          vertical: TenantAdminSpacing.md,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                        ),
-                        minimumSize: const Size(44, TenantAdminContentTokens.buttonHeight),
-                      ),
-                      child: const Text(
-                        'Save Draft',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(width: TenantAdminSpacing.md),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final stackActions =
+                  constraints.maxWidth < TenantAdminBreakpoints.mobile;
+              if (stackActions) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (onBack != null) backButton,
+                    if (onBack != null)
+                      const SizedBox(height: TenantAdminSpacing.sm),
+                    continueButton,
                   ],
-                  ElevatedButton(
-                    onPressed: canContinue ? onContinue : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: TenantAdminColors.primary,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: TenantAdminSpacing.xl,
-                        vertical: TenantAdminSpacing.md,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                      ),
-                      minimumSize: const Size(120, TenantAdminContentTokens.buttonHeight),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                    child: isContinuing
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(continueLabel),
-                  ),
+                );
+              }
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (onBack != null) backButton else const SizedBox.shrink(),
+                  continueButton,
                 ],
-              ),
-            ],
+              );
+            },
           ),
         ),
         Padding(
@@ -307,14 +196,18 @@ class RoleSetupFooterActions extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.lock_outline, size: 13, color: TenantAdminColors.mutedText),
+              const Icon(Icons.lock_outline,
+                  size: 13, color: TenantAdminColors.mutedText),
               const SizedBox(width: 4),
-              Text(
-                'All changes are tenant-specific and secure.',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: TenantAdminColors.mutedText.withValues(alpha: 0.8),
-                  fontWeight: FontWeight.w500,
+              Flexible(
+                child: Text(
+                  'All changes are tenant-specific and secure.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: TenantAdminColors.mutedText.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
@@ -474,7 +367,9 @@ class _HexagonPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = isSelected ? color.withValues(alpha: 0.12) : color.withValues(alpha: 0.04)
+      ..color = isSelected
+          ? color.withValues(alpha: 0.12)
+          : color.withValues(alpha: 0.04)
       ..style = PaintingStyle.fill;
 
     final borderPaint = Paint()
@@ -588,9 +483,8 @@ class RoleTemplateCard extends StatelessWidget {
                       : TenantAdminColors.border,
                   width: isSelected ? 2 : 1.5,
                 ),
-                color: isSelected
-                    ? TenantAdminColors.primary
-                    : Colors.transparent,
+                color:
+                    isSelected ? TenantAdminColors.primary : Colors.transparent,
               ),
               child: isSelected
                   ? const Icon(Icons.check, color: Colors.white, size: 16)
@@ -616,6 +510,7 @@ class RoleModuleCard extends StatelessWidget {
     required this.isSelected,
     required this.isEntitled,
     required this.onTap,
+    this.unavailableMessage,
   });
 
   final String title;
@@ -624,6 +519,7 @@ class RoleModuleCard extends StatelessWidget {
   final bool isSelected;
   final bool isEntitled;
   final VoidCallback onTap;
+  final String? unavailableMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -718,7 +614,7 @@ class RoleModuleCard extends StatelessWidget {
             if (!isEntitled) ...[
               const SizedBox(height: TenantAdminSpacing.sm),
               Text(
-                'Not available on your subscription',
+                unavailableMessage ?? 'Not available for this role',
                 style: TextStyle(
                   color: TenantAdminColors.warning,
                   fontSize: 11,
@@ -792,7 +688,11 @@ class RoleReviewSectionCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: TenantAdminSpacing.md),
-          content,
+          Expanded(
+            child: SingleChildScrollView(
+              child: content,
+            ),
+          ),
         ],
       ),
     );

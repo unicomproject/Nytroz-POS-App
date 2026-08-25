@@ -20,7 +20,7 @@ class TenantAdminOutletListItemDto {
       code: json['code'] as String? ?? '',
       type: json['type'] as String? ?? '',
       status: json['status'] as String? ?? '',
-      imageUrl: json['imageUrl'] as String?,
+      imageUrl: _imageUrl(json),
       manager: json['manager'] != null
           ? TenantAdminOutletManagerPreviewDto.fromJson(
               json['manager'] as Map<String, dynamic>)
@@ -53,6 +53,18 @@ class TenantAdminOutletListItemDto {
   final TenantAdminOutletHealthPreviewDto? operationalHealth;
   final TenantAdminOutletLocationPreviewDto? location;
   final TenantAdminOutletListSectionAccessDto access;
+
+  static String? _imageUrl(Map<String, dynamic> json) {
+    final primaryImage = json['primaryImage'];
+    final image = json['image'];
+    final rawUrl = json['imageUrl'] ??
+        (primaryImage is Map ? primaryImage['publicUrl'] : null) ??
+        (primaryImage is Map ? primaryImage['imageUrl'] : null) ??
+        (image is Map ? image['publicUrl'] : null) ??
+        (image is Map ? image['imageUrl'] : null);
+    final url = rawUrl?.toString().trim();
+    return url == null || url.isEmpty ? null : url;
+  }
 }
 
 class TenantAdminOutletManagerPreviewDto {

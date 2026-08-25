@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/core/network/dio_provider.dart';
+import 'package:nytroz_pos/core/network/media_url_resolver.dart';
 import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../domain/entities/outlet.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_mobile_list_card.dart';
+import '../../../presentation/widgets/tenant_admin_row_action.dart';
 import '../../../presentation/widgets/tenant_admin_status_badge.dart';
 import '../config/outlet_row_action_configs.dart';
 import '../providers/outlet_providers.dart';
@@ -100,6 +103,14 @@ class _OutletMobileCard extends ConsumerWidget {
     }
 
     final statusLabel = displayOutletStatus(outlet.status);
+    final imageUrl = outlet.imageUrl?.trim();
+    final resolvedImageUrl = imageUrl == null || imageUrl.isEmpty
+        ? null
+        : MediaUrlResolver.resolve(
+              imageUrl,
+              apiBaseUrl: ref.watch(appDioProvider).options.baseUrl,
+            ) ??
+            imageUrl;
 
     Widget? trailing;
     if (visibility.showMobileStatusBadge || visibility.showMobileSales) {
@@ -130,17 +141,17 @@ class _OutletMobileCard extends ConsumerWidget {
         child: SizedBox(
           width: 44,
           height: 44,
-          child: (outlet.imageUrl != null && outlet.imageUrl!.isNotEmpty)
+          child: resolvedImageUrl != null
               ? Image.network(
-                  outlet.imageUrl!,
+                  resolvedImageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _outletImagePlaceholder(outlet),
+                  errorBuilder: (_, __, ___) => _outletImagePlaceholder(),
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
-                    return _outletImagePlaceholder(outlet);
+                    return _outletImagePlaceholder();
                   },
                 )
-              : _outletImagePlaceholder(outlet),
+              : _outletImagePlaceholder(),
         ),
       ),
       trailing: trailing,
@@ -148,18 +159,29 @@ class _OutletMobileCard extends ConsumerWidget {
           ? Align(
               alignment: Alignment.centerRight,
               child: PopupMenuButton<OutletRowActionId>(
-                icon: const Icon(Icons.more_vert),
+                icon: const Icon(
+                  Icons.more_vert,
+                  color: TenantAdminColors.mutedText,
+                ),
                 tooltip: 'Actions',
+                position: PopupMenuPosition.under,
+                constraints: const BoxConstraints(minWidth: 172),
+                menuPadding: const EdgeInsets.symmetric(
+                  vertical: TenantAdminSpacing.xs,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+                ),
                 itemBuilder: (context) {
                   return [
                     for (final action in visibility.visibleRowActions)
                       PopupMenuItem<OutletRowActionId>(
                         value: action.actionId,
-                        child: ListTile(
-                          leading: Icon(action.icon),
-                          title: Text(action.label),
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
+                        child: TenantAdminRowActionMenuItem(
+                          icon: action.icon,
+                          label: action.label,
+                          destructive:
+                              action.actionId == OutletRowActionId.delete,
                         ),
                       ),
                   ];
@@ -231,31 +253,17 @@ class _OutletMobileCard extends ConsumerWidget {
   }
 }
 
-Widget _outletImagePlaceholder(Outlet outlet) {
-  String dummyUrl =
-      'https://images.unsplash.com/photo-1555529771-835f59fc5efe?auto=format&fit=crop&q=80&w=300';
-
-  if (outlet.name.toLowerCase().contains('warehouse') ||
-      outlet.outletType?.toUpperCase() == 'WAREHOUSE') {
-    dummyUrl =
-        'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=300';
-  } else if (outlet.name.toLowerCase().contains('city') ||
-      outlet.name.toLowerCase().contains('mall')) {
-    dummyUrl =
-        'https://images.unsplash.com/photo-1519567281027-d15c128f64a4?auto=format&fit=crop&q=80&w=300';
-  } else if (outlet.name.toLowerCase().contains('main')) {
-    dummyUrl =
-        'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300';
-  }
-
-  return Image.network(
-    dummyUrl,
+Widget _outletImagePlaceholder() {
+  return Image.asset(
+    'assets/images/outlet-placeholder.png',
     fit: BoxFit.cover,
     errorBuilder: (context, error, stackTrace) => Container(
-      color: const Color(0xFFF1F5F9), // TenantAdminColors.background
+      color: TenantAdminColors.secondary,
       child: const Center(
-        child: Icon(Icons.image_not_supported,
-            color: Color(0xFF94A3B8)), // TenantAdminColors.mutedText
+        child: Icon(
+          Icons.storefront_rounded,
+          color: TenantAdminColors.primary,
+        ),
       ),
     ),
   );

@@ -32,6 +32,7 @@ class TillMonitoringList extends ConsumerWidget {
         }
 
         final listView = ListView.separated(
+          primary: false,
           shrinkWrap: !scrollable,
           physics: scrollable
               ? const ClampingScrollPhysics()

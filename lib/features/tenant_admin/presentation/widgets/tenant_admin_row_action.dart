@@ -54,3 +54,41 @@ class TenantAdminRowAction extends StatelessWidget {
     );
   }
 }
+
+class TenantAdminRowActionMenuItem extends StatelessWidget {
+  const TenantAdminRowActionMenuItem({
+    super.key,
+    required this.icon,
+    required this.label,
+    this.destructive = false,
+    this.success = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool destructive;
+  final bool success;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = destructive
+        ? TenantAdminColors.danger
+        : success
+            ? TenantAdminColors.success
+            : TenantAdminColors.info;
+
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: TenantAdminSpacing.md),
+        Flexible(
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: color, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
+    );
+  }
+}

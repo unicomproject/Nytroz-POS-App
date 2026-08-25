@@ -76,9 +76,10 @@ class RolePermissionsScreen extends ConsumerWidget {
       actions: [
         if (canUpdate) ...[
           TenantAdminSecondaryButton(
-            label: 'Create Role',
+            label: 'Configure Role Access',
             icon: Icons.add,
-            onPressed: () => context.go('/tenant-admin/roles-permissions/create/select-role'),
+            onPressed: () => context
+                .go('/tenant-admin/roles-permissions/create/select-role'),
           ),
           const SizedBox(width: TenantAdminSpacing.md),
           TenantAdminPrimaryButton(
