@@ -499,34 +499,6 @@ class ProductTypeTracking extends StatelessWidget {
       ],
     );
   }
-
-  Widget _buildControlHintRow({
-    required bool isNarrow,
-    required Widget tile,
-    required Widget hint,
-  }) {
-    if (isNarrow) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          tile,
-          const SizedBox(height: 6),
-          hint,
-        ],
-      );
-    }
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(flex: 5, child: tile),
-          const SizedBox(width: TenantAdminSpacing.md),
-          Expanded(flex: 5, child: hint),
-        ],
-      ),
-    );
-  }
-
   Widget _buildInfoBanner(String message, {IconData? icon, Color? color}) {
     final bannerColor = color ?? TenantAdminColors.posHomeAccentOrange;
     final iconData = icon ?? Icons.info_outline;
@@ -704,7 +676,7 @@ class TrackingRuleTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final opacity = enabled ? 1.0 : 0.5;
-    final activeColor = const Color(0xFF22C55E); // Green
+    const activeColor = Color(0xFF22C55E); // Green
 
     return Opacity(
       opacity: opacity,

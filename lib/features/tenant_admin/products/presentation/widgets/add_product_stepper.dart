@@ -158,7 +158,6 @@ class _StepNode extends StatelessWidget {
   final bool showRightConnector;
 
   bool get _isCurrent => stepNum == currentStep;
-  bool get _isCompleted => stepNum < currentStep;
 
   @override
   Widget build(BuildContext context) {
@@ -285,16 +284,12 @@ class _StepCircle extends StatelessWidget {
 }
 
 class _StepConnector extends StatelessWidget {
-  const _StepConnector({
-    this.height = 1.0,
-  });
-
-  final double height;
+  const _StepConnector();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: height,
+      height: 1.0,
       color: const Color(0xFFE2E8F0),
     );
   }

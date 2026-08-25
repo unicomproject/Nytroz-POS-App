@@ -239,7 +239,7 @@ class _BasicDetailsCard extends StatelessWidget {
               : constraints.maxWidth >= 420
                   ? 2
                   : 1;
-          final spacing = TenantAdminSpacing.md;
+          const spacing = TenantAdminSpacing.md;
           final itemWidth =
               (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
                   crossAxisCount;
@@ -287,7 +287,7 @@ class _InventoryPricingCard extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final crossAxisCount = constraints.maxWidth >= 360 ? 2 : 1;
-          final spacing = TenantAdminSpacing.md;
+          const spacing = TenantAdminSpacing.md;
           final itemWidth =
               (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
                   crossAxisCount;

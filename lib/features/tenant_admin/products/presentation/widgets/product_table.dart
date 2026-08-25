@@ -102,12 +102,12 @@ class _ProductTableState extends State<ProductTable> {
             : ProductTable._headingHeight +
                 (ProductTable._rowHeight * ProductTable._visibleRows);
 
-        final maxBodyHeight = ProductTable._rowHeight * ProductTable._visibleRows;
+        const maxBodyHeight = ProductTable._rowHeight * ProductTable._visibleRows;
         final bodyHeight = (availableHeight - ProductTable._headingHeight)
             .clamp(0.0, maxBodyHeight)
             .toDouble();
 
-        final minTableWidth = _tableContentWidth;
+        const minTableWidth = _tableContentWidth;
         final tableWidth = constraints.maxWidth > minTableWidth
             ? constraints.maxWidth
             : minTableWidth;

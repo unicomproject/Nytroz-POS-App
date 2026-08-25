@@ -1073,7 +1073,7 @@ class _ResponsiveFieldGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final spacing = TenantAdminSpacing.md;
+        const spacing = TenantAdminSpacing.md;
         final count = crossAxisCount.clamp(1, 3);
         final itemWidth =
             (constraints.maxWidth - spacing * (count - 1)) / count;
