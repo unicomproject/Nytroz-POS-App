@@ -1361,9 +1361,8 @@ class _OutletAccessModeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = selected
-        ? TenantAdminColors.primary
-        : TenantAdminColors.border;
+    final borderColor =
+        selected ? TenantAdminColors.primary : TenantAdminColors.border;
     final backgroundColor =
         selected ? TenantAdminColors.secondary : TenantAdminColors.surface;
 
@@ -1422,11 +1421,9 @@ class _CardSection extends StatelessWidget {
   const _CardSection({
     required this.title,
     required this.child,
-    this.subtitle,
   });
 
   final String title;
-  final String? subtitle;
   final Widget child;
 
   @override
@@ -1453,16 +1450,6 @@ class _CardSection extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (subtitle != null) ...[
-                  const SizedBox(width: TenantAdminSpacing.sm),
-                  Flexible(
-                    child: Text(
-                      subtitle!,
-                      style: TenantAdminTextStyles.muted(context),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
               ],
             ),
             const SizedBox(height: TenantAdminSpacing.md),
