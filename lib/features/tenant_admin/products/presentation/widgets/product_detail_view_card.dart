@@ -38,67 +38,65 @@ class ProductDetailViewCard extends StatelessWidget {
     final isTablet = width >= TenantAdminBreakpoints.tablet &&
         width < TenantAdminBreakpoints.desktop;
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Row 1: Product Image + Basic Details
-          if (isDesktop || isTablet)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: isDesktop ? 280 : 240,
-                  child: _ProductImageCard(detail: detail),
-                ),
-                const SizedBox(width: TenantAdminSpacing.lg),
-                Expanded(
-                  child: _BasicDetailsCard(detail: detail),
-                ),
-              ],
-            )
-          else ...[
-            _ProductImageCard(detail: detail),
-            const SizedBox(height: TenantAdminSpacing.lg),
-            _BasicDetailsCard(detail: detail),
-          ],
-
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Row 1: Product Image + Basic Details
+        if (isDesktop || isTablet)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: isDesktop ? 280 : 240,
+                child: _ProductImageCard(detail: detail),
+              ),
+              const SizedBox(width: TenantAdminSpacing.lg),
+              Expanded(
+                child: _BasicDetailsCard(detail: detail),
+              ),
+            ],
+          )
+        else ...[
+          _ProductImageCard(detail: detail),
           const SizedBox(height: TenantAdminSpacing.lg),
-
-          // Row 2: Inventory & Pricing + Channel Visibility
-          if (isDesktop || isTablet)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _InventoryPricingCard(
-                    detail: detail,
-                    stockStatus: _computedStockStatus,
-                  ),
-                ),
-                const SizedBox(width: TenantAdminSpacing.lg),
-                const Expanded(
-                  flex: 3,
-                  child: _ChannelVisibilityCard(),
-                ),
-              ],
-            )
-          else ...[
-            _InventoryPricingCard(
-              detail: detail,
-              stockStatus: _computedStockStatus,
-            ),
-            const SizedBox(height: TenantAdminSpacing.lg),
-            const _ChannelVisibilityCard(),
-          ],
-
-          const SizedBox(height: TenantAdminSpacing.lg),
-
-          // Row 3: Product Summary (Audit Info)
-          _ProductSummaryAuditCard(detail: detail),
+          _BasicDetailsCard(detail: detail),
         ],
-      ),
+
+        const SizedBox(height: TenantAdminSpacing.lg),
+
+        // Row 2: Inventory & Pricing + Channel Visibility
+        if (isDesktop || isTablet)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 2,
+                child: _InventoryPricingCard(
+                  detail: detail,
+                  stockStatus: _computedStockStatus,
+                ),
+              ),
+              const SizedBox(width: TenantAdminSpacing.lg),
+              const Expanded(
+                flex: 3,
+                child: _ChannelVisibilityCard(),
+              ),
+            ],
+          )
+        else ...[
+          _InventoryPricingCard(
+            detail: detail,
+            stockStatus: _computedStockStatus,
+          ),
+          const SizedBox(height: TenantAdminSpacing.lg),
+          const _ChannelVisibilityCard(),
+        ],
+
+        const SizedBox(height: TenantAdminSpacing.lg),
+
+        // Row 3: Product Summary (Audit Info)
+        _ProductSummaryAuditCard(detail: detail),
+      ],
     );
   }
 }
@@ -125,7 +123,7 @@ class _ProductImageCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                   child: Image.network(
                     detail.imageUrl!,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) =>
                         _buildPlaceholder(),
                   ),
@@ -179,13 +177,6 @@ class _BasicDetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final crossAxisCount = width >= TenantAdminBreakpoints.desktop
-        ? 3
-        : width >= TenantAdminBreakpoints.smallTablet
-            ? 2
-            : 1;
-
     final items = [
       _InfoItemData(
         icon: Icons.inventory_2_outlined,
@@ -243,24 +234,30 @@ class _BasicDetailsCard extends StatelessWidget {
       title: 'Basic Details',
       child: LayoutBuilder(
         builder: (context, constraints) {
-          return GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: TenantAdminSpacing.md,
-              mainAxisSpacing: TenantAdminSpacing.md,
-              mainAxisExtent: 70,
-            ),
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              final item = items[index];
-              return _InfoTile(
-                icon: item.icon,
-                label: item.label,
-                value: item.value,
-              );
-            },
+          final crossAxisCount = constraints.maxWidth >= 720
+              ? 3
+              : constraints.maxWidth >= 420
+                  ? 2
+                  : 1;
+          final spacing = TenantAdminSpacing.md;
+          final itemWidth =
+              (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
+                  crossAxisCount;
+
+          return Wrap(
+            spacing: spacing,
+            runSpacing: spacing,
+            children: [
+              for (final item in items)
+                SizedBox(
+                  width: itemWidth,
+                  child: _InfoTile(
+                    icon: item.icon,
+                    label: item.label,
+                    value: item.value,
+                  ),
+                ),
+            ],
           );
         },
       ),
@@ -287,35 +284,43 @@ class _InventoryPricingCard extends StatelessWidget {
 
     return _SectionCard(
       title: 'Inventory & Pricing',
-      child: GridView(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: TenantAdminSpacing.md,
-          mainAxisSpacing: TenantAdminSpacing.md,
-          mainAxisExtent: 72,
-        ),
-        children: [
-          _InfoTile(
-            icon: Icons.attach_money_outlined,
-            label: 'Price',
-            value: formattedPrice,
-          ),
-          _InfoTile(
-            icon: Icons.inventory_outlined,
-            label: 'Stock',
-            value: stockQty,
-          ),
-          _StatusBadgeTile(
-            label: 'Product Status',
-            badge: ProductStatusBadge(status: detail.status),
-          ),
-          _StatusBadgeTile(
-            label: 'Stock Status',
-            badge: StockStatusBadge(status: stockStatus),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final crossAxisCount = constraints.maxWidth >= 360 ? 2 : 1;
+          final spacing = TenantAdminSpacing.md;
+          final itemWidth =
+              (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
+                  crossAxisCount;
+          final tiles = [
+            _InfoTile(
+              icon: Icons.attach_money_outlined,
+              label: 'Price',
+              value: formattedPrice,
+            ),
+            _InfoTile(
+              icon: Icons.inventory_outlined,
+              label: 'Stock',
+              value: stockQty,
+            ),
+            _StatusBadgeTile(
+              label: 'Product Status',
+              badge: ProductStatusBadge(status: detail.status),
+            ),
+            _StatusBadgeTile(
+              label: 'Stock Status',
+              badge: StockStatusBadge(status: stockStatus),
+            ),
+          ];
+
+          return Wrap(
+            spacing: spacing,
+            runSpacing: spacing,
+            children: [
+              for (final tile in tiles)
+                SizedBox(width: itemWidth, child: tile),
+            ],
+          );
+        },
       ),
     );
   }

@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/add_product_wizard_state.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_wizard_capabilities.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 
 /// Step 7 Review for SIMPLE (and shared shell). Create Product is blocked until Chunk 6.
 class Step7ReviewCreate extends StatelessWidget {
   const Step7ReviewCreate({
     super.key,
     required this.state,
+    this.controller,
+    this.canViewProductCost = true,
   });
 
   final AddProductWizardState state;
+  final AddProductWizardController? controller;
+  final bool canViewProductCost;
 
   String _unitLabel(String? unitId) {
     if (unitId == null || unitId.isEmpty || state.createOptions == null) {
@@ -52,7 +58,7 @@ class Step7ReviewCreate extends StatelessWidget {
     final isVariant = state.productStructure.toUpperCase() == 'VARIANT';
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -179,11 +185,22 @@ class Step7ReviewCreate extends StatelessWidget {
                       iconColor: Colors.blue,
                       rows: [
                         _Row('Selling Price (LKR)', state.standardSellingPrice != null ? _formatCurrency(state.standardSellingPrice!.toDouble()) : '—'),
-                        _Row('Cost Price (LKR)', state.costPrice != null ? _formatCurrency(state.costPrice!.toDouble()) : '—'),
+                        if (canViewProductCost)
+                          _Row('Cost Price (LKR)', state.costPrice != null ? _formatCurrency(state.costPrice!.toDouble()) : '—'),
                         _Row('Tax Class', state.taxName ?? state.taxId ?? 'Standard'),
                         _Row('Tax Included', !state.taxExclusive ? 'Yes' : 'No', isBadge: true, isPositiveBadge: !state.taxExclusive),
                       ],
                     ),
+                    if (_compatibleTrackingRows().isNotEmpty) ...[
+                      const SizedBox(height: TenantAdminSpacing.lg),
+                      _ReviewSectionCard(
+                        title: 'Initial Tracking Details',
+                        icon: Icons.qr_code_2_outlined,
+                        iconColor: Colors.teal,
+                        rows: _compatibleTrackingRows(),
+                        customContent: isVariant ? _variantAssignment() : null,
+                      ),
+                    ],
                     const SizedBox(height: TenantAdminSpacing.lg),
                     _ReviewSectionCard(
                       title: 'Product Images',
@@ -231,6 +248,69 @@ class Step7ReviewCreate extends StatelessWidget {
           ),
           const SizedBox(height: TenantAdminSpacing.xxl),
         ],
+      ),
+    );
+  }
+
+  List<_Row> _compatibleTrackingRows() {
+    final plan = InitialTrackingCompatibility.evaluate(
+      productStructure: state.productStructure,
+      trackInventory: state.trackInventory,
+      batchTracking: state.batchTracking,
+      expiryTracking: state.expiryTracking,
+      serialTracking: state.serialTracking,
+      batch: state.initialBatchNumber,
+      expiry: state.initialExpiryDate,
+      serial: state.initialSerialNumber,
+    );
+    final rows = <_Row>[];
+    if (plan.batchNumber != null && plan.batchNumber!.isNotEmpty) {
+      rows.add(_Row('Batch', plan.batchNumber!));
+    }
+    if (plan.expiryDate != null) {
+      final d = plan.expiryDate!;
+      rows.add(_Row(
+        'Expiry',
+        '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
+      ));
+    }
+    if (plan.serialNumber != null && plan.serialNumber!.isNotEmpty) {
+      rows.add(_Row('Serial', plan.serialNumber!));
+    }
+    return rows;
+  }
+
+  Widget? _variantAssignment() {
+    final included = state.step4State.generatedVariants
+        .where((v) => v.isIncluded)
+        .toList();
+    if (included.isEmpty) {
+      return null;
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        TenantAdminSpacing.md,
+        0,
+        TenantAdminSpacing.md,
+        TenantAdminSpacing.md,
+      ),
+      child: DropdownButtonFormField<String>(
+        value: state.initialTrackingAssignedVariantId,
+        decoration: const InputDecoration(
+          isDense: true,
+          labelText: 'Assign tracking to variant',
+        ),
+        items: included
+            .map(
+              (v) => DropdownMenuItem(
+                value: v.productVariantId ?? v.clientCombinationKey,
+                child: Text(v.displayLabel ?? v.combinationLabel),
+              ),
+            )
+            .toList(),
+        onChanged: controller == null
+            ? null
+            : (value) => controller!.setInitialTrackingAssignedVariantId(value),
       ),
     );
   }

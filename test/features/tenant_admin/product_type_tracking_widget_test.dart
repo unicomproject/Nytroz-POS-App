@@ -230,6 +230,20 @@ void main() {
           findsOneWidget);
     });
 
+    testWidgets('does not show incompatible tracking confirmation dialog',
+        (tester) async {
+      controller.updateInitialBatchNumber('BAT-001');
+      controller.updateInitialSerialNumber('SN-00001');
+
+      await tester.pumpWidget(buildTestWidget(controller.wizardState));
+      await tester.tap(find.text('Simple Product'));
+      await tester.pump();
+
+      expect(find.text('Clear incompatible tracking values?'), findsNothing);
+      expect(find.text('Clear and continue'), findsNothing);
+      expect(controller.wizardState.productStructure, 'SIMPLE');
+    });
+
     testWidgets('structure card selection updates controller state',
         (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(

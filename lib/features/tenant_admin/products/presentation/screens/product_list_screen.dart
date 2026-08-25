@@ -134,44 +134,7 @@ class _ProductListBody extends ConsumerWidget {
 
     return productsState.when(
       loading: () => const TenantAdminLoadingSkeleton(rowCount: 6),
-      error: (error, stackTrace) => Padding(
-        padding: const EdgeInsets.all(TenantAdminSpacing.xl),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                size: 48,
-                color: TenantAdminColors.danger,
-              ),
-              const SizedBox(height: TenantAdminSpacing.md),
-              const Text(
-                'Failed to load products list',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: TenantAdminColors.bodyText,
-                ),
-              ),
-              const SizedBox(height: TenantAdminSpacing.xs),
-              Text(
-                error.toString(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: TenantAdminColors.mutedText),
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              TextButton.icon(
-                onPressed: () {
-                  ref.invalidate(productListProvider);
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-      ),
+      error: (error, stackTrace) => const SizedBox.shrink(),
       data: (result) {
         if (result == null) {
           return const TenantAdminEmptyState(
@@ -308,10 +271,8 @@ class _ProductSearchToolbar extends ConsumerWidget {
         Widget buildFilters(TenantProductFilterOptions? options, bool loading) {
           final categories = options?.categories ?? [];
           final brands = options?.brands ?? [];
-          final productStatuses =
-              options?.productStatuses ?? ['DRAFT', 'ACTIVE', 'INACTIVE'];
-          final stockStatuses = options?.stockStatuses ??
-              ['NOT_TRACKED', 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK'];
+          final productStatuses = options?.productStatuses ?? [];
+          final stockStatuses = options?.stockStatuses ?? [];
 
           final categoryDropdown = DropdownButtonFormField<String?>(
             key: ValueKey(filterState.categoryId),

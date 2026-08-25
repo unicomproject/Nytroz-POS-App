@@ -61,6 +61,10 @@ class ProductListLocalDraftMerger {
     ProductWizardDraft draft,
     TenantProductListQuery query,
   ) {
+    if (draft.localDraftId == 'auto_save_draft') {
+      return false;
+    }
+
     final status = query.productStatus?.trim().toUpperCase();
     if (status != null && status.isNotEmpty && status != 'DRAFT') {
       return false;

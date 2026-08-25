@@ -6,7 +6,7 @@ import 'product_wizard_action_buttons.dart';
 /// Sticky Product Flow wizard footer — single place that composes shared CTAs.
 ///
 /// Pass a callback to show an action; leave it null to hide that button.
-/// Set [showSkip] only when the current step is skippable (e.g. Step 2 hides Skip).
+/// Set [showSkip] on steps 2–6. Step 1 and Step 7 never show Skip.
 class WizardActionsFooter extends StatelessWidget {
   const WizardActionsFooter({
     super.key,
@@ -38,7 +38,7 @@ class WizardActionsFooter extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: TenantAdminSpacing.xl,
-        vertical: TenantAdminSpacing.md,
+        vertical: TenantAdminSpacing.sm,
       ),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,

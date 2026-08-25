@@ -947,6 +947,38 @@ class TenantAdminPermissionAliases {
     'catalog.collections.manage': [
       'catalog.collections.manage',
     ],
+    'catalog.products.publish': [
+      'catalog.products.publish',
+    ],
+    'catalog.product_media.manage': [
+      'catalog.product_media.manage',
+    ],
+    'catalog.product_channels.manage': [
+      'catalog.product_channels.manage',
+    ],
+    'catalog.variants.manage': [
+      'catalog.variants.manage',
+    ],
+    'catalog.combo_components.manage': [
+      'catalog.combo_components.manage',
+    ],
+    'catalog.barcodes.manage': [
+      'catalog.barcodes.manage',
+    ],
+    'catalog.product_pricing.manage': [
+      'catalog.product_pricing.manage',
+    ],
+    'catalog.product_cost.view': [
+      'catalog.product_cost.view',
+    ],
+    'pricing.tax_classes.view': [
+      'pricing.tax_classes.view',
+      'tax.classes.view',
+    ],
+    'tax.classes.view': [
+      'tax.classes.view',
+      'pricing.tax_classes.view',
+    ],
   };
 
   static Iterable<String> expand(String permissionCode) {

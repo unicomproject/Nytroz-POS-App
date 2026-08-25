@@ -10,7 +10,7 @@ import '../../domain/entities/tenant_product.dart';
 import 'product_delete_action.dart';
 import 'product_status_badge.dart';
 
-class ProductTable extends StatelessWidget {
+class ProductTable extends StatefulWidget {
   const ProductTable({
     super.key,
     required this.products,
@@ -24,163 +24,398 @@ class ProductTable extends StatelessWidget {
   final ValueChanged<TenantProduct> onView;
   final ValueChanged<TenantProduct> onEdit;
 
+  static const double _imageSize = 68;
+  static const double _rowHeight = 120;
+  static const double _headingHeight = 48;
+  static const int _visibleRows = 3;
+  static const int pageSize = 6;
+
   @override
-  Widget build(BuildContext context) {
-    return SizedBox.expand(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            physics: const NeverScrollableScrollPhysics(),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                child: DataTable(
-                  headingRowHeight: 52,
-                  dataRowMinHeight: 80,
-                  dataRowMaxHeight: 120,
-                  columnSpacing: TenantAdminSpacing.xl,
-                  horizontalMargin: TenantAdminSpacing.lg,
-                  headingRowColor:
-                      WidgetStateProperty.all(const Color(0xFFF7F8FA)),
-                  headingTextStyle: const TextStyle(
-                    color: TenantAdminColors.bodyText,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w800,
-                  ),
-                  dataTextStyle: const TextStyle(
-                    color: TenantAdminColors.bodyText,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  columns: const [
-                    DataColumn(label: Text('Product')),
-                    DataColumn(label: Text('SKU')),
-                    DataColumn(label: Text('Category')),
-                    DataColumn(label: Text('Variants')),
-                    DataColumn(label: Text('Price')),
-                    DataColumn(label: Text('Stock')),
-                    DataColumn(label: Text('Product Status')),
-                    DataColumn(label: Text('Stock Status')),
-                    DataColumn(label: Text('Actions')),
-                  ],
-                  rows: [
-                    for (final product in products)
-                      DataRow(
-                        cells: [
-                          DataCell(
-                            _ProductIdentityCell(
-                              product: product,
-                              canView: visibility.showViewAction,
-                            ),
-                            onTap: visibility.showViewAction
-                                ? () => onView(product)
-                                : null,
-                          ),
-                          DataCell(_PlainCell(_emptyDash(product.sku))),
-                          DataCell(
-                            _PlainCell(_emptyDash(
-                                product.categoryName ?? 'Uncategorised')),
-                          ),
-                          DataCell(_PlainCell('${product.variantCount}')),
-                          DataCell(_PlainCell(_formatPrice(product))),
-                          DataCell(
-                            _PlainCell(
-                              product.stockQuantity == null
-                                  ? '—'
-                                  : '${product.stockQuantity}',
-                            ),
-                          ),
-                          DataCell(ProductStatusBadge(status: product.status)),
-                          DataCell(
-                              StockStatusBadge(status: product.stockStatus)),
-                          DataCell(
-                            ProductActionColumn(
-                              product: product,
-                              visibility: visibility,
-                              onView: () => onView(product),
-                              onEdit: () => onEdit(product),
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
+  State<ProductTable> createState() => _ProductTableState();
+}
+
+class _ProductTableState extends State<ProductTable> {
+  final ScrollController _headerHorizontalController = ScrollController();
+  final ScrollController _bodyHorizontalController = ScrollController();
+  bool _syncingHorizontal = false;
+
+  static const _colVariants = 120.0;
+  static const _colPrice = 110.0;
+  static const _colStock = 80.0;
+  static const _colStatus = 110.0;
+  static const _colStockStatus = 130.0;
+  static const _colActions = 110.0;
+  static const _colProduct = 240.0;
+  static const _horizontalPadding = 16.0;
+
+  static const _tableContentWidth = _horizontalPadding * 2 +
+      _colProduct +
+      _colVariants +
+      _colPrice +
+      _colStock +
+      _colStatus +
+      _colStockStatus +
+      _colActions;
+
+  @override
+  void initState() {
+    super.initState();
+    _headerHorizontalController.addListener(
+      () => _syncHorizontal(
+        _headerHorizontalController,
+        _bodyHorizontalController,
+      ),
+    );
+    _bodyHorizontalController.addListener(
+      () => _syncHorizontal(
+        _bodyHorizontalController,
+        _headerHorizontalController,
       ),
     );
   }
 
-  static String _emptyDash(String value) {
-    return value.trim().isEmpty ? '-' : value;
+  void _syncHorizontal(ScrollController source, ScrollController target) {
+    if (_syncingHorizontal || !source.hasClients || !target.hasClients) {
+      return;
+    }
+    if (source.offset == target.offset) {
+      return;
+    }
+    _syncingHorizontal = true;
+    target.jumpTo(source.offset);
+    _syncingHorizontal = false;
   }
 
-  static String _formatPrice(TenantProduct product) {
-    final currency =
-        (product.currencyCode == null || product.currencyCode!.trim().isEmpty)
-            ? 'LKR'
-            : product.currencyCode!.toUpperCase();
-
-    if (product.priceFrom == null && product.priceTo == null) {
-      return '—';
-    }
-
-    if (product.priceFrom == product.priceTo || product.priceTo == null) {
-      return '$currency ${product.priceFrom!.toStringAsFixed(2)}';
-    }
-
-    return '$currency ${product.priceFrom!.toStringAsFixed(2)} - ${product.priceTo!.toStringAsFixed(2)}';
+  @override
+  void dispose() {
+    _headerHorizontalController.dispose();
+    _bodyHorizontalController.dispose();
+    super.dispose();
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableHeight = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : ProductTable._headingHeight +
+                (ProductTable._rowHeight * ProductTable._visibleRows);
+
+        final maxBodyHeight = ProductTable._rowHeight * ProductTable._visibleRows;
+        final bodyHeight = (availableHeight - ProductTable._headingHeight)
+            .clamp(0.0, maxBodyHeight)
+            .toDouble();
+
+        final minTableWidth = _tableContentWidth;
+        final tableWidth = constraints.maxWidth > minTableWidth
+            ? constraints.maxWidth
+            : minTableWidth;
+        const productColWidth = _colProduct;
+
+        final totalHeight = ProductTable._headingHeight + bodyHeight;
+
+        return SizedBox(
+          width: constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : tableWidth,
+          height: totalHeight,
+          child: ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context).copyWith(
+              overscroll: false,
+              physics: const ClampingScrollPhysics(),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DecoratedBox(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF7F8FA),
+                    border: Border(
+                      bottom: BorderSide(color: TenantAdminColors.border),
+                    ),
+                  ),
+                  child: SingleChildScrollView(
+                    controller: _headerHorizontalController,
+                    scrollDirection: Axis.horizontal,
+                    physics: const ClampingScrollPhysics(),
+                    child: SizedBox(
+                      width: tableWidth,
+                      height: ProductTable._headingHeight,
+                      child: _ProductTableHeaderRow(
+                        productColWidth: productColWidth,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: bodyHeight,
+                  child: SingleChildScrollView(
+                    controller: _bodyHorizontalController,
+                    scrollDirection: Axis.horizontal,
+                    physics: const ClampingScrollPhysics(),
+                    child: SizedBox(
+                      width: tableWidth,
+                      height: bodyHeight,
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        primary: false,
+                        physics: const ClampingScrollPhysics(),
+                        itemExtent: ProductTable._rowHeight,
+                        itemCount: widget.products.length,
+                        itemBuilder: (context, index) {
+                          final product = widget.products[index];
+                          return DecoratedBox(
+                            decoration: const BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: TenantAdminColors.border,
+                                ),
+                              ),
+                            ),
+                            child: SizedBox(
+                              height: ProductTable._rowHeight,
+                              child: _ProductTableDataRow(
+                                product: product,
+                                productColWidth: productColWidth,
+                                visibility: widget.visibility,
+                                onView: () => widget.onView(product),
+                                onEdit: () => widget.onEdit(product),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ProductTableHeaderRow extends StatelessWidget {
+  const _ProductTableHeaderRow({required this.productColWidth});
+
+  final double productColWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(
+      color: Color(0xFF4B5563),
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: _ProductTableState._horizontalPadding,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: productColWidth,
+            child: const Text('Product', style: style),
+          ),
+          const SizedBox(
+            width: _ProductTableState._colVariants,
+            child: Center(child: Text('Variants', style: style)),
+          ),
+          const SizedBox(
+            width: _ProductTableState._colPrice,
+            child: Text('Price', style: style),
+          ),
+          const SizedBox(
+            width: _ProductTableState._colStock,
+            child: Center(child: Text('Stock', style: style)),
+          ),
+          const SizedBox(
+            width: _ProductTableState._colStatus,
+            child: Text('Status', style: style),
+          ),
+          const SizedBox(
+            width: _ProductTableState._colStockStatus,
+            child: Text('Stock Status', style: style),
+          ),
+          const SizedBox(
+            width: _ProductTableState._colActions,
+            child: Text('Actions', style: style),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductTableDataRow extends StatelessWidget {
+  const _ProductTableDataRow({
+    required this.product,
+    required this.productColWidth,
+    required this.visibility,
+    required this.onView,
+    required this.onEdit,
+  });
+
+  final TenantProduct product;
+  final double productColWidth;
+  final ProductListVisibility visibility;
+  final VoidCallback onView;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: _ProductTableState._horizontalPadding,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: productColWidth,
+            child: InkWell(
+              onTap: visibility.showViewAction ? onView : null,
+              child: _ProductIdentityCell(product: product),
+            ),
+          ),
+          SizedBox(
+            width: _ProductTableState._colVariants,
+            child: Center(
+              child: Text(
+                '${product.variantCount}',
+                style: const TextStyle(
+                  color: TenantAdminColors.bodyText,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: _ProductTableState._colPrice,
+            child: Text(
+              _formatProductPrice(product),
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: _ProductTableState._colStock,
+            child: Center(
+              child: Text(
+                product.stockQuantity == null
+                    ? '—'
+                    : '${product.stockQuantity}',
+                style: const TextStyle(
+                  color: TenantAdminColors.bodyText,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: _ProductTableState._colStatus,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: ProductStatusBadge(status: product.status),
+            ),
+          ),
+          SizedBox(
+            width: _ProductTableState._colStockStatus,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: StockStatusBadge(status: product.stockStatus),
+            ),
+          ),
+          SizedBox(
+            width: _ProductTableState._colActions,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: ProductActionColumn(
+                product: product,
+                visibility: visibility,
+                onView: onView,
+                onEdit: onEdit,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _formatProductPrice(TenantProduct product) {
+  final currency =
+      (product.currencyCode == null || product.currencyCode!.trim().isEmpty)
+          ? 'LKR'
+          : product.currencyCode!.toUpperCase();
+
+  if (product.priceFrom == null && product.priceTo == null) {
+    return '—';
+  }
+
+  if (product.priceFrom == product.priceTo || product.priceTo == null) {
+    return '$currency ${product.priceFrom!.toStringAsFixed(2)}';
+  }
+
+  return '$currency ${product.priceFrom!.toStringAsFixed(2)} - ${product.priceTo!.toStringAsFixed(2)}';
 }
 
 class _ProductIdentityCell extends StatelessWidget {
   const _ProductIdentityCell({
     required this.product,
-    required this.canView,
   });
 
   final TenantProduct product;
-  final bool canView;
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         _ProductAvatar(imageUrl: product.imageUrl, name: product.name),
-        const SizedBox(width: TenantAdminSpacing.md),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 product.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: canView
-                      ? TenantAdminColors.primary
-                      : TenantAdminColors.bodyText,
+                style: const TextStyle(
+                  color: Colors.black,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
+                  height: 1.25,
                 ),
               ),
-              if (product.primaryBarcode != null &&
-                  product.primaryBarcode!.isNotEmpty)
+              if (product.sku.isNotEmpty) ...[
+                const SizedBox(height: 2),
                 Text(
-                  product.primaryBarcode!,
+                  product.sku,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: TenantAdminColors.mutedText,
-                    fontSize: 11.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.w500,
+                    height: 1.2,
                   ),
                 ),
+              ],
             ],
           ),
         ),
@@ -209,11 +444,11 @@ class _ProductAvatar extends ConsumerWidget {
       final resolvedUrl =
           MediaUrlResolver.resolve(imageUrl!, apiBaseUrl: baseUrl) ?? imageUrl!;
       return ClipRRect(
-        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         child: Image.network(
           resolvedUrl,
-          width: 56,
-          height: 56,
+          width: ProductTable._imageSize,
+          height: ProductTable._imageSize,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) =>
               _FallbackAvatar(initials: initials),
@@ -233,37 +468,26 @@ class _FallbackAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 56,
-      height: 56,
+      width: ProductTable._imageSize,
+      height: ProductTable._imageSize,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: TenantAdminColors.secondary,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
       ),
       child: Text(
         initials,
         style: const TextStyle(
           color: TenantAdminColors.primary,
           fontWeight: FontWeight.w800,
-          fontSize: 18,
+          fontSize: 20,
         ),
       ),
     );
   }
 }
 
-class _PlainCell extends StatelessWidget {
-  const _PlainCell(this.value);
-
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(value);
-  }
-}
-
-class ProductActionColumn extends StatelessWidget {
+class ProductActionColumn extends ConsumerWidget {
   const ProductActionColumn({
     super.key,
     required this.product,
@@ -277,82 +501,85 @@ class ProductActionColumn extends StatelessWidget {
   final VoidCallback onView;
   final VoidCallback onEdit;
 
-  @override
-  Widget build(BuildContext context) {
-    final showDelete = visibility.showDeleteAction ||
-        visibility.showEditAction ||
-        visibility.showViewAction;
+  static const _actionBlue = Color(0xFF1890FF);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (visibility.showViewAction) ...[
-            _ActionRowButton(
-              icon: Icons.visibility_outlined,
-              label: 'View',
-              onPressed: onView,
-            ),
-            if (visibility.showEditAction || showDelete)
-              const SizedBox(height: 8),
-          ],
-          if (visibility.showEditAction) ...[
-            _ActionRowButton(
-              icon: Icons.edit_outlined,
-              label: 'Edit',
-              onPressed: onEdit,
-            ),
-            if (showDelete) const SizedBox(height: 8),
-          ],
-          if (showDelete)
-            ProductDeleteAction(
-              productId: product.id,
-              productName: product.name,
-              sku: product.sku,
-              imageUrl: product.imageUrl,
-              isLocalDraft: product.isLocalDraft,
-              compact: false,
-            ),
-        ],
-      ),
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final showView = visibility.showViewAction;
+    final showEdit = visibility.showEditAction;
+    final showDelete = visibility.showDeleteAction || showView || showEdit;
+
+    if (!showView && !showEdit && !showDelete) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (showView)
+          _ActionLinkButton(
+            icon: Icons.visibility_outlined,
+            label: 'View',
+            color: _actionBlue,
+            onPressed: onView,
+          ),
+        if (showView && (showEdit || showDelete)) const SizedBox(height: 8),
+        if (showEdit)
+          _ActionLinkButton(
+            icon: Icons.edit_outlined,
+            label: 'Edit',
+            color: _actionBlue,
+            onPressed: onEdit,
+          ),
+        if (showEdit && showDelete) const SizedBox(height: 8),
+        if (showDelete)
+          ProductDeleteAction(
+            productId: product.id,
+            productName: product.name,
+            sku: product.sku,
+            imageUrl: product.imageUrl,
+            isLocalDraft: product.isLocalDraft,
+            compact: false,
+          ),
+      ],
     );
   }
 }
 
-class _ActionRowButton extends StatelessWidget {
-  const _ActionRowButton({
+class _ActionLinkButton extends StatelessWidget {
+  const _ActionLinkButton({
     required this.icon,
     required this.label,
+    required this.color,
     required this.onPressed,
   });
 
   final IconData icon;
   final String label;
+  final Color color;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    const color = Color(0xFF1890FF);
-
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(4),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 8),
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: color,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
+                height: 1.2,
               ),
             ),
           ],

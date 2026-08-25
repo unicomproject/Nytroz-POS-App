@@ -3,7 +3,6 @@ import 'package:nytroz_pos/core/storage/secure_storage_provider.dart';
 
 import '../../../../../core/network/dio_provider.dart';
 import '../../../presentation/providers/tenant_admin_access_provider.dart';
-import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../application/usecases/create_product.dart';
 import '../../application/usecases/delete_product.dart';
 import '../../application/usecases/get_product_by_id.dart';
@@ -108,7 +107,7 @@ class ProductListFilterState {
     this.sortBy = 'productName',
     this.sortDirection = 'asc',
     this.pageNumber = 1,
-    this.pageSize = TenantAdminContentTokens.defaultListPageSize,
+    this.pageSize = 6,
   });
 
   final String search;
@@ -330,7 +329,7 @@ final productEditCreateOptionsProvider =
   return ref.watch(getProductCreateOptionsProvider).call();
 });
 
-final addProductWizardControllerProvider = StateNotifierProvider.autoDispose<
+final addProductWizardControllerProvider = StateNotifierProvider<
     AddProductWizardController, AddProductWizardState>((ref) {
   final repo = ref.watch(tenantProductRepositoryProvider);
   final draftLocal = ref.watch(productWizardDraftLocalRepositoryProvider);

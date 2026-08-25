@@ -111,6 +111,13 @@ class AddProductWizardState {
   final num? taxRate;
   final bool taxExclusive;
 
+  // Step 1 Initial Tracking Details (provisional)
+  final String initialBatchNumber;
+  final DateTime? initialExpiryDate;
+  final String initialSerialNumber;
+  final bool confirmClearIncompatibleInitialTracking;
+  final String? initialTrackingAssignedVariantId;
+
   const AddProductWizardState({
     this.currentStep = 1,
     this.targetSetupStep,
@@ -172,11 +179,20 @@ class AddProductWizardState {
     this.taxName,
     this.taxRate,
     this.taxExclusive = true,
+    this.initialBatchNumber = '',
+    this.initialExpiryDate,
+    this.initialSerialNumber = '',
+    this.confirmClearIncompatibleInitialTracking = false,
+    this.initialTrackingAssignedVariantId,
   });
 
   bool get isEditMode => productId != null && productId!.isNotEmpty;
   bool get hasImages =>
       productImages.isNotEmpty || stagedMediaAssets.isNotEmpty;
+  bool get hasInitialTrackingValues =>
+      initialBatchNumber.trim().isNotEmpty ||
+      initialExpiryDate != null ||
+      initialSerialNumber.trim().isNotEmpty;
 
   int get totalImageCount {
     if (isEditMode) {
@@ -265,6 +281,13 @@ class AddProductWizardState {
     num? taxRate,
     bool clearTaxRate = false,
     bool? taxExclusive,
+    String? initialBatchNumber,
+    DateTime? initialExpiryDate,
+    bool clearInitialExpiryDate = false,
+    String? initialSerialNumber,
+    bool? confirmClearIncompatibleInitialTracking,
+    String? initialTrackingAssignedVariantId,
+    bool clearInitialTrackingAssignedVariantId = false,
   }) {
     return AddProductWizardState(
       currentStep: currentStep ?? this.currentStep,
@@ -345,6 +368,18 @@ class AddProductWizardState {
       taxName: clearTaxName ? null : (taxName ?? this.taxName),
       taxRate: clearTaxRate ? null : (taxRate ?? this.taxRate),
       taxExclusive: taxExclusive ?? this.taxExclusive,
+      initialBatchNumber: initialBatchNumber ?? this.initialBatchNumber,
+      initialExpiryDate: clearInitialExpiryDate
+          ? null
+          : (initialExpiryDate ?? this.initialExpiryDate),
+      initialSerialNumber: initialSerialNumber ?? this.initialSerialNumber,
+      confirmClearIncompatibleInitialTracking:
+          confirmClearIncompatibleInitialTracking ??
+              this.confirmClearIncompatibleInitialTracking,
+      initialTrackingAssignedVariantId: clearInitialTrackingAssignedVariantId
+          ? null
+          : (initialTrackingAssignedVariantId ??
+              this.initialTrackingAssignedVariantId),
     );
   }
 }

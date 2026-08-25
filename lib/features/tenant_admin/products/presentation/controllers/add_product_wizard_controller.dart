@@ -1,16 +1,21 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 import 'dart:math';
 
 import '../../data/models/product_draft_response_dto.dart';
 import '../../data/models/step5_barcode_dtos.dart';
 import '../../data/mappers/wizard_product_create_mapper.dart';
 import '../../domain/entities/add_product_wizard_state.dart';
+import '../../domain/entities/product_wizard_capabilities.dart';
 import '../../domain/entities/product_wizard_draft.dart';
 import '../../domain/entities/staged_product_image.dart';
 import '../../domain/entities/tenant_product_create_options.dart';
+import '../../domain/entities/tenant_product_detail.dart';
 import '../../domain/entities/step4_variant_configuration_state.dart';
+import '../utils/product_duplicate_helper.dart';
+import '../utils/product_form_validation.dart';
 import '../../domain/utils/variant_combination_generator.dart';
 import '../../domain/repositories/product_wizard_draft_local_repository.dart';
 import '../../domain/repositories/tenant_product_repository.dart';
@@ -24,9 +29,14 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
 
   final TenantProductRepository _repository;
   final ProductWizardDraftLocalRepository? _draftLocal;
+  ProductWizardCapabilities? _capabilities;
 
   @visibleForTesting
   AddProductWizardState get wizardState => state;
+
+  void bindCapabilities(ProductWizardCapabilities capabilities) {
+    _capabilities = capabilities;
+  }
 
   @visibleForTesting
   void initializeOptions(TenantProductCreateOptions options) {
@@ -37,9 +47,72 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     state = state.copyWith(clearPageError: true);
   }
 
+  Timer? _autoSaveTimer;
+
+  @override
+  set state(AddProductWizardState value) {
+    super.state = value;
+    if (value.isDirty && !value.isSubmitting && !value.isSavingDraft) {
+      _triggerAutoSave();
+    }
+  }
+
+  void _triggerAutoSave() {
+    _autoSaveTimer?.cancel();
+    _autoSaveTimer = Timer(const Duration(seconds: 1), () {
+      if (!mounted) return;
+      _silentSaveDraft();
+    });
+  }
+
+  Future<void> _silentSaveDraft() async {
+    final local = _draftLocal;
+    if (local == null) return;
+    
+    // Do not auto-save over the generic 'auto_save_draft' if we are editing a live product
+    // (i.e., productId is present but it's not a local draft).
+    if (state.productId != null && state.productId!.isNotEmpty && state.localDraftId == null) {
+      return;
+    }
+    
+    try {
+      final draftId = state.localDraftId ?? 'auto_save_draft';
+      final snapshot = state.copyWith(
+        localDraftId: draftId,
+        status: 'DRAFT',
+      );
+      final draft = ProductWizardDraft.fromWizardState(
+        state: snapshot,
+        localDraftId: draftId,
+        createdAt: DateTime.now().toUtc(),
+        updatedAt: DateTime.now().toUtc(),
+      );
+      await local.saveDraft(draft);
+      if (state.localDraftId == null && mounted) {
+        super.state = state.copyWith(localDraftId: draftId);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> discardAutoSave() async {
+    _autoSaveTimer?.cancel();
+    final local = _draftLocal;
+    if (local != null) {
+      final draftId = state.localDraftId ?? 'auto_save_draft';
+      await local.deleteDraft(draftId);
+    }
+  }
+
+  @override
+  void dispose() {
+    _autoSaveTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> initWizard({
     String? resumeProductId,
     String? resumeLocalDraftId,
+    String? duplicateFromProductId,
   }) async {
     state = state.copyWith(isLoadingOptions: true, clearOptionsError: true);
 
@@ -49,6 +122,9 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
 
       if (resumeLocalDraftId != null && resumeLocalDraftId.isNotEmpty) {
         await loadLocalDraft(resumeLocalDraftId);
+      } else if (duplicateFromProductId != null &&
+          duplicateFromProductId.isNotEmpty) {
+        await loadDuplicateFromProduct(duplicateFromProductId);
       } else if (resumeProductId != null && resumeProductId.isNotEmpty) {
         if (state.productId == resumeProductId && state.currentStep > 1) {
           // Draft already hydrated and active in session, preserve step state
@@ -56,6 +132,14 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           await loadExistingDraft(resumeProductId);
         }
       } else if (state.productId == null || state.productId!.isEmpty) {
+        final local = _draftLocal;
+        if (local != null) {
+          final existing = await local.getDraft('auto_save_draft');
+          if (existing != null) {
+            await loadLocalDraft('auto_save_draft');
+            return;
+          }
+        }
         // Fresh Add Product always starts at Step 1 (Basic Details)
         state = state.copyWith(currentStep: 1);
       }
@@ -142,6 +226,162 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     }
   }
 
+  /// Loads an existing product's setup data into a fresh wizard for duplication.
+  Future<void> loadDuplicateFromProduct(String sourceProductId) async {
+    state = state.copyWith(isSubmitting: true, clearPageError: true);
+
+    try {
+      final draft = await _repository.getSetup(sourceProductId);
+      _hydrateFromDraftResponse(draft, forceStep: 1);
+      _applyDuplicateIdentityReset(sourceProductName: draft.productName);
+      state = state.copyWith(isSubmitting: false, isDirty: true);
+    } catch (_) {
+      try {
+        final detail = await _repository.getProductById(sourceProductId);
+        _seedFromProductDetail(detail);
+        state = state.copyWith(isSubmitting: false, isDirty: true);
+      } catch (e) {
+        state = state.copyWith(
+          isSubmitting: false,
+          pageError:
+              'Failed to duplicate product: ${_extractErrorMessage(e)}',
+        );
+      }
+    }
+  }
+
+  void _applyDuplicateIdentityReset({String? sourceProductName}) {
+    final clearedAssignments = state.step5State.assignments
+        .map(
+          (assignment) => assignment.copyWith(
+            clearSku: true,
+            clearBarcode: true,
+            clearProductVariantId: true,
+            isAssigned: false,
+            clearStatus: true,
+          ),
+        )
+        .toList();
+
+    final clearedVariants = state.step4State.generatedVariants
+        .map(
+          (variant) => GeneratedVariantRow(
+            clientCombinationKey: variant.clientCombinationKey,
+            combinationLabel: variant.combinationLabel,
+            displayLabel: variant.displayLabel,
+            isIncluded: variant.isIncluded,
+            exactImageMediaAssetId: variant.exactImageMediaAssetId,
+            effectiveImageUrl: variant.effectiveImageUrl,
+            selectedValues: variant.selectedValues,
+            optionCombinationHash: variant.optionCombinationHash,
+          ),
+        )
+        .toList();
+
+    final stagedAssets = <StagedProductImage>[];
+    final duplicatedImages = <ProductWizardImageItem>[];
+    for (final image in state.productImages) {
+      final mediaAssetId = image.mediaAssetId?.trim();
+      if (mediaAssetId == null || mediaAssetId.isEmpty) {
+        continue;
+      }
+
+      stagedAssets.add(
+        StagedProductImage(
+          mediaAssetId: mediaAssetId,
+          publicUrl: image.imageUrl,
+          fileName: image.fileName,
+          mimeType: 'image/jpeg',
+          fileSizeBytes: 0,
+          createdAt: DateTime.now().toUtc(),
+          isPrimary: image.isPrimary,
+          sortOrder: image.sortOrder,
+        ),
+      );
+      duplicatedImages.add(
+        ProductWizardImageItem(
+          id: mediaAssetId,
+          mediaAssetId: mediaAssetId,
+          imageUrl: image.imageUrl,
+          fileName: image.fileName,
+          isPrimary: image.isPrimary,
+          sortOrder: image.sortOrder,
+          isStaged: true,
+        ),
+      );
+    }
+
+    String? primaryImageId;
+    for (final image in duplicatedImages) {
+      if (image.isPrimary) {
+        primaryImageId = image.mediaAssetId;
+        break;
+      }
+    }
+
+    state = state.copyWith(
+      productId: '',
+      clearLocalDraftId: true,
+      status: 'DRAFT',
+      rowVersion: 0,
+      currentStep: 1,
+      clearTargetSetupStep: true,
+      lastCompletedSetupStep: 0,
+      productName: buildDuplicatedProductName(sourceProductName ?? ''),
+      internalCode: '',
+      desiredPublishActive: false,
+      stagedMediaAssets: stagedAssets,
+      productImages: duplicatedImages,
+      primaryImageId: primaryImageId,
+      clearPrimaryImageId: primaryImageId == null,
+      step4State: state.step4State.copyWith(
+        generatedVariants: clearedVariants,
+        deletedVariants: const [],
+      ),
+      step5State: state.step5State.copyWith(
+        baseSku: '',
+        parentProductBarcode: '',
+        assignments: clearedAssignments,
+        clearDuplicateBarcodeConflict: true,
+      ),
+      isDirty: true,
+      clearPageError: true,
+      fieldErrors: const {},
+    );
+  }
+
+  void _seedFromProductDetail(TenantProductDetail detail) {
+    final options = state.createOptions;
+    final unitId =
+        options == null ? null : unitIdForCode(options, detail.unitType);
+    final structure = inferProductStructureFromDetail(detail);
+
+    state = AddProductWizardState(
+      createOptions: options,
+      currentStep: 1,
+      status: 'DRAFT',
+      productName: buildDuplicatedProductName(detail.productName),
+      internalCode: '',
+      categoryId: detail.categoryId,
+      brandId: detail.brandId,
+      shortDescription: detail.shortDescription ?? '',
+      longDescription: detail.longDescription ?? '',
+      trackInventory: detail.trackInventory,
+      productStructure: structure,
+      productStructureConfirmed: true,
+      productUnitId: unitId,
+      baseUnitId: unitId,
+      standardSellingPrice: detail.sellingPrice,
+      costPrice: detail.costPrice,
+      discountPrice: detail.discountPrice,
+      taxId: detail.taxId,
+      taxName: detail.taxName,
+      posSellable: true,
+      allowOnlineSale: true,
+      isDirty: true,
+    );
+  }
+
   void setProductStructure(String structure) {
     if (structure != 'SIMPLE' &&
         structure != 'VARIANT' &&
@@ -216,6 +456,74 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   void updateLongDescription(String val) {
     state = state.copyWith(
       longDescription: val,
+      isDirty: true,
+    );
+  }
+
+  void updateInitialBatchNumber(String val) {
+    state = state.copyWith(
+      initialBatchNumber: val,
+      isDirty: true,
+    );
+  }
+
+  void updateInitialExpiryDate(DateTime? value) {
+    state = state.copyWith(
+      initialExpiryDate: value,
+      clearInitialExpiryDate: value == null,
+      isDirty: true,
+    );
+  }
+
+  void updateInitialSerialNumber(String val) {
+    state = state.copyWith(
+      initialSerialNumber: val,
+      isDirty: true,
+    );
+  }
+
+  void setInitialTrackingAssignedVariantId(String? variantId) {
+    state = state.copyWith(
+      initialTrackingAssignedVariantId: variantId,
+      clearInitialTrackingAssignedVariantId:
+          variantId == null || variantId.isEmpty,
+      isDirty: true,
+    );
+  }
+
+  InitialTrackingClearPlan previewTrackingClear({
+    String? productStructure,
+    bool? trackInventory,
+    bool? batchTracking,
+    bool? expiryTracking,
+    bool? serialTracking,
+  }) {
+    return InitialTrackingCompatibility.evaluate(
+      productStructure: productStructure ?? state.productStructure,
+      trackInventory: trackInventory ?? state.trackInventory,
+      batchTracking: batchTracking ?? state.batchTracking,
+      expiryTracking: expiryTracking ?? state.expiryTracking,
+      serialTracking: serialTracking ?? state.serialTracking,
+      batch: state.initialBatchNumber,
+      expiry: state.initialExpiryDate,
+      serial: state.initialSerialNumber,
+    );
+  }
+
+  void applyInitialTrackingPlan(
+    InitialTrackingClearPlan plan, {
+    required bool confirmed,
+  }) {
+    if (plan.requiresConfirmation && !confirmed) {
+      return;
+    }
+    state = state.copyWith(
+      initialBatchNumber: plan.batchNumber ?? '',
+      initialExpiryDate: plan.expiryDate,
+      clearInitialExpiryDate: plan.expiryDate == null,
+      initialSerialNumber: plan.serialNumber ?? '',
+      confirmClearIncompatibleInitialTracking:
+          confirmed && plan.requiresConfirmation,
       isDirty: true,
     );
   }
@@ -761,9 +1069,13 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         reconcileStep5AssignmentsWithVariants();
       }
 
-      final draftId = state.localDraftId ?? _newLocalDraftId();
+      String draftId = state.localDraftId ?? _newLocalDraftId();
       DateTime? createdAt;
-      if (state.localDraftId != null) {
+      
+      if (draftId == 'auto_save_draft') {
+        draftId = _newLocalDraftId();
+        await local.deleteDraft('auto_save_draft');
+      } else if (state.localDraftId != null) {
         final existing = await local.getDraft(draftId);
         createdAt = existing?.createdAt;
       }
@@ -847,6 +1159,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       final payload = WizardProductCreateMapper.toWizardCreateJson(
         state,
         idempotencyKey: idempotencyKey,
+        capabilities: _capabilities,
       );
       final result = await _repository.createProductFromWizard(payload);
 
@@ -905,6 +1218,11 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
               'Please explicitly select a Product Type before continuing.',
         );
         return false;
+      }
+
+      final plan = previewTrackingClear();
+      if (plan.requiresConfirmation) {
+        applyInitialTrackingPlan(plan, confirmed: true);
       }
     }
 
@@ -984,14 +1302,65 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     return true;
   }
 
-  /// Manual Skip is disabled. Non-applicable steps are skipped by routing.
+  bool get canSkipCurrentStep =>
+      state.currentStep >= 2 && state.currentStep <= 6;
+
+  /// Skip advances without Save & Continue validation.
+  /// Step 2 still requires an explicit Product Type (SIMPLE / VARIANT / BUNDLE).
   Future<bool> skip() async {
-    _logBlockedProductMutation('skip');
+    if (!canSkipCurrentStep) {
+      state = state.copyWith(
+        pageError: 'Skip is available on steps 2 to 6 only.',
+      );
+      return false;
+    }
+
+    if (state.currentStep == 2 && !state.productStructureConfirmed) {
+      state = state.copyWith(
+        pageError:
+            'Please select a Product Type before skipping tracking configuration.',
+      );
+      return false;
+    }
+
+    _logBlockedProductMutation('skip(step${state.currentStep})');
+
+    if (state.currentStep == 2) {
+      final structure = state.productStructure.toUpperCase();
+      if (structure == 'BUNDLE') {
+        state = state.copyWith(
+          trackInventory: false,
+          batchTracking: false,
+          expiryTracking: false,
+          serialTracking: false,
+        );
+      } else {
+        state = state.copyWith(
+          trackInventory: true,
+          batchTracking: false,
+          expiryTracking: false,
+          serialTracking: false,
+        );
+      }
+      final plan = previewTrackingClear();
+      if (plan.requiresConfirmation) {
+        applyInitialTrackingPlan(plan, confirmed: true);
+      }
+    }
+
+    final nextStep = getNextApplicableStep();
+    final completed = state.currentStep;
+
     state = state.copyWith(
-      pageError:
-          'Skip is not available. Non-applicable steps are skipped automatically.',
+      currentStep: nextStep,
+      lastCompletedSetupStep: completed,
+      targetSetupStep: nextStep,
+      isSubmitting: false,
+      clearPageError: true,
+      fieldErrors: const {},
+      isDirty: true,
     );
-    return false;
+    return true;
   }
 
   void goToStep(int step) {

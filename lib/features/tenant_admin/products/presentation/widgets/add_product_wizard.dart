@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/add_product_wizard_state.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_wizard_capabilities.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_create_options.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/providers/tenant_product_providers.dart';
@@ -27,6 +28,8 @@ class AddProductWizard extends ConsumerStatefulWidget {
     required this.canCreate,
     this.resumeProductId,
     this.resumeLocalDraftId,
+    this.duplicateFromProductId,
+    this.capabilities,
   });
 
   final TenantProductCreateOptions options;
@@ -34,6 +37,8 @@ class AddProductWizard extends ConsumerStatefulWidget {
   final bool canCreate;
   final String? resumeProductId;
   final String? resumeLocalDraftId;
+  final String? duplicateFromProductId;
+  final ProductWizardCapabilities? capabilities;
 
   @override
   ConsumerState<AddProductWizard> createState() => _AddProductWizardState();
@@ -44,6 +49,8 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
   late final TextEditingController _codeController;
   late final TextEditingController _shortDescriptionController;
   late final TextEditingController _longDescriptionController;
+  late final TextEditingController _batchController;
+  late final TextEditingController _serialController;
   final GlobalKey<FormState> _step4FormKey = GlobalKey<FormState>();
 
   @override
@@ -53,6 +60,8 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
     _codeController = TextEditingController();
     _shortDescriptionController = TextEditingController();
     _longDescriptionController = TextEditingController();
+    _batchController = TextEditingController();
+    _serialController = TextEditingController();
 
     _nameController.addListener(() {
       final controller = ref.read(addProductWizardControllerProvider.notifier);
@@ -88,9 +97,13 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final controller = ref.read(addProductWizardControllerProvider.notifier);
+      if (widget.capabilities != null) {
+        controller.bindCapabilities(widget.capabilities!);
+      }
       controller.initWizard(
         resumeProductId: widget.resumeProductId,
         resumeLocalDraftId: widget.resumeLocalDraftId,
+        duplicateFromProductId: widget.duplicateFromProductId,
       );
     });
   }
@@ -101,6 +114,8 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
     _codeController.dispose();
     _shortDescriptionController.dispose();
     _longDescriptionController.dispose();
+    _batchController.dispose();
+    _serialController.dispose();
     super.dispose();
   }
 
@@ -124,6 +139,8 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
     final state = ref.read(addProductWizardControllerProvider);
     if (!state.isDirty) {
       if (context.mounted) {
+        ref.read(addProductWizardControllerProvider.notifier).discardAutoSave();
+        ref.invalidate(addProductWizardControllerProvider);
         context.go('/tenant-admin/products');
       }
       return;
@@ -154,6 +171,8 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
     );
 
     if (result == true && mounted) {
+      ref.read(addProductWizardControllerProvider.notifier).discardAutoSave();
+      ref.invalidate(addProductWizardControllerProvider);
       context.go('/tenant-admin/products');
     }
   }
@@ -169,6 +188,14 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           previous?.shortDescription != next.shortDescription ||
           previous?.longDescription != next.longDescription) {
         _syncControllersWithState();
+      }
+      if (next.pageError != null && next.pageError != previous?.pageError) {
+        showAppToast(
+          context,
+          title: 'Validation Error',
+          message: next.pageError!,
+          type: AppToastType.error,
+        );
       }
     });
 
@@ -239,8 +266,19 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
               context.go('/tenant-admin/products');
             }
           },
-          onSkip: null,
-          showSkip: false,
+          onSkip: controller.canSkipCurrentStep
+              ? () async {
+                  final success = await controller.skip();
+                  if (success && context.mounted) {
+                    showProductSaveToast(
+                      context,
+                      title: 'Step Skipped',
+                      message: 'Moved to the next step.',
+                    );
+                  }
+                }
+              : null,
+          showSkip: state.currentStep >= 2 && state.currentStep <= 5,
           onSaveAndContinue: () async {
             final isStep7 = state.currentStep == 7;
             if (isStep7 && state.isSubmitting) {
@@ -289,6 +327,8 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           codeController: _codeController,
           shortDescriptionController: _shortDescriptionController,
           longDescriptionController: _longDescriptionController,
+          batchController: _batchController,
+          serialController: _serialController,
         );
       case 2:
         return ProductTypeTracking(
@@ -328,6 +368,8 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           codeController: _codeController,
           shortDescriptionController: _shortDescriptionController,
           longDescriptionController: _longDescriptionController,
+          batchController: _batchController,
+          serialController: _serialController,
         );
     }
   }
