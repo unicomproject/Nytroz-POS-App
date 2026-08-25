@@ -13,6 +13,13 @@ import 'outlets/presentation/screens/add_outlet_screen.dart';
 import 'outlets/presentation/screens/edit_outlet_screen.dart';
 import 'outlets/presentation/screens/outlet_details_screen.dart';
 import 'outlets/presentation/screens/outlet_list_screen.dart';
+import 'role_permissions/presentation/screens/edit_role_screen.dart';
+import 'role_permissions/presentation/screens/role_setup_step1_role_screen.dart';
+import 'role_permissions/presentation/screens/role_setup_step2_modules_screen.dart';
+import 'role_permissions/presentation/screens/role_setup_step3_permissions_screen.dart';
+import 'role_permissions/presentation/screens/role_setup_step4_assignments_screen.dart';
+import 'role_permissions/presentation/screens/role_setup_step5_review_screen.dart';
+import 'role_permissions/presentation/screens/roles_screen.dart';
 import 'tills/presentation/screens/add_till_screen.dart';
 import 'tills/presentation/screens/edit_till_screen.dart';
 import 'tills/presentation/screens/till_details_screen.dart';
@@ -33,11 +40,15 @@ import 'products/presentation/screens/product_list_screen.dart';
 import 'products/presentation/screens/popular_products_curation_screen.dart';
 import 'brands/presentation/screens/brand_list_screen.dart';
 import 'brands/presentation/screens/brand_form_screen.dart';
+import 'pricing_tax/tax_management/presentation/tax_management_page.dart';
 import 'inventory/presentation/navigation/inventory_routes.dart';
 import 'inventory/presentation/dashboard/pages/inventory_dashboard_page.dart';
 import 'inventory/presentation/current_stock/screens/current_stock_screen.dart';
 import 'inventory/presentation/current_stock/screens/product_stock_detail_screen.dart';
-import 'inventory/presentation/stock_in/screens/stock_in_screen.dart';
+import 'inventory/presentation/receiving/receiving_flow.dart';
+import 'inventory/presentation/adjustment/adjustment_flow.dart';
+import 'inventory/presentation/channel_allocation/channel_allocation_flow.dart';
+import 'inventory/presentation/serials/serial_registry_screen.dart';
 import 'reports/presentation/screens/outlet_report_screen.dart';
 import 'reports/presentation/screens/reports_dashboard_screen.dart';
 import 'reports/presentation/screens/sales_report_screen.dart';
@@ -99,21 +110,32 @@ List<RouteBase> tenantAdminRoutes(Ref ref) {
         ),
         GoRoute(
           path: '/tenant-admin/roles-access',
-          redirect: (context, state) => '/tenant-admin/roles-permissions',
+          redirect: (context, state) => '/tenant-admin/roles',
         ),
         GoRoute(
-          path: '/tenant-admin/roles',
-          redirect: (context, state) => '/tenant-admin/roles-permissions',
+          path: '/tenant-admin/roles-permissions',
+          redirect: (context, state) => '/tenant-admin/roles',
         ),
         // stockRoot is handled dynamically for access control, but we add a redirect
         // just in case it's navigated to directly.
         GoRoute(
           path: InventoryRoutes.stockRoot,
-          redirect: (context, state) => InventoryRoutes.currentStock,
+          redirect: (context, state) => InventoryRoutes.dashboard,
+        ),
+        GoRoute(
+          path: InventoryRoutes.inventoryRoot,
+          redirect: (context, state) => InventoryRoutes.dashboard,
         ),
         GoRoute(
           path: '/tenant-admin/products/import',
           redirect: (context, state) => '/tenant-admin/products',
+        ),
+        GoRoute(
+          path: '/tenant-admin/products/local-draft/:localDraftId',
+          builder: (context, state) {
+            final localDraftId = state.pathParameters['localDraftId'];
+            return AddProductScreen(resumeLocalDraftId: localDraftId);
+          },
         ),
         GoRoute(
           path: '/tenant-admin/products/draft/:id',
@@ -208,10 +230,34 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     );
   }
 
-  if (definition.path == '/tenant-admin/roles-permissions') {
-    return RolePermissionsScreen(
-      initialRoleId: state.uri.queryParameters['roleId'],
+  if (definition.path == '/tenant-admin/roles') {
+    return const RolesScreen();
+  }
+
+  if (definition.path == '/tenant-admin/roles/:id/edit') {
+    return EditRoleScreen(
+      roleId: state.pathParameters['id'] ?? '',
     );
+  }
+
+  if (definition.path == '/tenant-admin/roles-permissions/create/select-role') {
+    return const RoleSetupStep1RoleScreen();
+  }
+
+  if (definition.path == '/tenant-admin/roles-permissions/create/modules') {
+    return const RoleSetupStep2ModulesScreen();
+  }
+
+  if (definition.path == '/tenant-admin/roles-permissions/create/permissions') {
+    return const RoleSetupStep3PermissionsScreen();
+  }
+
+  if (definition.path == '/tenant-admin/roles-permissions/create/assignments') {
+    return const RoleSetupStep4AssignmentsScreen();
+  }
+
+  if (definition.path == '/tenant-admin/roles-permissions/create/review') {
+    return const RoleSetupStep5ReviewScreen();
   }
 
   if (definition.path == '/tenant-admin/roles-permissions/:roleId') {
@@ -332,7 +378,15 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
   }
 
   if (definition.path == ProductsSidebarRoutes.add ||
-      state.uri.path.startsWith('/tenant-admin/products/draft/')) {
+      state.uri.path.startsWith('/tenant-admin/products/draft/') ||
+      state.uri.path.startsWith('/tenant-admin/products/local-draft/')) {
+    if (state.uri.path.startsWith('/tenant-admin/products/local-draft/')) {
+      final localDraftId = state.pathParameters['localDraftId'] ??
+          (state.uri.pathSegments.length >= 4
+              ? state.uri.pathSegments[3]
+              : null);
+      return AddProductScreen(resumeLocalDraftId: localDraftId);
+    }
     final draftId = state.pathParameters['productId'] ??
         state.pathParameters['id'] ??
         (state.uri.pathSegments.length >= 4 &&
@@ -351,6 +405,10 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
 
   if (definition.path == ProductsSidebarRoutes.brands) {
     return const BrandListScreen();
+  }
+
+  if (definition.path == ProductsSidebarRoutes.tax) {
+    return const TaxManagementPage();
   }
 
   if (definition.path == ProductsSidebarRoutes.addBrand) {
@@ -372,15 +430,16 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return const PopularProductsCurationScreen();
   }
 
-  if (definition.path == InventoryRoutes.dashboard) {
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.dashboard)) {
     return const InventoryDashboardPage();
   }
 
-  if (definition.path == InventoryRoutes.currentStock) {
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.currentStock)) {
     return const CurrentStockScreen();
   }
 
-  if (definition.path == InventoryRoutes.currentStockDetail) {
+  if (InventoryRoutes.matches(
+      definition.path, InventoryRoutes.currentStockDetail)) {
     final variantId = state.pathParameters['variantId'];
     if (variantId != null) {
       return ProductStockDetailScreen(variantId: variantId);
@@ -388,12 +447,43 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return const TenantAdminErrorScreen();
   }
 
-  if (definition.path == InventoryRoutes.stockIn) {
-    return const StockInScreen();
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.stockIn) ||
+      InventoryRoutes.matches(definition.path, InventoryRoutes.receiving)) {
+    return const ReceivingDashboardScreen();
   }
 
-  if (definition.path == InventoryRoutes.openingStock) {
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.receivingNew)) {
+    return const ReceivingWizardScreen();
+  }
+
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.serials)) {
+    return const SerialRegistryScreen();
+  }
+
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.openingStock)) {
     return const OpeningStockWizardScreen();
+  }
+
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.adjustment)) {
+    return const AdjustmentDashboardScreen();
+  }
+
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.adjustmentNew)) {
+    return const AdjustmentWizardScreen();
+  }
+
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.channel)) {
+    return const ChannelAllocationDashboardScreen();
+  }
+
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.channelNew)) {
+    return const ChannelAllocationWizardScreen();
+  }
+
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.channelDetail)) {
+    return ChannelAllocationDetailScreen(
+      id: state.pathParameters['id'] ?? '',
+    );
   }
 
   if (definition.path == '/tenant-admin/reports') {
@@ -578,10 +668,12 @@ bool _canAccessRoute(
       definition.path == ProductsSidebarRoutes.add ||
       definition.path == ProductsSidebarRoutes.categories ||
       definition.path == ProductsSidebarRoutes.brands ||
+      definition.path == ProductsSidebarRoutes.tax ||
       definition.path == ProductsSidebarRoutes.variantTemplates ||
       definition.path == ProductsSidebarRoutes.popular) {
     return ProductsRouteGuard.canAccessPath(accessChecker, definition.path);
   }
+
 
   if (definition.path == '/tenant-admin/products') {
     return accessChecker.canViewProductListNav();
@@ -600,21 +692,45 @@ bool _canAccessRoute(
     return accessChecker.canAccessProductModule();
   }
 
-  if (definition.path == InventoryRoutes.currentStock ||
-      definition.path == InventoryRoutes.currentStockDetail) {
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.dashboard)) {
+    return accessChecker.canAccessInventoryDashboard();
+  }
+
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.currentStock) ||
+      InventoryRoutes.matches(
+          definition.path, InventoryRoutes.currentStockDetail)) {
     return accessChecker.canAccessCurrentStockPage();
   }
 
-  if (definition.path == InventoryRoutes.stockIn) {
-    return accessChecker.canAccessStockInPage();
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.stockIn) ||
+      InventoryRoutes.matches(definition.path, InventoryRoutes.receiving) ||
+      InventoryRoutes.matches(definition.path, InventoryRoutes.receivingNew)) {
+    return accessChecker.canAccessReceivingPage();
   }
 
-  if (definition.path == InventoryRoutes.openingStock) {
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.serials)) {
+    return accessChecker.canAccessSerialsPage();
+  }
+
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.openingStock)) {
     return accessChecker.canAccessOpeningStockPage();
   }
 
-  if (definition.path == InventoryRoutes.openingStock) {
-    return accessChecker.canAccessOpeningStockPage();
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.adjustment)) {
+    return accessChecker.canAccessAdjustmentPage();
+  }
+
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.adjustmentNew)) {
+    return accessChecker.canCreateStockAdjustment();
+  }
+
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.channel) ||
+      InventoryRoutes.matches(definition.path, InventoryRoutes.channelDetail)) {
+    return accessChecker.canAccessChannelAllocationPage();
+  }
+
+  if (InventoryRoutes.matches(definition.path, InventoryRoutes.channelNew)) {
+    return accessChecker.canManageChannelAllocation();
   }
 
   if (definition.path == '/tenant-admin/reports') {

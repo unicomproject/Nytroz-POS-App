@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/tenant_admin_theme.dart';
 import 'tenant_admin_states.dart';
 
-class TenantAdminDataTable extends StatelessWidget {
+class TenantAdminDataTable extends StatefulWidget {
   const TenantAdminDataTable({
     super.key,
     required this.columns,
@@ -15,6 +15,7 @@ class TenantAdminDataTable extends StatelessWidget {
     this.onRetry,
     this.showCheckboxColumn = false,
     this.footer,
+    this.minWidth = 850.0,
     this.fillAvailableWidth = false,
   });
 
@@ -27,32 +28,45 @@ class TenantAdminDataTable extends StatelessWidget {
   final VoidCallback? onRetry;
   final bool showCheckboxColumn;
   final Widget? footer;
-  final bool fillAvailableWidth;
+  final double minWidth;
+
+  @override
+  State<TenantAdminDataTable> createState() => _TenantAdminDataTableState();
+}
+
+class _TenantAdminDataTableState extends State<TenantAdminDataTable> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     Widget child;
 
-    if (loading) {
+    if (widget.loading) {
       child = const Padding(
         padding: EdgeInsets.all(TenantAdminSpacing.xl),
         child: TenantAdminLoadingSkeleton(rowCount: 6),
       );
-    } else if (errorMessage != null) {
+    } else if (widget.errorMessage != null) {
       child = Padding(
         padding: const EdgeInsets.all(TenantAdminSpacing.xl),
         child: TenantAdminErrorState(
           title: 'Unable to load data',
-          message: errorMessage!,
-          onRetry: onRetry,
+          message: widget.errorMessage!,
+          onRetry: widget.onRetry,
         ),
       );
-    } else if (rows.isEmpty) {
+    } else if (widget.rows.isEmpty) {
       child = Padding(
         padding: const EdgeInsets.all(TenantAdminSpacing.xl),
         child: TenantAdminEmptyState(
-          title: emptyTitle,
-          message: emptyMessage,
+          title: widget.emptyTitle,
+          message: widget.emptyMessage,
         ),
       );
     } else {
@@ -78,34 +92,38 @@ class TenantAdminDataTable extends StatelessWidget {
                         compact ? TenantAdminSpacing.lg : TenantAdminSpacing.xl,
                   ),
                 ),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minWidth: constraints.maxWidth,
-                    ),
-                    child: DataTable(
-                      headingTextStyle: const TextStyle(
-                        color: TenantAdminColors.mutedText,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
+                child: Scrollbar(
+                  controller: _scrollController,
+                  thumbVisibility: true,
+                  trackVisibility: true,
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    scrollDirection: Axis.horizontal,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: TenantAdminSpacing.md),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: widget.minWidth > constraints.maxWidth
+                              ? widget.minWidth
+                              : constraints.maxWidth,
+                        ),
+                        child: DataTable(
+                          headingTextStyle: TenantAdminTextStyles.tableHeader(context),
+                          dataTextStyle: TenantAdminTextStyles.tableRow(context),
+                          showCheckboxColumn: widget.showCheckboxColumn,
+                          columns: widget.columns,
+                          rows: widget.rows,
+                        ),
                       ),
-                      dataTextStyle: const TextStyle(
-                        color: TenantAdminColors.bodyText,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      showCheckboxColumn: showCheckboxColumn,
-                      columns: columns,
-                      rows: rows,
                     ),
                   ),
                 ),
               );
             },
           ),
-          if (footer != null) ...[
+          if (widget.footer != null) ...[
             const Divider(height: 1, color: TenantAdminColors.border),
-            footer!,
+            widget.footer!,
           ],
         ],
       );

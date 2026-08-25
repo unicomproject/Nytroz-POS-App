@@ -61,7 +61,7 @@ void main() {
       });
 
       expect(dto.page, 1);
-      expect(dto.pageSize, 10);
+      expect(dto.pageSize, 5);
       expect(dto.totalCount, 1);
       expect(dto.items.single.phone, isNull);
       expect(dto.items.single.lastActiveAt, isNull);

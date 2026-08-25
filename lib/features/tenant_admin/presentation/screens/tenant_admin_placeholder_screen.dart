@@ -453,7 +453,7 @@ final _tenantUsersProvider = FutureProvider.autoDispose<_TenantUsersResult>((
     '/api/v1/tenant-admin/users',
     queryParameters: const {
       'page': 1,
-      'pageSize': 10,
+      'pageSize': 5,
     },
   );
 
@@ -476,7 +476,7 @@ final _tenantUsersProvider = FutureProvider.autoDispose<_TenantUsersResult>((
   return _TenantUsersResult(
     users: items,
     page: _intValue(payload['page'], fallback: 1),
-    pageSize: _intValue(payload['pageSize'], fallback: 10),
+    pageSize: _intValue(payload['pageSize'], fallback: 5),
     totalCount: _intValue(payload['totalCount'], fallback: items.length),
   );
 });

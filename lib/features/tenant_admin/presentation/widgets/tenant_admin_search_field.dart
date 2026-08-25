@@ -55,8 +55,10 @@ class _TenantAdminSearchFieldState extends State<TenantAdminSearchField> {
     return TextField(
       controller: _controller,
       onChanged: _onChanged,
+      style: TenantAdminTextStyles.inputText(context),
       decoration: InputDecoration(
         hintText: widget.hint,
+        hintStyle: TenantAdminTextStyles.muted(context),
         prefixIcon: const Icon(Icons.search),
         filled: true,
         fillColor: TenantAdminColors.surface,

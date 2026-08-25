@@ -6,7 +6,7 @@ import 'package:nytroz_pos/features/tenant_admin/products/presentation/controlle
 
 import 'product_basic_details_form.dart';
 import 'product_image_upload_card.dart';
-import 'product_status_options_card.dart';
+import 'product_channel_availability_card.dart';
 
 class Step1BasicDetails extends StatelessWidget {
   const Step1BasicDetails({
@@ -117,77 +117,75 @@ class Step1BasicDetails extends StatelessWidget {
               ),
             ],
             if (isDesktop)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Main Form Fields Left Section (with Image Card under Brand)
-                  Expanded(
-                    flex: 3,
-                    child: ProductBasicDetailsForm(
-                      nameController: nameController,
-                      codeController: codeController,
-                      shortDescriptionController: shortDescriptionController,
-                      longDescriptionController: longDescriptionController,
-                      categoryId: state.categoryId,
-                      brandId: state.brandId,
-                      options: options,
-                      fieldErrors: state.fieldErrors,
-                      onCategoryChanged: controller.updateCategory,
-                      onBrandChanged: controller.updateBrand,
-                      imageUploadCard: imageCard,
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Main Form Fields Left Section
+                    Expanded(
+                      flex: 3,
+                      child: ProductBasicDetailsForm(
+                        nameController: nameController,
+                        codeController: codeController,
+                        shortDescriptionController: shortDescriptionController,
+                        longDescriptionController: longDescriptionController,
+                        categoryId: state.categoryId,
+                        brandId: state.brandId,
+                        options: options,
+                        fieldErrors: state.fieldErrors,
+                        onCategoryChanged: controller.updateCategory,
+                        onBrandChanged: controller.updateBrand,
+                        channelAvailabilityCard: ProductChannelAvailabilityCard(
+                          posSellable: state.posSellable,
+                          allowOnlineSale: state.allowOnlineSale,
+                          onPosSellableChanged: controller.setPosSellable,
+                          onAllowOnlineSaleChanged: controller.setAllowOnlineSale,
+                        ),
+                      ),
                     ),
-                  ),
 
                   const SizedBox(width: TenantAdminSpacing.xl),
 
-                  // Right Side Cards Section (Status & Options)
+                  // Right Side Cards Section (Image Upload)
                   SizedBox(
                     width: 340,
-                    child: ProductStatusOptionsCard(
-                      desiredPublishActive: state.desiredPublishActive,
-                      posSellable: state.posSellable,
-                      trackInventory: state.trackInventory,
-                      allowOnlineSale: state.allowOnlineSale,
-                      onDesiredPublishActiveChanged:
-                          controller.setDesiredPublishActive,
-                      onPosSellableChanged: controller.setPosSellable,
-                      onTrackInventoryChanged: controller.setTrackInventory,
-                      onAllowOnlineSaleChanged: controller.setAllowOnlineSale,
+                    child: SingleChildScrollView(
+                      child: imageCard,
                     ),
                   ),
                 ],
+                ),
               )
             else
               // Stacked for Tablet / Mobile
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ProductBasicDetailsForm(
-                    nameController: nameController,
-                    codeController: codeController,
-                    shortDescriptionController: shortDescriptionController,
-                    longDescriptionController: longDescriptionController,
-                    categoryId: state.categoryId,
-                    brandId: state.brandId,
-                    options: options,
-                    fieldErrors: state.fieldErrors,
-                    onCategoryChanged: controller.updateCategory,
-                    onBrandChanged: controller.updateBrand,
-                    imageUploadCard: imageCard,
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ProductBasicDetailsForm(
+                        nameController: nameController,
+                        codeController: codeController,
+                        shortDescriptionController: shortDescriptionController,
+                        longDescriptionController: longDescriptionController,
+                        categoryId: state.categoryId,
+                        brandId: state.brandId,
+                        options: options,
+                        fieldErrors: state.fieldErrors,
+                        onCategoryChanged: controller.updateCategory,
+                        onBrandChanged: controller.updateBrand,
+                        channelAvailabilityCard: ProductChannelAvailabilityCard(
+                          posSellable: state.posSellable,
+                          allowOnlineSale: state.allowOnlineSale,
+                          onPosSellableChanged: controller.setPosSellable,
+                          onAllowOnlineSaleChanged: controller.setAllowOnlineSale,
+                        ),
+                      ),
+                      const SizedBox(height: TenantAdminSpacing.lg),
+                      imageCard,
+                    ],
                   ),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  ProductStatusOptionsCard(
-                    desiredPublishActive: state.desiredPublishActive,
-                    posSellable: state.posSellable,
-                    trackInventory: state.trackInventory,
-                    allowOnlineSale: state.allowOnlineSale,
-                    onDesiredPublishActiveChanged:
-                        controller.setDesiredPublishActive,
-                    onPosSellableChanged: controller.setPosSellable,
-                    onTrackInventoryChanged: controller.setTrackInventory,
-                    onAllowOnlineSaleChanged: controller.setAllowOnlineSale,
-                  ),
-                ],
+                ),
               ),
           ],
         ),

@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/network/dio_provider.dart';
@@ -8,6 +7,7 @@ import '../../domain/entities/brand_list_query.dart';
 import '../../domain/repositories/brand_repository.dart';
 import '../../data/datasources/brand_remote_datasource.dart';
 import '../../data/repositories/brand_repository_impl.dart';
+import '../../../presentation/theme/tenant_admin_theme.dart';
 
 final brandRemoteDatasourceProvider = Provider<BrandRemoteDatasource>((ref) {
   return BrandRemoteDatasource(ref.watch(appDioProvider));
@@ -50,9 +50,6 @@ class BrandSaveController extends AutoDisposeAsyncNotifier<void> {
   @override
   Future<void> build() async {}
 
-  /// Creates or updates a brand and, when [logoBytes] is provided, uploads
-  /// the logo for the resulting brand id afterwards. Returns the final
-  /// brand entity (including the uploaded logo URL, if any).
   Future<Brand> save({
     String? brandId,
     required BrandUpsertInput input,

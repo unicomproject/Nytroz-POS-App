@@ -25,7 +25,7 @@ void main() {
     );
 
     _expectSafeEnding(original, 'Thank you\n', feed, cut);
-    _expectSafeEnding(reprint, 'Copy time: 2026-07-28T12:00:00\n', feed, cut);
+    _expectSafeEnding(reprint, 'Original receipt: RCPT-42\n', feed, cut);
     expect(original.sublist(original.length - 6),
         reprint.sublist(reprint.length - 6));
   });
@@ -49,7 +49,8 @@ void main() {
     _expectSafeEnding(bytes, 'Thank you\n', feed, cut);
   });
 
-  test('completed sale emits Code39 barcode before footer feed and cut', () {
+  test('completed sale emits Code39 barcode after footer and before feed/cut',
+      () {
     final bytes = generator.generateCompletedSale(
       receipt: _receipt(const ['Thank you']),
       config: _config(),
@@ -67,8 +68,9 @@ void main() {
       bytes.sublist(barcodeDataIndex, barcodeDataIndex + barcodeData.length),
       barcodeData,
     );
-    expect(barcodeDataIndex, lessThan(footerIndex));
-    expect(footerIndex, lessThan(feedIndex));
+    // Canonical order matches preview: footer text, then barcode, then feed/cut.
+    expect(footerIndex, lessThan(barcodeDataIndex));
+    expect(barcodeDataIndex, lessThan(feedIndex));
     expect(feedIndex, lessThan(cutIndex));
   });
 }

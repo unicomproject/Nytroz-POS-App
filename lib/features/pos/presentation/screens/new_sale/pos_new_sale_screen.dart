@@ -9,6 +9,7 @@ import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_car
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../widgets/new_sale/actions/pos_new_sale_action_bar.dart';
 import '../../../../sale/presentation/widgets/new_sale/pos_barcode_scanner_listener.dart';
+import '../../../../sale/application/services/pos_hid_scanner_input_service.dart';
 import '../../widgets/new_sale/catalogue/pos_product_category_chips.dart';
 import '../../widgets/new_sale/product_card/pos_product_grid.dart';
 import '../../providers/new_sale/pos_barcode_scan_controller.dart';
@@ -186,12 +187,17 @@ class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen>
         _openCameraScanner();
       }
     });
+    final hidModes = {'usbHid', 'bluetoothHid', 'hid'};
     final scannerEnabled = (ModalRoute.of(context)?.isCurrent ?? true) &&
         scannerConfiguration != null &&
         scannerConfiguration.enabled &&
-        scannerConfiguration.mode == 'usbHid';
+        hidModes.contains(scannerConfiguration.mode);
+    final suffix = scannerConfiguration?.inputSuffix == 'newline'
+        ? PosScannerSuffix.newline
+        : PosScannerSuffix.enter;
     return PosBarcodeScannerListener(
       enabled: scannerEnabled,
+      inputSuffix: suffix,
       minimumBarcodeLength: scannerConfiguration?.minimumBarcodeLength ?? 4,
       maximumBarcodeLength: scannerConfiguration?.maximumBarcodeLength ?? 128,
       maximumInterKeyDelay: Duration(

@@ -58,7 +58,9 @@ class AddTillHardwareStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isOnline = status.toLowerCase() == 'online';
+    final isOnline = status.toLowerCase() == 'online' ||
+        status.toLowerCase() == 'active' ||
+        status.toLowerCase() == 'connected';
     final statusColor =
         isOnline ? TenantAdminColors.success : TenantAdminColors.mutedText;
 
@@ -128,12 +130,15 @@ class AddTillHardwareStatusCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Text(
-                        status,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                      Expanded(
+                        child: Text(
+                          isOnline ? 'Connected' : status,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

@@ -15,6 +15,8 @@ class ProductsSidebarRoutes {
   static const popular = '/tenant-admin/products/popular';
   static const import = '/tenant-admin/products/import';
 
+  static const tax = '/tenant-admin/tax';
+  
   /// Product-specific inventory setup — route not available yet.
   /// Must not alias to the top-level Inventory/Stock module.
   static const productInventory = '';
@@ -22,6 +24,7 @@ class ProductsSidebarRoutes {
   static bool isProductsArea(String path) {
     if (path == categories ||
         path == brands ||
+        path == tax ||
         path.startsWith('$brands/') ||
         path == variantTemplates ||
         path == popular ||

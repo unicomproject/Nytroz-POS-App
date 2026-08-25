@@ -8,7 +8,7 @@ class CurrentStockQueryDto {
     this.expiryStatus,
     this.batchNumber,
     this.page = 1,
-    this.pageSize = 10,
+    this.pageSize = 5,
     this.sortBy,
     this.sortDirection,
   });
@@ -395,7 +395,7 @@ class StockMovementHistoryQueryDto {
   const StockMovementHistoryQueryDto({
     this.outletId,
     this.page = 1,
-    this.pageSize = 10,
+    this.pageSize = 5,
   });
 
   final String? outletId;

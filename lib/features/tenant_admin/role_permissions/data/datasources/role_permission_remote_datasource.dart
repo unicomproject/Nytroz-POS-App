@@ -1,8 +1,14 @@
 import 'package:dio/dio.dart';
 
+import '../models/create_role_request_dto.dart';
 import '../models/permission_catalog_dto.dart';
+import '../models/role_assignments_dto.dart';
+import '../models/role_list_dto.dart';
 import '../models/role_permissions_dto.dart';
+import '../models/update_role_assignments_request_dto.dart';
 import '../models/update_role_permissions_request_dto.dart';
+import '../models/update_role_request_dto.dart';
+import '../models/update_role_status_request_dto.dart';
 
 class RolePermissionRemoteDatasource {
   const RolePermissionRemoteDatasource(this._dio);
@@ -34,6 +40,77 @@ class RolePermissionRemoteDatasource {
     );
     final payload = _unwrapApiPayload(response.data, response.requestOptions);
     return RolePermissionsDto.fromJson(payload);
+  }
+
+  Future<Map<String, dynamic>> createRole(CreateRoleRequestDto request) async {
+    final idempotencyKey = '${DateTime.now().millisecondsSinceEpoch}-${request.hashCode}';
+    final response = await _dio.post<dynamic>(
+      _rolesPath,
+      data: request.toJson(),
+      options: Options(headers: {'Idempotency-Key': idempotencyKey}),
+    );
+    return _unwrapApiPayload(response.data, response.requestOptions);
+  }
+
+  Future<RoleListResponseDto> getRoles(int page, int pageSize, String? search, String? status) async {
+    final response = await _dio.get<dynamic>(
+      _rolesPath,
+      queryParameters: {
+        'page': page,
+        'pageSize': pageSize,
+        if (search != null && search.isNotEmpty) 'search': search,
+        if (status != null && status.isNotEmpty) 'status': status,
+      },
+    );
+    return RoleListResponseDto.fromJson(_unwrapApiPayload(response.data, response.requestOptions));
+  }
+
+  Future<Map<String, dynamic>> getRoleById(String roleId) async {
+    final response = await _dio.get<dynamic>('$_rolesPath/$roleId');
+    return _unwrapApiPayload(response.data, response.requestOptions);
+  }
+
+  Future<Map<String, dynamic>> updateRole(String roleId, UpdateRoleRequestDto request) async {
+    final response = await _dio.put<dynamic>(
+      '$_rolesPath/$roleId',
+      data: request.toJson(),
+    );
+    return _unwrapApiPayload(response.data, response.requestOptions);
+  }
+
+  Future<Map<String, dynamic>> updateRoleStatus(String roleId, UpdateRoleStatusRequestDto request) async {
+    final response = await _dio.patch<dynamic>(
+      '$_rolesPath/$roleId/status',
+      data: request.toJson(),
+    );
+    return _unwrapApiPayload(response.data, response.requestOptions);
+  }
+
+  Future<void> deleteRole(String roleId, DateTime? expectedUpdatedAt) async {
+    await _dio.delete<dynamic>(
+      '$_rolesPath/$roleId',
+      queryParameters: {
+        if (expectedUpdatedAt != null) 'expectedUpdatedAt': expectedUpdatedAt.toIso8601String(),
+      },
+    );
+  }
+
+  Future<RoleAssignmentsDto> getRoleAssignments(String roleId) async {
+    final response = await _dio.get<dynamic>('$_rolesPath/$roleId/assignments');
+    final payload = _unwrapApiPayload(response.data, response.requestOptions);
+    return RoleAssignmentsDto.fromJson(payload);
+  }
+
+  Future<RoleAssignmentsDto> updateRoleAssignments(
+    String roleId,
+    UpdateRoleAssignmentsRequestDto request,
+  ) async {
+    final response = await _dio.put<dynamic>(
+      '$_rolesPath/$roleId/assignments',
+      data: request.toJson(),
+    );
+    final payload = _unwrapApiPayload(response.data, response.requestOptions);
+    return RoleAssignmentsDto.fromJson(payload);
   }
 
   Map<String, dynamic> _unwrapApiPayload(

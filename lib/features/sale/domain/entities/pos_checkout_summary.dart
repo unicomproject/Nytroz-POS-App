@@ -285,6 +285,7 @@ class PosCheckoutStartPaymentPayload {
     this.customerPhone,
     this.customerId,
     this.drawerOperationId,
+    this.drawerRequestId,
     this.cashDrawerSettings,
     this.receiptDataJson,
   });
@@ -324,6 +325,7 @@ class PosCheckoutStartPaymentPayload {
   final String? taxRegistrationNumber;
   final String? taxInvoiceLabel;
   final String? drawerOperationId;
+  final String? drawerRequestId;
   final Map<String, dynamic>? cashDrawerSettings;
   final String? receiptDataJson;
 
@@ -409,6 +411,8 @@ class PosCheckoutStartPaymentPayload {
           json['TaxInvoiceLabel']?.toString(),
       drawerOperationId: json['drawerOperationId']?.toString() ??
           json['DrawerOperationId']?.toString(),
+      drawerRequestId: json['drawerRequestId']?.toString() ??
+          json['DrawerRequestId']?.toString(),
       cashDrawerSettings: json['cashDrawerSettings'] is Map
           ? Map<String, dynamic>.from(json['cashDrawerSettings'] as Map)
           : (json['CashDrawerSettings'] is Map
@@ -416,6 +420,55 @@ class PosCheckoutStartPaymentPayload {
               : null),
       receiptDataJson: json['receiptDataJson']?.toString() ??
           json['ReceiptDataJson']?.toString(),
+    );
+  }
+
+  /// Snapshot-preserving copy used to attach checkout customer fields when the
+  /// payment response omits them (or to prefer a resolved sale-time name).
+  PosCheckoutStartPaymentPayload copyWith({
+    String? customerName,
+    String? customerPhone,
+    String? customerId,
+  }) {
+    return PosCheckoutStartPaymentPayload(
+      checkoutSessionId: checkoutSessionId,
+      saleId: saleId,
+      saleNumber: saleNumber,
+      paymentMethod: paymentMethod,
+      grandTotal: grandTotal,
+      currency: currency,
+      saleStatus: saleStatus,
+      nextAction: nextAction,
+      receiptNumber: receiptNumber,
+      barcodeValue: barcodeValue,
+      completedAt: completedAt,
+      subtotal: subtotal,
+      discount: discount,
+      tax: tax,
+      cashReceived: cashReceived,
+      changeDue: changeDue,
+      items: items,
+      paymentId: paymentId,
+      receiptId: receiptId,
+      merchantName: merchantName,
+      outletName: outletName,
+      tillId: tillId,
+      tillName: tillName,
+      cashierId: cashierId,
+      cashierName: cashierName,
+      tenders: tenders,
+      discountLines: discountLines,
+      taxLines: taxLines,
+      copyPolicy: copyPolicy,
+      taxRegistrationNumber: taxRegistrationNumber,
+      taxInvoiceLabel: taxInvoiceLabel,
+      customerName: customerName ?? this.customerName,
+      customerPhone: customerPhone ?? this.customerPhone,
+      customerId: customerId ?? this.customerId,
+      drawerOperationId: drawerOperationId,
+      drawerRequestId: drawerRequestId,
+      cashDrawerSettings: cashDrawerSettings,
+      receiptDataJson: receiptDataJson,
     );
   }
 }

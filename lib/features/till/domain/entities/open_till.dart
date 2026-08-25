@@ -26,6 +26,9 @@ class TillSession {
     required this.status,
     required this.openedAt,
     this.openingNote,
+    this.currencyCode = '',
+    this.expectedCash = 0,
+    this.openedByName,
   });
 
   final String sessionId;
@@ -40,6 +43,9 @@ class TillSession {
   final String status;
   final DateTime openedAt;
   final String? openingNote;
+  final String currencyCode;
+  final double expectedCash;
+  final String? openedByName;
 
   Map<String, dynamic> toJson() {
     return {
@@ -55,6 +61,9 @@ class TillSession {
       'status': status,
       'openedAt': openedAt.toIso8601String(),
       'openingNote': openingNote,
+      'currencyCode': currencyCode,
+      'expectedCash': expectedCash,
+      'openedByName': openedByName,
     };
   }
 
@@ -73,8 +82,19 @@ class TillSession {
       openedAt: DateTime.tryParse(json['openedAt']?.toString() ?? '') ??
           DateTime.now(),
       openingNote: json['openingNote'] as String?,
+      currencyCode: json['currencyCode'] as String? ?? '',
+      expectedCash: _optionalDouble(json['expectedCash']),
+      openedByName: json['openedByName'] as String?,
     );
   }
+}
+
+double _optionalDouble(Object? value) {
+  if (value is num) {
+    return value.toDouble();
+  }
+
+  return double.tryParse(value?.toString() ?? '') ?? 0;
 }
 
 class TillException implements Exception {
@@ -87,14 +107,12 @@ class CloseTillForm {
   const CloseTillForm({
     required this.deviceContext,
     required this.countedCash,
-    required this.expectedCash,
     this.mismatchReason,
     this.closingNote,
   });
 
   final PosDeviceContext deviceContext;
   final double countedCash;
-  final double expectedCash;
   final String? mismatchReason;
   final String? closingNote;
 }
@@ -102,6 +120,7 @@ class CloseTillForm {
 class ClosedTillSession {
   const ClosedTillSession({
     required this.sessionId,
+    this.outletId = '',
     required this.tillId,
     required this.openingFloat,
     required this.expectedCash,
@@ -114,6 +133,7 @@ class ClosedTillSession {
   });
 
   final String sessionId;
+  final String outletId;
   final String tillId;
   final double openingFloat;
   final double expectedCash;

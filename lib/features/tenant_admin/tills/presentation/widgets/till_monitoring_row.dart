@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+
+import 'package:go_router/go_router.dart';
 
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/till_monitoring.dart';
+import '../../../presentation/providers/tenant_admin_access_provider.dart';
+import '../config/till_row_action_configs.dart';
+import 'till_delete_dialog.dart';
 
-class TillMonitoringRow extends StatelessWidget {
+class TillMonitoringRow extends ConsumerWidget {
   const TillMonitoringRow({
     super.key,
     required this.item,
@@ -19,7 +25,7 @@ class TillMonitoringRow extends StatelessWidget {
   static const _accent = TenantAdminColors.posHomeAccentOrange;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 720;
@@ -46,7 +52,7 @@ class TillMonitoringRow extends StatelessWidget {
                   ),
                 ),
               ),
-              child: compact ? _buildCompactContent() : _buildDesktopContent(),
+              child: compact ? _buildCompactContent(context, ref) : _buildDesktopContent(context, ref),
             ),
           ),
         );
@@ -54,7 +60,7 @@ class TillMonitoringRow extends StatelessWidget {
     );
   }
 
-  Widget _buildDesktopContent() {
+  Widget _buildDesktopContent(BuildContext context, WidgetRef ref) {
     return Row(
       children: [
         _buildTillIcon(size: 40),
@@ -81,6 +87,19 @@ class TillMonitoringRow extends StatelessWidget {
         ),
         Expanded(flex: 2, child: _buildCashier()),
         Expanded(
+          flex: 2,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: _buildActionButtons(context, ref).map((btn) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6.0),
+                child: btn,
+              );
+            }).toList(),
+          ),
+        ),
+        Expanded(
           flex: 1,
           child: Align(
             alignment: Alignment.centerRight,
@@ -97,7 +116,7 @@ class TillMonitoringRow extends StatelessWidget {
     );
   }
 
-  Widget _buildCompactContent() {
+  Widget _buildCompactContent(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -108,9 +127,7 @@ class TillMonitoringRow extends StatelessWidget {
             const SizedBox(width: TenantAdminSpacing.md),
             Expanded(child: _buildTitleBlock()),
             const SizedBox(width: TenantAdminSpacing.sm),
-            Flexible(
-                child: Align(
-                    alignment: Alignment.topRight, child: _buildStatusBadge())),
+            _buildStatusBadge(),
           ],
         ),
         const SizedBox(height: TenantAdminSpacing.sm),
@@ -137,6 +154,14 @@ class TillMonitoringRow extends StatelessWidget {
             ),
           ],
         ),
+        if (_buildActionButtons(context, ref).isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            children: _buildActionButtons(context, ref),
+          ),
+        ],
       ],
     );
   }
@@ -192,7 +217,7 @@ class TillMonitoringRow extends StatelessWidget {
 
     if (!hasCashier) {
       return const Text(
-        '—',
+        'Unassigned',
         style: TextStyle(
           color: TenantAdminColors.mutedText,
           fontWeight: FontWeight.w500,
@@ -270,6 +295,60 @@ class TillMonitoringRow extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<Widget> _buildActionButtons(BuildContext context, WidgetRef ref) {
+    final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+    final allActions = accessState.maybeWhen(
+      data: (access) => [
+        ...visibleTillRowActions(access.can, access.canAny),
+        ...visibleTillMoreMenuActions(access.can, access.canAny),
+      ],
+      orElse: () => <TillRowActionConfig>[],
+    );
+
+    if (allActions.isEmpty) return [];
+
+    return allActions.map((action) {
+      Color color = TenantAdminColors.info;
+      if (action.actionId == TillRowActionId.delete) {
+        color = TenantAdminColors.danger;
+      }
+
+      return _ActionTextBtn(
+        icon: action.icon,
+        label: action.label,
+        color: color,
+        onTap: () => _handleAction(context, ref, action),
+      );
+    }).toList();
+  }
+
+  Future<void> _handleAction(
+    BuildContext context,
+    WidgetRef ref,
+    TillRowActionConfig action,
+  ) async {
+    switch (action.actionId) {
+      case TillRowActionId.delete:
+        await TillDeleteDialog.show(
+          context: context,
+          ref: ref,
+          till: item,
+        );
+      case TillRowActionId.generateActivationCode:
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Activation code generation is not available yet.'),
+            ),
+          );
+        }
+      case TillRowActionId.viewDetails:
+        context.go('/tenant-admin/tills/${item.id}');
+      case TillRowActionId.edit:
+        context.go('/tenant-admin/tills/${item.id}/edit');
+    }
   }
 
   Widget _buildLastActivityText() {
@@ -358,6 +437,50 @@ class _CompactMeta extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionTextBtn extends StatelessWidget {
+  const _ActionTextBtn({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

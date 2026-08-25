@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/datasources/product_wizard_draft_local_datasource.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/models/product_draft_response_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/models/save_product_draft_request_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/models/staged_image_response_dto.dart';
@@ -9,11 +10,17 @@ import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_create_options.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_detail.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_filter_options.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/product_wizard_draft_local_repository.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/tenant_product_repository.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 
 class FakeTenantProductRepository implements TenantProductRepository {
   SaveProductDraftRequestDto? lastDraftRequest;
+  int saveDraftCallCount = 0;
+  int updateDraftCallCount = 0;
+  int createProductCallCount = 0;
+  int updateProductCallCount = 0;
+
   ProductDraftResponseDto storedDraft = const ProductDraftResponseDto(
     productId: 'prod-123',
     productName: 'Existing Headset',
@@ -53,6 +60,7 @@ class FakeTenantProductRepository implements TenantProductRepository {
   @override
   Future<ProductDraftResponseDto> saveDraft(
       SaveProductDraftRequestDto request) async {
+    saveDraftCallCount++;
     lastDraftRequest = request;
     storedDraft = ProductDraftResponseDto(
       productId: 'prod-123',
@@ -78,6 +86,7 @@ class FakeTenantProductRepository implements TenantProductRepository {
   @override
   Future<ProductDraftResponseDto> updateDraft(
       String productId, SaveProductDraftRequestDto request) async {
+    updateDraftCallCount++;
     lastDraftRequest = request;
     storedDraft = ProductDraftResponseDto(
       productId: productId,
@@ -183,8 +192,18 @@ class FakeTenantProductRepository implements TenantProductRepository {
   }
 
   @override
-  Future<ProductCreateResult> createProduct(ProductFormData request) =>
-      throw UnimplementedError();
+  Future<ProductCreateResult> createProduct(ProductFormData request) {
+    createProductCallCount++;
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ProductCreateResult> createProductFromWizard(
+      Map<String, dynamic> wizardCreatePayload) {
+    createProductCallCount++;
+    throw UnimplementedError();
+  }
+
   @override
   Future<ProductDeleteResult> deleteProduct(String productId) =>
       throw UnimplementedError();
@@ -203,8 +222,10 @@ class FakeTenantProductRepository implements TenantProductRepository {
       throw UnimplementedError();
   @override
   Future<TenantProductDetail> updateProduct(
-          String productId, ProductFormData request) =>
-      throw UnimplementedError();
+      String productId, ProductFormData request) {
+    updateProductCallCount++;
+    throw UnimplementedError();
+  }
   @override
   Future<ProductStatusUpdateResult> updateProductStatus(
           String productId, String status) =>
@@ -218,7 +239,12 @@ void main() {
 
     setUp(() {
       repo = FakeTenantProductRepository();
-      controller = AddProductWizardController(repo);
+      controller = AddProductWizardController(
+        repo,
+        draftLocal: ProductWizardDraftLocalRepositoryImpl(
+          InMemoryProductWizardDraftLocalDataSource(),
+        ),
+      );
     });
 
     test('initWizard loads create options', () async {
@@ -227,14 +253,17 @@ void main() {
       expect(controller.wizardState.createOptions!.categories.length, 1);
     });
 
-    test('Save Draft allows incomplete fields', () async {
+    test('Save Draft is frontend-local and does not call draft APIs', () async {
       await controller.initWizard();
-      controller.updateProductName(''); // Empty
+      controller.updateProductName('Local Draft');
       final success = await controller.saveDraft();
 
       expect(success, true);
-      expect(controller.wizardState.productId, 'prod-123');
-      expect(repo.lastDraftRequest?.advanceStep, false);
+      expect(controller.wizardState.localDraftId, isNotNull);
+      expect(controller.wizardState.productId, isNull);
+      expect(repo.saveDraftCallCount, 0);
+      expect(repo.updateDraftCallCount, 0);
+      expect(repo.lastDraftRequest, isNull);
     });
 
     test('Save & Continue rejects missing Product Name or Category', () async {
@@ -249,6 +278,8 @@ void main() {
           controller.wizardState.fieldErrors.containsKey('productName'), true);
       expect(
           controller.wizardState.fieldErrors.containsKey('categoryId'), true);
+      expect(controller.wizardState.currentStep, 1);
+      expect(repo.saveDraftCallCount, 0);
     });
 
     test(
@@ -263,7 +294,9 @@ void main() {
 
       expect(success, true);
       expect(controller.wizardState.currentStep, 2);
-      expect(repo.lastDraftRequest?.advanceStep, true);
+      expect(repo.saveDraftCallCount, 0);
+      expect(repo.updateDraftCallCount, 0);
+      expect(repo.lastDraftRequest, isNull);
     });
 
     test('Staging image enforces 10 count & 5MB limit & format check',
@@ -338,7 +371,7 @@ void main() {
     });
 
     test(
-        'Save & Continue on Step 2 sends Step 2 payload and advances to Step 3',
+        'Save & Continue on Step 2 VARIANT advances to Step 4 without draft API',
         () async {
       await controller.initWizard();
       controller.updateProductName('Wireless Headphones');
@@ -353,10 +386,9 @@ void main() {
 
       final success = await controller.saveAndContinue();
       expect(success, true);
-      expect(controller.wizardState.currentStep, 3);
-      expect(repo.lastDraftRequest?.productStructure, 'VARIANT');
-      expect(repo.lastDraftRequest?.batchTracking, true);
-      expect(repo.lastDraftRequest?.advanceStep, true);
+      expect(controller.wizardState.currentStep, 4);
+      expect(repo.saveDraftCallCount, 0);
+      expect(repo.updateDraftCallCount, 0);
     });
 
     test('loadExistingDraft hydrates draft and restores currentSetupStep',
@@ -402,22 +434,18 @@ void main() {
       expect(controller.wizardState.currentStep, 3);
     });
 
-    test(
-        'clears stagedMediaAssets after save draft while keeping productImages',
-        () async {
+    test('Save Draft keeps staged media in local wizard state', () async {
       await controller.initWizard();
       controller.updateProductName('Test Product');
       controller.updateCategory('cat-1');
 
-      // Add a staged image
       await controller.stageOrUploadImage([1, 2, 3], 'test.png', 'image/png');
       expect(controller.wizardState.stagedMediaAssets.length, 1);
 
-      // Save draft
       final success = await controller.saveDraft();
       expect(success, true);
-      expect(controller.wizardState.stagedMediaAssets.isEmpty, true);
-      expect(controller.wizardState.productImages.length, 1);
+      expect(controller.wizardState.stagedMediaAssets.length, 1);
+      expect(repo.saveDraftCallCount, 0);
     });
   });
 }

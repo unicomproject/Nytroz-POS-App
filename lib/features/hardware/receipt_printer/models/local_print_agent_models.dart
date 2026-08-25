@@ -77,6 +77,9 @@ class LocalPrintAgentReceiptLine {
     this.discountAmount,
     this.taxAmount,
     this.reason,
+    this.sku,
+    this.valueUnitPrice,
+    this.rateUnitPrice,
   });
 
   final String name;
@@ -88,6 +91,9 @@ class LocalPrintAgentReceiptLine {
   final num? discountAmount;
   final num? taxAmount;
   final String? reason;
+  final String? sku;
+  final num? valueUnitPrice;
+  final num? rateUnitPrice;
 
   Map<String, dynamic> toJson() => {
         'name': name,
@@ -99,6 +105,9 @@ class LocalPrintAgentReceiptLine {
         'discountAmount': discountAmount,
         'taxAmount': taxAmount,
         'reason': reason,
+        'sku': sku,
+        'valueUnitPrice': valueUnitPrice,
+        'rateUnitPrice': rateUnitPrice,
       };
 }
 
@@ -220,7 +229,24 @@ class LocalPrintAgentTaxLine {
 
 class LocalPrintAgentReceiptRequest {
   static const supportedApiVersion = '1';
-  static const supportedReceiptContractVersion = '2';
+  static const supportedReceiptContractVersion = '3';
+
+  /// Agents advertising these receipt contracts can still print.
+  /// Flutter prefers [supportedReceiptContractVersion] and negotiates down
+  /// when an older installed agent rejects the preferred wire version.
+  static const compatibleReceiptContractVersions = <String>{'1', '2', '3'};
+
+  static bool isCompatibleReceiptContractVersion(String? version) =>
+      version == null || compatibleReceiptContractVersions.contains(version);
+
+  static String negotiateReceiptContractVersion(String? agentVersion) {
+    if (agentVersion != null &&
+        compatibleReceiptContractVersions.contains(agentVersion)) {
+      return agentVersion;
+    }
+    return supportedReceiptContractVersion;
+  }
+
   const LocalPrintAgentReceiptRequest({
     required this.requestId,
     required this.receiptNumber,
@@ -255,6 +281,13 @@ class LocalPrintAgentReceiptRequest {
     this.settlementLines = const [],
     this.printerConfigurationId,
     this.printerConfigurationVersion,
+    this.brandSubtitle,
+    this.outletLocation,
+    this.customerName,
+    this.issuedAtDisplay,
+    this.itemCount,
+    this.presentationLayout = 'canonical_v1',
+    this.receiptContractVersion = supportedReceiptContractVersion,
   });
 
   final String requestId;
@@ -289,6 +322,13 @@ class LocalPrintAgentReceiptRequest {
   final List<LocalPrintAgentSettlementLine> settlementLines;
   final String? printerConfigurationId;
   final int? printerConfigurationVersion;
+  final String? brandSubtitle;
+  final String? outletLocation;
+  final String? customerName;
+  final String? issuedAtDisplay;
+  final int? itemCount;
+  final String presentationLayout;
+  final String receiptContractVersion;
 
   Map<String, dynamic> toJson() => {
         'requestId': requestId,
@@ -329,8 +369,14 @@ class LocalPrintAgentReceiptRequest {
             .toList(growable: false),
         'printerConfigurationId': printerConfigurationId,
         'printerConfigurationVersion': printerConfigurationVersion,
+        'brandSubtitle': brandSubtitle,
+        'outletLocation': outletLocation,
+        'customerName': customerName,
+        'issuedAtDisplay': issuedAtDisplay,
+        'itemCount': itemCount,
+        'presentationLayout': presentationLayout,
         'apiVersion': supportedApiVersion,
-        'receiptContractVersion': supportedReceiptContractVersion,
+        'receiptContractVersion': receiptContractVersion,
       };
 }
 
@@ -408,6 +454,7 @@ class LocalPrintAgentDrawerOpenRequest {
         'drawerPort': drawerPort,
         'pulseOnTime': pulseOnMilliseconds,
         'pulseOffTime': pulseOffMilliseconds,
+        'requestedAt': DateTime.now().toUtc().toIso8601String(),
         'configurationId': configurationId,
         'configurationVersion': configurationVersion,
         'posDeviceId': posDeviceId,

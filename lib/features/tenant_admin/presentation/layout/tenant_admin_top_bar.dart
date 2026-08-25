@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/tenant_admin_context_provider.dart';
@@ -20,7 +20,7 @@ class TenantAdminTopBar extends ConsumerWidget implements PreferredSizeWidget {
     final contextState = ref.watch(tenantAdminContextProvider);
 
     return AppBar(
-      backgroundColor: TenantAdminColors.navy,
+      backgroundColor: TenantAdminColors.posHomeDarkBackground,
       foregroundColor: Colors.white,
       leading: onMenuPressed == null
           ? null

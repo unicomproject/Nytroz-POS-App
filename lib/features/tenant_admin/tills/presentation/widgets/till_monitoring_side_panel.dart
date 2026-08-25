@@ -404,6 +404,19 @@ class _DetailHeader extends StatelessWidget {
                 ],
               ),
             ),
+            Consumer(
+              builder: (context, ref, child) {
+                return IconButton(
+                  icon: const Icon(Icons.close, size: 20, color: TenantAdminColors.mutedText),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  splashRadius: 20,
+                  onPressed: () {
+                    ref.read(selectedTillIdProvider.notifier).state = null;
+                  },
+                );
+              },
+            ),
           ],
         );
 

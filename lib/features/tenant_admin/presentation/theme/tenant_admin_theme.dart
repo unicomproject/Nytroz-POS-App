@@ -6,7 +6,7 @@ class TenantAdminColors {
   static const navy = Color(0xFF071A33);
   static const navySoft = Color(0xFF0E2748);
   static const startSaleHero = Color(0xFF001C38);
-  static const background = Color(0xFF030303);
+  static const background = Color(0xFF000000);
   static const subtleBackground = Color(0xFFF8FAFC);
   static const surface = Colors.white;
   static const border = Color(0xFFE5EAF4);
@@ -36,7 +36,7 @@ class TenantAdminColors {
   static const posHomeHeldCard = Color(0xFFFFF7D9);
   static const posHomeEndShiftCard = Color(0xFFFFE9ED);
   static const posHomeDot = Color(0x29081B3A);
-  static const posHomeDarkBackground = Color(0xFF030303);
+  static const posHomeDarkBackground = Color(0xFF000000);
   static const posHomeDarkSurface = Color(0xFF101010);
   static const posHomeDarkBorder = Color(0xFF555555);
   static const posHomeAccentOrange = Color(0xFFFF6A00);
@@ -172,7 +172,7 @@ class TenantAdminAppHeaderTokens {
   const TenantAdminAppHeaderTokens._();
 
   /// Height of the shared black Tenant Admin application header.
-  static const height = 44.0;
+  static const height = 74.0;
 }
 
 class TenantAdminSidebarTokens {
@@ -212,28 +212,131 @@ class TenantAdminContentTokens {
 class TenantAdminTextStyles {
   const TenantAdminTextStyles._();
 
-  static TextStyle pageTitle(BuildContext context) {
+  static TextStyle pageTitle(BuildContext context, {bool isDesktop = false}) {
     return Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w700,
               color: TenantAdminColors.bodyText,
+              fontSize: isDesktop ? 26 : 24,
+            ) ??
+        TextStyle(
+          fontSize: isDesktop ? 26 : 24,
+          fontWeight: FontWeight.w700,
+          color: TenantAdminColors.bodyText,
+        );
+  }
+
+  static TextStyle pageSubtitle(BuildContext context) {
+    return Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: TenantAdminColors.mutedText,
+              fontSize: 14,
             ) ??
         const TextStyle(
-          fontSize: 26,
-          fontWeight: FontWeight.w900,
-          color: TenantAdminColors.bodyText,
+          fontSize: 14,
+          color: TenantAdminColors.mutedText,
         );
   }
 
   static TextStyle sectionTitle(BuildContext context) {
     return Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: TenantAdminColors.bodyText,
+              fontSize: 18,
+            ) ??
+        const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: TenantAdminColors.bodyText,
+        );
+  }
+
+  static TextStyle cardTitle(BuildContext context) {
+    return Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: TenantAdminColors.bodyText,
+              fontSize: 16,
             ) ??
         const TextStyle(
           fontSize: 16,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: TenantAdminColors.bodyText,
         );
+  }
+
+  static TextStyle body(BuildContext context) {
+    return Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: TenantAdminColors.bodyText,
+              fontSize: 14,
+            ) ??
+        const TextStyle(
+          fontSize: 14,
+          color: TenantAdminColors.bodyText,
+        );
+  }
+
+  static TextStyle fieldLabel(BuildContext context) {
+    return Theme.of(context).textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: TenantAdminColors.bodyText,
+              fontSize: 13,
+            ) ??
+        const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: TenantAdminColors.bodyText,
+        );
+  }
+
+  static TextStyle inputText(BuildContext context) {
+    return Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: TenantAdminColors.bodyText,
+              fontSize: 14,
+            ) ??
+        const TextStyle(
+          fontSize: 14,
+          color: TenantAdminColors.bodyText,
+        );
+  }
+
+  static TextStyle tableHeader(BuildContext context) {
+    return Theme.of(context).textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: TenantAdminColors.mutedText,
+              fontSize: 13,
+            ) ??
+        const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: TenantAdminColors.mutedText,
+        );
+  }
+
+  static TextStyle tableRow(BuildContext context) {
+    return Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: TenantAdminColors.bodyText,
+              fontSize: 14,
+            ) ??
+        const TextStyle(
+          fontSize: 14,
+          color: TenantAdminColors.bodyText,
+        );
+  }
+
+  static TextStyle helperText(BuildContext context) {
+    return Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: TenantAdminColors.mutedText,
+              fontSize: 12,
+            ) ??
+        const TextStyle(
+          fontSize: 12,
+          color: TenantAdminColors.mutedText,
+        );
+  }
+
+  static TextStyle buttonLabel(BuildContext context) {
+    return const TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+    );
   }
 
   static TextStyle muted(BuildContext context) {

@@ -12,6 +12,7 @@ class OutletDto {
     this.outletType,
     this.contactNumber,
     this.city,
+    this.imageUrl,
   });
 
   factory OutletDto.fromJson(Map<String, dynamic> json) {
@@ -30,6 +31,7 @@ class OutletDto {
       contactNumber:
           json['phone'] as String? ?? json['contactNumber'] as String?,
       city: json['city'] as String?,
+      imageUrl: json['primaryImage']?['publicUrl']?.toString(),
     );
   }
 
@@ -45,6 +47,7 @@ class OutletDto {
   final String? outletType;
   final String? contactNumber;
   final String? city;
+  final String? imageUrl;
 }
 
 class OutletListResultDto {
@@ -52,7 +55,7 @@ class OutletListResultDto {
     required this.summary,
     required this.items,
     this.page = 1,
-    this.pageSize = 10,
+    this.pageSize = 5,
     this.totalCount = 0,
   });
 
@@ -60,7 +63,7 @@ class OutletListResultDto {
     final rawItems = json['items'] ?? json['outlets'];
     final items = _mapList(rawItems, OutletDto.fromJson);
     final page = _intValue(json['page'] ?? json['pageNumber'], fallback: 1);
-    final pageSize = _intValue(json['pageSize'], fallback: 10);
+    final pageSize = _intValue(json['pageSize'], fallback: 5);
     final totalCount = _intValue(json['totalCount'], fallback: items.length);
 
     return OutletListResultDto(
@@ -172,6 +175,8 @@ class OutletDetailsDto {
     required this.address,
     required this.status,
     this.outletType,
+    this.imageUrl,
+    this.imageMediaAssetId,
     this.isDefaultOutlet = false,
     this.addressLine1,
     this.addressLine2,
@@ -216,6 +221,8 @@ class OutletDetailsDto {
           : _formatAddress(addressJson.isNotEmpty ? addressJson : json),
       status: json['status'] as String? ?? '',
       outletType: json['outletType'] as String?,
+      imageUrl: json['primaryImage']?['publicUrl']?.toString(),
+      imageMediaAssetId: json['primaryImage']?['mediaAssetId']?.toString(),
       isDefaultOutlet: json['isDefaultOutlet'] == true,
       addressLine1: addressJson['addressLine1'] as String? ??
           json['addressLine1'] as String?,
@@ -263,6 +270,8 @@ class OutletDetailsDto {
   final String address;
   final String status;
   final String? outletType;
+  final String? imageUrl;
+  final String? imageMediaAssetId;
   final bool isDefaultOutlet;
   final String? addressLine1;
   final String? addressLine2;

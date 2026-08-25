@@ -90,24 +90,113 @@ class AddTillHardwareSection extends StatelessWidget {
             d.type.toLowerCase() == 'card_reader')
         .toList();
 
+    final dropdownsColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildCombo(
+          label: 'Device Name',
+          value: selectedPosDeviceId,
+          controller: posDeviceNameController,
+          items: posDevices,
+          onChanged: onPosDeviceChanged,
+          icon: Icons.computer,
+          outletId: selectedOutletId,
+          hintText: 'Enter device name',
+        ),
+        const SizedBox(height: TenantAdminSpacing.xs),
+        const Text('A friendly name to identify this till device.',
+            style: TextStyle(
+                fontSize: 12, color: TenantAdminColors.mutedText)),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        _buildCombo(
+          label: 'Scanner',
+          value: selectedScannerId,
+          controller: scannerNameController,
+          items: scanners,
+          onChanged: onScannerChanged,
+          icon: Icons.qr_code_scanner,
+          outletId: selectedOutletId,
+          hintText: 'Select scanner (optional)',
+        ),
+        const SizedBox(height: TenantAdminSpacing.md),
+        _buildCombo(
+          label: 'Receipt Printer',
+          value: selectedPrinterId,
+          controller: printerNameController,
+          items: printers,
+          onChanged: onPrinterChanged,
+          icon: Icons.print,
+          outletId: selectedOutletId,
+          hintText: 'Select printer (optional)',
+        ),
+        const SizedBox(height: TenantAdminSpacing.md),
+        _buildCombo(
+          label: 'Cash Drawer',
+          value: selectedCashDrawerId,
+          controller: cashDrawerNameController,
+          items: cashDrawers,
+          onChanged: onCashDrawerChanged,
+          icon: Icons.point_of_sale,
+          outletId: selectedOutletId,
+          hintText: 'Select cash drawer (optional)',
+        ),
+        const SizedBox(height: TenantAdminSpacing.md),
+        _buildCombo(
+          label: 'Card Reader',
+          value: selectedCardReaderId,
+          controller: cardReaderNameController,
+          items: cardReaders,
+          onChanged: onCardReaderChanged,
+          icon: Icons.credit_card,
+          outletId: selectedOutletId,
+          hintText: 'Select card reader (optional)',
+        ),
+      ],
+    );
+
+    Widget? statusColumn;
+    if (quickPairPanel != null || hardwareStatusCards != null) {
+      statusColumn = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (quickPairPanel != null) quickPairPanel!,
+          if (hardwareStatusCards != null) ...[
+            const SizedBox(height: TenantAdminSpacing.md),
+            hardwareStatusCards!,
+          ],
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Container(
-              width: 24,
-              height: 24,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFF6A00),
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF8C42), Color(0xFFFF6A00)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF6A00).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ],
               ),
               alignment: Alignment.center,
               child: const Text('2',
                   style: TextStyle(
                       color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold)),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800)),
             ),
             const SizedBox(width: TenantAdminSpacing.sm),
             Text(
@@ -124,87 +213,40 @@ class AddTillHardwareSection extends StatelessWidget {
           style: TextStyle(color: TenantAdminColors.mutedText),
         ),
         const SizedBox(height: TenantAdminSpacing.xl),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 3,
-              child: Column(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 650;
+
+            if (isNarrow) {
+              return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildCombo(
-                    label: 'Device Name',
-                    value: selectedPosDeviceId,
-                    controller: posDeviceNameController,
-                    items: posDevices,
-                    onChanged: onPosDeviceChanged,
-                    icon: Icons.computer,
-                    outletId: selectedOutletId,
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.xs),
-                  const Text('A friendly name to identify this till device.',
-                      style: TextStyle(
-                          fontSize: 12, color: TenantAdminColors.mutedText)),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  _buildCombo(
-                    label: 'Scanner',
-                    value: selectedScannerId,
-                    controller: scannerNameController,
-                    items: scanners,
-                    onChanged: onScannerChanged,
-                    icon: Icons.qr_code_scanner,
-                    outletId: selectedOutletId,
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  _buildCombo(
-                    label: 'Receipt Printer',
-                    value: selectedPrinterId,
-                    controller: printerNameController,
-                    items: printers,
-                    onChanged: onPrinterChanged,
-                    icon: Icons.print,
-                    outletId: selectedOutletId,
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  _buildCombo(
-                    label: 'Cash Drawer',
-                    value: selectedCashDrawerId,
-                    controller: cashDrawerNameController,
-                    items: cashDrawers,
-                    onChanged: onCashDrawerChanged,
-                    icon: Icons.point_of_sale,
-                    outletId: selectedOutletId,
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  _buildCombo(
-                    label: 'Card Reader',
-                    value: selectedCardReaderId,
-                    controller: cardReaderNameController,
-                    items: cardReaders,
-                    onChanged: onCardReaderChanged,
-                    icon: Icons.credit_card,
-                    outletId: selectedOutletId,
+                  dropdownsColumn,
+                  if (statusColumn != null) ...[
+                    const SizedBox(height: TenantAdminSpacing.xl),
+                    statusColumn,
+                  ],
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: dropdownsColumn,
+                ),
+                if (statusColumn != null) ...[
+                  const SizedBox(width: TenantAdminSpacing.xl),
+                  Expanded(
+                    flex: 2,
+                    child: statusColumn,
                   ),
                 ],
-              ),
-            ),
-            if (quickPairPanel != null || hardwareStatusCards != null) ...[
-              const SizedBox(width: TenantAdminSpacing.xl),
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (quickPairPanel != null) quickPairPanel!,
-                    if (hardwareStatusCards != null) ...[
-                      const SizedBox(height: TenantAdminSpacing.md),
-                      hardwareStatusCards!,
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ],
+              ],
+            );
+          },
         ),
       ],
     );
@@ -218,6 +260,7 @@ class AddTillHardwareSection extends StatelessWidget {
     required ValueChanged<String?> onChanged,
     required IconData icon,
     required String? outletId,
+    String? hintText,
   }) {
     final Map<String, dynamic> uniqueMap = {};
     for (final item in items) {
@@ -233,53 +276,54 @@ class AddTillHardwareSection extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
+            Text(label,
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  letterSpacing: 0.2,
+                )),
             const SizedBox(height: 8),
-            DropdownMenu<String>(
+            DropdownButtonFormField<String>(
               key: ValueKey('${label}_$outletId'),
-              width: constraints.maxWidth,
-              controller: controller,
-              initialSelection: safeValue,
-              hintText: 'Select $label',
-              leadingIcon: Icon(icon, color: TenantAdminColors.mutedText),
-              inputDecorationTheme: InputDecorationTheme(
+              value: safeValue,
+              isExpanded: true,
+              decoration: InputDecoration(
+                hintText: hintText ?? 'Select $label',
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14, fontWeight: FontWeight.w400),
+                prefixIcon: Icon(icon, color: Colors.grey.shade400, size: 20),
+                filled: true,
+                fillColor: const Color(0xFFF8F9FA),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 16,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: TenantAdminColors.border.withValues(alpha: 0.5),
-                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: TenantAdminColors.border.withValues(alpha: 0.5),
-                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFFF6A00)),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFFF6A00), width: 1.5),
                 ),
               ),
-              dropdownMenuEntries: uniqueItems
-                  .map(
-                    (item) => DropdownMenuEntry<String>(
-                      value: (item as dynamic).id as String,
-                      label: item.name as String,
-                    ),
-                  )
-                  .toList(),
-              onSelected: (String? selectedId) {
-                onChanged(selectedId);
+              items: uniqueItems.map((item) {
+                return DropdownMenuItem<String>(
+                  value: (item as dynamic).id as String,
+                  child: Text((item as dynamic).name as String),
+                );
+              }).toList(),
+              onChanged: (String? selectedId) {
+                if (selectedId != null) {
+                  controller.text = (uniqueItems.firstWhere(
+                          (e) => (e as dynamic).id == selectedId) as dynamic)
+                      .name;
+                  onChanged(selectedId);
+                }
               },
             ),
           ],

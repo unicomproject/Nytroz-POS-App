@@ -1,3 +1,4 @@
+// ignore_for_file: unused_element
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -137,11 +138,6 @@ class OnlineStoreSetupScreen extends ConsumerWidget {
                                 activeStep: activeStep,
                               ),
                               const SizedBox(height: 26),
-                              _OnlineStoreStepper(
-                                currentStep: activeStep,
-                                overview: overviewState.asData?.value,
-                              ),
-                              const SizedBox(height: 28),
                               _OnlineStoreStepBody(
                                 stepNumber: activeStep.number,
                                 access: access,
@@ -1684,11 +1680,29 @@ class _AsyncSection<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return state.when(
-      loading: () => const _OnlineStoreLoadingCard(),
-      error: (error, stackTrace) => _OnlineStoreErrorCard(
-        message: error.toString(),
-        onRetry: onRetry,
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(48.0),
+          child: CircularProgressIndicator(),
+        ),
       ),
+      error: (error, stackTrace) {
+        String errMsg = 'An unexpected error occurred.';
+        try {
+          if (error.toString().contains('DioException') && error.toString().contains('[403]')) {
+            errMsg = 'Access denied. You lack the necessary permissions or feature entitlement to view this data.';
+          } else {
+            errMsg = error.toString();
+          }
+        } catch (_) {
+          errMsg = error.toString();
+        }
+
+        return _OnlineStoreErrorCard(
+          message: errMsg,
+          onRetry: onRetry,
+        );
+      },
       data: builder,
     );
   }

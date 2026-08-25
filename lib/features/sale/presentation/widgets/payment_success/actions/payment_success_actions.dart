@@ -19,8 +19,12 @@ class PaymentSuccessActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isPrinting = ref.watch(completedSalePrintProvider).status ==
-        CompletedSalePrintStatus.printing;
+    final printState = ref.watch(completedSalePrintProvider);
+    final isPrinting = printState.status == CompletedSalePrintStatus.printing;
+    final printLabel = printState.saleId == saleId &&
+            printState.status == CompletedSalePrintStatus.printed
+        ? 'Print Again'
+        : 'Print Receipt';
 
     return Row(
       children: [
@@ -30,7 +34,7 @@ class PaymentSuccessActions extends ConsumerWidget {
                 ? null
                 : () => executeReceiptPrint(context, ref, saleId),
             icon: const Icon(Icons.print_outlined),
-            label: const Text('Print Receipt'),
+            label: Text(printLabel),
             style: OutlinedButton.styleFrom(
               foregroundColor: TenantAdminColors.primary,
               side: const BorderSide(color: TenantAdminColors.primary),

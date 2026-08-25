@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../domain/entities/cash_drop_reason.dart';
 import '../providers/cash_drop_provider.dart';
+import '../providers/cash_in_provider.dart';
 import 'cash_drawer_section_card.dart';
 
 class CashDropFormCard extends ConsumerWidget {
@@ -16,6 +15,10 @@ class CashDropFormCard extends ConsumerWidget {
     required this.noteController,
     required this.managerPinController,
     required this.availableCash,
+    this.currencyCode = '',
+    this.expand = false,
+    this.compact = false,
+    this.tight = false,
   });
 
   final GlobalKey<FormState> formKey;
@@ -23,27 +26,89 @@ class CashDropFormCard extends ConsumerWidget {
   final TextEditingController noteController;
   final TextEditingController managerPinController;
   final double availableCash;
+  final String currencyCode;
+  final bool expand;
+  final bool compact;
+  final bool tight;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final formState = ref.watch(cashDropFormProvider);
+    final catalog = ref.watch(cashDropCatalogProvider);
+    final prefix = currencyInputPrefix(currencyCode);
+    final reasonEnabled = catalog.status == CashDropCatalogStatus.ready &&
+        catalog.types.isNotEmpty;
 
     return CashDrawerSectionCard(
+      expand: expand,
+      padding: EdgeInsets.all(
+        tight
+            ? TenantAdminSpacing.sm
+            : compact
+                ? TenantAdminSpacing.lg
+                : TenantAdminSpacing.xl,
+      ),
       child: Form(
         key: formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Cash Drop Details',
-              style: TenantAdminTextStyles.sectionTitle(context),
+            _SectionHeading(
+              icon: Icons.point_of_sale_outlined,
+              label: 'Cash Drop Details',
+              compact: tight,
             ),
-            const SizedBox(height: TenantAdminSpacing.lg),
+            SizedBox(
+              height: tight
+                  ? TenantAdminSpacing.xs
+                  : compact
+                      ? TenantAdminSpacing.md
+                      : TenantAdminSpacing.lg,
+            ),
+            if (catalog.isLoading)
+              Padding(
+                padding: EdgeInsets.only(
+                  bottom: tight
+                      ? TenantAdminSpacing.xs
+                      : TenantAdminSpacing.md,
+                ),
+                child: const LinearProgressIndicator(minHeight: 2),
+              ),
+            if (catalog.status == CashDropCatalogStatus.empty)
+              Padding(
+                padding: EdgeInsets.only(
+                  bottom: tight
+                      ? TenantAdminSpacing.xs
+                      : TenantAdminSpacing.md,
+                ),
+                child: Text(
+                  'No Cash Drop reasons are available. Contact your administrator.',
+                  style: TenantAdminTextStyles.muted(context).copyWith(
+                    color: TenantAdminColors.danger,
+                    fontSize: tight ? 10 : 12,
+                  ),
+                ),
+              ),
+            if (catalog.status == CashDropCatalogStatus.failure)
+              Padding(
+                padding: EdgeInsets.only(
+                  bottom: tight
+                      ? TenantAdminSpacing.xs
+                      : TenantAdminSpacing.md,
+                ),
+                child: Text(
+                  catalog.errorMessage ??
+                      'Cash Drop reasons could not be loaded.',
+                  style: TenantAdminTextStyles.muted(context).copyWith(
+                    color: TenantAdminColors.danger,
+                    fontSize: tight ? 10 : 12,
+                  ),
+                ),
+              ),
             LayoutBuilder(
-              builder: (context, constraints) {
-                final useRow =
-                    constraints.maxWidth >= TenantAdminBreakpoints.mobile;
-
+              builder: (context, fieldConstraints) {
+                final sideBySide =
+                    fieldConstraints.maxWidth >= TenantAdminBreakpoints.mobile;
                 final amountField = TextFormField(
                   controller: amountController,
                   keyboardType:
@@ -57,9 +122,21 @@ class CashDropFormCard extends ConsumerWidget {
                       ref.read(cashDropFormProvider.notifier).setAmountText,
                   decoration: InputDecoration(
                     labelText: 'Drop Amount *',
-                    prefixText: '${formatLkrInputPrefix()} ',
+                    prefixText: prefix.isEmpty ? null : '$prefix ',
+                    helperText: sideBySide
+                        ? 'Amount cannot exceed available cash'
+                        : 'Cannot exceed available cash',
+                    helperStyle: tight ? const TextStyle(fontSize: 9) : null,
+                    isDense: compact,
+                    contentPadding: compact
+                        ? EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: tight ? 7 : 12,
+                          )
+                        : null,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                      borderRadius:
+                          BorderRadius.circular(TenantAdminRadius.md),
                     ),
                   ),
                   validator: (value) => validateCashDropAmount(
@@ -67,28 +144,62 @@ class CashDropFormCard extends ConsumerWidget {
                     maxAvailable: availableCash,
                   ),
                 );
-
                 final reasonField = DropdownButtonFormField<String>(
-                  key: ValueKey(formState.reason),
-                  initialValue: formState.reason,
+                  key: ValueKey(
+                    '${catalog.status.name}-${formState.selectedMovementTypeId}',
+                  ),
+                  isExpanded: true,
+                  initialValue: reasonEnabled
+                      ? formState.selectedMovementTypeId
+                      : null,
                   decoration: InputDecoration(
                     labelText: 'Reason *',
+                    isDense: compact,
+                    contentPadding: compact
+                        ? EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: tight ? 7 : 12,
+                          )
+                        : null,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                      borderRadius:
+                          BorderRadius.circular(TenantAdminRadius.md),
                     ),
                   ),
                   items: [
-                    for (final reason in CashDropReason.options)
+                    for (final type in catalog.types)
                       DropdownMenuItem(
-                        value: reason,
-                        child: Text(reason),
+                        value: type.movementTypeId,
+                        child: Text(
+                          type.name,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                   ],
-                  onChanged: ref.read(cashDropFormProvider.notifier).setReason,
-                  validator: validateCashDropReason,
+                  selectedItemBuilder: (context) => [
+                    for (final type in catalog.types)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          type.name,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                  ],
+                  onChanged: reasonEnabled
+                      ? ref
+                          .read(cashDropFormProvider.notifier)
+                          .setSelectedMovementTypeId
+                      : null,
+                  validator: (value) => validateCashDropMovementType(
+                    value,
+                    availableTypes: catalog.types,
+                  ),
                 );
 
-                if (useRow) {
+                if (sideBySide) {
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -103,28 +214,49 @@ class CashDropFormCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     amountField,
-                    const SizedBox(height: TenantAdminSpacing.lg),
+                    SizedBox(
+                      height: tight
+                          ? TenantAdminSpacing.xs
+                          : TenantAdminSpacing.md,
+                    ),
                     reasonField,
                   ],
                 );
               },
             ),
-            const SizedBox(height: TenantAdminSpacing.lg),
+            SizedBox(
+              height: tight
+                  ? TenantAdminSpacing.xs
+                  : compact
+                      ? TenantAdminSpacing.md
+                      : TenantAdminSpacing.lg,
+            ),
             TextFormField(
               controller: noteController,
-              maxLines: 4,
+              maxLines: tight ? 1 : (compact ? 2 : 4),
               maxLength: 500,
               onChanged: ref.read(cashDropFormProvider.notifier).setNote,
               decoration: InputDecoration(
-                labelText: 'Note',
-                hintText: 'Add note...',
+                labelText: 'Note (optional)',
+                hintText: 'Add note for this cash drop.',
                 alignLabelWithHint: true,
+                isDense: compact,
+                contentPadding: tight
+                    ? const EdgeInsets.symmetric(horizontal: 12, vertical: 8)
+                    : null,
+                counterStyle: tight ? const TextStyle(fontSize: 9) : null,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                 ),
               ),
             ),
-            const SizedBox(height: TenantAdminSpacing.lg),
+            SizedBox(
+              height: tight
+                  ? TenantAdminSpacing.xs
+                  : compact
+                      ? TenantAdminSpacing.md
+                      : TenantAdminSpacing.lg,
+            ),
             TextFormField(
               controller: managerPinController,
               obscureText: formState.obscureManagerPin,
@@ -136,10 +268,20 @@ class CashDropFormCard extends ConsumerWidget {
               onChanged: ref.read(cashDropFormProvider.notifier).setManagerPin,
               decoration: InputDecoration(
                 labelText: 'Manager PIN (optional)',
+                isDense: compact,
+                contentPadding: compact
+                    ? EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: tight ? 7 : 12,
+                      )
+                    : null,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                 ),
                 suffixIcon: IconButton(
+                  tooltip: formState.obscureManagerPin
+                      ? 'Show Manager PIN'
+                      : 'Hide Manager PIN',
                   onPressed: ref
                       .read(cashDropFormProvider.notifier)
                       .toggleManagerPinVisibility,
@@ -151,16 +293,60 @@ class CashDropFormCard extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: TenantAdminSpacing.sm),
+            SizedBox(height: tight ? 2 : TenantAdminSpacing.sm),
             Text(
               'Manager PIN is collected for future approval workflows only.',
               style: TenantAdminTextStyles.muted(context).copyWith(
-                fontSize: 12,
+                fontSize: tight ? 9 : (compact ? 10 : 12),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading({
+    required this.icon,
+    required this.label,
+    this.compact = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: compact ? 28 : 36,
+          height: compact ? 28 : 36,
+          decoration: BoxDecoration(
+            color: TenantAdminColors.expectedCashSurface,
+            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+          ),
+          child: Icon(
+            icon,
+            color: TenantAdminColors.posHomeAccentOrange,
+            size: compact ? 17 : 21,
+          ),
+        ),
+        SizedBox(
+          width: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
+        ),
+        Expanded(
+          child: Text(
+            label,
+            style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+              fontSize: compact ? 14 : null,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

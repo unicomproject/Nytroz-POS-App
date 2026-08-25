@@ -30,7 +30,7 @@ class ReceiptPreviewCard extends StatelessWidget {
         ),
         child: Padding(
           padding: const EdgeInsets.all(TenantAdminSpacing.md),
-          child: ThermalReceiptPreview(
+          child: ThermalReceiptPreview.fromPaymentSuccess(
             successData: successData,
             cashierName: cashierName,
             sessionContext: sessionContext,

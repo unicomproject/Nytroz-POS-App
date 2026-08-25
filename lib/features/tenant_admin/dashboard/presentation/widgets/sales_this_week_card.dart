@@ -29,7 +29,7 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
 
   @override
   Widget build(BuildContext context) {
-    final padding = widget.compact ? 18.0 : 22.0;
+    final padding = widget.compact ? 12.0 : 22.0;
 
     return Container(
       padding: EdgeInsets.all(padding),
@@ -84,7 +84,7 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
               );
             },
           ),
-          SizedBox(height: widget.compact ? 14 : 20),
+          SizedBox(height: widget.compact ? 8 : 20),
           Wrap(
             spacing: 8,
             runSpacing: 4,
@@ -119,7 +119,7 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
               ),
             ],
           ),
-          SizedBox(height: widget.compact ? 2 : 4),
+          SizedBox(height: widget.compact ? 0 : 4),
           const Text(
             'vs Yesterday (LKR 111,400.00)',
             style: TextStyle(
@@ -128,7 +128,7 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
               color: TenantAdminColors.mutedText,
             ),
           ),
-          SizedBox(height: widget.compact ? 12 : 20),
+          SizedBox(height: widget.compact ? 6 : 20),
           if (widget.expandChart)
             Expanded(child: _buildChart())
           else
@@ -136,7 +136,7 @@ class _SalesThisWeekCardState extends State<SalesThisWeekCard> {
               height: widget.compact ? 210 : 240,
               child: _buildChart(),
             ),
-          SizedBox(height: widget.compact ? 10 : 14),
+          SizedBox(height: widget.compact ? 6 : 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

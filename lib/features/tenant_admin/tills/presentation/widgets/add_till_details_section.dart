@@ -60,18 +60,29 @@ class AddTillDetailsSection extends StatelessWidget {
         Row(
           children: [
             Container(
-              width: 24,
-              height: 24,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFF6A00),
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF8C42), Color(0xFFFF6A00)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF6A00).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ],
               ),
               alignment: Alignment.center,
               child: const Text('1',
                   style: TextStyle(
                       color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold)),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800)),
             ),
             const SizedBox(width: TenantAdminSpacing.sm),
             Text(
@@ -102,6 +113,9 @@ class AddTillDetailsSection extends StatelessWidget {
                     if (value == null || value.trim().isEmpty) {
                       return 'Till Name is required';
                     }
+                    if (backendErrors['tillName'] != null) {
+                      return backendErrors['tillName'];
+                    }
                     return null;
                   },
                 ),
@@ -125,6 +139,9 @@ class AddTillDetailsSection extends StatelessWidget {
                     if (value == null || value.trim().isEmpty) {
                       return 'Till Code is required';
                     }
+                    if (backendErrors['tillCode'] != null) {
+                      return backendErrors['tillCode'];
+                    }
                     return null;
                   },
                 ),
@@ -142,6 +159,7 @@ class AddTillDetailsSection extends StatelessWidget {
                 isRequired: true,
                 child: DropdownButtonFormField<String>(
                   key: const ValueKey('outlet_dropdown'),
+                  isExpanded: true,
                   initialValue: safeOutletId,
                   decoration: _buildInputDecoration(
                     hintText: 'Select outlet',
@@ -160,6 +178,9 @@ class AddTillDetailsSection extends StatelessWidget {
                     if (value == null || value.isEmpty) {
                       return 'Please select an outlet';
                     }
+                    if (backendErrors['outletId'] != null) {
+                      return backendErrors['outletId'];
+                    }
                     return null;
                   },
                 ),
@@ -172,6 +193,7 @@ class AddTillDetailsSection extends StatelessWidget {
                 isRequired: true,
                 child: DropdownButtonFormField<String>(
                   key: const ValueKey('status_dropdown'),
+                  isExpanded: true,
                   initialValue: safeStatus,
                   decoration: _buildInputDecoration(
                     hintText: 'Select status',
@@ -195,6 +217,9 @@ class AddTillDetailsSection extends StatelessWidget {
                     if (value == null || value.isEmpty) {
                       return 'Please select a status';
                     }
+                    if (backendErrors['status'] != null) {
+                      return backendErrors['status'];
+                    }
                     return null;
                   },
                 ),
@@ -212,6 +237,7 @@ class AddTillDetailsSection extends StatelessWidget {
                 isRequired: true,
                 child: DropdownButtonFormField<String>(
                   key: ValueKey('cashier_dropdown_$selectedOutletId'),
+                  isExpanded: true,
                   initialValue: safeCashierId,
                   decoration: _buildInputDecoration(
                     hintText: 'Select cashier',
@@ -230,6 +256,9 @@ class AddTillDetailsSection extends StatelessWidget {
                     if (value == null || value.isEmpty) {
                       return 'Please select a default cashier';
                     }
+                    if (backendErrors['defaultCashierTenantUserId'] != null) {
+                      return backendErrors['defaultCashierTenantUserId'];
+                    }
                     return null;
                   },
                 ),
@@ -247,7 +276,7 @@ class AddTillDetailsSection extends StatelessWidget {
                       controller: floatController,
                       decoration: InputDecoration(
                         hintText: 'Enter opening float amount',
-                        prefixText: '${options.currencyCode} ',
+                        prefixText: options.currencyCode == 'LKR' ? 'Rs. ' : '${options.currencyCode} ',
                         errorText: backendErrors['defaultOpeningFloatAmount'],
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 16),
@@ -281,6 +310,9 @@ class AddTillDetailsSection extends StatelessWidget {
                         }
                         if (double.tryParse(value) == null) {
                           return 'Please enter a valid amount';
+                        }
+                        if (backendErrors['defaultOpeningFloatAmount'] != null) {
+                          return backendErrors['defaultOpeningFloatAmount'];
                         }
                         return null;
                       },
@@ -322,12 +354,16 @@ class AddTillDetailsSection extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(label,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  letterSpacing: 0.2,
+                )),
             if (isRequired)
               const Text(' *',
                   style: TextStyle(
-                      color: Colors.red,
+                      color: Colors.redAccent,
                       fontWeight: FontWeight.bold,
                       fontSize: 14)),
           ],
@@ -346,23 +382,32 @@ class AddTillDetailsSection extends StatelessWidget {
       String? errorText}) {
     return InputDecoration(
       hintText: hintText,
+      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14, fontWeight: FontWeight.w400),
       prefixIcon: Icon(icon,
-          color: iconColor ?? TenantAdminColors.mutedText, size: iconSize),
+          color: iconColor ?? Colors.grey.shade400, size: iconSize ?? 20),
       errorText: errorText,
+      filled: true,
+      fillColor: const Color(0xFFF8F9FA),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide:
-            BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade200),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide:
-            BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5)),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade200),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFFFF6A00)),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFFF6A00), width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
       ),
     );
   }

@@ -36,6 +36,7 @@ class PosCashPaymentSuccessData {
     this.customerPhone,
     this.cashierName,
     this.receiptDataJson,
+    this.authoritativePayment,
   });
 
   final String receiptNumber;
@@ -54,6 +55,8 @@ class PosCashPaymentSuccessData {
   final String? customerPhone;
   final String? cashierName;
   final String? receiptDataJson;
+  /// Backend checkout payload retained for explicit original print mapping.
+  final PosCheckoutStartPaymentPayload? authoritativePayment;
 }
 
 class PosCashPaymentSuccessNotifier
@@ -64,7 +67,28 @@ class PosCashPaymentSuccessNotifier
     PosCheckoutStartPaymentPayload payload, {
     String? customerName,
     String? customerPhone,
+    String? customerId,
   }) {
+    final resolvedCustomerName = _firstNonEmpty(
+      customerName,
+      payload.customerName,
+    );
+    final resolvedCustomerPhone = _firstNonEmpty(
+      customerPhone,
+      payload.customerPhone,
+    );
+    final resolvedCustomerId = _firstNonEmpty(
+      customerId,
+      payload.customerId,
+    );
+    // Keep authoritativePayment aligned with sale-time customer snapshot so
+    // preview, print, and reprint share one customer value after cart clear.
+    final authoritative = payload.copyWith(
+      customerName: resolvedCustomerName,
+      customerPhone: resolvedCustomerPhone,
+      customerId: resolvedCustomerId,
+    );
+
     state = PosCashPaymentSuccessData(
       receiptNumber: payload.receiptNumber,
       barcodeValue: payload.barcodeValue.isNotEmpty
@@ -82,16 +106,8 @@ class PosCashPaymentSuccessNotifier
       total: payload.grandTotal,
       cashReceived: payload.cashReceived,
       changeDue: payload.changeDue,
-      customerName: customerName?.trim().isNotEmpty == true
-          ? customerName!.trim()
-          : (payload.customerName?.trim().isNotEmpty == true
-              ? payload.customerName!.trim()
-              : null),
-      customerPhone: customerPhone?.trim().isNotEmpty == true
-          ? customerPhone!.trim()
-          : (payload.customerPhone?.trim().isNotEmpty == true
-              ? payload.customerPhone!.trim()
-              : null),
+      customerName: resolvedCustomerName,
+      customerPhone: resolvedCustomerPhone,
       cashierName: payload.cashierName?.trim().isNotEmpty == true
           ? payload.cashierName!.trim()
           : null,
@@ -107,7 +123,16 @@ class PosCashPaymentSuccessNotifier
           )
           .toList(growable: false),
       receiptDataJson: payload.receiptDataJson,
+      authoritativePayment: authoritative,
     );
+  }
+
+  static String? _firstNonEmpty(String? preferred, String? fallback) {
+    final a = preferred?.trim();
+    if (a != null && a.isNotEmpty) return a;
+    final b = fallback?.trim();
+    if (b != null && b.isNotEmpty) return b;
+    return null;
   }
 
   void clear() {

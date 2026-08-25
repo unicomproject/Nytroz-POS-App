@@ -18,7 +18,6 @@ class AddProductStepper extends StatelessWidget {
     'Product Configuration',
     'Barcode & SKU',
     'Pricing & Tax',
-    'Channel Visibility',
     'Review & Create',
   ];
 
@@ -32,7 +31,7 @@ class AddProductStepper extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: TenantAdminSpacing.lg,
-          vertical: TenantAdminSpacing.md,
+          vertical: TenantAdminSpacing.sm,
         ),
         decoration: BoxDecoration(
           color: TenantAdminColors.surface,

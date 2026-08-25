@@ -95,8 +95,11 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
   }
 
   String _calculateStockStatus(TenantProductDetail detail) {
-    if (!detail.trackInventory || detail.stock == null) {
+    if (!detail.trackInventory) {
       return 'NOT_TRACKED';
+    }
+    if (detail.stock == null) {
+      return 'OUT_OF_STOCK';
     }
     final onHand = detail.stock!.onHandQuantity;
     final minAlert = detail.stock!.minimumStockAlertQuantity;
@@ -260,7 +263,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
                 TenantAdminPrimaryButton(
                   label: _submitting ? 'Saving...' : 'Save Changes',
                   loading: _submitting,
-                  backgroundColor: const Color(0xFFFF5200),
+                  backgroundColor: TenantAdminColors.primary,
                   onPressed: _inputsEnabled ? _saveChanges : null,
                 ),
               ],

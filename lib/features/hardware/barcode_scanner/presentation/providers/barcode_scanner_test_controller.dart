@@ -148,8 +148,8 @@ class BarcodeScannerTestController extends Notifier<BarcodeScannerTestState> {
       errors
           .add('Scanner name is required and must be at most 150 characters.');
     }
-    if (mode != 'usbHid' && mode != 'camera') {
-      errors.add('Select USB HID or Camera mode.');
+    if (mode != 'usbHid' && mode != 'bluetoothHid' && mode != 'camera') {
+      errors.add('Select USB HID, Bluetooth HID, or Camera mode.');
     }
     if (scanTimeout < 20 || scanTimeout > 1000) {
       errors.add('Scan timeout must be 20–1000 ms.');

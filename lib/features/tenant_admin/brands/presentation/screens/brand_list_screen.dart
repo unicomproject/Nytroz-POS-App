@@ -10,6 +10,7 @@ import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_search_field.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/brand.dart';
+import '../../../presentation/widgets/tenant_admin_pagination.dart';
 import '../providers/brand_providers.dart';
 import '../providers/brand_visibility_provider.dart';
 import '../widgets/brand_details_side_panel.dart';

@@ -263,7 +263,7 @@ class ProductWizardSummary extends StatelessWidget {
                 ),
                 const SizedBox(width: TenantAdminSpacing.xs),
                 Text(
-                  'Step ${state.currentStep} of 8 Active',
+                  'Step ${state.currentStep} of 7 Active',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

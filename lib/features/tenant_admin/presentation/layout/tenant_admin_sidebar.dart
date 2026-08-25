@@ -52,6 +52,8 @@ class TenantAdminSidebar extends ConsumerWidget {
         ),
       ),
       child: SafeArea(
+        top: false,
+        bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

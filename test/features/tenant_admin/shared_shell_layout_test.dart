@@ -14,7 +14,7 @@ import 'package:nytroz_pos/features/tenant_admin/data/catalog/tenant_admin_menu_
 import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_context.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_access_checker.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/layout/tenant_admin_footer_navigation.dart';
-import 'package:nytroz_pos/features/tenant_admin/presentation/layout/tenant_admin_header.dart';
+import 'package:nytroz_pos/features/tenant_admin/presentation/layout/tenant_admin_app_header.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/layout/tenant_admin_shared_shell.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/layout/tenant_admin_sidebar.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_access_provider.dart';
@@ -323,8 +323,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(PosTopBar), findsOneWidget);
-      expect(find.byType(TenantAdminHeader), findsNothing);
+      expect(find.byType(TenantAdminAppHeader), findsOneWidget);
+      expect(find.byType(PosTopBar), findsNothing);
       expect(find.byType(TenantAdminSidebar), findsOneWidget);
       expect(find.byType(TenantAdminFooterNavigation), findsNothing);
       expect(find.text('Dashboard body'), findsOneWidget);
@@ -412,8 +412,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(PosTopBar), findsOneWidget);
-      expect(find.byType(TenantAdminHeader), findsNothing);
+      expect(find.byType(TenantAdminAppHeader), findsOneWidget);
+      expect(find.byType(PosTopBar), findsNothing);
       expect(find.byType(TenantAdminSidebar), findsNothing);
       expect(find.byType(TenantAdminFooterNavigation), findsNothing);
       expect(find.byIcon(Icons.menu_rounded), findsOneWidget);
