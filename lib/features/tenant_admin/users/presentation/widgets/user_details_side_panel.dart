@@ -10,6 +10,7 @@ import '../../domain/entities/tenant_user.dart';
 import '../providers/tenant_user_providers.dart';
 import '../providers/tenant_user_visibility_provider.dart';
 import '../utils/user_api_errors.dart';
+import 'tenant_user_avatar.dart';
 import 'user_status_badge.dart';
 
 class UserDetailsSidePanel extends ConsumerWidget {
@@ -77,19 +78,32 @@ class _UserDetailsContent extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          children: [
+            Expanded(
+              child: Text(
+                user.fullName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TenantAdminTextStyles.sectionTitle(context),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, size: 20),
+              color: TenantAdminColors.mutedText,
+              tooltip: 'Close user details',
+              onPressed: () =>
+                  ref.read(selectedUserIdProvider.notifier).state = null,
+            ),
+          ],
+        ),
+        const SizedBox(height: TenantAdminSpacing.md),
+        Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
+            TenantUserAvatar(
+              fullName: user.fullName,
+              imageUrl: user.profileImageUrl,
               radius: 30,
-              backgroundColor: TenantAdminColors.secondary,
-              child: Text(
-                _initials(user.fullName),
-                style: const TextStyle(
-                  color: TenantAdminColors.posHomeAccentOrange,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
             ),
             const SizedBox(width: TenantAdminSpacing.md),
             Expanded(
@@ -97,7 +111,9 @@ class _UserDetailsContent extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(user.fullName,
-                      style: TenantAdminTextStyles.sectionTitle(context)),
+                      style: TenantAdminTextStyles.body(context).copyWith(
+                            fontWeight: FontWeight.w700,
+                          )),
                   const SizedBox(height: TenantAdminSpacing.xs),
                   UserStatusBadge(status: user.status),
                   const SizedBox(height: TenantAdminSpacing.xs),
@@ -318,14 +334,3 @@ class _SummaryCard extends StatelessWidget {
 
 bool _hasText(String? value) => value?.trim().isNotEmpty == true;
 String _dash(String value) => value.trim().isEmpty ? '—' : value.trim();
-String _initials(String fullName) {
-  final parts = fullName
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((part) => part.isNotEmpty)
-      .toList();
-  if (parts.isEmpty) return '?';
-  if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
-      .toUpperCase();
-}

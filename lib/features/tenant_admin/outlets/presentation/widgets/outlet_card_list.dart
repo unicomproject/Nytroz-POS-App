@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/network/dio_provider.dart';
+import 'package:nytroz_pos/core/network/media_url_resolver.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/outlet.dart';
@@ -410,7 +412,7 @@ class _ManagerCell extends StatelessWidget {
   }
 }
 
-class _OutletThumbnail extends StatelessWidget {
+class _OutletThumbnail extends ConsumerWidget {
   const _OutletThumbnail({
     required this.outlet,
     this.compact = false,
@@ -420,8 +422,16 @@ class _OutletThumbnail extends StatelessWidget {
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
-    final hasImage = outlet.imageUrl != null && outlet.imageUrl!.isNotEmpty;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final imageUrl = outlet.imageUrl?.trim();
+    final hasImage = imageUrl != null && imageUrl.isNotEmpty;
+    final resolvedImageUrl = hasImage
+        ? MediaUrlResolver.resolve(
+              imageUrl,
+              apiBaseUrl: ref.watch(appDioProvider).options.baseUrl,
+            ) ??
+            imageUrl
+        : null;
     final size = compact ? 64.0 : 80.0;
 
     return Container(
@@ -441,9 +451,9 @@ class _OutletThumbnail extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(15),
-        child: hasImage
+        child: resolvedImageUrl != null
             ? Image.network(
-                outlet.imageUrl!,
+                resolvedImageUrl,
                 fit: BoxFit.cover,
                 loadingBuilder: (context, child, loadingProgress) {
                   return loadingProgress == null ? child : _placeholder();
@@ -456,22 +466,17 @@ class _OutletThumbnail extends StatelessWidget {
   }
 
   Widget _placeholder() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.05),
-            TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.15),
-          ],
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.storefront_rounded,
-          color: TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.5),
-          size: 32,
+    return Image.asset(
+      'assets/images/outlet-placeholder.png',
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => const ColoredBox(
+        color: TenantAdminColors.secondary,
+        child: Center(
+          child: Icon(
+            Icons.storefront_rounded,
+            color: TenantAdminColors.primary,
+            size: 32,
+          ),
         ),
       ),
     );

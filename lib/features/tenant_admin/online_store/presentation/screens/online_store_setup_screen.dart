@@ -2328,11 +2328,13 @@ class _AssetRow extends StatelessWidget {
         ),
         TextButton(
           onPressed: readOnly ? null : onUpload,
+          style: TextButton.styleFrom(foregroundColor: TenantAdminColors.info),
           child: const Text('Change'),
         ),
         IconButton(
           tooltip: 'Remove $label',
           onPressed: readOnly ? null : onRemove,
+          color: TenantAdminColors.danger,
           icon: const Icon(Icons.delete_outline),
         ),
       ],

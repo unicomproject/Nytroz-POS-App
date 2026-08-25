@@ -225,6 +225,7 @@ class OutletRemoteDatasource {
       for (final item in payload['items']) {
         if (item is Map) {
           resolve(item, 'imageUrl');
+          _resolveNestedImageUrl(item);
           if (item['manager'] is Map) {
             resolve(item['manager'], 'avatarUrl');
           }
@@ -240,6 +241,27 @@ class OutletRemoteDatasource {
     }
 
     resolve(payload, 'imageUrl');
+    _resolveNestedImageUrl(payload);
+  }
+
+  void _resolveNestedImageUrl(Map payload) {
+    void resolve(Map map, String key) {
+      if (map[key] != null) {
+        map[key] = MediaUrlResolver.resolve(
+              map[key]?.toString(),
+              apiBaseUrl: _dio.options.baseUrl,
+            ) ??
+            map[key];
+      }
+    }
+
+    for (final key in const ['primaryImage', 'image']) {
+      final image = payload[key];
+      if (image is Map) {
+        resolve(image, 'publicUrl');
+        resolve(image, 'imageUrl');
+      }
+    }
   }
 
   Future<OutletDetailDto> getOutletDetail(String id) async {

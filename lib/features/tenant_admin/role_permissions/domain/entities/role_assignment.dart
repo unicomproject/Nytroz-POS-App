@@ -3,11 +3,15 @@ class RoleAssignment {
     required this.userId,
     required this.scopeType,
     required this.outletIds,
+    this.fullName,
+    this.email,
   });
 
   final String userId;
   final RoleAccessScopeType scopeType;
   final List<String> outletIds;
+  final String? fullName;
+  final String? email;
 }
 
 enum RoleAccessScopeType {

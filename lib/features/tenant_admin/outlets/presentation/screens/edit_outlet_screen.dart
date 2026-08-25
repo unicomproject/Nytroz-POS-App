@@ -7,6 +7,7 @@ import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/outlet_details.dart';
 import '../providers/outlet_providers.dart';
+import '../providers/outlet_detail_providers.dart';
 import '../providers/outlet_visibility_provider.dart';
 import '../utils/outlet_api_errors.dart';
 import '../widgets/outlet_form.dart';
@@ -103,6 +104,7 @@ class _EditOutletScreenState extends ConsumerState<EditOutletScreen> {
       ref
           .refresh(outletDetailsProvider(widget.outletId))
           .maybeWhen(orElse: () {});
+      ref.invalidate(tenantAdminOutletOverviewProvider(widget.outletId));
       if (!mounted) {
         return;
       }

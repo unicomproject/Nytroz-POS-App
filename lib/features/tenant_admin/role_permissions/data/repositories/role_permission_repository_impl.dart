@@ -4,11 +4,13 @@ import '../../domain/entities/role_details.dart';
 import '../../domain/entities/role_list_item.dart';
 import '../../domain/entities/role_list_query.dart';
 import '../../domain/entities/role_permissions.dart';
+import '../../domain/entities/role_setup.dart';
 import '../../domain/repositories/role_permission_repository.dart';
 import '../datasources/role_permission_remote_datasource.dart';
 import '../mappers/role_permission_mapper.dart';
 import '../models/create_role_request_dto.dart';
 import '../models/role_assignments_dto.dart';
+import '../models/role_setup_dto.dart';
 import '../models/update_role_assignments_request_dto.dart';
 import '../models/update_role_permissions_request_dto.dart';
 import '../models/update_role_request_dto.dart';
@@ -23,6 +25,56 @@ class RolePermissionRepositoryImpl implements RolePermissionRepository {
   Future<PermissionCatalog> getPermissionCatalog() async {
     final dto = await _remoteDatasource.getPermissionCatalog();
     return dto.toEntity();
+  }
+
+  @override
+  Future<List<RoleSetupOption>> getSetupOptions() async {
+    final dto = await _remoteDatasource.getSetupOptions();
+    return dto.roles
+        .where((role) =>
+            role.roleCode == 'TENANT_ADMIN' || role.roleCode == 'CASHIER')
+        .map(
+          (role) => RoleSetupOption(
+            id: role.roleId,
+            code: role.roleCode,
+            name: role.roleName,
+            description: role.roleDescription,
+            isActive: role.isActive,
+            isSystem: role.isSystem,
+            permissionCount: role.permissionCount,
+            userCount: role.userCount,
+            updatedAt: role.updatedAt,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  @override
+  Future<SaveRoleSetupResult> saveRoleSetup(
+    String roleId,
+    SaveRoleSetupRequest request,
+  ) async {
+    final payload = await _remoteDatasource.saveRoleSetup(
+      roleId,
+      SaveRoleSetupRequestDto(
+        permissionCodes: request.permissionCodes,
+        assignments: request.assignments
+            .map(
+              (assignment) => UserRoleAssignmentDto(
+                userId: assignment.userId,
+                accessScope: assignment.scopeType.value,
+                outletIds: assignment.outletIds,
+              ),
+            )
+            .toList(growable: false),
+        expectedUpdatedAt: request.expectedUpdatedAt,
+      ),
+    );
+
+    return SaveRoleSetupResult(
+      roleId: payload['roleId']?.toString() ?? roleId,
+      updatedAt: DateTime.tryParse(payload['updatedAt']?.toString() ?? ''),
+    );
   }
 
   @override
@@ -59,11 +111,13 @@ class RolePermissionRepositoryImpl implements RolePermissionRepository {
         roleCode: roleCode,
         roleDescription: description,
         permissionCodes: permissionCodes,
-        assignments: assignments?.map((e) => UserRoleAssignmentDto(
-          userId: e.userId,
-          accessScope: e.scopeType.value,
-          outletIds: e.outletIds,
-        )).toList(growable: false),
+        assignments: assignments
+            ?.map((e) => UserRoleAssignmentDto(
+                  userId: e.userId,
+                  accessScope: e.scopeType.value,
+                  outletIds: e.outletIds,
+                ))
+            .toList(growable: false),
       ),
     );
     return RoleDetails(
@@ -131,23 +185,30 @@ class RolePermissionRepositoryImpl implements RolePermissionRepository {
   @override
   Future<List<RoleAssignment>> getRoleAssignments(String roleId) async {
     final dto = await _remoteDatasource.getRoleAssignments(roleId);
-    return dto.assignments.map((e) => RoleAssignment(
-      userId: e.userId,
-      scopeType: RoleAccessScopeType.fromValue(e.accessScope),
-      outletIds: e.outletIds,
-    )).toList(growable: false);
+    return dto.assignments
+        .map((e) => RoleAssignment(
+              userId: e.userId,
+              scopeType: RoleAccessScopeType.fromValue(e.accessScope),
+              outletIds: e.outletIds,
+              fullName: e.fullName,
+              email: e.email,
+            ))
+        .toList(growable: false);
   }
 
   @override
-  Future<void> updateRoleAssignments(String roleId, List<RoleAssignment> assignments) async {
+  Future<void> updateRoleAssignments(
+      String roleId, List<RoleAssignment> assignments) async {
     await _remoteDatasource.updateRoleAssignments(
       roleId,
       UpdateRoleAssignmentsRequestDto(
-        assignments: assignments.map((e) => UserRoleAssignmentDto(
-          userId: e.userId,
-          accessScope: e.scopeType.value,
-          outletIds: e.outletIds,
-        )).toList(growable: false),
+        assignments: assignments
+            .map((e) => UserRoleAssignmentDto(
+                  userId: e.userId,
+                  accessScope: e.scopeType.value,
+                  outletIds: e.outletIds,
+                ))
+            .toList(growable: false),
       ),
     );
   }

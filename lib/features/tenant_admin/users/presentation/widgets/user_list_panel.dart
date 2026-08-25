@@ -38,6 +38,7 @@ class UserListPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    const useManagementCards = true;
     final userCountLabel =
         '${result.totalCount > 0 ? result.totalCount : result.items.length} '
         '${result.totalCount == 1 ? 'User' : 'Users'}';
@@ -89,15 +90,18 @@ class UserListPanel extends ConsumerWidget {
                         : null,
               ),
             )
-          else if (isMobile)
+          else if (useManagementCards)
             Padding(
               padding: const EdgeInsets.all(TenantAdminSpacing.lg),
               child: UserMobileList(
                 users: result.items,
                 visibility: visibility,
+                selectedUserId: selectedUserId,
                 onView: (user) {
                   onSelect(user);
-                  showUserDetailsModal(context, user.id);
+                  if (!showDetailPanel) {
+                    showUserDetailsModal(context, user.id);
+                  }
                 },
                 onEdit: (user) =>
                     context.go('/tenant-admin/staff/${user.id}/edit'),

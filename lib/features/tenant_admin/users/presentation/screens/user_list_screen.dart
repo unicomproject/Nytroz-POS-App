@@ -18,7 +18,7 @@ import '../widgets/user_list_panel.dart';
 class UserListScreen extends ConsumerWidget {
   const UserListScreen({super.key});
 
-  static const _detailPanelBreakpoint = 1200.0;
+  static const _detailPanelBreakpoint = 750.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,11 +32,9 @@ class UserListScreen extends ConsumerWidget {
         if (result == null) return;
         final selectedId = ref.read(selectedUserIdProvider);
         final hasSelection = result.items.any((user) => user.id == selectedId);
-        ref.read(selectedUserIdProvider.notifier).state = result.items.isEmpty
-            ? null
-            : hasSelection
-                ? selectedId
-                : result.items.first.id;
+        if (selectedId != null && !hasSelection) {
+          ref.read(selectedUserIdProvider.notifier).state = null;
+        }
       });
     });
 
@@ -133,7 +131,7 @@ class UserListScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Expanded(
-                                flex: showDetailPanel ? 65 : 100,
+                                flex: selectedUserId == null ? 100 : 64,
                                 child: SingleChildScrollView(
                                   child: UserListPanel(
                                     result: result,
@@ -148,13 +146,19 @@ class UserListScreen extends ConsumerWidget {
                                   ),
                                 ),
                               ),
-                              if (showDetailPanel)
+                              if (selectedUserId != null) ...[
+                                const VerticalDivider(
+                                  width: 1,
+                                  thickness: 1,
+                                  color: TenantAdminColors.border,
+                                ),
                                 Expanded(
-                                  flex: 35,
+                                  flex: 36,
                                   child: UserDetailsSidePanel(
                                     userId: selectedUserId,
                                   ),
                                 ),
+                              ],
                             ],
                           ),
                         )

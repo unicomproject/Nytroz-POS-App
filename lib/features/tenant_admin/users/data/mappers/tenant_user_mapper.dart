@@ -10,6 +10,8 @@ class TenantUserMapper {
       fullName: dto.fullName,
       email: dto.email,
       phone: dto.phone,
+      staffCode: dto.staffCode,
+      profileImageUrl: dto.profileImageUrl,
       roleId: dto.roleId,
       roleName: dto.roleName,
       roleDescription: dto.roleDescription,

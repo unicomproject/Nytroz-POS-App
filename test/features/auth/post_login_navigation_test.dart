@@ -75,6 +75,15 @@ void main() {
       expect(route, PostLoginRoute.tenantAdminDashboard);
     });
 
+    test('routes tenant admin with POS delegation permissions to dashboard', () {
+      final container = _createContainer(session: _tenantAdminWithPosSession);
+      addTearDown(container.dispose);
+
+      final route = container.read(postLoginRouteProvider);
+
+      expect(route, PostLoginRoute.tenantAdminDashboard);
+    });
+
     test('bootstrap exposes device API failures instead of becoming ready',
         () async {
       final container = _createContainer(
@@ -322,6 +331,17 @@ const _tenantAdminSession = AuthSession(
     'tenant.context.view',
     'dashboard.view',
     'tills.view',
+  ],
+);
+
+const _tenantAdminWithPosSession = AuthSession(
+  accessToken: 'token',
+  userId: 'tenant-admin-1',
+  userDisplayName: 'Tenant Admin',
+  permissionCodes: [
+    'tenant.dashboard.view',
+    'pos.till.open',
+    'pos.home.view',
   ],
 );
 

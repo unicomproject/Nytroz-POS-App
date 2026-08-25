@@ -7,6 +7,7 @@ class RolePermissionsDto {
     required this.isSystem,
     required this.assignedPermissionCodes,
     required this.assignedPermissionIds,
+    this.updatedAt,
   });
 
   factory RolePermissionsDto.fromJson(Map<String, dynamic> json) {
@@ -18,6 +19,7 @@ class RolePermissionsDto {
       isSystem: json['isSystem'] as bool? ?? false,
       assignedPermissionCodes: _stringList(json['assignedPermissionCodes']),
       assignedPermissionIds: _idList(json['assignedPermissionIds']),
+      updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? ''),
     );
   }
 
@@ -28,6 +30,7 @@ class RolePermissionsDto {
   final bool isSystem;
   final List<String> assignedPermissionCodes;
   final List<String> assignedPermissionIds;
+  final DateTime? updatedAt;
 }
 
 List<String> _stringList(Object? value) {

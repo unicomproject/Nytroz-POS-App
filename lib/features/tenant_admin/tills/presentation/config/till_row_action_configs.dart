@@ -33,7 +33,7 @@ const tillRowActionConfigs = <TillRowActionConfig>[
   TillRowActionConfig(
     id: 'view_details',
     actionId: TillRowActionId.viewDetails,
-    label: 'View details',
+    label: 'View',
     icon: Icons.visibility_outlined,
     permission: TenantAdminPermissionCodes.tillView,
   ),
