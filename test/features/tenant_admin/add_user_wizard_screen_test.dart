@@ -296,6 +296,7 @@ Future<void> _pumpWizard(
 
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
+  await tester.pumpAndSettle();
 }
 
 const _createOptions = TenantUserCreateOptions(

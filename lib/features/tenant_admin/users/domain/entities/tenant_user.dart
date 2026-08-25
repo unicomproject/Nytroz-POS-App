@@ -4,6 +4,8 @@ class TenantUser {
     required this.fullName,
     required this.email,
     this.phone,
+    this.staffCode,
+    this.profileImageUrl,
     this.roleId,
     required this.roleName,
     this.roleDescription,
@@ -18,6 +20,8 @@ class TenantUser {
   final String fullName;
   final String email;
   final String? phone;
+  final String? staffCode;
+  final String? profileImageUrl;
   final String? roleId;
   final String roleName;
   final String? roleDescription;

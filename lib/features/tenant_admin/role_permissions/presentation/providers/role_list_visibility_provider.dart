@@ -6,13 +6,15 @@ import '../../../presentation/providers/tenant_admin_access_provider.dart';
 class RoleListVisibility {
   const RoleListVisibility({
     required this.showPage,
-    required this.showAddRole,
+    required this.showCreateCustomRole,
+    required this.showConfigureRole,
     required this.showEditRole,
     required this.showDeleteRole,
   });
 
   final bool showPage;
-  final bool showAddRole;
+  final bool showCreateCustomRole;
+  final bool showConfigureRole;
   final bool showEditRole;
   final bool showDeleteRole;
 }
@@ -32,7 +34,14 @@ final roleListVisibilityProvider = Provider.autoDispose<AsyncValue<RoleListVisib
             TenantAdminPermissionCodes.tenantRoleManage,
           ],
         ),
-        showAddRole: checker.canShowActionWithAnyPermission(
+        showCreateCustomRole: checker.canShowActionWithAnyPermission(
+          TenantAdminFeatureCodes.rolePermission,
+          [
+            TenantAdminPermissionCodes.tenantRolesCreate,
+            TenantAdminPermissionCodes.tenantRoleManage,
+          ],
+        ),
+        showConfigureRole: checker.canShowActionWithAnyPermission(
           TenantAdminFeatureCodes.rolePermission,
           [
             TenantAdminPermissionCodes.rolesPermissionsUpdate,

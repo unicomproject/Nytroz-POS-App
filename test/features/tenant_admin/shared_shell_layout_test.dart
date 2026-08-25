@@ -108,7 +108,7 @@ TenantAdminAccessChecker _fullAccess() {
           TenantAdminPermissionCodes.tenantProductImport,
           TenantAdminPermissionCodes.tenantHardwareView,
           TenantAdminPermissionCodes.onlineStoreView,
-          TenantAdminPermissionCodes.tenantSettingsView,
+          TenantAdminPermissionCodes.tenantSettingsManage,
         ])
           TenantAdminPermission(permissionCode: code, permissionName: code),
       ],
@@ -446,6 +446,32 @@ void main() {
 
       expect(find.byType(TenantAdminSidebar), findsOneWidget);
       expect(find.byType(TenantAdminFooterNavigation), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('tablet portrait uses the navigation drawer without overflow',
+        (tester) async {
+      final access = _fullAccess();
+      tester.view.physicalSize = const Size(768, 1024);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: _shellOverrides(access),
+          child: const MaterialApp(
+            home: TenantAdminSharedShell(
+              currentRoute: '/tenant-admin/roles-permissions',
+              child: Text('Roles body'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TenantAdminSidebar), findsNothing);
+      expect(find.byIcon(Icons.menu_rounded), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

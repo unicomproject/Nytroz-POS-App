@@ -1,30 +1,29 @@
-// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
-import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../../presentation/widgets/tenant_admin_search_field.dart';
-import '../../domain/entities/role_assignment.dart';
+import '../../../tills/domain/entities/till.dart';
+import '../../../tills/presentation/providers/till_providers.dart';
 import '../../../users/domain/entities/tenant_user.dart';
 import '../../../users/presentation/providers/tenant_user_providers.dart';
-import '../../../presentation/providers/tenant_admin_context_provider.dart';
+import '../../domain/entities/role_assignment.dart';
 import '../providers/role_setup_wizard_provider.dart';
 import '../widgets/role_setup_components.dart';
 import 'role_setup_shell.dart';
 
-// Local search query provider for Step 4 to avoid messing up main screen's state
-final wizardUserSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
+final roleSetupUserSearchProvider =
+    StateProvider.autoDispose<String>((ref) => '');
+final roleSetupOutletSearchProvider =
+    StateProvider.autoDispose<String>((ref) => '');
 
-// Local user list provider for Step 4
-final wizardUserListProvider = FutureProvider.autoDispose<List<TenantUser>>((ref) async {
-  final queryText = ref.watch(wizardUserSearchQueryProvider);
-  final getUsers = ref.watch(getUsersProvider);
-  
-  final result = await getUsers(
+final roleSetupUsersProvider =
+    FutureProvider.autoDispose<List<TenantUser>>((ref) async {
+  final search = ref.watch(roleSetupUserSearchProvider);
+  final result = await ref.watch(getUsersProvider)(
     query: TenantUserListQuery(
-      search: queryText.isEmpty ? null : queryText,
+      search: search.isEmpty ? null : search,
       page: 1,
       pageSize: 50,
     ),
@@ -32,39 +31,17 @@ final wizardUserListProvider = FutureProvider.autoDispose<List<TenantUser>>((ref
   return result.items;
 });
 
-// Local outlet search query provider for Step 4
-final wizardOutletSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
-
-class RoleSetupStep4AssignmentsScreen extends ConsumerStatefulWidget {
+class RoleSetupStep4AssignmentsScreen extends ConsumerWidget {
   const RoleSetupStep4AssignmentsScreen({super.key});
 
   @override
-  ConsumerState<RoleSetupStep4AssignmentsScreen> createState() =>
-      _RoleSetupStep4AssignmentsScreenState();
-}
-
-class _RoleSetupStep4AssignmentsScreenState
-    extends ConsumerState<RoleSetupStep4AssignmentsScreen> {
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(roleSetupWizardProvider);
     final controller = ref.read(roleSetupWizardProvider.notifier);
-
-    // Users and search states
-    final usersState = ref.watch(wizardUserListProvider);
-    final userSearchText = ref.watch(wizardUserSearchQueryProvider);
-    
-    // Outlets and search states
-    final outletContext = ref.watch(tenantAdminContextProvider).valueOrNull;
-    final outletSearchText = ref.watch(wizardOutletSearchQueryProvider);
-
-    final allOutlets = outletContext?.outletScope ?? [];
-    final filteredOutlets = allOutlets.where((outlet) {
-      if (outletSearchText.isEmpty) return true;
-      final term = outletSearchText.toLowerCase();
-      return outlet.outletName.toLowerCase().contains(term) ||
-          outlet.outletId.toLowerCase().contains(term);
-    }).toList();
+    final users = ref.watch(roleSetupUsersProvider);
+    final outlets = ref.watch(tillOutletOptionsProvider);
+    final userSearch = ref.watch(roleSetupUserSearchProvider);
+    final outletSearch = ref.watch(roleSetupOutletSearchProvider);
 
     return RoleSetupShell(
       child: Padding(
@@ -72,362 +49,293 @@ class _RoleSetupStep4AssignmentsScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-
-            // ── Step Header ──
             const RoleSetupStepHeader(
               step: 4,
               title: 'Assign Users & Access Scope',
               subtitle:
-                  'Assign this role to specific users and determine whether they have access tenant-wide or only for selected outlets.',
+                  'Choose users, then set tenant-wide or selected-outlet access for each user.',
             ),
-
-            // ── LayoutBuilder for Dual Panel ──
+            if (state.errorMessage != null) ...[
+              RoleSetupWarningBanner(message: state.errorMessage!),
+              const SizedBox(height: TenantAdminSpacing.md),
+            ],
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final isWide = constraints.maxWidth > 800;
-
-                  final leftPanel = _buildLeftUserPanel(
-                    context,
-                    state: state,
-                    controller: controller,
-                    usersState: usersState,
-                    userSearchText: userSearchText,
+                  final userPanel = _UserPanel(
+                    users: users,
+                    selectedIds:
+                        state.assignments.map((item) => item.userId).toSet(),
+                    activeUserId: state.activeAssignmentUserId,
+                    search: userSearch,
+                    onSearch: (value) => ref
+                        .read(roleSetupUserSearchProvider.notifier)
+                        .state = value,
+                    onToggle: (user) => controller.toggleUser(
+                      user.id,
+                      fullName: user.fullName,
+                      email: user.email,
+                    ),
+                    onSelect: controller.setActiveAssignmentUser,
                   );
-
-                  final rightPanel = _buildRightScopePanel(
-                    context,
-                    state: state,
-                    controller: controller,
-                    filteredOutlets: filteredOutlets,
-                    outletSearchText: outletSearchText,
-                    isWide: isWide,
+                  final scopePanel = _ScopePanel(
+                    assignment: state.activeAssignment,
+                    outlets: outlets,
+                    search: outletSearch,
+                    onSearch: (value) => ref
+                        .read(roleSetupOutletSearchProvider.notifier)
+                        .state = value,
+                    onScopeChanged: controller.setAssignmentScope,
+                    onOutletToggle: controller.toggleAssignmentOutlet,
                   );
-
-                  if (isWide) {
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(flex: 5, child: leftPanel),
-                        VerticalDivider(
-                          width: TenantAdminSpacing.xl * 2,
-                          thickness: 1,
-                          color: TenantAdminColors.border,
-                        ),
-                        Expanded(flex: 5, child: rightPanel),
-                      ],
-                    );
-                  } else {
-                    return ListView(
-                      children: [
-                        SizedBox(height: 400, child: leftPanel),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: TenantAdminSpacing.lg),
-                          child: Divider(),
-                        ),
-                        rightPanel,
-                      ],
-                    );
-                  }
+                  return constraints.maxWidth >=
+                          TenantAdminBreakpoints.smallTablet
+                      ? Row(
+                          children: [
+                            Expanded(child: userPanel),
+                            const SizedBox(width: TenantAdminSpacing.xl),
+                            Expanded(child: scopePanel),
+                          ],
+                        )
+                      : Column(
+                          children: [
+                            Expanded(child: userPanel),
+                            const SizedBox(height: TenantAdminSpacing.md),
+                            Expanded(child: scopePanel),
+                          ],
+                        );
                 },
               ),
             ),
-
             const SizedBox(height: TenantAdminSpacing.md),
-
-            // ── Info Banner ──
-            const RoleSetupInfoBanner(
-              message:
-                  'Access scope will apply to all selected users. Users with outlet-specific access can only view data within their assigned scope.',
-              icon: Icons.info_outline,
-            ),
-
-            const SizedBox(height: TenantAdminSpacing.md),
-
-            // ── Footer ──
             RoleSetupFooterActions(
               onBack: () {
                 controller.previousStep();
-                context.go('/tenant-admin/roles-permissions/create/permissions');
-              },
-              onSaveDraft: () {
-                controller.saveDraft();
+                context
+                    .go('/tenant-admin/roles-permissions/create/permissions');
               },
               onContinue: () {
+                if (state.hasInvalidAssignment) return;
                 controller.nextStep();
                 context.go('/tenant-admin/roles-permissions/create/review');
               },
+              canContinue: !state.hasInvalidAssignment,
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildLeftUserPanel(
-    BuildContext context, {
-    required RoleSetupWizardState state,
-    required RoleSetupWizardController controller,
-    required AsyncValue<List<TenantUser>> usersState,
-    required String userSearchText,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Assign Users',
-          style: TenantAdminTextStyles.sectionTitle(context),
-        ),
-        const SizedBox(height: TenantAdminSpacing.md),
-        
-        // Search users input
-        TenantAdminSearchField(
-          hint: 'Search users by name, email or staff code...',
-          value: userSearchText,
-          onChanged: (val) {
-            ref.read(wizardUserSearchQueryProvider.notifier).state = val;
-          },
-        ),
-        const SizedBox(height: TenantAdminSpacing.md),
+class _UserPanel extends StatelessWidget {
+  const _UserPanel({
+    required this.users,
+    required this.selectedIds,
+    required this.activeUserId,
+    required this.search,
+    required this.onSearch,
+    required this.onToggle,
+    required this.onSelect,
+  });
 
-        // Users List
-        Expanded(
-          child: usersState.when(
-            loading: () => const TenantAdminLoadingSkeleton(rowCount: 5),
-            error: (e, st) => TenantAdminErrorState(
-              title: 'Failed to load users',
-              message: 'Please try again.',
-              onRetry: () => ref.refresh(wizardUserListProvider),
+  final AsyncValue<List<TenantUser>> users;
+  final Set<String> selectedIds;
+  final String? activeUserId;
+  final String search;
+  final ValueChanged<String> onSearch;
+  final void Function(TenantUser user) onToggle;
+  final ValueChanged<String> onSelect;
+
+  @override
+  Widget build(BuildContext context) => _Panel(
+        title: 'Assign users',
+        child: Column(
+          children: [
+            TenantAdminSearchField(
+              hint: 'Search name, email or staff code',
+              onChanged: onSearch,
             ),
-            data: (users) {
-              if (users.isEmpty) {
-                return const Center(
-                  child: Text('No users match search criteria.'),
-                );
-              }
-              return ListView.separated(
-                itemCount: users.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final user = users[index];
-                  final isSelected = state.selectedUserIds.contains(user.id);
-                  final isActive = user.status.toLowerCase() == 'active';
-
-                  return CheckboxListTile(
-                    value: isSelected,
-                    onChanged: (_) => controller.toggleUser(user.id),
-                    activeColor: TenantAdminColors.primary,
-                    title: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: TenantAdminColors.primary.withValues(alpha: 0.1),
-                          child: Text(
-                            user.fullName.isNotEmpty
-                                ? user.fullName[0].toUpperCase()
-                                : 'U',
-                            style: const TextStyle(
-                              color: TenantAdminColors.primary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: TenantAdminSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                user.fullName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Text(
-                                user.email,
-                                style: TenantAdminTextStyles.muted(context).copyWith(
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    secondary: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? TenantAdminColors.successSurface
-                            : TenantAdminColors.dangerSurface,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+            const SizedBox(height: TenantAdminSpacing.md),
+            Expanded(
+              child: users.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, __) =>
+                    const Center(child: Text('Unable to load users.')),
+                data: (items) {
+                  if (items.isEmpty) {
+                    return Center(
                       child: Text(
-                        user.status,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: isActive
-                              ? TenantAdminColors.success
-                              : TenantAdminColors.danger,
-                        ),
+                        search.trim().isEmpty
+                            ? 'No eligible users are available.'
+                            : 'No users found for "${search.trim()}".',
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final user = items[index];
+                    final selected = selectedIds.contains(user.id);
+                    return ListTile(
+                      selected: user.id == activeUserId,
+                      selectedTileColor:
+                          TenantAdminColors.primary.withValues(alpha: 0.08),
+                      leading: Checkbox(
+                        value: selected,
+                        activeColor: TenantAdminColors.primary,
+                        onChanged: (_) => onToggle(user),
+                      ),
+                      title: Text(user.fullName),
+                      subtitle: Text(
+                        [
+                          user.email,
+                          if (user.staffCode?.isNotEmpty == true)
+                            user.staffCode!
+                        ].join(' • '),
+                      ),
+                      trailing: Text(user.status),
+                      onTap: selected
+                          ? () => onSelect(user.id)
+                          : () => onToggle(user),
+                    );
+                  },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+}
+
+class _ScopePanel extends StatelessWidget {
+  const _ScopePanel({
+    required this.assignment,
+    required this.outlets,
+    required this.search,
+    required this.onSearch,
+    required this.onScopeChanged,
+    required this.onOutletToggle,
+  });
+
+  final RoleAssignment? assignment;
+  final AsyncValue<List<OutletOption>> outlets;
+  final String search;
+  final ValueChanged<String> onSearch;
+  final ValueChanged<RoleAccessScopeType> onScopeChanged;
+  final ValueChanged<String> onOutletToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    if (assignment == null) {
+      return const _Panel(
+        title: 'Access scope',
+        child: Center(child: Text('Select a user to configure their scope.')),
+      );
+    }
+    return _Panel(
+      title: 'Access scope',
+      child: ListView(
+        children: [
+          RadioListTile<RoleAccessScopeType>(
+            value: RoleAccessScopeType.tenantWide,
+            groupValue: assignment!.scopeType,
+            activeColor: TenantAdminColors.primary,
+            title: const Text('Tenant-wide access'),
+            subtitle: const Text('User can access all permitted outlets.'),
+            onChanged: (value) => onScopeChanged(value!),
+          ),
+          RadioListTile<RoleAccessScopeType>(
+            value: RoleAccessScopeType.selectedOutlets,
+            groupValue: assignment!.scopeType,
+            activeColor: TenantAdminColors.primary,
+            title: const Text('Selected outlets'),
+            subtitle: const Text('User can access only the selected outlets.'),
+            onChanged: (value) => onScopeChanged(value!),
+          ),
+          if (assignment!.scopeType == RoleAccessScopeType.selectedOutlets) ...[
+            const SizedBox(height: TenantAdminSpacing.sm),
+            TenantAdminSearchField(
+              hint: 'Search outlets',
+              onChanged: onSearch,
+            ),
+            const SizedBox(height: TenantAdminSpacing.sm),
+            outlets.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(TenantAdminSpacing.md),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (_, __) => const Padding(
+                padding: EdgeInsets.all(TenantAdminSpacing.md),
+                child: Center(child: Text('Unable to load outlets.')),
+              ),
+              data: (items) {
+                final normalizedSearch = search.trim().toLowerCase();
+                final filtered = items.where((outlet) {
+                  return normalizedSearch.isEmpty ||
+                      outlet.name.toLowerCase().contains(normalizedSearch) ||
+                      outlet.code.toLowerCase().contains(normalizedSearch);
+                }).toList(growable: false);
+                if (filtered.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.all(TenantAdminSpacing.md),
+                    child: Center(
+                      child: Text(
+                        normalizedSearch.isEmpty
+                            ? 'No active outlets are available.'
+                            : 'No outlets found for "${search.trim()}".',
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   );
-                },
-              );
-            },
-          ),
-        ),
-
-        // Selected user chips section
-        if (state.selectedUserIds.isNotEmpty) ...[
-          const Divider(),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Selected Users (${state.selectedUserIds.length})',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-              ),
-              TextButton(
-                onPressed: () => controller.clearAllUsers(),
-                child: const Text('Clear All', style: TextStyle(fontSize: 12)),
-              ),
-            ],
-          ),
-          const SizedBox(height: TenantAdminSpacing.xs),
-          Wrap(
-            spacing: TenantAdminSpacing.sm,
-            runSpacing: TenantAdminSpacing.sm,
-            children: state.selectedUserIds.map((userId) {
-              return Chip(
-                label: Text(userId, style: const TextStyle(fontSize: 11)),
-                onDeleted: () => controller.toggleUser(userId),
-                backgroundColor: TenantAdminColors.subtleBackground,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-                ),
-              );
-            }).toList(),
-          ),
+                }
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final outlet = filtered[index];
+                    return CheckboxListTile(
+                      value: assignment!.outletIds.contains(outlet.id),
+                      activeColor: TenantAdminColors.primary,
+                      title: Text(outlet.name),
+                      subtitle: Text(outlet.code),
+                      onChanged: (_) => onOutletToggle(outlet.id),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
+}
 
-  Widget _buildRightScopePanel(
-    BuildContext context, {
-    required RoleSetupWizardState state,
-    required RoleSetupWizardController controller,
-    required List<dynamic> filteredOutlets,
-    required String outletSearchText,
-    required bool isWide,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Access Scope',
-          style: TenantAdminTextStyles.sectionTitle(context),
+class _Panel extends StatelessWidget {
+  const _Panel({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(TenantAdminSpacing.md),
+        decoration: BoxDecoration(
+          border: Border.all(color: TenantAdminColors.border),
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         ),
-        const SizedBox(height: TenantAdminSpacing.xs),
-        Text(
-          'Define the access scope for the selected users.',
-          style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 13),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: TenantAdminTextStyles.sectionTitle(context)),
+            const SizedBox(height: TenantAdminSpacing.md),
+            Expanded(child: child),
+          ],
         ),
-        const SizedBox(height: TenantAdminSpacing.lg),
-
-        // Scope Radio Group
-        RadioListTile<RoleAccessScopeType>(
-          title: const Text('Tenant-wide access', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-          subtitle: const Text('Users can access all permitted outlets.', style: TextStyle(fontSize: 12)),
-          value: RoleAccessScopeType.tenantWide,
-          groupValue: state.accessScopeType,
-          activeColor: TenantAdminColors.primary,
-          onChanged: (val) {
-            if (val != null) controller.setAccessScope(val);
-          },
-        ),
-        RadioListTile<RoleAccessScopeType>(
-          title: const Text('Selected outlets', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-          subtitle: const Text('Users can access only the selected outlets.', style: TextStyle(fontSize: 12)),
-          value: RoleAccessScopeType.selectedOutlets,
-          groupValue: state.accessScopeType,
-          activeColor: TenantAdminColors.primary,
-          onChanged: (val) {
-            if (val != null) controller.setAccessScope(val);
-          },
-        ),
-
-        // Outlet checklist (when Selected Outlets is chosen)
-        if (state.accessScopeType == RoleAccessScopeType.selectedOutlets) ...[
-          const SizedBox(height: TenantAdminSpacing.lg),
-          const Divider(),
-          const SizedBox(height: TenantAdminSpacing.md),
-          Text(
-            'Select Outlets',
-            style: TenantAdminTextStyles.sectionTitle(context).copyWith(fontSize: 14),
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          TenantAdminSearchField(
-            hint: 'Search outlets by name or code...',
-            value: outletSearchText,
-            onChanged: (val) {
-              ref.read(wizardOutletSearchQueryProvider.notifier).state = val;
-            },
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          isWide
-              ? Expanded(
-                  child: ListView.separated(
-                    itemCount: filteredOutlets.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final outlet = filteredOutlets[index];
-                      final isChecked = state.selectedOutletIds.contains(outlet.outletId);
-
-                      return CheckboxListTile(
-                        title: Text(outlet.outletName, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
-                        subtitle: Text(outlet.outletId, style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
-                        value: isChecked,
-                        onChanged: (_) => controller.toggleOutlet(outlet.outletId),
-                        activeColor: TenantAdminColors.primary,
-                        controlAffinity: ListTileControlAffinity.trailing,
-                      );
-                    },
-                  ),
-                )
-              : SizedBox(
-                  height: 300,
-                  child: ListView.separated(
-                    itemCount: filteredOutlets.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final outlet = filteredOutlets[index];
-                      final isChecked = state.selectedOutletIds.contains(outlet.outletId);
-
-                      return CheckboxListTile(
-                        title: Text(outlet.outletName, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
-                        subtitle: Text(outlet.outletId, style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
-                        value: isChecked,
-                        onChanged: (_) => controller.toggleOutlet(outlet.outletId),
-                        activeColor: TenantAdminColors.primary,
-                        controlAffinity: ListTileControlAffinity.trailing,
-                      );
-                    },
-                  ),
-                ),
-        ] else if (isWide)
-          const Expanded(child: SizedBox.shrink()),
-      ],
-    );
-  }
+      );
 }

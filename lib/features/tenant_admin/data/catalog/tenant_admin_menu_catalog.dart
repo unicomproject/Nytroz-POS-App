@@ -113,7 +113,7 @@ const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
     route: '/tenant-admin/settings',
     iconKey: 'settings',
     featureCode: TenantAdminFeatureCodes.tenantSettings,
-    permissionCode: TenantAdminPermissionCodes.tenantSettingsView,
+    permissionCode: TenantAdminPermissionCodes.tenantSettingsManage,
     visible: true,
     order: 11,
   ),

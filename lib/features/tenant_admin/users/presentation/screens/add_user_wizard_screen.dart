@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,7 @@ import '../../../outlets/presentation/providers/outlet_image_upload_provider.dar
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
+import '../../../presentation/widgets/tenant_admin_single_image_upload_card.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/tenant_user.dart';
 import '../providers/add_user_wizard_provider.dart';
@@ -987,64 +990,60 @@ class _ProfilePhotoCard extends ConsumerWidget {
         imageState.remoteImageUrl != null ||
         imageState.mediaAssetId != null;
 
-    return _CardSection(
+    return TenantAdminSingleImageUploadCard(
       title: 'Profile Photo',
-      subtitle: 'Optional',
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 56,
-            backgroundColor:
-                TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.12),
-            backgroundImage: imageState.previewBytes == null
-                ? null
-                : MemoryImage(imageState.previewBytes!),
-            child: imageState.previewBytes == null
-                ? Text(
-                    _initials(state.fullName),
-                    style: const TextStyle(
-                      fontSize: 32,
-                      color: TenantAdminColors.posHomeAccentOrange,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  )
-                : null,
-          ),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          if (imageState.status == OutletImageUploadStatus.uploading)
-            LinearProgressIndicator(value: imageState.progress),
-          if (imageState.errorMessage != null) ...[
-            const SizedBox(height: TenantAdminSpacing.sm),
-            Text(
-              imageState.errorMessage!,
-              style: const TextStyle(color: TenantAdminColors.danger),
-            ),
-          ],
-          const SizedBox(height: TenantAdminSpacing.md),
-          OutlinedButton.icon(
-            onPressed: imageState.status == OutletImageUploadStatus.uploading
-                ? null
-                : hasImage
-                    ? imageController.replaceImage
-                    : imageController.chooseImage,
-            icon: const Icon(Icons.upload_outlined),
-            label: Text(hasImage ? 'Replace' : 'Upload Photo'),
-          ),
-          if (hasImage)
-            TextButton.icon(
-              onPressed: imageState.status == OutletImageUploadStatus.deleting
-                  ? null
-                  : imageController.removeImage,
-              icon: const Icon(Icons.delete_outline),
-              label: const Text('Remove'),
-            ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          Text(
-            'JPG, JPEG or PNG. Max file size 2 MB.',
-            style: TenantAdminTextStyles.muted(context),
-            textAlign: TextAlign.center,
-          ),
-        ],
+      description: 'Use a clear portrait to help identify this user.',
+      fileName: imageState.fileName,
+      preview: hasImage
+          ? _UserProfilePreview(
+              imageBytes: imageState.previewBytes,
+              imageUrl: imageState.remoteImageUrl,
+              initials: _initials(state.fullName),
+            )
+          : null,
+      isBusy: imageState.status == OutletImageUploadStatus.uploading ||
+          imageState.status == OutletImageUploadStatus.deleting,
+      progress: imageState.status == OutletImageUploadStatus.uploading
+          ? imageState.progress
+          : null,
+      errorText: imageState.errorMessage,
+      onChooseImage:
+          hasImage ? imageController.replaceImage : imageController.chooseImage,
+      onRemoveImage: hasImage ? imageController.removeImage : null,
+      onRetry:
+          imageState.errorMessage == null ? null : imageController.retryUpload,
+    );
+  }
+}
+
+class _UserProfilePreview extends StatelessWidget {
+  const _UserProfilePreview({
+    required this.imageBytes,
+    required this.imageUrl,
+    required this.initials,
+  });
+
+  final Uint8List? imageBytes;
+  final String? imageUrl;
+  final String initials;
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageBytes != null) return Image.memory(imageBytes!, fit: BoxFit.cover);
+    if (imageUrl?.trim().isNotEmpty == true) {
+      return Image.network(imageUrl!, fit: BoxFit.cover);
+    }
+
+    return Container(
+      color: TenantAdminColors.secondary,
+      alignment: Alignment.center,
+      child: Text(
+        initials,
+        style: const TextStyle(
+          color: TenantAdminColors.primary,
+          fontWeight: FontWeight.w900,
+          fontSize: 24,
+        ),
       ),
     );
   }
@@ -1362,9 +1361,8 @@ class _OutletAccessModeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = selected
-        ? TenantAdminColors.primary
-        : TenantAdminColors.border;
+    final borderColor =
+        selected ? TenantAdminColors.primary : TenantAdminColors.border;
     final backgroundColor =
         selected ? TenantAdminColors.secondary : TenantAdminColors.surface;
 
@@ -1423,11 +1421,9 @@ class _CardSection extends StatelessWidget {
   const _CardSection({
     required this.title,
     required this.child,
-    this.subtitle,
   });
 
   final String title;
-  final String? subtitle;
   final Widget child;
 
   @override
@@ -1454,16 +1450,6 @@ class _CardSection extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (subtitle != null) ...[
-                  const SizedBox(width: TenantAdminSpacing.sm),
-                  Flexible(
-                    child: Text(
-                      subtitle!,
-                      style: TenantAdminTextStyles.muted(context),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
               ],
             ),
             const SizedBox(height: TenantAdminSpacing.md),

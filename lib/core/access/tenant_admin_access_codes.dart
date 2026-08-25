@@ -135,6 +135,7 @@ class TenantAdminPermissionCodes {
   static const tenantTillManage = 'tenant.till.manage';
   static const tenantUserManage = 'tenant.user.manage';
   static const tenantRoleManage = 'tenant.role.manage';
+  static const tenantRolesCreate = 'tenant.roles.create';
   static const tenantOutletsView = 'tenant.outlets.view';
   static const tenantOutletsManage = 'tenant.outlets.manage';
   static const tenantOutletsDetailsView = 'tenant.outlets.details.view';
