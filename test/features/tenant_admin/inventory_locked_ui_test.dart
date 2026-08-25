@@ -13,6 +13,7 @@ import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/current_
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/dashboard/pages/inventory_dashboard_page.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/navigation/inventory_routes.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/opening_stock/screens/opening_stock_wizard_screen.dart';
+import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/opening_stock/providers/opening_stock_providers.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/receiving/receiving_flow.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/serials/serial_registry_screen.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_access_provider.dart';
@@ -378,6 +379,15 @@ Future<void> _pump(
     ProviderScope(
       overrides: [
         inventoryFrontendMockEnabledProvider.overrideWith((ref) => true),
+        openingStockRepositoryProvider.overrideWith(
+          (ref) => const InventoryOpeningStockMockRepository(),
+        ),
+        openingStockProductsProvider.overrideWith(
+          (ref) async => InventoryFrontendMock.tenantProducts,
+        ),
+        openingStockOutletsProvider.overrideWith(
+          (ref) async => InventoryFrontendMock.tenantOutlets,
+        ),
         tenantAdminContextProvider.overrideWith(
           (ref) async => accessChecker.context,
         ),
