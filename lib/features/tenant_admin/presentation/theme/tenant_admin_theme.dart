@@ -203,7 +203,7 @@ class TenantAdminContentTokens {
   static const tabletButtonHeight = 48.0;
   static const tableHeaderHeight = 48.0;
   static const contentGap = TenantAdminSpacing.lg;
-  static const defaultListPageSize = 4;
+  static const defaultListPageSize = 5;
   static const desktopMasterRatio = 0.65;
   static const detailPanelRatio = 0.35;
   static const minUsablePanelWidth = 320.0;

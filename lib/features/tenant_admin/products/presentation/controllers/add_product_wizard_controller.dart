@@ -49,6 +49,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
 
   Timer? _autoSaveTimer;
 
+
+
   @override
   set state(AddProductWizardState value) {
     super.state = value;
