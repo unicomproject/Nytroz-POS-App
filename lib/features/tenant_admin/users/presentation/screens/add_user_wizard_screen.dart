@@ -991,7 +991,7 @@ class _ProfilePhotoCard extends ConsumerWidget {
         imageState.mediaAssetId != null;
 
     return TenantAdminSingleImageUploadCard(
-      title: 'Profile Image',
+      title: 'Profile Photo',
       description: 'Use a clear portrait to help identify this user.',
       fileName: imageState.fileName,
       preview: hasImage

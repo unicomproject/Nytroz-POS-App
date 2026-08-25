@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/core/access/tenant_admin_access_codes.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_context.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_access_checker.dart';
+import 'package:nytroz_pos/features/tenant_admin/inventory/data/mock/inventory_frontend_mock.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/adjustment/adjustment_flow.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/channel_allocation/channel_allocation_flow.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/current_stock/screens/current_stock_screen.dart';
@@ -376,6 +377,7 @@ Future<void> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        inventoryFrontendMockEnabledProvider.overrideWith((ref) => true),
         tenantAdminContextProvider.overrideWith(
           (ref) async => accessChecker.context,
         ),
@@ -398,6 +400,7 @@ Future<void> _pump(
   );
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
+  await tester.pumpAndSettle();
 }
 
 Future<void> _pumpRouter(

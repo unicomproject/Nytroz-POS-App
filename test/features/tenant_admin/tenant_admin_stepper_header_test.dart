@@ -13,6 +13,9 @@ void main() {
 
   testWidgets('uses compact progress on tablet portrait widths',
       (tester) async {
+    await tester.binding.setSurfaceSize(const Size(768, 1024));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
@@ -33,6 +36,9 @@ void main() {
 
   testWidgets('uses the full workflow indicator on tablet landscape widths',
       (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1024, 768));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(

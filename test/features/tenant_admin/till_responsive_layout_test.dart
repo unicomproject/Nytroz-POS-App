@@ -182,6 +182,7 @@ Future<void> _pumpTillScreen(
   await tester.pump(Duration.zero);
   await tester.pump(Duration.zero);
   await tester.pump(Duration.zero);
+  await tester.pumpAndSettle();
 }
 
 bool _hasFlutterOverflow(WidgetTester tester) {

@@ -31,6 +31,7 @@ class TillMonitoringRow extends ConsumerWidget {
       badge: _CodeBadge(code: item.code),
       leading: _TillIcon(status: item.displayStatus),
       onTap: onTap,
+      selected: isSelected,
       metrics: [
         TenantAdminManagementCardMetric(
           label: 'Outlet',
