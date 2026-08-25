@@ -95,17 +95,17 @@ void main() {
       await tester.tap(find.text('Main Outlet'));
       await tester.pump();
       await tester.tap(find.text('Continue to Enter Opening Details'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Enter Opening Stock Details'), findsOneWidget);
       await tester.tap(find.text('Continue to Review'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 300));
       expect(
         find.text(
             'Review does not change physical stock. Verify details before posting.'),
         findsOneWidget,
       );
       await tester.tap(find.text('Confirm & Submit Stock'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Opening Stock Added Successfully!'), findsOneWidget);
     });
   });
@@ -410,7 +410,7 @@ Future<void> _pump(
   );
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
-  await tester.pumpAndSettle();
+  await tester.pump(Duration.zero);
 }
 
 Future<void> _pumpRouter(

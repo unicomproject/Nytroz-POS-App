@@ -9,6 +9,7 @@ import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin
 import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till_hardware_readiness.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till_monitoring.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/presentation/providers/till_providers.dart';
+import 'package:nytroz_pos/features/tenant_admin/tills/presentation/providers/till_visibility_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/presentation/screens/till_monitoring_screen.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/presentation/widgets/till_monitoring_list.dart';
 import 'package:nytroz_pos/features/tenant_admin/tills/presentation/widgets/till_monitoring_side_panel.dart';
@@ -141,6 +142,11 @@ Future<void> _pumpTillScreen(
         tenantAdminAccessCheckerProvider.overrideWith(
           (ref) async => accessChecker,
         ),
+        tillListVisibilityProvider.overrideWith(
+          (ref) => AsyncData(
+            TillListVisibility.resolve(access: accessChecker),
+          ),
+        ),
         tillListResultFutureProvider.overrideWith(
           (ref) async => TillMonitoringResult(
             items: _tillItems(itemCount),
@@ -182,7 +188,7 @@ Future<void> _pumpTillScreen(
   await tester.pump(Duration.zero);
   await tester.pump(Duration.zero);
   await tester.pump(Duration.zero);
-  await tester.pumpAndSettle();
+  await tester.pump(const Duration(milliseconds: 300));
 }
 
 bool _hasFlutterOverflow(WidgetTester tester) {
