@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/theme/tenant_admin_motion.dart';
 import '../../../presentation/widgets/tenant_admin_data_table.dart';
+import '../../../presentation/widgets/tenant_admin_management_card.dart';
 import '../../../presentation/widgets/tenant_admin_pagination.dart';
+import '../../../presentation/widgets/tenant_admin_row_action.dart';
 import '../../domain/entities/role_list_item.dart';
 import '../providers/role_list_visibility_provider.dart';
+import '../providers/role_mutation_controller.dart';
 import '../providers/roles_list_providers.dart';
 
 class RoleListPanel extends ConsumerWidget {
@@ -29,6 +34,8 @@ class RoleListPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final mutationState = ref.watch(roleMutationControllerProvider);
+
     if (result.items.isEmpty) {
       return const TenantAdminDataTable(
         columns: [],
@@ -38,7 +45,40 @@ class RoleListPanel extends ConsumerWidget {
       );
     }
 
-    return TenantAdminDataTable(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < TenantAdminBreakpoints.desktop) {
+          return Column(
+            children: [
+              for (final role in result.items) ...[
+                _RoleManagementCard(
+                  role: role,
+                  canEdit: visibility.showEditRole,
+                  isLoading: mutationState.isLoading,
+                  onView: () => onSelect(role),
+                  onEdit: () => context.go('/tenant-admin/roles/${role.id}/edit'),
+                  onToggleStatus: () =>
+                      _confirmStatusChange(context, ref, role),
+                ),
+                const SizedBox(height: TenantAdminSpacing.md),
+              ],
+              if (result.totalPages > 1)
+                TenantAdminPaginationBar(
+                  currentPage: result.page,
+                  pageSize: result.pageSize,
+                  totalCount: result.totalCount,
+                  itemLabel: 'roles',
+                  onPageChanged: (page) {
+                    final query = ref.read(rolesListQueryProvider);
+                    ref.read(rolesListQueryProvider.notifier).state =
+                        query.copyWith(page: page);
+                  },
+                ),
+            ],
+          );
+        }
+
+        return TenantAdminDataTable(
       columns: const [
         DataColumn(label: Text('ROLE NAME')),
         DataColumn(
@@ -63,6 +103,12 @@ class RoleListPanel extends ConsumerWidget {
           label: SizedBox(
             width: 100,
             child: Text('CREATED', textAlign: TextAlign.center),
+          ),
+        ),
+        DataColumn(
+          label: SizedBox(
+            width: 96,
+            child: Text('ACTION', textAlign: TextAlign.center),
           ),
         ),
       ],
@@ -187,10 +233,24 @@ class RoleListPanel extends ConsumerWidget {
                 ),
               ),
             ),
+            DataCell(
+              SizedBox(
+                width: 96,
+                child: _RoleActions(
+                  role: role,
+                  canEdit: visibility.showEditRole,
+                  isLoading: mutationState.isLoading,
+                  onView: () => onSelect(role),
+                  onEdit: () => context.go('/tenant-admin/roles/${role.id}/edit'),
+                  onToggleStatus: () => _confirmStatusChange(context, ref, role),
+                ),
+              ),
+            ),
           ],
         );
       }).toList(),
       showCheckboxColumn: false,
+      minWidth: 980,
       footer: result.totalPages > 1
           ? TenantAdminPaginationBar(
               currentPage: result.page,
@@ -202,6 +262,266 @@ class RoleListPanel extends ConsumerWidget {
               },
             )
           : null,
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmStatusChange(
+    BuildContext context,
+    WidgetRef ref,
+    RoleListItem role,
+  ) async {
+    final nextStatus = !role.isActive;
+    final action = nextStatus ? 'activate' : 'disable';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('${nextStatus ? 'Activate' : 'Disable'} role?'),
+        content: Text(
+          nextStatus
+              ? 'Users assigned to "${role.name}" will regain this role access.'
+              : 'Users assigned to "${role.name}" will no longer receive this role access.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: nextStatus
+                  ? TenantAdminColors.success
+                  : TenantAdminColors.danger,
+            ),
+            child: Text(nextStatus ? 'Activate' : 'Disable'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final success = await ref
+        .read(roleMutationControllerProvider.notifier)
+        .updateRoleStatus(role.id, nextStatus, role.updatedAt);
+    if (!context.mounted) return;
+
+    final mutationState = ref.read(roleMutationControllerProvider);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Role ${nextStatus ? 'activated' : 'disabled'} successfully.'
+              : mutationState.error ?? 'Unable to $action this role.',
+        ),
+        backgroundColor:
+            success ? TenantAdminColors.success : TenantAdminColors.danger,
+      ),
     );
   }
 }
+
+class _RoleManagementCard extends StatelessWidget {
+  const _RoleManagementCard({
+    required this.role,
+    required this.canEdit,
+    required this.isLoading,
+    required this.onView,
+    required this.onEdit,
+    required this.onToggleStatus,
+  });
+
+  final RoleListItem role;
+  final bool canEdit;
+  final bool isLoading;
+  final VoidCallback onView;
+  final VoidCallback onEdit;
+  final VoidCallback onToggleStatus;
+
+  @override
+  Widget build(BuildContext context) => TenantAdminManagementCard(
+        title: role.name,
+        badge: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TenantAdminSpacing.sm,
+            vertical: TenantAdminSpacing.xs,
+          ),
+          decoration: BoxDecoration(
+            color: role.isSystem
+                ? TenantAdminColors.subtleBackground
+                : TenantAdminColors.secondary,
+            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+          ),
+          child: Text(
+            role.isSystem ? 'SYSTEM' : role.code,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: TenantAdminColors.mutedText,
+            ),
+          ),
+        ),
+        leading: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: TenantAdminColors.primary.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+          ),
+          child: const Icon(
+            Icons.admin_panel_settings_outlined,
+            color: TenantAdminColors.primary,
+            size: 28,
+          ),
+        ),
+        metrics: [
+          TenantAdminManagementCardMetric(
+            label: 'Permissions',
+            icon: Icons.key_outlined,
+            value: Text('${role.permissionCount}'),
+          ),
+          TenantAdminManagementCardMetric(
+            label: 'Users',
+            icon: Icons.people_outline,
+            value: Text('${role.userCount}'),
+          ),
+          TenantAdminManagementCardMetric(
+            label: 'Created',
+            icon: Icons.calendar_today_outlined,
+            value: Text(DateFormat('MMM d, yyyy').format(role.createdAt.toLocal())),
+          ),
+        ],
+        status: TenantAdminAnimatedStatus(
+          statusKey: role.isActive,
+          child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TenantAdminSpacing.md,
+            vertical: TenantAdminSpacing.xs,
+          ),
+          decoration: BoxDecoration(
+            color: (role.isActive
+                    ? TenantAdminColors.success
+                    : TenantAdminColors.danger)
+                .withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            role.isActive ? 'Active' : 'Inactive',
+            style: TextStyle(
+              color: role.isActive
+                  ? TenantAdminColors.success
+                  : TenantAdminColors.danger,
+              fontWeight: FontWeight.w800,
+              fontSize: 12,
+            ),
+          ),
+          ),
+        ),
+        actions: [
+          TenantAdminManagementCardAction(
+            label: 'View',
+            icon: Icons.visibility_outlined,
+            onPressed: onView,
+          ),
+          if (!role.isSystem && canEdit && !isLoading)
+            TenantAdminManagementCardAction(
+              label: 'Edit',
+              icon: Icons.edit_outlined,
+              onPressed: onEdit,
+            ),
+          if (!role.isSystem && canEdit && !isLoading)
+            TenantAdminManagementCardAction(
+              label: role.isActive ? 'Disable' : 'Enable',
+              icon: role.isActive
+                  ? Icons.block_outlined
+                  : Icons.check_circle_outline,
+              color: role.isActive
+                  ? TenantAdminColors.danger
+                  : TenantAdminColors.success,
+              onPressed: onToggleStatus,
+            ),
+        ],
+        onTap: onView,
+      );
+}
+
+class _RoleActions extends StatelessWidget {
+  const _RoleActions({
+    required this.role,
+    required this.canEdit,
+    required this.isLoading,
+    required this.onView,
+    required this.onEdit,
+    required this.onToggleStatus,
+  });
+
+  final RoleListItem role;
+  final bool canEdit;
+  final bool isLoading;
+  final VoidCallback onView;
+  final VoidCallback onEdit;
+  final VoidCallback onToggleStatus;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: PopupMenuButton<_RoleAction>(
+        tooltip: 'Role actions',
+        enabled: !isLoading,
+        position: PopupMenuPosition.under,
+        constraints: const BoxConstraints(minWidth: 148),
+        menuPadding: const EdgeInsets.symmetric(vertical: TenantAdminSpacing.xs),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+        ),
+        icon: const Icon(Icons.more_vert),
+        onSelected: (action) {
+          switch (action) {
+            case _RoleAction.view:
+              onView();
+              break;
+            case _RoleAction.edit:
+              onEdit();
+              break;
+            case _RoleAction.toggleStatus:
+              onToggleStatus();
+              break;
+          }
+        },
+        itemBuilder: (context) => [
+          const PopupMenuItem(
+            value: _RoleAction.view,
+            child: TenantAdminRowActionMenuItem(
+              icon: Icons.visibility_outlined,
+              label: 'View',
+            ),
+          ),
+          if (!role.isSystem && canEdit) ...[
+            const PopupMenuItem(
+              value: _RoleAction.edit,
+              child: TenantAdminRowActionMenuItem(
+                icon: Icons.edit_outlined,
+                label: 'Edit',
+              ),
+            ),
+            PopupMenuItem(
+              value: _RoleAction.toggleStatus,
+              child: TenantAdminRowActionMenuItem(
+                icon: role.isActive
+                    ? Icons.block_outlined
+                    : Icons.check_circle_outline,
+                label: role.isActive ? 'Disable' : 'Enable',
+                destructive: role.isActive,
+                success: !role.isActive,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+enum _RoleAction { view, edit, toggleStatus }

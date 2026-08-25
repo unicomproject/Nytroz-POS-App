@@ -4,6 +4,8 @@ class TenantUserListItemDto {
     required this.fullName,
     required this.email,
     this.phone,
+    this.staffCode,
+    this.profileImageUrl,
     this.roleId,
     required this.roleName,
     this.roleDescription,
@@ -20,6 +22,8 @@ class TenantUserListItemDto {
       fullName: json['fullName'] as String? ?? '',
       email: json['email'] as String? ?? '',
       phone: json['phoneNumber'] as String? ?? json['phone'] as String?,
+      staffCode: json['staffCode'] as String?,
+      profileImageUrl: json['profileImageUrl'] as String?,
       roleId: json['roleId']?.toString(),
       roleName: json['roleName'] as String? ?? '',
       roleDescription: json['roleDescription'] as String?,
@@ -37,6 +41,8 @@ class TenantUserListItemDto {
   final String fullName;
   final String email;
   final String? phone;
+  final String? staffCode;
+  final String? profileImageUrl;
   final String? roleId;
   final String roleName;
   final String? roleDescription;

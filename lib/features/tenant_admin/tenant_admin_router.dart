@@ -13,6 +13,7 @@ import 'outlets/presentation/screens/add_outlet_screen.dart';
 import 'outlets/presentation/screens/edit_outlet_screen.dart';
 import 'outlets/presentation/screens/outlet_details_screen.dart';
 import 'outlets/presentation/screens/outlet_list_screen.dart';
+import 'role_permissions/presentation/screens/create_custom_role_screen.dart';
 import 'role_permissions/presentation/screens/edit_role_screen.dart';
 import 'role_permissions/presentation/screens/role_setup_step1_role_screen.dart';
 import 'role_permissions/presentation/screens/role_setup_step2_modules_screen.dart';
@@ -231,6 +232,10 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
 
   if (definition.path == '/tenant-admin/roles') {
     return const RolesScreen();
+  }
+
+  if (definition.path == '/tenant-admin/roles/add') {
+    return const CreateCustomRoleScreen();
   }
 
   if (definition.path == '/tenant-admin/roles/:id/edit') {
@@ -565,6 +570,16 @@ bool _canAccessRoute(
   TenantAdminAccessChecker accessChecker,
   TenantAdminRouteDefinition definition,
 ) {
+  if (definition.path == '/tenant-admin/roles/add') {
+    return accessChecker.canShowActionWithAnyPermission(
+      TenantAdminFeatureCodes.rolePermission,
+      [
+        TenantAdminPermissionCodes.tenantRolesCreate,
+        TenantAdminPermissionCodes.tenantRoleManage,
+      ],
+    );
+  }
+
   if (definition.menuKey == 'roles-access') {
     return accessChecker.canShowActionWithAnyPermission(
       TenantAdminFeatureCodes.rolePermission,

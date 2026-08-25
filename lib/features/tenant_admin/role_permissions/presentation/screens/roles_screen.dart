@@ -12,12 +12,11 @@ import '../providers/role_list_visibility_provider.dart';
 import '../providers/roles_list_providers.dart';
 import '../widgets/role_details_side_panel.dart';
 import '../widgets/role_list_panel.dart';
-import '../widgets/role_details_modal.dart';
 
 class RolesScreen extends ConsumerWidget {
   const RolesScreen({super.key});
 
-  static const _detailPanelBreakpoint = 1200.0;
+  static const _detailPanelBreakpoint = 750.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,11 +30,9 @@ class RolesScreen extends ConsumerWidget {
         if (result == null) return;
         final selectedId = ref.read(selectedRoleIdProvider);
         final hasSelection = result.items.any((role) => role.id == selectedId);
-        ref.read(selectedRoleIdProvider.notifier).state = result.items.isEmpty
-            ? null
-            : hasSelection
-                ? selectedId
-                : result.items.first.id;
+        if (selectedId != null && !hasSelection) {
+          ref.read(selectedRoleIdProvider.notifier).state = null;
+        }
       });
     });
 
@@ -90,15 +87,23 @@ class RolesScreen extends ConsumerWidget {
 
                 return TenantAdminPageScaffold(
                   title: 'Roles & Access',
-                  subtitle: 'Manage user roles and their associated permissions.',
-                  actions: visibility.showAddRole
-                      ? [
-                          _RolesAddButton(
-                            onPressed: () => context
-                                .go('/tenant-admin/roles-permissions/create/select-role'),
+                  subtitle:
+                      'Manage user roles and their associated permissions.',
+                  actions: [
+                    if (visibility.showCreateCustomRole)
+                          _CreateCustomRoleButton(
+                            onPressed: () =>
+                                context.go('/tenant-admin/roles/add'),
                           ),
-                        ]
-                      : const [],
+                    if (visibility.showCreateCustomRole &&
+                        visibility.showConfigureRole)
+                      const SizedBox(width: TenantAdminSpacing.md),
+                    if (visibility.showConfigureRole)
+                          _RolesAddButton(
+                            onPressed: () => context.go(
+                                '/tenant-admin/roles-permissions/create/select-role'),
+                          ),
+                  ],
                   scrollable: !showDetailPanel,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,7 +119,7 @@ class RolesScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Expanded(
-                                flex: 65,
+                                flex: selectedRoleId == null ? 100 : 64,
                                 child: SingleChildScrollView(
                                   child: RoleListPanel(
                                     result: result,
@@ -128,12 +133,19 @@ class RolesScreen extends ConsumerWidget {
                                   ),
                                 ),
                               ),
-                              Expanded(
-                                flex: 35,
-                                child: RoleDetailsSidePanel(
-                                  roleId: selectedRoleId,
+                              if (selectedRoleId != null) ...[
+                                const VerticalDivider(
+                                  width: 1,
+                                  thickness: 1,
+                                  color: TenantAdminColors.border,
                                 ),
-                              ),
+                                Expanded(
+                                  flex: 36,
+                                  child: RoleDetailsSidePanel(
+                                    roleId: selectedRoleId,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         )
@@ -145,11 +157,10 @@ class RolesScreen extends ConsumerWidget {
                           showDetailPanel: false,
                           selectedRoleId: selectedRoleId,
                           onSelect: (role) {
-                            ref.read(selectedRoleIdProvider.notifier).state = role.id;
+                            ref.read(selectedRoleIdProvider.notifier).state =
+                                role.id;
                             if (isMobile) {
                               context.go('/tenant-admin/roles/${role.id}');
-                            } else {
-                              showRoleDetailsModal(context, role.id);
                             }
                           },
                         ),
@@ -165,6 +176,30 @@ class RolesScreen extends ConsumerWidget {
   }
 }
 
+class _CreateCustomRoleButton extends StatelessWidget {
+  const _CreateCustomRoleButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      onPressed: onPressed,
+      icon: const Icon(Icons.add),
+      label: const Text('Create Custom Role'),
+      style: FilledButton.styleFrom(
+        backgroundColor: TenantAdminColors.posHomeAccentOrange,
+        foregroundColor: Colors.white,
+        minimumSize: const Size(140, TenantAdminContentTokens.buttonHeight),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+        ),
+        textStyle: const TextStyle(fontWeight: FontWeight.w800),
+      ),
+    );
+  }
+}
+
 class _RolesAddButton extends ConsumerWidget {
   const _RolesAddButton({required this.onPressed});
 
@@ -172,16 +207,16 @@ class _RolesAddButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FilledButton.icon(
+    return OutlinedButton.icon(
       onPressed: () {
         ref.invalidate(roleSetupWizardProvider);
         onPressed();
       },
       icon: const Icon(Icons.add),
-      label: const Text('Add Role'),
-      style: FilledButton.styleFrom(
-        backgroundColor: TenantAdminColors.posHomeAccentOrange,
-        foregroundColor: Colors.white,
+      label: const Text('Configure Role Access'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: TenantAdminColors.posHomeAccentOrange,
+        side: const BorderSide(color: TenantAdminColors.posHomeAccentOrange),
         minimumSize: const Size(140, TenantAdminContentTokens.buttonHeight),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
@@ -208,7 +243,8 @@ class _RolesListControls extends ConsumerWidget {
       value: ref.watch(rolesListQueryProvider).search ?? '',
       onChanged: (value) {
         final query = ref.read(rolesListQueryProvider);
-        ref.read(rolesListQueryProvider.notifier).state = query.copyWith(search: value, page: 1);
+        ref.read(rolesListQueryProvider.notifier).state =
+            query.copyWith(search: value, page: 1);
       },
     );
 
@@ -224,7 +260,8 @@ class _RolesListControls extends ConsumerWidget {
           icon: const Icon(Icons.filter_list),
           onChanged: (String? newValue) {
             final query = ref.read(rolesListQueryProvider);
-            ref.read(rolesListQueryProvider.notifier).state = query.copyWith(status: newValue == '' ? null : newValue, page: 1);
+            ref.read(rolesListQueryProvider.notifier).state = query.copyWith(
+                status: newValue == '' ? null : newValue, page: 1);
           },
           items: const [
             DropdownMenuItem(value: '', child: Text('All Statuses')),

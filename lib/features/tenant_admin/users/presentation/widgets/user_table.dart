@@ -7,6 +7,7 @@ import '../../../presentation/widgets/tenant_admin_data_table.dart';
 import '../../domain/entities/tenant_user.dart';
 import '../config/user_row_action_configs.dart';
 import '../utils/user_api_errors.dart';
+import 'tenant_user_avatar.dart';
 import 'user_status_badge.dart';
 
 class UserTable extends StatelessWidget {
@@ -109,13 +110,10 @@ class _Identity extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          CircleAvatar(
+          TenantUserAvatar(
+            fullName: user.fullName,
+            imageUrl: user.profileImageUrl,
             radius: 19,
-            backgroundColor: TenantAdminColors.secondary,
-            child: Text(_initials(user.fullName),
-                style: const TextStyle(
-                    color: TenantAdminColors.posHomeAccentOrange,
-                    fontWeight: FontWeight.w800)),
           ),
           const SizedBox(width: TenantAdminSpacing.md),
           Expanded(
@@ -225,14 +223,3 @@ class _TwoLineCell extends StatelessWidget {
 String? _nonEmpty(String? value) =>
     value?.trim().isNotEmpty == true ? value!.trim() : null;
 String _dash(String value) => value.trim().isEmpty ? '—' : value.trim();
-String _initials(String fullName) {
-  final parts = fullName
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((part) => part.isNotEmpty)
-      .toList();
-  if (parts.isEmpty) return '?';
-  if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
-      .toUpperCase();
-}

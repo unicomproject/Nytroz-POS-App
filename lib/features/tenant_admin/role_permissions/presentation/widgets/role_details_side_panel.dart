@@ -24,11 +24,10 @@ class RoleDetailsSidePanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (roleId == null) {
       return Container(
-        margin: isModal ? EdgeInsets.zero : const EdgeInsets.only(left: TenantAdminSpacing.lg),
+        margin: EdgeInsets.zero,
         decoration: isModal ? null : BoxDecoration(
           color: TenantAdminColors.surface,
-          borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-          border: Border.all(color: TenantAdminColors.border),
+          borderRadius: BorderRadius.zero,
         ),
         child: const Center(
           child: TenantAdminEmptyState(
@@ -45,11 +44,10 @@ class RoleDetailsSidePanel extends ConsumerWidget {
     final mutationState = ref.watch(roleMutationControllerProvider);
 
     return Container(
-      margin: isModal ? EdgeInsets.zero : const EdgeInsets.only(left: TenantAdminSpacing.lg),
+      margin: EdgeInsets.zero,
       decoration: isModal ? null : BoxDecoration(
         color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-        border: Border.all(color: TenantAdminColors.border),
+        borderRadius: BorderRadius.zero,
       ),
       child: detailsState.when(
         loading: () => const TenantAdminLoadingSkeleton(rowCount: 6),
@@ -70,6 +68,20 @@ class RoleDetailsSidePanel extends ConsumerWidget {
                 padding: const EdgeInsets.all(TenantAdminSpacing.xl),
                 child: Row(
                   children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: TenantAdminColors.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                      ),
+                      child: const Icon(
+                        Icons.admin_panel_settings_outlined,
+                        color: TenantAdminColors.primary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: TenantAdminSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,6 +133,18 @@ class RoleDetailsSidePanel extends ConsumerWidget {
                           ),
                         ],
                       ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      color: TenantAdminColors.mutedText,
+                      tooltip: 'Close role details',
+                      onPressed: () {
+                        if (isModal) {
+                          Navigator.of(context).pop();
+                        } else {
+                          ref.read(selectedRoleIdProvider.notifier).state = null;
+                        }
+                      },
                     ),
                   ],
                 ),

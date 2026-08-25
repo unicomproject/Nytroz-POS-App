@@ -37,6 +37,32 @@ class RoleMutationController extends AutoDisposeNotifier<RoleMutationState> {
     return const RoleMutationState(isLoading: false);
   }
 
+  Future<String?> createRole(
+    String roleName,
+    String? description,
+    List<String> permissionCodes,
+  ) async {
+    state = state.copyWith(isLoading: true, clearError: true, clearMessage: true);
+    try {
+      final repo = ref.read(rolePermissionRepositoryProvider);
+      final created = await repo.createRole(
+        roleName,
+        description,
+        _clientRoleCode(roleName),
+        permissionCodes: permissionCodes,
+      );
+      state = state.copyWith(
+        isLoading: false,
+        message: 'Custom role created successfully.',
+      );
+      ref.invalidate(rolesListProvider);
+      return created.id;
+    } catch (e) {
+      _handleError(e);
+      return null;
+    }
+  }
+
   Future<bool> updateRole(
     String roleId,
     String roleName,
@@ -97,6 +123,15 @@ class RoleMutationController extends AutoDisposeNotifier<RoleMutationState> {
     } else {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+  }
+
+  String _clientRoleCode(String roleName) {
+    final normalized = roleName
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
+    return normalized.isEmpty ? 'custom_role' : normalized;
   }
 }
 

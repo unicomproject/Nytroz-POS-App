@@ -30,6 +30,14 @@ final postLoginRouteProvider = Provider<PostLoginRoute>((ref) {
   final device = deviceState.deviceContext;
   final deviceTrusted = device?.isTrusted == true;
 
+  if (authSession?.canAccessTenantAdminDashboard == true) {
+    developer.log(
+      'Post-login navigation: tenant admin dashboard. route=${PostLoginRoute.tenantAdminDashboard.path}',
+      name: 'auth.navigation',
+    );
+    return PostLoginRoute.tenantAdminDashboard;
+  }
+
   final isPosCashier = authSession?.canOpenPosTill == true;
 
   if (isPosCashier) {
@@ -54,14 +62,6 @@ final postLoginRouteProvider = Provider<PostLoginRoute>((ref) {
       name: 'auth.navigation',
     );
     return PostLoginRoute.posHome;
-  }
-
-  if (authSession?.canAccessTenantAdminDashboard == true) {
-    developer.log(
-      'Post-login navigation: tenant admin dashboard. route=${PostLoginRoute.tenantAdminDashboard.path}',
-      name: 'auth.navigation',
-    );
-    return PostLoginRoute.tenantAdminDashboard;
   }
 
   if (authSession?.canActivatePosDevice == true && !deviceTrusted) {

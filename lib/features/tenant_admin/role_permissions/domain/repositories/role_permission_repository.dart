@@ -4,9 +4,17 @@ import '../entities/role_details.dart';
 import '../entities/role_list_item.dart';
 import '../entities/role_list_query.dart';
 import '../entities/role_permissions.dart';
+import '../entities/role_setup.dart';
 
 abstract class RolePermissionRepository {
   Future<PermissionCatalog> getPermissionCatalog();
+
+  Future<List<RoleSetupOption>> getSetupOptions();
+
+  Future<SaveRoleSetupResult> saveRoleSetup(
+    String roleId,
+    SaveRoleSetupRequest request,
+  );
 
   Future<RolePermissions> getRolePermissions(String roleId);
 
@@ -45,5 +53,6 @@ abstract class RolePermissionRepository {
 
   Future<List<RoleAssignment>> getRoleAssignments(String roleId);
 
-  Future<void> updateRoleAssignments(String roleId, List<RoleAssignment> assignments);
+  Future<void> updateRoleAssignments(
+      String roleId, List<RoleAssignment> assignments);
 }
