@@ -89,8 +89,15 @@ void main() {
 
   group('TA-UJ-063 Opening Stock', () {
     testWidgets('completes select → enter → review → success', (tester) async {
-      await _pump(tester, const OpeningStockWizardScreen(), width: 1400);
+      await _pump(
+        tester,
+        const OpeningStockWizardScreen(),
+        width: 1400,
+        height: 1200,
+      );
       await tester.tap(find.text('Home Jersey (Red, L)'));
+      await tester.pump();
+      await tester.ensureVisible(find.text('Main Outlet'));
       await tester.pump();
       await tester.tap(find.text('Main Outlet'));
       await tester.pump();

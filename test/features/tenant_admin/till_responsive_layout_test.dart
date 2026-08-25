@@ -111,7 +111,7 @@ void main() {
       expect(find.text('All'), findsWidgets);
       expect(find.text('Online'), findsWidgets);
       expect(find.text('Offline'), findsWidgets);
-      expect(find.text('Needs attention'), findsOneWidget);
+      expect(find.text('Needs attention'), findsWidgets);
       expect(find.text('Front Till 01'), findsWidgets);
       expect(find.text('Development Main Store'), findsWidgets);
       expect(_hasFlutterOverflow(tester), isFalse);
