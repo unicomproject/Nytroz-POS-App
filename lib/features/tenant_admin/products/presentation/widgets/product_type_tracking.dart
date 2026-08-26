@@ -104,7 +104,7 @@ class ProductTypeTracking extends StatelessWidget {
 
           const SizedBox(height: 32),
           // Dynamic content based on productStructure
-          Expanded(child: _buildDynamicContent(context)),
+          _buildDynamicContent(context),
         ],
       );
 

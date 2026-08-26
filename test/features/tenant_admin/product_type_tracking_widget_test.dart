@@ -156,6 +156,10 @@ void main() {
     controller = AddProductWizardController(repository);
   });
 
+  tearDown(() {
+    if (controller.mounted) controller.dispose();
+  });
+
   Widget buildTestWidget(AddProductWizardState state) {
     return MaterialApp(
       home: Scaffold(
@@ -173,8 +177,7 @@ void main() {
     testWidgets('renders common header and structure cards', (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState()));
 
-      expect(find.text('Product Type & Tracking Setup'), findsOneWidget);
-      expect(find.text('Select Product Type'), findsOneWidget);
+      expect(find.text('Product Type *'), findsOneWidget);
       expect(find.text('Simple Product'), findsOneWidget);
       expect(find.text('Variant Product'), findsOneWidget);
       expect(find.text('Bundle / Kit'), findsOneWidget);
@@ -189,7 +192,7 @@ void main() {
       expect(find.text('Tracking & Stock Rules'), findsOneWidget);
       expect(find.text('Track Inventory'), findsOneWidget);
       expect(find.text('Batch / Lot Tracking'), findsOneWidget);
-      expect(find.text('Expiry Tracking'), findsOneWidget);
+      expect(find.text('Expiry Date Tracking'), findsOneWidget);
       expect(find.text('Serial Number Tracking'), findsOneWidget);
       expect(
           find.text(
@@ -203,14 +206,14 @@ void main() {
         productStructure: 'VARIANT',
       )));
 
-      expect(find.text('Tracking Settings'), findsOneWidget);
+      expect(find.text('Inventory Tracking (Applied at Variant Level) *'), findsOneWidget);
       expect(
           find.text(
-              'When ON, stock will be tracked for each variant at outlet level.'),
+              'Choose how you want to track inventory for this product variants.'),
           findsOneWidget);
       expect(
           find.text(
-              'Variant options such as size and color will be configured in Product Configuration.'),
+              'Inventory will be tracked by total quantity at variant level.'),
           findsOneWidget);
     });
 
@@ -242,6 +245,7 @@ void main() {
       expect(find.text('Clear incompatible tracking values?'), findsNothing);
       expect(find.text('Clear and continue'), findsNothing);
       expect(controller.wizardState.productStructure, 'SIMPLE');
+      await tester.pump(const Duration(seconds: 1));
     });
 
     testWidgets('structure card selection updates controller state',
@@ -254,10 +258,17 @@ void main() {
       await tester.pump();
 
       expect(controller.wizardState.productStructure, 'VARIANT');
+      await tester.pump(const Duration(seconds: 1));
     });
 
     testWidgets('toggling serial tracking disables batch and expiry in SIMPLE',
         (tester) async {
+      // Build the widget tree first so tester.pump() advances the fake clock
+      // and flushes the auto-save timer triggered by state mutations below.
+      await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
+        productStructure: 'SIMPLE',
+      )));
+
       controller.setTrackInventory(true);
       controller.setBatchTracking(true);
       controller.setExpiryTracking(true);
@@ -270,6 +281,9 @@ void main() {
       expect(controller.wizardState.serialTracking, true);
       expect(controller.wizardState.batchTracking, false);
       expect(controller.wizardState.expiryTracking, false);
+
+      // Advance fake clock to flush the pending 1-second auto-save timer.
+      await tester.pump(const Duration(seconds: 1));
     });
   });
 }
