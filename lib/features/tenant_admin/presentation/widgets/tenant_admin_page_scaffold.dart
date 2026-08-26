@@ -12,6 +12,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
     this.subtitle,
     this.actions = const [],
     this.padding,
+    this.headerSpacing,
     this.backgroundColor = TenantAdminColors.background,
     this.scrollable = true,
     this.fillHeight = true,
@@ -25,6 +26,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
   final List<Widget> actions;
   final Widget child;
   final EdgeInsets? padding;
+  final double? headerSpacing;
   final Color backgroundColor;
   final bool scrollable;
   final bool fillHeight;
@@ -66,7 +68,13 @@ class TenantAdminPageScaffold extends StatelessWidget {
                     showBackButton: showBackButton,
                     onBackButtonPressed: onBackButtonPressed,
                   ),
-                SizedBox(height: constraints.maxHeight < 720 ? TenantAdminSpacing.sm : TenantAdminSpacing.xl),
+                SizedBox(
+                  height: headerSpacing ??
+                      (constraints.maxHeight < 720
+                          ? TenantAdminSpacing.sm
+                          : TenantAdminSpacing.xl) +
+                          20,
+                ),
               ],
               if (scrollable) child else Expanded(child: child),
             ],
@@ -103,6 +111,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
               child: scrollable
                   ? SingleChildScrollView(
                       padding: basePadding,
+                      physics: const ClampingScrollPhysics(),
                       child: ConstrainedBox(
                         constraints: fillHeight && constraints.maxHeight.isFinite && constraints.maxHeight < 10000
                             ? BoxConstraints(

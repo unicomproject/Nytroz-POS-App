@@ -44,6 +44,12 @@ class SaveProductDraftRequestDto {
   // Step 6 — Pricing & Tax
   final PricingTaxConfigurationDto? pricingTaxConfiguration;
 
+  final String? initialBatchNumber;
+  final DateTime? initialExpiryDate;
+  final String? initialSerialNumber;
+  final bool confirmClearIncompatibleInitialTracking;
+  final String? initialTrackingAssignedVariantId;
+
   const SaveProductDraftRequestDto({
     this.productName,
     this.shortName,
@@ -77,6 +83,11 @@ class SaveProductDraftRequestDto {
     this.variantConfiguration,
     this.barcodeSkuConfiguration,
     this.pricingTaxConfiguration,
+    this.initialBatchNumber,
+    this.initialExpiryDate,
+    this.initialSerialNumber,
+    this.confirmClearIncompatibleInitialTracking = false,
+    this.initialTrackingAssignedVariantId,
   });
 
   Map<String, dynamic> toJson() {
@@ -118,6 +129,18 @@ class SaveProductDraftRequestDto {
         'barcodeSkuConfiguration': barcodeSkuConfiguration!.toJson(),
       if (pricingTaxConfiguration != null)
         'pricingTaxConfiguration': pricingTaxConfiguration!.toJson(),
+      if (initialBatchNumber != null && initialBatchNumber!.trim().isNotEmpty)
+        'initialBatchNumber': initialBatchNumber!.trim(),
+      if (initialExpiryDate != null)
+        'initialExpiryDate':
+            '${initialExpiryDate!.year.toString().padLeft(4, '0')}-${initialExpiryDate!.month.toString().padLeft(2, '0')}-${initialExpiryDate!.day.toString().padLeft(2, '0')}',
+      if (initialSerialNumber != null && initialSerialNumber!.trim().isNotEmpty)
+        'initialSerialNumber': initialSerialNumber!.trim(),
+      if (confirmClearIncompatibleInitialTracking)
+        'confirmClearIncompatibleInitialTracking': true,
+      if (initialTrackingAssignedVariantId != null &&
+          initialTrackingAssignedVariantId!.isNotEmpty)
+        'initialTrackingAssignedVariantId': initialTrackingAssignedVariantId,
     };
   }
 }

@@ -28,274 +28,352 @@ class Step4VariantConfigurationForm extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          Text(
-            'Variant Configuration',
-            style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: TenantAdminColors.bodyText),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Create product variants by defining attributes and their values.',
-            style: TextStyle(fontSize: 14, color: TenantAdminColors.mutedText),
-          ),
-          const SizedBox(height: 24),
-
-          // --- Attributes Section ---
-          const Text(
-            'Define Attributes',
-            style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: TenantAdminColors.bodyText),
-          ),
-          const SizedBox(height: 16),
-          ...step4State.attributeRows.asMap().entries.map((entry) {
-            final index = entry.key;
-            final row = entry.value;
-
-            return Padding(
-              key: Key(row.localId),
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: TenantAdminColors.border),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Attribute Name', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 8),
-                          _AttributeNameField(
-                            initialValue: row.templateName ?? '',
-                            onChanged: (val) {
-                              controller.updateAttributeName(index, val);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Values', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: TenantAdminColors.border),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Wrap(
-                                    spacing: 8,
-                                    children: [
-                                      ...row.selectedValues.map((v) {
-                                        return Chip(
-                                          label: Text(v.valueName),
-                                          backgroundColor: Colors.grey[100],
-                                          side: BorderSide(color: Colors.grey[300]!),
-                                          onDeleted: () {
-                                            final newValues = row.selectedValues
-                                                .where((x) => x.valueId != v.valueId)
-                                                .map((x) => x.valueId)
-                                                .toList();
-                                            controller.selectValues(index, newValues);
-                                          },
-                                        );
-                                      }),
-                                      _AddValueField(
-                                        onSubmitted: (val) {
-                                          final id = val.trim();
-                                          if (id.isNotEmpty &&
-                                              !row.selectedValues
-                                                  .any((x) => x.valueId == id)) {
-                                            final newValues = row.selectedValues
-                                                .map((x) => x.valueId)
-                                                .toList()
-                                              ..add(id);
-                                            controller.selectValues(index, newValues);
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      children: [
-                        const SizedBox(height: 24),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline,
-                              color: TenantAdminColors.danger),
-                          onPressed: () => controller.removeAttributeRow(index),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              TextButton.icon(
-                onPressed: () => controller.addAttributeRow(),
-                icon: const Icon(Icons.add),
-                label: const Text('Add Attribute', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: TenantAdminColors.posHomeAccentOrange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
-                onPressed: state.isSavingDraft
-                    ? null
-                    : () async {
-                        await controller.generateVariants();
-                      },
-                child: state.isSavingDraft
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
-                    : const Text(
-                        'Apply',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 32),
-
-          // --- Generated Variants Table ---
-          if (step4State.generatedVariants.isNotEmpty) ...[
             Text(
-              'Generated Variants (${step4State.totalGeneratedCount})',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              'Variant Configuration',
+              style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: TenantAdminColors.bodyText),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Create product variants by defining attributes and their values.',
+              style:
+                  TextStyle(fontSize: 14, color: TenantAdminColors.mutedText),
+            ),
+            const SizedBox(height: 12),
+
+            // --- Attributes Section ---
+            const Text(
+              'Define Attributes',
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: TenantAdminColors.bodyText),
             ),
             const SizedBox(height: 16),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: TenantAdminColors.border),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-                      border: Border(bottom: BorderSide(color: TenantAdminColors.border)),
-                    ),
-                    child: Row(
-                      children: const [
-                        Expanded(child: Text('Variant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                        SizedBox(
-                          width: 100,
-                          child: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12), textAlign: TextAlign.center),
-                        ),
-                      ],
-                    ),
+            ...step4State.attributeRows.asMap().entries.map((entry) {
+              final index = entry.key;
+              final row = entry.value;
+
+              return Padding(
+                key: Key(row.localId),
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: TenantAdminColors.border),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: step4State.generatedVariants.length,
-                    separatorBuilder: (context, index) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final variant = step4State.generatedVariants[index];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Row(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 1,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                variant.displayLabel ?? variant.combinationLabel,
-                                style: const TextStyle(fontWeight: FontWeight.w500),
-                              ),
+                            const Text('Attribute Name',
+                                style: TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8),
+                            _AttributeNameField(
+                              initialValue: row.templateName ?? '',
+                              onChanged: (val) {
+                                controller.updateAttributeName(index, val);
+                              },
                             ),
-                            SizedBox(
-                              width: 100,
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Values',
+                                style: TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                border:
+                                    Border.all(color: TenantAdminColors.border),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.blue),
-                                    onPressed: () {
-                                      showModalBottomSheet(
-                                          context: context,
-                                          isScrollControlled: true,
-                                          backgroundColor: Colors.transparent,
-                                          builder: (context) {
-                                            return Align(
-                                              alignment: Alignment.centerRight,
-                                              child: EditVariantDrawer(
-                                                state: state,
-                                                controller: controller,
-                                                variantKey: variant.clientCombinationKey,
-                                              ),
-                                            );
-                                          });
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete_outline, size: 20, color: TenantAdminColors.danger),
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => DeleteVariantModal(
-                                          controller: controller,
-                                          variantKey: variant.clientCombinationKey,
-                                          variantLabel: variant.displayLabel ??
-                                              variant.combinationLabel,
+                                  Expanded(
+                                    child: Wrap(
+                                      spacing: 8,
+                                      children: [
+                                        ...row.selectedValues.map((v) {
+                                          return Chip(
+                                            label: Text(v.valueName),
+                                            backgroundColor: Colors.grey[100],
+                                            side: BorderSide(
+                                                color: Colors.grey[300]!),
+                                            onDeleted: () {
+                                              final newValues = row
+                                                  .selectedValues
+                                                  .where((x) =>
+                                                      x.valueId != v.valueId)
+                                                  .map((x) => x.valueId)
+                                                  .toList();
+                                              controller.selectValues(
+                                                  index, newValues);
+                                            },
+                                          );
+                                        }),
+                                        _AddValueField(
+                                          onSubmitted: (val) {
+                                            final id = val.trim();
+                                            if (id.isNotEmpty &&
+                                                !row.selectedValues.any(
+                                                    (x) => x.valueId == id)) {
+                                              final newValues = row
+                                                  .selectedValues
+                                                  .map((x) => x.valueId)
+                                                  .toList()
+                                                ..add(id);
+                                              controller.selectValues(
+                                                  index, newValues);
+                                            }
+                                          },
                                         ),
-                                      );
-                                    },
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                           ],
                         ),
-                      );
-                    },
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        children: [
+                          const SizedBox(height: 12),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline,
+                                color: TenantAdminColors.danger),
+                            onPressed: () =>
+                                controller.removeAttributeRow(index),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              );
+            }),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton.icon(
+                  onPressed: () => controller.addAttributeRow(),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Attribute',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: TenantAdminColors.posHomeAccentOrange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                  ),
+                  onPressed: state.isSavingDraft
+                      ? null
+                      : () async {
+                          await controller.generateVariants();
+                        },
+                  child: state.isSavingDraft
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : const Text('Apply',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
-          ]
-        ],
-      ),
+
+            const SizedBox(height: 32),
+
+            // --- Generated Variants Table ---
+            if (step4State.generatedVariants.isNotEmpty) ...[
+              Text(
+                'Generated Variants (${step4State.totalGeneratedCount})',
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: TenantAdminColors.border),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(8)),
+                        border: Border(
+                            bottom:
+                                BorderSide(color: TenantAdminColors.border)),
+                      ),
+                      child: Row(
+                        children: const [
+                          Expanded(
+                              child: Text('Variant',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12))),
+                          SizedBox(
+                            width: 100,
+                            child: Text('Actions',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 12),
+                                textAlign: TextAlign.center),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: step4State.generatedVariants.length,
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final variant = step4State.generatedVariants[index];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  variant.displayLabel ??
+                                      variant.combinationLabel,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 100,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      key: ValueKey(
+                                          'edit-variant-${variant.clientCombinationKey}'),
+                                      icon: const Icon(Icons.edit_outlined,
+                                          size: 20, color: Colors.blue),
+                                      onPressed: () => _openEditVariantDrawer(
+                                        context,
+                                        state: state,
+                                        controller: controller,
+                                        variantKey:
+                                            variant.clientCombinationKey,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline,
+                                          size: 20,
+                                          color: TenantAdminColors.danger),
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) =>
+                                              DeleteVariantModal(
+                                            controller: controller,
+                                            variantKey:
+                                                variant.clientCombinationKey,
+                                            variantLabel:
+                                                variant.displayLabel ??
+                                                    variant.combinationLabel,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ]
+          ],
+        ),
       ),
     );
   }
+}
+
+Future<void> _openEditVariantDrawer(
+  BuildContext context, {
+  required AddProductWizardState state,
+  required AddProductWizardController controller,
+  required String variantKey,
+}) {
+  final screenWidth = MediaQuery.sizeOf(context).width;
+  final drawerWidth = screenWidth < 440 ? screenWidth : 420.0;
+
+  return showGeneralDialog<void>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: 'Close edit variant',
+    barrierColor: Colors.black54,
+    useRootNavigator: false,
+    transitionDuration: const Duration(milliseconds: 280),
+    pageBuilder: (dialogContext, animation, secondaryAnimation) {
+      final slide = Tween<Offset>(
+        begin: const Offset(1, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      ));
+
+      return Align(
+        alignment: Alignment.centerRight,
+        child: SlideTransition(
+          position: slide,
+          child: Material(
+            color: TenantAdminColors.surface,
+            elevation: 12,
+            child: SizedBox(
+              width: drawerWidth,
+              height: double.infinity,
+              child: EditVariantDrawer(
+                state: state,
+                controller: controller,
+                variantKey: variantKey,
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class _AttributeNameField extends StatefulWidget {
@@ -426,4 +504,3 @@ class _AddValueFieldState extends State<_AddValueField> {
     );
   }
 }
-

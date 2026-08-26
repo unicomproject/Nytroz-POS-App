@@ -26,7 +26,7 @@ class _FakeAddProductWizardController extends AddProductWizardController {
 
   @override
   Future<void> initWizard(
-      {String? resumeLocalDraftId, String? resumeProductId}) async {
+      {String? duplicateFromProductId, String? resumeLocalDraftId, String? resumeProductId}) async {
     // override so it doesn't fetch options
   }
 }

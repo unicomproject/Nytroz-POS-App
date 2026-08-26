@@ -95,7 +95,7 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
     });
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -159,9 +159,9 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
               helperText: 'Optional promotional price.',
             ),
           ),
-          const SizedBox(height: TenantAdminSpacing.xl),
+          const SizedBox(height: TenantAdminSpacing.md),
           const Divider(color: TenantAdminColors.border),
-          const SizedBox(height: TenantAdminSpacing.xl),
+          const SizedBox(height: TenantAdminSpacing.md),
           const Text(
             'Tax',
             style: TextStyle(

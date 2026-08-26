@@ -162,6 +162,12 @@ void main() {
     controller = AddProductWizardController(repo);
   });
 
+  tearDown(() {
+    if (controller.mounted) {
+      controller.dispose();
+    }
+  });
+
   group('Chunk 4 VARIANT flow', () {
     test('1. VARIANT Step 2 → Step 4', () async {
       await goToStep4Variant();
@@ -403,6 +409,8 @@ void main() {
       expect(find.text('Barcode & SKU'), findsOneWidget);
       expect(find.text('Attributes'), findsOneWidget);
       expect(find.text('Variants Created'), findsOneWidget);
+      
+      await tester.pump(const Duration(seconds: 1));
     });
 
     test('19. full flow performs zero Product DB mutation', () async {

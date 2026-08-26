@@ -8,6 +8,7 @@ import '../features/auth/presentation/providers/auth_network_provider.dart';
 import '../features/auth/presentation/providers/session_provider.dart';
 import '../features/sale/presentation/providers/completed_sale_print_provider.dart';
 import '../shared/pos_session/pos_session_bootstrap_provider.dart';
+import 'nytroz_scroll_behavior.dart';
 import 'router/app_router.dart';
 
 class NytrozPosApp extends ConsumerStatefulWidget {
@@ -70,6 +71,7 @@ class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
       title: 'Nytroz POS',
       debugShowCheckedModeBanner: false,
       theme: _themeData,
+      scrollBehavior: const NytrozScrollBehavior(),
       routerConfig: router,
     );
   }

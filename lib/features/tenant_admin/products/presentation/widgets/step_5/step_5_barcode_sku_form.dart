@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../providers/tenant_product_providers.dart';
 import '../../../data/models/step5_barcode_dtos.dart';
 import '../../../domain/entities/add_product_wizard_state.dart';
@@ -163,6 +164,16 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
               ),
               displayLabel: label,
               onUpdate: (updated) {
+                if (state.productStructure == 'SIMPLE' || state.productStructure == 'BUNDLE') {
+                  controller.updateSimpleBaseSku(updated.sku ?? '');
+                  controller.updateSimpleParentBarcode(updated.barcode ?? '');
+                  setState(() {
+                    _appliedSku = updated.sku ?? '';
+                    _appliedBarcode = updated.barcode ?? '';
+                    _skuController.text = _appliedSku;
+                    _barcodeController.text = _appliedBarcode;
+                  });
+                }
                 controller.updateBarcodeSkuAssignment(
                   BarcodeSkuAssignmentDto(
                     clientCombinationKey: assignment.clientCombinationKey,
@@ -179,6 +190,209 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
         );
       },
     );
+  }
+
+  void _onDeleteAssignment(BarcodeSkuAssignmentDto assignment, int index) {
+    final controller = ref.read(addProductWizardControllerProvider.notifier);
+    final state = ref.read(addProductWizardControllerProvider);
+
+    if (state.productStructure == 'SIMPLE' || state.productStructure == 'BUNDLE') {
+      setState(() {
+        _appliedSku = '';
+        _appliedBarcode = '';
+        _skuController.clear();
+        _barcodeController.clear();
+      });
+      controller.updateSimpleBaseSku('');
+      controller.updateSimpleParentBarcode('');
+    }
+
+    controller.updateBarcodeSkuAssignment(
+      BarcodeSkuAssignmentDto(
+        clientCombinationKey: assignment.clientCombinationKey,
+        productVariantId: assignment.productVariantId,
+        sku: null,
+        barcode: null,
+        isAssigned: false,
+      ),
+    );
+  }
+
+  Future<void> _confirmAndDeleteAssignment(
+      BuildContext context, BarcodeSkuAssignmentDto assignment, int index) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          backgroundColor: TenantAdminColors.surface,
+          surfaceTintColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: Padding(
+              padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFEE2E2),
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.link_off_rounded,
+                          size: 20,
+                          color: Color(0xFFEF4444),
+                        ),
+                      ),
+                      const SizedBox(width: TenantAdminSpacing.md),
+                      const Expanded(
+                        child: Text(
+                          'Remove Assignment',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: TenantAdminColors.bodyText,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        icon: const Icon(
+                          Icons.close,
+                          size: 20,
+                          color: TenantAdminColors.mutedText,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: TenantAdminSpacing.md),
+                  const Text(
+                    'Are you sure you want to remove the SKU and Barcode assignment for this item?',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                      color: TenantAdminColors.mutedText,
+                    ),
+                  ),
+                  const SizedBox(height: TenantAdminSpacing.md),
+                  Container(
+                    padding: const EdgeInsets.all(TenantAdminSpacing.md),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                      border: Border.all(color: TenantAdminColors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.qr_code_2,
+                          size: 28,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                        const SizedBox(width: TenantAdminSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                assignment.sku?.isNotEmpty == true
+                                    ? assignment.sku!
+                                    : 'No SKU',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: TenantAdminColors.bodyText,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Barcode: ${assignment.barcode?.isNotEmpty == true ? assignment.barcode : 'N/A'}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: TenantAdminColors.mutedText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: TenantAdminSpacing.xl),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
+                          side: const BorderSide(color: TenantAdminColors.border),
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(TenantAdminRadius.md),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: TenantAdminColors.bodyText,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: TenantAdminSpacing.md),
+                      ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: TenantAdminColors.danger,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(TenantAdminRadius.md),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Remove',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      _onDeleteAssignment(assignment, index);
+    }
   }
 
   @override
@@ -211,7 +425,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
         state.productName.isNotEmpty ? state.productName : 'Product';
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -224,7 +438,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
             'Assign the Base SKU and Parent Product Barcode for this product.',
             style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -356,7 +570,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           if (_appliedSku.isNotEmpty || _appliedBarcode.isNotEmpty) ...[
             const Text(
               'Barcode & SKU Assignment',
@@ -376,7 +590,10 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
               allVariants: const [],
               productName: productName,
               productStructure: state.productStructure,
-              onEdit: (assignment, index) {},
+              onEdit: (assignment, index) =>
+                  _onEditAssignment(context, assignment, index),
+              onDelete: (assignment, index) =>
+                  _confirmAndDeleteAssignment(context, assignment, index),
             ),
             const SizedBox(height: 80),
           ] else
@@ -421,7 +638,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -448,7 +665,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
               style: const TextStyle(color: Colors.red, fontSize: 12),
             ),
           ],
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -573,7 +790,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           Builder(builder: (context) {
             final appliedAssignments = state.step5State.assignments
                 .where((a) => a.isAssigned)
@@ -622,6 +839,8 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                   productStructure: state.productStructure,
                   onEdit: (assignment, index) =>
                       _onEditAssignment(context, assignment, index),
+                  onDelete: (assignment, index) =>
+                      _confirmAndDeleteAssignment(context, assignment, index),
                 ),
               ],
             );

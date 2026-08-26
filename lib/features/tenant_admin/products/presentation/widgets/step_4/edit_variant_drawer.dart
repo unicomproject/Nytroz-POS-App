@@ -68,144 +68,139 @@ class _EditVariantDrawerState extends ConsumerState<EditVariantDrawer> {
     final variant = state.generatedVariants
         .firstWhere((v) => v.clientCombinationKey == widget.variantKey);
 
-    return Container(
-      width: 400,
-      color: TenantAdminColors.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Edit Variant',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Variant Information',
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  ...variant.selectedValues.map((v) =>
-                      Text('${v.templateId ?? 'Attribute'}: ${v.valueName}')),
-                  const SizedBox(height: 24),
-                  const Text('Variant Image',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: TenantAdminColors.border),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TextButton.icon(
-                            icon: const Icon(Icons.image),
-                            label: const Text('Change Image'),
-                            onPressed: () {},
-                          ),
-                          if (_exactImageMediaAssetId != null)
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _exactImageMediaAssetId = null;
-                                });
-                              },
-                              child: const Text('Remove Override',
-                                  style: TextStyle(color: Colors.red)),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('Apply Image To:'),
-                  RadioListTile<String>(
-                    title: const Text('Only this variant'),
-                    value: 'ONLY_THIS',
-                    groupValue: _applyImageTo,
-                    onChanged: (val) {
-                      setState(() {
-                        _applyImageTo = val!;
-                      });
-                    },
-                  ),
-                  RadioListTile<String>(
-                    title: Text(
-                        'All ${variant.selectedValues.isNotEmpty ? variant.selectedValues.last.valueName : 'group'} variants'),
-                    value: 'ALL_GROUP',
-                    groupValue: _applyImageTo,
-                    onChanged: (val) {
-                      setState(() {
-                        _applyImageTo = val!;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  TextFormField(
-                    controller: _labelController,
-                    decoration: const InputDecoration(
-                      labelText: 'Display Label',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Include Variant',
-                          style: TextStyle(fontSize: 14)),
-                      Switch(
-                        value: _isIncluded,
-                        onChanged: (val) {
-                          setState(() {
-                            _isIncluded = val;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Edit Variant',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
               ),
-            ),
+            ],
           ),
-          Padding(
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+                const Text('Variant Information',
+                    style:
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                ...variant.selectedValues.map((v) =>
+                    Text('${v.templateId ?? 'Attribute'}: ${v.valueName}')),
+                const SizedBox(height: 24),
+                const Text('Variant Image',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: TenantAdminColors.border),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton.icon(
+                          icon: const Icon(Icons.image),
+                          label: const Text('Change Image'),
+                          onPressed: () {},
+                        ),
+                        if (_exactImageMediaAssetId != null)
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _exactImageMediaAssetId = null;
+                              });
+                            },
+                            child: const Text('Remove Override',
+                                style: TextStyle(color: Colors.red)),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _saveChanges,
-                  child: const Text('Save Changes'),
+                const SizedBox(height: 16),
+                const Text('Apply Image To:'),
+                RadioListTile<String>(
+                  title: const Text('Only this variant'),
+                  value: 'ONLY_THIS',
+                  groupValue: _applyImageTo,
+                  onChanged: (val) {
+                    setState(() {
+                      _applyImageTo = val!;
+                    });
+                  },
+                ),
+                RadioListTile<String>(
+                  title: Text(
+                      'All ${variant.selectedValues.isNotEmpty ? variant.selectedValues.last.valueName : 'group'} variants'),
+                  value: 'ALL_GROUP',
+                  groupValue: _applyImageTo,
+                  onChanged: (val) {
+                    setState(() {
+                      _applyImageTo = val!;
+                    });
+                  },
+                ),
+                const SizedBox(height: 24),
+                TextFormField(
+                  controller: _labelController,
+                  decoration: const InputDecoration(
+                    labelText: 'Display Label',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Include Variant',
+                        style: TextStyle(fontSize: 14)),
+                    Switch(
+                      value: _isIncluded,
+                      onChanged: (val) {
+                        setState(() {
+                          _isIncluded = val;
+                        });
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: _saveChanges,
+                child: const Text('Save Changes'),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

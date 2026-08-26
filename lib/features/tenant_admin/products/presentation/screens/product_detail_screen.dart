@@ -10,6 +10,7 @@ import '../../domain/entities/tenant_product_detail.dart';
 import '../providers/tenant_product_providers.dart';
 import '../providers/tenant_product_visibility_provider.dart';
 import '../widgets/product_delete_action.dart';
+import '../widgets/product_duplicate_action.dart';
 import '../widgets/product_detail_form.dart';
 import '../widgets/product_detail_view_card.dart';
 import '../widgets/product_status_action_menu.dart';
@@ -29,6 +30,7 @@ class ProductDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final hasViewAccess = ref.watch(productDetailPageAccessProvider);
     final canUpdate = ref.watch(productUpdateAccessProvider);
+    final canCreate = ref.watch(productCreateAccessProvider);
     final canDelete = ref.watch(productDeleteAccessProvider);
     final detailState = ref.watch(productDetailProvider(productId));
     final optionsState = canUpdate
@@ -196,6 +198,13 @@ class ProductDetailScreen extends ConsumerWidget {
                 sku: detail.sku,
                 imageUrl: detail.imageUrl,
                 navigateToListOnSuccess: true,
+                compact: false,
+              ),
+            ],
+            if (canCreate && !isEditRoute) ...[
+              const SizedBox(width: 8),
+              ProductDuplicateAction(
+                productId: productId,
                 compact: false,
               ),
             ],

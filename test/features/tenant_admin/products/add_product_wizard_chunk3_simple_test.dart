@@ -152,6 +152,12 @@ void main() {
     controller = AddProductWizardController(repo);
   });
 
+  tearDown(() {
+    if (controller.mounted) {
+      controller.dispose();
+    }
+  });
+
   group('Chunk 3 SIMPLE flow', () {
     test('1. SIMPLE Track ON → Step 3', () async {
       await controller.initWizard();
@@ -369,6 +375,8 @@ void main() {
       expect(find.text('TEST-SIMPLE-001'), findsWidgets);
       expect(find.text('Pricing & Tax'), findsOneWidget);
       expect(find.text('VAT 15%'), findsOneWidget);
+      
+      await tester.pump(const Duration(seconds: 1));
     });
   });
 }

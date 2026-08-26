@@ -397,7 +397,11 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
                 state.uri.pathSegments[2] == 'draft'
             ? state.uri.pathSegments[3]
             : null);
-    return AddProductScreen(resumeProductId: draftId);
+    final duplicateFrom = state.uri.queryParameters['duplicateFrom'];
+    return AddProductScreen(
+      resumeProductId: draftId,
+      duplicateFromProductId: duplicateFrom,
+    );
   }
 
   if (definition.path == ProductsSidebarRoutes.categories) {

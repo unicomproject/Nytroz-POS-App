@@ -2,6 +2,7 @@ import '../models/save_product_draft_request_dto.dart';
 import '../models/step5_barcode_dtos.dart';
 import '../models/step6_pricing_tax_dtos.dart';
 import '../../domain/entities/add_product_wizard_state.dart';
+import '../../domain/entities/product_wizard_capabilities.dart';
 import '../../domain/entities/step4_variant_configuration_state.dart';
 
 /// Builds the final Step 7 wizard-create payload from [AddProductWizardState].
@@ -11,9 +12,18 @@ class WizardProductCreateMapper {
   static Map<String, dynamic> toWizardCreateJson(
     AddProductWizardState state, {
     String? idempotencyKey,
+    ProductWizardCapabilities? capabilities,
   }) {
     final structure = state.productStructure.toUpperCase();
     final isVariant = structure == 'VARIANT';
+    final includeTracking = capabilities == null ||
+        capabilities.canUseAdvancedInventoryTracking;
+    final includeMedia = capabilities == null || capabilities.canManageProductMedia;
+    final includeVariant = isVariant &&
+        (capabilities == null || capabilities.canManageVariants);
+    final includeCost = capabilities == null || capabilities.canViewProductCost;
+    final includeChannels =
+        capabilities == null || capabilities.canManageProductChannels;
 
     return {
       'productName': state.productName.trim(),
@@ -27,23 +37,37 @@ class WizardProductCreateMapper {
       if (state.longDescription.trim().isNotEmpty)
         'longDescription': state.longDescription.trim(),
       'desiredPublishActive': state.desiredPublishActive,
-      'posSellable': state.posSellable,
-      'allowOnlineSale': state.allowOnlineSale,
+      'posSellable': includeChannels ? state.posSellable : true,
+      'allowOnlineSale': includeChannels ? state.allowOnlineSale : false,
       'trackInventory': state.trackInventory,
-      'batchTracking': state.batchTracking,
-      'expiryTracking': state.expiryTracking,
-      'serialTracking': state.serialTracking,
+      'batchTracking': includeTracking ? state.batchTracking : false,
+      'expiryTracking': includeTracking ? state.expiryTracking : false,
+      'serialTracking': includeTracking ? state.serialTracking : false,
       'productStructure': structure,
       if (!isVariant) ..._simpleUnits(state),
-      if (isVariant)
+      if (includeVariant)
         'variantConfiguration': _variantConfiguration(state).toJson(),
       'barcodeSkuConfiguration': _barcodeSku(state, isVariant).toJson(),
-      'pricingTax': _pricingTax(state).toWizardCreateJson(),
-      if (state.stagedMediaAssets.isNotEmpty)
+      'pricingTax': _pricingTax(state, includeCost: includeCost)
+          .toWizardCreateJson(),
+      if (includeMedia && state.stagedMediaAssets.isNotEmpty)
         'stagedMediaAssetIds': state.stagedMediaAssets
             .map((m) => m.mediaAssetId)
             .where((id) => id.isNotEmpty)
             .toList(),
+      if (includeTracking && state.initialBatchNumber.trim().isNotEmpty)
+        'initialBatchNumber': state.initialBatchNumber.trim(),
+      if (includeTracking && state.initialExpiryDate != null)
+        'initialExpiryDate': _dateOnly(state.initialExpiryDate!),
+      if (includeTracking && state.initialSerialNumber.trim().isNotEmpty)
+        'initialSerialNumber': state.initialSerialNumber.trim(),
+      if (state.confirmClearIncompatibleInitialTracking)
+        'confirmClearIncompatibleInitialTracking': true,
+      if (includeTracking &&
+          state.initialTrackingAssignedVariantId != null &&
+          state.initialTrackingAssignedVariantId!.isNotEmpty)
+        'initialTrackingAssignedVariantId':
+            state.initialTrackingAssignedVariantId,
       if (idempotencyKey != null && idempotencyKey.isNotEmpty)
         'idempotencyKey': idempotencyKey,
     };
@@ -192,14 +216,25 @@ class WizardProductCreateMapper {
     );
   }
 
-  static PricingTaxConfigurationDto _pricingTax(AddProductWizardState state) {
+  static PricingTaxConfigurationDto _pricingTax(
+    AddProductWizardState state, {
+    bool includeCost = true,
+  }) {
     return PricingTaxConfigurationDto(
-      costPrice: state.costPrice,
+      costPrice: includeCost ? state.costPrice : null,
       standardSellingPrice: state.standardSellingPrice,
       discountPrice: state.discountPrice,
       taxId: state.taxId,
       taxExclusive: state.taxExclusive,
     );
+  }
+
+  static String _dateOnly(DateTime value) {
+    final local = DateTime(value.year, value.month, value.day);
+    final y = local.year.toString().padLeft(4, '0');
+    final m = local.month.toString().padLeft(2, '0');
+    final d = local.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
   }
 
   static String? _guidOrNull(String? value) {

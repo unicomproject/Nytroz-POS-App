@@ -53,7 +53,7 @@ class TenantProductListResult {
   const TenantProductListResult({
     required this.items,
     this.page = 1,
-    this.pageSize = 5,
+    this.pageSize = 6,
     this.totalCount = 0,
     this.catalogTotalCount = 0,
   });
@@ -93,7 +93,7 @@ class TenantProductListQuery {
   const TenantProductListQuery({
     this.search,
     this.pageNumber = 1,
-    this.pageSize = 5,
+    this.pageSize = 6,
     this.sortBy = 'productName',
     this.sortDirection = 'asc',
     this.categoryId,

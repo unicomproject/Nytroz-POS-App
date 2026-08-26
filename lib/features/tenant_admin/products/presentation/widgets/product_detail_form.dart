@@ -171,105 +171,97 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final isDesktop = width >= TenantAdminBreakpoints.desktop;
-    final isTablet = width >= TenantAdminBreakpoints.tablet &&
-        width < TenantAdminBreakpoints.desktop;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final isWide = width >= 900;
+        final isMedium = width >= 640;
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Row 1: Product Image + Basic Details Card
-          if (isDesktop || isTablet)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: isDesktop ? 280 : 240,
-                  child: _buildProductImageEditCard(),
-                ),
-                const SizedBox(width: TenantAdminSpacing.lg),
-                Expanded(
-                  child: _buildBasicDetailsEditCard(context),
-                ),
-              ],
-            )
-          else ...[
-            _buildProductImageEditCard(),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (isWide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: width >= 1100 ? 280 : 240,
+                    child: _buildProductImageEditCard(),
+                  ),
+                  const SizedBox(width: TenantAdminSpacing.lg),
+                  Expanded(
+                    child: _buildBasicDetailsEditCard(),
+                  ),
+                ],
+              )
+            else ...[
+              _buildProductImageEditCard(),
+              const SizedBox(height: TenantAdminSpacing.lg),
+              _buildBasicDetailsEditCard(),
+            ],
             const SizedBox(height: TenantAdminSpacing.lg),
-            _buildBasicDetailsEditCard(context),
-          ],
-
-          const SizedBox(height: TenantAdminSpacing.lg),
-
-          // Row 2: Inventory & Pricing + Channel Visibility Card
-          if (isDesktop || isTablet)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _buildInventoryPricingEditCard(context),
-                ),
-                const SizedBox(width: TenantAdminSpacing.lg),
-                Expanded(
-                  flex: 3,
-                  child: _buildChannelVisibilityEditCard(),
-                ),
-              ],
-            )
-          else ...[
-            _buildInventoryPricingEditCard(context),
+            if (isMedium)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: _buildInventoryPricingEditCard(),
+                  ),
+                  const SizedBox(width: TenantAdminSpacing.lg),
+                  Expanded(
+                    flex: 3,
+                    child: _buildChannelVisibilityEditCard(isWide),
+                  ),
+                ],
+              )
+            else ...[
+              _buildInventoryPricingEditCard(),
+              const SizedBox(height: TenantAdminSpacing.lg),
+              _buildChannelVisibilityEditCard(false),
+            ],
             const SizedBox(height: TenantAdminSpacing.lg),
-            _buildChannelVisibilityEditCard(),
-          ],
-
-          const SizedBox(height: TenantAdminSpacing.lg),
-
-          // Row 3: Product Summary (Audit Info)
-          _buildAuditSummaryEditCard(widget.detail),
-
-          const SizedBox(height: TenantAdminSpacing.xl),
-
-          // Bottom Action Bar: Cancel & Save Changes
-          if (widget.canSave)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                OutlinedButton(
-                  onPressed: _submitting
-                      ? null
-                      : () => context.go('/tenant-admin/products'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
+            _buildAuditSummaryEditCard(widget.detail),
+            const SizedBox(height: TenantAdminSpacing.xl),
+            if (widget.canSave)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton(
+                    onPressed: _submitting
+                        ? null
+                        : () => context.go('/tenant-admin/products'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                      side: const BorderSide(color: TenantAdminColors.border),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
+                      ),
                     ),
-                    side: const BorderSide(color: TenantAdminColors.border),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: TenantAdminColors.bodyText,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: TenantAdminColors.bodyText,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  const SizedBox(width: TenantAdminSpacing.md),
+                  TenantAdminPrimaryButton(
+                    label: _submitting ? 'Saving...' : 'Save Changes',
+                    loading: _submitting,
+                    backgroundColor: TenantAdminColors.primary,
+                    onPressed: _inputsEnabled ? _saveChanges : null,
                   ),
-                ),
-                const SizedBox(width: TenantAdminSpacing.md),
-                TenantAdminPrimaryButton(
-                  label: _submitting ? 'Saving...' : 'Save Changes',
-                  loading: _submitting,
-                  backgroundColor: TenantAdminColors.primary,
-                  onPressed: _inputsEnabled ? _saveChanges : null,
-                ),
-              ],
-            ),
-        ],
-      ),
+                ],
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -568,7 +560,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
                       borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                       child: Image.network(
                         displayUrl,
-                        fit: BoxFit.cover,
+                        fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) =>
                             _buildPlaceholderImage(),
                       ),
@@ -641,17 +633,10 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
     );
   }
 
-  Widget _buildBasicDetailsEditCard(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final crossAxisCount = width >= TenantAdminBreakpoints.desktop
-        ? 3
-        : width >= TenantAdminBreakpoints.smallTablet
-            ? 2
-            : 1;
-
+  Widget _buildBasicDetailsEditCard() {
     final options = widget.options;
 
-    final basicFields = [
+    final basicFields = <Widget>[
       ProductFormTextField(
         label: 'Product name *',
         hint: 'Enter product name',
@@ -753,7 +738,10 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
               items: [
                 DropdownMenuItem(
                   value: _variantsController.text,
-                  child: Text(_variantsController.text),
+                  child: Text(
+                    _variantsController.text,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
               onChanged: (v) {},
@@ -790,104 +778,96 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
       title: 'Basic Details',
       child: LayoutBuilder(
         builder: (context, constraints) {
-          return GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: TenantAdminSpacing.md,
-              mainAxisSpacing: TenantAdminSpacing.md,
-              mainAxisExtent: 76,
-            ),
-            itemCount: basicFields.length,
-            itemBuilder: (context, index) => basicFields[index],
+          final crossAxisCount = constraints.maxWidth >= 720
+              ? 3
+              : constraints.maxWidth >= 420
+                  ? 2
+                  : 1;
+          return _ResponsiveFieldGrid(
+            crossAxisCount: crossAxisCount,
+            children: basicFields,
           );
         },
       ),
     );
   }
 
-  Widget _buildInventoryPricingEditCard(BuildContext context) {
+  Widget _buildInventoryPricingEditCard() {
     return _SectionCard(
       title: 'Inventory & Pricing',
-      child: GridView(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: TenantAdminSpacing.md,
-          mainAxisSpacing: TenantAdminSpacing.md,
-          mainAxisExtent: 76,
-        ),
-        children: [
-          ProductFormTextField(
-            label: 'Price *',
-            hint: 'LKR 2,500.00',
-            icon: Icons.attach_money_outlined,
-            controller: _priceController,
-            enabled: _inputsEnabled,
-            keyboardType: TextInputType.number,
-            errorText: _fieldErrors['sellingPrice'],
-          ),
-          ProductFormTextField(
-            label: 'Stock *',
-            hint: '0',
-            icon: Icons.inventory_outlined,
-            controller: _onHandController.text.isNotEmpty
-                ? _onHandController
-                : _openingStockController,
-            enabled: _inputsEnabled && _trackStock,
-            keyboardType: TextInputType.number,
-            errorText: _fieldErrors['openingStockQuantity'],
-          ),
-          ProductOptionDropdown(
-            label: 'Product Status *',
-            hint: 'Select status',
-            icon: Icons.check_circle_outline,
-            value: _productStatus,
-            enabled: _inputsEnabled,
-            items: const [
-              DropdownMenuItem(value: 'ACTIVE', child: Text('Active')),
-              DropdownMenuItem(value: 'INACTIVE', child: Text('Inactive')),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final crossAxisCount = constraints.maxWidth >= 360 ? 2 : 1;
+          return _ResponsiveFieldGrid(
+            crossAxisCount: crossAxisCount,
+            children: [
+              ProductFormTextField(
+                label: 'Price *',
+                hint: 'LKR 2,500.00',
+                icon: Icons.attach_money_outlined,
+                controller: _priceController,
+                enabled: _inputsEnabled,
+                keyboardType: TextInputType.number,
+                errorText: _fieldErrors['sellingPrice'],
+              ),
+              ProductFormTextField(
+                label: 'Stock *',
+                hint: '0',
+                icon: Icons.inventory_outlined,
+                controller: _onHandController.text.isNotEmpty
+                    ? _onHandController
+                    : _openingStockController,
+                enabled: _inputsEnabled && _trackStock,
+                keyboardType: TextInputType.number,
+                errorText: _fieldErrors['openingStockQuantity'],
+              ),
+              ProductOptionDropdown(
+                label: 'Product Status *',
+                hint: 'Select status',
+                icon: Icons.check_circle_outline,
+                value: _productStatus,
+                enabled: _inputsEnabled,
+                items: const [
+                  DropdownMenuItem(value: 'ACTIVE', child: Text('Active')),
+                  DropdownMenuItem(value: 'INACTIVE', child: Text('Inactive')),
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() => _productStatus = val);
+                  }
+                },
+              ),
+              ProductOptionDropdown(
+                label: 'Stock Status *',
+                hint: 'Select stock status',
+                icon: Icons.inventory_2_outlined,
+                value: _stockStatus,
+                enabled: _inputsEnabled,
+                items: const [
+                  DropdownMenuItem(value: 'IN_STOCK', child: Text('In Stock')),
+                  DropdownMenuItem(value: 'LOW_STOCK', child: Text('Low Stock')),
+                  DropdownMenuItem(
+                      value: 'OUT_OF_STOCK', child: Text('Out of Stock')),
+                  DropdownMenuItem(
+                      value: 'NOT_TRACKED', child: Text('Not Tracked')),
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() => _stockStatus = val);
+                  }
+                },
+              ),
             ],
-            onChanged: (val) {
-              if (val != null) {
-                setState(() => _productStatus = val);
-              }
-            },
-          ),
-          ProductOptionDropdown(
-            label: 'Stock Status *',
-            hint: 'Select stock status',
-            icon: Icons.inventory_2_outlined,
-            value: _stockStatus,
-            enabled: _inputsEnabled,
-            items: const [
-              DropdownMenuItem(value: 'IN_STOCK', child: Text('In Stock')),
-              DropdownMenuItem(value: 'LOW_STOCK', child: Text('Low Stock')),
-              DropdownMenuItem(
-                  value: 'OUT_OF_STOCK', child: Text('Out of Stock')),
-              DropdownMenuItem(
-                  value: 'NOT_TRACKED', child: Text('Not Tracked')),
-            ],
-            onChanged: (val) {
-              if (val != null) {
-                setState(() => _stockStatus = val);
-              }
-            },
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildChannelVisibilityEditCard() {
-    final isDesktop =
-        MediaQuery.sizeOf(context).width >= TenantAdminBreakpoints.desktop;
-
+  Widget _buildChannelVisibilityEditCard(bool sideBySide) {
     return _SectionCard(
       title: 'Channel Visibility',
-      child: isDesktop
+      child: sideBySide
           ? Row(
               children: [
                 Expanded(
@@ -1054,6 +1034,7 @@ class _SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
@@ -1079,6 +1060,40 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
+class _ResponsiveFieldGrid extends StatelessWidget {
+  const _ResponsiveFieldGrid({
+    required this.crossAxisCount,
+    required this.children,
+  });
+
+  final int crossAxisCount;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = TenantAdminSpacing.md;
+        final count = crossAxisCount.clamp(1, 3);
+        final itemWidth =
+            (constraints.maxWidth - spacing * (count - 1)) / count;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final child in children)
+              SizedBox(
+                width: itemWidth,
+                child: child,
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _AuditTile extends StatelessWidget {
   const _AuditTile({
     required this.icon,
@@ -1096,27 +1111,33 @@ class _AuditTile extends StatelessWidget {
       children: [
         Icon(icon, size: 20, color: TenantAdminColors.mutedText),
         const SizedBox(width: TenantAdminSpacing.md),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                color: TenantAdminColors.mutedText,
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: TenantAdminColors.mutedText,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: const TextStyle(
-                color: TenantAdminColors.bodyText,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+              const SizedBox(height: 2),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: TenantAdminColors.bodyText,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -1138,19 +1159,33 @@ class ProductReadOnlyField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             color: TenantAdminColors.bodyText,
-            fontWeight: FontWeight.w800,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            height: 1.2,
           ),
         ),
-        const SizedBox(height: TenantAdminSpacing.sm),
+        const SizedBox(height: 6),
         InputDecorator(
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, size: 19),
+            isDense: true,
+            prefixIcon: Icon(icon, size: 18, color: const Color(0xFF64748B)),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 40,
+              minHeight: 40,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
             filled: true,
             fillColor: TenantAdminColors.background,
             border: OutlineInputBorder(
@@ -1164,7 +1199,13 @@ class ProductReadOnlyField extends StatelessWidget {
           ),
           child: Text(
             value.isEmpty ? '-' : value,
-            style: const TextStyle(color: TenantAdminColors.bodyText),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: TenantAdminColors.bodyText,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],

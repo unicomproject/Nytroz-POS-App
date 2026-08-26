@@ -11,58 +11,33 @@ class ProductStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalized = status.trim().toUpperCase();
     final (color, background) = switch (normalized) {
-      'ACTIVE' => (
-          TenantAdminColors.success,
-          TenantAdminColors.success.withValues(alpha: 0.12),
-        ),
+      'ACTIVE' => (TenantAdminColors.success, TenantAdminColors.successSurface),
       'INACTIVE' => (
           TenantAdminColors.offline,
           TenantAdminColors.offline.withValues(alpha: 0.12),
         ),
-      'DRAFT' => (
-          TenantAdminColors.warning,
-          TenantAdminColors.warning.withValues(alpha: 0.12),
-        ),
-      'DELETED' => (
-          TenantAdminColors.danger,
-          TenantAdminColors.danger.withValues(alpha: 0.12),
-        ),
+      'DRAFT' => (TenantAdminColors.warning, TenantAdminColors.warningSurface),
+      'DELETED' => (TenantAdminColors.danger, TenantAdminColors.dangerSurface),
       _ => (
           TenantAdminColors.mutedText,
-          TenantAdminColors.background,
+          TenantAdminColors.subtleBackground,
         ),
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: TenantAdminSpacing.md,
-        vertical: TenantAdminSpacing.xs,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            _label(normalized),
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
+      child: Text(
+        _label(normalized),
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+        ),
       ),
     );
   }
@@ -99,17 +74,17 @@ class StockStatusBadge extends StatelessWidget {
       'IN_STOCK' => (
           'In Stock',
           TenantAdminColors.success,
-          TenantAdminColors.success.withValues(alpha: 0.12),
+          TenantAdminColors.successSurface,
         ),
       'LOW_STOCK' => (
           'Low Stock',
           TenantAdminColors.warning,
-          TenantAdminColors.warning.withValues(alpha: 0.12),
+          TenantAdminColors.warningSurface,
         ),
       'OUT_OF_STOCK' => (
           'Out of Stock',
           TenantAdminColors.danger,
-          TenantAdminColors.danger.withValues(alpha: 0.12),
+          TenantAdminColors.dangerSurface,
         ),
       'NOT_TRACKED' => (
           'Not Tracked',
@@ -119,40 +94,24 @@ class StockStatusBadge extends StatelessWidget {
       _ => (
           normalized,
           TenantAdminColors.mutedText,
-          TenantAdminColors.background,
+          TenantAdminColors.subtleBackground,
         ),
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: TenantAdminSpacing.md,
-        vertical: TenantAdminSpacing.xs,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+        ),
       ),
     );
   }

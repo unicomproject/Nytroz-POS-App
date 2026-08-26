@@ -68,6 +68,13 @@ class AddProductWizardStateCodec {
       'taxName': state.taxName,
       'taxRate': state.taxRate,
       'taxExclusive': state.taxExclusive,
+      'initialBatchNumber': state.initialBatchNumber,
+      'initialExpiryDate': state.initialExpiryDate?.toIso8601String(),
+      'initialSerialNumber': state.initialSerialNumber,
+      'confirmClearIncompatibleInitialTracking':
+          state.confirmClearIncompatibleInitialTracking,
+      'initialTrackingAssignedVariantId':
+          state.initialTrackingAssignedVariantId,
     };
   }
 
@@ -142,6 +149,15 @@ class AddProductWizardStateCodec {
       taxName: json['taxName']?.toString(),
       taxRate: json['taxRate'] as num?,
       taxExclusive: json['taxExclusive'] as bool? ?? true,
+      initialBatchNumber: json['initialBatchNumber']?.toString() ?? '',
+      initialExpiryDate: DateTime.tryParse(
+        json['initialExpiryDate']?.toString() ?? '',
+      ),
+      initialSerialNumber: json['initialSerialNumber']?.toString() ?? '',
+      confirmClearIncompatibleInitialTracking:
+          json['confirmClearIncompatibleInitialTracking'] as bool? ?? false,
+      initialTrackingAssignedVariantId:
+          json['initialTrackingAssignedVariantId']?.toString(),
       isDirty: false,
       isSubmitting: false,
       isSavingDraft: false,

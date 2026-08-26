@@ -10,6 +10,7 @@ class Step5IdentifierTable extends StatelessWidget {
   final String productName;
   final String productStructure;
   final void Function(BarcodeSkuAssignmentDto assignment, int index) onEdit;
+  final void Function(BarcodeSkuAssignmentDto assignment, int index)? onDelete;
 
   const Step5IdentifierTable({
     super.key,
@@ -18,6 +19,7 @@ class Step5IdentifierTable extends StatelessWidget {
     required this.productName,
     required this.productStructure,
     required this.onEdit,
+    this.onDelete,
   });
 
   String _variantLabel(BarcodeSkuAssignmentDto assignment) {
@@ -217,12 +219,27 @@ class Step5IdentifierTable extends StatelessWidget {
         ),
         // Actions
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: IconButton(
-            icon: const Icon(Icons.edit_outlined, size: 18),
-            color: Colors.grey.shade600,
-            tooltip: 'Edit',
-            onPressed: () => onEdit(assignment, index),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _ActionLinkButton(
+                icon: Icons.edit_outlined,
+                label: 'Edit',
+                color: const Color(0xFF1890FF),
+                onPressed: () => onEdit(assignment, index),
+              ),
+              if (onDelete != null) ...[
+                const SizedBox(height: 8),
+                _ActionLinkButton(
+                  icon: Icons.delete_outline,
+                  label: 'Delete',
+                  color: const Color(0xFFEF4444),
+                  onPressed: () => onDelete!(assignment, index),
+                ),
+              ],
+            ],
           ),
         ),
       ],
@@ -281,6 +298,47 @@ class _StatusChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionLinkButton extends StatelessWidget {
+  const _ActionLinkButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                height: 1.2,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

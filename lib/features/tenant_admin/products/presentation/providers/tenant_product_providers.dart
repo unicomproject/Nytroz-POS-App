@@ -330,7 +330,7 @@ final productEditCreateOptionsProvider =
   return ref.watch(getProductCreateOptionsProvider).call();
 });
 
-final addProductWizardControllerProvider = StateNotifierProvider.autoDispose<
+final addProductWizardControllerProvider = StateNotifierProvider<
     AddProductWizardController, AddProductWizardState>((ref) {
   final repo = ref.watch(tenantProductRepositoryProvider);
   final draftLocal = ref.watch(productWizardDraftLocalRepositoryProvider);

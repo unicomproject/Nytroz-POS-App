@@ -1107,7 +1107,31 @@ class TenantAdminAccessChecker {
         ]);
   }
 
-  bool canAccessAddProductPage() => canCreateProduct();
+  /// Page entry matches the Products sidebar and route guard: product create.
+  /// Specialized catalog codes (`barcodes.manage`, `product_pricing.manage`,
+  /// tax lookup) remain capability flags for in-wizard disablement; the backend
+  /// is authoritative. Do not block the whole Add Product page on grants that
+  /// Tenant Admin historically never received.
+  bool canAccessAddProductPage() {
+    return canCreateProduct();
+  }
+
+  List<String> missingProductWizardStartCapabilities() {
+    final missing = <String>[];
+    if (!canCreateProduct()) {
+      missing.add('catalog.products.create');
+    }
+    if (!canManageBarcodes()) {
+      missing.add('catalog.barcodes.manage');
+    }
+    if (!canManagePricing()) {
+      missing.add('catalog.product_pricing.manage');
+    }
+    if (!canLookupTaxClasses()) {
+      missing.add('pricing.tax_classes.view');
+    }
+    return missing;
+  }
 
   bool canViewProductDetail() {
     return hasProductManagementEntitlement() &&
@@ -1130,6 +1154,63 @@ class TenantAdminAccessChecker {
   bool canDeleteProduct() {
     return hasProductManagementEntitlement() &&
         can(TenantAdminPermissionCodes.tenantProductsDelete);
+  }
+
+  bool canPublishProduct() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogProductsPublish);
+  }
+
+  bool canManageProductMedia() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogProductMediaManage);
+  }
+
+  bool canManageProductChannels() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogProductChannelsManage);
+  }
+
+  bool canManageVariants() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogVariantsManage);
+  }
+
+  bool canManageBundleComponents() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogComboComponentsManage);
+  }
+
+  bool canManageBarcodes() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogBarcodesManage);
+  }
+
+  bool canManagePricing() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogProductPricingManage);
+  }
+
+  bool canViewProductCost() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogProductCostView);
+  }
+
+  bool canLookupTaxClasses() {
+    return canAny([
+      TenantAdminPermissionCodes.pricingTaxClassesView,
+      TenantAdminPermissionCodes.taxClassesView,
+    ]);
+  }
+
+  bool canViewStockForProductSetup() {
+    return can(TenantAdminPermissionCodes.inventoryView) ||
+        can(TenantAdminPermissionCodes.tenantStockView);
+  }
+
+  bool canUseAdvancedInventoryTracking() {
+    return canAccessFeature('inventory_tracking') ||
+        canAccessFeature(TenantAdminFeatureCodes.inventoryManagement);
   }
 
   bool canViewOutletDetail() {
