@@ -41,17 +41,6 @@ class PosCartAuthoritativeUnitPriceDisplay extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            formatCheckoutMoney(currency, pricing.baseUnitPrice!),
-            textAlign: TextAlign.right,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: TenantAdminColors.mutedText,
-                  decoration: TextDecoration.lineThrough,
-                  fontSize: 11,
-                ),
-          ),
-          Text(
             formatCheckoutMoney(currency, pricing.effectiveUnitPrice!),
             textAlign: TextAlign.right,
             maxLines: 1,
@@ -62,18 +51,17 @@ class PosCartAuthoritativeUnitPriceDisplay extends StatelessWidget {
               fontSize: 13,
             ),
           ),
-          if (pricing.appliedPromotion?.displayLabel != null)
-            Text(
-              pricing.appliedPromotion!.displayLabel!,
-              textAlign: TextAlign.right,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: TenantAdminColors.posHomeAccentOrange,
-                fontWeight: FontWeight.w700,
-                fontSize: 10,
-              ),
-            ),
+          Text(
+            formatCheckoutMoney(currency, pricing.baseUnitPrice!),
+            textAlign: TextAlign.right,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: TenantAdminColors.mutedText,
+                  decoration: TextDecoration.lineThrough,
+                  fontSize: 11,
+                ),
+          ),
         ],
       );
     }
@@ -94,18 +82,6 @@ class PosCartAuthoritativeUnitPriceDisplay extends StatelessWidget {
               fontSize: 13,
             ),
           ),
-          if (pricing.appliedPromotion?.displayLabel != null)
-            Text(
-              pricing.appliedPromotion!.displayLabel!,
-              textAlign: TextAlign.right,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: TenantAdminColors.posHomeAccentOrange,
-                fontWeight: FontWeight.w700,
-                fontSize: 10,
-              ),
-            ),
         ],
       );
     }

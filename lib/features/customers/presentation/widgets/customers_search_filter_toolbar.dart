@@ -78,27 +78,6 @@ class CustomersSearchFilterToolbar extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 10),
-            OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.filter_list_rounded, size: 18),
-              label: const Text('Filter'),
-              style: OutlinedButton.styleFrom(
-                backgroundColor: CustomersUiTokens.lightBlueSurface,
-                foregroundColor: CustomersUiTokens.accentText,
-                side:
-                    const BorderSide(color: CustomersUiTokens.lightBlueBorder),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                textStyle: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ),
             if (canAddCustomer) ...[
               const SizedBox(width: 10),
               FilledButton.icon(

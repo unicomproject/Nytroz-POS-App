@@ -12,6 +12,7 @@ class TenantUserListItemDto {
     this.outletCount,
     required this.status,
     this.lastActiveAt,
+    this.profileImageUrl,
   });
 
   factory TenantUserListItemDto.fromJson(Map<String, dynamic> json) {
@@ -30,6 +31,7 @@ class TenantUserListItemDto {
           : null,
       status: json['status'] as String? ?? '',
       lastActiveAt: _dateValue(json['lastActiveAt']),
+      profileImageUrl: json['profileImageUrl'] as String?,
     );
   }
 
@@ -45,6 +47,7 @@ class TenantUserListItemDto {
   final int? outletCount;
   final String status;
   final DateTime? lastActiveAt;
+  final String? profileImageUrl;
 }
 
 class TenantUserListResultDto {

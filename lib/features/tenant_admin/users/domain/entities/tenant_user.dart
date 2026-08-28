@@ -12,6 +12,7 @@ class TenantUser {
     this.outletCount,
     required this.status,
     this.lastActiveAt,
+    this.profileImageUrl,
   });
 
   final String id;
@@ -26,6 +27,7 @@ class TenantUser {
   final int? outletCount;
   final String status;
   final DateTime? lastActiveAt;
+  final String? profileImageUrl;
 }
 
 class TenantUserListResult {

@@ -27,6 +27,7 @@ void main() {
             'outletCount': 1,
             'status': 'ACTIVE',
             'lastActiveAt': '2026-06-22T10:00:00Z',
+            'profileImageUrl': 'https://example.com/users/sarah.jpg',
           },
         ],
         'page': 1,
@@ -44,6 +45,8 @@ void main() {
       expect(dto.items.single.outletCount, 1);
       expect(dto.items.single.status, 'ACTIVE');
       expect(dto.items.single.lastActiveAt, isNotNull);
+      expect(dto.items.single.profileImageUrl,
+          'https://example.com/users/sarah.jpg');
     });
 
     test('falls back gracefully when optional fields are missing', () {
@@ -156,6 +159,7 @@ void main() {
             'roleName': 'Store Manager',
             'outletName': 'High Street Store',
             'status': 'ACTIVE',
+            'profileImageUrl': 'https://example.com/users/sarah.jpg',
           },
         ],
         'page': 1,
@@ -166,6 +170,8 @@ void main() {
       final result = TenantUserMapper.toListResult(dto);
 
       expect(result.items.single.fullName, 'Sarah Ahmed');
+      expect(result.items.single.profileImageUrl,
+          'https://example.com/users/sarah.jpg');
       expect(result.totalCount, 1);
       expect(result.totalPages, 1);
     });

@@ -18,6 +18,7 @@ class TenantUserMapper {
       outletCount: dto.outletCount,
       status: dto.status,
       lastActiveAt: dto.lastActiveAt,
+      profileImageUrl: dto.profileImageUrl,
     );
   }
 

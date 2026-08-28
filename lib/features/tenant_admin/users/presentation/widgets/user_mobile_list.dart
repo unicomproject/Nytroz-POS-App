@@ -7,6 +7,7 @@ import '../../../presentation/widgets/tenant_admin_mobile_list_card.dart';
 import '../../domain/entities/tenant_user.dart';
 import '../config/user_row_action_configs.dart';
 import '../utils/user_api_errors.dart';
+import 'user_avatar.dart';
 import 'user_status_badge.dart';
 
 class UserMobileList extends StatelessWidget {
@@ -75,10 +76,10 @@ class _UserMobileListItem extends StatelessWidget {
       title: user.fullName,
       subtitle: user.email,
       onTap: canView ? () => onView(user) : null,
-      leading: const CircleAvatar(
+      leading: UserAvatar(
+        user: user,
         radius: 20,
-        backgroundColor: TenantAdminColors.secondary,
-        child: Icon(Icons.person_outline, color: TenantAdminColors.primary),
+        fallbackIcon: Icons.person_outline,
       ),
       trailing: UserStatusBadge(status: user.status),
       footer: Column(

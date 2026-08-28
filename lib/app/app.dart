@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../features/tenant_admin/presentation/providers/tenant_admin_session_sync_provider.dart';
 import '../features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../core/theme/pos_theme_provider.dart';
 import '../features/auth/presentation/providers/auth_network_provider.dart';
 import '../features/auth/presentation/providers/session_provider.dart';
 import '../features/sale/presentation/providers/completed_sale_print_provider.dart';
@@ -46,13 +47,17 @@ class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
     ref.watch(posSessionBootstrapProvider);
     ref.watch(completedSalePrintProvider);
     final router = ref.watch(appRouterProvider);
+    final posTheme = ref.watch(posThemeProvider);
 
     return MaterialApp.router(
       title: 'Nytroz POS',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: TenantAdminColors.primary,
+          seedColor: posTheme.primary,
+        ).copyWith(
+          primary: posTheme.primary,
+          secondary: posTheme.secondary,
         ),
         scaffoldBackgroundColor: TenantAdminColors.background,
         useMaterial3: true,
