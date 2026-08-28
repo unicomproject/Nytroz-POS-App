@@ -13,6 +13,7 @@ import 'outlets/presentation/screens/add_outlet_screen.dart';
 import 'outlets/presentation/screens/edit_outlet_screen.dart';
 import 'outlets/presentation/screens/outlet_details_screen.dart';
 import 'outlets/presentation/screens/outlet_list_screen.dart';
+import 'role_permissions/presentation/screens/create_custom_role_screen.dart';
 import 'role_permissions/presentation/screens/edit_role_screen.dart';
 import 'role_permissions/presentation/screens/role_setup_step1_role_screen.dart';
 import 'role_permissions/presentation/screens/role_setup_step2_modules_screen.dart';
@@ -39,6 +40,7 @@ import 'products/presentation/screens/product_detail_screen.dart';
 import 'products/presentation/screens/product_list_screen.dart';
 import 'products/presentation/screens/popular_products_curation_screen.dart';
 import 'brands/presentation/screens/brand_list_screen.dart';
+import 'pricing_tax/tax_management/presentation/tax_management_page.dart';
 import 'inventory/presentation/navigation/inventory_routes.dart';
 import 'inventory/presentation/dashboard/pages/inventory_dashboard_page.dart';
 import 'inventory/presentation/current_stock/screens/current_stock_screen.dart';
@@ -127,6 +129,13 @@ List<RouteBase> tenantAdminRoutes(Ref ref) {
         GoRoute(
           path: '/tenant-admin/products/import',
           redirect: (context, state) => '/tenant-admin/products',
+        ),
+        GoRoute(
+          path: '/tenant-admin/products/local-draft/:localDraftId',
+          builder: (context, state) {
+            final localDraftId = state.pathParameters['localDraftId'];
+            return AddProductScreen(resumeLocalDraftId: localDraftId);
+          },
         ),
         GoRoute(
           path: '/tenant-admin/products/draft/:id',
@@ -223,6 +232,10 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
 
   if (definition.path == '/tenant-admin/roles') {
     return const RolesScreen();
+  }
+
+  if (definition.path == '/tenant-admin/roles/add') {
+    return const CreateCustomRoleScreen();
   }
 
   if (definition.path == '/tenant-admin/roles/:id/edit') {
@@ -369,14 +382,26 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
   }
 
   if (definition.path == ProductsSidebarRoutes.add ||
-      state.uri.path.startsWith('/tenant-admin/products/draft/')) {
+      state.uri.path.startsWith('/tenant-admin/products/draft/') ||
+      state.uri.path.startsWith('/tenant-admin/products/local-draft/')) {
+    if (state.uri.path.startsWith('/tenant-admin/products/local-draft/')) {
+      final localDraftId = state.pathParameters['localDraftId'] ??
+          (state.uri.pathSegments.length >= 4
+              ? state.uri.pathSegments[3]
+              : null);
+      return AddProductScreen(resumeLocalDraftId: localDraftId);
+    }
     final draftId = state.pathParameters['productId'] ??
         state.pathParameters['id'] ??
         (state.uri.pathSegments.length >= 4 &&
                 state.uri.pathSegments[2] == 'draft'
             ? state.uri.pathSegments[3]
             : null);
-    return AddProductScreen(resumeProductId: draftId);
+    final duplicateFrom = state.uri.queryParameters['duplicateFrom'];
+    return AddProductScreen(
+      resumeProductId: draftId,
+      duplicateFromProductId: duplicateFrom,
+    );
   }
 
   if (definition.path == ProductsSidebarRoutes.categories) {
@@ -388,6 +413,10 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
 
   if (definition.path == ProductsSidebarRoutes.brands) {
     return const BrandListScreen();
+  }
+
+  if (definition.path == ProductsSidebarRoutes.tax) {
+    return const TaxManagementPage();
   }
 
   if (definition.path == ProductsSidebarRoutes.variantTemplates) {
@@ -541,6 +570,16 @@ bool _canAccessRoute(
   TenantAdminAccessChecker accessChecker,
   TenantAdminRouteDefinition definition,
 ) {
+  if (definition.path == '/tenant-admin/roles/add') {
+    return accessChecker.canShowActionWithAnyPermission(
+      TenantAdminFeatureCodes.rolePermission,
+      [
+        TenantAdminPermissionCodes.tenantRolesCreate,
+        TenantAdminPermissionCodes.tenantRoleManage,
+      ],
+    );
+  }
+
   if (definition.menuKey == 'roles-access') {
     return accessChecker.canShowActionWithAnyPermission(
       TenantAdminFeatureCodes.rolePermission,
@@ -631,10 +670,12 @@ bool _canAccessRoute(
       definition.path == ProductsSidebarRoutes.add ||
       definition.path == ProductsSidebarRoutes.categories ||
       definition.path == ProductsSidebarRoutes.brands ||
+      definition.path == ProductsSidebarRoutes.tax ||
       definition.path == ProductsSidebarRoutes.variantTemplates ||
       definition.path == ProductsSidebarRoutes.popular) {
     return ProductsRouteGuard.canAccessPath(accessChecker, definition.path);
   }
+
 
   if (definition.path == '/tenant-admin/products') {
     return accessChecker.canViewProductListNav();

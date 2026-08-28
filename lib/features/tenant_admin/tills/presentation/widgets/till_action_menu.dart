@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import 'package:nytroz_pos/features/tenant_admin/presentation/widgets/tenant_admin_row_action.dart';
 import '../../domain/entities/till_monitoring.dart';
 import '../config/till_row_action_configs.dart';
 import '../utils/till_api_errors.dart';
@@ -30,18 +31,21 @@ class TillActionMenu extends ConsumerWidget {
     return PopupMenuButton<TillRowActionConfig>(
       tooltip: 'More actions',
       icon: const Icon(Icons.more_vert, color: TenantAdminColors.mutedText),
+      position: PopupMenuPosition.under,
+      constraints: const BoxConstraints(minWidth: 172),
+      menuPadding: const EdgeInsets.symmetric(vertical: TenantAdminSpacing.xs),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+      ),
       itemBuilder: (context) {
         return actions
             .map(
               (action) => PopupMenuItem<TillRowActionConfig>(
                 value: action,
-                child: Row(
-                  children: [
-                    Icon(action.icon,
-                        size: 18, color: TenantAdminColors.bodyText),
-                    const SizedBox(width: TenantAdminSpacing.sm),
-                    Text(action.label),
-                  ],
+                child: TenantAdminRowActionMenuItem(
+                  icon: action.icon,
+                  label: action.label,
+                  destructive: action.actionId == TillRowActionId.delete,
                 ),
               ),
             )

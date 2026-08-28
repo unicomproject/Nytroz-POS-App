@@ -63,7 +63,8 @@ class _ProductImageUploadCardState
     final isFull = count >= 10;
 
     return Container(
-      padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+      width: double.infinity,
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
@@ -77,6 +78,7 @@ class _ProductImageUploadCardState
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header Row

@@ -6,6 +6,8 @@ class OutletDetails {
     required this.address,
     required this.status,
     this.outletType,
+    this.imageUrl,
+    this.imageMediaAssetId,
     this.isDefaultOutlet = false,
     this.addressLine1,
     this.addressLine2,
@@ -43,6 +45,8 @@ class OutletDetails {
   final String address;
   final String status;
   final String? outletType;
+  final String? imageUrl;
+  final String? imageMediaAssetId;
   final bool isDefaultOutlet;
   final String? addressLine1;
   final String? addressLine2;
@@ -173,6 +177,7 @@ class OutletFormData {
     this.contactName,
     this.contactPhone,
     this.contactEmail,
+    this.imageUrl,
     this.imageMediaAssetId,
     this.imageOperation = OutletImageOperation.keep,
     this.isDefaultOutlet = false,
@@ -196,6 +201,7 @@ class OutletFormData {
   final String? contactName;
   final String? contactPhone;
   final String? contactEmail;
+  final String? imageUrl;
   final String? imageMediaAssetId;
   final OutletImageOperation imageOperation;
   final bool isDefaultOutlet;

@@ -70,7 +70,7 @@ class TenantProductListResultDto {
   const TenantProductListResultDto({
     required this.items,
     this.page = 1,
-    this.pageSize = 5,
+    this.pageSize = 6,
     this.totalCount = 0,
     this.catalogTotalCount = 0,
   });
@@ -78,7 +78,7 @@ class TenantProductListResultDto {
   factory TenantProductListResultDto.fromJson(Map<String, dynamic> json) {
     final items = _mapList(json['items'], TenantProductListItemDto.fromJson);
     final page = _intValue(json['pageNumber'] ?? json['page'], fallback: 1);
-    final pageSize = _intValue(json['pageSize'], fallback: 5);
+    final pageSize = _intValue(json['pageSize'], fallback: 6);
     final totalCount = _intValue(
       json['totalCount'] ?? json['totalItems'],
       fallback: items.length,

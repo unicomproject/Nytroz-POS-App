@@ -3,40 +3,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
-import '../../../presentation/widgets/tenant_admin_states.dart';
-import '../../domain/entities/permission_catalog.dart';
-import '../providers/role_permissions_providers.dart';
 import '../providers/role_setup_wizard_provider.dart';
 import '../widgets/role_setup_components.dart';
 import 'role_setup_shell.dart';
-
-final wizardPermissionCatalogProvider =
-    FutureProvider.autoDispose<PermissionCatalog>((ref) async {
-  return ref.watch(getPermissionCatalogProvider)();
-});
 
 class RoleSetupStep2ModulesScreen extends ConsumerWidget {
   const RoleSetupStep2ModulesScreen({super.key});
 
   static const _moduleIcons = <String, IconData>{
-    'dashboard': Icons.dashboard,
-    'outlets': Icons.store,
-    'tills': Icons.point_of_sale,
-    'users': Icons.people,
-    'products': Icons.inventory,
-    'inventory': Icons.warehouse,
-    'sales': Icons.receipt,
-    'reports': Icons.bar_chart,
-    'roles-access': Icons.admin_panel_settings,
-    'online-store': Icons.shopping_bag,
-    'settings': Icons.settings,
+    'dashboard': Icons.dashboard_outlined,
+    'outlets': Icons.store_outlined,
+    'tills': Icons.point_of_sale_outlined,
+    'users': Icons.people_outline,
+    'products': Icons.inventory_2_outlined,
+    'inventory': Icons.warehouse_outlined,
+    'sales': Icons.receipt_long_outlined,
+    'sales_pos': Icons.receipt_long_outlined,
+    'reports': Icons.bar_chart_outlined,
+    'roles-access': Icons.admin_panel_settings_outlined,
+    'online-store': Icons.shopping_bag_outlined,
+    'online_store': Icons.shopping_bag_outlined,
+    'settings': Icons.settings_outlined,
   };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(roleSetupWizardProvider);
     final controller = ref.read(roleSetupWizardProvider.notifier);
-    final catalogState = ref.watch(wizardPermissionCatalogProvider);
+    final catalog = state.catalog;
 
     return RoleSetupShell(
       child: Padding(
@@ -44,85 +38,78 @@ class RoleSetupStep2ModulesScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-
-            // ── Step Header ──
             const RoleSetupStepHeader(
               step: 2,
               title: 'Select Modules',
               subtitle:
-                  'Select the modules this role can access. Only modules available in your subscription are shown.',
+                  'Choose the available modules this system role can access.',
             ),
-
-            // ── Module Grid ──
+            if (state.errorMessage != null) ...[
+              RoleSetupWarningBanner(message: state.errorMessage!),
+              const SizedBox(height: TenantAdminSpacing.md),
+            ],
             Expanded(
-              child: catalogState.when(
-                loading: () =>
-                    const TenantAdminLoadingSkeleton(rowCount: 3),
-                error: (error, stackTrace) => TenantAdminErrorState(
-                  title: 'Failed to load modules',
-                  message: 'Please try again.',
-                  onRetry: () =>
-                      ref.refresh(wizardPermissionCatalogProvider),
-                ),
-                data: (catalog) {
-                  return GridView.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      childAspectRatio: 1.3,
-                      crossAxisSpacing: TenantAdminSpacing.md,
-                      mainAxisSpacing: TenantAdminSpacing.md,
+              child: catalog == null
+                  ? const Center(child: CircularProgressIndicator())
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final columns = constraints.maxWidth >= 900
+                            ? 3
+                            : constraints.maxWidth >= 560
+                                ? 2
+                                : 1;
+                        return GridView.builder(
+                          itemCount: catalog.modules.length,
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: columns,
+                            childAspectRatio: columns == 1 ? 3.6 : 1.45,
+                            crossAxisSpacing: TenantAdminSpacing.md,
+                            mainAxisSpacing: TenantAdminSpacing.md,
+                          ),
+                          itemBuilder: (context, index) {
+                            final module = catalog.modules[index];
+                            final assignable =
+                                controller.canConfigureModule(module);
+                            final blockedReasons = module.features
+                                .expand((feature) => feature.permissions)
+                                .map((permission) => permission.blockedReason)
+                                .whereType<String>();
+                            final blockedReason = blockedReasons.isEmpty
+                                ? null
+                                : blockedReasons.first;
+                            return RoleModuleCard(
+                              title: module.name,
+                              description: module.description ??
+                                  'Manage ${module.name.toLowerCase()} access.',
+                              icon: _moduleIcons[module.code] ??
+                                  Icons.apps_outlined,
+                              isSelected:
+                                  state.selectedModules.contains(module.code),
+                              isEntitled: module.isActive && assignable,
+                              onTap: () => controller.toggleModule(module.code),
+                              unavailableMessage: blockedReason,
+                            );
+                          },
+                        );
+                      },
                     ),
-                    itemCount: catalog.modules.length,
-                    itemBuilder: (context, index) {
-                      final module = catalog.modules[index];
-                      final isEntitled = module.isActive;
-                      final icon =
-                          _moduleIcons[module.code] ?? Icons.apps;
-
-                      return RoleModuleCard(
-                        title: module.name,
-                        description: module.description ??
-                            'Manage ${module.name.toLowerCase()} operations.',
-                        icon: icon,
-                        isSelected:
-                            state.selectedModules.contains(module.code),
-                        isEntitled: isEntitled,
-                        onTap: () =>
-                            controller.toggleModule(module.code),
-                      );
-                    },
-                  );
-                },
-              ),
             ),
-
             const SizedBox(height: TenantAdminSpacing.md),
-
-            // ── Info Banner ──
             const RoleSetupInfoBanner(
               message:
-                  'You can change module selection later. Some modules are required and cannot be disabled.',
-              icon: Icons.info_outline,
+                  'Modules and permissions are supplied by the tenant permission catalog.',
             ),
-
-            const SizedBox(height: TenantAdminSpacing.md),
-
-            // ── Footer ──
             RoleSetupFooterActions(
               onBack: () {
                 controller.previousStep();
-                context.go(
-                    '/tenant-admin/roles-permissions/create/select-role');
-              },
-              onSaveDraft: () {
-                controller.saveDraft();
+                context
+                    .go('/tenant-admin/roles-permissions/create/select-role');
               },
               onContinue: () {
                 controller.nextStep();
-                context.go(
-                    '/tenant-admin/roles-permissions/create/permissions');
+                context
+                    .go('/tenant-admin/roles-permissions/create/permissions');
               },
               canContinue: state.selectedModules.isNotEmpty,
             ),

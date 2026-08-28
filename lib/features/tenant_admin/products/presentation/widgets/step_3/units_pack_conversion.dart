@@ -95,9 +95,10 @@ class _UnitsPackConversionFormState
     final options = state.createOptions;
     final unitOptions = options?.units ?? const [];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
         // Header
         const Text(
           'Units & Pack Conversion',
@@ -115,7 +116,7 @@ class _UnitsPackConversionFormState
             color: TenantAdminColors.mutedText,
           ),
         ),
-        const SizedBox(height: TenantAdminSpacing.xl),
+        const SizedBox(height: TenantAdminSpacing.md),
 
         // Unit Model Card Selector
         Row(
@@ -143,7 +144,7 @@ class _UnitsPackConversionFormState
             ),
           ],
         ),
-        const SizedBox(height: TenantAdminSpacing.xl),
+        const SizedBox(height: TenantAdminSpacing.md),
 
         // Form Section (State A or State B)
         if (state.unitModel == 'SINGLE_UNIT')
@@ -151,8 +152,9 @@ class _UnitsPackConversionFormState
         else
           _buildMultipleUnitsSection(state, controller, unitOptions),
       ],
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildUnitModelCard({
     required String title,
@@ -167,7 +169,7 @@ class _UnitsPackConversionFormState
       onTap: onTap,
       borderRadius: BorderRadius.circular(TenantAdminRadius.md),
       child: Container(
-        padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+        padding: const EdgeInsets.all(TenantAdminSpacing.md),
         decoration: BoxDecoration(
           color: isSelected
               ? activeColor.withValues(alpha: 0.04)
@@ -281,17 +283,17 @@ class _UnitsPackConversionFormState
                         errorText: unitError,
                         onChanged: (val) => controller.setProductUnit(val),
                       ),
-                      const SizedBox(height: TenantAdminSpacing.lg),
+                      const SizedBox(height: TenantAdminSpacing.md),
                       _buildDecimalToggle(state, controller),
                     ],
                   );
           },
         ),
-        const SizedBox(height: TenantAdminSpacing.xl),
+        const SizedBox(height: TenantAdminSpacing.md),
 
         // Information Banner
         Container(
-          padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+          padding: const EdgeInsets.all(TenantAdminSpacing.md),
           decoration: BoxDecoration(
             color: TenantAdminColors.subtleBackground,
             borderRadius: BorderRadius.circular(TenantAdminRadius.md),
@@ -381,7 +383,7 @@ class _UnitsPackConversionFormState
                       ),
                     ],
                   ),
-                  const SizedBox(height: TenantAdminSpacing.lg),
+                  const SizedBox(height: TenantAdminSpacing.md),
 
                   // Row 2: Selling Unit, Items per Purchase Unit, Purchase Units per Outer Pack
                   Row(
@@ -456,7 +458,7 @@ class _UnitsPackConversionFormState
                       ),
                     ],
                   ),
-                  const SizedBox(height: TenantAdminSpacing.lg),
+                  const SizedBox(height: TenantAdminSpacing.md),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -481,7 +483,7 @@ class _UnitsPackConversionFormState
                       ),
                     ],
                   ),
-                  const SizedBox(height: TenantAdminSpacing.lg),
+                  const SizedBox(height: TenantAdminSpacing.md),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -580,11 +582,11 @@ class _UnitsPackConversionFormState
             }
           },
         ),
-        const SizedBox(height: TenantAdminSpacing.lg),
+        const SizedBox(height: TenantAdminSpacing.md),
 
         // Decimal Quantity Toggle
         _buildDecimalToggle(state, controller),
-        const SizedBox(height: TenantAdminSpacing.xl),
+        const SizedBox(height: TenantAdminSpacing.md),
 
         // Conversion Summary Card
         _buildConversionSummaryCard(
@@ -594,7 +596,7 @@ class _UnitsPackConversionFormState
           itemsPerPurchase: state.itemsPerPurchaseUnit,
           purchaseUnitsPerOuter: state.purchaseUnitsPerOuterPack,
         ),
-        const SizedBox(height: TenantAdminSpacing.xl),
+        const SizedBox(height: TenantAdminSpacing.md),
 
         // Units & Pack Conversion Table
         _buildConversionTable(
@@ -606,11 +608,11 @@ class _UnitsPackConversionFormState
           itemsPerPurchase: state.itemsPerPurchaseUnit,
           purchaseUnitsPerOuter: state.purchaseUnitsPerOuterPack,
         ),
-        const SizedBox(height: TenantAdminSpacing.xl),
+        const SizedBox(height: TenantAdminSpacing.md),
 
         // Informational Note Panel
         Container(
-          padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+          padding: const EdgeInsets.all(TenantAdminSpacing.md),
           decoration: BoxDecoration(
             color: TenantAdminColors.subtleBackground,
             borderRadius: BorderRadius.circular(TenantAdminRadius.md),
@@ -774,25 +776,45 @@ class _UnitsPackConversionFormState
       ),
       child: Material(
         color: Colors.transparent,
-        child: SwitchListTile(
-          title: const Text(
-            'Allow Decimal Quantity',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: TenantAdminColors.bodyText,
-            ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: TenantAdminSpacing.sm,
+            vertical: TenantAdminSpacing.sm,
           ),
-          subtitle: const Text(
-            'Allow fractional quantities when the configured product supports them.',
-            style: TextStyle(
-              fontSize: 12,
-              color: TenantAdminColors.mutedText,
-            ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Text(
+                      'Allow Decimal Quantity',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: TenantAdminColors.bodyText,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Allow fractional quantities when the configured product supports them.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: TenantAdminColors.mutedText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: state.allowDecimalQuantity,
+                activeThumbColor: TenantAdminColors.posHomeAccentOrange,
+                onChanged: (val) => controller.setAllowDecimalQuantity(val),
+              ),
+            ],
           ),
-          value: state.allowDecimalQuantity,
-          activeThumbColor: TenantAdminColors.posHomeAccentOrange,
-          onChanged: (val) => controller.setAllowDecimalQuantity(val),
         ),
       ),
     );
@@ -836,7 +858,7 @@ class _UnitsPackConversionFormState
     }
 
     return Container(
-      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
       decoration: BoxDecoration(
         color: TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),

@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../domain/entities/brand.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
+import '../../../presentation/widgets/tenant_admin_single_image_upload_card.dart';
 import '../providers/brand_providers.dart';
 
 String brandApiErrorMessage(Object error) {
@@ -303,24 +304,21 @@ class _BrandDetailsSidePanelState extends ConsumerState<BrandDetailsSidePanel> {
                     },
                   ),
                   const SizedBox(height: TenantAdminSpacing.md),
-                  Text('Brand Image',
-                      style: Theme.of(context).textTheme.titleSmall),
-                  const SizedBox(height: TenantAdminSpacing.sm),
-                  Row(
-                    children: [
-                      _buildLogoPreview(),
-                      const SizedBox(width: TenantAdminSpacing.md),
-                      if (widget.canSave)
-                        OutlinedButton(
-                          onPressed: _saving ? null : _pickLogo,
-                          child: Text(
-                            _pendingLogoBytes != null ||
-                                    (widget.existing?.hasLogo ?? false)
-                                ? 'Change Image'
-                                : 'Upload Image',
-                          ),
-                        ),
-                    ],
+                  TenantAdminSingleImageUploadCard(
+                    title: 'Brand Logo',
+                    description:
+                        'Use a clear brand logo that is easy to recognise.',
+                    fileName: _pendingLogoFileName ??
+                        ((_pendingLogoBytes != null ||
+                                (widget.existing?.hasLogo ?? false))
+                            ? 'Current brand logo'
+                            : null),
+                    preview: _pendingLogoBytes != null ||
+                            (widget.existing?.hasLogo ?? false)
+                        ? _buildLogoPreview()
+                        : null,
+                    enabled: widget.canSave && !_saving,
+                    onChooseImage: _pickLogo,
                   ),
                   const SizedBox(height: TenantAdminSpacing.lg),
                   DropdownButtonFormField<String>(

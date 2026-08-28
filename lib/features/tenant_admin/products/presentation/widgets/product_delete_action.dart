@@ -2,9 +2,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/core/network/dio_provider.dart';
+import 'package:nytroz_pos/core/network/media_url_resolver.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
-import '../../../presentation/widgets/tenant_admin_row_action.dart';
+
 import '../../domain/entities/product_delete_result.dart';
 import '../dashboard/product_dashboard_providers.dart';
 import '../providers/tenant_product_providers.dart';
@@ -19,6 +21,7 @@ class ProductDeleteAction extends ConsumerWidget {
     this.imageUrl,
     this.navigateToListOnSuccess = false,
     this.compact = true,
+    this.isLocalDraft = false,
   });
 
   final String productId;
@@ -27,37 +30,103 @@ class ProductDeleteAction extends ConsumerWidget {
   final String? imageUrl;
   final bool navigateToListOnSuccess;
   final bool compact;
+  final bool isLocalDraft;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final deletingIds = ref.watch(productDeletingIdsProvider);
     final isDeleting = deletingIds.contains(productId);
 
-    if (isDeleting) {
-      return const SizedBox(
-        width: 28,
-        height: 28,
-        child: Center(
-          child: SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
+    const color = TenantAdminColors.danger;
+    final bg = TenantAdminColors.danger.withValues(alpha: 0.08);
+    final border = TenantAdminColors.danger.withValues(alpha: 0.3);
 
-    return TenantAdminRowAction(
-      icon: Icons.delete_outline,
-      label: 'Delete',
-      destructive: true,
-      onPressed: () => _confirmAndDelete(context, ref),
+    return Tooltip(
+      message: isDeleting
+          ? (isLocalDraft ? 'Deleting draft...' : 'Deleting product...')
+          : (isLocalDraft ? 'Delete draft' : 'Delete product'),
+      child: InkWell(
+        onTap: isDeleting
+            ? null
+            : () => confirmAndDelete(
+                  context: context,
+                  ref: ref,
+                  productId: productId,
+                  productName: productName,
+                  sku: sku,
+                  imageUrl: imageUrl,
+                  isLocalDraft: isLocalDraft,
+                  navigateToListOnSuccess: navigateToListOnSuccess,
+                ),
+        borderRadius: BorderRadius.circular(compact ? 8 : 4),
+        child: compact
+            ? Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: border, width: 1),
+                ),
+                child: isDeleting
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(
+                        Icons.delete_outline,
+                        size: 16,
+                        color: color,
+                      ),
+              )
+            : Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    isDeleting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: color),
+                          )
+                        : const Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: color,
+                          ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Delete',
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+      ),
     );
   }
 
-  Future<void> _confirmAndDelete(BuildContext context, WidgetRef ref) async {
+  static Future<void> confirmAndDelete({
+    required BuildContext context,
+    required WidgetRef ref,
+    required String productId,
+    required String productName,
+    String? sku,
+    String? imageUrl,
+    bool isLocalDraft = false,
+    bool navigateToListOnSuccess = false,
+  }) async {
     final confirmed = await showDialog<bool>(
       context: context,
+      useRootNavigator: true,
+      barrierDismissible: false,
       builder: (context) {
         return _DeleteConfirmationDialog(
           productName: productName,
@@ -76,6 +145,29 @@ class ProductDeleteAction extends ConsumerWidget {
         );
 
     try {
+      if (isLocalDraft) {
+        await ref
+            .read(productWizardDraftLocalRepositoryProvider)
+            .deleteDraft(productId);
+        ref.invalidate(localProductWizardDraftsProvider);
+        ref.invalidate(productListProvider);
+
+        if (!context.mounted) {
+          return;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Draft "$productName" deleted from this device.'),
+          ),
+        );
+
+        if (navigateToListOnSuccess) {
+          context.go('/tenant-admin/products');
+        }
+        return;
+      }
+
       final result = await ref.read(deleteProductProvider).call(productId);
 
       ref
@@ -129,7 +221,7 @@ class ProductDeleteAction extends ConsumerWidget {
     }
   }
 
-  String _successMessage(ProductDeleteResult result, String productName) {
+  static String _successMessage(ProductDeleteResult result, String productName) {
     final name = productName.trim().isEmpty ? 'Product' : productName;
     if (result.wasArchived) {
       return '$name was archived because it has sales or stock history.';
@@ -139,7 +231,7 @@ class ProductDeleteAction extends ConsumerWidget {
   }
 }
 
-class _DeleteConfirmationDialog extends StatelessWidget {
+class _DeleteConfirmationDialog extends ConsumerWidget {
   const _DeleteConfirmationDialog({
     required this.productName,
     this.sku,
@@ -151,9 +243,17 @@ class _DeleteConfirmationDialog extends StatelessWidget {
   final String? imageUrl;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final titleName = productName.trim().isEmpty ? 'Product' : productName;
     final displaySku = (sku != null && sku!.trim().isNotEmpty) ? sku! : 'N/A';
+    final rawImage = imageUrl?.trim();
+    final resolvedImageUrl = (rawImage == null || rawImage.isEmpty)
+        ? null
+        : (MediaUrlResolver.resolve(
+              rawImage,
+              apiBaseUrl: ref.watch(appDioProvider).options.baseUrl,
+            ) ??
+            rawImage);
 
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -243,12 +343,12 @@ class _DeleteConfirmationDialog extends StatelessWidget {
                             BorderRadius.circular(TenantAdminRadius.sm),
                         border: Border.all(color: TenantAdminColors.border),
                       ),
-                      child: imageUrl != null && imageUrl!.trim().isNotEmpty
+                      child: resolvedImageUrl != null
                           ? ClipRRect(
                               borderRadius:
                                   BorderRadius.circular(TenantAdminRadius.sm),
                               child: Image.network(
-                                imageUrl!,
+                                resolvedImageUrl,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) =>
                                     _buildPlaceholderIcon(),

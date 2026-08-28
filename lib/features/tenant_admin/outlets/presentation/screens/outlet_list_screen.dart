@@ -7,6 +7,7 @@ import '../../../presentation/widgets/tenant_admin_states.dart';
 
 import '../providers/outlet_providers.dart';
 import '../providers/outlet_visibility_provider.dart';
+import '../providers/selected_outlet_provider.dart';
 import '../utils/outlet_api_errors.dart';
 import '../widgets/outlet_list_panel.dart';
 import '../widgets/outlet_metric_cards.dart';
@@ -167,7 +168,7 @@ class OutletListScreen extends ConsumerWidget {
 
 // ─── Desktop split layout ─────────────────────────────────────────────────
 
-class _DesktopLayout extends StatelessWidget {
+class _DesktopLayout extends ConsumerWidget {
   const _DesktopLayout({
     required this.listPanel,
     this.summarySection,
@@ -177,7 +178,10 @@ class _DesktopLayout extends StatelessWidget {
   final Widget? summarySection;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedOutletId = ref.watch(selectedOutletIdProvider);
+    final hasSelection = selectedOutletId != null;
+
     return TenantAdminPageScaffold(
       title: '',
       backgroundColor: TenantAdminColors.background,
@@ -215,24 +219,26 @@ class _DesktopLayout extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Left: list panel (65 %) ─────────────────
+                    // ── Left: list panel ─────────────────
                     Expanded(
-                      flex: 64,
+                      flex: hasSelection ? 64 : 100,
                       child: listPanel,
                     ),
 
-                    // ── Divider ─────────────────────────────────
-                    const VerticalDivider(
-                      width: 1,
-                      thickness: 1,
-                      color: TenantAdminColors.border,
-                    ),
+                    if (hasSelection) ...[
+                      // ── Divider ─────────────────────────────────
+                      const VerticalDivider(
+                        width: 1,
+                        thickness: 1,
+                        color: TenantAdminColors.border,
+                      ),
 
-                    // ── Right: detail panel (35 %) ──────────────
-                    const Expanded(
-                      flex: 36,
-                      child: OutletDetailPanel(),
-                    ),
+                      // ── Right: detail panel (35 %) ──────────────
+                      const Expanded(
+                        flex: 36,
+                        child: OutletDetailPanel(),
+                      ),
+                    ],
                   ],
                 ),
               ),

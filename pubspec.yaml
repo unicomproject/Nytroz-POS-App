@@ -39,6 +39,8 @@ flutter:
     - assets/images/pos_home_online_orders.png
     - assets/images/pos_home_end_shift.png
     - assets/images/product_dummy.png
+    - assets/images/outlet-placeholder.png
+    - assets/images/user-avatar-placeholder.png
     - assets/images/logo.png
     - assets/images/log-screen-terminal.png
     - assets/images/login_brand_panel.png

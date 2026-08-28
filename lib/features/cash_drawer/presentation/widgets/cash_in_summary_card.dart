@@ -61,10 +61,12 @@ class CashInSummaryCard extends ConsumerWidget {
               SizedBox(
                 width: tight ? TenantAdminSpacing.sm : TenantAdminSpacing.md,
               ),
-              Text(
-                'Cash In Summary',
-                style: TenantAdminTextStyles.sectionTitle(context).copyWith(
-                  fontSize: tight ? 14 : null,
+              Expanded(
+                child: Text(
+                  'Cash In Summary',
+                  style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+                    fontSize: tight ? 14 : null,
+                  ),
                 ),
               ),
             ],

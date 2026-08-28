@@ -95,6 +95,8 @@ class PermissionCatalogPermissionDto {
     required this.sortOrder,
     required this.isActive,
     required this.source,
+    this.assignable = true,
+    this.blockedReason,
     this.description,
     this.action,
   });
@@ -110,6 +112,8 @@ class PermissionCatalogPermissionDto {
       sortOrder: json['sortOrder'] as int? ?? 0,
       isActive: json['isActive'] as bool? ?? true,
       source: json['source'] as String? ?? 'tenant',
+      assignable: json['assignable'] as bool? ?? true,
+      blockedReason: json['blockedReason'] as String?,
     );
   }
 
@@ -122,6 +126,8 @@ class PermissionCatalogPermissionDto {
   final int sortOrder;
   final bool isActive;
   final String source;
+  final bool assignable;
+  final String? blockedReason;
 }
 
 List<T> _mapList<T>(

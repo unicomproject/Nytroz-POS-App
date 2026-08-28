@@ -7,6 +7,7 @@ import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_search_field.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
+import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../providers/tenant_user_providers.dart';
 import '../providers/tenant_user_visibility_provider.dart';
 import '../utils/user_list_filters.dart';
@@ -17,7 +18,7 @@ import '../widgets/user_list_panel.dart';
 class UserListScreen extends ConsumerWidget {
   const UserListScreen({super.key});
 
-  static const _detailPanelBreakpoint = 1200.0;
+  static const _detailPanelBreakpoint = 750.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,11 +32,9 @@ class UserListScreen extends ConsumerWidget {
         if (result == null) return;
         final selectedId = ref.read(selectedUserIdProvider);
         final hasSelection = result.items.any((user) => user.id == selectedId);
-        ref.read(selectedUserIdProvider.notifier).state = result.items.isEmpty
-            ? null
-            : hasSelection
-                ? selectedId
-                : result.items.first.id;
+        if (selectedId != null && !hasSelection) {
+          ref.read(selectedUserIdProvider.notifier).state = null;
+        }
       });
     });
 
@@ -132,7 +131,7 @@ class UserListScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Expanded(
-                                flex: showDetailPanel ? 65 : 100,
+                                flex: selectedUserId == null ? 100 : 64,
                                 child: SingleChildScrollView(
                                   child: UserListPanel(
                                     result: result,
@@ -147,13 +146,19 @@ class UserListScreen extends ConsumerWidget {
                                   ),
                                 ),
                               ),
-                              if (showDetailPanel)
+                              if (selectedUserId != null) ...[
+                                const VerticalDivider(
+                                  width: 1,
+                                  thickness: 1,
+                                  color: TenantAdminColors.border,
+                                ),
                                 Expanded(
-                                  flex: 35,
+                                  flex: 36,
                                   child: UserDetailsSidePanel(
                                     userId: selectedUserId,
                                   ),
                                 ),
+                              ],
                             ],
                           ),
                         )
@@ -188,19 +193,10 @@ class _UsersAddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton.icon(
+    return TenantAdminPrimaryButton(
+      label: 'Add New User',
+      icon: Icons.add,
       onPressed: onPressed,
-      icon: const Icon(Icons.add),
-      label: const Text('Add New User'),
-      style: FilledButton.styleFrom(
-        backgroundColor: TenantAdminColors.posHomeAccentOrange,
-        foregroundColor: Colors.white,
-        minimumSize: const Size(160, TenantAdminContentTokens.buttonHeight),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-        ),
-        textStyle: const TextStyle(fontWeight: FontWeight.w800),
-      ),
     );
   }
 }

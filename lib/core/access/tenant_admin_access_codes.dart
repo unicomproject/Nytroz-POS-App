@@ -135,6 +135,7 @@ class TenantAdminPermissionCodes {
   static const tenantTillManage = 'tenant.till.manage';
   static const tenantUserManage = 'tenant.user.manage';
   static const tenantRoleManage = 'tenant.role.manage';
+  static const tenantRolesCreate = 'tenant.roles.create';
   static const tenantOutletsView = 'tenant.outlets.view';
   static const tenantOutletsManage = 'tenant.outlets.manage';
   static const tenantOutletsDetailsView = 'tenant.outlets.details.view';
@@ -213,6 +214,18 @@ class TenantAdminPermissionCodes {
   static const catalogProductView = 'catalog.product.view';
   static const catalogProductCreate = 'catalog.product.create';
   static const catalogProductsCreate = 'catalog.products.create';
+  static const catalogProductsUpdate = 'catalog.products.update';
+  static const catalogProductsView = 'catalog.products.view';
+  static const catalogProductsPublish = 'catalog.products.publish';
+  static const catalogProductMediaManage = 'catalog.product_media.manage';
+  static const catalogProductChannelsManage = 'catalog.product_channels.manage';
+  static const catalogVariantsManage = 'catalog.variants.manage';
+  static const catalogComboComponentsManage = 'catalog.combo_components.manage';
+  static const catalogBarcodesManage = 'catalog.barcodes.manage';
+  static const catalogProductPricingManage = 'catalog.product_pricing.manage';
+  static const catalogProductCostView = 'catalog.product_cost.view';
+  static const pricingTaxClassesView = 'pricing.tax_classes.view';
+  static const taxClassesView = 'tax.classes.view';
   static const tenantBillingView = 'tenant.billing.view';
   static const tenantSettingsManage = 'tenant.settings.manage';
   static const tenantActivityView = 'tenant.activity.view';

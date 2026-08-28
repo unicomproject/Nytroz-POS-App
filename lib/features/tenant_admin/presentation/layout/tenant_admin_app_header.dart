@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/access/pos_access_codes.dart';
@@ -10,7 +10,7 @@ import '../theme/tenant_admin_theme.dart';
 /// Shared black application header for every Tenant Admin page.
 ///
 /// Shows OneVerz POS branding, till-session status, outlet/till context, and
-/// notifications. Values come from authenticated providers — never hardcoded.
+/// notifications. Values come from authenticated providers ΓÇö never hardcoded.
 class TenantAdminAppHeader extends ConsumerWidget {
   const TenantAdminAppHeader({
     super.key,

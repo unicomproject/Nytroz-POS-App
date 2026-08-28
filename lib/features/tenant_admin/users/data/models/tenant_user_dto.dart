@@ -4,6 +4,8 @@ class TenantUserListItemDto {
     required this.fullName,
     required this.email,
     this.phone,
+    this.staffCode,
+    this.profileImageUrl,
     this.roleId,
     required this.roleName,
     this.roleDescription,
@@ -12,7 +14,6 @@ class TenantUserListItemDto {
     this.outletCount,
     required this.status,
     this.lastActiveAt,
-    this.profileImageUrl,
   });
 
   factory TenantUserListItemDto.fromJson(Map<String, dynamic> json) {
@@ -21,6 +22,8 @@ class TenantUserListItemDto {
       fullName: json['fullName'] as String? ?? '',
       email: json['email'] as String? ?? '',
       phone: json['phoneNumber'] as String? ?? json['phone'] as String?,
+      staffCode: json['staffCode'] as String?,
+      profileImageUrl: json['profileImageUrl'] as String?,
       roleId: json['roleId']?.toString(),
       roleName: json['roleName'] as String? ?? '',
       roleDescription: json['roleDescription'] as String?,
@@ -31,7 +34,6 @@ class TenantUserListItemDto {
           : null,
       status: json['status'] as String? ?? '',
       lastActiveAt: _dateValue(json['lastActiveAt']),
-      profileImageUrl: json['profileImageUrl'] as String?,
     );
   }
 
@@ -39,6 +41,8 @@ class TenantUserListItemDto {
   final String fullName;
   final String email;
   final String? phone;
+  final String? staffCode;
+  final String? profileImageUrl;
   final String? roleId;
   final String roleName;
   final String? roleDescription;
@@ -47,7 +51,6 @@ class TenantUserListItemDto {
   final int? outletCount;
   final String status;
   final DateTime? lastActiveAt;
-  final String? profileImageUrl;
 }
 
 class TenantUserListResultDto {

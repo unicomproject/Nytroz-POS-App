@@ -342,6 +342,13 @@ const tenantAdminRouteDefinitions = [
     permissionCode: 'tenant.brands.view',
   ),
   TenantAdminRouteDefinition(
+    path: '/tenant-admin/tax',
+    menuKey: 'products',
+    title: 'Taxes',
+    featureCode: 'catalog.product',
+    permissionCode: 'tenant.products.view',
+  ),
+  TenantAdminRouteDefinition(
     path: '/tenant-admin/variant-templates',
     menuKey: 'products',
     title: 'Variant Templates',

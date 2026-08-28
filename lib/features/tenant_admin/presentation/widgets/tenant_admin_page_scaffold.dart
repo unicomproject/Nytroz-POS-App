@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../layout/tenant_admin_breadcrumb.dart';
@@ -11,6 +12,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
     this.subtitle,
     this.actions = const [],
     this.padding,
+    this.headerSpacing,
     this.backgroundColor = TenantAdminColors.background,
     this.scrollable = true,
     this.fillHeight = true,
@@ -24,6 +26,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
   final List<Widget> actions;
   final Widget child;
   final EdgeInsets? padding;
+  final double? headerSpacing;
   final Color backgroundColor;
   final bool scrollable;
   final bool fillHeight;
@@ -65,7 +68,13 @@ class TenantAdminPageScaffold extends StatelessWidget {
                     showBackButton: showBackButton,
                     onBackButtonPressed: onBackButtonPressed,
                   ),
-                const SizedBox(height: TenantAdminSpacing.xl),
+                SizedBox(
+                  height: headerSpacing ??
+                      (constraints.maxHeight < 720
+                          ? TenantAdminSpacing.sm
+                          : TenantAdminSpacing.xl) +
+                          20,
+                ),
               ],
               if (scrollable) child else Expanded(child: child),
             ],
@@ -85,7 +94,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
             padding: framePadding,
             child: Container(
               width: double.infinity,
-              constraints: fillHeight
+              constraints: fillHeight && constraints.maxHeight.isFinite && constraints.maxHeight < 10000
                   ? BoxConstraints(
                       minHeight: (constraints.maxHeight - verticalFrameInset)
                           .clamp(0.0, double.infinity),
@@ -102,8 +111,9 @@ class TenantAdminPageScaffold extends StatelessWidget {
               child: scrollable
                   ? SingleChildScrollView(
                       padding: basePadding,
+                      physics: const ClampingScrollPhysics(),
                       child: ConstrainedBox(
-                        constraints: fillHeight
+                        constraints: fillHeight && constraints.maxHeight.isFinite && constraints.maxHeight < 10000
                             ? BoxConstraints(
                                 minHeight: (constraints.maxHeight -
                                         verticalFrameInset -
@@ -242,7 +252,7 @@ class _HeaderText extends StatelessWidget {
               if (title.isNotEmpty)
                 Text(title, style: TenantAdminTextStyles.pageTitle(context)),
               if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
-                const SizedBox(height: TenantAdminSpacing.xs),
+                const SizedBox(height: 6),
                 Text(subtitle!, style: TenantAdminTextStyles.muted(context)),
               ],
             ],

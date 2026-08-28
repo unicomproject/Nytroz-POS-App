@@ -18,6 +18,9 @@ abstract class TenantProductRepository {
   Future<TenantProductCreateOptions> getCreateOptions();
   Future<TenantProductDetail> getProductById(String productId);
   Future<ProductCreateResult> createProduct(ProductFormData request);
+  Future<ProductCreateResult> createProductFromWizard(
+    Map<String, dynamic> wizardCreatePayload,
+  );
   Future<TenantProductDetail> updateProduct(
     String productId,
     ProductFormData request,

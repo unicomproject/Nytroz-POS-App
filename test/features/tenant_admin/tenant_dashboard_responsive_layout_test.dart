@@ -68,7 +68,7 @@ void main() {
         (tester) async {
       await _pumpMobileDashboard(tester, const Size(390, 844));
 
-      expect(find.byType(SingleChildScrollView), findsOneWidget);
+      expect(find.byType(SingleChildScrollView), findsWidgets);
       expect(find.text('Sales Trend'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

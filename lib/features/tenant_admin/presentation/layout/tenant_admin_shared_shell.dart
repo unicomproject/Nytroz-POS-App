@@ -106,29 +106,33 @@ class TenantAdminSharedShell extends ConsumerWidget {
             final isMobile = TenantAdminBreakpoints.isMobile(width);
             final isSmallTablet = TenantAdminBreakpoints.isSmallTablet(width);
             final isTablet = TenantAdminBreakpoints.isTablet(width);
-            final showInlineSidebar = !isMobile;
+            final isTabletPortrait =
+                MediaQuery.orientationOf(context) == Orientation.portrait &&
+                    width < TenantAdminBreakpoints.tabletLandscape;
+            final showInlineSidebar = !isMobile && !isTabletPortrait;
             final content = TenantAdminResponsiveContentArea(
               breadcrumbs: breadcrumbs,
               optionalSidePanel: optionalSidePanel,
+              padding: EdgeInsets.zero,
               child: gatedChild,
             );
 
             if (showInlineSidebar) {
               return Scaffold(
-                body: Column(
+                body: Row(
                   children: [
-                    const TenantAdminAppHeader(),
+                    TenantAdminSidebar(
+                      items: items,
+                      currentPath: currentRoute,
+                      selectedSidebarKey: selectedSidebarKey,
+                      tenantContext: contextState.asData?.value,
+                      accessChecker: access,
+                      compact: isSmallTablet || isTablet,
+                    ),
                     Expanded(
-                      child: Row(
+                      child: Column(
                         children: [
-                          TenantAdminSidebar(
-                            items: items,
-                            currentPath: currentRoute,
-                            selectedSidebarKey: selectedSidebarKey,
-                            tenantContext: contextState.asData?.value,
-                            accessChecker: access,
-                            compact: isSmallTablet || isTablet,
-                          ),
+                          const TenantAdminAppHeader(),
                           Expanded(child: content),
                         ],
                       ),

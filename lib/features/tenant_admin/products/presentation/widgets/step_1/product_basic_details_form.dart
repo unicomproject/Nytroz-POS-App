@@ -16,7 +16,6 @@ class ProductBasicDetailsForm extends StatelessWidget {
     required this.fieldErrors,
     required this.onCategoryChanged,
     required this.onBrandChanged,
-    this.imageUploadCard,
   });
 
   final TextEditingController nameController;
@@ -32,72 +31,63 @@ class ProductBasicDetailsForm extends StatelessWidget {
   final ValueChanged<String?> onCategoryChanged;
   final ValueChanged<String?> onBrandChanged;
 
-  final Widget? imageUploadCard;
-
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final isTwoColumn = width >= TenantAdminBreakpoints.tablet;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(TenantAdminSpacing.md),
+      decoration: BoxDecoration(
+        color: TenantAdminColors.surface,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        border: Border.all(color: TenantAdminColors.border),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : MediaQuery.sizeOf(context).width;
+          final isTwoColumn = width >= TenantAdminBreakpoints.smallTablet;
 
-    if (!isTwoColumn) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildNameField(),
-          const SizedBox(height: TenantAdminSpacing.md),
-          _buildCodeField(),
-          const SizedBox(height: TenantAdminSpacing.md),
-          _buildCategoryDropdown(),
-          const SizedBox(height: TenantAdminSpacing.md),
-          _buildBrandDropdown(),
-          if (imageUploadCard != null) ...[
-            const SizedBox(height: TenantAdminSpacing.md),
-            imageUploadCard!,
-          ],
-          const SizedBox(height: TenantAdminSpacing.md),
-          _buildShortDescriptionField(),
-          const SizedBox(height: TenantAdminSpacing.md),
-          _buildLongDescriptionField(),
-        ],
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Left Form Column
-        Expanded(
-          child: Column(
+          return Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildNameField(),
+              const _SectionHeader(
+                icon: Icons.inventory_2_outlined,
+                title: 'Product Information',
+              ),
               const SizedBox(height: TenantAdminSpacing.md),
-              _buildCategoryDropdown(),
+              if (isTwoColumn) ...[
+                _twoColRow(_buildNameField(), _buildCodeField()),
+                const SizedBox(height: TenantAdminSpacing.md),
+                _twoColRow(_buildCategoryDropdown(), _buildBrandDropdown()),
+              ] else ...[
+                _buildNameField(),
+                const SizedBox(height: TenantAdminSpacing.md),
+                _buildCodeField(),
+                const SizedBox(height: TenantAdminSpacing.md),
+                _buildCategoryDropdown(),
+                const SizedBox(height: TenantAdminSpacing.md),
+                _buildBrandDropdown(),
+              ],
               const SizedBox(height: TenantAdminSpacing.md),
               _buildShortDescriptionField(),
               const SizedBox(height: TenantAdminSpacing.md),
               _buildLongDescriptionField(),
             ],
-          ),
-        ),
+          );
+        },
+      ),
+    );
+  }
 
-        const SizedBox(width: TenantAdminSpacing.lg),
-
-        // Right Form Column
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildCodeField(),
-              const SizedBox(height: TenantAdminSpacing.md),
-              _buildBrandDropdown(),
-              if (imageUploadCard != null) ...[
-                const SizedBox(height: TenantAdminSpacing.md),
-                imageUploadCard!,
-              ],
-            ],
-          ),
-        ),
+  Widget _twoColRow(Widget left, Widget right) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: left),
+        const SizedBox(width: TenantAdminSpacing.md),
+        Expanded(child: right),
       ],
     );
   }
@@ -114,7 +104,7 @@ class ProductBasicDetailsForm extends StatelessWidget {
 
   Widget _buildCodeField() {
     return ProductFormTextField(
-      label: 'Short Name / Internal Code',
+      label: 'Short Name / Product Code',
       hint: 'e.g. MERCH-TSHIRT-01',
       icon: Icons.qr_code_2_outlined,
       controller: codeController,
@@ -174,8 +164,40 @@ class ProductBasicDetailsForm extends StatelessWidget {
           'Detailed product features, materials, and care instructions for online store...',
       icon: Icons.description_outlined,
       controller: longDescriptionController,
-      maxLines: 4,
+      maxLines: 3,
       errorText: fieldErrors['longDescription'],
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.icon,
+    required this.title,
+  });
+
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          color: TenantAdminColors.posHomeAccentOrange,
+          size: 20,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: TenantAdminColors.bodyText,
+          ),
+        ),
+      ],
     );
   }
 }

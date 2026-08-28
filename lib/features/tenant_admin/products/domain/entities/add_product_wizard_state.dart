@@ -1,4 +1,6 @@
 import 'staged_product_image.dart';
+import 'step4_variant_configuration_state.dart';
+import 'step5_barcode_sku_state.dart';
 import 'tenant_product_create_options.dart';
 
 class ProductUnitConversionItem {
@@ -26,10 +28,12 @@ class ProductUnitConversionItem {
 }
 
 class AddProductWizardState {
-  final int currentStep; // 1 to 8
+  final int currentStep; // 1 to 7
   final int? targetSetupStep;
   final int? lastCompletedSetupStep;
   final String? productId;
+  /// Frontend-local draft identity (not a backend product id).
+  final String? localDraftId;
   final String status;
   final int rowVersion;
 
@@ -92,11 +96,34 @@ class AddProductWizardState {
   // Options cache
   final TenantProductCreateOptions? createOptions;
 
+  // Step 4 Variant Configuration State
+  final Step4VariantConfigurationState step4State;
+
+  // Step 5 Barcode & SKU State
+  final Step5BarcodeSkuState step5State;
+
+  // Step 6 Pricing & Tax State
+  final num? costPrice;
+  final num? standardSellingPrice;
+  final num? discountPrice;
+  final String? taxId;
+  final String? taxName;
+  final num? taxRate;
+  final bool taxExclusive;
+
+  // Step 1 Initial Tracking Details (provisional)
+  final String initialBatchNumber;
+  final DateTime? initialExpiryDate;
+  final String initialSerialNumber;
+  final bool confirmClearIncompatibleInitialTracking;
+  final String? initialTrackingAssignedVariantId;
+
   const AddProductWizardState({
     this.currentStep = 1,
     this.targetSetupStep,
     this.lastCompletedSetupStep,
     this.productId,
+    this.localDraftId,
     this.status = 'DRAFT',
     this.rowVersion = 0,
     this.productName = '',
@@ -143,11 +170,29 @@ class AddProductWizardState {
     this.componentCount = 0,
     this.componentsConfigured = false,
     this.createOptions,
+    this.step4State = const Step4VariantConfigurationState(),
+    this.step5State = const Step5BarcodeSkuState(),
+    this.costPrice,
+    this.standardSellingPrice,
+    this.discountPrice,
+    this.taxId,
+    this.taxName,
+    this.taxRate,
+    this.taxExclusive = true,
+    this.initialBatchNumber = '',
+    this.initialExpiryDate,
+    this.initialSerialNumber = '',
+    this.confirmClearIncompatibleInitialTracking = false,
+    this.initialTrackingAssignedVariantId,
   });
 
   bool get isEditMode => productId != null && productId!.isNotEmpty;
   bool get hasImages =>
       productImages.isNotEmpty || stagedMediaAssets.isNotEmpty;
+  bool get hasInitialTrackingValues =>
+      initialBatchNumber.trim().isNotEmpty ||
+      initialExpiryDate != null ||
+      initialSerialNumber.trim().isNotEmpty;
 
   int get totalImageCount {
     if (isEditMode) {
@@ -162,6 +207,8 @@ class AddProductWizardState {
     bool clearTargetSetupStep = false,
     int? lastCompletedSetupStep,
     String? productId,
+    String? localDraftId,
+    bool clearLocalDraftId = false,
     String? status,
     int? rowVersion,
     String? productName,
@@ -219,6 +266,28 @@ class AddProductWizardState {
     int? componentCount,
     bool? componentsConfigured,
     TenantProductCreateOptions? createOptions,
+    Step4VariantConfigurationState? step4State,
+    Step5BarcodeSkuState? step5State,
+    num? costPrice,
+    bool clearCostPrice = false,
+    num? standardSellingPrice,
+    bool clearStandardSellingPrice = false,
+    num? discountPrice,
+    bool clearDiscountPrice = false,
+    String? taxId,
+    bool clearTaxId = false,
+    String? taxName,
+    bool clearTaxName = false,
+    num? taxRate,
+    bool clearTaxRate = false,
+    bool? taxExclusive,
+    String? initialBatchNumber,
+    DateTime? initialExpiryDate,
+    bool clearInitialExpiryDate = false,
+    String? initialSerialNumber,
+    bool? confirmClearIncompatibleInitialTracking,
+    String? initialTrackingAssignedVariantId,
+    bool clearInitialTrackingAssignedVariantId = false,
   }) {
     return AddProductWizardState(
       currentStep: currentStep ?? this.currentStep,
@@ -228,6 +297,8 @@ class AddProductWizardState {
       lastCompletedSetupStep:
           lastCompletedSetupStep ?? this.lastCompletedSetupStep,
       productId: productId ?? this.productId,
+      localDraftId:
+          clearLocalDraftId ? null : (localDraftId ?? this.localDraftId),
       status: status ?? this.status,
       rowVersion: rowVersion ?? this.rowVersion,
       productName: productName ?? this.productName,
@@ -286,6 +357,29 @@ class AddProductWizardState {
       componentCount: componentCount ?? this.componentCount,
       componentsConfigured: componentsConfigured ?? this.componentsConfigured,
       createOptions: createOptions ?? this.createOptions,
+      step4State: step4State ?? this.step4State,
+      step5State: step5State ?? this.step5State,
+      costPrice: clearCostPrice ? null : (costPrice ?? this.costPrice),
+      standardSellingPrice: clearStandardSellingPrice
+          ? null
+          : (standardSellingPrice ?? this.standardSellingPrice),
+      discountPrice: clearDiscountPrice ? null : (discountPrice ?? this.discountPrice),
+      taxId: clearTaxId ? null : (taxId ?? this.taxId),
+      taxName: clearTaxName ? null : (taxName ?? this.taxName),
+      taxRate: clearTaxRate ? null : (taxRate ?? this.taxRate),
+      taxExclusive: taxExclusive ?? this.taxExclusive,
+      initialBatchNumber: initialBatchNumber ?? this.initialBatchNumber,
+      initialExpiryDate: clearInitialExpiryDate
+          ? null
+          : (initialExpiryDate ?? this.initialExpiryDate),
+      initialSerialNumber: initialSerialNumber ?? this.initialSerialNumber,
+      confirmClearIncompatibleInitialTracking:
+          confirmClearIncompatibleInitialTracking ??
+              this.confirmClearIncompatibleInitialTracking,
+      initialTrackingAssignedVariantId: clearInitialTrackingAssignedVariantId
+          ? null
+          : (initialTrackingAssignedVariantId ??
+              this.initialTrackingAssignedVariantId),
     );
   }
 }

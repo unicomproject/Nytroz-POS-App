@@ -4,6 +4,8 @@ class TenantUser {
     required this.fullName,
     required this.email,
     this.phone,
+    this.staffCode,
+    this.profileImageUrl,
     this.roleId,
     required this.roleName,
     this.roleDescription,
@@ -12,13 +14,14 @@ class TenantUser {
     this.outletCount,
     required this.status,
     this.lastActiveAt,
-    this.profileImageUrl,
   });
 
   final String id;
   final String fullName;
   final String email;
   final String? phone;
+  final String? staffCode;
+  final String? profileImageUrl;
   final String? roleId;
   final String roleName;
   final String? roleDescription;
@@ -27,7 +30,6 @@ class TenantUser {
   final int? outletCount;
   final String status;
   final DateTime? lastActiveAt;
-  final String? profileImageUrl;
 }
 
 class TenantUserListResult {

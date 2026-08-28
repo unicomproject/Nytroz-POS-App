@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/network/dio_provider.dart';
+import 'package:nytroz_pos/core/network/media_url_resolver.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
@@ -189,21 +191,32 @@ class _PanelContent extends ConsumerWidget {
 
 // ─── Banner image ──────────────────────────────────────────────────────────
 
-class _BannerImage extends StatelessWidget {
+class _BannerImage extends ConsumerWidget {
   const _BannerImage({this.imageUrl});
   final String? imageUrl;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rawImageUrl = imageUrl?.trim();
+    final resolvedImageUrl = rawImageUrl == null || rawImageUrl.isEmpty
+        ? null
+        : MediaUrlResolver.resolve(
+              rawImageUrl,
+              apiBaseUrl: ref.watch(appDioProvider).options.baseUrl,
+            ) ??
+            rawImageUrl;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(TenantAdminRadius.md),
       child: SizedBox(
         height: 160,
         width: double.infinity,
-        child: imageUrl != null && imageUrl!.isNotEmpty
+        child: resolvedImageUrl != null
             ? Image.network(
-                imageUrl!,
+                resolvedImageUrl,
                 fit: BoxFit.cover,
+                loadingBuilder: (_, child, loadingProgress) =>
+                    loadingProgress == null ? child : _placeholder(),
                 errorBuilder: (_, __, ___) => _placeholder(),
               )
             : _placeholder(),
@@ -212,12 +225,16 @@ class _BannerImage extends StatelessWidget {
   }
 
   Widget _placeholder() {
-    return Container(
-      color: const Color(0xFFF1F5F9),
-      child: const Icon(
-        Icons.storefront_outlined,
-        size: 48,
-        color: TenantAdminColors.mutedText,
+    return Image.asset(
+      'assets/images/outlet-placeholder.png',
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Container(
+        color: const Color(0xFFF1F5F9),
+        child: const Icon(
+          Icons.storefront_outlined,
+          size: 48,
+          color: TenantAdminColors.mutedText,
+        ),
       ),
     );
   }

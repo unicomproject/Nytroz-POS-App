@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/core/access/tenant_admin_access_codes.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_context.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_access_checker.dart';
+import 'package:nytroz_pos/features/tenant_admin/inventory/data/mock/inventory_frontend_mock.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/adjustment/adjustment_flow.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/channel_allocation/channel_allocation_flow.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/current_stock/screens/current_stock_screen.dart';
@@ -12,6 +13,7 @@ import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/current_
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/dashboard/pages/inventory_dashboard_page.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/navigation/inventory_routes.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/opening_stock/screens/opening_stock_wizard_screen.dart';
+import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/opening_stock/providers/opening_stock_providers.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/receiving/receiving_flow.dart';
 import 'package:nytroz_pos/features/tenant_admin/inventory/presentation/serials/serial_registry_screen.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_access_provider.dart';
@@ -87,23 +89,30 @@ void main() {
 
   group('TA-UJ-063 Opening Stock', () {
     testWidgets('completes select → enter → review → success', (tester) async {
-      await _pump(tester, const OpeningStockWizardScreen(), width: 1400);
+      await _pump(
+        tester,
+        const OpeningStockWizardScreen(),
+        width: 1400,
+        height: 1200,
+      );
       await tester.tap(find.text('Home Jersey (Red, L)'));
+      await tester.pump();
+      await tester.ensureVisible(find.text('Main Outlet'));
       await tester.pump();
       await tester.tap(find.text('Main Outlet'));
       await tester.pump();
       await tester.tap(find.text('Continue to Enter Opening Details'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Enter Opening Stock Details'), findsOneWidget);
       await tester.tap(find.text('Continue to Review'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 300));
       expect(
         find.text(
             'Review does not change physical stock. Verify details before posting.'),
         findsOneWidget,
       );
       await tester.tap(find.text('Confirm & Submit Stock'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Opening Stock Added Successfully!'), findsOneWidget);
     });
   });
@@ -376,6 +385,16 @@ Future<void> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        inventoryFrontendMockEnabledProvider.overrideWith((ref) => true),
+        openingStockRepositoryProvider.overrideWith(
+          (ref) => const InventoryOpeningStockMockRepository(),
+        ),
+        openingStockProductsProvider.overrideWith(
+          (ref) async => InventoryFrontendMock.tenantProducts,
+        ),
+        openingStockOutletsProvider.overrideWith(
+          (ref) async => InventoryFrontendMock.tenantOutlets,
+        ),
         tenantAdminContextProvider.overrideWith(
           (ref) async => accessChecker.context,
         ),
@@ -398,6 +417,7 @@ Future<void> _pump(
   );
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
+  await tester.pump(Duration.zero);
 }
 
 Future<void> _pumpRouter(
