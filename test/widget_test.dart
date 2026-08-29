@@ -248,6 +248,26 @@ void main() {
       expect(find.text('Orders'), findsOneWidget);
       expect(find.text('Customers'), findsOneWidget);
       expect(find.text('Settings'), findsOneWidget);
+
+      final bottomNavigation = find.byType(PosCashierBottomNavigation);
+      for (final label in const [
+        'Home',
+        'New Sale',
+        'Orders',
+        'Customers',
+        'Settings',
+      ]) {
+        final labelFinder = find.descendant(
+          of: bottomNavigation,
+          matching: find.text(label),
+        );
+        expect(labelFinder, findsOneWidget);
+        expect(
+          find.ancestor(of: labelFinder, matching: find.byType(Row)),
+          findsWidgets,
+          reason: '$label must render beside its icon in a horizontal row.',
+        );
+      }
     });
 
     testWidgets('New Sale home destination opens the sale screen', (

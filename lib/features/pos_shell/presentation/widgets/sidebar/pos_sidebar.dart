@@ -8,6 +8,7 @@ import '../../../../device_activation/presentation/providers/device_activation_p
 import '../../../../till/presentation/providers/till_provider.dart';
 import '../../../../../core/access/pos_permission_access.dart';
 import '../../config/pos_shell_nav_destinations.dart';
+import '../../providers/pos_home_dashboard_provider.dart';
 import '../../providers/pos_shell_navigation_provider.dart';
 import '../../../domain/entities/pos_shell_nav_destination.dart';
 import '../pos_shell_nav_item.dart';
@@ -177,6 +178,11 @@ class _UserProfileBlock extends ConsumerWidget {
     final displayName = ref.watch(authSessionProvider)?.userDisplayName.trim();
     final resolvedName =
         displayName == null || displayName.isEmpty ? 'Cashier' : displayName;
+    final profileImageUrl = ref
+        .watch(posHomeDashboardProvider)
+        .asData
+        ?.value
+        .cashierProfileImageUrl;
 
     return Material(
       color: Colors.white.withValues(alpha: 0.06),
@@ -203,6 +209,19 @@ class _UserProfileBlock extends ConsumerWidget {
                       ),
                     ),
                   ),
+                  if (_hasProfileImage(profileImageUrl))
+                    Positioned.fill(
+                      child: ClipOval(
+                        child: Image.network(
+                          profileImageUrl!.trim(),
+                          key: const Key('pos-sidebar-profile-image'),
+                          fit: BoxFit.cover,
+                          webHtmlElementStrategy:
+                              WebHtmlElementStrategy.fallback,
+                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                        ),
+                      ),
+                    ),
                   const Positioned(
                     right: -1,
                     bottom: 0,
@@ -316,6 +335,9 @@ class _UserProfileBlock extends ConsumerWidget {
       );
   }
 }
+
+bool _hasProfileImage(String? value) =>
+    value != null && value.trim().isNotEmpty;
 
 bool _canEndShift(WidgetRef ref) {
   final session = ref.read(authSessionProvider);

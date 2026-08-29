@@ -304,6 +304,28 @@ class PosPermissionAccess {
     return granted.contains(PosPermissionCodes.viewCashDrawer);
   }
 
+  /// Online Order queue/detail access is deliberately strict: both canonical
+  /// permissions are required. Legacy broad module aliases must not unlock it.
+  static bool canViewOnlineOrders(Set<String> granted) {
+    return granted.contains(PosPermissionCodes.accessOnlineOrders) &&
+        granted.contains(PosPermissionCodes.viewOnlineOrders);
+  }
+
+  static bool canViewOnlineOrdersSession(AuthSession? session) {
+    if (session == null) return false;
+    return canViewOnlineOrders(session.permissionCodes.toSet());
+  }
+
+  static bool canViewOnlineOrderPicking(Set<String> granted) {
+    return canViewOnlineOrders(granted) &&
+        granted.contains(PosPermissionCodes.viewOnlineOrderPicking);
+  }
+
+  static bool canViewOnlineOrderPacking(Set<String> granted) {
+    return canViewOnlineOrderPicking(granted) &&
+        granted.contains(PosPermissionCodes.viewOnlineOrderPacking);
+  }
+
   static bool canCreateCashDrawerMovement(Set<String> granted) {
     return granted.contains(PosPermissionCodes.createCashDrawerMovement);
   }

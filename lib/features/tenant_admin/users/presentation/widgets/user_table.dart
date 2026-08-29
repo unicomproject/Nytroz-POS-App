@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
-import '../../../presentation/widgets/tenant_admin_row_action.dart';
 import '../../../presentation/widgets/tenant_admin_data_table.dart';
+import '../../../presentation/widgets/tenant_admin_row_action.dart';
 import '../../domain/entities/tenant_user.dart';
 import '../config/user_row_action_configs.dart';
 import '../utils/user_api_errors.dart';
@@ -41,7 +41,7 @@ class UserTable extends StatelessWidget {
       showCheckboxColumn: false,
       emptyTitle: 'No users found',
       emptyMessage: 'Add a new user or adjust your search.',
-      minWidth: 1000.0,
+      minWidth: 1000,
       columns: const [
         DataColumn(label: Text('USER')),
         DataColumn(label: Text('ROLE')),
@@ -53,7 +53,7 @@ class UserTable extends StatelessWidget {
       rows: users.map((user) {
         return DataRow(
           selected: user.id == selectedUserId,
-          onSelectChanged: (_) => canView ? onView(user) : null,
+          onSelectChanged: canView ? (_) => onView(user) : null,
           cells: [
             DataCell(_Identity(user: user)),
             DataCell(_Role(user: user)),
@@ -107,7 +107,7 @@ class _Identity extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           TenantUserAvatar(
@@ -121,23 +121,30 @@ class _Identity extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user.fullName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: TenantAdminColors.bodyText)),
-                Text(user.email,
+                Text(
+                  user.fullName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: TenantAdminColors.bodyText,
+                  ),
+                ),
+                Text(
+                  user.email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TenantAdminTextStyles.muted(context)
+                      .copyWith(fontSize: 12),
+                ),
+                if ((user.phone ?? '').trim().isNotEmpty)
+                  Text(
+                    user.phone!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TenantAdminTextStyles.muted(context)
-                        .copyWith(fontSize: 12)),
-                if ((user.phone ?? '').trim().isNotEmpty)
-                  Text(user.phone!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TenantAdminTextStyles.muted(context)
-                          .copyWith(fontSize: 12)),
+                        .copyWith(fontSize: 12),
+                  ),
               ],
             ),
           ),
@@ -149,7 +156,9 @@ class _Identity extends StatelessWidget {
 
 class _Role extends StatelessWidget {
   const _Role({required this.user});
+
   final TenantUser user;
+
   @override
   Widget build(BuildContext context) => _TwoLineCell(
         primary: _dash(user.roleName),
@@ -159,7 +168,9 @@ class _Role extends StatelessWidget {
 
 class _OutletAccess extends StatelessWidget {
   const _OutletAccess({required this.user});
+
   final TenantUser user;
+
   @override
   Widget build(BuildContext context) {
     final names = user.outlets
@@ -178,7 +189,9 @@ class _OutletAccess extends StatelessWidget {
 
 class _LastActive extends StatelessWidget {
   const _LastActive({required this.user});
+
   final TenantUser user;
+
   @override
   Widget build(BuildContext context) => _TwoLineCell(
         primary: formatUserLastActive(user.lastActiveAt),
@@ -190,35 +203,39 @@ class _LastActive extends StatelessWidget {
 
 class _TwoLineCell extends StatelessWidget {
   const _TwoLineCell({required this.primary, this.secondary});
+
   final String primary;
   final String? secondary;
+
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(primary,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    color: TenantAdminColors.bodyText,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13)),
+            Text(
+              primary,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: TenantAdminColors.bodyText,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
             if (secondary != null)
-              Text(secondary!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TenantAdminTextStyles.muted(context)
-                      .copyWith(fontSize: 12)),
+              Text(
+                secondary!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TenantAdminTextStyles.muted(context)
+                    .copyWith(fontSize: 12),
+              ),
           ],
         ),
       );
 }
-
-
-
 
 String? _nonEmpty(String? value) =>
     value?.trim().isNotEmpty == true ? value!.trim() : null;

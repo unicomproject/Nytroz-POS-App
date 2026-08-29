@@ -102,15 +102,14 @@ void main() {
       ),
     );
 
-    final avatar = tester.widget<CircleAvatar>(
-      find.byKey(const Key('cashier-profile-avatar')),
+    final image = tester.widget<Image>(
+      find.byKey(const Key('cashier-profile-image')),
     );
-    expect(avatar.foregroundImage, isA<NetworkImage>());
-    expect((avatar.foregroundImage! as NetworkImage).url, imageUrl);
+    expect((image.image as NetworkImage).url, imageUrl);
     expect(find.text('CO'), findsOneWidget);
   });
 
-  testWidgets('cashier image request failure removes image and shows initials',
+  testWidgets('cashier image request failure keeps image request retryable',
       (tester) async {
     const imageUrl = 'https://cdn.example.test/missing-cashier.jpg';
     await tester.pumpWidget(
@@ -127,23 +126,21 @@ void main() {
       ),
     );
 
-    var avatar = tester.widget<CircleAvatar>(
-      find.byKey(const Key('cashier-profile-avatar')),
+    final image = tester.widget<Image>(
+      find.byKey(const Key('cashier-profile-image')),
     );
-    avatar.onForegroundImageError!(
+    image.errorBuilder!(
+      tester.element(find.byKey(const Key('cashier-profile-image'))),
       NetworkImageLoadException(statusCode: 404, uri: Uri()),
       StackTrace.empty,
     );
     await tester.pump();
 
-    avatar = tester.widget<CircleAvatar>(
-      find.byKey(const Key('cashier-profile-avatar')),
-    );
-    expect(avatar.foregroundImage, isNull);
+    expect(find.byKey(const Key('cashier-profile-image')), findsOneWidget);
     expect(find.text('CO'), findsOneWidget);
   });
 
-  testWidgets('cashier image retries after intermittent load failure',
+  testWidgets('cashier image remains active after intermittent load failure',
       (tester) async {
     const imageUrl = 'https://cdn.example.test/cashier-retry.jpg';
     await tester.pumpWidget(
@@ -160,31 +157,25 @@ void main() {
       ),
     );
 
-    var avatar = tester.widget<CircleAvatar>(
-      find.byKey(const Key('cashier-profile-avatar')),
+    var image = tester.widget<Image>(
+      find.byKey(const Key('cashier-profile-image')),
     );
-    avatar.onForegroundImageError!(
+    image.errorBuilder!(
+      tester.element(find.byKey(const Key('cashier-profile-image'))),
       NetworkImageLoadException(statusCode: 503, uri: Uri.parse(imageUrl)),
       StackTrace.empty,
     );
     await tester.pump();
-    expect(
-      tester
-          .widget<CircleAvatar>(find.byKey(const Key('cashier-profile-avatar')))
-          .foregroundImage,
-      isNull,
-    );
 
-    await tester.pump(const Duration(seconds: 2));
-    avatar = tester.widget<CircleAvatar>(
-      find.byKey(const Key('cashier-profile-avatar')),
+    image = tester.widget<Image>(
+      find.byKey(const Key('cashier-profile-image')),
     );
-    expect(avatar.foregroundImage, isA<NetworkImage>());
-    expect((avatar.foregroundImage! as NetworkImage).url, imageUrl);
+    expect((image.image as NetworkImage).url, imageUrl);
     expect(find.text('CO'), findsOneWidget);
   });
 
-  testWidgets('cashier image retries when dashboard refreshes with same URL',
+  testWidgets(
+      'cashier image remains active when dashboard refreshes with same URL',
       (tester) async {
     const imageUrl = 'https://cdn.example.test/cashier-refresh.jpg';
     final firstDashboard = _dashboard(profileImageUrl: imageUrl);
@@ -203,20 +194,16 @@ void main() {
       ),
     );
 
-    final avatar = tester.widget<CircleAvatar>(
-      find.byKey(const Key('cashier-profile-avatar')),
+    final image = tester.widget<Image>(
+      find.byKey(const Key('cashier-profile-image')),
     );
-    avatar.onForegroundImageError!(
+    image.errorBuilder!(
+      tester.element(find.byKey(const Key('cashier-profile-image'))),
       NetworkImageLoadException(statusCode: 503, uri: Uri.parse(imageUrl)),
       StackTrace.empty,
     );
     await tester.pump();
-    expect(
-      tester
-          .widget<CircleAvatar>(find.byKey(const Key('cashier-profile-avatar')))
-          .foregroundImage,
-      isNull,
-    );
+    expect(find.byKey(const Key('cashier-profile-image')), findsOneWidget);
 
     // Update the same card element in place (POS home refresh).
     await tester.pumpWidget(
@@ -231,11 +218,10 @@ void main() {
       ),
     );
 
-    final refreshed = tester.widget<CircleAvatar>(
-      find.byKey(const Key('cashier-profile-avatar')),
+    final refreshed = tester.widget<Image>(
+      find.byKey(const Key('cashier-profile-image')),
     );
-    expect(refreshed.foregroundImage, isA<NetworkImage>());
-    expect((refreshed.foregroundImage! as NetworkImage).url, imageUrl);
+    expect((refreshed.image as NetworkImage).url, imageUrl);
   });
 
   testWidgets('unavailable summary shows Retry without zero cards', (

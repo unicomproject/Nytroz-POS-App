@@ -116,27 +116,36 @@ class _DestinationButton extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    selected ? destination.selectedIcon : destination.icon,
-                    size: 26,
-                    color: color,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 4,
+                vertical: 6,
+              ),
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        selected ? destination.selectedIcon : destination.icon,
+                        size: 24,
+                        color: color,
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        destination.label,
+                        maxLines: 1,
+                        softWrap: false,
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 14,
+                          fontWeight:
+                              selected ? FontWeight.w900 : FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    destination.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 14,
-                      fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
             if (selected)

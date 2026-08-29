@@ -23,42 +23,83 @@ class PosQuantityStepper extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox.square(
-          dimension: 24,
-          child: IconButton(
-            padding: EdgeInsets.zero,
-            onPressed: onDecrement,
-            icon: Icon(
-              Icons.remove,
-              size: 16,
-              color: onDecrement != null ? activeColor : disabledColor,
+        _QuantityButton(
+          icon: Icons.remove,
+          onPressed: onDecrement,
+          activeColor: activeColor,
+          disabledColor: disabledColor,
+          tooltip: 'Decrease quantity',
+        ),
+        const SizedBox(width: TenantAdminSpacing.xs),
+        SizedBox(
+          width: 18,
+          child: Text(
+            '$quantity',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: TenantAdminColors.bodyText,
             ),
           ),
         ),
         const SizedBox(width: TenantAdminSpacing.xs),
-        Text(
-          '$quantity',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w900,
-            color: TenantAdminColors.bodyText,
-          ),
-        ),
-        const SizedBox(width: TenantAdminSpacing.xs),
-        SizedBox.square(
-          dimension: 24,
-          child: IconButton(
-            padding: EdgeInsets.zero,
-            onPressed: onIncrement,
-            icon: Icon(
-              Icons.add,
-              size: 16,
-              color: onIncrement != null ? activeColor : disabledColor,
-            ),
-          ),
+        _QuantityButton(
+          icon: Icons.add,
+          onPressed: onIncrement,
+          activeColor: activeColor,
+          disabledColor: disabledColor,
+          tooltip: 'Increase quantity',
         ),
       ],
+    );
+  }
+}
+
+class _QuantityButton extends StatelessWidget {
+  const _QuantityButton({
+    required this.icon,
+    required this.activeColor,
+    required this.disabledColor,
+    required this.tooltip,
+    this.onPressed,
+  });
+
+  final IconData icon;
+  final Color activeColor;
+  final Color disabledColor;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = onPressed != null;
+    final color = isEnabled ? activeColor : disabledColor;
+
+    return SizedBox.square(
+      dimension: 26,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: isEnabled
+              ? activeColor.withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: color.withValues(alpha: isEnabled ? 0.35 : 0.2),
+          ),
+        ),
+        child: IconButton(
+          tooltip: tooltip,
+          padding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
+          onPressed: onPressed,
+          icon: Icon(
+            icon,
+            size: 16,
+            color: color,
+          ),
+        ),
+      ),
     );
   }
 }

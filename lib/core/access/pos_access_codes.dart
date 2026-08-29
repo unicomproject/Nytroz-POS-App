@@ -77,6 +77,21 @@ class PosPermissionCodes {
   /// Legacy alias — prefer [createExchange].
   static const processExchange = 'pos.exchange.process';
   static const manageOnlineOrders = 'pos.online_orders.manage';
+  static const accessOnlineOrders = 'commerce.online_order.orders.access';
+  static const startOnlineOrderFulfillment =
+      'commerce.online_order.fulfilment.start';
+  static const viewOnlineOrderPicking = 'commerce.online_order.picking.view';
+  static const pickOnlineOrderItem = 'commerce.online_order.picking.pick';
+  static const scanOnlineOrderItem = 'commerce.online_order.picking.scan';
+  static const manuallyEnterOnlineOrderItem =
+      'commerce.online_order.picking.manual_entry';
+  static const reportOnlineOrderPickingIssue =
+      'commerce.online_order.picking.report_issue';
+  static const viewOnlineOrderPacking = 'commerce.online_order.packing.view';
+  static const packOnlineOrder = 'commerce.online_order.packing.pack';
+  static const markOnlineOrderReady =
+      'commerce.online_order.collection.mark_ready';
+  static const viewOnlineOrders = 'commerce.online_order.orders.view';
   static const openTill = 'pos.till.open';
   static const viewTill = 'pos.till.view';
   static const viewHome = 'pos.home.view';
