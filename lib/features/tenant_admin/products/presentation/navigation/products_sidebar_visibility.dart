@@ -51,7 +51,7 @@ class ProductsSidebarVisibility {
       ),
       ProductsSidebarChildVisibility(
         key: 'categories',
-        label: 'Categories & Subcategories',
+        label: 'Category',
         route: ProductsSidebarRoutes.categories,
         permissionCode: TenantAdminPermissionCodes.tenantCategoriesView,
         isVisible: access.canViewCategoriesNav(),

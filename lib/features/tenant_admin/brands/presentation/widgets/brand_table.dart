@@ -34,6 +34,11 @@ class BrandTable extends ConsumerWidget {
           existing: brands[index],
           canSave: canEdit,
         ),
+        onView: () => openBrandDetailsPanel(
+          context: context,
+          existing: brands[index],
+          canSave: false,
+        ),
         onDelete: () => _deleteBrand(context, ref, brands[index]),
       ),
     );
@@ -45,6 +50,7 @@ class _BrandCard extends StatelessWidget {
     required this.brand,
     required this.canEdit,
     required this.canDelete,
+    required this.onView,
     required this.onEdit,
     required this.onDelete,
   });
@@ -52,6 +58,7 @@ class _BrandCard extends StatelessWidget {
   final Brand brand;
   final bool canEdit;
   final bool canDelete;
+  final VoidCallback onView;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -120,44 +127,62 @@ class _BrandCard extends StatelessWidget {
           ],
         );
 
-        final actions = _BrandActions(
-          canEdit: canEdit,
-          canDelete: canDelete,
-          onEdit: onEdit,
-          onDelete: onDelete,
-          horizontal: compact,
+        final actions = TenantAdminOverflowMenu(
+          actions: [
+            if (canEdit)
+              TenantAdminOverflowAction(
+                id: 'edit',
+                icon: Icons.edit_outlined,
+                label: 'Edit',
+                onSelected: onEdit,
+              ),
+            if (canDelete)
+              TenantAdminOverflowAction(
+                id: 'delete',
+                icon: Icons.delete_outline,
+                label: 'Delete',
+                destructive: true,
+                onSelected: onDelete,
+              ),
+          ],
         );
 
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: TenantAdminColors.surface,
+        return Material(
+          color: TenantAdminColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            onTap: onView,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: TenantAdminColors.border),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: TenantAdminColors.border),
+              ),
+              child: compact
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        information,
+                        if (canEdit || canDelete) ...[
+                          const SizedBox(height: 8),
+                          Align(
+                              alignment: Alignment.centerRight, child: actions),
+                        ],
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(child: information),
+                        if (canEdit || canDelete) ...[
+                          const SizedBox(width: 16),
+                          actions,
+                        ],
+                      ],
+                    ),
+            ),
           ),
-          child: compact
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    information,
-                    if (canEdit || canDelete) ...[
-                      const SizedBox(height: 8),
-                      const Divider(height: 1, color: TenantAdminColors.border),
-                      const SizedBox(height: 4),
-                      Align(alignment: Alignment.centerRight, child: actions),
-                    ],
-                  ],
-                )
-              : Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(child: information),
-                    if (canEdit || canDelete) ...[
-                      const SizedBox(width: 16),
-                      actions,
-                    ],
-                  ],
-                ),
         );
       },
     );
@@ -217,51 +242,6 @@ class _BrandMetric extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-class _BrandActions extends StatelessWidget {
-  const _BrandActions({
-    required this.canEdit,
-    required this.canDelete,
-    required this.onEdit,
-    required this.onDelete,
-    required this.horizontal,
-  });
-
-  final bool canEdit;
-  final bool canDelete;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-  final bool horizontal;
-
-  @override
-  Widget build(BuildContext context) {
-    final children = <Widget>[
-      if (canEdit)
-        TenantAdminRowAction(
-          icon: Icons.edit_outlined,
-          label: 'Edit',
-          onPressed: onEdit,
-        ),
-      if (canEdit && canDelete)
-        SizedBox(width: horizontal ? 6 : 0, height: horizontal ? 0 : 4),
-      if (canDelete)
-        TenantAdminRowAction(
-          icon: Icons.delete_outline,
-          label: 'Delete',
-          destructive: true,
-          onPressed: onDelete,
-        ),
-    ];
-
-    return horizontal
-        ? Row(mainAxisSize: MainAxisSize.min, children: children)
-        : Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: children,
-          );
   }
 }
 

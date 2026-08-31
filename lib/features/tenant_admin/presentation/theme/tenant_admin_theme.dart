@@ -94,6 +94,59 @@ class TenantAdminRadius {
   static const xl = 24.0;
 }
 
+/// White overlay surfaces for 3-dot menus, filter menus, and dropdown lists.
+///
+/// Material 3 tints `surfaceContainer` with the orange seed, which reads as
+/// peach. Overlay cards stay [TenantAdminColors.surface] instead.
+class TenantAdminOverlaySurfaces {
+  const TenantAdminOverlaySurfaces._();
+
+  static const color = TenantAdminColors.surface;
+  static const surfaceTint = Colors.transparent;
+  static const shadow = Color(0x330F172A);
+
+  static ColorScheme withoutPeachTint(ColorScheme scheme) {
+    return scheme.copyWith(
+      surface: color,
+      surfaceContainerLowest: color,
+      surfaceContainerLow: color,
+      surfaceContainer: color,
+      surfaceContainerHigh: color,
+      surfaceContainerHighest: color,
+      surfaceTint: surfaceTint,
+    );
+  }
+
+  static PopupMenuThemeData get popupMenuTheme => PopupMenuThemeData(
+        color: color,
+        surfaceTintColor: surfaceTint,
+        elevation: 8,
+        shadowColor: shadow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          side: const BorderSide(color: TenantAdminColors.border),
+        ),
+      );
+
+  static MenuStyle get menuStyle => MenuStyle(
+        backgroundColor: const WidgetStatePropertyAll(color),
+        surfaceTintColor: const WidgetStatePropertyAll(surfaceTint),
+        shadowColor: const WidgetStatePropertyAll(shadow),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            side: const BorderSide(color: TenantAdminColors.border),
+          ),
+        ),
+      );
+
+  static DropdownMenuThemeData get dropdownMenuTheme => DropdownMenuThemeData(
+        menuStyle: menuStyle,
+      );
+
+  static MenuThemeData get menuTheme => MenuThemeData(style: menuStyle);
+}
+
 class TenantAdminShadows {
   const TenantAdminShadows._();
 

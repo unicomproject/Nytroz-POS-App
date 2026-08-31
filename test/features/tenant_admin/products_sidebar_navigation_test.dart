@@ -71,7 +71,7 @@ void main() {
       );
 
       expect(visibility.visibleChildren.map((item) => item.label), [
-        'Categories & Subcategories',
+        'Category',
       ]);
     });
 
@@ -98,7 +98,7 @@ void main() {
         visibility.visibleChildren.map((item) => item.label).toList(),
         [
           'Add Product',
-          'Categories & Subcategories',
+          'Category',
           'Brand',
           'Tax',
         ],

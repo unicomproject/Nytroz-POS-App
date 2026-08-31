@@ -26,11 +26,17 @@ class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _themeData = ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: TenantAdminColors.primary,
+      colorScheme: TenantAdminOverlaySurfaces.withoutPeachTint(
+        ColorScheme.fromSeed(
+          seedColor: TenantAdminColors.primary,
+        ),
       ),
+      canvasColor: TenantAdminOverlaySurfaces.color,
       scaffoldBackgroundColor: TenantAdminColors.background,
       useMaterial3: true,
+      popupMenuTheme: TenantAdminOverlaySurfaces.popupMenuTheme,
+      dropdownMenuTheme: TenantAdminOverlaySurfaces.dropdownMenuTheme,
+      menuTheme: TenantAdminOverlaySurfaces.menuTheme,
       textTheme: GoogleFonts.interTextTheme().copyWith(
         displayLarge: GoogleFonts.poppins(),
         displayMedium: GoogleFonts.poppins(),

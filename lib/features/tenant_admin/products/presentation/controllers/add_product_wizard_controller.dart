@@ -2121,6 +2121,13 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     );
   }
 
+  void updateTaxExclusive(bool isExclusive) {
+    state = state.copyWith(
+      taxExclusive: isExclusive,
+      isDirty: true,
+    );
+  }
+
   // --- STEP 5 LOGIC ---
   void updateSimpleBaseSku(String sku) {
     final updatedErrors = Map<String, String>.from(state.fieldErrors)

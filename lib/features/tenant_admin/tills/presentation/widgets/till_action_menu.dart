@@ -24,12 +24,15 @@ class TillActionMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (actions.isEmpty) {
+    final menuActions = actions
+        .where((action) => action.actionId != TillRowActionId.viewDetails)
+        .toList(growable: false);
+    if (menuActions.isEmpty) {
       return const SizedBox.shrink();
     }
 
     return PopupMenuButton<TillRowActionConfig>(
-      tooltip: 'More actions',
+      tooltip: 'Actions',
       icon: const Icon(Icons.more_vert, color: TenantAdminColors.mutedText),
       position: PopupMenuPosition.under,
       constraints: const BoxConstraints(minWidth: 172),
@@ -38,7 +41,7 @@ class TillActionMenu extends ConsumerWidget {
         borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
       ),
       itemBuilder: (context) {
-        return actions
+        return menuActions
             .map(
               (action) => PopupMenuItem<TillRowActionConfig>(
                 value: action,

@@ -40,6 +40,10 @@ import 'products/presentation/screens/product_detail_screen.dart';
 import 'products/presentation/screens/product_list_screen.dart';
 import 'products/presentation/screens/popular_products_curation_screen.dart';
 import 'brands/presentation/screens/brand_list_screen.dart';
+import 'categories/presentation/screens/add_category_screen.dart';
+import 'categories/presentation/screens/category_details_screen.dart';
+import 'categories/presentation/screens/category_list_screen.dart';
+import 'categories/presentation/screens/edit_category_screen.dart';
 import 'pricing_tax/tax_management/presentation/tax_management_page.dart';
 import 'inventory/presentation/navigation/inventory_routes.dart';
 import 'inventory/presentation/dashboard/pages/inventory_dashboard_page.dart';
@@ -129,6 +133,10 @@ List<RouteBase> tenantAdminRoutes(Ref ref) {
         GoRoute(
           path: '/tenant-admin/products/import',
           redirect: (context, state) => '/tenant-admin/products',
+        ),
+        GoRoute(
+          path: ProductsSidebarRoutes.categoriesTree,
+          redirect: (context, state) => ProductsSidebarRoutes.categories,
         ),
         GoRoute(
           path: '/tenant-admin/products/local-draft/:localDraftId',
@@ -405,9 +413,22 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
   }
 
   if (definition.path == ProductsSidebarRoutes.categories) {
-    return ProductsComingSoonScreen(
-      title: definition.title,
-      permissionCode: definition.permissionCode,
+    return const CategoryListScreen();
+  }
+
+  if (definition.path == ProductsSidebarRoutes.categoriesAdd) {
+    return const AddCategoryScreen();
+  }
+
+  if (definition.path == '/tenant-admin/categories/:id') {
+    return CategoryDetailsScreen(
+      categoryId: state.pathParameters['id'] ?? '',
+    );
+  }
+
+  if (definition.path == '/tenant-admin/categories/:id/edit') {
+    return EditCategoryScreen(
+      categoryId: state.pathParameters['id'] ?? '',
     );
   }
 
@@ -669,6 +690,7 @@ bool _canAccessRoute(
   if (definition.path == ProductsSidebarRoutes.list ||
       definition.path == ProductsSidebarRoutes.add ||
       definition.path == ProductsSidebarRoutes.categories ||
+      definition.path == ProductsSidebarRoutes.categoriesAdd ||
       definition.path == ProductsSidebarRoutes.brands ||
       definition.path == ProductsSidebarRoutes.tax ||
       definition.path == ProductsSidebarRoutes.variantTemplates ||
@@ -692,6 +714,16 @@ bool _canAccessRoute(
 
   if (definition.path == '/tenant-admin/products/:id') {
     return accessChecker.canAccessProductModule();
+  }
+
+  if (definition.path == '/tenant-admin/categories/:id/edit') {
+    return accessChecker.hasProductCatalogEntitlement() &&
+        accessChecker.canUpdateCategory();
+  }
+
+  if (definition.path == '/tenant-admin/categories/:id') {
+    return accessChecker.hasProductCatalogEntitlement() &&
+        accessChecker.canFetchCategoryList();
   }
 
   if (InventoryRoutes.matches(definition.path, InventoryRoutes.dashboard)) {
