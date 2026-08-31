@@ -6,8 +6,8 @@ import '../../../presentation/widgets/tenant_admin_management_card.dart';
 import '../../domain/entities/tenant_user.dart';
 import '../config/user_row_action_configs.dart';
 import '../utils/user_api_errors.dart';
-import 'user_status_badge.dart';
 import 'tenant_user_avatar.dart';
+import 'user_status_badge.dart';
 
 class UserMobileList extends StatelessWidget {
   const UserMobileList(
@@ -26,9 +26,10 @@ class UserMobileList extends StatelessWidget {
   final String? selectedUserId;
 
   @override
-  Widget build(BuildContext context) => Column(children: [
-        for (final user in users) ...[
-          _UserMobileListItem(
+  Widget build(BuildContext context) => Column(
+        children: [
+          for (final user in users) ...[
+            _UserMobileListItem(
               user: user,
               visibility: visibility,
               onView: onView,
@@ -37,7 +38,7 @@ class UserMobileList extends StatelessWidget {
               selected: user.id == selectedUserId),
           const SizedBox(height: TenantAdminSpacing.md),
         ],
-      ]);
+      );
 }
 
 class _UserMobileListItem extends StatelessWidget {
@@ -74,31 +75,42 @@ class _UserMobileListItem extends StatelessWidget {
       ),
       metrics: [
         TenantAdminManagementCardMetric(
-            label: 'Role',
-            icon: Icons.admin_panel_settings_outlined,
-            value: Text(_emptyDash(user.roleName))),
+          label: 'Role',
+          icon: Icons.admin_panel_settings_outlined,
+          value: Text(_emptyDash(user.roleName)),
+        ),
         TenantAdminManagementCardMetric(
-            label: 'Outlet',
-            icon: Icons.storefront_outlined,
-            value: Text(_emptyDash(user.outletName))),
+          label: 'Outlet',
+          icon: Icons.storefront_outlined,
+          value: Text(_emptyDash(user.outletName)),
+        ),
         TenantAdminManagementCardMetric(
-            label: 'Last active',
-            icon: Icons.schedule_outlined,
-            value: Text(formatUserLastActive(user.lastActiveAt))),
+          label: 'Last active',
+          icon: Icons.schedule_outlined,
+          value: Text(formatUserLastActive(user.lastActiveAt)),
+        ),
       ],
       status: UserStatusBadge(status: user.status),
       actions: [
+        if (canView)
+          TenantAdminManagementCardAction(
+            label: 'View',
+            icon: Icons.visibility_outlined,
+            onPressed: () => onView(user),
+          ),
         if (canEdit)
           TenantAdminManagementCardAction(
-              label: 'Edit',
-              icon: Icons.edit_outlined,
-              onPressed: () => onEdit(user)),
+            label: 'Edit',
+            icon: Icons.edit_outlined,
+            onPressed: () => onEdit(user),
+          ),
         if (canDelete)
           TenantAdminManagementCardAction(
-              label: 'Disable',
-              icon: Icons.block_outlined,
-              color: TenantAdminColors.danger,
-              onPressed: () => onDelete(user)),
+            label: 'Disable',
+            icon: Icons.block_outlined,
+            color: TenantAdminColors.danger,
+            onPressed: () => onDelete(user),
+          ),
       ],
       onTap: canView ? () => onView(user) : null,
       selected: selected,

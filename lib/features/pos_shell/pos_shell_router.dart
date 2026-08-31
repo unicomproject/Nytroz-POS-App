@@ -37,6 +37,9 @@ import '../sale/presentation/screens/pos_payment_placeholder_screen.dart';
 import '../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import 'presentation/screens/pos_home_screen.dart';
 import 'presentation/screens/pos_placeholder_screen.dart';
+import '../fulfilment_pickup/presentation/screens/pos_online_orders_screen.dart';
+import '../fulfilment_pickup/presentation/screens/pos_online_order_detail_route_screen.dart';
+import '../fulfilment_pickup/presentation/screens/pos_online_order_picking_screen.dart';
 import 'presentation/widgets/common/pos_shell_scaffold.dart';
 
 List<RouteBase> posShellRoutes(Ref ref) {
@@ -53,6 +56,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
               state.uri.path != '/pos/new-sale' &&
               state.uri.path != '/pos/customers' &&
               state.uri.path != '/pos/parked-sales' &&
+              !state.uri.path.startsWith('/pos/online-orders') &&
               !state.uri.path.startsWith('/pos/cash-drawer') &&
               state.uri.path != '/pos/new-sale/payment' &&
               !state.uri.path.startsWith('/pos/new-sale/payment/') &&
@@ -65,6 +69,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
           isDashboard: state.uri.path == '/pos/home' ||
               state.uri.path == '/pos/customers' ||
               state.uri.path == '/pos/parked-sales' ||
+              state.uri.path.startsWith('/pos/online-orders') ||
               state.uri.path.startsWith('/pos/cash-drawer') ||
               state.uri.path == '/pos/new-sale/payment/cash' ||
               state.uri.path == '/pos/new-sale/payment/cash/success',
@@ -296,9 +301,29 @@ List<RouteBase> posShellRoutes(Ref ref) {
         GoRoute(
           path: '/pos/online-orders',
           builder: (context, state) =>
-              _isAuthenticated(ref.read(authSessionProvider))
-                  ? const PosPlaceholderScreen(title: 'Online Orders')
+              _canViewOnlineOrders(ref.read(authSessionProvider))
+                  ? const PosOnlineOrdersScreen()
                   : const TenantAdminForbiddenScreen(),
+          routes: [
+            GoRoute(
+              path: ':orderId',
+              builder: (context, state) =>
+                  _canViewOnlineOrders(ref.read(authSessionProvider))
+                      ? PosOnlineOrderDetailRouteScreen(
+                          orderId: state.pathParameters['orderId']!,
+                        )
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: ':orderId/picking',
+              builder: (context, state) =>
+                  _canViewOnlineOrderPicking(ref.read(authSessionProvider))
+                      ? PosOnlineOrderPickingScreen(
+                          orderId: state.pathParameters['orderId']!,
+                        )
+                      : const TenantAdminForbiddenScreen(),
+            ),
+          ],
         ),
         GoRoute(
           path: '/pos/orders',
@@ -398,6 +423,10 @@ bool shouldShowPosCashierBottomNavigation(
     return _canViewCashDrawer(session);
   }
 
+  if (path.startsWith('/pos/online-orders/')) {
+    return _canViewOnlineOrderPicking(session);
+  }
+
   return switch (path) {
     '/pos/home' => _canViewPosHome(session),
     '/pos/new-sale' => _canStartNewSale(session),
@@ -405,6 +434,7 @@ bool shouldShowPosCashierBottomNavigation(
     '/pos/new-sale/payment/cash' => _canAcceptCashPayment(session),
     '/pos/new-sale/payment/cash/success' => _canViewPaymentSuccess(session),
     '/pos/customers' => _canViewCustomers(session),
+    '/pos/online-orders' => _canViewOnlineOrders(session),
     '/pos/orders' =>
       session?.hasPermission(PosPermissionCodes.viewReceipts) == true,
     _ => false,
@@ -412,6 +442,12 @@ bool shouldShowPosCashierBottomNavigation(
 }
 
 _PosShellHeader _headerForPath(String path) {
+  if (path.startsWith('/pos/online-orders/') && path.endsWith('/picking')) {
+    return const _PosShellHeader(
+      title: 'Pick Order',
+      subtitle: 'Review the assigned items and inventory locations.',
+    );
+  }
   final title = switch (path) {
     '/pos/home' => 'Home',
     '/pos/new-sale' => 'New Sale',
@@ -426,6 +462,7 @@ _PosShellHeader _headerForPath(String path) {
     '/pos/orders' => 'Orders',
     '/pos/parked-sales' => 'Parked Sales',
     '/pos/customers' => 'Customers',
+    '/pos/online-orders' => 'Online Orders',
     '/pos/returns-refunds' => 'Returns & Exchanges',
     '/pos/returns-refunds/summary' => 'Original Sale Summary',
     '/pos/returns-refunds/eligibility' => 'Select Items',
@@ -448,6 +485,8 @@ _PosShellHeader _headerForPath(String path) {
 
   final subtitle = switch (path) {
     '/pos/parked-sales' => 'Recall or cancel sales that were parked for later.',
+    '/pos/online-orders' =>
+      'Manage click & collect orders from confirmation to collection.',
     '/pos/cash-drawer' =>
       'Monitor the till cash position and perform drawer actions.',
     '/pos/cash-drawer/cash-in' =>
@@ -563,6 +602,18 @@ bool _canAccessCheckoutCustomer(AuthSession? session) {
 
 bool _canViewReturnsRefunds(AuthSession? session) {
   return ReturnsRouteGuard.canAccessPath(session, '/pos/returns-refunds');
+}
+
+bool _canViewOnlineOrders(AuthSession? session) {
+  return _isAuthenticated(session) &&
+      PosPermissionAccess.canViewOnlineOrdersSession(session);
+}
+
+bool _canViewOnlineOrderPicking(AuthSession? session) {
+  if (!_isAuthenticated(session)) return false;
+  return PosPermissionAccess.canViewOnlineOrderPicking(
+    session!.permissionCodes.toSet(),
+  );
 }
 
 bool _canAccessReturnsPath(AuthSession? session, String path) {
