@@ -56,7 +56,8 @@ class RoleListPanel extends ConsumerWidget {
                   canEdit: visibility.showEditRole,
                   isLoading: mutationState.isLoading,
                   onView: () => onSelect(role),
-                  onEdit: () => context.go('/tenant-admin/roles/${role.id}/edit'),
+                  onEdit: () =>
+                      context.go('/tenant-admin/roles/${role.id}/edit'),
                   onToggleStatus: () =>
                       _confirmStatusChange(context, ref, role),
                 ),
@@ -79,189 +80,199 @@ class RoleListPanel extends ConsumerWidget {
         }
 
         return TenantAdminDataTable(
-      columns: const [
-        DataColumn(label: Text('ROLE NAME')),
-        DataColumn(
-          label: SizedBox(
-            width: 95,
-            child: Text('PERMISSIONS', textAlign: TextAlign.center),
-          ),
-        ),
-        DataColumn(
-          label: SizedBox(
-            width: 60,
-            child: Text('USERS', textAlign: TextAlign.center),
-          ),
-        ),
-        DataColumn(
-          label: SizedBox(
-            width: 80,
-            child: Text('STATUS', textAlign: TextAlign.center),
-          ),
-        ),
-        DataColumn(
-          label: SizedBox(
-            width: 100,
-            child: Text('CREATED', textAlign: TextAlign.center),
-          ),
-        ),
-        DataColumn(
-          label: SizedBox(
-            width: 96,
-            child: Text('ACTION', textAlign: TextAlign.center),
-          ),
-        ),
-      ],
-      rows: result.items.map((role) {
-        final isSelected = role.id == selectedRoleId && showDetailPanel;
-        
-        return DataRow(
-          selected: isSelected,
-          onSelectChanged: (_) => onSelect(role),
-          color: WidgetStateProperty.resolveWith<Color?>((states) {
-            if (states.contains(WidgetState.selected)) {
-              return TenantAdminColors.posHomeAccentOrange.withAlpha(20);
-            }
-            if (states.contains(WidgetState.hovered)) {
-              return TenantAdminColors.subtleBackground;
-            }
-            return null;
-          }),
-          cells: [
-            DataCell(
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        role.name,
-                        style: TextStyle(
-                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
-                          color: isSelected
-                              ? TenantAdminColors.posHomeAccentOrange
-                              : TenantAdminColors.bodyText,
-                        ),
-                      ),
-                      if (role.isSystem) ...[
-                        const SizedBox(width: TenantAdminSpacing.sm),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: TenantAdminColors.mutedText.withAlpha(26),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'SYSTEM',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: TenantAdminColors.mutedText,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  if (role.description != null && role.description!.isNotEmpty)
-                    Text(
-                      role.description!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: TenantAdminColors.mutedText,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
-              ),
-            ),
-            DataCell(
-              SizedBox(
+          columns: const [
+            DataColumn(label: Text('ROLE NAME')),
+            DataColumn(
+              label: SizedBox(
                 width: 95,
-                child: Text('${role.permissionCount}', textAlign: TextAlign.center),
+                child: Text('PERMISSIONS', textAlign: TextAlign.center),
               ),
             ),
-            DataCell(
-              SizedBox(
+            DataColumn(
+              label: SizedBox(
                 width: 60,
-                child: Text('${role.userCount}', textAlign: TextAlign.center),
+                child: Text('USERS', textAlign: TextAlign.center),
               ),
             ),
-            DataCell(
-              SizedBox(
+            DataColumn(
+              label: SizedBox(
                 width: 80,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: TenantAdminSpacing.md,
-                      vertical: TenantAdminSpacing.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: role.isActive
-                          ? TenantAdminColors.successSurface
-                          : TenantAdminColors.dangerSurface,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      role.isActive ? 'Active' : 'Inactive',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: role.isActive
-                            ? TenantAdminColors.success
-                            : TenantAdminColors.danger,
-                      ),
-                    ),
-                  ),
-                ),
+                child: Text('STATUS', textAlign: TextAlign.center),
               ),
             ),
-            DataCell(
-              SizedBox(
+            DataColumn(
+              label: SizedBox(
                 width: 100,
-                child: Text(
-                  DateFormat('MMM d, yyyy').format(role.createdAt.toLocal()),
-                  style: const TextStyle(color: TenantAdminColors.mutedText),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  softWrap: false,
-                ),
+                child: Text('CREATED', textAlign: TextAlign.center),
               ),
             ),
-            DataCell(
-              SizedBox(
+            DataColumn(
+              label: SizedBox(
                 width: 96,
-                child: _RoleActions(
-                  role: role,
-                  canEdit: visibility.showEditRole,
-                  isLoading: mutationState.isLoading,
-                  onView: () => onSelect(role),
-                  onEdit: () => context.go('/tenant-admin/roles/${role.id}/edit'),
-                  onToggleStatus: () => _confirmStatusChange(context, ref, role),
-                ),
+                child: Text('ACTION', textAlign: TextAlign.center),
               ),
             ),
           ],
-        );
-      }).toList(),
-      showCheckboxColumn: false,
-      minWidth: 980,
-      footer: result.totalPages > 1
-          ? TenantAdminPaginationBar(
-              currentPage: result.page,
-              pageSize: 5,
-              totalCount: result.totalCount,
-              onPageChanged: (page) {
-                final query = ref.read(rolesListQueryProvider);
-                ref.read(rolesListQueryProvider.notifier).state = query.copyWith(page: page);
-              },
-            )
-          : null,
+          rows: result.items.map((role) {
+            final isSelected = role.id == selectedRoleId && showDetailPanel;
+
+            return DataRow(
+              selected: isSelected,
+              onSelectChanged: (_) => onSelect(role),
+              color: WidgetStateProperty.resolveWith<Color?>((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return TenantAdminColors.posHomeAccentOrange.withAlpha(20);
+                }
+                if (states.contains(WidgetState.hovered)) {
+                  return TenantAdminColors.subtleBackground;
+                }
+                return null;
+              }),
+              cells: [
+                DataCell(
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            role.name,
+                            style: TextStyle(
+                              fontWeight: isSelected
+                                  ? FontWeight.w800
+                                  : FontWeight.w700,
+                              color: isSelected
+                                  ? TenantAdminColors.posHomeAccentOrange
+                                  : TenantAdminColors.bodyText,
+                            ),
+                          ),
+                          if (role.isSystem) ...[
+                            const SizedBox(width: TenantAdminSpacing.sm),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    TenantAdminColors.mutedText.withAlpha(26),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'SYSTEM',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: TenantAdminColors.mutedText,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      if (role.description != null &&
+                          role.description!.isNotEmpty)
+                        Text(
+                          role.description!,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: TenantAdminColors.mutedText,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 95,
+                    child: Text('${role.permissionCount}',
+                        textAlign: TextAlign.center),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 60,
+                    child:
+                        Text('${role.userCount}', textAlign: TextAlign.center),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 80,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: TenantAdminSpacing.md,
+                          vertical: TenantAdminSpacing.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: role.isActive
+                              ? TenantAdminColors.successSurface
+                              : TenantAdminColors.dangerSurface,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          role.isActive ? 'Active' : 'Inactive',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: role.isActive
+                                ? TenantAdminColors.success
+                                : TenantAdminColors.danger,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 100,
+                    child: Text(
+                      DateFormat('MMM d, yyyy')
+                          .format(role.createdAt.toLocal()),
+                      style:
+                          const TextStyle(color: TenantAdminColors.mutedText),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      softWrap: false,
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 96,
+                    child: _RoleActions(
+                      role: role,
+                      canEdit: visibility.showEditRole,
+                      isLoading: mutationState.isLoading,
+                      onEdit: () =>
+                          context.go('/tenant-admin/roles/${role.id}/edit'),
+                      onToggleStatus: () =>
+                          _confirmStatusChange(context, ref, role),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
+          showCheckboxColumn: false,
+          minWidth: 980,
+          footer: result.totalPages > 1
+              ? TenantAdminPaginationBar(
+                  currentPage: result.page,
+                  pageSize: 5,
+                  totalCount: result.totalCount,
+                  onPageChanged: (page) {
+                    final query = ref.read(rolesListQueryProvider);
+                    ref.read(rolesListQueryProvider.notifier).state =
+                        query.copyWith(page: page);
+                  },
+                )
+              : null,
         );
       },
     );
@@ -390,41 +401,37 @@ class _RoleManagementCard extends StatelessWidget {
           TenantAdminManagementCardMetric(
             label: 'Created',
             icon: Icons.calendar_today_outlined,
-            value: Text(DateFormat('MMM d, yyyy').format(role.createdAt.toLocal())),
+            value: Text(
+                DateFormat('MMM d, yyyy').format(role.createdAt.toLocal())),
           ),
         ],
         status: TenantAdminAnimatedStatus(
           statusKey: role.isActive,
           child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: TenantAdminSpacing.md,
-            vertical: TenantAdminSpacing.xs,
-          ),
-          decoration: BoxDecoration(
-            color: (role.isActive
-                    ? TenantAdminColors.success
-                    : TenantAdminColors.danger)
-                .withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            role.isActive ? 'Active' : 'Inactive',
-            style: TextStyle(
-              color: role.isActive
-                  ? TenantAdminColors.success
-                  : TenantAdminColors.danger,
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
+            padding: const EdgeInsets.symmetric(
+              horizontal: TenantAdminSpacing.md,
+              vertical: TenantAdminSpacing.xs,
             ),
-          ),
+            decoration: BoxDecoration(
+              color: (role.isActive
+                      ? TenantAdminColors.success
+                      : TenantAdminColors.danger)
+                  .withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              role.isActive ? 'Active' : 'Inactive',
+              style: TextStyle(
+                color: role.isActive
+                    ? TenantAdminColors.success
+                    : TenantAdminColors.danger,
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+            ),
           ),
         ),
         actions: [
-          TenantAdminManagementCardAction(
-            label: 'View',
-            icon: Icons.visibility_outlined,
-            onPressed: onView,
-          ),
           if (!role.isSystem && canEdit && !isLoading)
             TenantAdminManagementCardAction(
               label: 'Edit',
@@ -452,7 +459,6 @@ class _RoleActions extends StatelessWidget {
     required this.role,
     required this.canEdit,
     required this.isLoading,
-    required this.onView,
     required this.onEdit,
     required this.onToggleStatus,
   });
@@ -460,68 +466,39 @@ class _RoleActions extends StatelessWidget {
   final RoleListItem role;
   final bool canEdit;
   final bool isLoading;
-  final VoidCallback onView;
   final VoidCallback onEdit;
   final VoidCallback onToggleStatus;
 
   @override
   Widget build(BuildContext context) {
+    if (role.isSystem || !canEdit) {
+      return const SizedBox.shrink();
+    }
+
     return Center(
-      child: PopupMenuButton<_RoleAction>(
-        tooltip: 'Role actions',
-        enabled: !isLoading,
-        position: PopupMenuPosition.under,
-        constraints: const BoxConstraints(minWidth: 148),
-        menuPadding: const EdgeInsets.symmetric(vertical: TenantAdminSpacing.xs),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-        ),
-        icon: const Icon(Icons.more_vert),
-        onSelected: (action) {
-          switch (action) {
-            case _RoleAction.view:
-              onView();
-              break;
-            case _RoleAction.edit:
-              onEdit();
-              break;
-            case _RoleAction.toggleStatus:
-              onToggleStatus();
-              break;
-          }
-        },
-        itemBuilder: (context) => [
-          const PopupMenuItem(
-            value: _RoleAction.view,
-            child: TenantAdminRowActionMenuItem(
-              icon: Icons.visibility_outlined,
-              label: 'View',
-            ),
+      child: TenantAdminOverflowMenu(
+        tooltip: 'Actions',
+        actions: [
+          TenantAdminOverflowAction(
+            id: 'edit',
+            icon: Icons.edit_outlined,
+            label: 'Edit',
+            onSelected: isLoading ? () {} : onEdit,
+            enabled: !isLoading,
           ),
-          if (!role.isSystem && canEdit) ...[
-            const PopupMenuItem(
-              value: _RoleAction.edit,
-              child: TenantAdminRowActionMenuItem(
-                icon: Icons.edit_outlined,
-                label: 'Edit',
-              ),
-            ),
-            PopupMenuItem(
-              value: _RoleAction.toggleStatus,
-              child: TenantAdminRowActionMenuItem(
-                icon: role.isActive
-                    ? Icons.block_outlined
-                    : Icons.check_circle_outline,
-                label: role.isActive ? 'Disable' : 'Enable',
-                destructive: role.isActive,
-                success: !role.isActive,
-              ),
-            ),
-          ],
+          TenantAdminOverflowAction(
+            id: 'status',
+            icon: role.isActive
+                ? Icons.block_outlined
+                : Icons.check_circle_outline,
+            label: role.isActive ? 'Disable' : 'Enable',
+            onSelected: isLoading ? () {} : onToggleStatus,
+            enabled: !isLoading,
+            destructive: role.isActive,
+            success: !role.isActive,
+          ),
         ],
       ),
     );
   }
 }
-
-enum _RoleAction { view, edit, toggleStatus }

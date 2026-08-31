@@ -82,7 +82,8 @@ class TillMonitoringRow extends ConsumerWidget {
     return name != null && name.isNotEmpty && name != '-';
   }
 
-  String get _cashierName => _hasCashier ? item.currentCashierName!.trim() : 'Not assigned';
+  String get _cashierName =>
+      _hasCashier ? item.currentCashierName!.trim() : 'Not assigned';
 
   List<TenantAdminManagementCardAction> _actions(
     BuildContext context,
@@ -97,6 +98,7 @@ class TillMonitoringRow extends ConsumerWidget {
         );
 
     return configs
+        .where((action) => action.actionId != TillRowActionId.viewDetails)
         .map(
           (action) => TenantAdminManagementCardAction(
             label: action.label,
@@ -152,7 +154,9 @@ class _TillIcon extends StatelessWidget {
     final color = switch (status) {
       TillDisplayStatus.online => TenantAdminColors.success,
       TillDisplayStatus.needsAttention => TenantAdminColors.warning,
-      TillDisplayStatus.offline || TillDisplayStatus.unknown => TenantAdminColors.danger,
+      TillDisplayStatus.offline ||
+      TillDisplayStatus.unknown =>
+        TenantAdminColors.danger,
     };
     return Container(
       width: 60,
@@ -172,12 +176,17 @@ class _CodeBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.sm, vertical: TenantAdminSpacing.xs),
+        padding: const EdgeInsets.symmetric(
+            horizontal: TenantAdminSpacing.sm, vertical: TenantAdminSpacing.xs),
         decoration: BoxDecoration(
           border: Border.all(color: TenantAdminColors.border),
           borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
         ),
-        child: Text(code, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: TenantAdminColors.mutedText)),
+        child: Text(code,
+            style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: TenantAdminColors.mutedText)),
       );
 }
 
@@ -189,13 +198,24 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
       TillDisplayStatus.online => ('Online', TenantAdminColors.success),
-      TillDisplayStatus.needsAttention => ('Needs attention', TenantAdminColors.warning),
-      TillDisplayStatus.offline || TillDisplayStatus.unknown => ('Offline', TenantAdminColors.danger),
+      TillDisplayStatus.needsAttention => (
+          'Needs attention',
+          TenantAdminColors.warning
+        ),
+      TillDisplayStatus.offline || TillDisplayStatus.unknown => (
+          'Offline',
+          TenantAdminColors.danger
+        ),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.md, vertical: TenantAdminSpacing.xs),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(999)),
-      child: Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w800)),
+      padding: const EdgeInsets.symmetric(
+          horizontal: TenantAdminSpacing.md, vertical: TenantAdminSpacing.xs),
+      decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(999)),
+      child: Text(label,
+          style: TextStyle(
+              color: color, fontSize: 12, fontWeight: FontWeight.w800)),
     );
   }
 }

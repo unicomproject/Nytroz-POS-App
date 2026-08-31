@@ -26,6 +26,7 @@ import '../../domain/repositories/product_wizard_draft_local_repository.dart';
 import '../../domain/repositories/tenant_product_repository.dart';
 import '../../domain/services/product_list_local_draft_merger.dart';
 import '../controllers/add_product_wizard_controller.dart';
+import '../widgets/product_table.dart';
 
 final tenantProductRemoteDatasourceProvider =
     Provider<TenantProductRemoteDatasource>((ref) {
@@ -108,7 +109,7 @@ class ProductListFilterState {
     this.sortBy = 'productName',
     this.sortDirection = 'asc',
     this.pageNumber = 1,
-    this.pageSize = TenantAdminContentTokens.defaultListPageSize,
+    this.pageSize = ProductTable.pageSize,
   });
 
   final String search;

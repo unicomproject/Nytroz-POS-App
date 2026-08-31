@@ -4,6 +4,7 @@ import 'package:nytroz_pos/core/network/dio_provider.dart';
 import 'package:nytroz_pos/core/network/media_url_resolver.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/widgets/tenant_admin_row_action.dart';
 import '../../domain/entities/outlet.dart';
 import '../providers/selected_outlet_provider.dart';
 
@@ -73,32 +74,34 @@ class _OutletCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final overflowMenu = TenantAdminOverflowMenu(
+          actions: [
+            TenantAdminOverflowAction(
+              id: 'edit',
+              icon: Icons.edit_outlined,
+              label: 'Edit',
+              onSelected: onEdit,
+            ),
+            TenantAdminOverflowAction(
+              id: 'status',
+              icon:
+                  _isActive ? Icons.block_outlined : Icons.check_circle_outline,
+              label: _isActive ? 'Disable' : 'Activate',
+              onSelected: onDisable,
+              destructive: _isActive,
+              success: !_isActive,
+            ),
+          ],
+        );
         final compact = constraints.maxWidth < 500;
         final content = compact
-            ? Column(
+            ? Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _OutletThumbnail(outlet: outlet, compact: true),
-                      const SizedBox(width: TenantAdminSpacing.lg),
-                      Expanded(child: _OutletMainInfo(outlet: outlet)),
-                    ],
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  const Divider(height: 1, color: TenantAdminColors.border),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: _ActionsColumn(
-                      isActive: _isActive,
-                      onView: onTap,
-                      onEdit: onEdit,
-                      onDisable: onDisable,
-                      horizontal: true,
-                    ),
-                  ),
+                  _OutletThumbnail(outlet: outlet, compact: true),
+                  const SizedBox(width: TenantAdminSpacing.lg),
+                  Expanded(child: _OutletMainInfo(outlet: outlet)),
+                  overflowMenu,
                 ],
               )
             : Row(
@@ -108,13 +111,7 @@ class _OutletCard extends StatelessWidget {
                   const SizedBox(width: TenantAdminSpacing.xl),
                   Expanded(child: _OutletMainInfo(outlet: outlet)),
                   const SizedBox(width: TenantAdminSpacing.xl),
-                  _ActionsColumn(
-                    isActive: _isActive,
-                    onView: onTap,
-                    onEdit: onEdit,
-                    onDisable: onDisable,
-                    horizontal: false,
-                  ),
+                  overflowMenu,
                 ],
               );
 
@@ -565,107 +562,6 @@ class _StatusBadge extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ActionsColumn extends StatelessWidget {
-  const _ActionsColumn({
-    required this.isActive,
-    required this.onView,
-    required this.onEdit,
-    required this.onDisable,
-    this.horizontal = false,
-  });
-
-  final bool isActive;
-  final VoidCallback onView;
-  final VoidCallback onEdit;
-  final VoidCallback onDisable;
-  final bool horizontal;
-
-  @override
-  Widget build(BuildContext context) {
-    final actions = [
-      _ActionTextBtn(
-        icon: Icons.visibility_outlined,
-        label: 'View',
-        color: TenantAdminColors.info,
-        onTap: onView,
-      ),
-      _ActionTextBtn(
-        icon: Icons.edit_outlined,
-        label: 'Edit',
-        color: TenantAdminColors.info,
-        onTap: onEdit,
-      ),
-      _ActionTextBtn(
-        icon: isActive ? Icons.block_outlined : Icons.check_circle_outline,
-        label: isActive ? 'Disable' : 'Activate',
-        color: isActive ? TenantAdminColors.danger : TenantAdminColors.success,
-        onTap: onDisable,
-      ),
-    ];
-
-    if (horizontal) {
-      return Wrap(
-        spacing: 16,
-        runSpacing: 8,
-        alignment: WrapAlignment.end,
-        children: actions,
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        actions[0],
-        const SizedBox(height: 12),
-        actions[1],
-        const SizedBox(height: 12),
-        actions[2],
-      ],
-    );
-  }
-}
-
-class _ActionTextBtn extends StatelessWidget {
-  const _ActionTextBtn({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

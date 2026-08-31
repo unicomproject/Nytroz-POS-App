@@ -10,16 +10,14 @@ import 'tenant_user_avatar.dart';
 import 'user_status_badge.dart';
 
 class UserMobileList extends StatelessWidget {
-  const UserMobileList({
-    super.key,
-    required this.users,
-    required this.visibility,
-    required this.onView,
-    required this.onEdit,
-    required this.onDelete,
-    this.selectedUserId,
-  });
-
+  const UserMobileList(
+      {super.key,
+      required this.users,
+      required this.visibility,
+      required this.onView,
+      required this.onEdit,
+      required this.onDelete,
+      this.selectedUserId});
   final List<TenantUser> users;
   final UserListVisibility visibility;
   final ValueChanged<TenantUser> onView;
@@ -37,24 +35,20 @@ class UserMobileList extends StatelessWidget {
               onView: onView,
               onEdit: onEdit,
               onDelete: onDelete,
-              selected: user.id == selectedUserId,
-            ),
-            const SizedBox(height: TenantAdminSpacing.md),
-          ],
+              selected: user.id == selectedUserId),
+          const SizedBox(height: TenantAdminSpacing.md),
         ],
       );
 }
 
 class _UserMobileListItem extends StatelessWidget {
-  const _UserMobileListItem({
-    required this.user,
-    required this.visibility,
-    required this.onView,
-    required this.onEdit,
-    required this.onDelete,
-    required this.selected,
-  });
-
+  const _UserMobileListItem(
+      {required this.user,
+      required this.visibility,
+      required this.onView,
+      required this.onEdit,
+      required this.onDelete,
+      required this.selected});
   final TenantUser user;
   final UserListVisibility visibility;
   final ValueChanged<TenantUser> onView;
@@ -70,13 +64,10 @@ class _UserMobileListItem extends StatelessWidget {
         .any((action) => action.actionId == UserRowActionId.edit);
     final canDelete = visibility.visibleRowActions
         .any((action) => action.actionId == UserRowActionId.delete);
-
     return TenantAdminManagementCard(
       title: user.fullName,
-      badge: Text(
-        _emptyDash(user.staffCode ?? user.email),
-        style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 12),
-      ),
+      badge: Text(_emptyDash(user.staffCode ?? user.email),
+          style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 12)),
       leading: TenantUserAvatar(
         fullName: user.fullName,
         imageUrl: user.profileImageUrl,

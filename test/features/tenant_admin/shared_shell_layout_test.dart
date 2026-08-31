@@ -356,7 +356,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Add Product'), findsOneWidget);
-      expect(find.text('Categories & Subcategories'), findsOneWidget);
+      expect(find.text('Category'), findsOneWidget);
       expect(find.text('Brand'), findsOneWidget);
       expect(find.text('Product List'), findsNothing);
       expect(find.text('Import'), findsNothing);

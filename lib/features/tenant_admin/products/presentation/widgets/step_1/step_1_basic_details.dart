@@ -121,24 +121,24 @@ class Step1BasicDetails extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: form),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        form,
+                        const SizedBox(height: TenantAdminSpacing.md),
+                        channelCard,
+                      ],
+                    ),
+                  ),
                   const SizedBox(width: TenantAdminSpacing.md),
                   Expanded(child: imageCard),
                 ],
               ),
-              const SizedBox(height: TenantAdminSpacing.md),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: trackingCard ?? channelCard),
-                  const SizedBox(width: TenantAdminSpacing.md),
-                  Expanded(
-                    child: trackingCard == null
-                        ? const SizedBox.shrink()
-                        : channelCard,
-                  ),
-                ],
-              ),
+              if (trackingCard != null) ...[
+                const SizedBox(height: TenantAdminSpacing.md),
+                trackingCard,
+              ],
             ],
           );
         } else {
@@ -147,13 +147,13 @@ class Step1BasicDetails extends StatelessWidget {
             children: [
               form,
               const SizedBox(height: TenantAdminSpacing.md),
+              channelCard,
+              const SizedBox(height: TenantAdminSpacing.md),
               imageCard,
               if (trackingCard != null) ...[
                 const SizedBox(height: TenantAdminSpacing.md),
                 trackingCard,
               ],
-              const SizedBox(height: TenantAdminSpacing.md),
-              channelCard,
             ],
           );
         }

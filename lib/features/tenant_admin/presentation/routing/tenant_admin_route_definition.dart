@@ -335,6 +335,27 @@ const tenantAdminRouteDefinitions = [
     permissionCode: 'tenant.categories.view',
   ),
   TenantAdminRouteDefinition(
+    path: '/tenant-admin/categories/add',
+    menuKey: 'products',
+    title: 'Add Category',
+    featureCode: 'catalog.product',
+    permissionCode: 'tenant.categories.create',
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/categories/:id',
+    menuKey: 'products',
+    title: 'Category Details',
+    featureCode: 'catalog.product',
+    permissionCode: 'tenant.categories.view',
+  ),
+  TenantAdminRouteDefinition(
+    path: '/tenant-admin/categories/:id/edit',
+    menuKey: 'products',
+    title: 'Edit Category',
+    featureCode: 'catalog.product',
+    permissionCode: 'tenant.categories.update',
+  ),
+  TenantAdminRouteDefinition(
     path: '/tenant-admin/brands',
     menuKey: 'products',
     title: 'Brands',

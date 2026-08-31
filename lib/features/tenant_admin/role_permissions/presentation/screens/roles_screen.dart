@@ -258,6 +258,7 @@ class _RolesListControls extends ConsumerWidget {
         child: DropdownButton<String>(
           value: statusFilter.isEmpty ? '' : statusFilter,
           icon: const Icon(Icons.filter_list),
+          dropdownColor: TenantAdminOverlaySurfaces.color,
           onChanged: (String? newValue) {
             final query = ref.read(rolesListQueryProvider);
             ref.read(rolesListQueryProvider.notifier).state = query.copyWith(

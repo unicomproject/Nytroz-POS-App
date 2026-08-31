@@ -186,6 +186,9 @@ class TenantAdminPermissionCodes {
   static const inventoryMovementsView = 'inventory.movements.view';
   static const tenantReportsProductsView = 'tenant.reports.products.view';
   static const tenantCategoriesView = 'tenant.categories.view';
+  static const tenantCategoriesCreate = 'tenant.categories.create';
+  static const tenantCategoriesUpdate = 'tenant.categories.update';
+  static const tenantCategoriesDelete = 'tenant.categories.delete';
   static const tenantBrandsView = 'tenant.brands.view';
   static const tenantBrandsCreate = 'tenant.brands.create';
   static const tenantBrandsUpdate = 'tenant.brands.update';

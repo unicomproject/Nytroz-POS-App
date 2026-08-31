@@ -214,31 +214,24 @@ class OutletTable extends ConsumerWidget {
         return DataCell(
           Align(
             alignment: Alignment.centerRight,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TenantAdminRowAction(
-                  icon: Icons.visibility_outlined,
-                  label: 'View',
-                  onPressed: () => _handleRowTap(context, ref, outlet.id),
-                ),
-                if (canEdit) const SizedBox(width: TenantAdminSpacing.sm),
+            child: TenantAdminOverflowMenu(
+              actions: [
                 if (canEdit)
-                  TenantAdminRowAction(
+                  TenantAdminOverflowAction(
+                    id: 'edit',
                     icon: Icons.edit_outlined,
                     label: 'Edit',
-                    onPressed: () => context.go(
+                    onSelected: () => context.go(
                       '/tenant-admin/outlets/${outlet.id}/edit',
                     ),
                   ),
-                if (canEdit && canDelete)
-                  const SizedBox(width: TenantAdminSpacing.sm),
                 if (canDelete)
-                  TenantAdminRowAction(
+                  TenantAdminOverflowAction(
+                    id: 'delete',
                     icon: Icons.delete_outline,
                     label: 'Delete',
                     destructive: true,
-                    onPressed: () => _confirmDelete(context, ref, outlet),
+                    onSelected: () => _confirmDelete(context, ref, outlet),
                   ),
               ],
             ),

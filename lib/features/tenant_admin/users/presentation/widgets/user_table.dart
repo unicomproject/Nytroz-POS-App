@@ -63,30 +63,22 @@ class UserTable extends StatelessWidget {
             DataCell(
               Align(
                 alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (canView)
-                      TenantAdminRowAction(
-                        icon: Icons.visibility_outlined,
-                        label: 'View',
-                        onPressed: () => onView(user),
-                      ),
-                    if (canEdit) const SizedBox(width: TenantAdminSpacing.sm),
+                child: TenantAdminOverflowMenu(
+                  actions: [
                     if (canEdit)
-                      TenantAdminRowAction(
+                      TenantAdminOverflowAction(
+                        id: 'edit',
                         icon: Icons.edit_outlined,
                         label: 'Edit',
-                        onPressed: () => onEdit(user),
+                        onSelected: () => onEdit(user),
                       ),
-                    if (canEdit && canDeactivate)
-                      const SizedBox(width: TenantAdminSpacing.sm),
                     if (canDeactivate)
-                      TenantAdminRowAction(
+                      TenantAdminOverflowAction(
+                        id: 'disable',
                         icon: Icons.block_outlined,
                         label: 'Disable',
                         destructive: true,
-                        onPressed: () => onDelete(user),
+                        onSelected: () => onDelete(user),
                       ),
                   ],
                 ),
