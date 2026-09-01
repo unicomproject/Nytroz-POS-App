@@ -10,7 +10,6 @@ import 'package:nytroz_pos/features/tenant_admin/categories/domain/entities/cate
 import 'package:nytroz_pos/features/tenant_admin/categories/domain/entities/category_tree_node.dart';
 import 'package:nytroz_pos/features/tenant_admin/categories/domain/repositories/category_repository.dart';
 import 'package:nytroz_pos/features/tenant_admin/categories/presentation/providers/category_providers.dart';
-import 'package:nytroz_pos/features/tenant_admin/categories/presentation/utils/category_form_utils.dart';
 import 'package:nytroz_pos/features/tenant_admin/categories/presentation/providers/category_visibility_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/categories/presentation/screens/edit_category_screen.dart';
 import 'package:nytroz_pos/features/tenant_admin/categories/presentation/widgets/category_edit_form.dart';
@@ -65,7 +64,8 @@ void main() {
   });
 
   group('EditCategoryScreen', () {
-    testWidgets('shows loading then prefilled form at 1024x768', (tester) async {
+    testWidgets('shows loading then prefilled form at 1024x768',
+        (tester) async {
       await tester.binding.setSurfaceSize(const Size(1024, 768));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -87,7 +87,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Edit Category'), findsOneWidget);
-      expect(find.textContaining('Update category information'), findsOneWidget);
+      expect(
+          find.textContaining('Update category information'), findsOneWidget);
       expect(find.textContaining('Product /'), findsNothing);
       expect(find.text('Back to List'), findsOneWidget);
       expect(find.text('Save Changes'), findsOneWidget);
@@ -147,7 +148,8 @@ void main() {
 
       expect(find.textContaining('Inactive Parent (Inactive)'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextFormField).at(3), 'Updated description only');
+      await tester.enterText(
+          find.byType(TextFormField).at(3), 'Updated description only');
       await formKey.currentState!.submit(
         onSuccess: () {},
         onPartialSuccess: (_) {},
@@ -156,7 +158,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.updateCalls, 1);
-      expect(repository.lastUpdateInput?.description, 'Updated description only');
+      expect(
+          repository.lastUpdateInput?.description, 'Updated description only');
       expect(repository.lastUpdateInput?.parentCategoryId, 'inactive-parent');
     });
 
@@ -289,7 +292,8 @@ void main() {
       expect(find.text('Updated Name'), findsOneWidget);
     });
 
-    testWidgets('partial image upload failure keeps master update', (tester) async {
+    testWidgets('partial image upload failure keeps master update',
+        (tester) async {
       final repository = _RecordingCategoryRepository(
         details: _childCategory(),
         tree: _sampleTree(),
@@ -380,7 +384,8 @@ Widget _wrapEditScreen({
   return ProviderScope(
     overrides: [
       tenantAdminAccessCheckerProvider.overrideWith((ref) async => access),
-      categoryUpdateAccessProvider.overrideWith((ref) => access.canUpdateCategory()),
+      categoryUpdateAccessProvider
+          .overrideWith((ref) => access.canUpdateCategory()),
       categoryDetailsProvider.overrideWith((ref, id) async {
         if (repository.detailsError != null) {
           throw repository.detailsError!;
@@ -410,7 +415,8 @@ Widget _wrapEditFormHarness({
 }) {
   return ProviderScope(
     overrides: [
-      categoryDetailsProvider.overrideWith((ref, id) async => repository.details),
+      categoryDetailsProvider
+          .overrideWith((ref, id) async => repository.details),
       categoryRepositoryProvider.overrideWith((ref) => repository),
       categoryTreeProvider.overrideWith((ref) async => repository.tree),
     ],
@@ -463,12 +469,73 @@ class _EditFormHarness extends ConsumerWidget {
 }
 
 final _onePixelPng = Uint8List.fromList([
-  0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
-  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-  0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00,
-  0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
-  0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49,
-  0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0A,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0x9C,
+  0x63,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x05,
+  0x00,
+  0x01,
+  0x0D,
+  0x0A,
+  0x2D,
+  0xB4,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+  0x42,
+  0x60,
+  0x82,
 ]);
 
 Widget _wrapEditForm({

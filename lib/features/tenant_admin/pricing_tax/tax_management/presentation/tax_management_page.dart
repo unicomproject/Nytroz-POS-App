@@ -383,8 +383,9 @@ class _TaxFormSectionState extends ConsumerState<_TaxFormSection> {
       validator: (val) {
         if (val == null || val.isEmpty) return 'Required';
         final num = double.tryParse(val);
-        if (num == null || num < 0 || (_taxType == 'PERCENTAGE' && num > 100))
+        if (num == null || num < 0 || (_taxType == 'PERCENTAGE' && num > 100)) {
           return 'Invalid value';
+        }
         return null;
       },
       enabled: !widget.isViewOnly,
