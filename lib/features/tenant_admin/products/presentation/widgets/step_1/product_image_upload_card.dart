@@ -87,16 +87,10 @@ class _ProductImageUploadCardState
             children: [
               const Row(
                 children: [
-                  Icon(
-                    Icons.add_photo_alternate_outlined,
-                    color: TenantAdminColors.posHomeAccentOrange,
-                    size: 22,
-                  ),
-                  SizedBox(width: 8),
                   Text(
                     'Product Images',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: TenantAdminColors.bodyText,
                     ),
@@ -107,19 +101,15 @@ class _ProductImageUploadCardState
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: count > 0
-                      ? const Color(0x1AFF9800)
-                      : const Color(0xFFF1F5F9),
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  '$count / 10',
+                child: const Text(
+                  'Up to 10 images',
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: count > 0
-                        ? TenantAdminColors.posHomeAccentOrange
-                        : TenantAdminColors.mutedText,
+                    fontWeight: FontWeight.w600,
+                    color: TenantAdminColors.mutedText,
                   ),
                 ),
               ),
@@ -139,10 +129,10 @@ class _ProductImageUploadCardState
                   horizontal: TenantAdminSpacing.lg,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFAFAFA),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
                   border: Border.all(
-                    color: const Color(0x80FF9800),
+                    color: const Color(0xFFCBD5E1),
                     style: BorderStyle.solid,
                     width: 1.5,
                   ),
@@ -167,26 +157,25 @@ class _ProductImageUploadCardState
                             )
                           : const Icon(
                               Icons.cloud_upload_outlined,
-                              color: TenantAdminColors.posHomeAccentOrange,
+                              color: Color(0xFF64748B),
                               size: 32,
                             ),
                     ),
                     const SizedBox(height: TenantAdminSpacing.sm),
-                    Text(
-                      count == 0
-                          ? 'Click to Upload Product Images'
-                          : 'Click to Add More Product Images ($count/10)',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: TenantAdminColors.bodyText,
+                    const Text(
+                      'Drag and drop images here\nor tap to browse',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF64748B),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     const Text(
-                      'Browse files to select • Up to 10 images allowed',
+                      'JPG, PNG up to 5MB each',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         color: TenantAdminColors.mutedText,
                       ),
                     ),
@@ -199,161 +188,19 @@ class _ProductImageUploadCardState
             const SizedBox(height: TenantAdminSpacing.lg),
 
             // Inline Grid of Uploaded Images (Direct management right here)
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                for (final img in widget.images)
-                  Container(
-                    width: 105,
-                    height: 105,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-                      border: Border.all(
-                        color: img.isPrimary
-                            ? TenantAdminColors.posHomeAccentOrange
-                            : TenantAdminColors.border,
-                        width: img.isPrimary ? 2 : 1,
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        // Image Preview with Quick WhatsApp Style Loader
-                        Positioned.fill(
-                          child: ClipRRect(
-                            borderRadius:
-                                BorderRadius.circular(TenantAdminRadius.sm - 1),
-                            child: img.bytes != null && img.bytes!.isNotEmpty
-                                ? Image.memory(
-                                    img.bytes!,
-                                    fit: BoxFit.cover,
-                                    gaplessPlayback: true,
-                                  )
-                                : (img.imageUrl.isNotEmpty
-                                    ? Image.network(
-                                        _resolveImageUrl(img.imageUrl),
-                                        fit: BoxFit.cover,
-                                        gaplessPlayback: true,
-                                        loadingBuilder:
-                                            (context, child, loadingProgress) {
-                                          if (loadingProgress == null) {
-                                            return child;
-                                          }
-                                          return Container(
-                                            color: const Color(0xFFF1F5F9),
-                                            child: Center(
-                                              child: Container(
-                                                width: 36,
-                                                height: 36,
-                                                decoration: const BoxDecoration(
-                                                  color: Colors.black54,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: const Center(
-                                                  child: SizedBox(
-                                                    width: 18,
-                                                    height: 18,
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                      strokeWidth: 2.2,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                        errorBuilder: (_, __, ___) =>
-                                            const Center(
-                                          child: Icon(
-                                              Icons.broken_image_outlined,
-                                              color: Colors.grey),
-                                        ),
-                                      )
-                                    : const Center(
-                                        child: Icon(Icons.image_outlined,
-                                            color: Colors.grey),
-                                      )),
-                          ),
-                        ),
-
-                        // Delete Icon (Top Right)
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: InkWell(
-                            onTap: () => widget.onDelete(img.id),
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Color(0x99000000),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.close,
-                                color: Colors.white,
-                                size: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // Primary Badge or Set Primary Action Button (Bottom Left)
-                        if (img.isPrimary)
-                          Positioned(
-                            bottom: 4,
-                            left: 4,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: TenantAdminColors.posHomeAccentOrange,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'Primary',
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          )
-                        else
-                          Positioned(
-                            bottom: 4,
-                            left: 4,
-                            child: InkWell(
-                              onTap: () => widget.onSetPrimary(img.id),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.black54,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Text(
-                                  'Set Primary',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                // WhatsApp-Style Uploading Tile (Appears instantly on Open/Drop)
-                if (_isUploading)
-                  Container(
-                    width: 105,
-                    height: 105,
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.0,
+              ),
+              itemCount: widget.images.length + (_isUploading ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (_isUploading && index == widget.images.length) {
+                  return Container(
                     decoration: BoxDecoration(
                       color: const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
@@ -370,7 +217,6 @@ class _ProductImageUploadCardState
                           color: TenantAdminColors.mutedText,
                           size: 32,
                         ),
-                        // Dark translucent circular overlay with white spinner (WhatsApp style)
                         Container(
                           width: 38,
                           height: 38,
@@ -392,14 +238,158 @@ class _ProductImageUploadCardState
                         ),
                       ],
                     ),
+                  );
+                }
+
+                final img = widget.images[index];
+                return Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+                    border: Border.all(
+                      color: img.isPrimary
+                          ? TenantAdminColors.posHomeAccentOrange
+                          : const Color(0xFFE2E8F0),
+                      width: 1.5,
+                    ),
                   ),
-              ],
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: ClipRRect(
+                          borderRadius:
+                              BorderRadius.circular(TenantAdminRadius.sm - 1.5),
+                          child: img.bytes != null && img.bytes!.isNotEmpty
+                              ? Image.memory(
+                                  img.bytes!,
+                                  fit: BoxFit.cover,
+                                  gaplessPlayback: true,
+                                )
+                              : (img.imageUrl.isNotEmpty
+                                  ? Image.network(
+                                      _resolveImageUrl(img.imageUrl),
+                                      fit: BoxFit.cover,
+                                      gaplessPlayback: true,
+                                      loadingBuilder:
+                                          (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return Container(
+                                          color: const Color(0xFFF1F5F9),
+                                          child: const Center(
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      errorBuilder: (_, __, ___) => const Center(
+                                        child: Icon(Icons.broken_image_outlined,
+                                            color: Colors.grey),
+                                      ),
+                                    )
+                                  : const Center(
+                                      child: Icon(Icons.image_outlined,
+                                          color: Colors.grey),
+                                    )),
+                        ),
+                      ),
+                      if (img.isPrimary)
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: TenantAdminColors.posHomeAccentOrange,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              'Primary',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert, size: 16),
+                            padding: EdgeInsets.zero,
+                            onSelected: (value) {
+                              if (value == 'delete') {
+                                widget.onDelete(img.id);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Text('Delete Image', style: TextStyle(color: TenantAdminColors.danger)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 8,
+                        left: 8,
+                        child: InkWell(
+                          onTap: () {
+                            if (!img.isPrimary) {
+                              widget.onSetPrimary(img.id);
+                            }
+                          },
+                          child: Icon(
+                            img.isPrimary
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            color: img.isPrimary
+                                ? TenantAdminColors.posHomeAccentOrange
+                                : const Color(0xFFCBD5E1),
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
-
           const SizedBox(height: TenantAdminSpacing.lg),
-          // Direct Embedded Guidelines (No popup required)
-          const ProductImageGuidelinesCard(),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline, size: 16, color: Color(0xFF64748B)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'The first image is used as the default primary image unless you change it.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/tenant_admin_motion.dart';
 import '../theme/tenant_admin_theme.dart';
+import 'tenant_admin_row_action.dart';
 
 class TenantAdminManagementCardMetric {
   const TenantAdminManagementCardMetric({
@@ -56,7 +57,26 @@ class TenantAdminManagementCard extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= TenantAdminBreakpoints.tablet;
-          final header = Row(
+          final metricWidgets = metrics
+              .map((metric) => _Metric(metric: metric))
+              .toList(growable: false);
+          final overflowMenu = actions.isEmpty
+              ? null
+              : TenantAdminOverflowMenu(
+                  actions: [
+                    for (final action in actions)
+                      TenantAdminOverflowAction(
+                        id: action.label,
+                        icon: action.icon,
+                        label: action.label,
+                        onSelected: action.onPressed,
+                        destructive: action.color == TenantAdminColors.danger,
+                        success: action.color == TenantAdminColors.success,
+                      ),
+                  ],
+                );
+
+          final compactHeader = Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               leading,
@@ -67,58 +87,54 @@ class TenantAdminManagementCard extends StatelessWidget {
                   runSpacing: TenantAdminSpacing.xs,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Text(title, style: TenantAdminTextStyles.sectionTitle(context)),
+                    Text(title,
+                        style: TenantAdminTextStyles.sectionTitle(context)),
                     if (badge != null) badge!,
                   ],
                 ),
               ),
-              if (!wide && status != null) status!,
+              if (status != null) status!,
+              if (overflowMenu != null) overflowMenu,
             ],
           );
-
-          final metricWidgets = metrics
-              .map((metric) => _Metric(metric: metric))
-              .toList(growable: false);
-          final actionWidgets = actions
-              .map((action) => _Action(action: action))
-              .toList(growable: false);
 
           final content = wide
               ? Row(
                   children: [
                     SizedBox(width: 76, child: leading),
                     const SizedBox(width: TenantAdminSpacing.lg),
-                    Expanded(flex: 3, child: Wrap(
-                      spacing: TenantAdminSpacing.sm,
-                      runSpacing: TenantAdminSpacing.xs,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(title, style: TenantAdminTextStyles.sectionTitle(context)),
-                        if (badge != null) badge!,
-                      ],
-                    )),
+                    Expanded(
+                        flex: 3,
+                        child: Wrap(
+                          spacing: TenantAdminSpacing.sm,
+                          runSpacing: TenantAdminSpacing.xs,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(title,
+                                style: TenantAdminTextStyles.sectionTitle(
+                                    context)),
+                            if (badge != null) badge!,
+                          ],
+                        )),
                     for (final metric in metricWidgets) ...[
-                      const VerticalDivider(width: 32, color: TenantAdminColors.border),
+                      const VerticalDivider(
+                          width: 32, color: TenantAdminColors.border),
                       Expanded(flex: 2, child: metric),
                     ],
                     if (status != null) ...[
                       const SizedBox(width: TenantAdminSpacing.lg),
                       status!,
                     ],
-                    if (actionWidgets.isNotEmpty) ...[
-                      const SizedBox(width: TenantAdminSpacing.xl),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: actionWidgets,
-                      ),
+                    if (overflowMenu != null) ...[
+                      const SizedBox(width: TenantAdminSpacing.sm),
+                      overflowMenu,
                     ],
                   ],
                 )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    header,
+                    compactHeader,
                     if (metricWidgets.isNotEmpty) ...[
                       const SizedBox(height: TenantAdminSpacing.lg),
                       Wrap(
@@ -126,10 +142,6 @@ class TenantAdminManagementCard extends StatelessWidget {
                         runSpacing: TenantAdminSpacing.md,
                         children: metricWidgets,
                       ),
-                    ],
-                    if (actionWidgets.isNotEmpty) ...[
-                      const SizedBox(height: TenantAdminSpacing.lg),
-                      Wrap(spacing: TenantAdminSpacing.lg, runSpacing: TenantAdminSpacing.sm, children: actionWidgets),
                     ],
                   ],
                 );
@@ -147,22 +159,22 @@ class TenantAdminManagementCard extends StatelessWidget {
                 child: AnimatedContainer(
                   duration: TenantAdminMotion.fast,
                   curve: TenantAdminMotion.standard,
-                padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-                constraints: const BoxConstraints(minHeight: 124),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? TenantAdminColors.primary.withValues(alpha: 0.06)
-                      : null,
-                  border: Border.all(
+                  padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+                  constraints: const BoxConstraints(minHeight: 124),
+                  decoration: BoxDecoration(
                     color: selected
-                        ? TenantAdminColors.primary
-                        : TenantAdminColors.border,
+                        ? TenantAdminColors.primary.withValues(alpha: 0.06)
+                        : null,
+                    border: Border.all(
+                      color: selected
+                          ? TenantAdminColors.primary
+                          : TenantAdminColors.border,
+                    ),
+                    borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
                   ),
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+                  child: content,
                 ),
-                child: content,
               ),
-            ),
             ),
           );
         },
@@ -178,33 +190,20 @@ class _Metric extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(metric.label.toUpperCase(), style: const TextStyle(fontSize: 10, letterSpacing: 0.7, color: TenantAdminColors.mutedText, fontWeight: FontWeight.w700)),
+          Text(metric.label.toUpperCase(),
+              style: const TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 0.7,
+                  color: TenantAdminColors.mutedText,
+                  fontWeight: FontWeight.w700)),
           const SizedBox(height: TenantAdminSpacing.xs),
           Row(mainAxisSize: MainAxisSize.min, children: [
-            if (metric.icon != null) ...[Icon(metric.icon, size: 16, color: TenantAdminColors.mutedText), const SizedBox(width: TenantAdminSpacing.xs)],
+            if (metric.icon != null) ...[
+              Icon(metric.icon, size: 16, color: TenantAdminColors.mutedText),
+              const SizedBox(width: TenantAdminSpacing.xs)
+            ],
             Flexible(child: metric.value),
           ]),
         ],
       );
-}
-
-class _Action extends StatelessWidget {
-  const _Action({required this.action});
-  final TenantAdminManagementCardAction action;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = action.color ?? TenantAdminColors.info;
-    return TextButton.icon(
-      onPressed: action.onPressed,
-      icon: Icon(action.icon, size: 18, color: color),
-      label: Text(action.label),
-      style: TextButton.styleFrom(
-        foregroundColor: color,
-        minimumSize: const Size(44, 36),
-        padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.xs),
-        textStyle: const TextStyle(fontWeight: FontWeight.w700),
-      ),
-    );
-  }
 }

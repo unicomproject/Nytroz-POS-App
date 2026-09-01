@@ -52,15 +52,12 @@ class ProductBasicDetailsForm extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const _SectionHeader(
-                icon: Icons.inventory_2_outlined,
-                title: 'Product Information',
-              ),
-              const SizedBox(height: TenantAdminSpacing.md),
               if (isTwoColumn) ...[
                 _twoColRow(_buildNameField(), _buildCodeField()),
                 const SizedBox(height: TenantAdminSpacing.md),
                 _twoColRow(_buildCategoryDropdown(), _buildBrandDropdown()),
+                const SizedBox(height: TenantAdminSpacing.md),
+                _buildReturnPolicyDropdown(),
               ] else ...[
                 _buildNameField(),
                 const SizedBox(height: TenantAdminSpacing.md),
@@ -69,6 +66,8 @@ class ProductBasicDetailsForm extends StatelessWidget {
                 _buildCategoryDropdown(),
                 const SizedBox(height: TenantAdminSpacing.md),
                 _buildBrandDropdown(),
+                const SizedBox(height: TenantAdminSpacing.md),
+                _buildReturnPolicyDropdown(),
               ],
               const SizedBox(height: TenantAdminSpacing.md),
               _buildShortDescriptionField(),
@@ -103,12 +102,41 @@ class ProductBasicDetailsForm extends StatelessWidget {
   }
 
   Widget _buildCodeField() {
-    return ProductFormTextField(
-      label: 'Short Name / Product Code',
-      hint: 'e.g. MERCH-TSHIRT-01',
-      icon: Icons.qr_code_2_outlined,
-      controller: codeController,
-      errorText: fieldErrors['productCode'],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ProductFormTextField(
+          label: 'Product Code *',
+          hint: 'AQF-BTL-001',
+          icon: Icons.qr_code_2_outlined,
+          controller: codeController,
+          errorText: fieldErrors['productCode'],
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'SKU will be generated in a later step.',
+          style: TextStyle(
+            color: TenantAdminColors.mutedText,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReturnPolicyDropdown() {
+    return ProductOptionDropdown(
+      label: 'Return Policy *',
+      hint: 'Select return policy',
+      icon: Icons.assignment_return_outlined,
+      value: 'Standard 14-day return',
+      items: const [
+        DropdownMenuItem(
+          value: 'Standard 14-day return',
+          child: Text('Standard 14-day return'),
+        ),
+      ],
+      onChanged: (val) {},
     );
   }
 
@@ -148,56 +176,25 @@ class ProductBasicDetailsForm extends StatelessWidget {
 
   Widget _buildShortDescriptionField() {
     return ProductFormTextField(
-      label: 'Short Description',
-      hint: 'Brief summary for POS grid (e.g. 100% Cotton Crewneck T-Shirt)',
+      label: 'Short Description *',
+      hint: 'Brief summary for POS grid',
       icon: Icons.notes_outlined,
       controller: shortDescriptionController,
       maxLines: 2,
+      maxLength: 255,
       errorText: fieldErrors['shortDescription'],
     );
   }
 
   Widget _buildLongDescriptionField() {
     return ProductFormTextField(
-      label: 'Long Description',
-      hint:
-          'Detailed product features, materials, and care instructions for online store...',
+      label: 'Long Description (Optional)',
+      hint: 'Detailed product features, materials...',
       icon: Icons.description_outlined,
       controller: longDescriptionController,
       maxLines: 3,
+      maxLength: 2000,
       errorText: fieldErrors['longDescription'],
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.icon,
-    required this.title,
-  });
-
-  final IconData icon;
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          color: TenantAdminColors.posHomeAccentOrange,
-          size: 20,
-        ),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: TenantAdminColors.bodyText,
-          ),
-        ),
-      ],
     );
   }
 }

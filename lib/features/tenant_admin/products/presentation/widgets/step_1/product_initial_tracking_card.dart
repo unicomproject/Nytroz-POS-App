@@ -27,53 +27,85 @@ class ProductInitialTrackingCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         border: Border.all(color: TenantAdminColors.border),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= TenantAdminBreakpoints.smallTablet;
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.qr_code_scanner_outlined,
-                color: TenantAdminColors.posHomeAccentOrange,
-                size: 20,
+              const Row(
+                children: [
+                  Icon(
+                    Icons.qr_code_scanner_outlined,
+                    color: TenantAdminColors.posHomeAccentOrange,
+                    size: 20,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Initial Tracking Details',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: TenantAdminColors.bodyText,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 8),
-              Text(
-                'Initial Tracking Details',
+              const SizedBox(height: 2),
+              const Text(
+                'Tracking behaviour will be configured in the next step.',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: TenantAdminColors.bodyText,
+                  fontSize: 12,
+                  color: TenantAdminColors.mutedText,
                 ),
               ),
+              const SizedBox(height: TenantAdminSpacing.md),
+              if (isWide)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _compactField(
+                        label: 'Initial Batch Number',
+                        hint: 'e.g. BAT-2026-0001',
+                        controller: batchController,
+                        enabled: enabled,
+                      ),
+                    ),
+                    const SizedBox(width: TenantAdminSpacing.md),
+                    Expanded(child: _expiryField(context)),
+                    const SizedBox(width: TenantAdminSpacing.md),
+                    Expanded(
+                      child: _compactField(
+                        label: 'Initial Serial Number',
+                        hint: 'e.g. SN-100045',
+                        controller: serialController,
+                        enabled: enabled,
+                      ),
+                    ),
+                  ],
+                )
+              else ...[
+                _compactField(
+                  label: 'Initial Batch Number',
+                  hint: 'e.g. BAT-2026-0001',
+                  controller: batchController,
+                  enabled: enabled,
+                ),
+                const SizedBox(height: TenantAdminSpacing.sm),
+                _expiryField(context),
+                const SizedBox(height: TenantAdminSpacing.sm),
+                _compactField(
+                  label: 'Initial Serial Number',
+                  hint: 'e.g. SN-100045',
+                  controller: serialController,
+                  enabled: enabled,
+                ),
+              ],
             ],
-          ),
-          const SizedBox(height: 2),
-          const Text(
-            'Tracking behaviour will be configured in the next step.',
-            style: TextStyle(
-              fontSize: 12,
-              color: TenantAdminColors.mutedText,
-            ),
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          _compactField(
-            label: 'Initial Batch Number',
-            hint: 'e.g. BAT-2026-0001',
-            controller: batchController,
-            enabled: enabled,
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          _expiryField(context),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          _compactField(
-            label: 'Initial Serial Number',
-            hint: 'e.g. SN-100045',
-            controller: serialController,
-            enabled: enabled,
-          ),
-        ],
+          );
+        },
       ),
     );
   }

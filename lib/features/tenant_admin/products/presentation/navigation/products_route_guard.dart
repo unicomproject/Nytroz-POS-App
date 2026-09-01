@@ -18,10 +18,12 @@ class ProductsRouteGuard {
         return access.canCreateProductNav();
       case ProductsSidebarRoutes.categories:
         return access.canViewCategoriesNav();
+      case ProductsSidebarRoutes.categoriesAdd:
+        return access.canCreateCategory();
       case ProductsSidebarRoutes.brands:
         return access.canViewBrandsNav();
       case ProductsSidebarRoutes.tax:
-        return access.canAccessProductListPage(); // Using same permission as Product List for now
+        return access.canAccessProductListPage();
       case ProductsSidebarRoutes.variantTemplates:
         return access.canViewVariantTemplatesNav();
       case ProductsSidebarRoutes.popular:
@@ -29,6 +31,13 @@ class ProductsRouteGuard {
       case ProductsSidebarRoutes.import:
         return access.canImportProductsNav();
       default:
+        if (path.startsWith('${ProductsSidebarRoutes.categories}/') &&
+            path.endsWith('/edit')) {
+          return access.canUpdateCategory();
+        }
+        if (path.startsWith('${ProductsSidebarRoutes.categories}/')) {
+          return access.canFetchCategoryList();
+        }
         return false;
     }
   }

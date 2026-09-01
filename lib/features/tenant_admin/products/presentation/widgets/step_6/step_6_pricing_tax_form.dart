@@ -96,9 +96,24 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(TenantAdminSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(TenantAdminSpacing.md),
+        decoration: BoxDecoration(
+          color: TenantAdminColors.surface,
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          border: Border.all(color: TenantAdminColors.border),
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth.isFinite
+                ? constraints.maxWidth
+                : MediaQuery.sizeOf(context).width;
+            final isTwoColumn = width >= TenantAdminBreakpoints.smallTablet;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
           const Text(
             'Pricing',
             style: TextStyle(
@@ -108,46 +123,82 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
             ),
           ),
           const SizedBox(height: TenantAdminSpacing.md),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ProductFormTextField(
-                  label: 'Cost Price *',
-                  hint: '0.00',
-                  icon: Icons.attach_money,
-                  controller: _costPriceController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  errorText: state.fieldErrors['costPrice'],
-                  enabled: !state.isSubmitting && !state.isSavingDraft,
+          if (isTwoColumn) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: ProductFormTextField(
+                    label: 'Cost Price *',
+                    hint: '0.00',
+                    icon: Icons.attach_money,
+                    controller: _costPriceController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    errorText: state.fieldErrors['costPrice'],
+                    enabled: !state.isSubmitting && !state.isSavingDraft,
+                  ),
                 ),
-              ),
-              const SizedBox(width: TenantAdminSpacing.lg),
-              Expanded(
-                child: ProductFormTextField(
-                  label: 'Standard Selling Price *',
-                  hint: '0.00',
-                  icon: Icons.sell_outlined,
-                  controller: _sellingPriceController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  errorText: state.fieldErrors['standardSellingPrice'],
-                  enabled: !state.isSubmitting && !state.isSavingDraft,
+                const SizedBox(width: TenantAdminSpacing.lg),
+                Expanded(
+                  child: ProductFormTextField(
+                    label: 'Standard Selling Price *',
+                    hint: '0.00',
+                    icon: Icons.sell_outlined,
+                    controller: _sellingPriceController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    errorText: state.fieldErrors['standardSellingPrice'],
+                    enabled: !state.isSubmitting && !state.isSavingDraft,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          SizedBox(
-            width: MediaQuery.of(context).size.width > 768
-                ? (MediaQuery.of(context).size.width -
-                        TenantAdminSpacing.xl * 2 -
-                        TenantAdminSpacing.lg -
-                        320) / // assuming sidebar
-                    2
-                : double.infinity,
-            child: ProductFormTextField(
+              ],
+            ),
+            const SizedBox(height: TenantAdminSpacing.lg),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: ProductFormTextField(
+                    label: 'Discount Price',
+                    hint: '0.00',
+                    icon: Icons.local_offer_outlined,
+                    controller: _discountPriceController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    errorText: state.fieldErrors['discountPrice'],
+                    enabled: !state.isSubmitting && !state.isSavingDraft,
+                    helperText: 'Optional promotional price.',
+                  ),
+                ),
+                const SizedBox(width: TenantAdminSpacing.lg),
+                const Spacer(),
+              ],
+            ),
+          ] else ...[
+            ProductFormTextField(
+              label: 'Cost Price *',
+              hint: '0.00',
+              icon: Icons.attach_money,
+              controller: _costPriceController,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              errorText: state.fieldErrors['costPrice'],
+              enabled: !state.isSubmitting && !state.isSavingDraft,
+            ),
+            const SizedBox(height: TenantAdminSpacing.lg),
+            ProductFormTextField(
+              label: 'Standard Selling Price *',
+              hint: '0.00',
+              icon: Icons.sell_outlined,
+              controller: _sellingPriceController,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              errorText: state.fieldErrors['standardSellingPrice'],
+              enabled: !state.isSubmitting && !state.isSavingDraft,
+            ),
+            const SizedBox(height: TenantAdminSpacing.lg),
+            ProductFormTextField(
               label: 'Discount Price',
               hint: '0.00',
               icon: Icons.local_offer_outlined,
@@ -158,7 +209,7 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
               enabled: !state.isSubmitting && !state.isSavingDraft,
               helperText: 'Optional promotional price.',
             ),
-          ),
+          ],
           const SizedBox(height: TenantAdminSpacing.md),
           const Divider(color: TenantAdminColors.border),
           const SizedBox(height: TenantAdminSpacing.md),
@@ -174,11 +225,62 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
           taxListResult.when(
             data: (data) {
               final taxes = data.items.where((t) => t.status == 'ACTIVE').toList();
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: ProductOptionDropdown(
+              if (isTwoColumn) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: ProductOptionDropdown(
+                        label: 'Tax Name (Optional)',
+                        hint: 'Select Tax',
+                        icon: Icons.receipt_long_outlined,
+                        value: state.taxId,
+                        items: taxes.map((t) {
+                          return DropdownMenuItem<String>(
+                            value: t.id,
+                            child: Text('${t.taxName} (${t.taxPercentage}%)'),
+                          );
+                        }).toList(),
+                        errorText: state.fieldErrors['taxId'],
+                        enabled: !state.isSubmitting && !state.isSavingDraft,
+                        onChanged: (val) {
+                          if (val != null) {
+                            final selectedTax =
+                                taxes.firstWhere((t) => t.id == val);
+                            ref
+                                .read(addProductWizardControllerProvider.notifier)
+                                .updateTaxId(
+                                  val,
+                                  taxRate: selectedTax.taxPercentage,
+                                  taxName: selectedTax.taxName,
+                                );
+                          } else {
+                            ref
+                                .read(addProductWizardControllerProvider.notifier)
+                                .updateTaxId(null);
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: TenantAdminSpacing.lg),
+                    Expanded(
+                      child: ProductFormTextField(
+                        label: 'Tax Rate',
+                        hint: 'Auto-filled',
+                        icon: Icons.percent,
+                        controller: TextEditingController(
+                          text: state.taxRate != null ? '${state.taxRate}%' : '',
+                        ),
+                        enabled: false,
+                      ),
+                    ),
+                  ],
+                );
+              } else {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ProductOptionDropdown(
                       label: 'Tax Name (Optional)',
                       hint: 'Select Tax',
                       icon: Icons.receipt_long_outlined,
@@ -209,51 +311,19 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
                         }
                       },
                     ),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Tax Rate',
-                          style: TextStyle(
-                            color: TenantAdminColors.bodyText,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: TenantAdminSpacing.sm),
-                        TextField(
-                          controller: TextEditingController(
-                            text: state.taxRate != null
-                                ? '${state.taxRate}%'
-                                : '',
-                          ),
-                          enabled: false,
-                          decoration: InputDecoration(
-                            hintText: 'Auto-filled',
-                            prefixIcon: const Icon(Icons.percent, size: 19),
-                            filled: true,
-                            fillColor: TenantAdminColors.subtleBackground,
-                            border: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.circular(TenantAdminRadius.md),
-                              borderSide: const BorderSide(
-                                  color: TenantAdminColors.border),
-                            ),
-                            disabledBorder: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.circular(TenantAdminRadius.md),
-                              borderSide: const BorderSide(
-                                  color: TenantAdminColors.border),
-                            ),
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: TenantAdminSpacing.lg),
+                    ProductFormTextField(
+                      label: 'Tax Rate',
+                      hint: 'Auto-filled',
+                      icon: Icons.percent,
+                      controller: TextEditingController(
+                        text: state.taxRate != null ? '${state.taxRate}%' : '',
+                      ),
+                      enabled: false,
                     ),
-                  ),
-                ],
-              );
+                  ],
+                );
+              }
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, stack) => Text(
@@ -261,30 +331,156 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
               style: const TextStyle(color: TenantAdminColors.danger),
             ),
           ),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          Container(
-            padding: const EdgeInsets.all(TenantAdminSpacing.md),
-            decoration: BoxDecoration(
-              color: TenantAdminColors.subtleBackground,
-              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-              border: Border.all(color: TenantAdminColors.border),
+          if (state.taxId != null) ...[
+            const SizedBox(height: TenantAdminSpacing.lg),
+            const Text(
+              'Tax Presentation *',
+              style: TextStyle(
+                color: TenantAdminColors.bodyText,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+              ),
             ),
-            child: const Row(
+            const SizedBox(height: 6),
+            Row(
               children: [
-                Icon(Icons.lock_outline,
-                    size: 18, color: TenantAdminColors.mutedText),
-                SizedBox(width: TenantAdminSpacing.sm),
-                Text(
-                  'Pricing model is locked to Tax Exclusive.',
-                  style: TextStyle(
-                    color: TenantAdminColors.mutedText,
-                    fontSize: 13,
+                Expanded(
+                  child: InkWell(
+                    onTap: state.isSubmitting || state.isSavingDraft
+                        ? null
+                        : () => ref
+                            .read(addProductWizardControllerProvider.notifier)
+                            .updateTaxExclusive(false),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: !state.taxExclusive
+                            ? const Color(0xFFFFF5F3)
+                            : TenantAdminColors.surface,
+                        border: Border.all(
+                          color: !state.taxExclusive
+                              ? TenantAdminColors.primary
+                              : TenantAdminColors.border,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.price_check_outlined,
+                            color: !state.taxExclusive
+                                ? Colors.brown.shade700
+                                : TenantAdminColors.mutedText,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Tax Inclusive',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: !state.taxExclusive
+                                        ? Colors.brown.shade800
+                                        : TenantAdminColors.bodyText,
+                                  ),
+                                ),
+                                Text(
+                                  'Tax is already included in the selling price.',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: !state.taxExclusive
+                                        ? Colors.blueGrey.shade400
+                                        : TenantAdminColors.mutedText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (!state.taxExclusive)
+                            Icon(Icons.check_circle, color: TenantAdminColors.primary, size: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (isTwoColumn) const SizedBox(width: TenantAdminSpacing.lg) else const SizedBox(width: TenantAdminSpacing.sm),
+                Expanded(
+                  child: InkWell(
+                    onTap: state.isSubmitting || state.isSavingDraft
+                        ? null
+                        : () => ref
+                            .read(addProductWizardControllerProvider.notifier)
+                            .updateTaxExclusive(true),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: state.taxExclusive
+                            ? const Color(0xFFFFF5F3)
+                            : TenantAdminColors.surface,
+                        border: Border.all(
+                          color: state.taxExclusive
+                              ? TenantAdminColors.primary
+                              : TenantAdminColors.border,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.price_change_outlined,
+                            color: state.taxExclusive
+                                ? Colors.brown.shade700
+                                : TenantAdminColors.mutedText,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Tax Exclusive',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: state.taxExclusive
+                                        ? Colors.brown.shade800
+                                        : TenantAdminColors.bodyText,
+                                  ),
+                                ),
+                                Text(
+                                  'Tax will be added on top of the selling price.',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: state.taxExclusive
+                                        ? Colors.blueGrey.shade400
+                                        : TenantAdminColors.mutedText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (state.taxExclusive)
+                            Icon(Icons.check_circle, color: TenantAdminColors.primary, size: 20),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+          ],
+            ],
+            );
+          },
+        ),
       ),
     );
   }

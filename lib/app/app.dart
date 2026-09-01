@@ -25,6 +25,30 @@ class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _themeData = ThemeData(
+      colorScheme: TenantAdminOverlaySurfaces.withoutPeachTint(
+        ColorScheme.fromSeed(
+          seedColor: TenantAdminColors.primary,
+        ),
+      ),
+      canvasColor: TenantAdminOverlaySurfaces.color,
+      scaffoldBackgroundColor: TenantAdminColors.background,
+      useMaterial3: true,
+      popupMenuTheme: TenantAdminOverlaySurfaces.popupMenuTheme,
+      dropdownMenuTheme: TenantAdminOverlaySurfaces.dropdownMenuTheme,
+      menuTheme: TenantAdminOverlaySurfaces.menuTheme,
+      textTheme: GoogleFonts.interTextTheme().copyWith(
+        displayLarge: GoogleFonts.poppins(),
+        displayMedium: GoogleFonts.poppins(),
+        displaySmall: GoogleFonts.poppins(),
+        headlineLarge: GoogleFonts.poppins(),
+        headlineMedium: GoogleFonts.poppins(),
+        headlineSmall: GoogleFonts.poppins(),
+        titleLarge: GoogleFonts.poppins(),
+        titleMedium: GoogleFonts.poppins(),
+        titleSmall: GoogleFonts.poppins(),
+      ),
+    );
   }
 
   @override

@@ -80,25 +80,6 @@ class CustomerTableRow extends StatelessWidget {
                 ),
                 _Cell(customer.ordersDisplay, flex: 10, style: textStyle),
                 _Cell(customer.spentDisplay, flex: 12, style: textStyle),
-                SizedBox(
-                  width: 64,
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: IconButton(
-                      tooltip: 'View details',
-                      onPressed: onSelect,
-                      style: IconButton.styleFrom(
-                        backgroundColor: selected
-                            ? TenantAdminColors.posHomeAccentOrange
-                            : const Color(0xFFF1F5F9),
-                        foregroundColor:
-                            selected ? Colors.white : const Color(0xFF06235D),
-                        minimumSize: const Size(36, 36),
-                      ),
-                      icon: const Icon(Icons.visibility_outlined, size: 18),
-                    ),
-                  ),
-                ),
               ] else ...[
                 Expanded(
                   flex: 22,
