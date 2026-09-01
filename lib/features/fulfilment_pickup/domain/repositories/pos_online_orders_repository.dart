@@ -17,6 +17,7 @@ abstract interface class PosOnlineOrdersRepository {
   Future<PosStartFulfillmentResult> startFulfillment({
     required String outletId,
     required String orderId,
+    required int expectedVersion,
     CancelToken? cancelToken,
   });
 

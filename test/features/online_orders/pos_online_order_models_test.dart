@@ -137,6 +137,62 @@ void main() {
     expect(detail.lines.single.remainingQuantity, 0);
   });
 
+  test('maps the canonical OO-02 detail and concurrency fields', () {
+    final detail = PosOnlineOrderDetail.fromJson({
+      'id': 'order-2',
+      'orderNumber': 'CC-0002',
+      'status': 'NEW',
+      'statusLabel': 'New',
+      'orderStatus': 'CONFIRMED',
+      'fulfillmentStatus': 'ALLOCATED',
+      'pickupStatus': 'PENDING',
+      'salesChannel': 'E-commerce Web',
+      'customerName': 'Customer',
+      'customerClassification': null,
+      'outletId': 'outlet-1',
+      'outletName': 'Main Outlet',
+      'pickupNumber': 'PICK-2',
+      'collectionStart': '2026-08-31T12:00:00Z',
+      'currencyCode': 'LKR',
+      'totalAmount': 4200,
+      'paidAmount': 4200,
+      'balanceDue': 0,
+      'paymentStatus': 'PAID',
+      'itemCount': 1,
+      'unitCount': 3,
+      'fulfillmentOrderId': 'fulfilment-2',
+      'fulfillmentVersion': 5,
+      'serverTime': '2026-08-31T10:00:00Z',
+      'lines': [
+        {
+          'id': 'line-2',
+          'salesOrderLineId': 'sales-line-2',
+          'fulfillmentOrderLineId': 'fulfilment-line-2',
+          'lineNumber': 1,
+          'productId': 'product-2',
+          'productVariantId': 'variant-2',
+          'productName': 'Product',
+          'sku': 'SKU-2',
+          'quantity': 3,
+          'pickedQuantity': 1,
+          'packedQuantity': 0,
+          'remainingQuantity': 2,
+          'imageUrl': 'https://example.test/product-2.png',
+          'altText': 'Product image',
+        },
+      ],
+    });
+
+    expect(detail.fulfillmentVersion, 5);
+    expect(detail.fulfillmentStatus, 'ALLOCATED');
+    expect(detail.customerClassification, isNull);
+    expect(detail.itemCount, 1);
+    expect(detail.unitCount, 3);
+    expect(detail.serverTime, isNotNull);
+    expect(detail.lines.single.remainingQuantity, 2);
+    expect(detail.lines.single.imageUrl, contains('product-2'));
+  });
+
   test('parses the canonical read-only picking payload', () {
     final picking = PosPickingOrder.fromJson({
       'orderId': 'order-1',

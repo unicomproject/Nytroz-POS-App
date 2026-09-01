@@ -28,6 +28,148 @@ abstract final class OnlineOrderUi {
       : DateFormat('dd MMM, hh:mm a').format(value.toLocal());
 }
 
+enum OnlineOrderSummarySemantic {
+  newOrder,
+  preparing,
+  ready,
+  delayed,
+  collected,
+  cancelled,
+  collection,
+  paymentPaid,
+  paymentPending,
+  paymentRefunded,
+  paymentFailed,
+  paymentUnknown,
+  items,
+}
+
+extension OnlineOrderSummarySemanticColor on OnlineOrderSummarySemantic {
+  Color get color => switch (this) {
+        OnlineOrderSummarySemantic.newOrder => Colors.blue,
+        OnlineOrderSummarySemantic.preparing => Colors.orange,
+        OnlineOrderSummarySemantic.ready => Colors.green,
+        OnlineOrderSummarySemantic.delayed => Colors.red,
+        OnlineOrderSummarySemantic.collected => Colors.purple,
+        OnlineOrderSummarySemantic.cancelled => Colors.blueGrey,
+        OnlineOrderSummarySemantic.collection => Colors.green,
+        OnlineOrderSummarySemantic.paymentPaid => Colors.green,
+        OnlineOrderSummarySemantic.paymentPending => Colors.orange,
+        OnlineOrderSummarySemantic.paymentRefunded => Colors.blue,
+        OnlineOrderSummarySemantic.paymentFailed => Colors.red,
+        OnlineOrderSummarySemantic.paymentUnknown => Colors.blueGrey,
+        OnlineOrderSummarySemantic.items => Colors.blue,
+      };
+}
+
+enum OnlineOrderPaymentStatusStyle {
+  paid,
+  pending,
+  refunded,
+  failed,
+  unknown;
+
+  static OnlineOrderPaymentStatusStyle fromStatus(String status) {
+    return switch (status.trim().toUpperCase()) {
+      'PAID' => paid,
+      'UNPAID' || 'PARTIALLY_PAID' => pending,
+      'REFUNDED' || 'PARTIALLY_REFUNDED' => refunded,
+      'FAILED' => failed,
+      _ => unknown,
+    };
+  }
+
+  Color get color => switch (this) {
+        paid => Colors.green,
+        pending => Colors.orange,
+        refunded => Colors.blue,
+        failed => Colors.red,
+        unknown => Colors.blueGrey,
+      };
+
+  Color get foreground => switch (this) {
+        paid => Colors.green.shade700,
+        pending => Colors.orange.shade800,
+        refunded => Colors.blue.shade700,
+        failed => Colors.red.shade700,
+        unknown => Colors.blueGrey.shade700,
+      };
+
+  OnlineOrderSummarySemantic get summarySemantic => switch (this) {
+        paid => OnlineOrderSummarySemantic.paymentPaid,
+        pending => OnlineOrderSummarySemantic.paymentPending,
+        refunded => OnlineOrderSummarySemantic.paymentRefunded,
+        failed => OnlineOrderSummarySemantic.paymentFailed,
+        unknown => OnlineOrderSummarySemantic.paymentUnknown,
+      };
+}
+
+class OnlineOrderSummaryCard extends StatelessWidget {
+  const OnlineOrderSummaryCard({
+    required this.title,
+    required this.icon,
+    required this.semantic,
+    this.count,
+    this.content,
+    this.minHeight,
+    super.key,
+  }) : assert(count != null || content != null);
+
+  final String title;
+  final IconData icon;
+  final OnlineOrderSummarySemantic semantic;
+  final int? count;
+  final Widget? content;
+  final double? minHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = semantic.color;
+    return Container(
+      constraints: BoxConstraints(minHeight: minHeight ?? 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: .055),
+        border: Border.all(color: const Color(0xFFE1E7F0)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: color.withValues(alpha: .12),
+            foregroundColor: color,
+            child: Icon(icon, size: 21),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (content case final content?)
+                  content
+                else
+                  Text(
+                    '$count',
+                    style: const TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class OnlineOrderStatusChip extends StatelessWidget {
   const OnlineOrderStatusChip({
     required this.label,
@@ -73,17 +215,17 @@ class PaymentStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final paid = status.toUpperCase().contains('PAID');
+    final statusStyle = OnlineOrderPaymentStatusStyle.fromStatus(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: (paid ? Colors.green : Colors.orange).withValues(alpha: .1),
+        color: statusStyle.color.withValues(alpha: .1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         status,
         style: TextStyle(
-          color: paid ? Colors.green.shade700 : Colors.orange.shade800,
+          color: statusStyle.foreground,
           fontSize: 11,
           fontWeight: FontWeight.w700,
         ),

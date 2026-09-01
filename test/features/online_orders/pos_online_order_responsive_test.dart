@@ -6,7 +6,8 @@ import 'package:nytroz_pos/features/fulfilment_pickup/presentation/providers/pos
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/screens/online_order_detail_screen.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/screens/ready_for_collection_screen.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/screens/review_pack_screen.dart';
-import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/online_orders_queue_widgets.dart';
+import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/oo01_online_orders_widgets.dart';
+import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/online_order_ui.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/picking_widgets.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/start_fulfilment_dialog.dart';
 
@@ -25,25 +26,38 @@ void main() {
         await _pumpAt(
           tester,
           entry.value,
-          ResponsiveOnlineOrderList(
+          Oo01OrderResults(
             state: _queueState,
-            onSelect: (_) {},
-            onPage: (_) {},
+            onOpen: (_) {},
             onRetry: () {},
           ),
         );
 
         expect(tester.takeException(), isNull);
-        if (entry.value.width >= 1200) {
-          expect(find.byType(OnlineOrdersTable), findsOneWidget);
-        } else {
-          expect(find.byType(OnlineOrderCard), findsOneWidget);
-        }
+        expect(find.byType(Oo01OrderCard), findsOneWidget);
       });
     }
   });
 
   group('OO02 detail responsive contract', () {
+    testWidgets('target landscape uses a fixed non-scrollable body',
+        (tester) async {
+      await _pumpAt(
+        tester,
+        const Size(1280, 800),
+        const OnlineOrderDetailScreen(
+          state: PosOnlineOrdersState(selected: _detail),
+          showBackButton: true,
+        ),
+      );
+
+      expect(
+          find.byKey(const Key('oo02-fixed-landscape-body')), findsOneWidget);
+      expect(find.byType(SingleChildScrollView), findsNothing);
+      expect(find.textContaining(_longProduct), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     for (final entry in viewportCases.entries) {
       testWidgets('${entry.key} keeps long authoritative content reachable',
           (tester) async {
@@ -58,25 +72,38 @@ void main() {
 
         expect(tester.takeException(), isNull);
         expect(find.textContaining(_longCustomer), findsOneWidget);
-        expect(find.text('Start Fulfilment'), findsOneWidget);
+        // The default test session has no start permission. The action must be
+        // completely absent so the header naturally reflows.
+        expect(find.byKey(const Key('oo02-start-fulfilment')), findsNothing);
+        expect(find.byKey(const Key('oo02-order-icon')), findsOneWidget);
       });
     }
   });
 
   group('OO03 start fulfilment confirmation', () {
-    testWidgets('desktop uses a constrained dialog', (tester) async {
-      await _pumpDialogLauncher(tester, const Size(1440, 900));
-      expect(find.byType(Dialog), findsOneWidget);
-      expect(find.byType(BottomSheet), findsNothing);
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('small phone uses a scroll-safe bottom sheet', (tester) async {
-      await _pumpDialogLauncher(tester, const Size(390, 640));
-      expect(find.byType(BottomSheet), findsOneWidget);
-      expect(find.byType(SingleChildScrollView), findsWidgets);
-      expect(tester.takeException(), isNull);
-    });
+    for (final entry in viewportCases.entries) {
+      testWidgets('${entry.key} keeps summary and actions reachable',
+          (tester) async {
+        await _pumpDialogLauncher(tester, entry.value);
+        if (entry.value.width < OnlineOrderUi.phoneBreakpoint) {
+          expect(find.byType(BottomSheet), findsOneWidget);
+        } else {
+          expect(find.byType(Dialog), findsOneWidget);
+        }
+        expect(find.byType(SingleChildScrollView), findsNothing);
+        expect(find.byKey(const Key('oo03-dialog-icon')), findsOneWidget);
+        expect(find.byKey(const Key('oo03-summary-card')), findsOneWidget);
+        expect(
+          find.text('You are about to start picking this order.\n'
+              'This order will be assigned to you.'),
+          findsOneWidget,
+        );
+        expect(find.text('Yes, Start Fulfilment'), findsOneWidget);
+        expect(find.text('Cancel'), findsOneWidget);
+        expect(find.textContaining(_longCustomer), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    }
   });
 
   group('OO04 picking responsive contract', () {
@@ -158,7 +185,11 @@ Future<void> _pumpDialogLauncher(WidgetTester tester, Size size) async {
     size,
     Builder(
       builder: (context) => TextButton(
-        onPressed: () => StartFulfilmentDialog.show(context, _detail),
+        onPressed: () => StartFulfilmentDialog.show(
+          context,
+          _detail,
+          onConfirm: () async => true,
+        ),
         child: const Text('Open'),
       ),
     ),

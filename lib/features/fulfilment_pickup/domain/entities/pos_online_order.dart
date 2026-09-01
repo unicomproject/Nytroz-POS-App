@@ -201,6 +201,13 @@ class PosOnlineOrderLine {
     this.sku,
     this.barcode,
     this.lineStatus,
+    this.salesOrderLineId,
+    this.fulfillmentOrderLineId,
+    this.productId,
+    this.productVariantId,
+    this.imageUrl,
+    this.altText,
+    this.authoritativeRemainingQuantity,
   });
 
   final String id;
@@ -210,6 +217,13 @@ class PosOnlineOrderLine {
   final String? sku;
   final String? barcode;
   final String? lineStatus;
+  final String? salesOrderLineId;
+  final String? fulfillmentOrderLineId;
+  final String? productId;
+  final String? productVariantId;
+  final String? imageUrl;
+  final String? altText;
+  final double? authoritativeRemainingQuantity;
   final double quantity;
   final double unitPrice;
   final double lineTotal;
@@ -217,6 +231,7 @@ class PosOnlineOrderLine {
   final double packedQuantity;
 
   double get remainingQuantity =>
+      authoritativeRemainingQuantity ??
       (quantity - pickedQuantity).clamp(0, quantity).toDouble();
 
   factory PosOnlineOrderLine.fromJson(Map<String, dynamic> json) =>
@@ -228,6 +243,15 @@ class PosOnlineOrderLine {
         sku: _optionalText(json['sku']),
         barcode: _optionalText(json['barcode']),
         lineStatus: _optionalText(json['lineStatus']),
+        salesOrderLineId: _optionalText(json['salesOrderLineId']),
+        fulfillmentOrderLineId: _optionalText(json['fulfillmentOrderLineId']),
+        productId: _optionalText(json['productId']),
+        productVariantId: _optionalText(json['productVariantId']),
+        imageUrl: _optionalText(json['imageUrl']),
+        altText: _optionalText(json['altText']),
+        authoritativeRemainingQuantity: json['remainingQuantity'] == null
+            ? null
+            : _decimal(json['remainingQuantity']),
         quantity: _decimal(json['quantity']),
         unitPrice: _decimal(json['unitPrice']),
         lineTotal: _decimal(json['lineTotal']),
@@ -258,6 +282,16 @@ class PosOnlineOrderDetail {
     this.assignedToTenantUserId,
     this.placedAt,
     this.updatedAt,
+    this.orderStatus,
+    this.fulfillmentStatus,
+    this.pickupStatus,
+    this.salesChannel,
+    this.customerClassification,
+    this.pickupNumber,
+    this.fulfillmentVersion,
+    this.serverTime,
+    this.backendItemCount,
+    this.backendUnitCount,
   });
 
   final PosOnlineOrder order;
@@ -279,10 +313,21 @@ class PosOnlineOrderDetail {
   final String? assignedToTenantUserId;
   final DateTime? placedAt;
   final DateTime? updatedAt;
+  final String? orderStatus;
+  final String? fulfillmentStatus;
+  final String? pickupStatus;
+  final String? salesChannel;
+  final String? customerClassification;
+  final String? pickupNumber;
+  final int? fulfillmentVersion;
+  final DateTime? serverTime;
+  final int? backendItemCount;
+  final double? backendUnitCount;
   final List<PosOnlineOrderLine> lines;
 
-  int get itemCount => lines.length;
+  int get itemCount => backendItemCount ?? lines.length;
   double get unitCount =>
+      backendUnitCount ??
       lines.fold<double>(0, (total, line) => total + line.quantity);
 
   factory PosOnlineOrderDetail.fromJson(Map<String, dynamic> json) {
@@ -331,6 +376,20 @@ class PosOnlineOrderDetail {
       assignedToTenantUserId: _optionalText(json['assignedToTenantUserId']),
       placedAt: _date(json['placedAt']),
       updatedAt: _date(json['updatedAt']),
+      orderStatus: _optionalText(json['orderStatus']),
+      fulfillmentStatus: _optionalText(json['fulfillmentStatus']),
+      pickupStatus: _optionalText(json['pickupStatus']),
+      salesChannel: _optionalText(json['salesChannel']),
+      customerClassification: _optionalText(json['customerClassification']),
+      pickupNumber: _optionalText(json['pickupNumber']),
+      fulfillmentVersion: json['fulfillmentVersion'] == null
+          ? null
+          : _integer(json['fulfillmentVersion']),
+      serverTime: _date(json['serverTime']),
+      backendItemCount:
+          json['itemCount'] == null ? null : _integer(json['itemCount']),
+      backendUnitCount:
+          json['unitCount'] == null ? null : _decimal(json['unitCount']),
       lines: lines,
     );
   }
@@ -382,6 +441,7 @@ class PosStartFulfillmentResult {
     this.fulfillmentNumber,
     this.assignedToTenantUserId,
     this.startedAt,
+    this.fulfillmentVersion,
   });
 
   final String orderId;
@@ -391,16 +451,20 @@ class PosStartFulfillmentResult {
   final String? fulfillmentNumber;
   final String? assignedToTenantUserId;
   final DateTime? startedAt;
+  final int? fulfillmentVersion;
 
   factory PosStartFulfillmentResult.fromJson(Map<String, dynamic> json) =>
       PosStartFulfillmentResult(
         orderId: _text(json['orderId']),
         fulfillmentOrderId: _text(json['fulfillmentOrderId']),
-        status: _text(json['status']),
+        status: _text(json['fulfillmentStatus'] ?? json['status']),
         alreadyStarted: json['alreadyStarted'] == true,
         fulfillmentNumber: _optionalText(json['fulfillmentNumber']),
         assignedToTenantUserId: _optionalText(json['assignedToTenantUserId']),
         startedAt: _date(json['startedAt']),
+        fulfillmentVersion: json['fulfillmentVersion'] == null
+            ? null
+            : _integer(json['fulfillmentVersion']),
       );
 }
 

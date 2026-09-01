@@ -20,6 +20,9 @@ final posOnlineOrdersRepositoryProvider = Provider<PosOnlineOrdersRepository>(
   ),
 );
 
+final posOnlineOrdersOutletIdProvider = Provider<String?>((ref) =>
+    ref.watch(deviceActivationProvider).deviceContext?.outletId.trim());
+
 class PosOnlineOrdersState {
   const PosOnlineOrdersState({
     this.items = const [],
@@ -132,8 +135,7 @@ class PosOnlineOrdersController extends Notifier<PosOnlineOrdersState> {
   }
 
   Future<void> load({bool resetPage = false}) async {
-    final outletId =
-        ref.read(deviceActivationProvider).deviceContext?.outletId.trim();
+    final outletId = ref.read(posOnlineOrdersOutletIdProvider);
     if (outletId == null || outletId.isEmpty) {
       state = state.copyWith(errorMessage: 'Assigned outlet is unavailable.');
       return;
@@ -178,8 +180,7 @@ class PosOnlineOrdersController extends Notifier<PosOnlineOrdersState> {
   }
 
   Future<void> select(String orderId) async {
-    final outletId =
-        ref.read(deviceActivationProvider).deviceContext?.outletId.trim();
+    final outletId = ref.read(posOnlineOrdersOutletIdProvider);
     if (outletId == null || outletId.isEmpty) return;
     _detailToken?.cancel('superseded');
     _detailToken = CancelToken();
@@ -206,22 +207,44 @@ class PosOnlineOrdersController extends Notifier<PosOnlineOrdersState> {
   }
 
   Future<PosStartFulfillmentResult?> startFulfillment(String orderId) async {
-    final outletId =
-        ref.read(deviceActivationProvider).deviceContext?.outletId.trim();
+    if (state.isStartingFulfillment) return null;
+    final outletId = ref.read(posOnlineOrdersOutletIdProvider);
     if (outletId == null || outletId.isEmpty) return null;
+    final expectedVersion = state.selected?.order.id == orderId
+        ? state.selected?.fulfillmentVersion
+        : null;
+    if (expectedVersion == null || expectedVersion < 1) {
+      state = state.copyWith(
+        detailErrorMessage:
+            'The latest fulfilment version is unavailable. Refresh and try again.',
+      );
+      return null;
+    }
     state = state.copyWith(
       isStartingFulfillment: true,
       clearDetailError: true,
     );
     try {
-      final result = await ref
-          .read(posOnlineOrdersRepositoryProvider)
-          .startFulfillment(outletId: outletId, orderId: orderId);
+      final result =
+          await ref.read(posOnlineOrdersRepositoryProvider).startFulfillment(
+                outletId: outletId,
+                orderId: orderId,
+                expectedVersion: expectedVersion,
+              );
       state = state.copyWith(isStartingFulfillment: false);
       await select(orderId);
       await load();
       return result;
     } on DioException catch (error) {
+      if (error.response?.statusCode == 409) {
+        state = state.copyWith(isStartingFulfillment: false);
+        await select(orderId);
+        state = state.copyWith(
+          detailErrorMessage:
+              'This order was updated by another user. The latest order state has been refreshed.',
+        );
+        return null;
+      }
       state = state.copyWith(
         isStartingFulfillment: false,
         detailErrorMessage: _message(error),
@@ -268,7 +291,8 @@ class PosOnlineOrdersController extends Notifier<PosOnlineOrdersState> {
 
 String onlineOrderErrorMessage(DioException error) {
   final data = error.response?.data;
-  final code = data is Map ? data['code']?.toString() : null;
+  final code =
+      data is Map ? (data['errorCode'] ?? data['code'])?.toString() : null;
   return switch (code) {
     'online_orders.permission_denied' =>
       'You do not have permission to perform this online-order action.',
@@ -279,7 +303,10 @@ String onlineOrderErrorMessage(DioException error) {
     'online_orders.not_found' ||
     'online_orders.picking_not_found' =>
       'This online order is no longer available. Refresh the queue.',
-    'online_orders.fulfilment_conflict' =>
+    'online_orders.fulfilment_conflict' ||
+    'online_orders.concurrency_conflict' ||
+    'online_orders.invalid_state' ||
+    'online_orders.invalid_reservation' =>
       'This order changed or is being handled by another cashier. Refresh and try again.',
     'online_orders.invalid_pagination' ||
     'online_orders.invalid_order_id' ||
