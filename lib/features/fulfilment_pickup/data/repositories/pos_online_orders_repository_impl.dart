@@ -36,9 +36,13 @@ class PosOnlineOrdersRepositoryImpl implements PosOnlineOrdersRepository {
   Future<PosStartFulfillmentResult> startFulfillment(
           {required String outletId,
           required String orderId,
+          required int expectedVersion,
           CancelToken? cancelToken}) =>
       _remote.startFulfillment(
-          outletId: outletId, orderId: orderId, cancelToken: cancelToken);
+          outletId: outletId,
+          orderId: orderId,
+          expectedVersion: expectedVersion,
+          cancelToken: cancelToken);
 
   @override
   Future<PosFulfillmentCommandResult> pickLine(

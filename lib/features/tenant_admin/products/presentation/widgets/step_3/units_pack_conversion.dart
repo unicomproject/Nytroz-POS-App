@@ -99,62 +99,62 @@ class _UnitsPackConversionFormState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-        // Header
-        const Text(
-          'Units & Pack Conversion',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: TenantAdminColors.bodyText,
-          ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.xs),
-        const Text(
-          'Configure the unit of measure used to manage this product.',
-          style: TextStyle(
-            fontSize: 14,
-            color: TenantAdminColors.mutedText,
-          ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.md),
-
-        // Unit Model Card Selector
-        Row(
-          children: [
-            Expanded(
-              child: _buildUnitModelCard(
-                title: 'Single Unit Only',
-                description:
-                    'Use one unit for purchase, selling and stock counting.',
-                icon: Icons.inventory_2_outlined,
-                isSelected: state.unitModel == 'SINGLE_UNIT',
-                onTap: () => controller.selectUnitModel('SINGLE_UNIT'),
-              ),
+          // Header
+          const Text(
+            'Units & Pack Conversion',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: TenantAdminColors.bodyText,
             ),
-            const SizedBox(width: TenantAdminSpacing.md),
-            Expanded(
-              child: _buildUnitModelCard(
-                title: 'Multiple Units & Pack Conversion',
-                description:
-                    'Use different units and set conversion between them.',
-                icon: Icons.layers_outlined,
-                isSelected: state.unitModel == 'MULTIPLE_UNITS',
-                onTap: () => controller.selectUnitModel('MULTIPLE_UNITS'),
-              ),
+          ),
+          const SizedBox(height: TenantAdminSpacing.xs),
+          const Text(
+            'Configure the unit of measure used to manage this product.',
+            style: TextStyle(
+              fontSize: 14,
+              color: TenantAdminColors.mutedText,
             ),
-          ],
-        ),
-        const SizedBox(height: TenantAdminSpacing.md),
+          ),
+          const SizedBox(height: TenantAdminSpacing.md),
 
-        // Form Section (State A or State B)
-        if (state.unitModel == 'SINGLE_UNIT')
-          _buildSingleUnitSection(state, controller, unitOptions)
-        else
-          _buildMultipleUnitsSection(state, controller, unitOptions),
-      ],
-    ),
-  );
-}
+          // Unit Model Card Selector
+          Row(
+            children: [
+              Expanded(
+                child: _buildUnitModelCard(
+                  title: 'Single Unit Only',
+                  description:
+                      'Use one unit for purchase, selling and stock counting.',
+                  icon: Icons.inventory_2_outlined,
+                  isSelected: state.unitModel == 'SINGLE_UNIT',
+                  onTap: () => controller.selectUnitModel('SINGLE_UNIT'),
+                ),
+              ),
+              const SizedBox(width: TenantAdminSpacing.md),
+              Expanded(
+                child: _buildUnitModelCard(
+                  title: 'Multiple Units & Pack Conversion',
+                  description:
+                      'Use different units and set conversion between them.',
+                  icon: Icons.layers_outlined,
+                  isSelected: state.unitModel == 'MULTIPLE_UNITS',
+                  onTap: () => controller.selectUnitModel('MULTIPLE_UNITS'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: TenantAdminSpacing.md),
+
+          // Form Section (State A or State B)
+          if (state.unitModel == 'SINGLE_UNIT')
+            _buildSingleUnitSection(state, controller, unitOptions)
+          else
+            _buildMultipleUnitsSection(state, controller, unitOptions),
+        ],
+      ),
+    );
+  }
 
   Widget _buildUnitModelCard({
     required String title,
@@ -334,7 +334,6 @@ class _UnitsPackConversionFormState
     final baseUnit = _findUnit(state.baseUnitId);
     final purchaseUnit = _findUnit(state.purchaseUnitId);
     final outerPackUnit = _findUnit(state.outerPackUnitId);
-    final sellingUnit = _findUnit(state.sellingUnitId);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -782,7 +781,8 @@ class _UnitsPackConversionFormState
                           title: 'Whole numbers only',
                           subtitle: 'e.g. 1, 2, 3, 4...',
                           isSelected: !state.allowDecimalQuantity,
-                          onTap: () => controller.setAllowDecimalQuantity(false),
+                          onTap: () =>
+                              controller.setAllowDecimalQuantity(false),
                         ),
                       ),
                       const SizedBox(width: TenantAdminSpacing.md),
@@ -841,7 +841,7 @@ class _UnitsPackConversionFormState
     required bool isSelected,
     required VoidCallback? onTap,
   }) {
-    final activeColor = TenantAdminColors.posHomeAccentOrange;
+    const activeColor = TenantAdminColors.posHomeAccentOrange;
     final isDisabled = onTap == null;
 
     return InkWell(
@@ -865,7 +865,7 @@ class _UnitsPackConversionFormState
             Radio<bool>(
               value: true,
               groupValue: isSelected ? true : false,
-              onChanged: isDisabled ? null : (_) => onTap?.call(),
+              onChanged: isDisabled ? null : (_) => onTap(),
               activeColor: activeColor,
               visualDensity: const VisualDensity(
                 horizontal: VisualDensity.minimumDensity,
@@ -885,7 +885,9 @@ class _UnitsPackConversionFormState
                       fontWeight: FontWeight.w600,
                       color: isDisabled
                           ? TenantAdminColors.mutedText
-                          : (isSelected ? activeColor : TenantAdminColors.bodyText),
+                          : (isSelected
+                              ? activeColor
+                              : TenantAdminColors.bodyText),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -990,5 +992,4 @@ class _UnitsPackConversionFormState
       ),
     );
   }
-
 }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/access/pos_access_codes.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
+import '../../../../shared/widgets/pos_action_buttons.dart';
 import '../../domain/entities/pos_online_order.dart';
 import '../providers/pos_online_orders_provider.dart';
 import '../widgets/online_order_detail_widgets.dart';
@@ -11,175 +12,210 @@ import '../widgets/online_order_ui.dart';
 import '../widgets/start_fulfilment_dialog.dart';
 
 class OnlineOrderDetailScreen extends ConsumerWidget {
-  const OnlineOrderDetailScreen({
-    required this.state,
-    this.showBackButton = false,
-    super.key,
-  });
-
+  const OnlineOrderDetailScreen(
+      {required this.state, this.showBackButton = false, super.key});
   final PosOnlineOrdersState state;
   final bool showBackButton;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (state.isLoadingDetail) {
-      return const Card(child: Center(child: CircularProgressIndicator()));
-    }
-    if (state.detailErrorMessage != null) {
-      return Card(
-        child: OnlineOrderScreenState(
-          message: state.detailErrorMessage!,
-          icon: Icons.error_outline,
-        ),
-      );
+    if (state.isLoadingDetail && state.selected == null) {
+      return const Center(child: CircularProgressIndicator());
     }
     final detail = state.selected;
     if (detail == null) {
-      return const Card(
-        child: OnlineOrderScreenState(
-          message: 'Select an order to view details.',
-          icon: Icons.touch_app_outlined,
-        ),
+      return OnlineOrderScreenState(
+        message:
+            state.detailErrorMessage ?? 'This online order is unavailable.',
+        icon: Icons.error_outline,
+        onRetry: () {
+          final id = GoRouterState.of(context).pathParameters['orderId'];
+          if (id != null) ref.read(posOnlineOrdersProvider.notifier).select(id);
+        },
       );
     }
-    return Card(
-      margin: EdgeInsets.zero,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < OnlineOrderUi.phoneBreakpoint;
-          final header = <Widget>[
-            if (showBackButton)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: IconButton.outlined(
-                  onPressed: () => Navigator.maybePop(context),
-                  icon: const Icon(Icons.arrow_back),
-                ),
-              ),
-            OnlineOrderHero(detail: detail),
-            const SizedBox(height: 4),
-            Text('${detail.order.customerName} • '
-                '${detail.customerPhone ?? 'No phone'}'),
-            const SizedBox(height: 12),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final cards = [
-                  OrderCollectionSummaryCard(detail: detail),
-                  OrderPaymentSummaryCard(detail: detail),
-                  OrderItemsSummaryCard(detail: detail),
-                ];
-                if (constraints.maxWidth >= 720) {
-                  return Row(
-                    children: [
-                      for (var i = 0; i < cards.length; i++) ...[
-                        Expanded(child: cards[i]),
-                        if (i < cards.length - 1) const SizedBox(width: 8),
-                      ],
-                    ],
-                  );
-                }
-                return Column(
-                  children: cards
-                      .map((card) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: card,
-                          ))
-                      .toList(growable: false),
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-          ];
-          final footer = <Widget>[
-            const Divider(),
-            OrderTotals(detail: detail),
-            if (_isStartEligible(detail)) ...[
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: OnlineOrderUi.accent,
-                  minimumSize: const Size.fromHeight(48),
-                ),
-                onPressed: state.isStartingFulfillment ||
-                        ref.watch(authSessionProvider)?.hasPermission(
-                                PosPermissionCodes
-                                    .startOnlineOrderFulfillment) !=
-                            true
-                    ? null
-                    : () => _start(context, ref, detail),
-                icon: state.isStartingFulfillment
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.play_arrow),
-                label: const Text('Start Fulfilment'),
-              ),
-              if (ref.watch(authSessionProvider)?.hasPermission(
-                      PosPermissionCodes.startOnlineOrderFulfillment) !=
-                  true)
-                const Padding(
-                  padding: EdgeInsets.only(top: 6),
-                  child: Text(
-                    'Start fulfilment permission is required.',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-            ],
-          ];
+    final canStart = ref.watch(authSessionProvider)?.hasPermission(
+              PosPermissionCodes.startOnlineOrderFulfillment,
+            ) ==
+        true;
+    final lifecycle =
+        (detail.fulfillmentStatus ?? detail.order.status).trim().toUpperCase();
+    final startEligible =
+        const {'PENDING', 'ALLOCATED', 'ACCEPTED'}.contains(lifecycle);
+    final alreadyPicking = lifecycle == 'PICKING';
 
-          if (compact) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ...header,
-                  const Text('Order Items',
-                      style: TextStyle(fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 8),
-                  OnlineOrderItemList(detail: detail, shrinkWrap: true),
-                  ...footer,
+    return LayoutBuilder(builder: (context, constraints) {
+      final compact = constraints.maxWidth < OnlineOrderUi.phoneBreakpoint;
+      final stackedHeader = constraints.maxWidth < 1100;
+      // The POS shell consumes a material portion of the physical tablet
+      // height. Available width, rather than the reduced body height, is the
+      // reliable authority for the fixed landscape composition.
+      final fixedLandscape = !stackedHeader;
+      final content = Padding(
+        padding: EdgeInsets.fromLTRB(
+          compact
+              ? 16
+              : fixedLandscape
+                  ? 24
+                  : 30,
+          compact
+              ? 16
+              : fixedLandscape
+                  ? 6
+                  : 18,
+          compact
+              ? 16
+              : fixedLandscape
+                  ? 24
+                  : 30,
+          compact
+              ? 20
+              : fixedLandscape
+                  ? 8
+                  : 30,
+        ),
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (showBackButton)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('oo02-back-to-orders'),
+                onPressed: () => context.go('/pos/online-orders'),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Back to Orders'),
+                style: fixedLandscape
+                    ? TextButton.styleFrom(
+                        minimumSize: const Size(0, 32),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      )
+                    : null,
+              ),
+            ),
+          SizedBox(height: fixedLandscape ? 2 : 6),
+          OrderDetailHeader(
+            detail: detail,
+            compact: stackedHeader,
+            dense: fixedLandscape,
+            action: _action(context, ref, detail,
+                canStart: canStart,
+                startEligible: startEligible,
+                alreadyPicking: alreadyPicking,
+                dense: fixedLandscape),
+          ),
+          if (state.detailErrorMessage != null) ...[
+            const SizedBox(height: 12),
+            Semantics(
+              liveRegion: true,
+              label: state.detailErrorMessage,
+              child: MaterialBanner(
+                content: Text(state.detailErrorMessage!),
+                actions: [
+                  TextButton(
+                    onPressed: () => ref
+                        .read(posOnlineOrdersProvider.notifier)
+                        .select(detail.order.id),
+                    child: const Text('Refresh'),
+                  )
                 ],
               ),
-            );
-          }
-
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ...header,
-                const Text('Order Items',
-                    style: TextStyle(fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                Expanded(child: OnlineOrderItemList(detail: detail)),
-                ...footer,
-              ],
             ),
-          );
-        },
+          ],
+          SizedBox(height: fixedLandscape ? 8 : 22),
+          OrderSummaryCards(detail: detail, dense: fixedLandscape),
+          SizedBox(height: fixedLandscape ? 8 : 20),
+          if (fixedLandscape)
+            Expanded(
+              child: OrderItemsSection(detail: detail, dense: true),
+            )
+          else
+            OrderItemsSection(detail: detail),
+        ]),
+      );
+      return ColoredBox(
+        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        child: fixedLandscape
+            ? KeyedSubtree(
+                key: const Key('oo02-fixed-landscape-body'),
+                child: content,
+              )
+            : SingleChildScrollView(child: content),
+      );
+    });
+  }
+
+  Widget? _action(
+      BuildContext context, WidgetRef ref, PosOnlineOrderDetail detail,
+      {required bool canStart,
+      required bool startEligible,
+      required bool alreadyPicking,
+      required bool dense}) {
+    if (alreadyPicking) {
+      return FilledButton.icon(
+        onPressed: () =>
+            context.go('/pos/online-orders/${detail.order.id}/picking'),
+        icon: const Icon(Icons.inventory_2_outlined),
+        label: const Text('Continue Picking'),
+      );
+    }
+    if (!canStart || !startEligible) return null;
+    return Semantics(
+      button: true,
+      label: 'Start Fulfilment',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PosPrimaryActionButton(
+            key: const Key('oo02-start-fulfilment'),
+            label: 'START\nFULFILMENT',
+            semanticLabel: 'Start Fulfilment',
+            onPressed: () => _start(context, ref, detail),
+            isLoading: state.isStartingFulfillment,
+            fullWidth: true,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            minimumHeight: dense ? 64 : 92,
+            horizontalPadding: dense ? 22 : 26,
+            verticalPadding: dense ? 10 : 18,
+            borderRadius: 14,
+            leadingIcon: Icons.inventory_2_outlined,
+            iconSize: dense ? 26 : 34,
+            maxLabelLines: 2,
+            labelTextAlign: TextAlign.left,
+            textStyle: TextStyle(
+              fontSize: dense ? 15 : 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: dense ? 5 : 10),
+          Text(
+            'Accept and start picking this order',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+        ],
       ),
     );
   }
 
-  bool _isStartEligible(PosOnlineOrderDetail detail) =>
-      detail.order.status == 'PENDING_CONFIRMATION' ||
-      detail.order.status == 'ACCEPTED';
-
   Future<void> _start(
-    BuildContext context,
-    WidgetRef ref,
-    PosOnlineOrderDetail detail,
-  ) async {
-    final confirmed = await StartFulfilmentDialog.show(context, detail);
-    if (!confirmed || !context.mounted) return;
-    final result = await ref
-        .read(posOnlineOrdersProvider.notifier)
-        .startFulfillment(detail.order.id);
+      BuildContext context, WidgetRef ref, PosOnlineOrderDetail detail) async {
+    PosStartFulfillmentResult? result;
+    final started = await StartFulfilmentDialog.show(
+      context,
+      detail,
+      onConfirm: () async {
+        result = await ref
+            .read(posOnlineOrdersProvider.notifier)
+            .startFulfillment(detail.order.id);
+        return result != null;
+      },
+    );
+    if (!started || !context.mounted) return;
     if (result != null && context.mounted) {
-      context.go('/pos/online-orders/${detail.order.id}/picking');
+      context.go('/pos/online-orders/${result!.orderId}/picking');
     }
   }
 }

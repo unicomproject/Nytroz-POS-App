@@ -67,22 +67,42 @@ class Oo01SummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cards = [
-      ('New', summary.newOrders, Icons.shopping_bag_outlined, Colors.blue),
+      (
+        'New',
+        summary.newOrders,
+        Icons.shopping_bag_outlined,
+        OnlineOrderSummarySemantic.newOrder
+      ),
       (
         'Preparing',
         summary.preparing,
         Icons.inventory_2_outlined,
-        Colors.orange
+        OnlineOrderSummarySemantic.preparing
       ),
-      ('Ready', summary.ready, Icons.shopping_bag_outlined, Colors.green),
-      ('Delayed', summary.overdue, Icons.schedule, Colors.red),
+      (
+        'Ready',
+        summary.ready,
+        Icons.shopping_bag_outlined,
+        OnlineOrderSummarySemantic.ready
+      ),
+      (
+        'Delayed',
+        summary.overdue,
+        Icons.schedule,
+        OnlineOrderSummarySemantic.delayed
+      ),
       (
         'Collected',
         summary.collected,
         Icons.check_circle_outline,
-        Colors.purple
+        OnlineOrderSummarySemantic.collected
       ),
-      ('Cancelled', summary.cancelled, Icons.cancel_outlined, Colors.blueGrey),
+      (
+        'Cancelled',
+        summary.cancelled,
+        Icons.cancel_outlined,
+        OnlineOrderSummarySemantic.cancelled
+      ),
     ];
     return LayoutBuilder(builder: (context, constraints) {
       final columns = constraints.maxWidth >= 1000
@@ -98,63 +118,17 @@ class Oo01SummaryRow extends StatelessWidget {
           for (final card in cards)
             SizedBox(
               width: width,
-              child: _SummaryCard(
-                label: card.$1,
+              child: OnlineOrderSummaryCard(
+                title: card.$1,
                 count: card.$2,
                 icon: card.$3,
-                color: card.$4,
+                semantic: card.$4,
               ),
             ),
         ],
       );
     });
   }
-}
-
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.label,
-    required this.count,
-    required this.icon,
-    required this.color,
-  });
-  final String label;
-  final int count;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: .055),
-          border: Border.all(color: const Color(0xFFE1E7F0)),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(children: [
-          CircleAvatar(
-            backgroundColor: color.withValues(alpha: .12),
-            foregroundColor: color,
-            child: Icon(icon, size: 21),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(
-                  '$count',
-                  style: const TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ]),
-      );
 }
 
 class Oo01OrderResults extends StatelessWidget {

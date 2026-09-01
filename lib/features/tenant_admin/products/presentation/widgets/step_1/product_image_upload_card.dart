@@ -5,8 +5,6 @@ import 'package:nytroz_pos/core/network/media_url_resolver.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/staged_product_image.dart';
 
-import '../product_images/product_image_guidelines_card.dart';
-
 class ProductImageUploadCard extends ConsumerStatefulWidget {
   const ProductImageUploadCard({
     super.key,
@@ -271,7 +269,9 @@ class _ProductImageUploadCardState
                                       gaplessPlayback: true,
                                       loadingBuilder:
                                           (context, child, loadingProgress) {
-                                        if (loadingProgress == null) return child;
+                                        if (loadingProgress == null) {
+                                          return child;
+                                        }
                                         return Container(
                                           color: const Color(0xFFF1F5F9),
                                           child: const Center(
@@ -281,7 +281,8 @@ class _ProductImageUploadCardState
                                           ),
                                         );
                                       },
-                                      errorBuilder: (_, __, ___) => const Center(
+                                      errorBuilder: (_, __, ___) =>
+                                          const Center(
                                         child: Icon(Icons.broken_image_outlined,
                                             color: Colors.grey),
                                       ),
@@ -333,7 +334,9 @@ class _ProductImageUploadCardState
                             itemBuilder: (context) => [
                               const PopupMenuItem(
                                 value: 'delete',
-                                child: Text('Delete Image', style: TextStyle(color: TenantAdminColors.danger)),
+                                child: Text('Delete Image',
+                                    style: TextStyle(
+                                        color: TenantAdminColors.danger)),
                               ),
                             ],
                           ),

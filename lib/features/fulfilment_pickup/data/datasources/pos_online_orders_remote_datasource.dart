@@ -47,11 +47,13 @@ class PosOnlineOrdersRemoteDatasource {
   Future<PosStartFulfillmentResult> startFulfillment({
     required String outletId,
     required String orderId,
+    required int expectedVersion,
     CancelToken? cancelToken,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       ApiEndpoints.posOnlineOrderStartFulfillment(orderId),
       queryParameters: {'outletId': outletId},
+      data: {'expectedVersion': expectedVersion},
       cancelToken: cancelToken,
     );
     return PosStartFulfillmentResult.fromJson(_data(response.data));

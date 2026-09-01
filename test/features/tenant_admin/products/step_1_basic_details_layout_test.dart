@@ -70,7 +70,7 @@ void main() {
 
     await tester.pumpWidget(buildPage(const Size(1024, 768)));
 
-    expect(find.text('Product Information'), findsOneWidget);
+    expect(find.text('Product Code *'), findsOneWidget);
     expect(find.text('Product Images'), findsOneWidget);
     expect(find.text('Initial Tracking Details'), findsOneWidget);
     expect(find.text('Channel Availability'), findsOneWidget);
