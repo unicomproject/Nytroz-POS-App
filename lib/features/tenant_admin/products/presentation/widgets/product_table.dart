@@ -28,7 +28,7 @@ class ProductTable extends StatefulWidget {
   static const double _imageSize = 80;
   static const double _headingHeight = 44;
   static const int _visibleRows = 4;
-  static const int pageSize = 4;
+  static const int pageSize = TenantAdminContentTokens.defaultListPageSize;
 
   @override
   State<ProductTable> createState() => _ProductTableState();
