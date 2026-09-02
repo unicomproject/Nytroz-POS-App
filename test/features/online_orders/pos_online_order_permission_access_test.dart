@@ -12,6 +12,8 @@ import 'package:nytroz_pos/features/auth/presentation/providers/session_provider
 import 'package:nytroz_pos/features/fulfilment_pickup/domain/entities/pos_online_order.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/providers/pos_online_orders_provider.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/screens/online_order_detail_screen.dart';
+import 'package:nytroz_pos/features/fulfilment_pickup/presentation/screens/pos_online_order_picking_screen.dart';
+import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/picking_widgets.dart';
 
 void main() {
   group('online order permission access', () {
@@ -137,7 +139,147 @@ void main() {
       expect(find.byKey(const Key('oo02-start-fulfilment')), findsNothing);
     });
   }
+
+  testWidgets('OO04 fixed landscape keeps permission actions in-view',
+      (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1180, 820);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(_pickingHarness(
+      permissions: const [
+        PosPermissionCodes.pickOnlineOrderItem,
+        PosPermissionCodes.scanOnlineOrderItem,
+        PosPermissionCodes.addOnlineOrderPickingNote,
+      ],
+      child: const SizedBox(
+        width: 420,
+        height: 430,
+        child: PickingOrderSidebar(order: _picking, orderId: 'order-1'),
+      ),
+    ));
+
+    expect(find.byType(SingleChildScrollView), findsNothing);
+    expect(find.byKey(const Key('add-picking-note')), findsOneWidget);
+    expect(find.byKey(const Key('review-pack-button')), findsOneWidget);
+    expect(find.text('Pick all items to continue'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('OO04 target three lines and scanner fit without list scrolling',
+      (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1180, 820);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(_pickingHarness(
+      permissions: const [
+        PosPermissionCodes.pickOnlineOrderItem,
+        PosPermissionCodes.scanOnlineOrderItem,
+      ],
+      child: const SizedBox(
+        width: 740,
+        height: 470,
+        child: PickingItemsList(orderId: 'order-1', order: _picking),
+      ),
+    ));
+
+    expect(find.byType(ListView), findsNothing);
+    expect(find.byType(PickingItemCard), findsNWidgets(3));
+    expect(find.byKey(const Key('scan-item-barcode')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'OO04 complete three-line center fits one fixed landscape viewport',
+      (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1180, 820);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(_pickingHarness(
+      permissions: const [
+        PosPermissionCodes.pickOnlineOrderItem,
+        PosPermissionCodes.scanOnlineOrderItem,
+        PosPermissionCodes.addOnlineOrderPickingNote,
+      ],
+      child: SizedBox(
+        width: 1132,
+        height: 620,
+        child: Column(children: const [
+          PickingHeader(order: _picking, onBack: _noop),
+          SizedBox(height: 14),
+          Expanded(
+            child: PickingWorkspace(
+              orderId: 'order-1',
+              order: _picking,
+              onReviewPack: _noop,
+            ),
+          ),
+        ]),
+      ),
+    ));
+
+    expect(find.byType(SingleChildScrollView), findsNothing);
+    expect(find.byType(PickingItemCard), findsNWidgets(3));
+    expect(find.byKey(const Key('scan-item-barcode')), findsOneWidget);
+    expect(find.byKey(const Key('add-picking-note')), findsOneWidget);
+    expect(find.byKey(const Key('review-pack-button')), findsOneWidget);
+    expect(find.text('Pick all items to continue'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
+
+Widget _pickingHarness({
+  required List<String> permissions,
+  required Widget child,
+}) =>
+    ProviderScope(
+      overrides: [
+        authSessionProvider.overrideWith(
+          (ref) => _PresetAuthSessionNotifier(
+            AuthSession(
+              accessToken: 'test-token',
+              userId: 'user-1',
+              userDisplayName: 'Cashier',
+              permissionCodes: permissions,
+            ),
+          ),
+        ),
+      ],
+      child: MaterialApp(home: Scaffold(body: Center(child: child))),
+    );
+
+void _noop() {}
+
+const _pickingLine = PosPickingLine(
+  id: 'line-1',
+  lineNumber: 1,
+  productName: 'Match Shorts',
+  sku: 'MER-003-SKU',
+  requestedQuantity: 1,
+  pickedQuantity: 0,
+  status: 'PENDING',
+  locationCode: 'MAIN',
+  locationName: 'Main Store Stock',
+);
+
+const _picking = PosPickingOrder(
+  orderId: 'order-1',
+  orderNumber: 'ECOMM-SEED-ACCEPTED-001',
+  fulfillmentOrderId: 'fulfilment-1',
+  fulfillmentNumber: 'FUL-1',
+  status: 'PICKING',
+  assignedToName: 'Cashier',
+  customerName: 'Customer 1',
+  totalLines: 3,
+  pickedLines: 0,
+  canPack: false,
+  lines: [_pickingLine, _pickingLine, _pickingLine],
+);
 
 Future<void> _pumpDetail(
   WidgetTester tester, {

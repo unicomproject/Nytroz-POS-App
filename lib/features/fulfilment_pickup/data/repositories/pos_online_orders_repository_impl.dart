@@ -51,14 +51,16 @@ class PosOnlineOrdersRepositoryImpl implements PosOnlineOrdersRepository {
           required String lineId,
           required double quantity,
           required String barcode,
-          required bool scanned}) =>
+          required bool scanned,
+          required int expectedVersion}) =>
       _remote.pickLine(
           outletId: outletId,
           orderId: orderId,
           lineId: lineId,
           quantity: quantity,
           barcode: barcode,
-          scanned: scanned);
+          scanned: scanned,
+          expectedVersion: expectedVersion);
 
   @override
   Future<PosFulfillmentCommandResult> reportIssue(
@@ -66,13 +68,29 @@ class PosOnlineOrdersRepositoryImpl implements PosOnlineOrdersRepository {
           required String orderId,
           required String lineId,
           required String reason,
-          String? note}) =>
+          String? note,
+          required int expectedVersion}) =>
       _remote.reportIssue(
           outletId: outletId,
           orderId: orderId,
           lineId: lineId,
           reason: reason,
-          note: note);
+          note: note,
+          expectedVersion: expectedVersion);
+
+  @override
+  Future<PosPickingNoteCommandResult> addPickingNote({
+    required String outletId,
+    required String orderId,
+    required String note,
+    required int expectedVersion,
+  }) =>
+      _remote.addPickingNote(
+        outletId: outletId,
+        orderId: orderId,
+        note: note,
+        expectedVersion: expectedVersion,
+      );
 
   @override
   Future<PosFulfillmentCommandResult> pack(

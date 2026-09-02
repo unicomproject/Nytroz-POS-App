@@ -87,6 +87,7 @@ class PosPermissionCodes {
       'commerce.online_order.picking.manual_entry';
   static const reportOnlineOrderPickingIssue =
       'commerce.online_order.picking.report_issue';
+  static const addOnlineOrderPickingNote = 'commerce.online_order.picking.note';
   static const viewOnlineOrderPacking = 'commerce.online_order.packing.view';
   static const packOnlineOrder = 'commerce.online_order.packing.pack';
   static const markOnlineOrderReady =
