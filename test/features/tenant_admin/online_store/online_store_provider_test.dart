@@ -25,6 +25,297 @@ void main() {
     expect(data.policies.single.policyType, 'TERMS');
   });
 
+  test('url domain provider combines summary with canonical domain list',
+      () async {
+    final repository = _FakeOnlineStoreRepository();
+    final container = ProviderContainer(overrides: [
+      onlineStoreRepositoryProvider.overrideWithValue(repository),
+    ]);
+    addTearDown(container.dispose);
+
+    final data = await container.read(onlineStoreUrlDomainProvider.future);
+
+    expect(data.storeSlug, 'tenant-store');
+    expect(data.domains.single.domainName, 'store.example.com');
+  });
+
+  test('domain editor tracks dirty save and one-time DNS token', () async {
+    final repository = _FakeOnlineStoreRepository();
+    final container = ProviderContainer(overrides: [
+      onlineStoreRepositoryProvider.overrideWithValue(repository),
+    ]);
+    addTearDown(container.dispose);
+    final subscription = container.listen(
+      onlineStoreDomainEditorProvider,
+      (_, __) {},
+    );
+    addTearDown(subscription.close);
+    final controller = container.read(onlineStoreDomainEditorProvider.notifier);
+
+    controller.initialize(await repository.getUrlDomain());
+    controller.updateStoreSlug('updated-store');
+    expect(container.read(onlineStoreDomainEditorProvider).isDirty, isTrue);
+
+    expect(await controller.saveIfNeeded(), isTrue);
+    expect(repository.updatedSlug, 'updated-store');
+    expect(container.read(onlineStoreDomainEditorProvider).isDirty, isFalse);
+
+    expect(await controller.createDomain('new.example.com'), isTrue);
+    expect(
+      container
+          .read(onlineStoreDomainEditorProvider)
+          .verificationTokens['domain-new'],
+      'dns-token',
+    );
+  });
+
+  test('branding editor saves backend-supported colours and clears dirty state',
+      () async {
+    final repository = _FakeOnlineStoreRepository();
+    final container = ProviderContainer(overrides: [
+      onlineStoreRepositoryProvider.overrideWithValue(repository),
+    ]);
+    addTearDown(container.dispose);
+    final subscription = container.listen(
+      onlineStoreBrandingEditorProvider,
+      (_, __) {},
+    );
+    addTearDown(subscription.close);
+    final controller =
+        container.read(onlineStoreBrandingEditorProvider.notifier);
+
+    controller.initialize(await repository.getBranding());
+    controller.updatePrimaryColor('#123456');
+    controller.updateSecondaryColor('#ABCDEF');
+
+    expect(container.read(onlineStoreBrandingEditorProvider).isDirty, isTrue);
+    expect(await controller.saveIfNeeded(), isTrue);
+    expect(repository.brandingUpdates.single.primaryColor, '#123456');
+    expect(repository.brandingUpdates.single.secondaryColor, '#ABCDEF');
+    expect(container.read(onlineStoreBrandingEditorProvider).isDirty, isFalse);
+  });
+
+  test('branding upload attaches new asset then deletes replaced asset',
+      () async {
+    final repository = _FakeOnlineStoreRepository();
+    final container = ProviderContainer(overrides: [
+      onlineStoreRepositoryProvider.overrideWithValue(repository),
+    ]);
+    addTearDown(container.dispose);
+    final subscription = container.listen(
+      onlineStoreBrandingEditorProvider,
+      (_, __) {},
+    );
+    addTearDown(subscription.close);
+    final controller =
+        container.read(onlineStoreBrandingEditorProvider.notifier);
+    controller.initialize(await repository.getBranding());
+
+    final succeeded = await controller.uploadAndAttach(
+      purpose: OnlineStoreBrandingEditorController.logoPurpose,
+      bytes: Uint8List.fromList([1, 2, 3]),
+      fileName: 'new-logo.png',
+      mimeType: 'image/png',
+    );
+
+    expect(succeeded, isTrue);
+    expect(repository.uploadedPurposes, ['ONLINE_STORE_LOGO']);
+    expect(repository.brandingUpdates.single.logoMediaAssetId, 'uploaded-1');
+    expect(repository.deletedMediaIds, ['logo-old']);
+    expect(
+      container.read(onlineStoreBrandingEditorProvider).logoMediaAssetId,
+      'uploaded-1',
+    );
+  });
+
+  test('branding attach failure preserves previous asset and cleans upload',
+      () async {
+    final repository = _FakeOnlineStoreRepository()
+      ..failNextBrandingUpdate = true;
+    final container = ProviderContainer(overrides: [
+      onlineStoreRepositoryProvider.overrideWithValue(repository),
+    ]);
+    addTearDown(container.dispose);
+    final subscription = container.listen(
+      onlineStoreBrandingEditorProvider,
+      (_, __) {},
+    );
+    addTearDown(subscription.close);
+    final controller =
+        container.read(onlineStoreBrandingEditorProvider.notifier);
+    controller.initialize(await repository.getBranding());
+
+    final succeeded = await controller.uploadAndAttach(
+      purpose: OnlineStoreBrandingEditorController.logoPurpose,
+      bytes: Uint8List.fromList([1, 2, 3]),
+      fileName: 'new-logo.png',
+      mimeType: 'image/png',
+    );
+
+    expect(succeeded, isFalse);
+    expect(repository.deletedMediaIds, ['uploaded-1']);
+    expect(
+      container.read(onlineStoreBrandingEditorProvider).logoMediaAssetId,
+      'logo-old',
+    );
+  });
+
+  test('branding removal detaches asset before deleting media', () async {
+    final repository = _FakeOnlineStoreRepository();
+    final container = ProviderContainer(overrides: [
+      onlineStoreRepositoryProvider.overrideWithValue(repository),
+    ]);
+    addTearDown(container.dispose);
+    final subscription = container.listen(
+      onlineStoreBrandingEditorProvider,
+      (_, __) {},
+    );
+    addTearDown(subscription.close);
+    final controller =
+        container.read(onlineStoreBrandingEditorProvider.notifier);
+    controller.initialize(await repository.getBranding());
+
+    final succeeded = await controller.removeAsset(
+      OnlineStoreBrandingEditorController.faviconPurpose,
+    );
+
+    expect(succeeded, isTrue);
+    expect(repository.brandingUpdates.single.faviconMediaAssetId, isNull);
+    expect(repository.deletedMediaIds, ['favicon-old']);
+    expect(
+      container.read(onlineStoreBrandingEditorProvider).faviconMediaAssetId,
+      isNull,
+    );
+  });
+
+  test('branding duplicate upload is rejected while first request is active',
+      () async {
+    final repository = _FakeOnlineStoreRepository()
+      ..uploadCompleter = Completer<OnlineStoreMedia>();
+    final container = ProviderContainer(overrides: [
+      onlineStoreRepositoryProvider.overrideWithValue(repository),
+    ]);
+    addTearDown(container.dispose);
+    final subscription = container.listen(
+      onlineStoreBrandingEditorProvider,
+      (_, __) {},
+    );
+    addTearDown(subscription.close);
+    final controller =
+        container.read(onlineStoreBrandingEditorProvider.notifier);
+    controller.initialize(await repository.getBranding());
+
+    final first = controller.uploadAndAttach(
+      purpose: OnlineStoreBrandingEditorController.logoPurpose,
+      bytes: Uint8List.fromList([1, 2, 3]),
+      fileName: 'logo.png',
+      mimeType: 'image/png',
+    );
+    final second = await controller.uploadAndAttach(
+      purpose: OnlineStoreBrandingEditorController.logoPurpose,
+      bytes: Uint8List.fromList([4, 5, 6]),
+      fileName: 'other.png',
+      mimeType: 'image/png',
+    );
+
+    expect(second, isFalse);
+    expect(repository.uploadedPurposes, hasLength(1));
+    repository.uploadCompleter!.complete(
+      const OnlineStoreMedia(
+        mediaAssetId: 'uploaded-1',
+        purpose: 'ONLINE_STORE_LOGO',
+        fileName: 'logo.png',
+        mimeType: 'image/png',
+        fileSizeBytes: 3,
+      ),
+    );
+    expect(await first, isTrue);
+  });
+
+  test('support editor applies backend normalization after successful save',
+      () async {
+    final repository = _FakeOnlineStoreRepository();
+    final container = ProviderContainer(overrides: [
+      onlineStoreRepositoryProvider.overrideWithValue(repository),
+    ]);
+    addTearDown(container.dispose);
+    final subscription = container.listen(
+      onlineStoreSupportEditorProvider,
+      (_, __) {},
+    );
+    addTearDown(subscription.close);
+    final controller =
+        container.read(onlineStoreSupportEditorProvider.notifier);
+    controller.initialize(await repository.getSupport());
+
+    controller.updatePhone(' +94 11 000 0000 ');
+    expect(container.read(onlineStoreSupportEditorProvider).isDirty, isTrue);
+    expect(await controller.saveIfNeeded(), isTrue);
+
+    expect(repository.supportUpdateCount, 1);
+    expect(
+        container.read(onlineStoreSupportEditorProvider).phone, '+94110000000');
+    expect(container.read(onlineStoreSupportEditorProvider).isDirty, isFalse);
+  });
+
+  test('support save failure preserves dirty form values', () async {
+    final repository = _FakeOnlineStoreRepository()..failSupportUpdate = true;
+    final container = ProviderContainer(overrides: [
+      onlineStoreRepositoryProvider.overrideWithValue(repository),
+    ]);
+    addTearDown(container.dispose);
+    final subscription = container.listen(
+      onlineStoreSupportEditorProvider,
+      (_, __) {},
+    );
+    addTearDown(subscription.close);
+    final controller =
+        container.read(onlineStoreSupportEditorProvider.notifier);
+    controller.initialize(await repository.getSupport());
+    controller.updateEmail('changed@example.test');
+
+    expect(await controller.saveIfNeeded(), isFalse);
+    final state = container.read(onlineStoreSupportEditorProvider);
+    expect(state.email, 'changed@example.test');
+    expect(state.isDirty, isTrue);
+    expect(state.errorMessage, isNotNull);
+  });
+
+  test('support duplicate save shares one backend request', () async {
+    final repository = _FakeOnlineStoreRepository()
+      ..supportCompleter = Completer<OnlineStoreSupport>();
+    final container = ProviderContainer(overrides: [
+      onlineStoreRepositoryProvider.overrideWithValue(repository),
+    ]);
+    addTearDown(container.dispose);
+    final subscription = container.listen(
+      onlineStoreSupportEditorProvider,
+      (_, __) {},
+    );
+    addTearDown(subscription.close);
+    final controller =
+        container.read(onlineStoreSupportEditorProvider.notifier);
+    controller.initialize(await repository.getSupport());
+    controller.updateBusinessAddress('Updated support address');
+
+    final first = controller.saveIfNeeded();
+    final second = controller.saveIfNeeded();
+    expect(repository.supportUpdateCount, 1);
+    repository.supportCompleter!.complete(
+      const OnlineStoreSupport(
+        email: 'help@example.test',
+        phone: '+94110000000',
+        whatsapp: '+94770000000',
+        helpUrl: 'https://support.example.test',
+        contactUsEnabled: true,
+        supportHours: 'Mon - Fri: 9:00 AM - 6:00 PM',
+        businessAddress: 'Updated support address',
+      ),
+    );
+    expect(await first, isTrue);
+    expect(await second, isTrue);
+  });
+
   test('publish double tap sends one request with one idempotency key',
       () async {
     final repository = _FakeOnlineStoreRepository();
@@ -123,9 +414,20 @@ OnlineStorePublishResult _publishResult() {
 }
 
 class _FakeOnlineStoreRepository implements OnlineStoreRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
   final List<String> publishKeys = [];
   Completer<OnlineStorePublishResult>? publishCompleter;
   Object? nextPublishError;
+  String? updatedSlug;
+  bool failNextBrandingUpdate = false;
+  final List<_BrandingUpdate> brandingUpdates = [];
+  final List<String> uploadedPurposes = [];
+  final List<String> deletedMediaIds = [];
+  Completer<OnlineStoreMedia>? uploadCompleter;
+  Completer<OnlineStoreSupport>? supportCompleter;
+  bool failSupportUpdate = false;
+  int supportUpdateCount = 0;
 
   @override
   Future<OnlineStoreCatalogSummary> getCatalogSummary() async {
@@ -173,7 +475,15 @@ class _FakeOnlineStoreRepository implements OnlineStoreRepository {
   Future<OnlineStoreActivation> getActivation() => throw UnimplementedError();
 
   @override
-  Future<OnlineStoreBranding> getBranding() => throw UnimplementedError();
+  Future<OnlineStoreBranding> getBranding() async => const OnlineStoreBranding(
+        logoMediaAssetId: 'logo-old',
+        faviconMediaAssetId: 'favicon-old',
+        logoImageUrl: 'https://cdn.example.com/logo-old.png',
+        faviconImageUrl: 'https://cdn.example.com/favicon-old.ico',
+        primaryColor: '#FF6A00',
+        secondaryColor: '#000000',
+        banners: [],
+      );
 
   @override
   Future<OnlineStoreClickCollect> getClickCollect() =>
@@ -189,7 +499,12 @@ class _FakeOnlineStoreRepository implements OnlineStoreRepository {
   Future<OnlineStoreReadiness> getReadiness() => throw UnimplementedError();
 
   @override
-  Future<OnlineStoreUrlDomain> getUrlDomain() => throw UnimplementedError();
+  Future<OnlineStoreUrlDomain> getUrlDomain() async =>
+      const OnlineStoreUrlDomain(
+        storeSlug: 'tenant-store',
+        hostedUrl: 'https://tenant-store.oneverz.shop',
+        domains: [],
+      );
 
   @override
   Future<List<OnlineStoreBanner>> listBanners() => throw UnimplementedError();
@@ -207,10 +522,34 @@ class _FakeOnlineStoreRepository implements OnlineStoreRepository {
       throw UnimplementedError();
 
   @override
-  Future<List<OnlineStoreDomain>> listDomains() => throw UnimplementedError();
+  Future<List<OnlineStoreDomain>> listDomains() async => const [
+        OnlineStoreDomain(
+          id: 'domain-1',
+          domainType: 'CUSTOM',
+          domainName: 'store.example.com',
+          isPrimary: false,
+          verificationStatus: 'PENDING',
+          sslStatus: 'NOT_REQUESTED',
+          status: 'ACTIVE',
+        ),
+      ];
 
   @override
-  Future<void> deleteMedia(String mediaAssetId) => throw UnimplementedError();
+  Future<OnlineStoreDomainToken> createDomain({
+    required String domainName,
+    required String domainType,
+    required bool isPrimary,
+  }) async =>
+      OnlineStoreDomainToken(
+        domainId: 'domain-new',
+        domainName: domainName,
+        verificationToken: 'dns-token',
+      );
+
+  @override
+  Future<void> deleteMedia(String mediaAssetId) async {
+    deletedMediaIds.add(mediaAssetId);
+  }
 
   @override
   Future<OnlineStoreActivation> updateActivation(bool setupEnabled) =>
@@ -222,8 +561,33 @@ class _FakeOnlineStoreRepository implements OnlineStoreRepository {
     String? faviconMediaAssetId,
     required String primaryColor,
     required String secondaryColor,
-  }) =>
-      throw UnimplementedError();
+  }) async {
+    if (failNextBrandingUpdate) {
+      failNextBrandingUpdate = false;
+      throw StateError('update failed');
+    }
+    brandingUpdates.add(
+      _BrandingUpdate(
+        logoMediaAssetId: logoMediaAssetId,
+        faviconMediaAssetId: faviconMediaAssetId,
+        primaryColor: primaryColor,
+        secondaryColor: secondaryColor,
+      ),
+    );
+    return OnlineStoreBranding(
+      logoMediaAssetId: logoMediaAssetId,
+      faviconMediaAssetId: faviconMediaAssetId,
+      logoImageUrl: logoMediaAssetId == null
+          ? null
+          : 'https://cdn.example.com/$logoMediaAssetId.png',
+      faviconImageUrl: faviconMediaAssetId == null
+          ? null
+          : 'https://cdn.example.com/$faviconMediaAssetId.ico',
+      primaryColor: primaryColor,
+      secondaryColor: secondaryColor,
+      banners: const [],
+    );
+  }
 
   @override
   Future<OnlineStoreClickCollect> updateClickCollect(bool enabled) =>
@@ -249,12 +613,34 @@ class _FakeOnlineStoreRepository implements OnlineStoreRepository {
     required bool contactUsEnabled,
     String? supportHours,
     String? businessAddress,
-  }) =>
-      throw UnimplementedError();
+  }) async {
+    supportUpdateCount += 1;
+    if (failSupportUpdate) throw StateError('support update failed');
+    final completer = supportCompleter;
+    if (completer != null) return completer.future;
+    final normalizedPhone = phone == null
+        ? null
+        : '${phone.trim().startsWith('+') ? '+' : ''}${phone.replaceAll(RegExp(r'\D'), '')}';
+    return OnlineStoreSupport(
+      email: email?.trim(),
+      phone: normalizedPhone,
+      whatsapp: whatsapp?.trim(),
+      helpUrl: helpUrl?.trim(),
+      contactUsEnabled: contactUsEnabled,
+      supportHours: supportHours?.trim(),
+      businessAddress: businessAddress?.trim(),
+    );
+  }
 
   @override
-  Future<OnlineStoreUrlDomain> updateUrl(String storeSlug) =>
-      throw UnimplementedError();
+  Future<OnlineStoreUrlDomain> updateUrl(String storeSlug) async {
+    updatedSlug = storeSlug;
+    return OnlineStoreUrlDomain(
+      storeSlug: storeSlug,
+      hostedUrl: 'https://$storeSlug.oneverz.shop',
+      domains: const [],
+    );
+  }
 
   @override
   Future<OnlineStoreMedia> uploadMedia({
@@ -263,9 +649,43 @@ class _FakeOnlineStoreRepository implements OnlineStoreRepository {
     required String fileName,
     required String mimeType,
     void Function(int sent, int total)? onProgress,
-  }) =>
-      throw UnimplementedError();
+  }) async {
+    uploadedPurposes.add(purpose);
+    onProgress?.call(bytes.length, bytes.length);
+    final completer = uploadCompleter;
+    if (completer != null) return completer.future;
+    return OnlineStoreMedia(
+      mediaAssetId: 'uploaded-1',
+      purpose: purpose,
+      publicUrl: 'https://cdn.example.com/uploaded-1.png',
+      fileName: fileName,
+      mimeType: mimeType,
+      fileSizeBytes: bytes.length,
+    );
+  }
 
   @override
-  Future<OnlineStoreSupport> getSupport() => throw UnimplementedError();
+  Future<OnlineStoreSupport> getSupport() async => const OnlineStoreSupport(
+        email: 'help@example.test',
+        phone: '+94110000000',
+        whatsapp: '+94770000000',
+        helpUrl: 'https://support.example.test',
+        contactUsEnabled: true,
+        supportHours: 'Mon - Fri: 9:00 AM - 6:00 PM',
+        businessAddress: 'Example support address',
+      );
+}
+
+class _BrandingUpdate {
+  const _BrandingUpdate({
+    required this.logoMediaAssetId,
+    required this.faviconMediaAssetId,
+    required this.primaryColor,
+    required this.secondaryColor,
+  });
+
+  final String? logoMediaAssetId;
+  final String? faviconMediaAssetId;
+  final String primaryColor;
+  final String secondaryColor;
 }

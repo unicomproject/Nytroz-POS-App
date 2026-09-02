@@ -12,6 +12,8 @@ import '../../providers/pos_home_dashboard_provider.dart';
 import '../../providers/pos_shell_navigation_provider.dart';
 import '../../../domain/entities/pos_shell_nav_destination.dart';
 import '../pos_shell_nav_item.dart';
+import '../../../../workspace/presentation/providers/workspace_selection_provider.dart';
+import '../../../../workspace/workspace_router.dart';
 
 const _oneVerzLogoAsset = 'assets/images/logo.png';
 const _sidebarWidth = 160.0;
@@ -166,7 +168,7 @@ class _BrandHeader extends StatelessWidget {
   }
 }
 
-enum _UserMenuAction { profile, endShift }
+enum _UserMenuAction { accountSettings, switchWorkspace, endShift }
 
 const _endShiftCloseTillRoute = '/pos/cash-drawer/close-till?endShift=true';
 
@@ -273,7 +275,9 @@ class _UserProfileBlock extends ConsumerWidget {
     }
 
     const menuWidth = 168.0;
-    const menuHeight = 104.0;
+    final canSwitchWorkspace =
+        ref.read(workspaceSelectionProvider).access.hasMultiple;
+    final menuHeight = canSwitchWorkspace ? 152.0 : 104.0;
     final canEndShift = _canEndShift(ref);
     final offset = box.localToGlobal(Offset.zero, ancestor: overlay);
     final left = offset.dx + box.size.width + TenantAdminSpacing.sm;
@@ -297,9 +301,20 @@ class _UserProfileBlock extends ConsumerWidget {
       ),
       items: [
         const PopupMenuItem(
-          value: _UserMenuAction.profile,
-          child: Text('Profile'),
+          value: _UserMenuAction.accountSettings,
+          child: Text('Account Settings'),
         ),
+        if (canSwitchWorkspace)
+          const PopupMenuItem(
+            value: _UserMenuAction.switchWorkspace,
+            child: Row(
+              children: [
+                Icon(Icons.swap_horiz_rounded, size: 19),
+                SizedBox(width: 8),
+                Text('Switch workspace'),
+              ],
+            ),
+          ),
         PopupMenuItem(
           value: _UserMenuAction.endShift,
           enabled: canEndShift,
@@ -313,8 +328,11 @@ class _UserProfileBlock extends ConsumerWidget {
     }
 
     switch (selected) {
-      case _UserMenuAction.profile:
-        context.go('/pos/profile');
+      case _UserMenuAction.accountSettings:
+        context.go(workspaceAccountSettingsRoute);
+      case _UserMenuAction.switchWorkspace:
+        ref.read(workspaceSelectionProvider.notifier).showChooser();
+        context.go(workspaceChooserRoute);
       case _UserMenuAction.endShift:
         await _startEndShiftFlow(context, ref);
     }

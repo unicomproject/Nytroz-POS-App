@@ -40,6 +40,17 @@ class OnlineStoreOverview {
     required this.readiness,
     this.storeSlug,
     this.hostedUrl,
+    this.domain = const OnlineStoreDomainSummary(),
+    this.branding = const OnlineStoreSectionSummary(),
+    this.contactSupport = const OnlineStoreSectionSummary(),
+    this.clickCollect = const OnlineStoreClickCollectSummary(),
+    this.catalog = const OnlineStoreCatalogOverview(),
+    this.policies = const OnlineStorePolicySummary(),
+    this.customerAccountMode = 'REGISTRATION_REQUIRED',
+    this.emailVerificationRequired = true,
+    this.paymentMode = 'PAY_AT_PICKUP',
+    this.notificationsStatus = 'NOT_READY',
+    this.nextActions = const [],
   });
 
   final String salesChannelId;
@@ -54,6 +65,85 @@ class OnlineStoreOverview {
   final int setupProgressPercent;
   final List<OnlineStoreStep> steps;
   final OnlineStoreReadiness readiness;
+  final OnlineStoreDomainSummary domain;
+  final OnlineStoreSectionSummary branding;
+  final OnlineStoreSectionSummary contactSupport;
+  final OnlineStoreClickCollectSummary clickCollect;
+  final OnlineStoreCatalogOverview catalog;
+  final OnlineStorePolicySummary policies;
+  final String customerAccountMode;
+  final bool emailVerificationRequired;
+  final String paymentMode;
+  final String notificationsStatus;
+  final List<OnlineStoreNextAction> nextActions;
+}
+
+class OnlineStoreDomainSummary {
+  const OnlineStoreDomainSummary({
+    this.configured = false,
+    this.domain,
+    this.dnsStatus,
+    this.sslStatus,
+    this.isPrimary = false,
+  });
+
+  final bool configured;
+  final String? domain;
+  final String? dnsStatus;
+  final String? sslStatus;
+  final bool isPrimary;
+}
+
+class OnlineStoreSectionSummary {
+  const OnlineStoreSectionSummary({this.status = 'INCOMPLETE'});
+
+  final String status;
+}
+
+class OnlineStoreClickCollectSummary {
+  const OnlineStoreClickCollectSummary({
+    this.enabled = false,
+    this.eligibleOutletCount = 0,
+    this.status = 'INCOMPLETE',
+  });
+
+  final bool enabled;
+  final int eligibleOutletCount;
+  final String status;
+}
+
+class OnlineStoreCatalogOverview {
+  const OnlineStoreCatalogOverview({
+    this.totalProducts = 0,
+    this.onlineVisibleProducts = 0,
+  });
+
+  final int totalProducts;
+  final int onlineVisibleProducts;
+}
+
+class OnlineStorePolicySummary {
+  const OnlineStorePolicySummary({
+    this.requiredCount = 0,
+    this.publishedRequiredCount = 0,
+    this.status = 'INCOMPLETE',
+  });
+
+  final int requiredCount;
+  final int publishedRequiredCount;
+  final String status;
+}
+
+class OnlineStoreNextAction {
+  const OnlineStoreNextAction({
+    required this.code,
+    required this.step,
+    required this.blocking,
+  });
+
+  final String code;
+  final int step;
+  final bool blocking;
 }
 
 class OnlineStoreEntitlement {
@@ -73,6 +163,13 @@ class OnlineStoreActivation {
     required this.channelStatus,
     required this.visibility,
     required this.entitlements,
+    this.releaseScope = 'CLICK_COLLECT_ONLY',
+    this.checkoutMode = 'REGISTRATION_REQUIRED',
+    this.emailVerificationRequired = true,
+    this.paymentMode = 'PAY_AT_PICKUP',
+    this.notificationsStatus = 'NOT_READY',
+    this.privateUntilPublished = true,
+    this.readiness = const [],
   });
 
   final bool setupEnabled;
@@ -80,6 +177,27 @@ class OnlineStoreActivation {
   final String channelStatus;
   final String visibility;
   final List<OnlineStoreEntitlement> entitlements;
+  final String releaseScope;
+  final String checkoutMode;
+  final bool emailVerificationRequired;
+  final String paymentMode;
+  final String notificationsStatus;
+  final bool privateUntilPublished;
+  final List<OnlineStoreActivationReadinessItem> readiness;
+}
+
+class OnlineStoreActivationReadinessItem {
+  const OnlineStoreActivationReadinessItem({
+    required this.code,
+    required this.label,
+    required this.status,
+    required this.message,
+  });
+
+  final String code;
+  final String label;
+  final String status;
+  final String message;
 }
 
 class OnlineStoreIdentity {
@@ -104,6 +222,84 @@ class OnlineStoreIdentity {
   final String? supportTagline;
   final String currencyCode;
   final String timezone;
+}
+
+class OnlineStoreCheckoutRules {
+  const OnlineStoreCheckoutRules({
+    required this.release,
+    required this.customerAccount,
+    required this.guestCheckout,
+    required this.emailVerification,
+    required this.fulfilment,
+    required this.payment,
+  });
+
+  final String release;
+  final OnlineStoreCustomerAccountRule customerAccount;
+  final OnlineStoreGuestCheckoutRule guestCheckout;
+  final OnlineStoreEmailVerificationRule emailVerification;
+  final OnlineStoreFulfilmentRule fulfilment;
+  final OnlineStorePaymentRule payment;
+}
+
+class OnlineStoreCustomerAccountRule {
+  const OnlineStoreCustomerAccountRule({
+    required this.registrationRequired,
+    required this.mode,
+    required this.label,
+  });
+
+  final bool registrationRequired;
+  final String mode;
+  final String label;
+}
+
+class OnlineStoreGuestCheckoutRule {
+  const OnlineStoreGuestCheckoutRule({
+    required this.available,
+    required this.mode,
+    required this.label,
+  });
+
+  final bool available;
+  final String mode;
+  final String label;
+}
+
+class OnlineStoreEmailVerificationRule {
+  const OnlineStoreEmailVerificationRule({
+    required this.required,
+    required this.mode,
+    required this.label,
+  });
+
+  final bool required;
+  final String mode;
+  final String label;
+}
+
+class OnlineStoreFulfilmentRule {
+  const OnlineStoreFulfilmentRule({
+    required this.mode,
+    required this.label,
+    required this.featureEnabled,
+    required this.configured,
+  });
+
+  final String mode;
+  final String label;
+  final bool featureEnabled;
+  final bool configured;
+}
+
+class OnlineStorePaymentRule {
+  const OnlineStorePaymentRule({
+    required this.mode,
+    required this.label,
+  });
+
+  final String mode;
+  final String label;
 }
 
 class OnlineStoreDomain {
@@ -132,6 +328,18 @@ class OnlineStoreDomain {
   final String status;
 }
 
+class OnlineStoreDomainToken {
+  const OnlineStoreDomainToken({
+    required this.domainId,
+    required this.domainName,
+    required this.verificationToken,
+  });
+
+  final String domainId;
+  final String domainName;
+  final String verificationToken;
+}
+
 class OnlineStoreUrlDomain {
   const OnlineStoreUrlDomain({
     required this.domains,
@@ -151,10 +359,14 @@ class OnlineStoreBranding {
     required this.banners,
     this.logoMediaAssetId,
     this.faviconMediaAssetId,
+    this.logoImageUrl,
+    this.faviconImageUrl,
   });
 
   final String? logoMediaAssetId;
   final String? faviconMediaAssetId;
+  final String? logoImageUrl;
+  final String? faviconImageUrl;
   final String primaryColor;
   final String secondaryColor;
   final List<OnlineStoreBanner> banners;

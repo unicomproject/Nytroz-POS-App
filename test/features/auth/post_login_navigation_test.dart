@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/core/network/dio_provider.dart';
 import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
+import 'package:nytroz_pos/core/storage/secure_storage_provider.dart';
 import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.dart';
 import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/post_login_navigation_provider.dart';
@@ -75,13 +76,13 @@ void main() {
       expect(route, PostLoginRoute.tenantAdminDashboard);
     });
 
-    test('routes tenant admin with POS delegation permissions to dashboard', () {
+    test('routes dual-access user to workspace chooser', () {
       final container = _createContainer(session: _tenantAdminWithPosSession);
       addTearDown(container.dispose);
 
       final route = container.read(postLoginRouteProvider);
 
-      expect(route, PostLoginRoute.tenantAdminDashboard);
+      expect(route, PostLoginRoute.workspace);
     });
 
     test('bootstrap exposes device API failures instead of becoming ready',
@@ -119,6 +120,7 @@ ProviderContainer _createContainer({
         Dio(BaseOptions(baseUrl: 'https://test.local')),
       ),
       authSessionStorageProvider.overrideWithValue(_TestAuthSessionStorage()),
+      secureStorageProvider.overrideWithValue(_TestSecureStorage()),
       authSessionProvider.overrideWith(
         (ref) => _PresetAuthSessionNotifier(session),
       ),
@@ -256,6 +258,25 @@ class _TestAuthSessionStorage extends AuthSessionStorage {
 
   @override
   Future<void> clear() async {}
+}
+
+class _TestSecureStorage extends AppSecureStorage {
+  _TestSecureStorage() : super(const FlutterSecureStorage());
+
+  final Map<String, String> values = {};
+
+  @override
+  Future<String?> read(String key) async => values[key];
+
+  @override
+  Future<void> write(String key, String value) async {
+    values[key] = value;
+  }
+
+  @override
+  Future<void> delete(String key) async {
+    values.remove(key);
+  }
 }
 
 class _TestDeviceContextStorage extends DeviceContextStorage {

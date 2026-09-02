@@ -215,9 +215,11 @@ class OutletRemoteDatasource {
     void resolve(Map map, String key) {
       if (map[key] != null) {
         map[key] = MediaUrlResolver.resolve(
-          map[key]?.toString(),
-          apiBaseUrl: _dio.options.baseUrl,
-        ) ?? map[key];
+              map[key]?.toString(),
+              apiBaseUrl: _dio.options.baseUrl,
+              replaceLoopbackHost: true,
+            ) ??
+            map[key];
       }
     }
 
@@ -250,6 +252,7 @@ class OutletRemoteDatasource {
         map[key] = MediaUrlResolver.resolve(
               map[key]?.toString(),
               apiBaseUrl: _dio.options.baseUrl,
+              replaceLoopbackHost: true,
             ) ??
             map[key];
       }

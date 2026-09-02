@@ -3,6 +3,7 @@ import '../../domain/repositories/tenant_user_repository.dart';
 import '../datasources/tenant_user_remote_datasource.dart';
 import '../mappers/tenant_user_mapper.dart';
 import '../models/user_write_request_dto.dart';
+import '../../domain/entities/user_profile_image_upload.dart';
 
 class TenantUserRepositoryImpl implements TenantUserRepository {
   const TenantUserRepositoryImpl(this._remoteDatasource);
@@ -52,6 +53,22 @@ class TenantUserRepositoryImpl implements TenantUserRepository {
     return _remoteDatasource.deleteUser(id);
   }
 
+  @override
+  Future<UserProfileImageUpload> uploadProfileImage(
+    UserProfileImageUploadInput input, {
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    final result = await _remoteDatasource.uploadProfileImage(
+      input,
+      onProgress: onProgress,
+    );
+    return result.toEntity();
+  }
+
+  @override
+  Future<void> deleteStagedProfileImage(String mediaAssetId) =>
+      _remoteDatasource.deleteStagedProfileImage(mediaAssetId);
+
   UserWriteRequestDto _toRequestDto(UserFormData form) {
     return UserWriteRequestDto(
       fullName: form.fullName,
@@ -65,6 +82,16 @@ class TenantUserRepositoryImpl implements TenantUserRepository {
       sendInviteEmail: form.status == null ? form.sendInviteEmail : null,
       status: form.status,
       profileMediaAssetId: form.profileMediaAssetId,
+      profileMediaAction: form.profileMediaAction,
+      outletAccessScope: form.outletAccessScope,
+      defaultOutletId: form.defaultOutletId,
+      tillAccessScope: form.tillAccessScope,
+      tillIds: form.tillIds,
+      defaultTillId: form.defaultTillId,
+      permissionCatalogVersion: form.permissionCatalogVersion,
+      deniedPermissionIds: form.deniedPermissionIds,
+      password: form.password,
+      confirmPassword: form.confirmPassword,
     );
   }
 }

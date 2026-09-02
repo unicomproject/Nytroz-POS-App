@@ -9,10 +9,14 @@ class TenantAdminStepperHeader extends StatelessWidget {
     super.key,
     required this.steps,
     required this.currentStep,
+    this.completedColor = TenantAdminColors.primary,
+    this.onStepTap,
   });
 
   final List<String> steps;
   final int currentStep;
+  final Color completedColor;
+  final ValueChanged<int>? onStepTap;
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +55,10 @@ class TenantAdminStepperHeader extends StatelessWidget {
                     number: index + 1,
                     isActive: index == activeIndex,
                     isComplete: index < activeIndex,
+                    completedColor: completedColor,
+                    onTap: index < activeIndex && onStepTap != null
+                        ? () => onStepTap!(index)
+                        : null,
                   ),
                 ),
                 if (index < steps.length - 1)
@@ -80,22 +88,26 @@ class _ExpandedWorkflowStep extends StatelessWidget {
     required this.number,
     required this.isActive,
     required this.isComplete,
+    required this.completedColor,
+    this.onTap,
   });
 
   final String label;
   final int number;
   final bool isActive;
   final bool isComplete;
+  final Color completedColor;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final circleColor = isActive
         ? TenantAdminColors.primary
         : isComplete
-            ? TenantAdminColors.secondary
+            ? completedColor.withValues(alpha: 0.10)
             : TenantAdminColors.surface;
     final borderColor = isActive || isComplete
-        ? TenantAdminColors.primary
+        ? (isComplete ? completedColor : TenantAdminColors.primary)
         : TenantAdminColors.border;
     final labelColor = isActive
         ? TenantAdminColors.primary
@@ -103,48 +115,51 @@ class _ExpandedWorkflowStep extends StatelessWidget {
             ? TenantAdminColors.bodyText
             : TenantAdminColors.mutedText;
 
-    return Column(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: circleColor,
-            shape: BoxShape.circle,
-            border: Border.all(color: borderColor, width: 2),
-            boxShadow: isActive ? TenantAdminShadows.card : null,
-          ),
-          alignment: Alignment.center,
-          child: isComplete
-              ? const Icon(
-                  Icons.check,
-                  size: 18,
-                  color: TenantAdminColors.primary,
-                )
-              : Text(
-                  '$number',
-                  style: TextStyle(
-                    color: isActive
-                        ? Colors.white
-                        : TenantAdminColors.mutedText,
-                    fontWeight: FontWeight.w800,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+      child: Column(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: circleColor,
+              shape: BoxShape.circle,
+              border: Border.all(color: borderColor, width: 2),
+              boxShadow: isActive ? TenantAdminShadows.card : null,
+            ),
+            alignment: Alignment.center,
+            child: isComplete
+                ? Icon(
+                    Icons.check,
+                    size: 18,
+                    color: completedColor,
+                  )
+                : Text(
+                    '$number',
+                    style: TextStyle(
+                      color:
+                          isActive ? Colors.white : TenantAdminColors.mutedText,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.sm),
-        Text(
-          label,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: labelColor,
-            fontSize: 12,
-            height: 1.2,
-            fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
           ),
-        ),
-      ],
+          const SizedBox(height: TenantAdminSpacing.sm),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: labelColor,
+              fontSize: 12,
+              height: 1.2,
+              fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

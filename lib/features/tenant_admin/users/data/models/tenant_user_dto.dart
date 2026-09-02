@@ -87,6 +87,11 @@ class RoleOptionDto {
     required this.name,
     required this.code,
     this.roleDescription,
+    this.isActive = true,
+    this.moduleCount = 0,
+    this.permissionCount = 0,
+    this.modulePreview = const [],
+    this.permissionPreview = const [],
   });
 
   factory RoleOptionDto.fromJson(Map<String, dynamic> json) {
@@ -95,6 +100,11 @@ class RoleOptionDto {
       name: json['roleName'] as String? ?? json['name'] as String? ?? '',
       code: json['roleCode'] as String? ?? json['code'] as String? ?? '',
       roleDescription: json['roleDescription'] as String?,
+      isActive: json['isActive'] != false,
+      moduleCount: _intValue(json['moduleCount']),
+      permissionCount: _intValue(json['permissionCount']),
+      modulePreview: _stringList(json['modulePreview']),
+      permissionPreview: _stringList(json['permissionPreview']),
     );
   }
 
@@ -102,6 +112,11 @@ class RoleOptionDto {
   final String name;
   final String code;
   final String? roleDescription;
+  final bool isActive;
+  final int moduleCount;
+  final int permissionCount;
+  final List<String> modulePreview;
+  final List<String> permissionPreview;
 }
 
 class UserOutletOptionDto {
@@ -133,6 +148,13 @@ class PermissionItemDto {
     required this.code,
     required this.actionType,
     this.description,
+    this.name,
+    this.moduleId,
+    this.moduleCode,
+    this.moduleName,
+    this.sortOrder = 0,
+    this.isAssignable = true,
+    this.isLocked = false,
   });
 
   factory PermissionItemDto.fromJson(Map<String, dynamic> json) {
@@ -141,6 +163,13 @@ class PermissionItemDto {
       code: json['permissionCode'] as String? ?? json['code'] as String? ?? '',
       actionType: json['actionType'] as String? ?? '',
       description: json['description'] as String?,
+      name: json['permissionName'] as String? ?? json['name'] as String?,
+      moduleId: json['moduleId']?.toString(),
+      moduleCode: json['moduleCode'] as String?,
+      moduleName: json['moduleName'] as String?,
+      sortOrder: _intValue(json['sortOrder']),
+      isAssignable: json['isAssignable'] != false,
+      isLocked: json['isLocked'] == true,
     );
   }
 
@@ -148,23 +177,126 @@ class PermissionItemDto {
   final String code;
   final String actionType;
   final String? description;
+  final String? name;
+  final String? moduleId;
+  final String? moduleCode;
+  final String? moduleName;
+  final int sortOrder;
+  final bool isAssignable;
+  final bool isLocked;
 }
 
 class PermissionGroupDto {
   const PermissionGroupDto({
     required this.groupName,
     required this.permissions,
+    this.moduleId,
+    this.moduleCode,
+    this.description,
+    this.sortOrder = 0,
   });
 
   factory PermissionGroupDto.fromJson(Map<String, dynamic> json) {
     return PermissionGroupDto(
       groupName: json['groupName'] as String? ?? '',
       permissions: _mapList(json['permissions'], PermissionItemDto.fromJson),
+      moduleId: json['moduleId']?.toString(),
+      moduleCode: json['moduleCode'] as String?,
+      description: json['description'] as String?,
+      sortOrder: _intValue(json['sortOrder']),
     );
   }
 
   final String groupName;
   final List<PermissionItemDto> permissions;
+  final String? moduleId;
+  final String? moduleCode;
+  final String? description;
+  final int sortOrder;
+}
+
+class UserTillOptionDto {
+  const UserTillOptionDto({
+    required this.id,
+    required this.outletId,
+    required this.name,
+    required this.code,
+    required this.status,
+  });
+
+  factory UserTillOptionDto.fromJson(Map<String, dynamic> json) {
+    return UserTillOptionDto(
+      id: json['tillId']?.toString() ?? json['id']?.toString() ?? '',
+      outletId: json['outletId']?.toString() ?? '',
+      name: json['tillName'] as String? ?? json['name'] as String? ?? '',
+      code: json['tillCode'] as String? ?? json['code'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+    );
+  }
+
+  final String id;
+  final String outletId;
+  final String name;
+  final String code;
+  final String status;
+}
+
+class TenantUserCreateCapabilitiesDto {
+  const TenantUserCreateCapabilitiesDto({
+    this.supportsInvitedUserCreation = false,
+    this.supportsDirectActiveCreation = false,
+    this.supportsUserPermissionOverrides = false,
+    this.supportsPermissionDenies = false,
+    this.supportsAllOutletAccess = false,
+    this.supportsNoOutletAccess = false,
+    this.supportsExplicitTillAccess = false,
+    this.supportsDefaultOutlet = false,
+    this.supportsDefaultTill = false,
+    this.supportsAccessStartDate = false,
+    this.supportsTemporaryPassword = false,
+    this.supportsForcePasswordChange = false,
+    this.supportsTwoFactorDuringCreation = false,
+    this.supportsSaveDraft = false,
+  });
+
+  factory TenantUserCreateCapabilitiesDto.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return TenantUserCreateCapabilitiesDto(
+      supportsInvitedUserCreation: json['supportsInvitedUserCreation'] == true,
+      supportsDirectActiveCreation:
+          json['supportsDirectActiveCreation'] == true,
+      supportsUserPermissionOverrides:
+          json['supportsUserPermissionOverrides'] == true,
+      supportsPermissionDenies: json['supportsPermissionDenies'] == true,
+      supportsAllOutletAccess: json['supportsAllOutletAccess'] == true,
+      supportsNoOutletAccess: json['supportsNoOutletAccess'] == true,
+      supportsExplicitTillAccess: json['supportsExplicitTillAccess'] == true,
+      supportsDefaultOutlet: json['supportsDefaultOutlet'] == true,
+      supportsDefaultTill: json['supportsDefaultTill'] == true,
+      supportsAccessStartDate: json['supportsAccessStartDate'] == true,
+      supportsTemporaryPassword: json['supportsTemporaryPassword'] == true,
+      supportsForcePasswordChange: json['supportsForcePasswordChange'] == true,
+      supportsTwoFactorDuringCreation:
+          json['supportsTwoFactorDuringCreation'] == true,
+      supportsSaveDraft: json['supportsSaveDraft'] == true,
+    );
+  }
+
+  final bool supportsInvitedUserCreation;
+  final bool supportsDirectActiveCreation;
+  final bool supportsUserPermissionOverrides;
+  final bool supportsPermissionDenies;
+  final bool supportsAllOutletAccess;
+  final bool supportsNoOutletAccess;
+  final bool supportsExplicitTillAccess;
+  final bool supportsDefaultOutlet;
+  final bool supportsDefaultTill;
+  final bool supportsAccessStartDate;
+  final bool supportsTemporaryPassword;
+  final bool supportsForcePasswordChange;
+  final bool supportsTwoFactorDuringCreation;
+  final bool supportsSaveDraft;
 }
 
 class TenantUserCreateOptionsDto {
@@ -172,6 +304,12 @@ class TenantUserCreateOptionsDto {
     required this.roles,
     required this.outlets,
     required this.permissionGroups,
+    this.supportedStatuses = const [],
+    this.tills = const [],
+    this.supportedOutletAccessScopes = const [],
+    this.supportedTillAccessScopes = const [],
+    this.capabilities = const TenantUserCreateCapabilitiesDto(),
+    this.permissionCatalogVersion,
   });
 
   factory TenantUserCreateOptionsDto.fromJson(Map<String, dynamic> json) {
@@ -180,12 +318,29 @@ class TenantUserCreateOptionsDto {
       outlets: _mapList(json['outlets'], UserOutletOptionDto.fromJson),
       permissionGroups:
           _mapList(json['permissionGroups'], PermissionGroupDto.fromJson),
+      supportedStatuses: _stringList(json['supportedStatuses']),
+      tills: _mapList(json['tills'], UserTillOptionDto.fromJson),
+      supportedOutletAccessScopes:
+          _stringList(json['supportedOutletAccessScopes']),
+      supportedTillAccessScopes: _stringList(json['supportedTillAccessScopes']),
+      capabilities: json['capabilities'] is Map
+          ? TenantUserCreateCapabilitiesDto.fromJson(
+              Map<String, dynamic>.from(json['capabilities'] as Map),
+            )
+          : const TenantUserCreateCapabilitiesDto(),
+      permissionCatalogVersion: json['permissionCatalogVersion'] as String?,
     );
   }
 
   final List<RoleOptionDto> roles;
   final List<UserOutletOptionDto> outlets;
   final List<PermissionGroupDto> permissionGroups;
+  final List<String> supportedStatuses;
+  final List<UserTillOptionDto> tills;
+  final List<String> supportedOutletAccessScopes;
+  final List<String> supportedTillAccessScopes;
+  final TenantUserCreateCapabilitiesDto capabilities;
+  final String? permissionCatalogVersion;
 }
 
 class TenantUserDetailDto {
@@ -319,4 +474,9 @@ List<T> _mapList<T>(
       .whereType<Map>()
       .map((item) => mapper(Map<String, dynamic>.from(item)))
       .toList(growable: false);
+}
+
+List<String> _stringList(dynamic raw) {
+  if (raw is! List) return const [];
+  return raw.map((item) => item.toString()).toList(growable: false);
 }

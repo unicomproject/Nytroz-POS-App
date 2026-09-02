@@ -11,12 +11,13 @@ import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/tenant_user.dart';
 import '../providers/tenant_user_providers.dart';
 import '../providers/tenant_user_visibility_provider.dart';
+import '../providers/user_profile_image_upload_provider.dart';
 import '../utils/user_api_errors.dart';
 import 'add_user_wizard_screen.dart';
 import '../widgets/user_access_section.dart';
 import '../widgets/user_basic_info_section.dart';
 import '../widgets/user_permission_override_panel.dart';
-import '../widgets/user_profile_image_upload.dart';
+import '../../../presentation/widgets/tenant_admin_single_image_upload_card.dart';
 import '../widgets/user_status_preview.dart';
 
 class AddEditUserScreen extends ConsumerWidget {
@@ -129,8 +130,6 @@ class _UserFormState extends ConsumerState<_UserForm> {
   late Set<String> _overriddenPermissionIds;
   bool _sendInviteEmail = false;
   late String _status;
-  String? _profileImageFileName;
-
   bool _submitting = false;
   Map<String, String> _fieldErrors = const {};
 
@@ -147,6 +146,17 @@ class _UserFormState extends ConsumerState<_UserForm> {
     _overriddenPermissionIds = detail?.overriddenPermissionIds.toSet() ?? {};
     final rawStatus = detail?.status.trim().toUpperCase();
     _status = (rawStatus == null || rawStatus.isEmpty) ? 'ACTIVE' : rawStatus;
+    if (detail?.profileMediaAssetId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref
+            .read(userProfileImageUploadControllerProvider.notifier)
+            .initializeExistingImage(
+              mediaAssetId: detail!.profileMediaAssetId!,
+              imageUrl: detail.profileImageUrl,
+            );
+      });
+    }
   }
 
   @override
@@ -159,6 +169,13 @@ class _UserFormState extends ConsumerState<_UserForm> {
 
   @override
   Widget build(BuildContext context) {
+    final profileUpload = ref.watch(userProfileImageUploadControllerProvider);
+    final profileUploader =
+        ref.read(userProfileImageUploadControllerProvider.notifier);
+    final profileUploadBusy =
+        profileUpload.status == UserProfileImageUploadStatus.selecting ||
+            profileUpload.status == UserProfileImageUploadStatus.uploading ||
+            profileUpload.status == UserProfileImageUploadStatus.deleting;
     final effectiveStatus =
         widget.isEdit ? _status : (_sendInviteEmail ? 'INVITED' : 'INACTIVE');
     final statusHelper = widget.isEdit
@@ -235,10 +252,24 @@ class _UserFormState extends ConsumerState<_UserForm> {
               helperText: statusHelper,
             ),
             const SizedBox(height: TenantAdminSpacing.xl),
-            UserProfileImageUpload(
-              fileName: _profileImageFileName,
-              onChanged: (value) =>
-                  setState(() => _profileImageFileName = value),
+            TenantAdminSingleImageUploadCard(
+              title: 'Profile Image',
+              description: 'Use a clear square JPG or PNG, up to 2 MB.',
+              fileName: profileUpload.fileName,
+              preview: _profilePreview(profileUpload),
+              isBusy: profileUploadBusy,
+              progress: profileUpload.progress,
+              errorText: profileUpload.errorMessage,
+              enabled: !_submitting,
+              onChooseImage: profileUpload.mediaAssetId == null
+                  ? profileUploader.chooseImage
+                  : profileUploader.replaceImage,
+              onRemoveImage: profileUpload.mediaAssetId == null
+                  ? null
+                  : profileUploader.removeImage,
+              onRetry: profileUpload.pendingInput == null
+                  ? null
+                  : profileUploader.retryUpload,
             ),
             const SizedBox(height: TenantAdminSpacing.xl),
             Row(
@@ -247,16 +278,22 @@ class _UserFormState extends ConsumerState<_UserForm> {
                 TenantAdminSecondaryButton(
                   label: 'Cancel',
                   icon: Icons.close,
-                  onPressed: _submitting
+                  onPressed: _submitting || profileUploadBusy
                       ? null
-                      : () => Navigator.of(context).maybePop(),
+                      : () async {
+                          await profileUploader.discardStagedImage();
+                          if (context.mounted) {
+                            await Navigator.of(context).maybePop();
+                          }
+                        },
                 ),
                 const SizedBox(width: TenantAdminSpacing.md),
                 TenantAdminPrimaryButton(
                   label: widget.isEdit ? 'Save Changes' : 'Save User',
                   icon: Icons.save_outlined,
                   loading: _submitting,
-                  onPressed: _submitting ? null : _submit,
+                  onPressed:
+                      _submitting || profileUploadBusy ? null : _submit,
                 ),
               ],
             ),
@@ -332,6 +369,21 @@ class _UserFormState extends ConsumerState<_UserForm> {
   }
 
   Future<void> _submit() async {
+    final profileUpload = ref.read(userProfileImageUploadControllerProvider);
+    if (profileUpload.status == UserProfileImageUploadStatus.selecting ||
+        profileUpload.status == UserProfileImageUploadStatus.uploading ||
+        profileUpload.status == UserProfileImageUploadStatus.deleting) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Wait for the profile image upload to finish.')),
+      );
+      return;
+    }
+    if (profileUpload.status == UserProfileImageUploadStatus.failed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Retry or remove the profile image before saving.')),
+      );
+      return;
+    }
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -358,7 +410,11 @@ class _UserFormState extends ConsumerState<_UserForm> {
       overriddenPermissionIds: _overriddenPermissionIds.toList(growable: false),
       sendInviteEmail: _sendInviteEmail,
       status: widget.isEdit ? _status : null,
-      profileImageFileName: _profileImageFileName,
+      profileImageFileName: profileUpload.fileName,
+      profileMediaAssetId: profileUpload.mediaAssetId,
+      profileMediaAction: widget.isEdit
+          ? (profileUpload.changeAction ?? 'KEEP')
+          : null,
     );
 
     try {
@@ -368,6 +424,8 @@ class _UserFormState extends ConsumerState<_UserForm> {
       } else {
         await ref.read(createUserProvider).call(form);
       }
+
+      ref.read(userProfileImageUploadControllerProvider.notifier).reset();
 
       ref.invalidate(userListProvider);
       if (!mounted) {
@@ -410,5 +468,35 @@ class _UserFormState extends ConsumerState<_UserForm> {
         setState(() => _submitting = false);
       }
     }
+  }
+
+  Widget? _profilePreview(UserProfileImageUploadState upload) {
+    if (upload.previewBytes != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        child: Image.memory(
+          upload.previewBytes!,
+          width: double.infinity,
+          height: 180,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+    if (upload.remoteImageUrl != null && upload.remoteImageUrl!.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        child: Image.network(
+          upload.remoteImageUrl!,
+          width: double.infinity,
+          height: 180,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const SizedBox(
+            height: 180,
+            child: Center(child: Icon(Icons.person_outline, size: 48)),
+          ),
+        ),
+      );
+    }
+    return null;
   }
 }

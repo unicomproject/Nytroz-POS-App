@@ -11,7 +11,9 @@ import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/providers/
 class FakeOutletImageUploadController
     extends StateNotifier<OutletImageUploadState>
     implements OutletImageUploadController {
-  FakeOutletImageUploadController() : super(const OutletImageUploadState());
+  FakeOutletImageUploadController([
+    super.initialState = const OutletImageUploadState(),
+  ]);
   @override
   Future<void> chooseImage() async {}
   @override
@@ -76,6 +78,29 @@ void main() {
       expect(
           find.textContaining('Country or Region must be 2'), findsOneWidget);
       expect(submitted, isFalse);
+    });
+
+    testWidgets('blocks navigation while the selected outlet image failed',
+        (tester) async {
+      await _pumpForm(
+        tester,
+        initialValue: _initialFormWithCountry('LK'),
+        imageState: const OutletImageUploadState(
+          status: OutletImageUploadStatus.failed,
+          errorMessage: 'Upload failed.',
+        ),
+      );
+
+      await _tapText(tester, 'Next');
+      await tester.pumpAndSettle();
+      await _tapText(tester, 'Next');
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Retry or remove the failed outlet image before continuing.'),
+        findsOneWidget,
+      );
+      expect(find.text('Business Hours'), findsNothing);
     });
 
     testWidgets('country dropdown never displays object string',
@@ -250,6 +275,7 @@ Future<void> _pumpForm(
   OutletFormData? initialValue,
   OutletCreateOptions? createOptions,
   bool useCreateOptions = true,
+  OutletImageUploadState imageState = const OutletImageUploadState(),
   Future<void> Function(OutletFormData form)? onSubmit,
 }) async {
   tester.view.physicalSize = const Size(800, 2500);
@@ -263,7 +289,7 @@ Future<void> _pumpForm(
     ProviderScope(
       overrides: [
         outletImageUploadControllerProvider
-            .overrideWith((ref) => FakeOutletImageUploadController()),
+            .overrideWith((ref) => FakeOutletImageUploadController(imageState)),
       ],
       child: MaterialApp(
         home: Scaffold(
