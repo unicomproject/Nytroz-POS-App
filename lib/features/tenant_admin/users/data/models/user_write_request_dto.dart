@@ -11,6 +11,16 @@ class UserWriteRequestDto {
     this.sendInviteEmail,
     this.status,
     this.profileMediaAssetId,
+    this.profileMediaAction,
+    this.outletAccessScope = 'ALL_OUTLETS',
+    this.defaultOutletId,
+    this.tillAccessScope = 'ALL_ACCESSIBLE_TILLS',
+    this.tillIds = const [],
+    this.defaultTillId,
+    this.permissionCatalogVersion,
+    this.deniedPermissionIds = const [],
+    this.password,
+    this.confirmPassword,
   });
 
   final String fullName;
@@ -24,6 +34,16 @@ class UserWriteRequestDto {
   final bool? sendInviteEmail;
   final String? status;
   final String? profileMediaAssetId;
+  final String? profileMediaAction;
+  final String outletAccessScope;
+  final String? defaultOutletId;
+  final String tillAccessScope;
+  final List<String> tillIds;
+  final String? defaultTillId;
+  final String? permissionCatalogVersion;
+  final List<String> deniedPermissionIds;
+  final String? password;
+  final String? confirmPassword;
 
   Map<String, dynamic> toJson() {
     return {
@@ -38,9 +58,22 @@ class UserWriteRequestDto {
       'permissionOverrideEnabled': permissionOverrideEnabled,
       'overriddenPermissionIds': overriddenPermissionIds,
       if (sendInviteEmail != null) 'sendInviteEmail': sendInviteEmail,
-      if (status != null) 'status': status,
+      if (status != null) 'createStatus': status,
+      'outletAccessScope': outletAccessScope,
+      if (defaultOutletId != null) 'defaultOutletId': defaultOutletId,
+      'tillAccessScope': tillAccessScope,
+      'tillIds': tillIds,
+      if (defaultTillId != null) 'defaultTillId': defaultTillId,
+      if (permissionCatalogVersion != null &&
+          permissionCatalogVersion!.trim().isNotEmpty)
+        'permissionCatalogVersion': permissionCatalogVersion!.trim(),
+      'deniedPermissionIds': deniedPermissionIds,
+      if (password != null) 'password': password,
+      if (confirmPassword != null) 'confirmPassword': confirmPassword,
       if (profileMediaAssetId != null && profileMediaAssetId!.trim().isNotEmpty)
         'profileMediaAssetId': profileMediaAssetId!.trim(),
+      if (profileMediaAction != null && profileMediaAction!.trim().isNotEmpty)
+        'profileMediaAction': profileMediaAction!.trim(),
     };
   }
 }

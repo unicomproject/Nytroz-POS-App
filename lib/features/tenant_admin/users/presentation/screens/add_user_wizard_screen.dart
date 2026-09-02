@@ -5,16 +5,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../auth/presentation/providers/session_provider.dart';
-import '../../../outlets/presentation/providers/outlet_image_upload_provider.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/theme/tenant_admin_motion.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_single_image_upload_card.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
+import '../../../presentation/widgets/tenant_admin_stepper_header.dart';
 import '../../domain/entities/tenant_user.dart';
 import '../providers/add_user_wizard_provider.dart';
 import '../providers/tenant_user_providers.dart';
 import '../providers/tenant_user_visibility_provider.dart';
+import '../providers/user_profile_image_upload_provider.dart';
+
+const _stepLabels = [
+  'Basic Information',
+  'Assign Role',
+  'Configure Permissions',
+  'Outlet, Till & Access Scope',
+  'Security & Review',
+];
 
 class AddUserWizardScreen extends ConsumerWidget {
   const AddUserWizardScreen({super.key});
@@ -37,12 +47,11 @@ class AddUserWizardScreen extends ConsumerWidget {
       );
     }
 
-    ref.listen(outletImageUploadControllerProvider, (previous, next) {
+    ref.listen(userProfileImageUploadControllerProvider, (previous, next) {
       if (previous?.mediaAssetId == next.mediaAssetId &&
           previous?.fileName == next.fileName) {
         return;
       }
-
       ref.read(addUserWizardControllerProvider.notifier).setProfileMedia(
             mediaAssetId: next.mediaAssetId,
             fileName: next.fileName,
@@ -51,7 +60,8 @@ class AddUserWizardScreen extends ConsumerWidget {
 
     return TenantAdminPageScaffold(
       title: 'Add New User',
-      subtitle: 'Complete the steps below to add a user and assign access.',
+      subtitle: 'Create a user and assign role-based access in five steps.',
+      scrollable: false,
       child: optionsState.when(
         loading: () => const TenantAdminLoadingSkeleton(rowCount: 6),
         error: (error, stackTrace) => TenantAdminErrorState(
@@ -59,7 +69,7 @@ class AddUserWizardScreen extends ConsumerWidget {
           message: 'Roles, outlets and permission options could not load.',
           onRetry: () => ref.invalidate(userCreateOptionsProvider),
         ),
-        data: (options) => _AddUserWizardBody(
+        data: (options) => _WizardBody(
           options: options,
           canInvite: canInvite,
           canOverride: canOverride,
@@ -69,8 +79,8 @@ class AddUserWizardScreen extends ConsumerWidget {
   }
 }
 
-class _AddUserWizardBody extends ConsumerWidget {
-  const _AddUserWizardBody({
+class _WizardBody extends ConsumerStatefulWidget {
+  const _WizardBody({
     required this.options,
     required this.canInvite,
     required this.canOverride,
@@ -81,62 +91,175 @@ class _AddUserWizardBody extends ConsumerWidget {
   final bool canOverride;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_WizardBody> createState() => _WizardBodyState();
+}
+
+class _WizardBodyState extends ConsumerState<_WizardBody> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref
+            .read(addUserWizardControllerProvider.notifier)
+            .syncCreateOptions(widget.options);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(addUserWizardControllerProvider);
     final controller = ref.read(addUserWizardControllerProvider.notifier);
+    final stepIndex = AddUserWizardStep.values.indexOf(state.currentStep);
 
     return PopScope(
       canPop: !state.isDirty,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (!didPop && state.isDirty) {
-          await _confirmDiscard(context, ref);
-        }
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && state.isDirty) _confirmDiscard();
       },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _WizardStepper(currentStep: state.currentStep),
-          const SizedBox(height: TenantAdminSpacing.xl),
-          const Divider(height: 1, color: TenantAdminColors.border),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          _StepContent(
-            state: state,
-            options: options,
-            canInvite: canInvite,
-            canOverride: canOverride,
-          ),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          const Divider(height: 1, color: TenantAdminColors.border),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          _WizardActions(
-            state: state,
-            onCancel: () => _handleCancel(context, ref),
-            onBack: state.currentStep == AddUserWizardStep.basicInformation
-                ? null
-                : controller.back,
-            onNext: state.currentStep == AddUserWizardStep.securityReview
-                ? null
-                : controller.next,
-            onCreate: state.currentStep == AddUserWizardStep.securityReview
-                ? () => _submit(context, ref)
-                : null,
-          ),
-        ],
+      child: Container(
+        decoration: BoxDecoration(
+          color: TenantAdminColors.surface,
+          border: Border.all(color: TenantAdminColors.border),
+          borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+          boxShadow: TenantAdminShadows.card,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                TenantAdminSpacing.xlg,
+                TenantAdminSpacing.xlg,
+                TenantAdminSpacing.xlg,
+                0,
+              ),
+              child: TenantAdminStepperHeader(
+                steps: _stepLabels,
+                currentStep: stepIndex,
+                completedColor: TenantAdminColors.success,
+                onStepTap: (index) => controller.goToCompletedStep(
+                  AddUserWizardStep.values[index],
+                ),
+              ),
+            ),
+            const SizedBox(height: TenantAdminSpacing.lg),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: TenantAdminSpacing.xlg,
+                ),
+                physics: const ClampingScrollPhysics(),
+                child: AnimatedSwitcher(
+                  duration: TenantAdminMotion.normal,
+                  switchInCurve: TenantAdminMotion.emphasized,
+                  switchOutCurve: Curves.easeIn,
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0.025, 0),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  ),
+                  child: KeyedSubtree(
+                    key: ValueKey(state.currentStep),
+                    child: _StepContent(
+                      state: state,
+                      options: widget.options,
+                      canInvite: widget.canInvite,
+                      canOverride: widget.canOverride,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+              decoration: const BoxDecoration(
+                color: TenantAdminColors.surface,
+                border: Border(
+                  top: BorderSide(color: TenantAdminColors.border),
+                ),
+              ),
+              child: Row(
+                children: [
+                  TenantAdminSecondaryButton(
+                    label: stepIndex == 0 ? 'Cancel' : 'Back',
+                    icon: stepIndex == 0 ? Icons.close : Icons.arrow_back,
+                    onPressed: state.isSubmitting
+                        ? null
+                        : stepIndex == 0
+                            ? _handleCancel
+                            : controller.back,
+                  ),
+                  if (stepIndex > 0)
+                    TextButton(
+                      onPressed: state.isSubmitting ? null : _handleCancel,
+                      child: const Text('Cancel'),
+                    ),
+                  const Spacer(),
+                  TenantAdminPrimaryButton(
+                    label: stepIndex == 4 ? 'Create User' : 'Next',
+                    icon: stepIndex == 4
+                        ? Icons.person_add_alt_1
+                        : Icons.arrow_forward,
+                    loading: state.isSubmitting,
+                    onPressed: stepIndex == 4 ? _submit : _next,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Future<void> _handleCancel(BuildContext context, WidgetRef ref) async {
+  Future<void> _handleCancel() async {
     final state = ref.read(addUserWizardControllerProvider);
     if (!state.isDirty) {
       context.go('/tenant-admin/staff');
       return;
     }
-
-    await _confirmDiscard(context, ref);
+    await _confirmDiscard();
   }
 
-  Future<void> _confirmDiscard(BuildContext context, WidgetRef ref) async {
+  void _next() {
+    final state = ref.read(addUserWizardControllerProvider);
+    if (state.currentStep == AddUserWizardStep.basicInformation &&
+        !_profileImageReady()) {
+      return;
+    }
+    ref.read(addUserWizardControllerProvider.notifier).next();
+  }
+
+  bool _profileImageReady() {
+    final upload = ref.read(userProfileImageUploadControllerProvider);
+    if (upload.status == UserProfileImageUploadStatus.selecting ||
+        upload.status == UserProfileImageUploadStatus.uploading ||
+        upload.status == UserProfileImageUploadStatus.deleting) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Wait for the profile image upload to finish.')),
+      );
+      return false;
+    }
+    if (upload.status == UserProfileImageUploadStatus.failed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content:
+                Text('Retry or remove the profile image before continuing.')),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _confirmDiscard() async {
     final discard = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -154,35 +277,22 @@ class _AddUserWizardBody extends ConsumerWidget {
         ],
       ),
     );
-
-    if (discard != true || !context.mounted) {
-      return;
-    }
-
+    if (discard != true || !mounted) return;
     try {
       await ref
-          .read(outletImageUploadControllerProvider.notifier)
-          .removeImage();
-    } catch (_) {
-      // Navigation must not be permanently blocked by staged-media cleanup.
-    }
-
-    if (!context.mounted) {
-      return;
-    }
-
+          .read(userProfileImageUploadControllerProvider.notifier)
+          .discardStagedImage();
+    } catch (_) {}
+    if (!mounted) return;
     ref.read(addUserWizardControllerProvider.notifier).reset();
     context.go('/tenant-admin/staff');
   }
 
-  Future<void> _submit(BuildContext context, WidgetRef ref) async {
+  Future<void> _submit() async {
+    if (!_profileImageReady()) return;
     final created =
         await ref.read(addUserWizardControllerProvider.notifier).submit();
-
-    if (!context.mounted) {
-      return;
-    }
-
+    if (!mounted) return;
     if (created == null) {
       final error = ref.read(addUserWizardControllerProvider).generalError;
       if (error != null && error.isNotEmpty) {
@@ -191,18 +301,11 @@ class _AddUserWizardBody extends ConsumerWidget {
       }
       return;
     }
-
     ref.invalidate(userListProvider);
     ref.read(selectedUserIdProvider.notifier).state = created.id;
-    ref.read(outletImageUploadControllerProvider.notifier).reset();
+    ref.read(userProfileImageUploadControllerProvider.notifier).reset();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          created.status.toUpperCase() == 'INVITED'
-              ? 'User created and invitation queued.'
-              : 'User created successfully.',
-        ),
-      ),
+      const SnackBar(content: Text('User created successfully.')),
     );
     context.go('/tenant-admin/staff');
   }
@@ -223,27 +326,42 @@ class _StepContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return switch (state.currentStep) {
-      AddUserWizardStep.basicInformation => _BasicInformationStep(
+    final stepIndex = AddUserWizardStep.values.indexOf(state.currentStep);
+    final content = switch (state.currentStep) {
+      AddUserWizardStep.basicInformation => _BasicStep(
           state: state,
           options: options,
           canInvite: canInvite,
         ),
-      AddUserWizardStep.accessSetup => _AccessSetupStep(
+      AddUserWizardStep.assignRole => _RoleStep(state: state, options: options),
+      AddUserWizardStep.configurePermissions => _PermissionStep(
           state: state,
           options: options,
           canOverride: canOverride,
         ),
-      AddUserWizardStep.securityReview => _SecurityReviewStep(
-          state: state,
-          options: options,
-        ),
+      AddUserWizardStep.accessScope =>
+        _AccessStep(state: state, options: options),
+      AddUserWizardStep.securityReview =>
+        _ReviewStep(state: state, options: options),
     };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _StepEyebrow(
+          current: stepIndex + 1,
+          total: AddUserWizardStep.values.length,
+          label: _stepLabels[stepIndex],
+        ),
+        const SizedBox(height: TenantAdminSpacing.md),
+        content,
+        const SizedBox(height: TenantAdminSpacing.xlg),
+      ],
+    );
   }
 }
 
-class _BasicInformationStep extends ConsumerWidget {
-  const _BasicInformationStep({
+class _BasicStep extends ConsumerWidget {
+  const _BasicStep({
     required this.state,
     required this.options,
     required this.canInvite,
@@ -256,127 +374,214 @@ class _BasicInformationStep extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(addUserWizardControllerProvider.notifier);
+    final upload = ref.watch(userProfileImageUploadControllerProvider);
+    final uploader =
+        ref.read(userProfileImageUploadControllerProvider.notifier);
+    final busy = upload.status == UserProfileImageUploadStatus.selecting ||
+        upload.status == UserProfileImageUploadStatus.uploading ||
+        upload.status == UserProfileImageUploadStatus.deleting;
+    Widget? preview;
+    if (upload.previewBytes != null) {
+      preview = _ImagePreview(bytes: upload.previewBytes!);
+    }
 
-    final fields = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SectionHeader(
-          title: 'Basic Information',
-          subtitle: "Enter the user's personal details and assign a role.",
-        ),
-        const SizedBox(height: TenantAdminSpacing.xl),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final twoColumn = constraints.maxWidth >= 760;
-            final children = [
-              _TextField(
-                label: 'Full Name *',
-                initialValue: state.fullName,
-                errorText: state.fieldErrors['fullName'],
-                onChanged: controller.setFullName,
-                hintText: 'Enter full name',
+    final fields = _Panel(
+      title: 'Basic Information',
+      subtitle: "Enter the user's identity and account details.",
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth >= 680
+              ? (constraints.maxWidth - TenantAdminSpacing.lg) / 2
+              : constraints.maxWidth;
+          return Wrap(
+            spacing: TenantAdminSpacing.lg,
+            runSpacing: TenantAdminSpacing.lg,
+            children: [
+              _field(width, 'Full Name *', state.fullName, 'Enter full name',
+                  controller.setFullName, state.fieldErrors['fullName']),
+              _field(width, 'Phone', state.phone, 'Enter phone number',
+                  controller.setPhone, state.fieldErrors['phone'],
+                  icon: Icons.phone_outlined),
+              _field(width, 'Email *', state.email, 'Enter email address',
+                  controller.setEmail, state.fieldErrors['email'],
+                  icon: Icons.email_outlined),
+              _field(
+                  width,
+                  'Employee ID (Optional)',
+                  state.employeeId,
+                  'Enter employee ID',
+                  controller.setEmployeeId,
+                  state.fieldErrors['employeeId'],
+                  icon: Icons.badge_outlined),
+              SizedBox(
+                width: width,
+                child: const _ReadOnlyField(
+                  label: 'Staff Code',
+                  value: 'Generated when the user is created',
+                ),
               ),
-              _TextField(
-                label: 'Phone',
-                initialValue: state.phone,
-                errorText: state.fieldErrors['phone'] ??
-                    state.fieldErrors['phoneNumber'],
-                onChanged: controller.setPhone,
-                hintText: 'Enter phone number',
-                prefixIcon: Icons.phone_outlined,
+              SizedBox(
+                width: width,
+                child: _StatusField(
+                  state: state,
+                  options: options,
+                  canInvite: canInvite,
+                  onChanged: controller.setAccountStatus,
+                ),
               ),
-              _TextField(
-                label: 'Email *',
-                initialValue: state.email,
-                errorText: state.fieldErrors['email'],
-                onChanged: controller.setEmail,
-                hintText: 'Enter email address',
-                prefixIcon: Icons.email_outlined,
-              ),
-              _RoleDropdown(
-                roles: options.roles,
-                selectedRoleId: state.roleId,
-                errorText: state.fieldErrors['roleId'],
-                onChanged: controller.setRoleId,
-              ),
-              _TextField(
-                label: 'Employee ID',
-                initialValue: state.employeeId,
-                errorText: state.fieldErrors['employeeId'],
-                onChanged: controller.setEmployeeId,
-                hintText: 'Enter employee ID',
-              ),
-              const _ReadOnlyStaffCodeField(),
-            ];
-
-            if (!twoColumn) {
-              return Column(
-                children: [
-                  for (final child in children) ...[
-                    child,
-                    const SizedBox(height: TenantAdminSpacing.lg),
-                  ],
-                ],
-              );
-            }
-
-            return Wrap(
-              spacing: TenantAdminSpacing.xl,
-              runSpacing: TenantAdminSpacing.lg,
-              children: [
-                for (final child in children)
-                  SizedBox(
-                    width: (constraints.maxWidth - TenantAdminSpacing.xl) / 2,
-                    child: child,
+              if (state.accountStatus == AddUserAccountStatus.active) ...[
+                _field(
+                  width,
+                  'Password *',
+                  state.password,
+                  'Create a secure password',
+                  controller.setPassword,
+                  state.fieldErrors['password'],
+                  icon: Icons.lock_outline,
+                  obscureText: true,
+                ),
+                _field(
+                  width,
+                  'Confirm Password *',
+                  state.confirmPassword,
+                  'Enter the password again',
+                  controller.setConfirmPassword,
+                  state.fieldErrors['confirmPassword'],
+                  icon: Icons.lock_reset_outlined,
+                  obscureText: true,
+                ),
+                SizedBox(
+                  width: constraints.maxWidth,
+                  child: const Text(
+                    'Minimum 8 characters with uppercase, lowercase, and a number. Only a secure password hash is stored.',
+                    style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
                   ),
+                ),
               ],
-            );
-          },
-        ),
-        const SizedBox(height: TenantAdminSpacing.xl),
-        _StatusSelector(
-          value: state.accountStatus,
-          canInvite: canInvite,
-          onChanged: controller.setAccountStatus,
-        ),
-      ],
+            ],
+          );
+        },
+      ),
     );
 
-    final photo = _ProfilePhotoCard(state: state);
+    final photo = TenantAdminSingleImageUploadCard(
+      title: 'Profile Photo',
+      description: 'Square JPG or PNG, up to 2 MB.',
+      fileName: upload.fileName,
+      preview: preview,
+      isBusy: busy,
+      progress: upload.progress,
+      errorText: upload.errorMessage,
+      onChooseImage: upload.mediaAssetId == null
+          ? uploader.chooseImage
+          : uploader.replaceImage,
+      onRemoveImage: upload.mediaAssetId == null ? null : uploader.removeImage,
+      onRetry: upload.pendingInput == null ? null : uploader.retryUpload,
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 1080) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              fields,
-              const SizedBox(height: TenantAdminSpacing.xl),
-              photo,
-            ],
-          );
+        if (constraints.maxWidth < 860) {
+          return Column(children: [
+            fields,
+            const SizedBox(height: TenantAdminSpacing.lg),
+            photo,
+          ]);
         }
-
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(flex: 3, child: fields),
-            const SizedBox(width: TenantAdminSpacing.xl),
-            SizedBox(width: 300, child: photo),
+            const SizedBox(width: TenantAdminSpacing.lg),
+            SizedBox(width: 280, child: photo),
           ],
         );
       },
     );
   }
+
+  Widget _field(
+    double width,
+    String label,
+    String value,
+    String hint,
+    ValueChanged<String> onChanged,
+    String? error, {
+    IconData? icon,
+    bool obscureText = false,
+  }) {
+    return SizedBox(
+      width: width,
+      child: _Input(
+        label: label,
+        initialValue: value,
+        hint: hint,
+        onChanged: onChanged,
+        error: error,
+        icon: icon,
+        obscureText: obscureText,
+      ),
+    );
+  }
 }
 
-class _AccessSetupStep extends ConsumerWidget {
-  const _AccessSetupStep({
+class _RoleStep extends ConsumerWidget {
+  const _RoleStep({required this.state, required this.options});
+  final AddUserWizardState state;
+  final TenantUserCreateOptions options;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = ref.read(addUserWizardControllerProvider.notifier);
+    final role = _roleFor(options, state.roleId);
+    return _Panel(
+      title: 'Assign Role',
+      subtitle: "Select the role that defines this user's base access.",
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final list = Column(
+            children: [
+              for (final item in options.roles.where((item) => item.isActive))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: TenantAdminSpacing.md),
+                  child: _RoleCard(
+                    role: item,
+                    selected: item.id == state.roleId,
+                    onTap: () => controller.setRoleId(item.id),
+                  ),
+                ),
+              if (state.fieldErrors['roleId'] != null)
+                _ErrorText(state.fieldErrors['roleId']!),
+            ],
+          );
+          final preview = _RolePreview(role: role);
+          if (constraints.maxWidth < 900) {
+            return Column(children: [
+              list,
+              const SizedBox(height: TenantAdminSpacing.lg),
+              preview,
+            ]);
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 3, child: list),
+              const SizedBox(width: TenantAdminSpacing.lg),
+              Expanded(flex: 2, child: preview),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PermissionStep extends ConsumerWidget {
+  const _PermissionStep({
     required this.state,
     required this.options,
     required this.canOverride,
   });
-
   final AddUserWizardState state;
   final TenantUserCreateOptions options;
   final bool canOverride;
@@ -384,750 +589,415 @@ class _AccessSetupStep extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(addUserWizardControllerProvider.notifier);
+    final groups = options.permissionGroups;
     final role = _roleFor(options, state.roleId);
+    final selectedIndex = groups.isEmpty
+        ? 0
+        : state.selectedPermissionGroupIndex
+            .clamp(0, groups.length - 1)
+            .toInt();
+    final enabled =
+        canOverride && options.capabilities.supportsUserPermissionOverrides;
+    final ids = groups
+        .expand((group) => group.permissions)
+        .where((permission) => permission.isAssignable)
+        .map((permission) => permission.id);
+
+    return Column(
+      children: [
+        _InfoBanner(
+          text: state.permissionOverrideEnabled
+              ? 'Permission override is enabled.'
+              : 'Permissions are inherited from the selected role.',
+        ),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        _Panel(
+          title: 'Configure Permissions',
+          subtitle: 'Review modules and fine-tune access if allowed.',
+          trailing: Switch.adaptive(
+            value: state.permissionOverrideEnabled,
+            onChanged: enabled
+                ? (value) => controller.setPermissionOverrideEnabled(
+                      value,
+                      inheritedPermissionIds: ids,
+                    )
+                : null,
+          ),
+          child: groups.isEmpty
+              ? const Text('No permission catalog is available.')
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final modules = _ModuleList(
+                      groups: groups,
+                      selectedIndex: selectedIndex,
+                      state: state,
+                      onSelected: controller.setPermissionGroupIndex,
+                    );
+                    final permissions = _PermissionList(
+                      group: groups[selectedIndex],
+                      state: state,
+                      enabled: enabled && state.permissionOverrideEnabled,
+                      onChanged: controller.togglePermission,
+                    );
+                    if (constraints.maxWidth < 820) {
+                      return Column(children: [
+                        modules,
+                        const SizedBox(height: TenantAdminSpacing.lg),
+                        permissions,
+                      ]);
+                    }
+                    return SizedBox(
+                      height: 390,
+                      child: Row(children: [
+                        SizedBox(width: 260, child: modules),
+                        const SizedBox(width: TenantAdminSpacing.lg),
+                        Expanded(child: permissions),
+                      ]),
+                    );
+                  },
+                ),
+        ),
+        if (groups.isNotEmpty) ...[
+          const SizedBox(height: TenantAdminSpacing.lg),
+          _MetricSummaryBar(
+            items: [
+              _SummaryMetric(
+                icon: Icons.widgets_outlined,
+                label: 'Modules',
+                value: '${groups.length}',
+              ),
+              _SummaryMetric(
+                icon: Icons.verified_user_outlined,
+                label: 'Permissions',
+                value: state.permissionOverrideEnabled
+                    ? '${state.selectedPermissionIds.length}'
+                    : '${role?.permissionCount ?? ids.length}',
+              ),
+              _SummaryMetric(
+                icon: Icons.insights_outlined,
+                label: 'Access level',
+                value: _accessLevel(
+                  state.permissionOverrideEnabled
+                      ? state.selectedPermissionIds.length
+                      : role?.permissionCount ?? ids.length,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _AccessStep extends ConsumerWidget {
+  const _AccessStep({required this.state, required this.options});
+  final AddUserWizardState state;
+  final TenantUserCreateOptions options;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = ref.read(addUserWizardControllerProvider.notifier);
+    final outlets = _availableOutlets(options, state).toList();
+    final tills = _availableTills(options, state).toList();
+    final outletPanel = _Panel(
+      title: 'Outlet Access',
+      subtitle: 'Choose where this user can work.',
+      child: Column(
+        children: [
+          _ChoiceTile(
+            title: 'All Outlets',
+            subtitle: 'Access all active tenant outlets.',
+            selected:
+                state.outletAccessMode == AddUserOutletAccessMode.allOutlets,
+            onTap: () => controller
+                .setOutletAccessMode(AddUserOutletAccessMode.allOutlets),
+          ),
+          _ChoiceTile(
+            title: 'Selected Outlets',
+            subtitle: 'Access only selected outlets.',
+            selected: state.outletAccessMode ==
+                AddUserOutletAccessMode.selectedOutlets,
+            onTap: () => controller
+                .setOutletAccessMode(AddUserOutletAccessMode.selectedOutlets),
+          ),
+          if (options.capabilities.supportsNoOutletAccess)
+            _ChoiceTile(
+              title: 'No Outlet Access',
+              subtitle: 'Create without outlet access.',
+              selected: state.outletAccessMode ==
+                  AddUserOutletAccessMode.noOutletAccess,
+              onTap: () => controller
+                  .setOutletAccessMode(AddUserOutletAccessMode.noOutletAccess),
+            ),
+          if (state.outletAccessMode == AddUserOutletAccessMode.selectedOutlets)
+            for (final outlet in options.outlets)
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: state.selectedOutletIds.contains(outlet.id),
+                title: Text(outlet.name),
+                subtitle: Text(outlet.code),
+                activeColor: TenantAdminColors.primary,
+                onChanged: (value) => controller.toggleOutlet(
+                  outlet.id,
+                  value ?? false,
+                  tills: options.tills,
+                ),
+              ),
+          if (state.fieldErrors['outletIds'] != null)
+            _ErrorText(state.fieldErrors['outletIds']!),
+          if (options.capabilities.supportsDefaultOutlet &&
+              state.outletAccessMode != AddUserOutletAccessMode.noOutletAccess)
+            _Dropdown<String>(
+              label: 'Default Outlet (Optional)',
+              value: state.defaultOutletId,
+              items: outlets
+                  .map((item) => DropdownMenuItem(
+                        value: item.id,
+                        child: Text(item.name),
+                      ))
+                  .toList(),
+              onChanged: controller.setDefaultOutlet,
+              error: state.fieldErrors['defaultOutletId'],
+            ),
+        ],
+      ),
+    );
+    final tillPanel = _Panel(
+      title: 'Till Access',
+      subtitle: 'Choose which tills are available.',
+      child: Column(
+        children: [
+          _ChoiceTile(
+            title: 'All Accessible Tills',
+            subtitle: 'Access all tills within outlet scope.',
+            selected: state.tillAccessMode ==
+                AddUserTillAccessMode.allAccessibleTills,
+            onTap:
+                state.outletAccessMode == AddUserOutletAccessMode.noOutletAccess
+                    ? null
+                    : () => controller.setTillAccessMode(
+                          AddUserTillAccessMode.allAccessibleTills,
+                        ),
+          ),
+          if (options.capabilities.supportsExplicitTillAccess)
+            _ChoiceTile(
+              title: 'Selected Tills',
+              subtitle: 'Access only selected tills.',
+              selected:
+                  state.tillAccessMode == AddUserTillAccessMode.selectedTills,
+              onTap: () => controller
+                  .setTillAccessMode(AddUserTillAccessMode.selectedTills),
+            ),
+          _ChoiceTile(
+            title: 'No Till Access',
+            subtitle: 'No POS till access.',
+            selected:
+                state.tillAccessMode == AddUserTillAccessMode.noTillAccess,
+            onTap: () => controller
+                .setTillAccessMode(AddUserTillAccessMode.noTillAccess),
+          ),
+          if (state.tillAccessMode == AddUserTillAccessMode.selectedTills)
+            for (final till in tills)
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: state.selectedTillIds.contains(till.id),
+                title: Text(till.name),
+                subtitle: Text(till.code),
+                activeColor: TenantAdminColors.primary,
+                onChanged: (value) =>
+                    controller.toggleTill(till.id, value ?? false),
+              ),
+          if (state.fieldErrors['tillIds'] != null)
+            _ErrorText(state.fieldErrors['tillIds']!),
+          if (options.capabilities.supportsDefaultTill &&
+              state.tillAccessMode != AddUserTillAccessMode.noTillAccess)
+            _Dropdown<String>(
+              label: 'Default Till (Optional)',
+              value: state.defaultTillId,
+              items: tills
+                  .where((till) =>
+                      state.tillAccessMode !=
+                          AddUserTillAccessMode.selectedTills ||
+                      state.selectedTillIds.contains(till.id))
+                  .map((item) => DropdownMenuItem(
+                        value: item.id,
+                        child: Text(item.name),
+                      ))
+                  .toList(),
+              onChanged: controller.setDefaultTill,
+              error: state.fieldErrors['defaultTillId'],
+            ),
+        ],
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionHeader(
-          title: 'Access Setup',
-          subtitle: "Configure the user's role, outlet access and permissions.",
+        const _SectionTitle(
+          title: 'Outlet, Till & Access Scope',
+          subtitle: 'Configure outlet and till access for this user.',
         ),
         const SizedBox(height: TenantAdminSpacing.lg),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final twoColumn = constraints.maxWidth >= 980;
-            final outletAccess = _AccessSetupPanel(
-              title: 'Outlet Access',
-              errorText: state.fieldErrors['outletIds'],
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _OutletAccessModeTile(
-                    selected: state.outletAccessMode ==
-                        AddUserOutletAccessMode.allOutlets,
-                    onTap: state.isSubmitting
-                        ? null
-                        : () => controller.setOutletAccessMode(
-                              AddUserOutletAccessMode.allOutlets,
-                            ),
-                    title: const Text('All Outlets'),
-                    subtitle: const Text(
-                      'User can access all current tenant outlets.',
-                    ),
-                  ),
-                  _OutletAccessModeTile(
-                    selected: state.outletAccessMode ==
-                        AddUserOutletAccessMode.specificOutlets,
-                    onTap: state.isSubmitting
-                        ? null
-                        : () => controller.setOutletAccessMode(
-                              AddUserOutletAccessMode.specificOutlets,
-                            ),
-                    title: const Text('Specific Outlets'),
-                    subtitle: const Text('Choose one or more active outlets.'),
-                  ),
-                  if (state.outletAccessMode ==
-                      AddUserOutletAccessMode.specificOutlets)
-                    _SpecificOutletSelector(
-                      outlets: options.outlets,
-                      selectedOutletIds: state.selectedOutletIds,
-                      isSubmitting: state.isSubmitting,
-                      onChanged: controller.toggleOutlet,
-                    ),
-                ],
-              ),
-            );
-            final leftColumn = Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _AssignedRoleSummary(role: role),
-                const SizedBox(height: TenantAdminSpacing.lg),
-                outletAccess,
-              ],
-            );
-            final permissionOverride = _PermissionOverridePanel(
-              state: state,
-              options: options,
-              canOverride: canOverride,
-              onToggleOverride: controller.setPermissionOverrideEnabled,
-              onTogglePermission: controller.togglePermission,
-            );
-
-            if (!twoColumn) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  leftColumn,
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  permissionOverride,
-                ],
-              );
-            }
-
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(flex: 11, child: leftColumn),
-                const SizedBox(width: TenantAdminSpacing.xl),
-                Expanded(flex: 9, child: permissionOverride),
-              ],
-            );
-          },
+        LayoutBuilder(builder: (context, constraints) {
+          if (constraints.maxWidth < 900) {
+            return Column(children: [
+              outletPanel,
+              const SizedBox(height: TenantAdminSpacing.lg),
+              tillPanel,
+            ]);
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: outletPanel),
+              const SizedBox(width: TenantAdminSpacing.lg),
+              Expanded(child: tillPanel),
+            ],
+          );
+        }),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        _MetricSummaryBar(
+          items: [
+            _SummaryMetric(
+              icon: Icons.storefront_outlined,
+              label: 'Outlet scope',
+              value: switch (state.outletAccessMode) {
+                AddUserOutletAccessMode.allOutlets => 'All outlets',
+                AddUserOutletAccessMode.selectedOutlets =>
+                  '${state.selectedOutletIds.length} selected',
+                AddUserOutletAccessMode.noOutletAccess => 'No access',
+              },
+            ),
+            _SummaryMetric(
+              icon: Icons.point_of_sale_outlined,
+              label: 'Till scope',
+              value: switch (state.tillAccessMode) {
+                AddUserTillAccessMode.allAccessibleTills => 'All accessible',
+                AddUserTillAccessMode.selectedTills =>
+                  '${state.selectedTillIds.length} selected',
+                AddUserTillAccessMode.noTillAccess => 'No access',
+              },
+            ),
+            _SummaryMetric(
+              icon: Icons.shield_outlined,
+              label: 'Role',
+              value: _roleFor(options, state.roleId)?.name ?? 'Not selected',
+            ),
+          ],
         ),
       ],
     );
   }
 }
 
-class _SecurityReviewStep extends StatelessWidget {
-  const _SecurityReviewStep({
-    required this.state,
-    required this.options,
-  });
-
+class _ReviewStep extends StatelessWidget {
+  const _ReviewStep({required this.state, required this.options});
   final AddUserWizardState state;
   final TenantUserCreateOptions options;
 
   @override
   Widget build(BuildContext context) {
     final role = _roleFor(options, state.roleId);
-    final selectedOutlets = options.outlets
-        .where((outlet) => state.selectedOutletIds.contains(outlet.id))
-        .map((outlet) => outlet.name)
-        .toList(growable: false);
-
+    final cards = [
+      _ReviewCard(
+          icon: Icons.person_outline,
+          title: '1. User Information',
+          rows: {
+            'Full Name': state.fullName,
+            'Email': state.email,
+            'Phone': state.phone.isEmpty ? 'Not provided' : state.phone,
+            'Employee ID':
+                state.employeeId.isEmpty ? 'Not provided' : state.employeeId,
+            'Status': state.accountStatusApiValue,
+            if (state.accountStatus == AddUserAccountStatus.active)
+              'Password': 'Configured securely',
+          }),
+      _ReviewCard(
+          icon: Icons.admin_panel_settings_outlined,
+          title: '2. Role & Permissions',
+          rows: {
+            'Selected Role': role?.name ?? 'Not selected',
+            'Role Permissions': (role?.permissionCount ?? 0).toString(),
+            'Override': state.permissionOverrideEnabled
+                ? '${state.selectedPermissionIds.length} selected'
+                : 'Inherited',
+          }),
+      _ReviewCard(
+          icon: Icons.storefront_outlined,
+          title: '3. Outlets & Tills',
+          rows: {
+            'Outlet Scope': state.outletAccessMode.apiValue,
+            'Selected Outlets': state.selectedOutletIds.length.toString(),
+            'Till Scope': state.tillAccessMode.apiValue,
+            'Selected Tills': state.selectedTillIds.length.toString(),
+          }),
+      _ReviewCard(
+          icon: Icons.lock_outline,
+          title: '4. Security & Invitation',
+          rows: {
+            'Access Method': switch (state.accountStatus) {
+              AddUserAccountStatus.invited => 'Email invitation',
+              AddUserAccountStatus.active => 'Email and created password',
+              AddUserAccountStatus.inactive => 'Login disabled',
+            },
+            'Account Status': state.accountStatusApiValue,
+            'Profile Photo':
+                state.profileMediaAssetId == null ? 'Not provided' : 'Selected',
+          }),
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionHeader(
+        const _SectionTitle(
           title: 'Security & Review',
-          subtitle: 'Review the user before creating the account.',
+          subtitle: 'Review all details before creating the user.',
         ),
         if (state.generalError != null) ...[
-          const SizedBox(height: TenantAdminSpacing.lg),
-          _InlineError(message: state.generalError!),
+          const SizedBox(height: TenantAdminSpacing.md),
+          _ErrorText(state.generalError!),
         ],
-        const SizedBox(height: TenantAdminSpacing.xl),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final twoColumn = constraints.maxWidth >= 900;
-            final sections = [
-              _ReviewSection(
-                title: 'USER INFORMATION',
-                rows: {
-                  'Name': state.fullName.trim(),
-                  'Email': state.email.trim(),
-                  'Phone': state.phone.trim().isEmpty
-                      ? 'Not provided'
-                      : state.phone.trim(),
-                  'Employee ID': state.employeeId.trim().isEmpty
-                      ? 'Not provided'
-                      : state.employeeId.trim(),
-                  'Role': role?.name ?? 'Not selected',
-                  'Status': state.accountStatusApiValue,
-                },
-              ),
-              _ReviewSection(
-                title: 'ACCESS',
-                rows: {
-                  'Outlet access': state.outletAccessMode ==
-                          AddUserOutletAccessMode.allOutlets
-                      ? 'All Outlets'
-                      : selectedOutlets.join(', '),
-                  'Permission override': state.permissionOverrideEnabled
-                      ? '${state.selectedPermissionIds.length} selected'
-                      : 'Off',
-                  'Profile photo': state.profileMediaAssetId == null
-                      ? 'Not provided'
-                      : 'Staged media selected',
-                },
-              ),
-            ];
-
-            if (!twoColumn) {
-              return Column(
-                children: [
-                  for (final section in sections) ...[
-                    section,
-                    const SizedBox(height: TenantAdminSpacing.lg),
-                  ],
-                ],
-              );
-            }
-
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: sections.first),
-                const SizedBox(width: TenantAdminSpacing.xl),
-                Expanded(child: sections.last),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: TenantAdminSpacing.xl),
-        _SecurityMessage(status: state.accountStatus),
-      ],
-    );
-  }
-}
-
-class _WizardStepper extends StatelessWidget {
-  const _WizardStepper({required this.currentStep});
-
-  final AddUserWizardStep currentStep;
-
-  @override
-  Widget build(BuildContext context) {
-    const steps = AddUserWizardStep.values;
-    final currentIndex = steps.indexOf(currentStep);
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 640) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var index = 0; index < steps.length; index++) ...[
-                _StepperNode(
-                  index: index + 1,
-                  label: _stepLabel(steps[index]),
-                  active: index == currentIndex,
-                  completed: index < currentIndex,
-                  compact: true,
-                ),
-                if (index < steps.length - 1)
-                  Container(
-                    width: 2,
-                    height: TenantAdminSpacing.md,
-                    margin: const EdgeInsets.only(left: 16),
-                    color: index < currentIndex
-                        ? TenantAdminColors.posHomeAccentOrange
-                        : TenantAdminColors.border,
-                  ),
-              ],
-            ],
-          );
-        }
-
-        return Row(
-          children: [
-            for (var index = 0; index < steps.length; index++) ...[
-              Expanded(
-                child: _StepperNode(
-                  index: index + 1,
-                  label: _stepLabel(steps[index]),
-                  active: index == currentIndex,
-                  completed: index < currentIndex,
-                ),
-              ),
-              if (index < steps.length - 1)
-                Expanded(
-                  child: _StepperConnector(
-                    key: ValueKey('addUserWizardStepperConnector$index'),
-                    active: index < currentIndex,
-                  ),
-                ),
-            ],
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _StepperNode extends StatelessWidget {
-  const _StepperNode({
-    required this.index,
-    required this.label,
-    required this.active,
-    required this.completed,
-    this.compact = false,
-  });
-
-  final int index;
-  final String label;
-  final bool active;
-  final bool completed;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    final stateLabel = completed
-        ? 'completed'
-        : active
-            ? 'current'
-            : 'not started';
-    final labelColor = active
-        ? TenantAdminColors.posHomeAccentOrange
-        : TenantAdminColors.bodyText;
-    final circleBorder = active
-        ? TenantAdminColors.posHomeAccentOrange
-        : completed
-            ? TenantAdminColors.success
-            : TenantAdminColors.border;
-
-    return Semantics(
-      label: 'Step $index, $label, $stateLabel',
-      container: true,
-      child: ExcludeSemantics(
-        child: Row(
-          mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
-          mainAxisAlignment:
-              compact ? MainAxisAlignment.start : MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: active
-                    ? TenantAdminColors.posHomeAccentOrange
-                    : TenantAdminColors.surface,
-                shape: BoxShape.circle,
-                border: Border.all(color: circleBorder),
-              ),
-              child: completed
-                  ? const Icon(
-                      Icons.check,
-                      size: 18,
-                      color: TenantAdminColors.success,
-                    )
-                  : Center(
-                      child: Text(
-                        '$index',
-                        style: TextStyle(
-                          color: active
-                              ? Colors.white
-                              : TenantAdminColors.mutedText,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-            ),
-            const SizedBox(width: TenantAdminSpacing.sm),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: labelColor,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StepperConnector extends StatelessWidget {
-  const _StepperConnector({
-    super.key,
-    required this.active,
-  });
-
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 2,
-      margin: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.sm),
-      color: active
-          ? TenantAdminColors.posHomeAccentOrange
-          : TenantAdminColors.border,
-    );
-  }
-}
-
-class _WizardActions extends StatelessWidget {
-  const _WizardActions({
-    required this.state,
-    required this.onCancel,
-    required this.onBack,
-    required this.onNext,
-    required this.onCreate,
-  });
-
-  final AddUserWizardState state;
-  final VoidCallback onCancel;
-  final VoidCallback? onBack;
-  final VoidCallback? onNext;
-  final VoidCallback? onCreate;
-
-  @override
-  Widget build(BuildContext context) {
-    final backButton = onBack == null
-        ? null
-        : TenantAdminSecondaryButton(
-            label: 'Back',
-            icon: Icons.arrow_back,
-            onPressed: state.isSubmitting ? null : onBack,
-          );
-    final cancelButton = _CancelWizardButton(
-      onPressed: state.isSubmitting ? null : onCancel,
-    );
-    final primaryButton = onNext != null
-        ? TenantAdminPrimaryButton(
-            label: 'Next',
-            icon: Icons.arrow_forward,
-            onPressed: state.isSubmitting ? null : onNext,
-            backgroundColor: TenantAdminColors.posHomeAccentOrange,
-          )
-        : TenantAdminPrimaryButton(
-            label: 'Create User',
-            icon: Icons.person_add_alt_1,
-            loading: state.isSubmitting,
-            onPressed: state.isSubmitting ? null : onCreate,
-            backgroundColor: TenantAdminColors.posHomeAccentOrange,
-          );
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final actions = [
-          if (backButton != null) backButton,
-          cancelButton,
-          primaryButton,
-        ];
-
-        if (constraints.maxWidth < 620) {
+        const SizedBox(height: TenantAdminSpacing.lg),
+        LayoutBuilder(builder: (context, constraints) {
+          final width = constraints.maxWidth >= 900
+              ? (constraints.maxWidth - TenantAdminSpacing.lg) / 2
+              : constraints.maxWidth;
           return Wrap(
-            spacing: TenantAdminSpacing.md,
-            runSpacing: TenantAdminSpacing.md,
-            children: actions,
-          );
-        }
-
-        return Row(
-          children: [
-            if (backButton != null) ...[
-              backButton,
-              const SizedBox(width: TenantAdminSpacing.md),
+            spacing: TenantAdminSpacing.lg,
+            runSpacing: TenantAdminSpacing.lg,
+            children: [
+              for (final card in cards) SizedBox(width: width, child: card),
             ],
-            cancelButton,
-            const Spacer(),
-            primaryButton,
+          );
+        }),
+        const SizedBox(height: TenantAdminSpacing.lg),
+        _ReadyPanel(
+          checks: [
+            state.fullName.trim().isNotEmpty && state.email.trim().isNotEmpty,
+            role != null,
+            state.outletAccessMode != AddUserOutletAccessMode.selectedOutlets ||
+                state.selectedOutletIds.isNotEmpty,
+            state.tillAccessMode != AddUserTillAccessMode.selectedTills ||
+                state.selectedTillIds.isNotEmpty,
           ],
-        );
-      },
-    );
-  }
-}
-
-class _CancelWizardButton extends StatelessWidget {
-  const _CancelWizardButton({required this.onPressed});
-
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: TenantAdminColors.danger,
-        side: BorderSide(
-          color: TenantAdminColors.danger.withValues(alpha: 0.55),
         ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: TenantAdminSpacing.lg,
-          vertical: TenantAdminSpacing.md,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        ),
-      ),
-      icon: const Icon(Icons.close, size: 18),
-      label: const Text(
-        'Cancel',
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-}
-
-class _TextField extends StatelessWidget {
-  const _TextField({
-    required this.label,
-    required this.initialValue,
-    required this.onChanged,
-    required this.hintText,
-    this.errorText,
-    this.prefixIcon,
-  });
-
-  final String label;
-  final String initialValue;
-  final ValueChanged<String> onChanged;
-  final String hintText;
-  final String? errorText;
-  final IconData? prefixIcon;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      initialValue: initialValue,
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hintText,
-        errorText: errorText,
-        prefixIcon: prefixIcon == null ? null : Icon(prefixIcon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoleDropdown extends StatelessWidget {
-  const _RoleDropdown({
-    required this.roles,
-    required this.selectedRoleId,
-    required this.onChanged,
-    this.errorText,
-  });
-
-  final List<RoleOption> roles;
-  final String? selectedRoleId;
-  final ValueChanged<String?> onChanged;
-  final String? errorText;
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      initialValue: selectedRoleId,
-      decoration: InputDecoration(
-        labelText: 'Role *',
-        errorText: errorText,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        ),
-      ),
-      hint: const Text('Select role'),
-      items: [
-        for (final role in roles)
-          DropdownMenuItem(
-            value: role.id,
-            child: Text(role.name),
-          ),
       ],
-      onChanged: onChanged,
     );
   }
 }
 
-class _ReadOnlyStaffCodeField extends StatelessWidget {
-  const _ReadOnlyStaffCodeField();
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      readOnly: true,
-      initialValue: 'Auto-generated when user is created',
-      decoration: InputDecoration(
-        labelText: 'Staff Code',
-        prefixIcon: const Icon(Icons.lock_outline),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusSelector extends StatelessWidget {
-  const _StatusSelector({
-    required this.value,
-    required this.canInvite,
-    required this.onChanged,
-  });
-
-  final AddUserAccountStatus value;
-  final bool canInvite;
-  final ValueChanged<AddUserAccountStatus> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return _CardSection(
-      title: 'User Status *',
-      child: SegmentedButton<AddUserAccountStatus>(
-        segments: [
-          const ButtonSegment(
-            value: AddUserAccountStatus.inactive,
-            label: Text('Inactive'),
-            icon: Icon(Icons.pause_circle_outline),
-          ),
-          ButtonSegment(
-            value: AddUserAccountStatus.invited,
-            label: const Text('Invited'),
-            icon: const Icon(Icons.mail_outline),
-            enabled: canInvite,
-          ),
-        ],
-        selected: {value},
-        onSelectionChanged: (selection) => onChanged(selection.single),
-      ),
-    );
-  }
-}
-
-class _ProfilePhotoCard extends ConsumerWidget {
-  const _ProfilePhotoCard({required this.state});
-
-  final AddUserWizardState state;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final imageState = ref.watch(outletImageUploadControllerProvider);
-    final imageController =
-        ref.read(outletImageUploadControllerProvider.notifier);
-    final hasImage = imageState.previewBytes != null ||
-        imageState.remoteImageUrl != null ||
-        imageState.mediaAssetId != null;
-
-    return TenantAdminSingleImageUploadCard(
-      title: 'Profile Photo',
-      description: 'Use a clear portrait to help identify this user.',
-      fileName: imageState.fileName,
-      preview: hasImage
-          ? _UserProfilePreview(
-              imageBytes: imageState.previewBytes,
-              imageUrl: imageState.remoteImageUrl,
-              initials: _initials(state.fullName),
-            )
-          : null,
-      isBusy: imageState.status == OutletImageUploadStatus.uploading ||
-          imageState.status == OutletImageUploadStatus.deleting,
-      progress: imageState.status == OutletImageUploadStatus.uploading
-          ? imageState.progress
-          : null,
-      errorText: imageState.errorMessage,
-      onChooseImage:
-          hasImage ? imageController.replaceImage : imageController.chooseImage,
-      onRemoveImage: hasImage ? imageController.removeImage : null,
-      onRetry:
-          imageState.errorMessage == null ? null : imageController.retryUpload,
-    );
-  }
-}
-
-class _UserProfilePreview extends StatelessWidget {
-  const _UserProfilePreview({
-    required this.imageBytes,
-    required this.imageUrl,
-    required this.initials,
-  });
-
-  final Uint8List? imageBytes;
-  final String? imageUrl;
-  final String initials;
-
-  @override
-  Widget build(BuildContext context) {
-    if (imageBytes != null) return Image.memory(imageBytes!, fit: BoxFit.cover);
-    if (imageUrl?.trim().isNotEmpty == true) {
-      return Image.network(imageUrl!, fit: BoxFit.cover);
-    }
-
-    return Container(
-      color: TenantAdminColors.secondary,
-      alignment: Alignment.center,
-      child: Text(
-        initials,
-        style: const TextStyle(
-          color: TenantAdminColors.primary,
-          fontWeight: FontWeight.w900,
-          fontSize: 24,
-        ),
-      ),
-    );
-  }
-}
-
-class _AssignedRoleSummary extends StatelessWidget {
-  const _AssignedRoleSummary({required this.role});
-
-  final RoleOption? role;
-
-  @override
-  Widget build(BuildContext context) {
-    return _AccessSetupPanel(
-      title: 'Assigned Role',
-      subtitle: "Role determines the user's base permissions.",
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color:
-                  TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            ),
-            child: const Icon(
-              Icons.admin_panel_settings_outlined,
-              color: TenantAdminColors.posHomeAccentOrange,
-            ),
-          ),
-          const SizedBox(width: TenantAdminSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  role == null ? 'Select a role in Step 1' : role!.name,
-                  style: const TextStyle(
-                    color: TenantAdminColors.bodyText,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                if (role?.roleDescription?.isNotEmpty == true) ...[
-                  const SizedBox(height: TenantAdminSpacing.xs),
-                  Text(
-                    role!.roleDescription!,
-                    style: TenantAdminTextStyles.muted(context),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(width: TenantAdminSpacing.md),
-          const Tooltip(
-            message: 'Assigned from Basic Information',
-            child: Icon(
-              Icons.lock_outline,
-              size: 20,
-              color: TenantAdminColors.mutedText,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AccessSetupPanel extends StatelessWidget {
-  const _AccessSetupPanel({
+class _Panel extends StatelessWidget {
+  const _Panel({
     required this.title,
     required this.child,
     this.subtitle,
     this.trailing,
-    this.errorText,
   });
-
   final String title;
   final String? subtitle;
-  final Widget? trailing;
-  final String? errorText;
   final Widget child;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -1136,422 +1006,748 @@ class _AccessSetupPanel extends StatelessWidget {
       padding: const EdgeInsets.all(TenantAdminSpacing.lg),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
         border: Border.all(color: TenantAdminColors.border),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        boxShadow: TenantAdminShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(children: [
+            Expanded(child: _SectionTitle(title: title, subtitle: subtitle)),
+            if (trailing != null) trailing!,
+          ]),
+          const SizedBox(height: TenantAdminSpacing.md),
+          Material(
+            color: Colors.transparent,
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.title, this.subtitle});
+  final String title;
+  final String? subtitle;
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: TenantAdminTextStyles.sectionTitle(context)),
+          if (subtitle != null) ...[
+            const SizedBox(height: TenantAdminSpacing.xs),
+            Text(subtitle!, style: TenantAdminTextStyles.muted(context)),
+          ],
+        ],
+      );
+}
+
+class _StepEyebrow extends StatelessWidget {
+  const _StepEyebrow({
+    required this.current,
+    required this.total,
+    required this.label,
+  });
+
+  final int current;
+  final int total;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth >= TenantAdminBreakpoints.tablet) {
+            return const SizedBox.shrink();
+          }
+          return Row(
             children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: TenantAdminSpacing.md,
+                  vertical: TenantAdminSpacing.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: TenantAdminColors.secondary,
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.xl),
+                ),
+                child: Text(
+                  'Step $current of $total',
+                  style: const TextStyle(
+                    color: TenantAdminColors.primary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(width: TenantAdminSpacing.md),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TenantAdminTextStyles.muted(context).copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+}
+
+class _Input extends StatelessWidget {
+  const _Input({
+    required this.label,
+    required this.initialValue,
+    required this.hint,
+    required this.onChanged,
+    this.icon,
+    this.error,
+    this.obscureText = false,
+  });
+  final String label;
+  final String initialValue;
+  final String hint;
+  final ValueChanged<String> onChanged;
+  final IconData? icon;
+  final String? error;
+  final bool obscureText;
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TenantAdminTextStyles.fieldLabel(context)),
+          const SizedBox(height: TenantAdminSpacing.sm),
+          TextFormField(
+            key: ValueKey(label),
+            initialValue: initialValue,
+            obscureText: obscureText,
+            enableSuggestions: !obscureText,
+            autocorrect: !obscureText,
+            onChanged: onChanged,
+            decoration: InputDecoration(
+              hintText: hint,
+              prefixIcon: icon == null ? null : Icon(icon),
+              errorText: error,
+            ),
+          ),
+        ],
+      );
+}
+
+class _ReadOnlyField extends StatelessWidget {
+  const _ReadOnlyField({required this.label, required this.value});
+  final String label;
+  final String value;
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TenantAdminTextStyles.fieldLabel(context)),
+          const SizedBox(height: TenantAdminSpacing.sm),
+          InputDecorator(
+            decoration:
+                const InputDecoration(suffixIcon: Icon(Icons.lock_outline)),
+            child: Text(value, style: TenantAdminTextStyles.muted(context)),
+          ),
+        ],
+      );
+}
+
+class _StatusField extends StatelessWidget {
+  const _StatusField({
+    required this.state,
+    required this.options,
+    required this.canInvite,
+    required this.onChanged,
+  });
+  final AddUserWizardState state;
+  final TenantUserCreateOptions options;
+  final bool canInvite;
+  final ValueChanged<AddUserAccountStatus> onChanged;
+  @override
+  Widget build(BuildContext context) {
+    final statuses =
+        options.supportedStatuses.map((item) => item.toUpperCase()).toSet();
+    final segments = <ButtonSegment<AddUserAccountStatus>>[
+      if (statuses.contains('INVITED') && canInvite)
+        const ButtonSegment(
+          value: AddUserAccountStatus.invited,
+          label: Text('Invited'),
+          icon: Icon(Icons.mail_outline),
+        ),
+      if (statuses.contains('ACTIVE') &&
+          options.capabilities.supportsDirectActiveCreation &&
+          options.capabilities.supportsTemporaryPassword)
+        const ButtonSegment(
+          value: AddUserAccountStatus.active,
+          label: Text('Active'),
+          icon: Icon(Icons.check_circle_outline),
+        ),
+      if (statuses.contains('INACTIVE'))
+        const ButtonSegment(
+          value: AddUserAccountStatus.inactive,
+          label: Text('Inactive'),
+          icon: Icon(Icons.pause_circle_outline),
+        ),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Account Status *',
+            style: TenantAdminTextStyles.fieldLabel(context)),
+        const SizedBox(height: TenantAdminSpacing.sm),
+        if (segments.isEmpty)
+          const Text('No supported account status is available.')
+        else
+          SegmentedButton<AddUserAccountStatus>(
+            segments: segments,
+            selected: segments.any((item) => item.value == state.accountStatus)
+                ? {state.accountStatus}
+                : {segments.first.value},
+            onSelectionChanged: (values) => onChanged(values.first),
+          ),
+      ],
+    );
+  }
+}
+
+class _RoleCard extends StatelessWidget {
+  const _RoleCard({
+    required this.role,
+    required this.selected,
+    required this.onTap,
+  });
+  final RoleOption role;
+  final bool selected;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => TenantAdminPressScale(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          child: AnimatedContainer(
+            duration: TenantAdminMotion.fast,
+            curve: TenantAdminMotion.standard,
+            padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+            decoration: BoxDecoration(
+              color: selected
+                  ? TenantAdminColors.secondary
+                  : TenantAdminColors.surface,
+              border: Border.all(
+                color: selected
+                    ? TenantAdminColors.primary
+                    : TenantAdminColors.border,
+                width: selected ? 2 : 1,
+              ),
+              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            ),
+            child: Row(children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? TenantAdminColors.primary.withValues(alpha: 0.12)
+                      : TenantAdminColors.subtleBackground,
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                ),
+                child: Icon(
+                  Icons.admin_panel_settings_outlined,
+                  color: selected
+                      ? TenantAdminColors.primary
+                      : TenantAdminColors.mutedText,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: TenantAdminSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(role.name,
+                        style: TenantAdminTextStyles.cardTitle(context)),
+                    Text(role.roleDescription ?? role.code,
+                        style: TenantAdminTextStyles.muted(context)),
                     Text(
-                      title,
-                      style: TenantAdminTextStyles.sectionTitle(context),
+                      '${role.moduleCount} modules • '
+                      '${role.permissionCount} permissions',
+                      style: TenantAdminTextStyles.helperText(context),
                     ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: TenantAdminSpacing.xs),
-                      Text(
-                        subtitle!,
-                        style: TenantAdminTextStyles.muted(context),
-                      ),
-                    ],
                   ],
                 ),
               ),
-              if (trailing != null) ...[
-                const SizedBox(width: TenantAdminSpacing.md),
-                trailing!,
-              ],
-            ],
-          ),
-          if (errorText != null) ...[
-            const SizedBox(height: TenantAdminSpacing.sm),
-            Text(
-              errorText!,
-              style: const TextStyle(color: TenantAdminColors.danger),
-            ),
-          ],
-          const SizedBox(height: TenantAdminSpacing.md),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _SpecificOutletSelector extends StatelessWidget {
-  const _SpecificOutletSelector({
-    required this.outlets,
-    required this.selectedOutletIds,
-    required this.isSubmitting,
-    required this.onChanged,
-  });
-
-  final List<UserOutletOption> outlets;
-  final Set<String> selectedOutletIds;
-  final bool isSubmitting;
-  final void Function(String outletId, bool selected) onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: TenantAdminSpacing.sm),
-      child: outlets.isEmpty
-          ? const TenantAdminEmptyState(
-              title: 'No outlets available',
-              message:
-                  'Create an outlet before assigning specific outlet access.',
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Select active outlets',
-                  style: TenantAdminTextStyles.muted(context),
-                ),
-                const SizedBox(height: TenantAdminSpacing.sm),
-                Wrap(
-                  spacing: TenantAdminSpacing.sm,
-                  runSpacing: TenantAdminSpacing.sm,
-                  children: [
-                    for (final outlet in outlets)
-                      FilterChip(
-                        label: Text(outlet.name),
-                        selected: selectedOutletIds.contains(outlet.id),
-                        onSelected: isSubmitting
-                            ? null
-                            : (selected) => onChanged(outlet.id, selected),
-                        avatar: const Icon(Icons.storefront_outlined),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-    );
-  }
-}
-
-class _PermissionOverridePanel extends StatelessWidget {
-  const _PermissionOverridePanel({
-    required this.state,
-    required this.options,
-    required this.canOverride,
-    required this.onToggleOverride,
-    required this.onTogglePermission,
-  });
-
-  final AddUserWizardState state;
-  final TenantUserCreateOptions options;
-  final bool canOverride;
-  final ValueChanged<bool> onToggleOverride;
-  final void Function(String permissionId, bool selected) onTogglePermission;
-
-  @override
-  Widget build(BuildContext context) {
-    final canToggle = canOverride && !state.isSubmitting;
-
-    return _AccessSetupPanel(
-      title: 'Permission Override',
-      subtitle: canOverride
-          ? 'Grant selected backend-provided permissions beyond the role.'
-          : 'You do not have permission to override user permissions.',
-      errorText: state.fieldErrors['permissions'] ??
-          state.fieldErrors['overriddenPermissionIds'],
-      trailing: Switch(
-        value: state.permissionOverrideEnabled,
-        onChanged: canToggle ? onToggleOverride : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            onTap: canToggle
-                ? () => onToggleOverride(!state.permissionOverrideEnabled)
-                : null,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: TenantAdminSpacing.xs,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    state.permissionOverrideEnabled
-                        ? Icons.tune
-                        : Icons.tune_outlined,
-                    color: state.permissionOverrideEnabled
-                        ? TenantAdminColors.posHomeAccentOrange
-                        : TenantAdminColors.mutedText,
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.sm),
-                  const Expanded(
-                    child: Text(
-                      'Enable permission override',
-                      style: TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (state.permissionOverrideEnabled) ...[
-            const SizedBox(height: TenantAdminSpacing.lg),
-            if (options.permissionGroups.isEmpty)
-              Text(
-                'No backend permission groups are available for override.',
-                style: TenantAdminTextStyles.muted(context),
-              )
-            else
-              for (final group in options.permissionGroups) ...[
-                Text(
-                  group.groupName,
-                  style: const TextStyle(
-                    color: TenantAdminColors.bodyText,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: TenantAdminSpacing.sm),
-                Wrap(
-                  spacing: TenantAdminSpacing.sm,
-                  runSpacing: TenantAdminSpacing.sm,
-                  children: [
-                    for (final permission in group.permissions)
-                      FilterChip(
-                        label: Text(
-                          permission.description?.isNotEmpty == true
-                              ? permission.description!
-                              : permission.code,
-                        ),
-                        selected:
-                            state.selectedPermissionIds.contains(permission.id),
-                        onSelected: state.isSubmitting
-                            ? null
-                            : (selected) =>
-                                onTogglePermission(permission.id, selected),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: TenantAdminSpacing.md),
-              ],
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _OutletAccessModeTile extends StatelessWidget {
-  const _OutletAccessModeTile({
-    required this.selected,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final bool selected;
-  final Widget title;
-  final Widget subtitle;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor =
-        selected ? TenantAdminColors.primary : TenantAdminColors.border;
-    final backgroundColor =
-        selected ? TenantAdminColors.secondary : TenantAdminColors.surface;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: TenantAdminSpacing.sm),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        onTap: onTap,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(TenantAdminSpacing.md),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            border: Border.all(color: borderColor),
-          ),
-          child: Row(
-            children: [
               Icon(
-                selected
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_unchecked,
+                selected ? Icons.check_circle : Icons.radio_button_unchecked,
                 color: selected
                     ? TenantAdminColors.primary
                     : TenantAdminColors.mutedText,
               ),
-              const SizedBox(width: TenantAdminSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    DefaultTextStyle(
-                      style: const TextStyle(
-                        color: TenantAdminColors.bodyText,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      child: title,
-                    ),
-                    const SizedBox(height: TenantAdminSpacing.xs),
-                    DefaultTextStyle(
-                      style: TenantAdminTextStyles.muted(context),
-                      child: subtitle,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ]),
           ),
         ),
-      ),
-    );
-  }
+      );
 }
 
-class _CardSection extends StatelessWidget {
-  const _CardSection({
-    required this.title,
-    required this.child,
-  });
-
-  final String title;
-  final Widget child;
-
+class _RolePreview extends StatelessWidget {
+  const _RolePreview({required this.role});
+  final RoleOption? role;
   @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: TenantAdminColors.surface,
-      borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
-      child: Container(
+  Widget build(BuildContext context) => Container(
         width: double.infinity,
+        padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+        decoration: BoxDecoration(
+          color: role == null
+              ? TenantAdminColors.subtleBackground
+              : TenantAdminColors.successSurface,
+          border: Border.all(
+            color: role == null
+                ? TenantAdminColors.border
+                : TenantAdminColors.successBorder,
+          ),
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        ),
+        child: role == null
+            ? const Text('Select a role to preview inherited access.')
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: const BoxDecoration(
+                          color: TenantAdminColors.surface,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.verified_user_outlined,
+                          color: TenantAdminColors.success,
+                        ),
+                      ),
+                      const SizedBox(width: TenantAdminSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Permission Inheritance',
+                              style: TenantAdminTextStyles.cardTitle(context),
+                            ),
+                            Text(
+                              role!.name,
+                              style: TenantAdminTextStyles.muted(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: TenantAdminSpacing.md),
+                  for (final module in role!.modulePreview)
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(bottom: TenantAdminSpacing.sm),
+                      child: Row(children: [
+                        const Icon(Icons.check_circle_outline,
+                            color: TenantAdminColors.success, size: 18),
+                        const SizedBox(width: TenantAdminSpacing.sm),
+                        Expanded(child: Text(module)),
+                      ]),
+                    ),
+                ],
+              ),
+      );
+}
+
+class _ModuleList extends StatelessWidget {
+  const _ModuleList({
+    required this.groups,
+    required this.selectedIndex,
+    required this.state,
+    required this.onSelected,
+  });
+  final List<PermissionGroup> groups;
+  final int selectedIndex;
+  final AddUserWizardState state;
+  final ValueChanged<int> onSelected;
+  @override
+  Widget build(BuildContext context) => Material(
+        color: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: TenantAdminColors.border),
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: groups.length,
+          itemBuilder: (context, index) {
+            final group = groups[index];
+            final count = state.permissionOverrideEnabled
+                ? group.permissions
+                    .where(
+                        (item) => state.selectedPermissionIds.contains(item.id))
+                    .length
+                : group.permissions.length;
+            return ListTile(
+              selected: index == selectedIndex,
+              selectedTileColor: TenantAdminColors.secondary,
+              title: Text(group.groupName),
+              trailing: Text('$count/${group.permissions.length}'),
+              onTap: () => onSelected(index),
+            );
+          },
+        ),
+      );
+}
+
+class _PermissionList extends StatelessWidget {
+  const _PermissionList({
+    required this.group,
+    required this.state,
+    required this.enabled,
+    required this.onChanged,
+  });
+  final PermissionGroup group;
+  final AddUserWizardState state;
+  final bool enabled;
+  final void Function(String, bool) onChanged;
+  @override
+  Widget build(BuildContext context) => Material(
+        color: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: TenantAdminColors.border),
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: ListView.separated(
+          shrinkWrap: true,
+          itemCount: group.permissions.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final item = group.permissions[index];
+            final checked = state.permissionOverrideEnabled
+                ? state.selectedPermissionIds.contains(item.id)
+                : true;
+            return CheckboxListTile(
+              value: checked,
+              activeColor: TenantAdminColors.primary,
+              title: Text(item.displayName),
+              subtitle: Text(item.description ?? item.code),
+              secondary: item.isLocked ? const Icon(Icons.lock_outline) : null,
+              onChanged: enabled && item.isAssignable && !item.isLocked
+                  ? (value) => onChanged(item.id, value ?? false)
+                  : null,
+            );
+          },
+        ),
+      );
+}
+
+class _ChoiceTile extends StatelessWidget {
+  const _ChoiceTile({
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+  });
+  final String title;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback? onTap;
+  @override
+  Widget build(BuildContext context) => AnimatedContainer(
+        duration: TenantAdminMotion.fast,
+        margin: const EdgeInsets.only(bottom: TenantAdminSpacing.sm),
+        decoration: BoxDecoration(
+          color: selected ? TenantAdminColors.secondary : Colors.transparent,
+          border: Border.all(
+            color: selected
+                ? TenantAdminColors.primary.withValues(alpha: 0.45)
+                : TenantAdminColors.border,
+          ),
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          clipBehavior: Clip.antiAlias,
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: TenantAdminSpacing.md,
+              vertical: TenantAdminSpacing.xs,
+            ),
+            leading: Icon(
+              selected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              color: selected
+                  ? TenantAdminColors.primary
+                  : TenantAdminColors.mutedText,
+            ),
+            title: Text(title),
+            subtitle: Text(subtitle),
+            onTap: onTap,
+          ),
+        ),
+      );
+}
+
+class _Dropdown<T> extends StatelessWidget {
+  const _Dropdown({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+    this.error,
+  });
+  final String label;
+  final T? value;
+  final List<DropdownMenuItem<T>> items;
+  final ValueChanged<T?> onChanged;
+  final String? error;
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TenantAdminTextStyles.fieldLabel(context)),
+          const SizedBox(height: TenantAdminSpacing.sm),
+          DropdownButtonFormField<T>(
+            initialValue:
+                items.any((item) => item.value == value) ? value : null,
+            items: items,
+            onChanged: onChanged,
+            decoration: InputDecoration(errorText: error),
+          ),
+        ],
+      );
+}
+
+class _ReviewCard extends StatelessWidget {
+  const _ReviewCard({
+    required this.icon,
+    required this.title,
+    required this.rows,
+  });
+  final IconData icon;
+  final String title;
+  final Map<String, String> rows;
+  @override
+  Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(TenantAdminSpacing.lg),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
           border: Border.all(color: TenantAdminColors.border),
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Flexible(
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: TenantAdminColors.secondary,
+                    borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: TenantAdminColors.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: TenantAdminSpacing.md),
+                Expanded(
                   child: Text(
                     title,
-                    style: TenantAdminTextStyles.sectionTitle(context),
-                    overflow: TextOverflow.ellipsis,
+                    style: TenantAdminTextStyles.cardTitle(context),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: TenantAdminSpacing.md),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, required this.subtitle});
-
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: TenantAdminTextStyles.sectionTitle(context)),
-        const SizedBox(height: TenantAdminSpacing.xs),
-        Text(subtitle, style: TenantAdminTextStyles.muted(context)),
-      ],
-    );
-  }
-}
-
-class _ReviewSection extends StatelessWidget {
-  const _ReviewSection({required this.title, required this.rows});
-
-  final String title;
-  final Map<String, String> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    return _CardSection(
-      title: title,
-      child: Column(
-        children: [
-          for (final row in rows.entries)
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: TenantAdminSpacing.sm),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            const SizedBox(height: TenantAdminSpacing.lg),
+            for (final entry in rows.entries)
+              Padding(
+                padding: const EdgeInsets.only(bottom: TenantAdminSpacing.md),
+                child: Row(children: [
                   SizedBox(
-                    width: 130,
-                    child: Text(row.key,
+                    width: 120,
+                    child: Text(entry.key,
                         style: TenantAdminTextStyles.muted(context)),
                   ),
-                  Expanded(
-                    child: Text(
-                      row.value.isEmpty ? 'Not provided' : row.value,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ],
+                  Expanded(child: Text(entry.value)),
+                ]),
               ),
-            ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
 }
 
-class _SecurityMessage extends StatelessWidget {
-  const _SecurityMessage({required this.status});
+class _SummaryMetric {
+  const _SummaryMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
-  final AddUserAccountStatus status;
+  final IconData icon;
+  final String label;
+  final String value;
+}
+
+class _MetricSummaryBar extends StatelessWidget {
+  const _MetricSummaryBar({required this.items});
+
+  final List<_SummaryMetric> items;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+        decoration: BoxDecoration(
+          color: TenantAdminColors.subtleBackground,
+          border: Border.all(color: TenantAdminColors.border),
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 680;
+            final children = [
+              for (final item in items)
+                _MetricItem(item: item, compact: compact),
+            ];
+            if (compact) {
+              return Wrap(
+                spacing: TenantAdminSpacing.md,
+                runSpacing: TenantAdminSpacing.md,
+                children: children
+                    .map(
+                      (child) => SizedBox(
+                        width:
+                            (constraints.maxWidth - TenantAdminSpacing.md) / 2,
+                        child: child,
+                      ),
+                    )
+                    .toList(),
+              );
+            }
+            return Row(
+              children: [
+                for (var index = 0; index < children.length; index++) ...[
+                  Expanded(child: children[index]),
+                  if (index < children.length - 1)
+                    const SizedBox(
+                      height: 42,
+                      child: VerticalDivider(color: TenantAdminColors.border),
+                    ),
+                ],
+              ],
+            );
+          },
+        ),
+      );
+}
+
+class _MetricItem extends StatelessWidget {
+  const _MetricItem({required this.item, required this.compact});
+
+  final _SummaryMetric item;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        mainAxisAlignment:
+            compact ? MainAxisAlignment.start : MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: TenantAdminColors.secondary,
+              borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+            ),
+            child: Icon(item.icon, color: TenantAdminColors.primary, size: 20),
+          ),
+          const SizedBox(width: TenantAdminSpacing.md),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.label, style: TenantAdminTextStyles.muted(context)),
+                const SizedBox(height: TenantAdminSpacing.xs),
+                Text(
+                  item.value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TenantAdminTextStyles.cardTitle(context),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+}
+
+class _ReadyPanel extends StatelessWidget {
+  const _ReadyPanel({required this.checks});
+
+  final List<bool> checks;
 
   @override
   Widget build(BuildContext context) {
-    final invited = status == AddUserAccountStatus.invited;
+    final ready = checks.every((item) => item);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(TenantAdminSpacing.lg),
       decoration: BoxDecoration(
-        color: TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        color: ready
+            ? TenantAdminColors.info.withValues(alpha: 0.07)
+            : TenantAdminColors.warningSurface,
         border: Border.all(
-          color: TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.24),
+          color: ready
+              ? TenantAdminColors.info.withValues(alpha: 0.28)
+              : TenantAdminColors.warningBorder,
         ),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
       ),
       child: Row(
         children: [
-          Icon(
-            invited
-                ? Icons.mark_email_read_outlined
-                : Icons.lock_clock_outlined,
-            color: TenantAdminColors.posHomeAccentOrange,
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: ready
+                  ? TenantAdminColors.info.withValues(alpha: 0.12)
+                  : TenantAdminColors.warning.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              ready ? Icons.check_circle_outline : Icons.info_outline,
+              color: ready ? TenantAdminColors.info : TenantAdminColors.warning,
+            ),
           ),
           const SizedBox(width: TenantAdminSpacing.md),
           Expanded(
-            child: Text(
-              invited
-                  ? 'The user will receive a secure invitation email to set up their password.'
-                  : 'This account will be created inactive and cannot sign in until activated through the approved lifecycle.',
-              style: const TextStyle(fontWeight: FontWeight.w700),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ready ? 'Ready to create user' : 'Review required details',
+                  style: TenantAdminTextStyles.cardTitle(context),
+                ),
+                const SizedBox(height: TenantAdminSpacing.xs),
+                Text(
+                  'Create User performs one atomic server-side validation and save.',
+                  style: TenantAdminTextStyles.muted(context),
+                ),
+              ],
             ),
           ),
         ],
@@ -1560,60 +1756,92 @@ class _SecurityMessage extends StatelessWidget {
   }
 }
 
-class _InlineError extends StatelessWidget {
-  const _InlineError({required this.message});
-
-  final String message;
-
+class _InfoBanner extends StatelessWidget {
+  const _InfoBanner({required this.text});
+  final String text;
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(TenantAdminSpacing.md),
-      decoration: BoxDecoration(
-        color: TenantAdminColors.danger.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      ),
-      child: Text(message,
-          style: const TextStyle(color: TenantAdminColors.danger)),
-    );
-  }
+  Widget build(BuildContext context) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(TenantAdminSpacing.md),
+        decoration: BoxDecoration(
+          color: TenantAdminColors.info.withValues(alpha: 0.08),
+          border:
+              Border.all(color: TenantAdminColors.info.withValues(alpha: 0.3)),
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        ),
+        child: Row(children: [
+          const Icon(Icons.info_outline, color: TenantAdminColors.info),
+          const SizedBox(width: TenantAdminSpacing.sm),
+          Expanded(child: Text(text)),
+        ]),
+      );
 }
 
-String _stepLabel(AddUserWizardStep step) {
-  return switch (step) {
-    AddUserWizardStep.basicInformation => 'Basic Information',
-    AddUserWizardStep.accessSetup => 'Access Setup',
-    AddUserWizardStep.securityReview => 'Security & Review',
-  };
+class _ErrorText extends StatelessWidget {
+  const _ErrorText(this.message);
+  final String message;
+  @override
+  Widget build(BuildContext context) => Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          message,
+          style: const TextStyle(color: TenantAdminColors.danger, fontSize: 12),
+        ),
+      );
+}
+
+class _ImagePreview extends StatelessWidget {
+  const _ImagePreview({required this.bytes});
+  final Uint8List bytes;
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        child: Image.memory(
+          bytes,
+          width: double.infinity,
+          height: 180,
+          fit: BoxFit.cover,
+        ),
+      );
 }
 
 RoleOption? _roleFor(TenantUserCreateOptions options, String? roleId) {
-  if (roleId == null) {
-    return null;
-  }
-
   for (final role in options.roles) {
-    if (role.id == roleId) {
-      return role;
-    }
+    if (role.id == roleId) return role;
   }
-
   return null;
 }
 
-String _initials(String value) {
-  final parts = value
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((part) => part.isNotEmpty)
-      .toList(growable: false);
-  if (parts.isEmpty) {
-    return 'AB';
+String _accessLevel(int permissionCount) {
+  if (permissionCount >= 30) return 'High';
+  if (permissionCount >= 12) return 'Standard';
+  return 'Focused';
+}
+
+Iterable<UserOutletOption> _availableOutlets(
+  TenantUserCreateOptions options,
+  AddUserWizardState state,
+) {
+  if (state.outletAccessMode == AddUserOutletAccessMode.noOutletAccess) {
+    return const [];
   }
-  if (parts.length == 1) {
-    return parts.single.substring(0, 1).toUpperCase();
+  if (state.outletAccessMode == AddUserOutletAccessMode.allOutlets) {
+    return options.outlets
+        .where((item) => item.status.toUpperCase() == 'ACTIVE');
   }
-  return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
-      .toUpperCase();
+  return options.outlets
+      .where((item) => state.selectedOutletIds.contains(item.id));
+}
+
+Iterable<UserTillOption> _availableTills(
+  TenantUserCreateOptions options,
+  AddUserWizardState state,
+) {
+  final outletIds =
+      _availableOutlets(options, state).map((item) => item.id).toSet();
+  return options.tills.where(
+    (item) =>
+        outletIds.contains(item.outletId) &&
+        item.status.toUpperCase() == 'ACTIVE',
+  );
 }

@@ -429,6 +429,7 @@ class _OutletThumbnail extends ConsumerWidget {
         ? MediaUrlResolver.resolve(
               imageUrl,
               apiBaseUrl: ref.watch(appDioProvider).options.baseUrl,
+              replaceLoopbackHost: true,
             ) ??
             imageUrl
         : null;

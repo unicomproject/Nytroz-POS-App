@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 
 import '../../../../../core/network/api_endpoints.dart';
+import '../../../../../core/network/media_url_resolver.dart';
 import '../models/online_store_dtos.dart';
 
 class OnlineStoreRemoteDatasource {
@@ -44,6 +45,13 @@ class OnlineStoreRemoteDatasource {
       ApiEndpoints.tenantAdminOnlineStoreIdentity,
     );
     return OnlineStoreIdentityDto.fromJson(_payload(response));
+  }
+
+  Future<OnlineStoreCheckoutRulesDto> getCheckoutRules() async {
+    final response = await _dio.get<dynamic>(
+      ApiEndpoints.tenantAdminOnlineStoreCheckoutRules,
+    );
+    return OnlineStoreCheckoutRulesDto.fromJson(_payload(response));
   }
 
   Future<OnlineStoreIdentityDto> updateIdentity({
@@ -90,7 +98,7 @@ class OnlineStoreRemoteDatasource {
     return _payloadList(response, OnlineStoreDomainDto.fromJson);
   }
 
-  Future<Map<String, dynamic>> createDomain({
+  Future<OnlineStoreDomainTokenDto> createDomain({
     required String domainName,
     required String domainType,
     required bool isPrimary,
@@ -103,7 +111,7 @@ class OnlineStoreRemoteDatasource {
         'isPrimary': isPrimary,
       },
     );
-    return _payload(response);
+    return OnlineStoreDomainTokenDto.fromJson(_payload(response));
   }
 
   Future<OnlineStoreDomainDto> verifyDomain(
@@ -117,11 +125,11 @@ class OnlineStoreRemoteDatasource {
     return OnlineStoreDomainDto.fromJson(_payload(response));
   }
 
-  Future<Map<String, dynamic>> rotateDomainToken(String domainId) async {
+  Future<OnlineStoreDomainTokenDto> rotateDomainToken(String domainId) async {
     final response = await _dio.post<dynamic>(
       ApiEndpoints.tenantAdminOnlineStoreDomainRotateToken(domainId),
     );
-    return _payload(response);
+    return OnlineStoreDomainTokenDto.fromJson(_payload(response));
   }
 
   Future<OnlineStoreDomainDto> getDomainStatus(String domainId) async {
@@ -155,7 +163,9 @@ class OnlineStoreRemoteDatasource {
     final response = await _dio.get<dynamic>(
       ApiEndpoints.tenantAdminOnlineStoreBranding,
     );
-    return OnlineStoreBrandingDto.fromJson(_payload(response));
+    return OnlineStoreBrandingDto.fromJson(
+      _resolveBrandingMediaUrls(_payload(response)),
+    );
   }
 
   Future<OnlineStoreBrandingDto> updateBranding({
@@ -173,7 +183,9 @@ class OnlineStoreRemoteDatasource {
         'secondaryColor': secondaryColor,
       },
     );
-    return OnlineStoreBrandingDto.fromJson(_payload(response));
+    return OnlineStoreBrandingDto.fromJson(
+      _resolveBrandingMediaUrls(_payload(response)),
+    );
   }
 
   Future<OnlineStoreMediaDto> uploadMedia({
@@ -194,7 +206,9 @@ class OnlineStoreRemoteDatasource {
       }),
       onSendProgress: onProgress,
     );
-    return OnlineStoreMediaDto.fromJson(_payload(response));
+    final payload = _payload(response);
+    payload['publicUrl'] = _resolveMediaUrl(payload['publicUrl']);
+    return OnlineStoreMediaDto.fromJson(payload);
   }
 
   Future<void> deleteMedia(String mediaAssetId) async {
@@ -207,14 +221,19 @@ class OnlineStoreRemoteDatasource {
     final response = await _dio.get<dynamic>(
       ApiEndpoints.tenantAdminOnlineStoreBanners,
     );
-    return _payloadList(response, OnlineStoreBannerDto.fromJson);
+    return _payloadList(
+      response,
+      (json) => OnlineStoreBannerDto.fromJson(_resolveBannerMediaUrl(json)),
+    );
   }
 
   Future<OnlineStoreBannerDto> getBanner(String id) async {
     final response = await _dio.get<dynamic>(
       ApiEndpoints.tenantAdminOnlineStoreBanner(id),
     );
-    return OnlineStoreBannerDto.fromJson(_payload(response));
+    return OnlineStoreBannerDto.fromJson(
+      _resolveBannerMediaUrl(_payload(response)),
+    );
   }
 
   Future<OnlineStoreBannerDto> upsertBanner({
@@ -230,7 +249,9 @@ class OnlineStoreRemoteDatasource {
             ApiEndpoints.tenantAdminOnlineStoreBanner(id),
             data: data,
           );
-    return OnlineStoreBannerDto.fromJson(_payload(response));
+    return OnlineStoreBannerDto.fromJson(
+      _resolveBannerMediaUrl(_payload(response)),
+    );
   }
 
   Future<OnlineStoreBannerDto> updateBannerStatus(
@@ -241,7 +262,9 @@ class OnlineStoreRemoteDatasource {
       ApiEndpoints.tenantAdminOnlineStoreBannerStatus(id),
       data: {'status': status},
     );
-    return OnlineStoreBannerDto.fromJson(_payload(response));
+    return OnlineStoreBannerDto.fromJson(
+      _resolveBannerMediaUrl(_payload(response)),
+    );
   }
 
   Future<List<OnlineStoreBannerDto>> reorderBanners(
@@ -251,7 +274,10 @@ class OnlineStoreRemoteDatasource {
       ApiEndpoints.tenantAdminOnlineStoreBannerOrder,
       data: {'items': items},
     );
-    return _payloadList(response, OnlineStoreBannerDto.fromJson);
+    return _payloadList(
+      response,
+      (json) => OnlineStoreBannerDto.fromJson(_resolveBannerMediaUrl(json)),
+    );
   }
 
   Future<void> deleteBanner(String id) async {
@@ -488,6 +514,37 @@ class OnlineStoreRemoteDatasource {
       for (final item in value)
         if (item is Map) map(Map<String, dynamic>.from(item)),
     ];
+  }
+
+  Map<String, dynamic> _resolveBrandingMediaUrls(
+    Map<String, dynamic> payload,
+  ) {
+    final resolved = Map<String, dynamic>.from(payload);
+    resolved['logoImageUrl'] = _resolveMediaUrl(resolved['logoImageUrl']);
+    resolved['faviconImageUrl'] = _resolveMediaUrl(resolved['faviconImageUrl']);
+    final banners = resolved['banners'];
+    if (banners is List) {
+      resolved['banners'] = [
+        for (final banner in banners)
+          if (banner is Map)
+            _resolveBannerMediaUrl(Map<String, dynamic>.from(banner)),
+      ];
+    }
+    return resolved;
+  }
+
+  Map<String, dynamic> _resolveBannerMediaUrl(Map<String, dynamic> payload) {
+    final resolved = Map<String, dynamic>.from(payload);
+    resolved['imageUrl'] = _resolveMediaUrl(resolved['imageUrl']);
+    return resolved;
+  }
+
+  String? _resolveMediaUrl(Object? value) {
+    return MediaUrlResolver.resolve(
+      value?.toString(),
+      apiBaseUrl: _dio.options.baseUrl,
+      replaceLoopbackHost: true,
+    );
   }
 }
 

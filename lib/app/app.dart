@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../features/tenant_admin/presentation/providers/tenant_admin_session_sync_provider.dart';
 import '../features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -31,17 +30,7 @@ class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
       ),
       scaffoldBackgroundColor: TenantAdminColors.background,
       useMaterial3: true,
-      textTheme: GoogleFonts.interTextTheme().copyWith(
-        displayLarge: GoogleFonts.poppins(),
-        displayMedium: GoogleFonts.poppins(),
-        displaySmall: GoogleFonts.poppins(),
-        headlineLarge: GoogleFonts.poppins(),
-        headlineMedium: GoogleFonts.poppins(),
-        headlineSmall: GoogleFonts.poppins(),
-        titleLarge: GoogleFonts.poppins(),
-        titleMedium: GoogleFonts.poppins(),
-        titleSmall: GoogleFonts.poppins(),
-      ),
+      fontFamily: 'Roboto',
     );
   }
 

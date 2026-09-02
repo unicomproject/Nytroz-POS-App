@@ -34,6 +34,8 @@ class ApiEndpoints {
       '$tenantAdminOnlineStore/activation';
   static const tenantAdminOnlineStoreIdentity =
       '$tenantAdminOnlineStore/identity';
+  static const tenantAdminOnlineStoreCheckoutRules =
+      '$tenantAdminOnlineStore/checkout-rules';
   static const tenantAdminOnlineStoreUrlDomain =
       '$tenantAdminOnlineStore/url-domain';
   static const tenantAdminOnlineStoreUrl = '$tenantAdminOnlineStore/url';

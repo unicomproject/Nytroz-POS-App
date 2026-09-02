@@ -39,7 +39,7 @@ void main() {
       expect(adapter.lastBody['outletIds'], ['outlet-1']);
       expect(adapter.lastBody['permissionOverrideEnabled'], isTrue);
       expect(adapter.lastBody['overriddenPermissionIds'], ['perm-1']);
-      expect(adapter.lastBody['status'], 'INVITED');
+      expect(adapter.lastBody['createStatus'], 'INVITED');
       expect(adapter.lastBody['profileMediaAssetId'], 'media-1');
       expect(adapter.lastBody.containsKey('staffCode'), isFalse);
       expect(adapter.lastBody.containsKey('defaultOutletId'), isFalse);
@@ -67,7 +67,29 @@ void main() {
       expect(adapter.lastBody.containsKey('phoneNumber'), isFalse);
       expect(adapter.lastBody.containsKey('employeeId'), isFalse);
       expect(adapter.lastBody.containsKey('sendInviteEmail'), isFalse);
-      expect(adapter.lastBody['status'], 'INACTIVE');
+      expect(adapter.lastBody['createStatus'], 'INACTIVE');
+    });
+
+    test('sends password fields only for direct active creation', () async {
+      final dio = Dio();
+      final adapter = _RecordingAdapter();
+      dio.httpClientAdapter = adapter;
+      final datasource = TenantUserRemoteDatasource(dio);
+
+      await datasource.createUser(
+        const UserWriteRequestDto(
+          fullName: 'Direct User',
+          email: 'direct@oneverz.com',
+          roleId: 'role-1',
+          status: 'ACTIVE',
+          password: 'SecurePass123',
+          confirmPassword: 'SecurePass123',
+        ),
+      );
+
+      expect(adapter.lastBody['createStatus'], 'ACTIVE');
+      expect(adapter.lastBody['password'], 'SecurePass123');
+      expect(adapter.lastBody['confirmPassword'], 'SecurePass123');
     });
   });
 }

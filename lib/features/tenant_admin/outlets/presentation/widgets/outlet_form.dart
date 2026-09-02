@@ -100,15 +100,16 @@ class _OutletFormState extends ConsumerState<OutletForm> {
     );
     _isDefaultOutlet = initial?.isDefaultOutlet ?? false;
     _openingHours = _initialOpeningHours(initial?.openingHours);
-    
+
     if (initial?.imageMediaAssetId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          ref.read(outletImageUploadControllerProvider.notifier)
-            .initializeExistingImage(
-              mediaAssetId: initial!.imageMediaAssetId!,
-              imageUrl: initial.imageUrl,
-            );
+          ref
+              .read(outletImageUploadControllerProvider.notifier)
+              .initializeExistingImage(
+                mediaAssetId: initial!.imageMediaAssetId!,
+                imageUrl: initial.imageUrl,
+              );
         }
       });
     }
@@ -238,12 +239,40 @@ class _OutletFormState extends ConsumerState<OutletForm> {
       return;
     }
 
+    if (_step == 1 && !_validateImageUpload()) {
+      return;
+    }
+
     if (_step < _steps.length - 1) {
       setState(() => _step += 1);
       return;
     }
 
     await widget.onSubmit(_formData());
+  }
+
+  bool _validateImageUpload() {
+    final imageState = ref.read(outletImageUploadControllerProvider);
+    switch (imageState.status) {
+      case OutletImageUploadStatus.selecting:
+      case OutletImageUploadStatus.uploading:
+      case OutletImageUploadStatus.deleting:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Wait for the outlet image upload to finish.')),
+        );
+        return false;
+      case OutletImageUploadStatus.failed:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  'Retry or remove the failed outlet image before continuing.')),
+        );
+        return false;
+      case OutletImageUploadStatus.idle:
+      case OutletImageUploadStatus.uploaded:
+        return true;
+    }
   }
 
   bool _validateCurrentStep() {
@@ -352,7 +381,8 @@ class _OutletFormState extends ConsumerState<OutletForm> {
   }
 
   Future<void> _confirmDiscard() async {
-    final currentImageId = ref.read(outletImageUploadControllerProvider).mediaAssetId;
+    final currentImageId =
+        ref.read(outletImageUploadControllerProvider).mediaAssetId;
     if (_signature() == _initialSignature) {
       await widget.onDiscard?.call(currentImageId);
       return;
@@ -524,7 +554,9 @@ class _OutletDetailsStep extends StatelessWidget {
         color: TenantAdminColors.surface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         border: Border.all(
-          color: value ? TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.3) : TenantAdminColors.border,
+          color: value
+              ? TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.3)
+              : TenantAdminColors.border,
         ),
         boxShadow: [
           BoxShadow(
@@ -675,7 +707,8 @@ class _OutletDetailsStep extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.lock_outline, size: 18, color: TenantAdminColors.mutedText),
+              const Icon(Icons.lock_outline,
+                  size: 18, color: TenantAdminColors.mutedText),
               const SizedBox(width: TenantAdminSpacing.sm),
               const Expanded(
                 child: Text(
@@ -716,8 +749,6 @@ class _OutletDetailsStep extends StatelessWidget {
       ],
     );
   }
-
-
 
   Widget _outletTypeDropdown() {
     final options = outletTypes.isEmpty && outletType.trim().isNotEmpty
@@ -980,7 +1011,9 @@ class _OutletDetailsStep extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? TenantAdminColors.bodyText : TenantAdminColors.mutedText,
+                color: isSelected
+                    ? TenantAdminColors.bodyText
+                    : TenantAdminColors.mutedText,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 fontSize: 13,
               ),
@@ -1193,8 +1226,6 @@ class _OutletReviewStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1222,7 +1253,6 @@ class _OutletReviewStep extends ConsumerWidget {
                     : gridConstraints.maxWidth,
                 child: _buildBusinessHoursCard(),
               ),
-
             ],
           );
         }),
@@ -1269,9 +1299,11 @@ class _OutletReviewStep extends ConsumerWidget {
                   onTap: () => onEdit(step),
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.1),
+                      color: TenantAdminColors.posHomeOrangeEnd
+                          .withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -1374,28 +1406,30 @@ class _OutletReviewStep extends ConsumerWidget {
               width: 160,
               child: row('Status', _displayStatus(form.status),
                   isBadge: true, badgeSuccess: form.status == 'ACTIVE')),
-          SizedBox(
-              width: 160, child: row('Manager', form.contactName ?? '-')),
+          SizedBox(width: 160, child: row('Manager', form.contactName ?? '-')),
           SizedBox(
               width: 160,
-              child: row('Phone',
-                  form.mainPhoneNumber.isNotEmpty ? form.mainPhoneNumber : '-')),
+              child: row(
+                  'Phone',
+                  form.mainPhoneNumber.isNotEmpty
+                      ? form.mainPhoneNumber
+                      : '-')),
           SizedBox(
               width: 160,
               child: row('Email',
                   form.emailAddress.isNotEmpty ? form.emailAddress : '-')),
           SizedBox(
               width: 160,
-              child: row('Timezone',
-                  form.timezone.isNotEmpty ? form.timezone : '-')),
+              child: row(
+                  'Timezone', form.timezone.isNotEmpty ? form.timezone : '-')),
           SizedBox(
               width: 160,
-              child: row('Main Outlet', 'No',
-                  isBadge: true, badgeSuccess: false)),
+              child:
+                  row('Main Outlet', 'No', isBadge: true, badgeSuccess: false)),
           SizedBox(
               width: 160,
-              child: row('Default for Tills',
-                  form.isDefaultOutlet ? 'Yes' : 'No',
+              child: row(
+                  'Default for Tills', form.isDefaultOutlet ? 'Yes' : 'No',
                   isBadge: true, badgeSuccess: form.isDefaultOutlet)),
         ],
       ),
@@ -1448,20 +1482,29 @@ class _OutletReviewStep extends ConsumerWidget {
         children: [
           SizedBox(
               width: 160,
-              child: section('Address',
-                  address.isEmpty ? '-' : address.join('\n'))),
+              child: section(
+                  'Address', address.isEmpty ? '-' : address.join('\n'))),
           SizedBox(
               width: 160,
-              child: section('Contact Person',
-                  form.contactName?.isNotEmpty == true ? form.contactName! : '-')),
+              child: section(
+                  'Contact Person',
+                  form.contactName?.isNotEmpty == true
+                      ? form.contactName!
+                      : '-')),
           SizedBox(
               width: 160,
-              child: section('Phone Number',
-                  form.contactPhone?.isNotEmpty == true ? form.contactPhone! : '-')),
+              child: section(
+                  'Phone Number',
+                  form.contactPhone?.isNotEmpty == true
+                      ? form.contactPhone!
+                      : '-')),
           SizedBox(
               width: 160,
-              child: section('Email Address',
-                  form.contactEmail?.isNotEmpty == true ? form.contactEmail! : '-')),
+              child: section(
+                  'Email Address',
+                  form.contactEmail?.isNotEmpty == true
+                      ? form.contactEmail!
+                      : '-')),
         ],
       ),
     );
@@ -1486,7 +1529,9 @@ class _OutletReviewStep extends ConsumerWidget {
               style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: hour.closed ? const Color(0xFFEF4444) : const Color(0xFF1E293B)),
+                  color: hour.closed
+                      ? const Color(0xFFEF4444)
+                      : const Color(0xFF1E293B)),
             ),
           ],
         ),
@@ -1554,7 +1599,9 @@ class _OutletReviewStep extends ConsumerWidget {
           Wrap(
             spacing: 24,
             runSpacing: 4,
-            children: form.openingHours.map((hour) => SizedBox(width: 140, child: hourRow(hour))).toList(),
+            children: form.openingHours
+                .map((hour) => SizedBox(width: 140, child: hourRow(hour)))
+                .toList(),
           ),
           const SizedBox(height: 24),
           const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
@@ -1571,18 +1618,18 @@ class _OutletReviewStep extends ConsumerWidget {
             children: [
               SizedBox(
                   width: 180,
-                  child: specialDayRow('Christmas Day (Dec 25)', '09:00 AM - 06:00 PM')),
+                  child: specialDayRow(
+                      'Christmas Day (Dec 25)', '09:00 AM - 06:00 PM')),
               SizedBox(
                   width: 180,
-                  child: specialDayRow("New Year's Day (Jan 01)", '10:00 AM - 08:00 PM')),
+                  child: specialDayRow(
+                      "New Year's Day (Jan 01)", '10:00 AM - 08:00 PM')),
             ],
           ),
         ],
       ),
     );
   }
-
-
 }
 
 class _OutletWizardActions extends StatelessWidget {
@@ -1712,7 +1759,8 @@ Widget _field(
             fontWeight: FontWeight.w500,
           ),
           decoration: InputDecoration(
-            hintText: 'Enter ${label.toLowerCase().replaceAll(RegExp(r'\(optional\)'), '').trim()}',
+            hintText:
+                'Enter ${label.toLowerCase().replaceAll(RegExp(r'\(optional\)'), '').trim()}',
             hintStyle: const TextStyle(
                 color: TenantAdminColors.mutedText,
                 fontWeight: FontWeight.normal),
@@ -1720,7 +1768,7 @@ Widget _field(
             counterText: '',
             filled: true,
             fillColor: Colors.white,
-            prefixIcon: icon != null 
+            prefixIcon: icon != null
                 ? Icon(icon, size: 20, color: const Color(0xFF94A3B8))
                 : null,
             border: OutlineInputBorder(
@@ -1733,7 +1781,8 @@ Widget _field(
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-              borderSide: const BorderSide(color: TenantAdminColors.posHomeOrangeEnd, width: 1.5),
+              borderSide: const BorderSide(
+                  color: TenantAdminColors.posHomeOrangeEnd, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(TenantAdminRadius.md),

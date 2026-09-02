@@ -19,7 +19,6 @@ dependencies:
   fl_chart: ^1.2.0
   intl: ^0.20.3
   crypto: ^3.0.7
-  google_fonts: ^8.2.1
   cached_network_image: ^3.4.1
   timezone: ^0.11.1
 
@@ -44,3 +43,9 @@ flutter:
     - assets/images/logo.png
     - assets/images/log-screen-terminal.png
     - assets/images/login_brand_panel.png
+    - assets/images/online_store/branding_hero_products.png
+    - assets/images/online_store/overview_storefront_hero.png
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf

@@ -32,11 +32,40 @@ Map<String, String> userValidationErrors(DioException error) {
     case 'user.duplicate_email':
       return {'email': message};
     case 'user.role_not_found':
+    case 'user.role_not_delegable':
       return {'roleId': message};
     case 'user.outlet_not_found':
+    case 'user.outlet_wrong_tenant':
+    case 'user.outlet_inactive':
+    case 'user.selected_outlets_required':
       return {'outletIds': message};
+    case 'user.invalid_default_outlet':
+      return {'defaultOutletId': message};
+    case 'user.till_not_found':
+    case 'user.till_wrong_tenant':
+    case 'user.till_inactive':
+    case 'user.till_outside_outlet_scope':
+    case 'user.selected_tills_required':
+      return {'tillIds': message};
+    case 'user.invalid_default_till':
+      return {'defaultTillId': message};
+    case 'user.invalid_outlet_scope':
+    case 'user.no_outlet_access_conflict':
+    case 'user.outlet_ids_not_allowed':
+      return {'outletAccessScope': message};
+    case 'user.invalid_till_scope':
+    case 'user.till_ids_not_allowed':
+      return {'tillAccessScope': message};
     case 'user.invalid_permissions':
+    case 'user.permission_not_assignable':
+    case 'user.permission_catalog_mismatch':
       return {'permissions': message};
+    case 'user.password_invalid':
+      return {'password': message};
+    case 'user.password_mismatch':
+      return {'confirmPassword': message};
+    case 'user.password_not_allowed':
+      return {'password': message};
     case 'user.validation_failed':
       return {'form': message};
     default:

@@ -38,6 +38,11 @@ class TenantUserMapper {
       name: dto.name,
       code: dto.code,
       roleDescription: dto.roleDescription,
+      isActive: dto.isActive,
+      moduleCount: dto.moduleCount,
+      permissionCount: dto.permissionCount,
+      modulePreview: dto.modulePreview,
+      permissionPreview: dto.permissionPreview,
     );
   }
 
@@ -56,6 +61,13 @@ class TenantUserMapper {
       code: dto.code,
       actionType: dto.actionType,
       description: dto.description,
+      name: dto.name,
+      moduleId: dto.moduleId,
+      moduleCode: dto.moduleCode,
+      moduleName: dto.moduleName,
+      sortOrder: dto.sortOrder,
+      isAssignable: dto.isAssignable,
+      isLocked: dto.isLocked,
     );
   }
 
@@ -64,6 +76,10 @@ class TenantUserMapper {
       groupName: dto.groupName,
       permissions:
           dto.permissions.map(toPermissionItem).toList(growable: false),
+      moduleId: dto.moduleId,
+      moduleCode: dto.moduleCode,
+      description: dto.description,
+      sortOrder: dto.sortOrder,
     );
   }
 
@@ -75,6 +91,42 @@ class TenantUserMapper {
       outlets: dto.outlets.map(toOutletOption).toList(growable: false),
       permissionGroups:
           dto.permissionGroups.map(toPermissionGroup).toList(growable: false),
+      supportedStatuses: dto.supportedStatuses,
+      tills: dto.tills
+          .map(
+            (till) => UserTillOption(
+              id: till.id,
+              outletId: till.outletId,
+              name: till.name,
+              code: till.code,
+              status: till.status,
+            ),
+          )
+          .toList(growable: false),
+      supportedOutletAccessScopes: dto.supportedOutletAccessScopes,
+      supportedTillAccessScopes: dto.supportedTillAccessScopes,
+      capabilities: TenantUserCreateCapabilities(
+        supportsInvitedUserCreation:
+            dto.capabilities.supportsInvitedUserCreation,
+        supportsDirectActiveCreation:
+            dto.capabilities.supportsDirectActiveCreation,
+        supportsUserPermissionOverrides:
+            dto.capabilities.supportsUserPermissionOverrides,
+        supportsPermissionDenies: dto.capabilities.supportsPermissionDenies,
+        supportsAllOutletAccess: dto.capabilities.supportsAllOutletAccess,
+        supportsNoOutletAccess: dto.capabilities.supportsNoOutletAccess,
+        supportsExplicitTillAccess: dto.capabilities.supportsExplicitTillAccess,
+        supportsDefaultOutlet: dto.capabilities.supportsDefaultOutlet,
+        supportsDefaultTill: dto.capabilities.supportsDefaultTill,
+        supportsAccessStartDate: dto.capabilities.supportsAccessStartDate,
+        supportsTemporaryPassword: dto.capabilities.supportsTemporaryPassword,
+        supportsForcePasswordChange:
+            dto.capabilities.supportsForcePasswordChange,
+        supportsTwoFactorDuringCreation:
+            dto.capabilities.supportsTwoFactorDuringCreation,
+        supportsSaveDraft: dto.capabilities.supportsSaveDraft,
+      ),
+      permissionCatalogVersion: dto.permissionCatalogVersion,
     );
   }
 

@@ -56,6 +56,17 @@ class OnlineStoreOverviewDto {
     required this.setupProgressPercent,
     required this.steps,
     required this.readiness,
+    required this.domain,
+    required this.branding,
+    required this.contactSupport,
+    required this.clickCollect,
+    required this.catalog,
+    required this.policies,
+    required this.customerAccountMode,
+    required this.emailVerificationRequired,
+    required this.paymentMode,
+    required this.notificationsStatus,
+    required this.nextActions,
     this.storeSlug,
     this.hostedUrl,
   });
@@ -74,6 +85,20 @@ class OnlineStoreOverviewDto {
       setupProgressPercent: _int(json, 'setupProgressPercent'),
       steps: _list(json['steps'], OnlineStoreSetupStepDto.fromJson),
       readiness: OnlineStoreReadinessDto.fromJson(_map(json['readiness'])),
+      domain: OnlineStoreDomainSummaryDto.fromJson(_map(json['domain'])),
+      branding: OnlineStoreSectionSummaryDto.fromJson(_map(json['branding'])),
+      contactSupport:
+          OnlineStoreSectionSummaryDto.fromJson(_map(json['contactSupport'])),
+      clickCollect: OnlineStoreClickCollectSummaryDto.fromJson(
+          _map(json['clickCollect'])),
+      catalog: OnlineStoreCatalogOverviewDto.fromJson(_map(json['catalog'])),
+      policies: OnlineStorePolicySummaryDto.fromJson(_map(json['policies'])),
+      customerAccountMode: _string(json, 'customerAccountMode'),
+      emailVerificationRequired: _bool(json, 'emailVerificationRequired'),
+      paymentMode: _string(json, 'paymentMode'),
+      notificationsStatus: _string(json, 'notificationsStatus'),
+      nextActions:
+          _list(json['nextActions'], OnlineStoreNextActionDto.fromJson),
     );
   }
 
@@ -89,6 +114,126 @@ class OnlineStoreOverviewDto {
   final int setupProgressPercent;
   final List<OnlineStoreSetupStepDto> steps;
   final OnlineStoreReadinessDto readiness;
+  final OnlineStoreDomainSummaryDto domain;
+  final OnlineStoreSectionSummaryDto branding;
+  final OnlineStoreSectionSummaryDto contactSupport;
+  final OnlineStoreClickCollectSummaryDto clickCollect;
+  final OnlineStoreCatalogOverviewDto catalog;
+  final OnlineStorePolicySummaryDto policies;
+  final String customerAccountMode;
+  final bool emailVerificationRequired;
+  final String paymentMode;
+  final String notificationsStatus;
+  final List<OnlineStoreNextActionDto> nextActions;
+}
+
+class OnlineStoreDomainSummaryDto {
+  const OnlineStoreDomainSummaryDto({
+    required this.configured,
+    required this.isPrimary,
+    this.domain,
+    this.dnsStatus,
+    this.sslStatus,
+  });
+
+  factory OnlineStoreDomainSummaryDto.fromJson(Map<String, dynamic> json) =>
+      OnlineStoreDomainSummaryDto(
+        configured: _bool(json, 'configured'),
+        domain: _nullableString(json, 'domain'),
+        dnsStatus: _nullableString(json, 'dnsStatus'),
+        sslStatus: _nullableString(json, 'sslStatus'),
+        isPrimary: _bool(json, 'isPrimary'),
+      );
+
+  final bool configured;
+  final String? domain;
+  final String? dnsStatus;
+  final String? sslStatus;
+  final bool isPrimary;
+}
+
+class OnlineStoreSectionSummaryDto {
+  const OnlineStoreSectionSummaryDto({required this.status});
+
+  factory OnlineStoreSectionSummaryDto.fromJson(Map<String, dynamic> json) =>
+      OnlineStoreSectionSummaryDto(status: _string(json, 'status'));
+
+  final String status;
+}
+
+class OnlineStoreClickCollectSummaryDto {
+  const OnlineStoreClickCollectSummaryDto({
+    required this.enabled,
+    required this.eligibleOutletCount,
+    required this.status,
+  });
+
+  factory OnlineStoreClickCollectSummaryDto.fromJson(
+    Map<String, dynamic> json,
+  ) =>
+      OnlineStoreClickCollectSummaryDto(
+        enabled: _bool(json, 'enabled'),
+        eligibleOutletCount: _int(json, 'eligibleOutletCount'),
+        status: _string(json, 'status'),
+      );
+
+  final bool enabled;
+  final int eligibleOutletCount;
+  final String status;
+}
+
+class OnlineStoreCatalogOverviewDto {
+  const OnlineStoreCatalogOverviewDto({
+    required this.totalProducts,
+    required this.onlineVisibleProducts,
+  });
+
+  factory OnlineStoreCatalogOverviewDto.fromJson(Map<String, dynamic> json) =>
+      OnlineStoreCatalogOverviewDto(
+        totalProducts: _int(json, 'totalProducts'),
+        onlineVisibleProducts: _int(json, 'onlineVisibleProducts'),
+      );
+
+  final int totalProducts;
+  final int onlineVisibleProducts;
+}
+
+class OnlineStorePolicySummaryDto {
+  const OnlineStorePolicySummaryDto({
+    required this.requiredCount,
+    required this.publishedRequiredCount,
+    required this.status,
+  });
+
+  factory OnlineStorePolicySummaryDto.fromJson(Map<String, dynamic> json) =>
+      OnlineStorePolicySummaryDto(
+        requiredCount: _int(json, 'requiredCount'),
+        publishedRequiredCount: _int(json, 'publishedRequiredCount'),
+        status: _string(json, 'status'),
+      );
+
+  final int requiredCount;
+  final int publishedRequiredCount;
+  final String status;
+}
+
+class OnlineStoreNextActionDto {
+  const OnlineStoreNextActionDto({
+    required this.code,
+    required this.step,
+    required this.blocking,
+  });
+
+  factory OnlineStoreNextActionDto.fromJson(Map<String, dynamic> json) =>
+      OnlineStoreNextActionDto(
+        code: _string(json, 'code'),
+        step: _int(json, 'step'),
+        blocking: _bool(json, 'blocking'),
+      );
+
+  final String code;
+  final int step;
+  final bool blocking;
 }
 
 class OnlineStoreEntitlementDto {
@@ -115,6 +260,13 @@ class OnlineStoreActivationDto {
     required this.channelStatus,
     required this.visibility,
     required this.entitlements,
+    required this.releaseScope,
+    required this.checkoutMode,
+    required this.emailVerificationRequired,
+    required this.paymentMode,
+    required this.notificationsStatus,
+    required this.privateUntilPublished,
+    required this.readiness,
   });
 
   factory OnlineStoreActivationDto.fromJson(Map<String, dynamic> json) {
@@ -127,6 +279,20 @@ class OnlineStoreActivationDto {
         json['entitlements'],
         OnlineStoreEntitlementDto.fromJson,
       ),
+      releaseScope:
+          _nullableString(json, 'releaseScope') ?? 'CLICK_COLLECT_ONLY',
+      checkoutMode:
+          _nullableString(json, 'checkoutMode') ?? 'REGISTRATION_REQUIRED',
+      emailVerificationRequired:
+          json['emailVerificationRequired'] as bool? ?? true,
+      paymentMode: _nullableString(json, 'paymentMode') ?? 'PAY_AT_PICKUP',
+      notificationsStatus:
+          _nullableString(json, 'notificationsStatus') ?? 'NOT_READY',
+      privateUntilPublished: json['privateUntilPublished'] as bool? ?? true,
+      readiness: _list(
+        json['readiness'],
+        OnlineStoreActivationReadinessItemDto.fromJson,
+      ),
     );
   }
 
@@ -135,6 +301,38 @@ class OnlineStoreActivationDto {
   final String channelStatus;
   final String visibility;
   final List<OnlineStoreEntitlementDto> entitlements;
+  final String releaseScope;
+  final String checkoutMode;
+  final bool emailVerificationRequired;
+  final String paymentMode;
+  final String notificationsStatus;
+  final bool privateUntilPublished;
+  final List<OnlineStoreActivationReadinessItemDto> readiness;
+}
+
+class OnlineStoreActivationReadinessItemDto {
+  const OnlineStoreActivationReadinessItemDto({
+    required this.code,
+    required this.label,
+    required this.status,
+    required this.message,
+  });
+
+  factory OnlineStoreActivationReadinessItemDto.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return OnlineStoreActivationReadinessItemDto(
+      code: _string(json, 'code'),
+      label: _string(json, 'label'),
+      status: _string(json, 'status'),
+      message: _string(json, 'message'),
+    );
+  }
+
+  final String code;
+  final String label;
+  final String status;
+  final String message;
 }
 
 class OnlineStoreIdentityDto {
@@ -173,6 +371,147 @@ class OnlineStoreIdentityDto {
   final String? supportTagline;
   final String currencyCode;
   final String timezone;
+}
+
+class OnlineStoreCheckoutRulesDto {
+  const OnlineStoreCheckoutRulesDto({
+    required this.release,
+    required this.customerAccount,
+    required this.guestCheckout,
+    required this.emailVerification,
+    required this.fulfilment,
+    required this.payment,
+  });
+
+  factory OnlineStoreCheckoutRulesDto.fromJson(Map<String, dynamic> json) {
+    return OnlineStoreCheckoutRulesDto(
+      release: _string(json, 'release'),
+      customerAccount: OnlineStoreCustomerAccountRuleDto.fromJson(
+        _map(json['customerAccount']),
+      ),
+      guestCheckout: OnlineStoreGuestCheckoutRuleDto.fromJson(
+        _map(json['guestCheckout']),
+      ),
+      emailVerification: OnlineStoreEmailVerificationRuleDto.fromJson(
+        _map(json['emailVerification']),
+      ),
+      fulfilment: OnlineStoreFulfilmentRuleDto.fromJson(
+        _map(json['fulfilment']),
+      ),
+      payment: OnlineStorePaymentRuleDto.fromJson(_map(json['payment'])),
+    );
+  }
+
+  final String release;
+  final OnlineStoreCustomerAccountRuleDto customerAccount;
+  final OnlineStoreGuestCheckoutRuleDto guestCheckout;
+  final OnlineStoreEmailVerificationRuleDto emailVerification;
+  final OnlineStoreFulfilmentRuleDto fulfilment;
+  final OnlineStorePaymentRuleDto payment;
+}
+
+class OnlineStoreCustomerAccountRuleDto {
+  const OnlineStoreCustomerAccountRuleDto({
+    required this.registrationRequired,
+    required this.mode,
+    required this.label,
+  });
+
+  factory OnlineStoreCustomerAccountRuleDto.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return OnlineStoreCustomerAccountRuleDto(
+      registrationRequired: _bool(json, 'registrationRequired'),
+      mode: _string(json, 'mode'),
+      label: _string(json, 'label'),
+    );
+  }
+
+  final bool registrationRequired;
+  final String mode;
+  final String label;
+}
+
+class OnlineStoreGuestCheckoutRuleDto {
+  const OnlineStoreGuestCheckoutRuleDto({
+    required this.available,
+    required this.mode,
+    required this.label,
+  });
+
+  factory OnlineStoreGuestCheckoutRuleDto.fromJson(Map<String, dynamic> json) {
+    return OnlineStoreGuestCheckoutRuleDto(
+      available: _bool(json, 'available'),
+      mode: _string(json, 'mode'),
+      label: _string(json, 'label'),
+    );
+  }
+
+  final bool available;
+  final String mode;
+  final String label;
+}
+
+class OnlineStoreEmailVerificationRuleDto {
+  const OnlineStoreEmailVerificationRuleDto({
+    required this.required,
+    required this.mode,
+    required this.label,
+  });
+
+  factory OnlineStoreEmailVerificationRuleDto.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return OnlineStoreEmailVerificationRuleDto(
+      required: _bool(json, 'required'),
+      mode: _string(json, 'mode'),
+      label: _string(json, 'label'),
+    );
+  }
+
+  final bool required;
+  final String mode;
+  final String label;
+}
+
+class OnlineStoreFulfilmentRuleDto {
+  const OnlineStoreFulfilmentRuleDto({
+    required this.mode,
+    required this.label,
+    required this.featureEnabled,
+    required this.configured,
+  });
+
+  factory OnlineStoreFulfilmentRuleDto.fromJson(Map<String, dynamic> json) {
+    return OnlineStoreFulfilmentRuleDto(
+      mode: _string(json, 'mode'),
+      label: _string(json, 'label'),
+      featureEnabled: _bool(json, 'featureEnabled'),
+      configured: _bool(json, 'configured'),
+    );
+  }
+
+  final String mode;
+  final String label;
+  final bool featureEnabled;
+  final bool configured;
+}
+
+class OnlineStorePaymentRuleDto {
+  const OnlineStorePaymentRuleDto({
+    required this.mode,
+    required this.label,
+  });
+
+  factory OnlineStorePaymentRuleDto.fromJson(Map<String, dynamic> json) {
+    return OnlineStorePaymentRuleDto(
+      mode: _string(json, 'mode'),
+      label: _string(json, 'label'),
+    );
+  }
+
+  final String mode;
+  final String label;
 }
 
 class OnlineStoreDomainDto {
@@ -216,6 +555,26 @@ class OnlineStoreDomainDto {
   final String status;
 }
 
+class OnlineStoreDomainTokenDto {
+  const OnlineStoreDomainTokenDto({
+    required this.domainId,
+    required this.domainName,
+    required this.verificationToken,
+  });
+
+  factory OnlineStoreDomainTokenDto.fromJson(Map<String, dynamic> json) {
+    return OnlineStoreDomainTokenDto(
+      domainId: _string(json, 'domainId'),
+      domainName: _string(json, 'domainName'),
+      verificationToken: _string(json, 'verificationToken'),
+    );
+  }
+
+  final String domainId;
+  final String domainName;
+  final String verificationToken;
+}
+
 class OnlineStoreUrlDomainDto {
   const OnlineStoreUrlDomainDto({
     required this.domains,
@@ -243,12 +602,16 @@ class OnlineStoreBrandingDto {
     required this.banners,
     this.logoMediaAssetId,
     this.faviconMediaAssetId,
+    this.logoImageUrl,
+    this.faviconImageUrl,
   });
 
   factory OnlineStoreBrandingDto.fromJson(Map<String, dynamic> json) {
     return OnlineStoreBrandingDto(
       logoMediaAssetId: _nullableString(json, 'logoMediaAssetId'),
       faviconMediaAssetId: _nullableString(json, 'faviconMediaAssetId'),
+      logoImageUrl: _nullableString(json, 'logoImageUrl'),
+      faviconImageUrl: _nullableString(json, 'faviconImageUrl'),
       primaryColor: _string(json, 'primaryColor'),
       secondaryColor: _string(json, 'secondaryColor'),
       banners: _list(json['banners'], OnlineStoreBannerDto.fromJson),
@@ -257,6 +620,8 @@ class OnlineStoreBrandingDto {
 
   final String? logoMediaAssetId;
   final String? faviconMediaAssetId;
+  final String? logoImageUrl;
+  final String? faviconImageUrl;
   final String primaryColor;
   final String secondaryColor;
   final List<OnlineStoreBannerDto> banners;

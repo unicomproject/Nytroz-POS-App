@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/access/pos_access_codes.dart';
@@ -6,6 +6,8 @@ import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../till/presentation/providers/till_provider.dart';
 import '../providers/tenant_admin_context_provider.dart';
 import '../theme/tenant_admin_theme.dart';
+import '../../../workspace/domain/workspace_access.dart';
+import '../../../workspace/presentation/widgets/workspace_account_menu_button.dart';
 
 /// Shared black application header for every Tenant Admin page.
 ///
@@ -48,64 +50,68 @@ class TenantAdminAppHeader extends ConsumerWidget {
         color: TenantAdminColors.posHomeDarkBackground,
         child: LayoutBuilder(
           builder: (context, constraints) {
-              final compact = constraints.maxWidth < 900;
-              final veryCompact = constraints.maxWidth < 700;
+            final compact = constraints.maxWidth < 900;
+            final veryCompact = constraints.maxWidth < 700;
 
-              return Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: veryCompact
-                      ? TenantAdminSpacing.sm
-                      : TenantAdminSpacing.lg,
-                ),
-                child: Row(
-                  children: [
-                    if (onMenuPressed != null) ...[
-                      IconButton(
-                        tooltip: 'Open navigation',
-                        onPressed: onMenuPressed,
-                        icon: const Icon(
-                          Icons.menu_rounded,
-                          color: TenantAdminColors.surface,
-                        ),
+            return Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal:
+                    veryCompact ? TenantAdminSpacing.sm : TenantAdminSpacing.lg,
+              ),
+              child: Row(
+                children: [
+                  if (onMenuPressed != null) ...[
+                    IconButton(
+                      tooltip: 'Open navigation',
+                      onPressed: onMenuPressed,
+                      icon: const Icon(
+                        Icons.menu_rounded,
+                        color: TenantAdminColors.surface,
                       ),
-                      const SizedBox(width: TenantAdminSpacing.xs),
-                    ],
-                    _BrandMark(
-                      compact: veryCompact,
-                      logoUrl: tenantContext?.tenantLogoUrl,
-                      brandName: tenantContext?.tenantName,
                     ),
-                    SizedBox(
-                      width: veryCompact
-                          ? TenantAdminSpacing.sm
-                          : TenantAdminSpacing.lg,
-                    ),
-                    const Spacer(),
-                    if (!veryCompact) ...[
-                      _ContextChip(
-                        icon: Icons.location_on_outlined,
-                        label: outletLabel,
-                        compact: compact,
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.sm),
-                      _ContextChip(
-                        icon: Icons.point_of_sale_outlined,
-                        label: tillLabel,
-                        compact: compact,
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.sm),
-                    ],
-                    _NotificationBell(
-                      canView: session?.hasPermission(
-                            PosPermissionCodes.viewNotifications,
-                          ) ==
-                          true,
-                    ),
+                    const SizedBox(width: TenantAdminSpacing.xs),
                   ],
-                ),
-              );
-            },
-          ),
+                  _BrandMark(
+                    compact: veryCompact,
+                    logoUrl: tenantContext?.tenantLogoUrl,
+                    brandName: tenantContext?.tenantName,
+                  ),
+                  SizedBox(
+                    width: veryCompact
+                        ? TenantAdminSpacing.sm
+                        : TenantAdminSpacing.lg,
+                  ),
+                  const Spacer(),
+                  if (!veryCompact) ...[
+                    _ContextChip(
+                      icon: Icons.location_on_outlined,
+                      label: outletLabel,
+                      compact: compact,
+                    ),
+                    const SizedBox(width: TenantAdminSpacing.sm),
+                    _ContextChip(
+                      icon: Icons.point_of_sale_outlined,
+                      label: tillLabel,
+                      compact: compact,
+                    ),
+                    const SizedBox(width: TenantAdminSpacing.sm),
+                  ],
+                  _NotificationBell(
+                    canView: session?.hasPermission(
+                          PosPermissionCodes.viewNotifications,
+                        ) ==
+                        true,
+                  ),
+                  const SizedBox(width: TenantAdminSpacing.xs),
+                  WorkspaceAccountMenuButton(
+                    currentWorkspace: AppWorkspace.tenantAdmin,
+                    compact: veryCompact,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -160,7 +166,8 @@ class _BrandMark extends StatelessWidget {
         ? brandName!.trim()
         : 'OneVerz POS';
 
-    final resolvedLogoUrl = logoUrl?.trim().isNotEmpty == true ? logoUrl!.trim() : null;
+    final resolvedLogoUrl =
+        logoUrl?.trim().isNotEmpty == true ? logoUrl!.trim() : null;
 
     final baseStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
               color: TenantAdminColors.surface,
@@ -172,7 +179,8 @@ class _BrandMark extends StatelessWidget {
           fontWeight: FontWeight.w800,
         );
 
-    final match = RegExp(r'^(.*?)(\s+POS)$', caseSensitive: false).firstMatch(resolvedName);
+    final match = RegExp(r'^(.*?)(\s+POS)$', caseSensitive: false)
+        .firstMatch(resolvedName);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -185,7 +193,8 @@ class _BrandMark extends StatelessWidget {
                 ? Image.network(
                     resolvedLogoUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _LogoFallback(compact: compact),
+                    errorBuilder: (_, __, ___) =>
+                        _LogoFallback(compact: compact),
                   )
                 : _LogoFallback(compact: compact),
           ),
@@ -236,8 +245,6 @@ class _LogoFallback extends StatelessWidget {
         ),
       );
 }
-
-
 
 class _ContextChip extends StatelessWidget {
   const _ContextChip({
