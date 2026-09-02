@@ -31,7 +31,6 @@ class CustomerTableHeader extends StatelessWidget {
                 _HeaderCell('Status', flex: 10),
                 _HeaderCell('Orders', flex: 10),
                 _HeaderCell('Total Spend', flex: 12),
-                SizedBox(width: 64),
               ]
             : const [
                 _HeaderCell('Customer', flex: 22, sortable: true),

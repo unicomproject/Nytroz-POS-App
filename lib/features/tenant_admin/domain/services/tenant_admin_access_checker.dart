@@ -916,7 +916,59 @@ class TenantAdminAccessChecker {
   }
 
   bool canViewCategoriesNav() {
-    return can(TenantAdminPermissionCodes.tenantCategoriesView);
+    return hasProductCatalogEntitlement() && canFetchCategoryList();
+  }
+
+  bool hasProductCatalogEntitlement() {
+    final productCatalogEntries = _context.featureEntitlements.where(
+      (feature) => feature.featureCode == 'product_catalog',
+    );
+
+    if (productCatalogEntries.isEmpty) {
+      return true;
+    }
+
+    final enabled = productCatalogEntries.any((feature) => feature.enabled);
+    if (!enabled) {
+      return false;
+    }
+
+    return hasRuntimeFlag('product_catalog');
+  }
+
+  bool canFetchCategoryList() {
+    return canAny([
+      TenantAdminPermissionCodes.tenantCategoriesView,
+      'catalog.categories.view',
+      'catalog.categories.manage',
+    ]);
+  }
+
+  bool canCreateCategory() {
+    return hasProductCatalogEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantCategoriesCreate,
+          'catalog.categories.create',
+          'catalog.categories.manage',
+        ]);
+  }
+
+  bool canUpdateCategory() {
+    return hasProductCatalogEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantCategoriesUpdate,
+          'catalog.categories.update',
+          'catalog.categories.manage',
+        ]);
+  }
+
+  bool canDeleteCategory() {
+    return hasProductCatalogEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantCategoriesDelete,
+          'catalog.categories.delete',
+          'catalog.categories.manage',
+        ]);
   }
 
   bool canViewBrandsNav() {
@@ -1683,6 +1735,52 @@ class BrandListVisibility {
       showList: showPage,
       showEditBrand: access.canUpdateBrand(),
       showDeleteBrand: access.canDeleteBrand(),
+    );
+  }
+}
+
+class CategoryListVisibility {
+  const CategoryListVisibility({
+    required this.showPage,
+    required this.showTitle,
+    required this.showSubtitle,
+    required this.showSearch,
+    required this.showAddCategory,
+    required this.showList,
+    required this.showViewAction,
+    required this.showEditAction,
+    required this.showStatusAction,
+    required this.showDeleteAction,
+  });
+
+  final bool showPage;
+  final bool showTitle;
+  final bool showSubtitle;
+  final bool showSearch;
+  final bool showAddCategory;
+  final bool showList;
+  final bool showViewAction;
+  final bool showEditAction;
+  final bool showStatusAction;
+  final bool showDeleteAction;
+
+  static CategoryListVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage =
+        access.hasProductCatalogEntitlement() && access.canFetchCategoryList();
+
+    return CategoryListVisibility(
+      showPage: showPage,
+      showTitle: showPage,
+      showSubtitle: showPage,
+      showSearch: showPage,
+      showAddCategory: access.canCreateCategory(),
+      showList: showPage,
+      showViewAction: access.canFetchCategoryList(),
+      showEditAction: access.canUpdateCategory(),
+      showStatusAction: access.canUpdateCategory(),
+      showDeleteAction: access.canDeleteCategory(),
     );
   }
 }

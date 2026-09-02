@@ -447,7 +447,26 @@ class TenantAdminPermissionAliases {
     'tenant.categories.view': [
       'tenant.categories.view',
       'catalog.categories.view',
+      'catalog.categories.manage',
       'category.view',
+    ],
+    'tenant.categories.create': [
+      'tenant.categories.create',
+      'catalog.categories.create',
+      'catalog.categories.manage',
+      'category.create',
+    ],
+    'tenant.categories.update': [
+      'tenant.categories.update',
+      'catalog.categories.update',
+      'catalog.categories.manage',
+      'category.update',
+    ],
+    'tenant.categories.delete': [
+      'tenant.categories.delete',
+      'catalog.categories.delete',
+      'catalog.categories.manage',
+      'category.delete',
     ],
     'tenant.brands.view': [
       'tenant.brands.view',

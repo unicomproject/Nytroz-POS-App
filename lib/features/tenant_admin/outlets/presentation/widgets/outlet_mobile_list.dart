@@ -175,15 +175,16 @@ class _OutletMobileCard extends ConsumerWidget {
                 itemBuilder: (context) {
                   return [
                     for (final action in visibility.visibleRowActions)
-                      PopupMenuItem<OutletRowActionId>(
-                        value: action.actionId,
-                        child: TenantAdminRowActionMenuItem(
-                          icon: action.icon,
-                          label: action.label,
-                          destructive:
-                              action.actionId == OutletRowActionId.delete,
+                      if (action.actionId != OutletRowActionId.viewDetails)
+                        PopupMenuItem<OutletRowActionId>(
+                          value: action.actionId,
+                          child: TenantAdminRowActionMenuItem(
+                            icon: action.icon,
+                            label: action.label,
+                            destructive:
+                                action.actionId == OutletRowActionId.delete,
+                          ),
                         ),
-                      ),
                   ];
                 },
                 onSelected: (actionId) =>

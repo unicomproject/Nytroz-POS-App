@@ -3,7 +3,6 @@ import 'package:nytroz_pos/core/storage/secure_storage_provider.dart';
 
 import '../../../../../core/network/dio_provider.dart';
 import '../../../presentation/providers/tenant_admin_access_provider.dart';
-import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../application/usecases/create_product.dart';
 import '../../application/usecases/delete_product.dart';
 import '../../application/usecases/get_product_by_id.dart';
@@ -26,6 +25,7 @@ import '../../domain/repositories/product_wizard_draft_local_repository.dart';
 import '../../domain/repositories/tenant_product_repository.dart';
 import '../../domain/services/product_list_local_draft_merger.dart';
 import '../controllers/add_product_wizard_controller.dart';
+import '../widgets/product_table.dart';
 
 final tenantProductRemoteDatasourceProvider =
     Provider<TenantProductRemoteDatasource>((ref) {
@@ -108,7 +108,7 @@ class ProductListFilterState {
     this.sortBy = 'productName',
     this.sortDirection = 'asc',
     this.pageNumber = 1,
-    this.pageSize = TenantAdminContentTokens.defaultListPageSize,
+    this.pageSize = ProductTable.pageSize,
   });
 
   final String search;
@@ -330,8 +330,9 @@ final productEditCreateOptionsProvider =
   return ref.watch(getProductCreateOptionsProvider).call();
 });
 
-final addProductWizardControllerProvider = StateNotifierProvider<
-    AddProductWizardController, AddProductWizardState>((ref) {
+final addProductWizardControllerProvider =
+    StateNotifierProvider<AddProductWizardController, AddProductWizardState>(
+        (ref) {
   final repo = ref.watch(tenantProductRepositoryProvider);
   final draftLocal = ref.watch(productWizardDraftLocalRepositoryProvider);
   return AddProductWizardController(repo, draftLocal: draftLocal);

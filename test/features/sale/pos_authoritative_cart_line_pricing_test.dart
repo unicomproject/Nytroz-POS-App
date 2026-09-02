@@ -213,7 +213,7 @@ void main() {
 
       expect(find.text('LKR 2,800.00'), findsOneWidget);
       expect(find.text('LKR 2,100.00'), findsNWidgets(2));
-      expect(find.text('25% OFF'), findsOneWidget);
+      expect(find.text('25% OFF'), findsNothing);
     });
 
     testWidgets('non-authoritative line total is not shown as final',

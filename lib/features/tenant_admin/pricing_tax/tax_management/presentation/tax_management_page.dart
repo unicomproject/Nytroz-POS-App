@@ -5,6 +5,7 @@ import '../../../presentation/providers/tenant_admin_access_provider.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
+import '../../../presentation/widgets/tenant_admin_row_action.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../application/tax_management_controller.dart';
 import '../domain/tax_aggregate.dart';
@@ -162,7 +163,7 @@ class _TaxFormSectionState extends ConsumerState<_TaxFormSection> {
   void didUpdateWidget(_TaxFormSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.taxId != oldWidget.taxId) {
-      _lastPopulatedId = null; 
+      _lastPopulatedId = null;
     }
   }
 
@@ -205,11 +206,16 @@ class _TaxFormSectionState extends ConsumerState<_TaxFormSection> {
 
     final isEditing = ref.read(taxManagementControllerProvider).isEditing;
 
-    ref.read(taxManagementControllerProvider.notifier).submitTax(input).then((_) {
+    ref
+        .read(taxManagementControllerProvider.notifier)
+        .submitTax(input)
+        .then((_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isEditing ? 'Tax updated successfully.' : 'Tax created successfully.'),
+          content: Text(isEditing
+              ? 'Tax updated successfully.'
+              : 'Tax created successfully.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -231,7 +237,8 @@ class _TaxFormSectionState extends ConsumerState<_TaxFormSection> {
     final taxes = ref.watch(taxListProvider).valueOrNull?.items ?? [];
 
     if (widget.taxId != null && _lastPopulatedId != widget.taxId) {
-      final tax = taxes.firstWhere((t) => t.id == widget.taxId, orElse: () => taxes.first);
+      final tax = taxes.firstWhere((t) => t.id == widget.taxId,
+          orElse: () => taxes.first);
       _populateForm(tax);
       _lastPopulatedId = widget.taxId;
     } else if (widget.taxId == null && _lastPopulatedId != null) {
@@ -239,21 +246,28 @@ class _TaxFormSectionState extends ConsumerState<_TaxFormSection> {
       _lastPopulatedId = null;
     }
 
-    final title = widget.isViewOnly ? 'View Tax' : (state.isEditing ? 'Edit Tax' : 'Create Tax');
+    final title = widget.isViewOnly
+        ? 'View Tax'
+        : (state.isEditing ? 'Edit Tax' : 'Create Tax');
 
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.xl, vertical: TenantAdminSpacing.lg),
+          padding: const EdgeInsets.symmetric(
+              horizontal: TenantAdminSpacing.xl,
+              vertical: TenantAdminSpacing.lg),
           decoration: const BoxDecoration(
             border: Border(bottom: BorderSide(color: TenantAdminColors.border)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              Text(title,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 18)),
               IconButton(
-                icon: const Icon(Icons.close, color: TenantAdminColors.bodyText),
+                icon:
+                    const Icon(Icons.close, color: TenantAdminColors.bodyText),
                 onPressed: widget.onClose,
                 splashRadius: 20,
               ),
@@ -299,10 +313,12 @@ class _TaxFormSectionState extends ConsumerState<_TaxFormSection> {
                         const SizedBox(width: TenantAdminSpacing.md),
                         Expanded(
                           child: TenantAdminPrimaryButton(
-                            label: state.isEditing ? 'Save Changes' : 'Create Tax',
+                            label:
+                                state.isEditing ? 'Save Changes' : 'Create Tax',
                             loading: state.isSubmitting,
                             onPressed: _submit,
-                            backgroundColor: TenantAdminColors.posHomeAccentOrange,
+                            backgroundColor:
+                                TenantAdminColors.posHomeAccentOrange,
                           ),
                         ),
                       ],
@@ -319,7 +335,8 @@ class _TaxFormSectionState extends ConsumerState<_TaxFormSection> {
   Widget _buildNameField() {
     return TextFormField(
       controller: _taxNameController,
-      decoration: const InputDecoration(labelText: 'Tax Name *', border: OutlineInputBorder()),
+      decoration: const InputDecoration(
+          labelText: 'Tax Name *', border: OutlineInputBorder()),
       validator: (val) => val == null || val.isEmpty ? 'Required' : null,
       enabled: !widget.isViewOnly,
     );
@@ -344,25 +361,31 @@ class _TaxFormSectionState extends ConsumerState<_TaxFormSection> {
     return DropdownButtonFormField<String>(
       // ignore: deprecated_member_use
       value: _taxType,
-      decoration: const InputDecoration(labelText: 'Tax Type *', border: OutlineInputBorder()),
+      decoration: const InputDecoration(
+          labelText: 'Tax Type *', border: OutlineInputBorder()),
       items: const [
         DropdownMenuItem(value: 'PERCENTAGE', child: Text('Percentage')),
         DropdownMenuItem(value: 'FIXED', child: Text('Fixed Amount')),
       ],
-      onChanged: widget.isViewOnly ? null : (val) => setState(() => _taxType = val!),
+      onChanged:
+          widget.isViewOnly ? null : (val) => setState(() => _taxType = val!),
     );
   }
 
   Widget _buildRateField() {
-    final label = _taxType == 'PERCENTAGE' ? 'Tax Rate (%) *' : 'Tax Amount (LKR) *';
+    final label =
+        _taxType == 'PERCENTAGE' ? 'Tax Rate (%) *' : 'Tax Amount (LKR) *';
     return TextFormField(
       controller: _taxPercentageController,
-      decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+      decoration:
+          InputDecoration(labelText: label, border: const OutlineInputBorder()),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       validator: (val) {
         if (val == null || val.isEmpty) return 'Required';
         final num = double.tryParse(val);
-        if (num == null || num < 0 || (_taxType == 'PERCENTAGE' && num > 100)) return 'Invalid value';
+        if (num == null || num < 0 || (_taxType == 'PERCENTAGE' && num > 100)) {
+          return 'Invalid value';
+        }
         return null;
       },
       enabled: !widget.isViewOnly,
@@ -372,7 +395,8 @@ class _TaxFormSectionState extends ConsumerState<_TaxFormSection> {
   Widget _buildDescField() {
     return TextFormField(
       controller: _descriptionController,
-      decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+      decoration: const InputDecoration(
+          labelText: 'Description', border: OutlineInputBorder()),
       enabled: !widget.isViewOnly,
     );
   }
@@ -381,12 +405,14 @@ class _TaxFormSectionState extends ConsumerState<_TaxFormSection> {
     return DropdownButtonFormField<String>(
       // ignore: deprecated_member_use
       value: _status,
-      decoration: const InputDecoration(labelText: 'Status *', border: OutlineInputBorder()),
+      decoration: const InputDecoration(
+          labelText: 'Status *', border: OutlineInputBorder()),
       items: const [
         DropdownMenuItem(value: 'ACTIVE', child: Text('Active')),
         DropdownMenuItem(value: 'INACTIVE', child: Text('Inactive')),
       ],
-      onChanged: widget.isViewOnly ? null : (val) => setState(() => _status = val!),
+      onChanged:
+          widget.isViewOnly ? null : (val) => setState(() => _status = val!),
     );
   }
 }
@@ -432,7 +458,9 @@ class _TaxTableSectionState extends ConsumerState<_TaxTableSection> {
         }
 
         final filteredTaxes = result.items.where((tax) {
-          final matchesSearch = tax.taxName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          final matchesSearch = tax.taxName
+                  .toLowerCase()
+                  .contains(_searchQuery.toLowerCase()) ||
               tax.taxCode.toLowerCase().contains(_searchQuery.toLowerCase());
           final matchesStatus = _statusFilter == 'All' ||
               (_statusFilter == 'Active' && tax.status == 'ACTIVE') ||
@@ -445,7 +473,8 @@ class _TaxTableSectionState extends ConsumerState<_TaxTableSection> {
         if (_currentPage > maxPage) _currentPage = maxPage;
 
         final startIndex = (_currentPage - 1) * _rowsPerPage;
-        final endIndex = (startIndex + _rowsPerPage).clamp(0, filteredTaxes.length);
+        final endIndex =
+            (startIndex + _rowsPerPage).clamp(0, filteredTaxes.length);
         final paginatedTaxes = filteredTaxes.sublist(startIndex, endIndex);
 
         return Column(
@@ -471,10 +500,14 @@ class _TaxTableSectionState extends ConsumerState<_TaxTableSection> {
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: DataTable(
+                              showCheckboxColumn: false,
                               dataRowMinHeight: 64,
-                              dataRowMaxHeight: 120, // Increased to prevent overflow for vertically stacked actions
-                              headingRowColor: WidgetStateProperty.all(const Color(0xFFF8F8F8)),
-                              headingTextStyle: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
+                              dataRowMaxHeight: 72,
+                              headingRowColor: WidgetStateProperty.all(
+                                  const Color(0xFFF8F8F8)),
+                              headingTextStyle: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87),
                               columns: const [
                                 DataColumn(label: Text('Tax Name')),
                                 DataColumn(label: Text('Tax Code')),
@@ -485,28 +518,36 @@ class _TaxTableSectionState extends ConsumerState<_TaxTableSection> {
                                 DataColumn(label: Text('Actions')),
                               ],
                               rows: paginatedTaxes.map((tax) {
-                                final isEditingRow = editingState.editingTaxId == tax.id;
+                                final isEditingRow =
+                                    editingState.editingTaxId == tax.id;
                                 return DataRow(
                                   color: WidgetStateProperty.all(
-                                    isEditingRow ? const Color(0xFFFFF4EC) : null,
+                                    isEditingRow
+                                        ? const Color(0xFFFFF4EC)
+                                        : null,
                                   ),
+                                  onSelectChanged: (_) => widget.onView(tax.id),
                                   cells: [
-                                    DataCell(Text(tax.taxName, style: const TextStyle(fontWeight: FontWeight.w500))),
+                                    DataCell(Text(tax.taxName,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w500))),
                                     DataCell(Text(tax.taxCode)),
-                                    DataCell(Text(tax.taxType == 'PERCENTAGE' ? 'Percentage' : 'Fixed Amount')),
+                                    DataCell(Text(tax.taxType == 'PERCENTAGE'
+                                        ? 'Percentage'
+                                        : 'Fixed Amount')),
                                     DataCell(Text(
                                       tax.taxType == 'PERCENTAGE'
                                           ? '${tax.taxPercentage.toStringAsFixed(tax.taxPercentage.truncateToDouble() == tax.taxPercentage ? 0 : 2)}%'
                                           : 'LKR ${tax.taxPercentage.toStringAsFixed(2)}',
                                     )),
                                     DataCell(_buildStatusBadge(tax.status)),
-                                    DataCell(const Text('-')), // Placeholder as DTO doesn't have Updated On
+                                    DataCell(const Text(
+                                        '-')), // Placeholder as DTO doesn't have Updated On
                                     DataCell(
                                       _TaxActionColumn(
-                                        tax: tax,
-                                        onView: () => widget.onView(tax.id),
                                         onEdit: () => widget.onEdit(tax.id),
-                                        onDelete: () => _confirmDelete(context, ref, tax),
+                                        onDelete: () =>
+                                            _confirmDelete(context, ref, tax),
                                       ),
                                     ),
                                   ],
@@ -583,10 +624,14 @@ class _TaxTableSectionState extends ConsumerState<_TaxTableSection> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
+        color: isActive
+            ? Colors.green.withValues(alpha: 0.1)
+            : Colors.grey.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: isActive ? Colors.green.withValues(alpha: 0.3) : Colors.grey.withValues(alpha: 0.3),
+          color: isActive
+              ? Colors.green.withValues(alpha: 0.3)
+              : Colors.grey.withValues(alpha: 0.3),
         ),
       ),
       child: Text(
@@ -607,7 +652,8 @@ class _TaxTableSectionState extends ConsumerState<_TaxTableSection> {
     final endIndex = (startIndex + _rowsPerPage - 1).clamp(1, totalItems);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.lg, vertical: TenantAdminSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+          horizontal: TenantAdminSpacing.lg, vertical: TenantAdminSpacing.sm),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -618,7 +664,9 @@ class _TaxTableSectionState extends ConsumerState<_TaxTableSection> {
           Row(
             children: [
               TextButton(
-                onPressed: _currentPage > 1 ? () => setState(() => _currentPage--) : null,
+                onPressed: _currentPage > 1
+                    ? () => setState(() => _currentPage--)
+                    : null,
                 child: const Text('Previous'),
               ),
               for (int i = 1; i <= totalPages; i++)
@@ -628,20 +676,27 @@ class _TaxTableSectionState extends ConsumerState<_TaxTableSection> {
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: _currentPage == i ? TenantAdminColors.posHomeAccentOrange : Colors.transparent,
+                      color: _currentPage == i
+                          ? TenantAdminColors.posHomeAccentOrange
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       '$i',
                       style: TextStyle(
-                        color: _currentPage == i ? Colors.white : Colors.black87,
-                        fontWeight: _currentPage == i ? FontWeight.bold : FontWeight.normal,
+                        color:
+                            _currentPage == i ? Colors.white : Colors.black87,
+                        fontWeight: _currentPage == i
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                   ),
                 ),
               TextButton(
-                onPressed: _currentPage < totalPages ? () => setState(() => _currentPage++) : null,
+                onPressed: _currentPage < totalPages
+                    ? () => setState(() => _currentPage++)
+                    : null,
                 child: const Text('Next'),
               ),
             ],
@@ -656,24 +711,34 @@ class _TaxTableSectionState extends ConsumerState<_TaxTableSection> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Tax?'),
-        content: Text('Are you sure you want to delete "${tax.taxName}"?\n\nThis action may affect products currently using this tax.'),
+        content: Text(
+            'Are you sure you want to delete "${tax.taxName}"?\n\nThis action may affect products currently using this tax.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: TenantAdminColors.danger, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: TenantAdminColors.danger,
+                foregroundColor: Colors.white),
             onPressed: () {
               final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(ctx);
-              ref.read(taxManagementControllerProvider.notifier).deleteTax(tax.id).then((_) {
+              ref
+                  .read(taxManagementControllerProvider.notifier)
+                  .deleteTax(tax.id)
+                  .then((_) {
                 messenger.showSnackBar(
-                  const SnackBar(content: Text('Tax deleted successfully.'), behavior: SnackBarBehavior.floating),
+                  const SnackBar(
+                      content: Text('Tax deleted successfully.'),
+                      behavior: SnackBarBehavior.floating),
                 );
               }).catchError((e) {
                 messenger.showSnackBar(
-                  const SnackBar(content: Text('Unable to delete tax. Please try again.'), behavior: SnackBarBehavior.floating),
+                  const SnackBar(
+                      content: Text('Unable to delete tax. Please try again.'),
+                      behavior: SnackBarBehavior.floating),
                 );
               });
             },
@@ -687,86 +752,31 @@ class _TaxTableSectionState extends ConsumerState<_TaxTableSection> {
 
 class _TaxActionColumn extends StatelessWidget {
   const _TaxActionColumn({
-    required this.tax,
-    required this.onView,
     required this.onEdit,
     required this.onDelete,
   });
 
-  final TaxAggregate tax;
-  final VoidCallback onView;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _ActionRowButton(
-            icon: Icons.visibility_outlined,
-            label: 'View',
-            onPressed: onView,
-          ),
-          const SizedBox(height: 8),
-          _ActionRowButton(
-            icon: Icons.edit_outlined,
-            label: 'Edit',
-            onPressed: onEdit,
-          ),
-          const SizedBox(height: 8),
-          _ActionRowButton(
-            icon: Icons.delete_outline,
-            label: 'Delete',
-            color: TenantAdminColors.danger,
-            onPressed: onDelete,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionRowButton extends StatelessWidget {
-  const _ActionRowButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-    this.color = const Color(0xFF1890FF),
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(4),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+    return TenantAdminOverflowMenu(
+      actions: [
+        TenantAdminOverflowAction(
+          id: 'edit',
+          icon: Icons.edit_outlined,
+          label: 'Edit',
+          onSelected: onEdit,
         ),
-      ),
+        TenantAdminOverflowAction(
+          id: 'delete',
+          icon: Icons.delete_outline,
+          label: 'Delete',
+          destructive: true,
+          onSelected: onDelete,
+        ),
+      ],
     );
   }
 }

@@ -64,38 +64,78 @@ class _EditVariantIdentifierDrawerState
           _buildHeader(context),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Variant',
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.shade100),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Update the SKU or barcode for this variant.',
+                                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Ensure the barcode is unique across all variants.',
+                                  style: TextStyle(color: Colors.black54, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Variant (Read-only)',
                         style: TextStyle(
                             fontWeight: FontWeight.w600, fontSize: 13)),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     TextFormField(
                       initialValue: widget.displayLabel,
                       readOnly: true,
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: Colors.grey.shade100,
-                        border: const OutlineInputBorder(),
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 12),
+                            horizontal: 16, vertical: 12),
+                        suffixIcon: const Icon(Icons.lock_outline, size: 20, color: Colors.black54),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     const Text('SKU *',
                         style: TextStyle(
                             fontWeight: FontWeight.w600, fontSize: 13)),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     TextFormField(
                       controller: _skuController,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                         contentPadding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       ),
                       validator: (val) {
                          if (val == null || val.trim().isEmpty) {
@@ -104,19 +144,19 @@ class _EditVariantIdentifierDrawerState
                          return null;
                       },
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     const Text('Barcode *',
                         style: TextStyle(
                             fontWeight: FontWeight.w600, fontSize: 13)),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     TextFormField(
                       controller: _barcodeController,
                       decoration: InputDecoration(
-                          border: const OutlineInputBorder(),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 12),
+                              horizontal: 16, vertical: 12),
                           suffixIcon: IconButton(
-                            icon: const Icon(Icons.qr_code_scanner),
+                            icon: const Icon(Icons.qr_code_scanner, color: Colors.black54),
                             onPressed: () {
                               // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Scanner opened')));
                               // Hardware scanner integration goes here.
@@ -128,6 +168,54 @@ class _EditVariantIdentifierDrawerState
                          }
                          return null;
                       },
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          // Scan action
+                        },
+                        icon: const Icon(Icons.qr_code_scanner, size: 20, color: Colors.brown),
+                        label: const Text('Scan to Replace Barcode', style: TextStyle(color: Colors.brown)),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(color: Colors.brown.shade200),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.green.shade200),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.check_circle_outline, color: Colors.green.shade700, size: 22),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Barcode is valid and unique',
+                                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.green.shade800),
+                                ),
+                                const SizedBox(height: 2),
+                                const Text(
+                                  'This barcode is not used by any other variant.',
+                                  style: TextStyle(color: Colors.black54, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -149,10 +237,10 @@ class _EditVariantIdentifierDrawerState
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
+          const Expanded(
             child: Text(
-              'Edit Variant (${widget.displayLabel})',
-              style: const TextStyle(
+              'Edit Variant SKU & Barcode',
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),

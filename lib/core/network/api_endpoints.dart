@@ -1,5 +1,6 @@
 class ApiEndpoints {
   const ApiEndpoints._();
+  static const posTheme = '/api/v1/pos/theme';
 
   static const activateDevice = '/api/v1/devices/activate';
   static const currentDevice = '/api/v1/devices/current';
@@ -130,6 +131,22 @@ class ApiEndpoints {
   static String posHold(String holdId) => '/api/v1/pos/holds/$holdId';
   static const posCustomers = '/api/v1/customers';
   static const posCustomersSummary = '/api/v1/customers/summary';
+  static const posOnlineOrders =
+      '/api/v1/tenant/ecommerce/click-collect/orders';
+  static String posOnlineOrder(String orderId) =>
+      '$posOnlineOrders/${Uri.encodeComponent(orderId)}';
+  static String posOnlineOrderStartFulfillment(String orderId) =>
+      '${posOnlineOrder(orderId)}/fulfilment/start';
+  static String posOnlineOrderPicking(String orderId) =>
+      '${posOnlineOrder(orderId)}/picking';
+  static String posOnlineOrderPickLine(String orderId, String lineId) =>
+      '${posOnlineOrderPicking(orderId)}/lines/${Uri.encodeComponent(lineId)}/pick';
+  static String posOnlineOrderPickingIssue(String orderId, String lineId) =>
+      '${posOnlineOrderPicking(orderId)}/lines/${Uri.encodeComponent(lineId)}/issues';
+  static String posOnlineOrderPack(String orderId) =>
+      '${posOnlineOrder(orderId)}/pack';
+  static String posOnlineOrderReady(String orderId) =>
+      '${posOnlineOrder(orderId)}/ready';
   static String posCustomer(String customerId) =>
       '/api/v1/customers/$customerId';
   static String posCustomerOrders(String customerId) =>
