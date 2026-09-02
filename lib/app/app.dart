@@ -24,14 +24,6 @@ class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _themeData = ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: TenantAdminColors.primary,
-      ),
-      scaffoldBackgroundColor: TenantAdminColors.background,
-      useMaterial3: true,
-      fontFamily: 'Roboto',
-    );
   }
 
   @override
@@ -67,17 +59,7 @@ class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
         ),
         scaffoldBackgroundColor: TenantAdminColors.background,
         useMaterial3: true,
-        textTheme: GoogleFonts.interTextTheme().copyWith(
-          displayLarge: GoogleFonts.poppins(),
-          displayMedium: GoogleFonts.poppins(),
-          displaySmall: GoogleFonts.poppins(),
-          headlineLarge: GoogleFonts.poppins(),
-          headlineMedium: GoogleFonts.poppins(),
-          headlineSmall: GoogleFonts.poppins(),
-          titleLarge: GoogleFonts.poppins(),
-          titleMedium: GoogleFonts.poppins(),
-          titleSmall: GoogleFonts.poppins(),
-        ),
+        fontFamily: 'Roboto',
       ),
       scrollBehavior: const NytrozScrollBehavior(),
       routerConfig: router,

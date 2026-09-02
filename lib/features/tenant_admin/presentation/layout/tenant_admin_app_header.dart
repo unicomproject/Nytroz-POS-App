@@ -51,7 +51,10 @@ class TenantAdminAppHeader extends ConsumerWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final compact = constraints.maxWidth < 900;
-            final veryCompact = constraints.maxWidth < 700;
+            // At the 1024 px tablet breakpoint the inline sidebar leaves only
+            // 804 px for the header. Collapse the context controls before that
+            // point so the account menu and actions never overflow.
+            final veryCompact = constraints.maxWidth < 860;
 
             return Padding(
               padding: EdgeInsets.symmetric(
