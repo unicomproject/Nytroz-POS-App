@@ -78,11 +78,13 @@ class PosOnlineOrdersRemoteDatasource {
           required String lineId,
           required double quantity,
           required String barcode,
-          required bool scanned}) =>
+          required bool scanned,
+          required int expectedVersion}) =>
       _command(ApiEndpoints.posOnlineOrderPickLine(orderId, lineId), outletId, {
         'quantity': quantity,
         'barcode': barcode,
         'inputMethod': scanned ? 'SCAN' : 'MANUAL',
+        'expectedVersion': expectedVersion,
       });
 
   Future<PosFulfillmentCommandResult> reportIssue(
@@ -90,9 +92,26 @@ class PosOnlineOrdersRemoteDatasource {
           required String orderId,
           required String lineId,
           required String reason,
-          String? note}) =>
-      _command(ApiEndpoints.posOnlineOrderPickingIssue(orderId, lineId),
-          outletId, {'reason': reason, 'note': note});
+          String? note,
+          required int expectedVersion}) =>
+      _command(
+          ApiEndpoints.posOnlineOrderPickingIssue(orderId, lineId),
+          outletId,
+          {'reason': reason, 'note': note, 'expectedVersion': expectedVersion});
+
+  Future<PosPickingNoteCommandResult> addPickingNote({
+    required String outletId,
+    required String orderId,
+    required String note,
+    required int expectedVersion,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.posOnlineOrderPickingNotes(orderId),
+      queryParameters: {'outletId': outletId},
+      data: {'note': note, 'expectedVersion': expectedVersion},
+    );
+    return PosPickingNoteCommandResult.fromJson(_data(response.data));
+  }
 
   Future<PosFulfillmentCommandResult> pack(
           {required String outletId,

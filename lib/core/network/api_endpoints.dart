@@ -141,6 +141,8 @@ class ApiEndpoints {
       '${posOnlineOrderPicking(orderId)}/lines/${Uri.encodeComponent(lineId)}/pick';
   static String posOnlineOrderPickingIssue(String orderId, String lineId) =>
       '${posOnlineOrderPicking(orderId)}/lines/${Uri.encodeComponent(lineId)}/issues';
+  static String posOnlineOrderPickingNotes(String orderId) =>
+      '${posOnlineOrderPicking(orderId)}/notes';
   static String posOnlineOrderPack(String orderId) =>
       '${posOnlineOrder(orderId)}/pack';
   static String posOnlineOrderReady(String orderId) =>

@@ -122,6 +122,7 @@ final posOnlineOrdersProvider =
 class PosOnlineOrdersController extends Notifier<PosOnlineOrdersState> {
   CancelToken? _listToken;
   CancelToken? _detailToken;
+  int _detailRequestGeneration = 0;
   Timer? _searchDebounce;
 
   @override
@@ -184,21 +185,29 @@ class PosOnlineOrdersController extends Notifier<PosOnlineOrdersState> {
     if (outletId == null || outletId.isEmpty) return;
     _detailToken?.cancel('superseded');
     _detailToken = CancelToken();
-    state = state.copyWith(isLoadingDetail: true, clearDetailError: true);
+    final requestGeneration = ++_detailRequestGeneration;
+    state = state.copyWith(
+      isLoadingDetail: true,
+      clearSelected: state.selected?.order.id != orderId,
+      clearDetailError: true,
+    );
     try {
       final detail = await ref.read(posOnlineOrdersRepositoryProvider).get(
             outletId: outletId,
             orderId: orderId,
             cancelToken: _detailToken,
           );
+      if (requestGeneration != _detailRequestGeneration) return;
       state = state.copyWith(isLoadingDetail: false, selected: detail);
     } on DioException catch (error) {
       if (CancelToken.isCancel(error)) return;
+      if (requestGeneration != _detailRequestGeneration) return;
       state = state.copyWith(
         isLoadingDetail: false,
         detailErrorMessage: _message(error),
       );
     } catch (_) {
+      if (requestGeneration != _detailRequestGeneration) return;
       state = state.copyWith(
         isLoadingDetail: false,
         detailErrorMessage: 'Unable to load order details.',
@@ -345,37 +354,79 @@ class PosPickingActions {
   PosPickingActions(this.ref, this.orderId);
   final Ref ref;
   final String orderId;
+  bool _mutationInFlight = false;
 
   String get _outletId =>
       ref.read(deviceActivationProvider).deviceContext?.outletId.trim() ?? '';
 
   Future<PosFulfillmentCommandResult> pick(
+    PosPickingOrder order,
     PosPickingLine line, {
     required bool scanned,
     required String barcode,
   }) async {
-    final result = await ref.read(posOnlineOrdersRepositoryProvider).pickLine(
-          outletId: _outletId,
-          orderId: orderId,
-          lineId: line.id,
-          quantity: line.requestedQuantity - line.pickedQuantity,
-          barcode: barcode.trim(),
-          scanned: scanned,
-        );
-    ref.invalidate(posPickingOrderProvider(orderId));
-    return result;
+    return _runMutation(() async {
+      final result = await ref.read(posOnlineOrdersRepositoryProvider).pickLine(
+            outletId: _outletId,
+            orderId: orderId,
+            lineId: line.id,
+            quantity: line.requestedQuantity - line.pickedQuantity,
+            barcode: barcode.trim(),
+            scanned: scanned,
+            expectedVersion: order.fulfillmentVersion,
+          );
+      await _refresh();
+      return result;
+    });
   }
 
-  Future<void> issue(PosPickingLine line, String reason, String? note) async {
-    await ref.read(posOnlineOrdersRepositoryProvider).reportIssue(
-          outletId: _outletId,
-          orderId: orderId,
-          lineId: line.id,
-          reason: reason,
-          note: note,
-        );
-    ref.invalidate(posPickingOrderProvider(orderId));
+  Future<void> issue(PosPickingOrder order, PosPickingLine line, String reason,
+          String? note) =>
+      _runMutation(() async {
+        await ref.read(posOnlineOrdersRepositoryProvider).reportIssue(
+              outletId: _outletId,
+              orderId: orderId,
+              lineId: line.id,
+              reason: reason,
+              note: note,
+              expectedVersion: order.fulfillmentVersion,
+            );
+        await _refresh();
+      });
+
+  Future<PosPickingNoteCommandResult> addNote(
+          PosPickingOrder order, String note) =>
+      _runMutation(() async {
+        final result =
+            await ref.read(posOnlineOrdersRepositoryProvider).addPickingNote(
+                  outletId: _outletId,
+                  orderId: orderId,
+                  note: note.trim(),
+                  expectedVersion: order.fulfillmentVersion,
+                );
+        await _refresh();
+        return result;
+      });
+
+  Future<T> _runMutation<T>(Future<T> Function() operation) async {
+    if (_mutationInFlight) {
+      throw StateError('A picking action is already in progress.');
+    }
+    _mutationInFlight = true;
+    try {
+      return await operation();
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 409) {
+        await _refresh();
+      }
+      rethrow;
+    } finally {
+      _mutationInFlight = false;
+    }
   }
+
+  Future<PosPickingOrder> _refresh() =>
+      ref.refresh(posPickingOrderProvider(orderId).future);
 
   Future<PosFulfillmentCommandResult> pack(String? note) async {
     final result = await ref

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -41,6 +43,24 @@ void main() {
     expect(state.selected?.fulfillmentVersion, 6);
     expect(state.detailErrorMessage, contains('updated by another user'));
   });
+
+  test('delayed Order A detail cannot overwrite currently selected Order B',
+      () async {
+    final repository = _FakeRepository(delayOrderA: true);
+    final container = _container(repository);
+    addTearDown(container.dispose);
+    final controller = container.read(posOnlineOrdersProvider.notifier);
+
+    final orderA = controller.select('order-a');
+    await controller.select('order-b');
+    repository.completeOrderA();
+    await orderA;
+
+    final selected = container.read(posOnlineOrdersProvider).selected;
+    expect(selected?.order.id, 'order-b');
+    expect(selected?.order.orderNumber, 'ORDER-B');
+    expect(selected?.fulfillmentVersion, 22);
+  });
 }
 
 ProviderContainer _container(_FakeRepository repository) => ProviderContainer(
@@ -51,14 +71,20 @@ ProviderContainer _container(_FakeRepository repository) => ProviderContainer(
     );
 
 class _FakeRepository implements PosOnlineOrdersRepository {
-  _FakeRepository({this.conflict = false});
+  _FakeRepository({this.conflict = false, this.delayOrderA = false});
 
   final bool conflict;
+  final bool delayOrderA;
+  final Completer<void> _orderAGate = Completer<void>();
   int startCalls = 0;
   int detailCalls = 0;
   String? startedOutletId;
   String? startedOrderId;
   int? expectedVersion;
+
+  void completeOrderA() {
+    if (!_orderAGate.isCompleted) _orderAGate.complete();
+  }
 
   @override
   Future<PosOnlineOrderDetail> get({
@@ -67,9 +93,15 @@ class _FakeRepository implements PosOnlineOrdersRepository {
     CancelToken? cancelToken,
   }) async {
     detailCalls++;
+    if (delayOrderA && orderId == 'order-a') await _orderAGate.future;
     return _detail(
+      orderId: orderId,
       status: conflict && detailCalls > 1 ? 'PICKING' : 'PENDING',
-      version: conflict && detailCalls > 1 ? 6 : 5,
+      version: delayOrderA && orderId == 'order-b'
+          ? 22
+          : conflict && detailCalls > 1
+              ? 6
+              : 5,
     );
   }
 
@@ -129,11 +161,15 @@ class _FakeRepository implements PosOnlineOrdersRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-PosOnlineOrderDetail _detail({required String status, required int version}) =>
+PosOnlineOrderDetail _detail({
+  String orderId = 'order-1',
+  required String status,
+  required int version,
+}) =>
     PosOnlineOrderDetail(
-      order: const PosOnlineOrder(
-        id: 'order-1',
-        orderNumber: 'ORDER-1',
+      order: PosOnlineOrder(
+        id: orderId,
+        orderNumber: orderId.toUpperCase(),
         customerName: 'Customer',
         status: 'ACCEPTED',
         statusLabel: 'Accepted',

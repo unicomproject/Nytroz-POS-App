@@ -34,6 +34,7 @@ abstract interface class PosOnlineOrdersRepository {
     required double quantity,
     required String barcode,
     required bool scanned,
+    required int expectedVersion,
   });
 
   Future<PosFulfillmentCommandResult> reportIssue({
@@ -42,6 +43,14 @@ abstract interface class PosOnlineOrdersRepository {
     required String lineId,
     required String reason,
     String? note,
+    required int expectedVersion,
+  });
+
+  Future<PosPickingNoteCommandResult> addPickingNote({
+    required String outletId,
+    required String orderId,
+    required String note,
+    required int expectedVersion,
   });
 
   Future<PosFulfillmentCommandResult> pack({
