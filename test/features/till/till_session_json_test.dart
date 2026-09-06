@@ -3,18 +3,18 @@ import 'package:nytroz_pos/features/till/domain/entities/open_till.dart';
 
 void main() {
   group('TillSession.fromJson expectedCash compatibility', () {
-    test('defaults to zero when expectedCash is missing', () {
+    test('leaves expectedCash null when expectedCash is missing', () {
       final session = TillSession.fromJson(_sessionJson());
 
-      expect(session.expectedCash, 0);
+      expect(session.expectedCash, isNull);
     });
 
-    test('defaults to zero when expectedCash is null', () {
+    test('leaves expectedCash null when expectedCash is null', () {
       final session = TillSession.fromJson(
         _sessionJson(expectedCash: null, includeExpectedCash: true),
       );
 
-      expect(session.expectedCash, 0);
+      expect(session.expectedCash, isNull);
     });
 
     test('parses numeric expectedCash', () {

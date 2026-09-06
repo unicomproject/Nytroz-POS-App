@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_cash_drawer_till_visibility.dart';
 
 import '../../../../core/access/pos_permission_access.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
@@ -49,16 +51,16 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
     });
 
     final tillState = ref.watch(tillProvider);
-    final granted = session?.permissionCodes.toSet() ?? const {};
+    final permissions = ref.watch(effectivePermissionSetProvider);
     final drawerState = ref.watch(cashDrawerProvider);
     final hardwareState = ref.watch(hardware.cashDrawerControllerProvider);
     final summary = drawerState.summary;
 
     final canOpenDrawer =
-        PosPermissionAccess.canManageCashDrawerActions(granted);
-    final canCashIn = PosPermissionAccess.canCreateCashDrawerMovement(granted);
-    final canCashOut = PosPermissionAccess.canCreateCashDrawerMovement(granted);
-    final canCloseTill = PosPermissionAccess.canCloseTill(granted);
+        PosCashDrawerTillVisibility.canPhysicalOpenDrawer(permissions);
+    final canCashIn = PosCashDrawerTillVisibility.canCashIn(permissions);
+    final canCashDrop = PosCashDrawerTillVisibility.canCashDrop(permissions);
+    final canCloseTill = PosCashDrawerTillVisibility.canCloseTill(permissions);
     final actionsEnabled =
         tillState.hasOpenSession && (summary?.isOpen ?? false);
 
@@ -99,7 +101,7 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
                       wide: wide,
                       canOpenDrawer: canOpenDrawer,
                       canCashIn: canCashIn,
-                      canCashOut: canCashOut,
+                      canCashDrop: canCashDrop,
                       canCloseTill: canCloseTill,
                       actionsEnabled: actionsEnabled,
                       openDrawerBusy: hardwareState.isBusy,
@@ -120,7 +122,7 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
     required bool wide,
     required bool canOpenDrawer,
     required bool canCashIn,
-    required bool canCashOut,
+    required bool canCashDrop,
     required bool canCloseTill,
     required bool actionsEnabled,
     required bool openDrawerBusy,
@@ -159,13 +161,13 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
       compact: wide,
       canOpenDrawer: canOpenDrawer,
       canCashIn: canCashIn,
-      canCashOut: canCashOut,
+      canCashDrop: canCashDrop,
       canCloseTill: canCloseTill,
       actionsEnabled: actionsEnabled,
       openDrawerBusy: openDrawerBusy,
       onOpenDrawer: () => _onOpenDrawer(context),
       onCashIn: () => _onCashIn(context),
-      onCashOut: () => _onCashOut(context),
+      onCashDrop: () => _onCashDrop(context),
       onCloseTill: () => _onCloseTill(context),
     );
     final movements = CashDrawerMovementsSection(
@@ -229,9 +231,8 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
   }
 
   Future<void> _onOpenDrawer(BuildContext context) async {
-    if (!PosPermissionAccess.canManageCashDrawerActions(
-      ref.read(authSessionProvider)?.permissionCodes.toSet() ?? const {},
-    )) {
+    final permissions = ref.read(effectivePermissionSetProvider);
+    if (!PosCashDrawerTillVisibility.canPhysicalOpenDrawer(permissions)) {
       PosPermissionAccess.showAccessDeniedSnackBar(
         context,
         'You do not have permission to open the cash drawer.',
@@ -298,14 +299,20 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
   }
 
   Future<String?> _promptManualOpenReason(BuildContext context) async {
-    const reasons = <String>[
-      'Provide change',
-      'Till check',
-      'Cash count',
-      'Manager operation',
-      'Other',
-    ];
-    String selected = reasons.first;
+    final permissions = ref.read(effectivePermissionSetProvider);
+    final allowed = PosCashDrawerTillVisibility.openDrawerReasons
+        .where((r) =>
+            PosCashDrawerTillVisibility.canShowOpenReason(permissions, r.id))
+        .toList(growable: false);
+    if (allowed.isEmpty) {
+      PosPermissionAccess.showAccessDeniedSnackBar(
+        context,
+        'You do not have permission to select an open-drawer reason.',
+      );
+      return null;
+    }
+
+    var selectedId = allowed.first.id;
     final otherController = TextEditingController();
 
     final confirmed = await showDialog<bool>(
@@ -313,25 +320,49 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setLocal) {
+            final live = ref.read(effectivePermissionSetProvider);
+            final liveAllowed = PosCashDrawerTillVisibility.openDrawerReasons
+                .where((r) => PosCashDrawerTillVisibility.canShowOpenReason(
+                      live,
+                      r.id,
+                    ))
+                .toList(growable: false);
+            if (liveAllowed.isEmpty) {
+              return AlertDialog(
+                title: const Text('Open cash drawer'),
+                content: const Text(
+                  'No permitted open-drawer reasons are available.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                ],
+              );
+            }
+            if (!liveAllowed.any((r) => r.id == selectedId)) {
+              selectedId = liveAllowed.first.id;
+            }
+            final canContinue =
+                PosCashDrawerTillVisibility.canPhysicalOpenDrawer(live);
+
             return AlertDialog(
               title: const Text('Open cash drawer'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Column(
-                    children: [
-                      for (final r in reasons)
-                        ListTile(
-                          dense: true,
-                          title: Text(r),
-                          trailing: selected == r
-                              ? const Icon(Icons.check_circle_outline)
-                              : const Icon(Icons.circle_outlined),
-                          onTap: () => setLocal(() => selected = r),
-                        ),
-                    ],
-                  ),
-                  if (selected == 'Other') ...[
+                  for (final r in liveAllowed)
+                    ListTile(
+                      key: ValueKey('open-reason-${r.id}'),
+                      dense: true,
+                      title: Text(r.label),
+                      trailing: selectedId == r.id
+                          ? const Icon(Icons.check_circle_outline)
+                          : const Icon(Icons.circle_outlined),
+                      onTap: () => setLocal(() => selectedId = r.id),
+                    ),
+                  if (selectedId == 'other') ...[
                     const SizedBox(height: 12),
                     TextField(
                       controller: otherController,
@@ -348,16 +379,23 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
                   onPressed: () => Navigator.of(dialogContext).pop(false),
                   child: const Text('Cancel'),
                 ),
-                FilledButton(
-                  onPressed: () {
-                    if (selected == 'Other' &&
-                        otherController.text.trim().isEmpty) {
-                      return;
-                    }
-                    Navigator.of(dialogContext).pop(true);
-                  },
-                  child: const Text('Continue'),
-                ),
+                if (canContinue)
+                  FilledButton(
+                    onPressed: () {
+                      if (selectedId == 'other' &&
+                          otherController.text.trim().isEmpty) {
+                        return;
+                      }
+                      if (!PosCashDrawerTillVisibility.canShowOpenReason(
+                        ref.read(effectivePermissionSetProvider),
+                        selectedId,
+                      )) {
+                        return;
+                      }
+                      Navigator.of(dialogContext).pop(true);
+                    },
+                    child: const Text('Continue'),
+                  ),
               ],
             );
           },
@@ -368,8 +406,18 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
     final otherNote = otherController.text.trim();
     otherController.dispose();
     if (confirmed != true) return null;
-    if (selected == 'Other') return 'Other: $otherNote';
-    return selected;
+    final match = PosCashDrawerTillVisibility.openDrawerReasons
+        .where((r) => r.id == selectedId)
+        .firstOrNull;
+    if (match == null) return null;
+    if (!PosCashDrawerTillVisibility.canShowOpenReason(
+      ref.read(effectivePermissionSetProvider),
+      match.id,
+    )) {
+      return null;
+    }
+    if (match.id == 'other') return 'Other: $otherNote';
+    return match.label;
   }
 
   Future<(String, String)?> _promptManagerApproval(BuildContext context) async {
@@ -428,8 +476,8 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
   }
 
   void _onCashIn(BuildContext context) {
-    if (!PosPermissionAccess.canCreateCashDrawerMovement(
-      ref.read(authSessionProvider)?.permissionCodes.toSet() ?? const {},
+    if (!PosCashDrawerTillVisibility.canCashIn(
+      ref.read(effectivePermissionSetProvider),
     )) {
       PosPermissionAccess.showAccessDeniedSnackBar(
         context,
@@ -440,13 +488,13 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
     context.push('/pos/cash-drawer/cash-in');
   }
 
-  void _onCashOut(BuildContext context) {
-    if (!PosPermissionAccess.canCreateCashDrawerMovement(
-      ref.read(authSessionProvider)?.permissionCodes.toSet() ?? const {},
+  void _onCashDrop(BuildContext context) {
+    if (!PosCashDrawerTillVisibility.canCashDrop(
+      ref.read(effectivePermissionSetProvider),
     )) {
       PosPermissionAccess.showAccessDeniedSnackBar(
         context,
-        'You do not have permission to record cash out.',
+        'You do not have permission to record cash drop.',
       );
       return;
     }
@@ -454,8 +502,8 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
   }
 
   void _onCloseTill(BuildContext context) {
-    if (!PosPermissionAccess.canCloseTill(
-      ref.read(authSessionProvider)?.permissionCodes.toSet() ?? const {},
+    if (!PosCashDrawerTillVisibility.canCloseTill(
+      ref.read(effectivePermissionSetProvider),
     )) {
       PosPermissionAccess.showAccessDeniedSnackBar(
         context,

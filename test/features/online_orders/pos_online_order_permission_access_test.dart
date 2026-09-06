@@ -13,7 +13,10 @@ import 'package:nytroz_pos/features/fulfilment_pickup/domain/entities/pos_online
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/providers/pos_online_orders_provider.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/screens/online_order_detail_screen.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/screens/pos_online_order_picking_screen.dart';
-import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/picking_widgets.dart';
+import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/picking/picking_header.dart';
+import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/picking/picking_item_card.dart';
+import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/picking/picking_items_list.dart';
+import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/picking/picking_order_sidebar.dart';
 
 void main() {
   group('online order permission access', () {
@@ -211,7 +214,7 @@ void main() {
         height: 620,
         child: Column(children: const [
           PickingHeader(order: _picking, onBack: _noop),
-          SizedBox(height: 14),
+          SizedBox(height: 10),
           Expanded(
             child: PickingWorkspace(
               orderId: 'order-1',

@@ -6,7 +6,8 @@ import '../../../auth/presentation/providers/session_provider.dart';
 import '../../domain/entities/pos_online_order.dart';
 import '../providers/pos_online_orders_provider.dart';
 import '../widgets/online_order_ui.dart';
-import '../widgets/picking_widgets.dart';
+import '../widgets/picking/fulfilment_stepper.dart';
+import '../widgets/picking/picking_progress_metrics.dart';
 
 class ReviewPackScreen extends ConsumerStatefulWidget {
   const ReviewPackScreen({required this.order, super.key});

@@ -43,8 +43,18 @@ const _testSession = AuthSession(
   userId: 'user-1',
   userDisplayName: 'Test Cashier',
   permissionCodes: [
+    PosPermissionCodes.shellTopbarBrand,
+    PosPermissionCodes.shellTopbarContainer,
+    PosPermissionCodes.shellTopbarSessionStatus,
+    PosPermissionCodes.shellTopbarOutlet,
+    PosPermissionCodes.shellTopbarTill,
     PosPermissionCodes.viewNotifications,
+    PosPermissionCodes.shellTopbarNotificationBell,
+    PosPermissionCodes.shellTopbarConnectivity,
+    PosPermissionCodes.shellTopbarClock,
     PosPermissionCodes.searchProducts,
+    PosPermissionCodes.catalogSearchBar,
+    PosPermissionCodes.catalogSearchScannerHint,
     PosPermissionCodes.viewTillSession,
   ],
 );

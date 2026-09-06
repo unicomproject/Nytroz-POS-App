@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import '../../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../../domain/entities/pos_cash_payment_observability.dart';
-
-import 'cash_payment_numeric_keypad.dart';
+import '../../../providers/pos_checkout_summary_provider.dart';
+import '../../payment_method/payment_method_style.dart';
 
 class CashPaymentAmountReceivedSection extends StatelessWidget {
   const CashPaymentAmountReceivedSection({
@@ -11,6 +9,10 @@ class CashPaymentAmountReceivedSection extends StatelessWidget {
     required this.cashReceived,
     required this.inputBuffer,
     required this.totalDue,
+    this.currency = 'LKR',
+    this.showAmountView = true,
+    this.showDueAmount = true,
+    this.onClear,
     this.failure,
     this.onDismissFailure,
   });
@@ -18,54 +20,113 @@ class CashPaymentAmountReceivedSection extends StatelessWidget {
   final int cashReceived;
   final String inputBuffer;
   final int totalDue;
+  final String currency;
+  final bool showAmountView;
+  final bool showDueAmount;
+  final VoidCallback? onClear;
   final CashPaymentFailure? failure;
   final VoidCallback? onDismissFailure;
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final currencyLabel = currency.trim().isNotEmpty ? currency.trim() : 'LKR';
+
+    if (!showAmountView && !showDueAmount) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Amount Received',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            if (showAmountView)
+              const Text(
+                'AMOUNT RECEIVED',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF64748B),
+                  fontSize: 12,
+                  letterSpacing: 0.3,
+                ),
+              )
+            else
+              const SizedBox.shrink(),
+            if (showDueAmount)
+              Text.rich(
+                TextSpan(
+                  text: 'Due: ',
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
                     fontWeight: FontWeight.w600,
-                    color: TenantAdminColors.mutedText,
-                    fontSize: 11,
+                    fontSize: 13,
                   ),
-            ),
-            const Spacer(),
-            Icon(
-              Icons.info_outline,
-              size: 12,
-              color: TenantAdminColors.mutedText.withValues(alpha: 0.8),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              'Due: ${formatLkr(totalDue)}',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: TenantAdminColors.mutedText,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
+                  children: [
+                    TextSpan(
+                      text: formatCheckoutMoney(currency, totalDue),
+                      style: TextStyle(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          _formatInputDisplay(inputBuffer, cashReceived),
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: CashPaymentKeypadStyle.digitColor,
-                fontSize: 34,
-                height: 1.05,
-                letterSpacing: -0.5,
+        if (showAmountView) ...[
+        const SizedBox(height: 8),
+        Container(
+          key: const ValueKey('cash-amount-received-field'),
+          height: 64,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: PaymentMethodStyle.border),
+          ),
+          child: Row(
+            children: [
+              Text(
+                currencyLabel,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF64748B),
+                ),
               ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  _formatAmountOnly(inputBuffer, cashReceived),
+                  style: const TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
+                    color: PaymentMethodStyle.navy,
+                    letterSpacing: -0.5,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (onClear != null)
+                IconButton(
+                  key: const ValueKey('cash-amount-reset'),
+                  onPressed: onClear,
+                  tooltip: 'Reset cash amount',
+                  icon: const Icon(
+                    Icons.cancel_outlined,
+                    size: 24,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+            ],
+          ),
         ),
+        ],
         if (failure != null) ...[
           const SizedBox(height: 6),
           _PersistentCashError(
@@ -77,35 +138,10 @@ class CashPaymentAmountReceivedSection extends StatelessWidget {
     );
   }
 
-  String _formatInputDisplay(String buffer, int parsedAmount) {
-    if (buffer.isEmpty) {
-      return formatLkr(0);
-    }
-
-    if (buffer.contains('.')) {
-      final parts = buffer.split('.');
-      final whole = int.tryParse(parts.first) ?? parsedAmount;
-      final fraction = parts.length > 1 ? parts[1] : '';
-      final paddedFraction = '${fraction}00'.substring(0, 2);
-      return 'LKR ${_formatNumber(whole)}.$paddedFraction';
-    }
-
-    return formatLkr(parsedAmount);
-  }
-
-  String _formatNumber(int value) {
-    final raw = value.toString();
-    final buffer = StringBuffer();
-
-    for (var index = 0; index < raw.length; index += 1) {
-      final digitsFromEnd = raw.length - index;
-      buffer.write(raw[index]);
-      if (digitsFromEnd > 1 && digitsFromEnd % 3 == 1) {
-        buffer.write(',');
-      }
-    }
-
-    return buffer.toString();
+  String _formatAmountOnly(String buffer, int parsedAmount) {
+    final formattedWithPrefix =
+        formatCheckoutMoney('', buffer.isEmpty ? 0 : parsedAmount);
+    return formattedWithPrefix.replaceFirst('LKR ', '').trim();
   }
 }
 
@@ -116,80 +152,83 @@ class _PersistentCashError extends StatelessWidget {
   final VoidCallback? onDismiss;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-        liveRegion: true,
-        label:
-            '${failure.unknownOutcome ? 'Payment result could not be confirmed' : 'Payment could not be completed'}. Reference ${failure.correlation}.',
-        child: Container(
-          key: const ValueKey('cash-payment-persistent-error'),
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFEF2F2),
-            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-            border: Border.all(color: const Color(0xFFFCA5A5)),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                color: TenantAdminColors.danger,
-                size: 16,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      failure.unknownOutcome
-                          ? 'Payment result could not be confirmed.'
-                          : 'Payment could not be completed.',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11,
-                      ),
-                    ),
-                    Text(
-                      failure.message,
-                      style: const TextStyle(fontSize: 10),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      'Reference: ${failure.correlation.toUpperCase()}',
-                      style: const TextStyle(fontSize: 10),
-                    ),
-                    if (failure.code != null)
-                      Text(
-                        'Code: ${failure.code}',
-                        style: const TextStyle(fontSize: 10),
-                      ),
-                    Text(
-                      failure.unknownOutcome
-                          ? 'Do not retry until the transaction status has been checked.'
-                          : 'Check the details or contact support before retrying.',
-                      style: const TextStyle(fontSize: 10),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              if (onDismiss != null)
-                IconButton(
-                  tooltip: 'Dismiss payment error',
-                  onPressed: onDismiss,
-                  iconSize: 16,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 24,
-                    minHeight: 24,
-                  ),
-                  icon: const Icon(Icons.close),
-                ),
-            ],
-          ),
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Semantics(
+      liveRegion: true,
+      label:
+          '${failure.unknownOutcome ? 'Payment result could not be confirmed' : 'Payment could not be completed'}. Reference ${failure.correlation}.',
+      child: Container(
+        key: const ValueKey('cash-payment-persistent-error'),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: colors.errorContainer,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: colors.error.withValues(alpha: 0.4)),
         ),
-      );
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.error_outline,
+              color: colors.error,
+              size: 16,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    failure.unknownOutcome
+                        ? 'Payment result could not be confirmed.'
+                        : 'Payment could not be completed.',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
+                  ),
+                  Text(
+                    failure.message,
+                    style: const TextStyle(fontSize: 10),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    'Reference: ${failure.correlation.toUpperCase()}',
+                    style: const TextStyle(fontSize: 10),
+                  ),
+                  if (failure.code != null)
+                    Text(
+                      'Code: ${failure.code}',
+                      style: const TextStyle(fontSize: 10),
+                    ),
+                  Text(
+                    failure.unknownOutcome
+                        ? 'Do not retry until the transaction status has been checked.'
+                        : 'Check the details or contact support before retrying.',
+                    style: const TextStyle(fontSize: 10),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            if (onDismiss != null)
+              IconButton(
+                tooltip: 'Dismiss payment error',
+                onPressed: onDismiss,
+                iconSize: 16,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 24,
+                  minHeight: 24,
+                ),
+                icon: const Icon(Icons.close),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

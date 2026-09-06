@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_sales_permission_visibility.dart';
 
 import '../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../../cart/presentation/providers/pos_parked_sale_provider.dart';
@@ -13,6 +15,11 @@ Future<void> showPosParkSaleDialog({
   required WidgetRef ref,
   required PosNewSaleCartState cart,
 }) {
+  final permissions = ref.read(effectivePermissionSetProvider);
+  if (!PosSalesPermissionVisibility.canShowParkPopup(permissions) ||
+      !PosSalesPermissionVisibility.canConfirmPark(permissions)) {
+    return Future.value();
+  }
   return showAppDialog<void>(
     context: context,
     barrierDismissible: false,
@@ -51,7 +58,6 @@ class _PosParkSaleDialogState extends ConsumerState<_PosParkSaleDialog> {
   Widget build(BuildContext context) {
     final operation = ref.watch(posParkedSaleOperationProvider);
     final submitting = operation == PosParkedSaleOperation.creating;
-    final success = _successfulSale;
 
     return PopScope(
       canPop: !submitting,
@@ -66,9 +72,7 @@ class _PosParkSaleDialogState extends ConsumerState<_PosParkSaleDialog> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 640, maxHeight: 600),
           child: SafeArea(
-            child: success == null
-                ? _buildForm(context, submitting)
-                : _buildSuccess(context, success),
+            child: _buildForm(context, submitting),
           ),
         ),
       ),
@@ -76,6 +80,15 @@ class _PosParkSaleDialogState extends ConsumerState<_PosParkSaleDialog> {
   }
 
   Widget _buildForm(BuildContext context, bool submitting) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    final showReference =
+        PosSalesPermissionVisibility.canShowParkReference(permissions);
+    final showNote = PosSalesPermissionVisibility.canShowParkNote(permissions);
+    final showExpiry =
+        PosSalesPermissionVisibility.canShowParkExpiry(permissions);
+    final canConfirm =
+        PosSalesPermissionVisibility.canConfirmPark(permissions);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -98,53 +111,57 @@ class _PosParkSaleDialogState extends ConsumerState<_PosParkSaleDialog> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const _ParkReferenceCard(),
-                  const SizedBox(height: TenantAdminSpacing.xl),
-                  Text(
-                    'Short Note (Optional)',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: TenantAdminColors.bodyText,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.sm),
-                  TextFormField(
-                    key: const Key('park-sale-note'),
-                    controller: _noteController,
-                    focusNode: _noteFocus,
-                    autofocus: true,
-                    enabled: !submitting,
-                    maxLength: 250,
-                    maxLengthEnforcement: MaxLengthEnforcement.none,
-                    maxLines: 2,
-                    minLines: 1,
-                    textInputAction: TextInputAction.done,
-                    decoration: InputDecoration(
-                      hintText: 'Customer will return shortly',
-                      counterText: '',
-                      filled: true,
-                      fillColor: TenantAdminColors.surface,
-                      border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(TenantAdminRadius.sm),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(TenantAdminRadius.sm),
-                        borderSide: const BorderSide(
-                          color: TenantAdminColors.border,
-                        ),
-                      ),
+                  if (showReference) ...[
+                    const _ParkReferenceCard(),
+                    const SizedBox(height: TenantAdminSpacing.xl),
+                  ],
+                  if (showNote) ...[
+                    Text(
+                      'Short Note (Optional)',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: TenantAdminColors.bodyText,
+                            fontWeight: FontWeight.w700,
+                          ),
                     ),
-                    validator: (value) => (value?.trim().length ?? 0) > 250
-                        ? 'Short note must be 250 characters or fewer.'
-                        : null,
-                    onFieldSubmitted: (_) {
-                      if (!submitting) _submit();
-                    },
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.xl),
-                  const _ExpiryInformation(),
+                    const SizedBox(height: TenantAdminSpacing.sm),
+                    TextFormField(
+                      key: const Key('park-sale-note'),
+                      controller: _noteController,
+                      focusNode: _noteFocus,
+                      autofocus: true,
+                      enabled: !submitting,
+                      maxLength: 250,
+                      maxLengthEnforcement: MaxLengthEnforcement.none,
+                      maxLines: 2,
+                      minLines: 1,
+                      textInputAction: TextInputAction.done,
+                      decoration: InputDecoration(
+                        hintText: 'Customer will return shortly',
+                        counterText: '',
+                        filled: true,
+                        fillColor: TenantAdminColors.surface,
+                        border: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(TenantAdminRadius.sm),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(TenantAdminRadius.sm),
+                          borderSide: const BorderSide(
+                            color: TenantAdminColors.border,
+                          ),
+                        ),
+                      ),
+                      validator: (value) => (value?.trim().length ?? 0) > 250
+                          ? 'Short note must be 250 characters or fewer.'
+                          : null,
+                      onFieldSubmitted: (_) {
+                        if (!submitting && canConfirm) _submit();
+                      },
+                    ),
+                    const SizedBox(height: TenantAdminSpacing.xl),
+                  ],
+                  if (showExpiry) const _ExpiryInformation(),
                   if (_errorMessage != null) ...[
                     const SizedBox(height: TenantAdminSpacing.md),
                     _ParkErrorMessage(message: _errorMessage!),
@@ -157,7 +174,7 @@ class _PosParkSaleDialogState extends ConsumerState<_PosParkSaleDialog> {
         _ParkDialogFooter(
           submitting: submitting,
           onCancel: () => Navigator.of(context).pop(),
-          onSubmit: _submit,
+          onSubmit: canConfirm ? _submit : null,
         ),
       ],
     );
@@ -233,6 +250,10 @@ class _PosParkSaleDialogState extends ConsumerState<_PosParkSaleDialog> {
 
   Future<void> _submit() async {
     FocusManager.instance.primaryFocus?.unfocus();
+    final permissions = ref.read(effectivePermissionSetProvider);
+    if (!PosSalesPermissionVisibility.canConfirmPark(permissions)) {
+      return;
+    }
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (ref.read(posParkedSaleOperationProvider) ==
         PosParkedSaleOperation.creating) {
@@ -250,7 +271,7 @@ class _PosParkSaleDialogState extends ConsumerState<_PosParkSaleDialog> {
               );
       if (!mounted || sale == null) return;
       _noteController.clear();
-      setState(() => _successfulSale = sale);
+      Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) return;
       setState(() => _errorMessage = _safeParkError(error));
@@ -434,7 +455,8 @@ class _ParkDialogFooter extends StatelessWidget {
       required this.onCancel,
       required this.onSubmit});
   final bool submitting;
-  final VoidCallback onCancel, onSubmit;
+  final VoidCallback onCancel;
+  final VoidCallback? onSubmit;
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -469,39 +491,41 @@ class _ParkDialogFooter extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: TenantAdminSpacing.md),
-          SizedBox(
-            width: 220,
-            child: FilledButton.icon(
-              key: const Key('park-sale-submit'),
-              onPressed: submitting ? null : onSubmit,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(
-                  PosPrimaryActionTokens.compactHeight,
+          if (onSubmit != null) ...[
+            const SizedBox(width: TenantAdminSpacing.md),
+            SizedBox(
+              width: 220,
+              child: FilledButton.icon(
+                key: const Key('park-sale-submit'),
+                onPressed: submitting ? null : onSubmit,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(
+                    PosPrimaryActionTokens.compactHeight,
+                  ),
+                  backgroundColor: TenantAdminColors.posNewSaleAccent,
+                  foregroundColor: TenantAdminColors.surface,
+                  disabledBackgroundColor: TenantAdminColors.border,
+                  disabledForegroundColor: TenantAdminColors.mutedText,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                  ),
                 ),
-                backgroundColor: TenantAdminColors.posNewSaleAccent,
-                foregroundColor: TenantAdminColors.surface,
-                disabledBackgroundColor: TenantAdminColors.border,
-                disabledForegroundColor: TenantAdminColors.mutedText,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                icon: submitting
+                    ? const SizedBox.square(
+                        dimension: PosPrimaryActionTokens.iconSize,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: TenantAdminColors.surface,
+                        ),
+                      )
+                    : const Icon(Icons.pause_circle_outline_rounded),
+                label: Text(
+                  submitting ? 'Parking sale' : 'Park Sale',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
-              ),
-              icon: submitting
-                  ? const SizedBox.square(
-                      dimension: PosPrimaryActionTokens.iconSize,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: TenantAdminColors.surface,
-                      ),
-                    )
-                  : const Icon(Icons.pause_circle_outline_rounded),
-              label: Text(
-                submitting ? 'Parking sale' : 'Park Sale',
-                style: const TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

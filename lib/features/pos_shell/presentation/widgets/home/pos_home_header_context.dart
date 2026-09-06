@@ -1,39 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/access/permission_access_providers.dart';
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../application/state/pos_home_dashboard_state.dart';
+import '../common/pos_notifications_dialog.dart';
+import '../common/pos_shell_top_bar_visibility.dart';
 import 'pos_home_date_time_chip.dart';
 import 'pos_home_notification_button.dart';
 import 'pos_status_chip.dart';
 
-class PosHomeHeaderContext extends StatelessWidget {
+class PosHomeHeaderContext extends ConsumerWidget {
   const PosHomeHeaderContext({
     super.key,
     required this.now,
     required this.dashboard,
-    required this.showNotification,
     required this.showTillStatus,
     required this.notificationCount,
   });
 
   final DateTime now;
   final PosHomeDashboardState dashboard;
-  final bool showNotification;
   final bool showTillStatus;
   final int notificationCount;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    final showBell =
+        PosShellTopBarVisibility.canShowNotificationBell(permissions);
+    final canOpenPanel =
+        PosShellTopBarVisibility.canShowNotificationPanel(permissions);
+    final canShowUnread =
+        PosShellTopBarVisibility.canShowUnreadCount(permissions);
+
     return Wrap(
       spacing: TenantAdminSpacing.sm,
       runSpacing: TenantAdminSpacing.sm,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        if (showNotification)
+        if (showBell)
           PosHomeNotificationButton(
-            // Presentation-only until a notification module exists.
-            onPressed: () {},
-            notificationCount: notificationCount,
+            onPressed: canOpenPanel
+                ? () => showPosNotificationsDialog(context)
+                : null,
+            notificationCount: canShowUnread ? notificationCount : 0,
+            showUnreadBadge: canShowUnread,
           ),
         if (showTillStatus && shouldShowTillChip(dashboard))
           PosStatusChip(

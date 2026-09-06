@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_cash_drawer_till_visibility.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/cash_movement.dart';
 import '../providers/cash_drawer_provider.dart';
 
-class CashDrawerMovementsSection extends StatelessWidget {
+class CashDrawerMovementsSection extends ConsumerWidget {
   const CashDrawerMovementsSection({
     super.key,
     required this.movements,
@@ -19,7 +22,12 @@ class CashDrawerMovementsSection extends StatelessWidget {
   final int maxVisible;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = ref.watch(effectivePermissionSetProvider);
+    if (!PosCashDrawerTillVisibility.canShowMovementsList(p)) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -110,7 +118,7 @@ class _EmptyMovementsState extends StatelessWidget {
   }
 }
 
-class _MovementsTable extends StatelessWidget {
+class _MovementsTable extends ConsumerWidget {
   const _MovementsTable({
     required this.movements,
     required this.currencyCode,
@@ -122,23 +130,41 @@ class _MovementsTable extends StatelessWidget {
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = ref.watch(effectivePermissionSetProvider);
+    final showType = PosCashDrawerTillVisibility.canShowMovementType(p);
+    final showAmount = PosCashDrawerTillVisibility.canShowMovementAmount(p);
+    final showDate = PosCashDrawerTillVisibility.canShowMovementDate(p) ||
+        PosCashDrawerTillVisibility.canShowMovementTime(p);
+    final showCashier = PosCashDrawerTillVisibility.canShowMovementCashier(p);
+
+    final headers = <Widget>[
+      if (showType) const Expanded(flex: 2, child: _TableHeaderCell('Type')),
+      if (showAmount)
+        const Expanded(flex: 2, child: _TableHeaderCell('Amount')),
+      if (showDate)
+        const Expanded(flex: 2, child: _TableHeaderCell('Date & Time')),
+      if (showCashier)
+        const Expanded(flex: 2, child: _TableHeaderCell('User')),
+    ];
+
+    if (headers.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       children: [
-        const Row(
-          children: [
-            Expanded(flex: 2, child: _TableHeaderCell('Type')),
-            Expanded(flex: 2, child: _TableHeaderCell('Amount')),
-            Expanded(flex: 2, child: _TableHeaderCell('Date & Time')),
-            Expanded(flex: 2, child: _TableHeaderCell('User')),
-          ],
-        ),
+        Row(children: headers),
         const Divider(height: 1, color: TenantAdminColors.border),
         for (final movement in movements) ...[
           _MovementRow(
             movement: movement,
             currencyCode: currencyCode,
             compact: compact,
+            showType: showType,
+            showAmount: showAmount,
+            showDate: showDate,
+            showCashier: showCashier,
           ),
           const Divider(height: 1, color: TenantAdminColors.border),
         ],
@@ -152,11 +178,19 @@ class _MovementRow extends StatelessWidget {
     required this.movement,
     required this.currencyCode,
     required this.compact,
+    required this.showType,
+    required this.showAmount,
+    required this.showDate,
+    required this.showCashier,
   });
 
   final CashMovement movement;
   final String currencyCode;
   final bool compact;
+  final bool showType;
+  final bool showAmount;
+  final bool showDate;
+  final bool showCashier;
 
   @override
   Widget build(BuildContext context) {
@@ -166,73 +200,77 @@ class _MovementRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(
-            flex: 2,
-            child: Row(
-              children: [
-                Icon(
-                  _movementIcon(movement.type),
-                  size: 20,
-                  color: _amountColor(movement.type),
-                ),
-                const SizedBox(width: TenantAdminSpacing.sm),
-                Flexible(
-                  child: Text(
-                    movement.type.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: TenantAdminColors.bodyText,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              _formatSignedAmount(movement, currencyCode),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          if (showType)
+            Expanded(
+              flex: 2,
+              child: Row(
+                children: [
+                  Icon(
+                    _movementIcon(movement.type),
+                    size: 20,
                     color: _amountColor(movement.type),
-                    fontWeight: FontWeight.w800,
                   ),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              formatCashDrawerDateTime(movement.dateTime),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: TenantAdminColors.bodyText,
-                    fontWeight: FontWeight.w600,
+                  const SizedBox(width: TenantAdminSpacing.sm),
+                  Flexible(
+                    child: Text(
+                      movement.type.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: TenantAdminColors.bodyText,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
                   ),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              movement.userName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: TenantAdminColors.bodyText,
-                    fontWeight: FontWeight.w600,
-                  ),
+          if (showAmount)
+            Expanded(
+              flex: 2,
+              child: Text(
+                _formatSignedAmount(movement, currencyCode),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: _amountColor(movement.type),
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
             ),
-          ),
+          if (showDate)
+            Expanded(
+              flex: 2,
+              child: Text(
+                formatCashDrawerDateTime(movement.dateTime),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: TenantAdminColors.bodyText,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
+          if (showCashier)
+            Expanded(
+              flex: 2,
+              child: Text(
+                movement.userName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: TenantAdminColors.bodyText,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
         ],
       ),
     );
   }
 }
 
-class _MovementListCard extends StatelessWidget {
+class _MovementListCard extends ConsumerWidget {
   const _MovementListCard({
     required this.movement,
     required this.currencyCode,
@@ -242,7 +280,19 @@ class _MovementListCard extends StatelessWidget {
   final String currencyCode;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = ref.watch(effectivePermissionSetProvider);
+    final showType = PosCashDrawerTillVisibility.canShowMovementType(p);
+    final showAmount = PosCashDrawerTillVisibility.canShowMovementAmount(p);
+    final showDate = PosCashDrawerTillVisibility.canShowMovementDate(p) ||
+        PosCashDrawerTillVisibility.canShowMovementTime(p);
+    final showCashier = PosCashDrawerTillVisibility.canShowMovementCashier(p);
+
+    final metaParts = <String>[
+      if (showDate) formatCashDrawerDateTime(movement.dateTime),
+      if (showCashier) movement.userName,
+    ];
+
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 72),
@@ -254,55 +304,62 @@ class _MovementListCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: _amountColor(movement.type).withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+          if (showType) ...[
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: _amountColor(movement.type).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+              ),
+              child: Icon(
+                _movementIcon(movement.type),
+                color: _amountColor(movement.type),
+              ),
             ),
-            child: Icon(
-              _movementIcon(movement.type),
-              color: _amountColor(movement.type),
-            ),
-          ),
-          const SizedBox(width: TenantAdminSpacing.md),
+            const SizedBox(width: TenantAdminSpacing.md),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  movement.type.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: TenantAdminColors.bodyText,
-                      ),
-                ),
-                const SizedBox(height: TenantAdminSpacing.xs),
-                Text(
-                  '${formatCashDrawerDateTime(movement.dateTime)} · ${movement.userName}',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TenantAdminTextStyles.muted(context),
-                ),
+                if (showType)
+                  Text(
+                    movement.type.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: TenantAdminColors.bodyText,
+                        ),
+                  ),
+                if (metaParts.isNotEmpty) ...[
+                  const SizedBox(height: TenantAdminSpacing.xs),
+                  Text(
+                    metaParts.join(' · '),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TenantAdminTextStyles.muted(context),
+                  ),
+                ],
               ],
             ),
           ),
-          const SizedBox(width: TenantAdminSpacing.sm),
-          Flexible(
-            child: Text(
-              _formatSignedAmount(movement, currencyCode),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.right,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: _amountColor(movement.type),
-                    fontWeight: FontWeight.w900,
-                  ),
+          if (showAmount) ...[
+            const SizedBox(width: TenantAdminSpacing.sm),
+            Flexible(
+              child: Text(
+                _formatSignedAmount(movement, currencyCode),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.right,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: _amountColor(movement.type),
+                      fontWeight: FontWeight.w900,
+                    ),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

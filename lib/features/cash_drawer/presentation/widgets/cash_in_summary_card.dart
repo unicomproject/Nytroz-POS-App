@@ -16,7 +16,7 @@ class CashInSummaryCard extends ConsumerWidget {
     this.tight = false,
   });
 
-  final double currentExpectedCash;
+  final double? currentExpectedCash;
   final String currencyCode;
   final bool expand;
   final bool compact;

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nytroz_pos/core/access/effective_permission_set.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/core/network/dio_provider.dart';
 import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
 import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.dart';
@@ -22,6 +25,36 @@ import 'package:nytroz_pos/features/till/presentation/providers/till_provider.da
 import 'package:nytroz_pos/features/till/presentation/screens/till_open_screen.dart';
 import 'package:nytroz_pos/features/till/presentation/widgets/open_till_form.dart'
     as till_widget;
+
+/// Full Open Till UI grant for fixture tests (Chunk 14 fine-grained keys).
+final _fullOpenTillPermissions = EffectivePermissionSet.fromIterable([
+  PosPermissionCodes.tillSessionOpen,
+  PosPermissionCodes.tillOpeningStartingCashView,
+  PosPermissionCodes.tillOpeningStartingCashEntry,
+  PosPermissionCodes.tillOpeningValidationMessage,
+  PosPermissionCodes.tillOpeningNoteView,
+  PosPermissionCodes.tillOpeningNoteEntry,
+  PosPermissionCodes.tillOpeningQuickAmounts,
+  PosPermissionCodes.tillOpeningQuickSlot1,
+  PosPermissionCodes.tillOpeningQuickSlot2,
+  PosPermissionCodes.tillOpeningQuickSlot3,
+  PosPermissionCodes.tillOpeningNumpad,
+  PosPermissionCodes.tillOpeningBackspace,
+  PosPermissionCodes.tillOpeningClear,
+  PosPermissionCodes.tillOpeningConfirmMessage,
+  PosPermissionCodes.tillOpeningKey0,
+  PosPermissionCodes.tillOpeningKey1,
+  PosPermissionCodes.tillOpeningKey2,
+  PosPermissionCodes.tillOpeningKey3,
+  PosPermissionCodes.tillOpeningKey4,
+  PosPermissionCodes.tillOpeningKey5,
+  PosPermissionCodes.tillOpeningKey6,
+  PosPermissionCodes.tillOpeningKey7,
+  PosPermissionCodes.tillOpeningKey8,
+  PosPermissionCodes.tillOpeningKey9,
+  PosPermissionCodes.tillOpeningKey00,
+  PosPermissionCodes.tillOpeningKeyDecimal,
+]);
 
 void main() {
   group('TillOpenScreen', () {
@@ -133,6 +166,9 @@ Future<void> _pumpTillOpenScreen(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        effectivePermissionSetProvider.overrideWithValue(
+          _fullOpenTillPermissions,
+        ),
         appDioProvider.overrideWithValue(
           Dio(BaseOptions(baseUrl: 'https://test.local')),
         ),
@@ -285,6 +321,34 @@ const _cashierSession = AuthSession(
   accessToken: 'test-token',
   userId: 'cashier-1',
   userDisplayName: 'CASHIER001@GMAIL.COM',
+  permissionCodes: [
+    PosPermissionCodes.tillSessionOpen,
+    PosPermissionCodes.tillOpeningStartingCashView,
+    PosPermissionCodes.tillOpeningStartingCashEntry,
+    PosPermissionCodes.tillOpeningValidationMessage,
+    PosPermissionCodes.tillOpeningNoteView,
+    PosPermissionCodes.tillOpeningNoteEntry,
+    PosPermissionCodes.tillOpeningQuickAmounts,
+    PosPermissionCodes.tillOpeningQuickSlot1,
+    PosPermissionCodes.tillOpeningQuickSlot2,
+    PosPermissionCodes.tillOpeningQuickSlot3,
+    PosPermissionCodes.tillOpeningNumpad,
+    PosPermissionCodes.tillOpeningBackspace,
+    PosPermissionCodes.tillOpeningClear,
+    PosPermissionCodes.tillOpeningConfirmMessage,
+    PosPermissionCodes.tillOpeningKey0,
+    PosPermissionCodes.tillOpeningKey1,
+    PosPermissionCodes.tillOpeningKey2,
+    PosPermissionCodes.tillOpeningKey3,
+    PosPermissionCodes.tillOpeningKey4,
+    PosPermissionCodes.tillOpeningKey5,
+    PosPermissionCodes.tillOpeningKey6,
+    PosPermissionCodes.tillOpeningKey7,
+    PosPermissionCodes.tillOpeningKey8,
+    PosPermissionCodes.tillOpeningKey9,
+    PosPermissionCodes.tillOpeningKey00,
+    PosPermissionCodes.tillOpeningKeyDecimal,
+  ],
 );
 
 final _trustedDevice = PosDeviceContext(

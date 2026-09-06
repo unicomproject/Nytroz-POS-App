@@ -382,7 +382,9 @@ ProviderContainer _createContainer({
   bool canStartSale = true,
   bool canEditCustomer = false,
   bool canCreateCustomer = true,
+  bool canAttachCustomer = true,
 }) {
+  // Chunk 14: list/detail field codes are exact-membership (not inferred from view).
   final permissions = <String>[
     PosPermissionCodes.viewNewSaleCustomers,
     if (canCreateCustomer) PosPermissionCodes.createNewSaleCustomer,
@@ -390,6 +392,26 @@ ProviderContainer _createContainer({
     if (canStartSale) PosPermissionCodes.viewNewSale,
     if (canStartSale) PosPermissionCodes.createSale,
     if (canEditCustomer) PosPermissionCodes.updateNewSaleCustomer,
+    // List / toolbar visibility
+    PosPermissionCodes.customersListSearch,
+    PosPermissionCodes.customersListFilters,
+    PosPermissionCodes.customersListId,
+    PosPermissionCodes.customersListName,
+    PosPermissionCodes.customersListPhone,
+    PosPermissionCodes.customersListEmail,
+    PosPermissionCodes.customersListSource,
+    PosPermissionCodes.customersListStatus,
+    PosPermissionCodes.customersListOrderCount,
+    PosPermissionCodes.customersListTotalSpend,
+    PosPermissionCodes.customersListPagination,
+    // Details / history actions
+    PosPermissionCodes.customersDetailsJoinedDate,
+    PosPermissionCodes.customersDetailsAverageOrderValue,
+    PosPermissionCodes.customersHistoryRecentPurchases,
+    PosPermissionCodes.customersHistoryPurchaseAmounts,
+    PosPermissionCodes.customersHistoryPurchaseHistory,
+    // Attach: grant so button is present; till-closed tests keep it disabled.
+    if (canAttachCustomer) PosPermissionCodes.customersAttachSale,
   ];
 
   final session = AuthSession(

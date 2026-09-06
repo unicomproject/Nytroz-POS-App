@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
+import 'package:nytroz_pos/core/access/effective_permission_set.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/core/utils/timezone_resolver.dart';
 import 'package:nytroz_pos/features/pos_shell/application/state/pos_home_dashboard_state.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/pos_home_header.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/pos_status_chip.dart';
+
+/// Shell header chrome used by fixture tests (Chunk 14 exact membership).
+final _fullHeaderPermissions = EffectivePermissionSet.fromIterable({
+  PosPermissionCodes.shellTopbarNotificationBell,
+  PosPermissionCodes.notificationsPanelView,
+  PosPermissionCodes.notificationsPanelUnreadCount,
+  PosPermissionCodes.viewTillSession,
+});
 
 void main() {
   setUpAll(() {
@@ -20,7 +31,6 @@ void main() {
     String tillDisplayLabel = 'Main Till 01 / Open',
     bool isTillOpen = true,
     int notificationCount = 5,
-    Set<String>? permissions,
     DateTime? serverNowUtc,
     DateTime? serverTimeReceivedAt,
     String? outletTimezone,
@@ -34,14 +44,30 @@ void main() {
       tillDisplayLabel: tillDisplayLabel,
       isTillOpen: isTillOpen,
       notificationCount: notificationCount,
-      grantedPermissionKeys: permissions ??
-          {
-            PosPermissionCodes.viewNotifications,
-            PosPermissionCodes.viewTillSession,
-          },
       serverNowUtc: serverNowUtc,
       serverTimeReceivedAt: serverTimeReceivedAt,
       outletTimezone: outletTimezone,
+    );
+  }
+
+  Future<void> pumpHeader(
+    WidgetTester tester, {
+    required PosHomeDashboardState state,
+    EffectivePermissionSet? permissions,
+  }) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          effectivePermissionSetProvider.overrideWithValue(
+            permissions ?? _fullHeaderPermissions,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: PosHomeHeader(dashboard: state),
+          ),
+        ),
+      ),
     );
   }
 
@@ -52,13 +78,7 @@ void main() {
         statusMessage: 'Ready for sales',
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PosHomeHeader(dashboard: state),
-          ),
-        ),
-      );
+      await pumpHeader(tester, state: state);
 
       expect(find.text('Hello, Alice 👋'), findsOneWidget);
       expect(find.text('Ready for sales'), findsOneWidget);
@@ -69,82 +89,60 @@ void main() {
         (tester) async {
       // Test count <= 99
       final state5 = createTestState(notificationCount: 5);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PosHomeHeader(dashboard: state5),
-          ),
-        ),
-      );
+      await pumpHeader(tester, state: state5);
       expect(find.text('5'), findsOneWidget);
 
       // Test count > 99 -> displays 99+
       final state120 = createTestState(notificationCount: 120);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PosHomeHeader(dashboard: state120),
-          ),
-        ),
-      );
+      await pumpHeader(tester, state: state120);
       expect(find.text('99+'), findsOneWidget);
     });
 
     testWidgets(
-        'hides notification button when viewNotifications permission is missing',
+        'hides notification button when notification bell permission is missing',
         (tester) async {
-      final stateWithoutNotifs = createTestState(
-        permissions: {PosPermissionCodes.viewTillSession},
-      );
+      final stateWithoutNotifs = createTestState();
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PosHomeHeader(dashboard: stateWithoutNotifs),
-          ),
-        ),
+      await pumpHeader(
+        tester,
+        state: stateWithoutNotifs,
+        permissions: EffectivePermissionSet.fromIterable({
+          PosPermissionCodes.viewTillSession,
+        }),
       );
 
       expect(find.byIcon(Icons.notifications_none_rounded), findsNothing);
     });
 
     testWidgets(
-        'shows till status chip when viewTillSession permission is granted and till is open',
+        'shows till status chip when till is open',
         (tester) async {
       final state = createTestState(
         tillDisplayLabel: 'Main Till 01 / Open',
         isTillOpen: true,
-        permissions: {
-          PosPermissionCodes.viewNotifications,
-          PosPermissionCodes.viewTillSession,
-        },
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PosHomeHeader(dashboard: state),
-          ),
-        ),
-      );
+      await pumpHeader(tester, state: state);
 
       expect(find.byType(PosStatusChip), findsOneWidget);
       expect(find.text('Main Till 01 / Open'), findsOneWidget);
     });
 
     testWidgets(
-        'hides till status chip when viewTillSession permission is missing',
+        'hides till status chip when till context is absent',
         (tester) async {
       final state = createTestState(
-        permissions: {PosPermissionCodes.viewNotifications},
+        isTillOpen: false,
+        tillDisplayLabel: '',
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PosHomeHeader(dashboard: state),
-          ),
-        ),
+      await pumpHeader(
+        tester,
+        state: state,
+        permissions: EffectivePermissionSet.fromIterable({
+          PosPermissionCodes.shellTopbarNotificationBell,
+          PosPermissionCodes.notificationsPanelUnreadCount,
+        }),
       );
 
       expect(find.byType(PosStatusChip), findsNothing);
@@ -162,13 +160,7 @@ void main() {
         outletTimezone: 'Asia/Colombo', // +05:30 -> 10:50 AM
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PosHomeHeader(dashboard: stateColombo),
-          ),
-        ),
-      );
+      await pumpHeader(tester, state: stateColombo);
 
       final expectedDate =
           DateFormat('EEE, MMM d').format(DateTime(2026, 8, 8));
@@ -186,13 +178,7 @@ void main() {
 
       final state = createTestState();
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PosHomeHeader(dashboard: state),
-          ),
-        ),
-      );
+      await pumpHeader(tester, state: state);
 
       expect(find.byType(PosHomeHeader), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -208,13 +194,7 @@ void main() {
 
       final state = createTestState();
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PosHomeHeader(dashboard: state),
-          ),
-        ),
-      );
+      await pumpHeader(tester, state: state);
 
       expect(find.byType(PosHomeHeader), findsOneWidget);
       expect(tester.takeException(), isNull);

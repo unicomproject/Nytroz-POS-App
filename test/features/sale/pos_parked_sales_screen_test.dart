@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/core/access/effective_permission_set.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/cart/data/models/pos_parked_sale_dtos.dart';
 import 'package:nytroz_pos/features/cart/domain/repositories/pos_parked_sale_repository.dart';
@@ -9,6 +11,29 @@ import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_car
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_parked_sale_provider.dart';
 import 'package:nytroz_pos/features/sale/domain/entities/pos_checkout_summary.dart';
 import 'package:nytroz_pos/features/sale/presentation/screens/pos_parked_sales_screen.dart';
+
+/// Held-sales view/recall/cancel + list/summary children (Chunk 14).
+const _heldSalesFixturePermissions = {
+  PosPermissionCodes.heldSalesView,
+  PosPermissionCodes.viewBackendParkedSales,
+  PosPermissionCodes.heldSalesRecall,
+  PosPermissionCodes.recallBackendParkedSale,
+  PosPermissionCodes.heldSalesCancel,
+  PosPermissionCodes.heldSalesCreate,
+  PosPermissionCodes.createParkedSale,
+  PosPermissionCodes.heldSalesListActiveCount,
+  PosPermissionCodes.heldSalesListCustomer,
+  PosPermissionCodes.heldSalesListValue,
+  PosPermissionCodes.heldSalesListItemCount,
+  PosPermissionCodes.heldSalesListParkedTime,
+  PosPermissionCodes.heldSalesListExpiryTime,
+  PosPermissionCodes.heldSalesListItems,
+  PosPermissionCodes.heldSalesListSummary,
+  PosPermissionCodes.heldSalesListFilters,
+  PosPermissionCodes.heldSalesListPagination,
+  // Summary panel "Start New Sale" uses canAccessNewSale (exact create).
+  PosPermissionCodes.createSale,
+};
 
 void main() {
   testWidgets('loading state shows a progress indicator', (tester) async {
@@ -99,18 +124,57 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('recall-hold-1')));
     await tester.pumpAndSettle();
-    expect(find.text('Recall Sale'), findsWidgets);
 
-    await tester.tap(find.byKey(const ValueKey('recall-sale-confirm')));
+    expect(repo.recalled, ['hold-1']);
+    expect(find.text('New Sale Stub'), findsOneWidget);
+    expect(find.byType(PosParkedSalesScreen), findsNothing);
+    expect(find.text('Parked Sales'), findsNothing);
+    expect(
+      harness.container.read(posNewSaleCartProvider).itemList.single.quantity,
+      2,
+    );
+    expect(harness.router.routerDelegate.currentConfiguration.uri.toString(),
+        '/pos/new-sale');
+  });
+
+  testWidgets('failed recall stays on Parked Sales without changing cart',
+      (tester) async {
+    final repo = _Repo(holds: [_hold], failRecalls: 1);
+    final harness = await _pump(tester, repo: repo);
+    addTearDown(harness.dispose);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('recall-hold-1')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PosParkedSalesScreen), findsOneWidget);
+    expect(find.text('New Sale Stub'), findsNothing);
+    expect(harness.container.read(posNewSaleCartProvider).hasItems, isFalse);
+    expect(repo.recalled, isEmpty);
+    expect(harness.router.routerDelegate.currentConfiguration.uri.toString(),
+        '/pos/parked-sales');
+  });
+
+  testWidgets('rapid double Recall tap issues one recall and one New Sale go',
+      (tester) async {
+    final repo = _Repo(
+      holds: [_hold],
+      recallDelay: const Duration(milliseconds: 80),
+    );
+    final harness = await _pump(tester, repo: repo);
+    addTearDown(harness.dispose);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('recall-hold-1')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('recall-hold-1')));
     await tester.pumpAndSettle();
 
     expect(repo.recalled, ['hold-1']);
     expect(find.text('New Sale Stub'), findsOneWidget);
     expect(find.byType(PosParkedSalesScreen), findsNothing);
-    expect(
-      harness.container.read(posNewSaleCartProvider).itemList.single.quantity,
-      2,
-    );
+    expect(harness.router.routerDelegate.currentConfiguration.uri.toString(),
+        '/pos/new-sale');
   });
 }
 
@@ -122,12 +186,11 @@ Future<_Harness> _pump(WidgetTester tester, {required _Repo repo}) async {
         authenticated: true,
         trustedDevice: true,
         deviceId: 'device-1',
-        permissions: {
-          PosPermissionCodes.viewBackendParkedSales,
-          PosPermissionCodes.recallBackendParkedSale,
-          PosPermissionCodes.createParkedSale,
-        },
+        permissions: _heldSalesFixturePermissions,
       ),
+    ),
+    effectivePermissionSetProvider.overrideWithValue(
+      EffectivePermissionSet.fromIterable(_heldSalesFixturePermissions),
     ),
   ]);
   final router = GoRouter(
@@ -153,20 +216,28 @@ Future<_Harness> _pump(WidgetTester tester, {required _Repo repo}) async {
       child: MaterialApp.router(routerConfig: router),
     ),
   );
-  return _Harness(container, repo);
+  return _Harness(container, repo, router);
 }
 
 class _Harness {
-  const _Harness(this.container, this.repo);
+  const _Harness(this.container, this.repo, this.router);
   final ProviderContainer container;
   final _Repo repo;
+  final GoRouter router;
   void dispose() => container.dispose();
 }
 
 class _Repo implements PosParkedSaleRepository {
-  _Repo({required this.holds, this.failFirstList = false});
+  _Repo({
+    required this.holds,
+    this.failFirstList = false,
+    this.failRecalls = 0,
+    this.recallDelay,
+  });
   final List<PosHoldDto> holds;
   bool failFirstList;
+  int failRecalls;
+  final Duration? recallDelay;
   final recalled = <String>[];
 
   @override
@@ -189,6 +260,12 @@ class _Repo implements PosParkedSaleRepository {
 
   @override
   Future<PosRecallHoldDto> recall(String holdId, String deviceId) async {
+    if (recallDelay != null) {
+      await Future<void>.delayed(recallDelay!);
+    }
+    if (failRecalls-- > 0) {
+      throw Exception('Recall unavailable');
+    }
     recalled.add(holdId);
     holds.removeWhere((hold) => hold.holdId == holdId);
     return _recall;

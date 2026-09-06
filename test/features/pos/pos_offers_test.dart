@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
+import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/core/network/dio_provider.dart';
 import 'package:nytroz_pos/features/pos/data/datasources/remote/pos_catalog_remote_datasource.dart';
 import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
@@ -153,7 +154,21 @@ void main() {
         accessToken: 'dummy-token',
         userId: 'user-1',
         userDisplayName: 'Cashier One',
-        permissionCodes: ['products.view'],
+        permissionCodes: [
+          PosPermissionCodes.viewProducts,
+          // Chunk 14: section tabs are exact-membership children.
+          PosPermissionCodes.catalogSectionsQuickProducts,
+          PosPermissionCodes.catalogSectionsPopular,
+          PosPermissionCodes.catalogSectionsFrequentlySold,
+          PosPermissionCodes.catalogSectionsOffers,
+          // Product card children (name/prices/badge) for offer rendering.
+          PosPermissionCodes.catalogProductCardImage,
+          PosPermissionCodes.catalogProductCardName,
+          PosPermissionCodes.catalogProductCardRegularPrice,
+          PosPermissionCodes.catalogProductCardSalePrice,
+          PosPermissionCodes.catalogProductCardDiscountBadge,
+          PosPermissionCodes.catalogProductCardOpenDetails,
+        ],
       );
       fakeDeviceContext = PosDeviceContext(
         deviceId: 'device-1',

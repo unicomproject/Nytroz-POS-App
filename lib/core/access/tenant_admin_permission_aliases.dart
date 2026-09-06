@@ -595,13 +595,8 @@ class TenantAdminPermissionAliases {
     'activity_log.detail.view': [
       'activity_log.detail.view',
     ],
-    'notification.view': [
-      'notification.view',
-      'notifications.view',
-    ],
-    'notifications.view': [
-      'notification.view',
-      'notifications.view',
+    'pos.notifications.alerts.view': [
+      'pos.notifications.alerts.view',
     ],
     'notification.read': [
       'notification.read',

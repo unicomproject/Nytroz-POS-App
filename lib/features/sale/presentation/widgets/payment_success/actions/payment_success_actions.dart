@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_payment_permission_visibility.dart';
 
 import '../../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -19,62 +21,81 @@ class PaymentSuccessActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
     final printState = ref.watch(completedSalePrintProvider);
     final isPrinting = printState.status == CompletedSalePrintStatus.printing;
-    final printLabel = printState.saleId == saleId &&
-            printState.status == CompletedSalePrintStatus.printed
-        ? 'Print Again'
-        : 'Print Receipt';
+    final alreadyPrinted = printState.saleId == saleId &&
+        printState.status == CompletedSalePrintStatus.printed;
+    final canPrint =
+        PosPaymentPermissionVisibility.canPrintPhysicalReceipt(permissions);
+    final canReprint =
+        PosPaymentPermissionVisibility.canReprintReceipt(permissions);
+    final canNewSale =
+        PosPaymentPermissionVisibility.canStartNewSaleFromSuccess(permissions);
+
+    final showPrintAction = alreadyPrinted ? canReprint : canPrint;
+    final printLabel = alreadyPrinted ? 'Print Again' : 'Print Receipt';
+
+    if (!showPrintAction && !canNewSale) {
+      return const SizedBox.shrink();
+    }
 
     return Row(
       children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: isPrinting
-                ? null
-                : () => executeReceiptPrint(context, ref, saleId),
-            icon: const Icon(Icons.print_outlined),
-            label: Text(printLabel),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: TenantAdminColors.primary,
-              side: const BorderSide(color: TenantAdminColors.primary),
-              padding: const EdgeInsets.symmetric(
-                vertical: TenantAdminSpacing.lg,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: TenantAdminSpacing.md),
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {
-              _startNewSale(context, ref);
-            },
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Start New Sale'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: TenantAdminColors.posHomeAccentOrange,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                vertical: TenantAdminSpacing.lg,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+        if (showPrintAction)
+          Expanded(
+            child: OutlinedButton.icon(
+              key: ValueKey(alreadyPrinted
+                  ? 'payment-success-reprint'
+                  : 'payment-success-print'),
+              onPressed: isPrinting
+                  ? null
+                  : () => executeReceiptPrint(context, ref, saleId),
+              icon: const Icon(Icons.print_outlined),
+              label: Text(printLabel),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: TenantAdminColors.primary,
+                side: const BorderSide(color: TenantAdminColors.primary),
+                padding: const EdgeInsets.symmetric(
+                  vertical: TenantAdminSpacing.lg,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
-        ),
+        if (showPrintAction && canNewSale)
+          const SizedBox(width: TenantAdminSpacing.md),
+        if (canNewSale)
+          Expanded(
+            child: ElevatedButton.icon(
+              key: const ValueKey('payment-success-new-sale'),
+              onPressed: () {
+                _startNewSale(context, ref);
+              },
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Start New Sale'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: TenantAdminColors.posHomeAccentOrange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  vertical: TenantAdminSpacing.lg,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }

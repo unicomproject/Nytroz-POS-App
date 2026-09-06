@@ -114,7 +114,7 @@ class _SummaryCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const PaymentSuccessStatusHeader(),
+                  PaymentSuccessStatusHeader(),
                   const SizedBox(height: TenantAdminSpacing.xl),
                   PaymentSuccessDetailList(
                     successData: successData,

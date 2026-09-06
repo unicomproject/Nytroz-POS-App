@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/permission_gate.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
+import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/device_activation/presentation/providers/device_activation_provider.dart';
 import 'package:nytroz_pos/features/pos/presentation/providers/new_sale/pos_camera_scanner_provider.dart';
+import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_shell_top_bar_visibility.dart';
 
 class PosNewSaleTopBarContent extends ConsumerStatefulWidget {
   const PosNewSaleTopBarContent({super.key});
@@ -28,13 +32,22 @@ class _PosNewSaleTopBarContentState
 
   @override
   Widget build(BuildContext context) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    final showConnectivity =
+        PosShellTopBarVisibility.canShowConnectivity(permissions);
+
     return Row(
       children: [
         Expanded(
           child: _NewSaleSearchField(focusNode: _searchFocusNode),
         ),
-        const SizedBox(width: TenantAdminSpacing.md),
-        const _TerminalOnlineChip(),
+        if (showConnectivity) ...[
+          const SizedBox(width: TenantAdminSpacing.md),
+          const PermissionGate(
+            permission: PosPermissionCodes.shellTopbarConnectivity,
+            child: _TerminalOnlineChip(),
+          ),
+        ],
       ],
     );
   }
@@ -68,8 +81,22 @@ class _NewSaleSearchFieldState extends ConsumerState<_NewSaleSearchField> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider);
-    final canSearch =
-        session?.hasPermission(PosPermissionCodes.searchProducts) == true;
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    final granted = session?.permissionCodes.toSet() ?? const <String>{};
+    final canSearch = PosPermissionAccess.canSearchProducts(granted);
+    final canScan = permissions.hasPermission(
+          PosPermissionCodes.catalogSearchScannerHint,
+        ) ||
+        canSearch;
+    final canClearSearch = permissions.hasPermission(
+          PosPermissionCodes.catalogSearchClear,
+        ) ||
+        canSearch;
+
+    if (!canSearch && !canScan) {
+      return const SizedBox.shrink();
+    }
+
     final query = canSearch ? ref.watch(posNewSaleSearchQueryProvider) : '';
     if (_controller.text != query) {
       _controller.value = TextEditingValue(
@@ -89,9 +116,12 @@ class _NewSaleSearchFieldState extends ConsumerState<_NewSaleSearchField> {
             focusNode: widget.focusNode,
             enabled: canSearch,
             textInputAction: TextInputAction.search,
-            onChanged: (value) {
-              ref.read(posNewSaleSearchQueryProvider.notifier).state = value;
-            },
+            onChanged: canSearch
+                ? (value) {
+                    ref.read(posNewSaleSearchQueryProvider.notifier).state =
+                        value;
+                  }
+                : null,
             style: const TextStyle(
               color: Color(0xFF101828),
               fontWeight: FontWeight.w900,
@@ -109,7 +139,9 @@ class _NewSaleSearchFieldState extends ConsumerState<_NewSaleSearchField> {
                 size: 36,
               ),
               prefixIconConstraints: const BoxConstraints(minWidth: 48),
-              hintText: 'Scan barcode or search products',
+              hintText: canSearch
+                  ? 'Scan barcode or search products'
+                  : 'Scan barcode',
               hintStyle: const TextStyle(
                 color: Color(0xFF64748B),
                 fontWeight: FontWeight.w700,
@@ -118,7 +150,7 @@ class _NewSaleSearchFieldState extends ConsumerState<_NewSaleSearchField> {
               suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (query.isNotEmpty)
+                  if (canClearSearch && query.isNotEmpty)
                     IconButton(
                       onPressed: () {
                         ref.read(posNewSaleSearchQueryProvider.notifier).state =
@@ -129,27 +161,27 @@ class _NewSaleSearchFieldState extends ConsumerState<_NewSaleSearchField> {
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    key: const Key('new-sale-scanner-button'),
-                    onPressed: canSearch
-                        ? () {
-                            final current =
-                                ref.read(posCameraScannerRequestProvider);
-                            ref
-                                .read(posCameraScannerRequestProvider.notifier)
-                                .state = current + 1;
-                          }
-                        : null,
-                    tooltip: 'Open barcode scanner',
-                    icon: const Icon(
-                      Icons.center_focus_strong_rounded,
-                      color: TenantAdminColors.posHomeAccentOrange,
-                      size: 30,
+                  if (canScan) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      key: const Key('new-sale-scanner-button'),
+                      onPressed: () {
+                        final current =
+                            ref.read(posCameraScannerRequestProvider);
+                        ref
+                            .read(posCameraScannerRequestProvider.notifier)
+                            .state = current + 1;
+                      },
+                      tooltip: 'Open barcode scanner',
+                      icon: const Icon(
+                        Icons.center_focus_strong_rounded,
+                        color: TenantAdminColors.posHomeAccentOrange,
+                        size: 30,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
+                  ],
                   const SizedBox(width: 8),
                 ],
               ),
@@ -169,6 +201,11 @@ class _NewSaleSearchFieldState extends ConsumerState<_NewSaleSearchField> {
                   color: TenantAdminColors.posHomeAccentOrange,
                   width: 1.5,
                 ),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                borderSide: const BorderSide(
+                    color: TenantAdminColors.border, width: 1.5),
               ),
             ),
             textAlignVertical: TextAlignVertical.center,

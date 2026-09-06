@@ -287,7 +287,7 @@ final _context = {
       'inventory.activity.view',
       'billing.view',
       'subscription.view',
-      'notifications.view',
+      'pos.notifications.alerts.view',
       'profile.view',
       'tenant.context.view',
       'activity.view',

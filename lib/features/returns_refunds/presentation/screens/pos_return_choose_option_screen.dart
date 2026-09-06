@@ -209,7 +209,7 @@ class _PosReturnChooseOptionScreenState
                           title: 'No authorised resolution',
                           message:
                               'You do not have permission to process a refund or exchange for this return.',
-                          icon: Icons.lock_outline_rounded,
+                          icon: Icons.info_outline_rounded,
                         ),
                 ),
                 const SizedBox(height: TenantAdminSpacing.lg),

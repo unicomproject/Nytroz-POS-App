@@ -118,13 +118,10 @@ class TillRemoteDatasource {
       sessionId: _string(session['id']),
       outletId: _string(session['outletId']),
       tillId: _string(session['tillId']),
-      openingFloat: _requiredDouble(session['openingFloat'], 'openingFloat'),
-      expectedCash: _requiredDouble(session['expectedCash'], 'expectedCash'),
-      countedCash: _requiredDouble(session['countedCash'], 'countedCash'),
-      cashDifference: _requiredDouble(
-        session['cashDifference'],
-        'cashDifference',
-      ),
+      openingFloat: _optionalDouble(session['openingFloat']),
+      expectedCash: _optionalDouble(session['expectedCash']),
+      countedCash: _optionalDouble(session['countedCash']),
+      cashDifference: _optionalDouble(session['cashDifference']),
       status: _string(session['status'], fallback: 'closed'),
       openedAt:
           DateTime.tryParse(_string(session['openedAt'])) ?? DateTime.now(),
@@ -162,7 +159,7 @@ class TillRemoteDatasource {
         session['openedDeviceId'],
         fallback: device.deviceId,
       ),
-      openingFloat: _double(session['openingFloat'], form.openingFloat),
+      openingFloat: _optionalDouble(session['openingFloat']) ?? form.openingFloat,
       status: _string(session['status'], fallback: 'open'),
       openedAt:
           DateTime.tryParse(_string(session['openedAt'])) ?? DateTime.now(),
@@ -171,7 +168,7 @@ class TillRemoteDatasource {
         session['currencyCode'],
         fallback: device.currencyCode,
       ),
-      expectedCash: _requiredDouble(session['expectedCash'], 'expectedCash'),
+      expectedCash: _optionalDouble(session['expectedCash']),
       openedByName: session['openedByName']?.toString(),
     );
   }
@@ -193,19 +190,14 @@ class TillRemoteDatasource {
     return text;
   }
 
-  double _double(Object? value, double fallback) {
+  double? _optionalDouble(Object? value) {
+    if (value == null) {
+      return null;
+    }
     if (value is num) {
       return value.toDouble();
     }
-
-    return double.tryParse(value?.toString() ?? '') ?? fallback;
-  }
-
-  double _requiredDouble(Object? value, String fieldName) {
-    if (value is num) return value.toDouble();
-    final parsed = double.tryParse(value?.toString() ?? '');
-    if (parsed != null) return parsed;
-    throw FormatException('Till response is missing $fieldName.');
+    return double.tryParse(value.toString());
   }
 
   String _messageFromDio(DioException error) {

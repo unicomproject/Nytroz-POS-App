@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/effective_permission_set.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_payment_permission_visibility.dart';
 
 import '../../../../../shared/pos_session/pos_session_context.dart';
 import '../../../../hardware/receipt_printer/mappers/canonical_receipt_presentation_mapper.dart';
@@ -9,7 +13,8 @@ import '../../providers/pos_cash_payment_success_provider.dart';
 /// Flutter renderer of [CanonicalReceiptPresentation].
 ///
 /// Semantic content must match ESC/POS renderers; pixel parity is not required.
-class ThermalReceiptPreview extends StatelessWidget {
+/// Chunk 11 gates preview presentation only — legal print payload unchanged.
+class ThermalReceiptPreview extends ConsumerWidget {
   const ThermalReceiptPreview({
     super.key,
     required this.presentation,
@@ -24,7 +29,8 @@ class ThermalReceiptPreview extends StatelessWidget {
   }) {
     return ThermalReceiptPreview(
       key: key,
-      presentation: const CanonicalReceiptPresentationMapper().fromPaymentSuccess(
+      presentation:
+          const CanonicalReceiptPresentationMapper().fromPaymentSuccess(
         success: successData,
         session: sessionContext,
         cashierFallback: cashierName,
@@ -36,8 +42,11 @@ class ThermalReceiptPreview extends StatelessWidget {
   final CanonicalReceiptPresentation presentation;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
     final p = presentation;
+    final showItems =
+        PosPaymentPermissionVisibility.canShowReceiptItems(permissions);
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -62,29 +71,48 @@ class ThermalReceiptPreview extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _ReceiptHeader(
-                    businessName: p.merchantName,
-                    subtitle: p.brandSubtitle,
-                    outletName: p.outletName.isEmpty ? null : p.outletName,
-                    outletLocation:
-                        p.outletLocation.isEmpty ? null : p.outletLocation,
+                  if (PosPaymentPermissionVisibility.canShowReceiptStore(
+                    permissions,
+                  ))
+                    _ReceiptHeader(
+                      businessName: p.merchantName,
+                      subtitle: p.brandSubtitle,
+                      outletName: p.outletName.isEmpty ? null : p.outletName,
+                      outletLocation:
+                          p.outletLocation.isEmpty ? null : p.outletLocation,
+                    ),
+                  if (PosPaymentPermissionVisibility.canShowReceiptStore(
+                    permissions,
+                  )) ...[
+                    const SizedBox(height: TenantAdminSpacing.md),
+                    const _DashedDivider(),
+                    const SizedBox(height: TenantAdminSpacing.md),
+                  ],
+                  _ReceiptInfoSection(
+                    presentation: p,
+                    permissions: permissions,
                   ),
                   const SizedBox(height: TenantAdminSpacing.md),
                   const _DashedDivider(),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  _ReceiptInfoSection(presentation: p),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  const _DashedDivider(),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  const _ItemTableHeader(),
-                  const SizedBox(height: TenantAdminSpacing.sm),
-                  for (final item in p.items) ...[
-                    _ItemTableRow(item: item, presentation: p),
+                  if (showItems) ...[
+                    const SizedBox(height: TenantAdminSpacing.md),
+                    _ItemTableHeader(permissions: permissions),
                     const SizedBox(height: TenantAdminSpacing.sm),
+                    for (final item in p.items) ...[
+                      _ItemTableRow(
+                        item: item,
+                        presentation: p,
+                        permissions: permissions,
+                      ),
+                      const SizedBox(height: TenantAdminSpacing.sm),
+                    ],
+                    const _DashedDivider(),
+                    const SizedBox(height: TenantAdminSpacing.md),
                   ],
-                  const _DashedDivider(),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  _SummarySection(presentation: p),
+                  _SummarySection(
+                    presentation: p,
+                    permissions: permissions,
+                  ),
                   const SizedBox(height: TenantAdminSpacing.md),
                   const _DashedDivider(),
                   const SizedBox(height: TenantAdminSpacing.md),
@@ -151,31 +179,43 @@ class _ReceiptHeader extends StatelessWidget {
 }
 
 class _ReceiptInfoSection extends StatelessWidget {
-  const _ReceiptInfoSection({required this.presentation});
+  const _ReceiptInfoSection({
+    required this.presentation,
+    required this.permissions,
+  });
 
   final CanonicalReceiptPresentation presentation;
+  final EffectivePermissionSet permissions;
 
   @override
   Widget build(BuildContext context) {
     final p = presentation;
     return Column(
       children: [
-        _InfoLine(
-          label: CanonicalReceiptPresentation.receiptNoLabel,
-          value: p.receiptNumber,
-        ),
-        _InfoLine(
-          label: CanonicalReceiptPresentation.dateTimeLabel,
-          value: p.issuedAtDisplay,
-        ),
-        _InfoLine(label: 'Cashier', value: p.cashierName),
-        _InfoLine(label: 'Customer', value: p.customerDisplayName),
-        if (p.terminalName.isNotEmpty)
+        if (PosPaymentPermissionVisibility.canShowReceiptNumber(permissions))
+          _InfoLine(
+            label: CanonicalReceiptPresentation.receiptNoLabel,
+            value: p.receiptNumber,
+          ),
+        if (PosPaymentPermissionVisibility.canShowReceiptDatetime(permissions))
+          _InfoLine(
+            label: CanonicalReceiptPresentation.dateTimeLabel,
+            value: p.issuedAtDisplay,
+          ),
+        if (PosPaymentPermissionVisibility.canShowReceiptCashier(permissions))
+          _InfoLine(label: 'Cashier', value: p.cashierName),
+        if (PosPaymentPermissionVisibility.canShowReceiptCustomer(permissions))
+          _InfoLine(label: 'Customer', value: p.customerDisplayName),
+        if (p.terminalName.isNotEmpty &&
+            PosPaymentPermissionVisibility.canShowReceiptTerminal(permissions))
           _InfoLine(
             label: CanonicalReceiptPresentation.terminalFieldLabel,
             value: p.terminalName,
           ),
-        _InfoLine(label: 'Payment', value: p.paymentMethodDisplay),
+        if (PosPaymentPermissionVisibility.canShowReceiptPaymentMethod(
+          permissions,
+        ))
+          _InfoLine(label: 'Payment', value: p.paymentMethodDisplay),
       ],
     );
   }
@@ -222,7 +262,9 @@ class _InfoLine extends StatelessWidget {
 }
 
 class _ItemTableHeader extends StatelessWidget {
-  const _ItemTableHeader();
+  const _ItemTableHeader({required this.permissions});
+
+  final EffectivePermissionSet permissions;
 
   @override
   Widget build(BuildContext context) {
@@ -231,19 +273,29 @@ class _ItemTableHeader extends StatelessWidget {
           color: TenantAdminColors.bodyText,
           letterSpacing: 0,
         );
+    final showQty =
+        PosPaymentPermissionVisibility.canShowReceiptItemQuantity(permissions);
+    final showValue =
+        PosPaymentPermissionVisibility.canShowReceiptItemValue(permissions);
+    final showRate =
+        PosPaymentPermissionVisibility.canShowReceiptItemRate(permissions);
 
     return Row(
       children: [
         Expanded(flex: 5, child: Text('ITEM', style: style)),
-        Expanded(child: Text('QTY', textAlign: TextAlign.center, style: style)),
-        Expanded(
-          flex: 2,
-          child: Text('VALUE', textAlign: TextAlign.end, style: style),
-        ),
-        Expanded(
-          flex: 2,
-          child: Text('RATE', textAlign: TextAlign.end, style: style),
-        ),
+        if (showQty)
+          Expanded(
+              child: Text('QTY', textAlign: TextAlign.center, style: style)),
+        if (showValue)
+          Expanded(
+            flex: 2,
+            child: Text('VALUE', textAlign: TextAlign.end, style: style),
+          ),
+        if (showRate)
+          Expanded(
+            flex: 2,
+            child: Text('RATE', textAlign: TextAlign.end, style: style),
+          ),
       ],
     );
   }
@@ -253,10 +305,12 @@ class _ItemTableRow extends StatelessWidget {
   const _ItemTableRow({
     required this.item,
     required this.presentation,
+    required this.permissions,
   });
 
   final CanonicalReceiptItemPresentation item;
   final CanonicalReceiptPresentation presentation;
+  final EffectivePermissionSet permissions;
 
   @override
   Widget build(BuildContext context) {
@@ -270,6 +324,12 @@ class _ItemTableRow extends StatelessWidget {
           fontWeight: FontWeight.w600,
           letterSpacing: 0,
         );
+    final showQty =
+        PosPaymentPermissionVisibility.canShowReceiptItemQuantity(permissions);
+    final showValue =
+        PosPaymentPermissionVisibility.canShowReceiptItemValue(permissions);
+    final showRate =
+        PosPaymentPermissionVisibility.canShowReceiptItemRate(permissions);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -286,29 +346,32 @@ class _ItemTableRow extends StatelessWidget {
                 style: itemStyle,
               ),
             ),
-            Expanded(
-              child: Text(
-                '${item.quantity}',
-                textAlign: TextAlign.center,
-                style: itemStyle,
+            if (showQty)
+              Expanded(
+                child: Text(
+                  '${item.quantity}',
+                  textAlign: TextAlign.center,
+                  style: itemStyle,
+                ),
               ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text(
-                presentation.formatMoneyAmountOnly(item.valueUnitPrice),
-                textAlign: TextAlign.end,
-                style: itemStyle,
+            if (showValue)
+              Expanded(
+                flex: 2,
+                child: Text(
+                  presentation.formatMoneyAmountOnly(item.valueUnitPrice),
+                  textAlign: TextAlign.end,
+                  style: itemStyle,
+                ),
               ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text(
-                presentation.formatMoneyAmountOnly(item.rateUnitPrice),
-                textAlign: TextAlign.end,
-                style: itemStyle,
+            if (showRate)
+              Expanded(
+                flex: 2,
+                child: Text(
+                  presentation.formatMoneyAmountOnly(item.rateUnitPrice),
+                  textAlign: TextAlign.end,
+                  style: itemStyle,
+                ),
               ),
-            ),
           ],
         ),
         if (item.sku.isNotEmpty)
@@ -322,36 +385,53 @@ class _ItemTableRow extends StatelessWidget {
 }
 
 class _SummarySection extends StatelessWidget {
-  const _SummarySection({required this.presentation});
+  const _SummarySection({
+    required this.presentation,
+    required this.permissions,
+  });
 
   final CanonicalReceiptPresentation presentation;
+  final EffectivePermissionSet permissions;
 
   @override
   Widget build(BuildContext context) {
     final p = presentation;
     return Column(
       children: [
-        _TotalLine(label: 'No. of Items', value: '${p.itemCount}'),
-        _TotalLine(label: 'Subtotal', value: p.formatMoney(p.subtotal)),
-        if (p.discountTotal > 0)
+        if (PosPaymentPermissionVisibility.canShowReceiptItemQuantity(
+          permissions,
+        ))
+          _TotalLine(label: 'No. of Items', value: '${p.itemCount}'),
+        if (PosPaymentPermissionVisibility.canShowReceiptSubtotal(permissions))
+          _TotalLine(label: 'Subtotal', value: p.formatMoney(p.subtotal)),
+        if (p.discountTotal > 0 &&
+            PosPaymentPermissionVisibility.canShowReceiptDiscount(permissions))
           _TotalLine(
             label: 'Discount',
             value: '- ${p.formatMoney(p.discountTotal)}',
           ),
         if (p.taxTotal > 0)
           _TotalLine(label: 'Tax', value: p.formatMoney(p.taxTotal)),
-        const SizedBox(height: TenantAdminSpacing.xs),
-        _TotalLine(
-          label: 'Total',
-          value: p.formatMoney(p.total),
-          emphasized: true,
-        ),
-        const SizedBox(height: TenantAdminSpacing.xs),
-        _TotalLine(label: p.paidByLabel, value: p.formatMoney(p.amountTendered)),
-        _TotalLine(
-          label: 'Change Due',
-          value: p.formatMoney(p.changeDue),
-        ),
+        if (PosPaymentPermissionVisibility.canShowReceiptTotal(permissions)) ...[
+          const SizedBox(height: TenantAdminSpacing.xs),
+          _TotalLine(
+            label: 'Total',
+            value: p.formatMoney(p.total),
+            emphasized: true,
+          ),
+        ],
+        if (PosPaymentPermissionVisibility.canShowReceiptPaidAmount(
+          permissions,
+        )) ...[
+          const SizedBox(height: TenantAdminSpacing.xs),
+          _TotalLine(
+              label: p.paidByLabel, value: p.formatMoney(p.amountTendered)),
+        ],
+        if (PosPaymentPermissionVisibility.canShowReceiptChangeDue(permissions))
+          _TotalLine(
+            label: 'Change Due',
+            value: p.formatMoney(p.changeDue),
+          ),
       ],
     );
   }

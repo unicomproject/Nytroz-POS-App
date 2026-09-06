@@ -58,5 +58,49 @@ void main() {
         ),
       );
     });
+
+    test('prefers effectivePermissionCodes over permissions when both present', () {
+      final session = authSessionFromJson({
+        'data': {
+          'accessToken': 'access-token',
+          'user': {
+            'id': 'cashier-001',
+            'fullName': 'Cashier 001',
+          },
+          'effectivePermissionCodes': const [
+            PosPermissionCodes.viewNewSale,
+          ],
+          'permissions': const [
+            PosPermissionCodes.viewOrders,
+            PosPermissionCodes.viewCashDrawer,
+          ],
+        },
+      });
+
+      expect(session.permissionCodes, [PosPermissionCodes.viewNewSale]);
+      expect(
+        session.permissionCodes,
+        isNot(contains(PosPermissionCodes.viewOrders)),
+      );
+    });
+
+    test('absent permission membership is false and does not invent grants', () {
+      final session = authSessionFromJson({
+        'data': {
+          'accessToken': 'access-token',
+          'user': {
+            'id': 'cashier-001',
+            'fullName': 'Cashier 001',
+          },
+          'permissions': const [
+            PosPermissionCodes.viewNewSale,
+          ],
+        },
+      });
+
+      expect(session.hasPermission(PosPermissionCodes.viewNewSale), isTrue);
+      expect(session.hasPermission(PosPermissionCodes.viewCashDrawer), isFalse);
+      expect(session.hasPermission('pre_auth.login.email.input'), isFalse);
+    });
   });
 }

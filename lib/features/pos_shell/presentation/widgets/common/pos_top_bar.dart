@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:nytroz_pos/core/access/permission_gate.dart';
+import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../application/state/pos_home_dashboard_state.dart';
 import '../home/pos_branding.dart';
 import 'pos_top_bar_notification_button.dart';
 
-class PosTopBar extends StatelessWidget {
+class PosTopBar extends ConsumerWidget {
   const PosTopBar({
     super.key,
     required this.content,
@@ -22,7 +25,7 @@ class PosTopBar extends StatelessWidget {
   final Widget? trailing;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       height: 96,
       decoration: const BoxDecoration(
@@ -45,33 +48,32 @@ class PosTopBar extends StatelessWidget {
             ),
             child: Row(
               children: [
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minWidth: veryCompact ? 116 : 156,
-                    maxWidth: compact ? 180 : 240,
+                PermissionGate(
+                  permission: PosPermissionCodes.shellTopbarBrand,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minWidth: veryCompact ? 116 : 156,
+                      maxWidth: compact ? 180 : 240,
+                    ),
+                    child: PosBranding(
+                      dashboard: dashboard,
+                      brandName: brandName,
+                      logoUrl: brandLogoUrl,
+                    ),
                   ),
-                  child: PosBranding(
-                    dashboard: dashboard,
-                    brandName: brandName,
-                    logoUrl: brandLogoUrl,
-                  ),
                 ),
-                SizedBox(
-                  width: veryCompact
-                      ? TenantAdminSpacing.sm
-                      : TenantAdminSpacing.lg,
-                ),
-                Expanded(
-                  child: content,
-                ),
-                if (trailing != null) ...[
-                  SizedBox(
+                PermissionGate(
+                  permission: PosPermissionCodes.shellTopbarBrand,
+                  child: SizedBox(
                     width: veryCompact
                         ? TenantAdminSpacing.sm
                         : TenantAdminSpacing.lg,
                   ),
-                  trailing!,
-                ],
+                ),
+                Expanded(
+                  child: content,
+                ),
+                if (trailing != null) trailing!,
               ],
             ),
           );

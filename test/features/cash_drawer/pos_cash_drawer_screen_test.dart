@@ -24,6 +24,34 @@ import 'package:nytroz_pos/features/tenant_admin/presentation/screens/tenant_adm
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  final fullDrawerPermissions = <String>{
+    PosPermissionCodes.viewCashDrawer,
+    PosPermissionCodes.cashDrawerPositionView,
+    PosPermissionCodes.manageCashDrawer,
+    PosPermissionCodes.cashDrawerPhysicalManage,
+    PosPermissionCodes.createCashDrawerMovement,
+    PosPermissionCodes.cashDrawerCashIn,
+    PosPermissionCodes.cashDrawerCashDrop,
+    PosPermissionCodes.closeTill,
+    PosPermissionCodes.tillSessionClose,
+    PosPermissionCodes.cashDrawerSummaryTill,
+    PosPermissionCodes.cashDrawerSummaryStatus,
+    PosPermissionCodes.cashDrawerSummaryOpeningCash,
+    PosPermissionCodes.cashDrawerSummaryCashSales,
+    PosPermissionCodes.cashDrawerSummaryExpectedCash,
+    PosPermissionCodes.cashDrawerMovementsList,
+    PosPermissionCodes.cashDrawerMovementsType,
+    PosPermissionCodes.cashDrawerMovementsDate,
+    PosPermissionCodes.cashDrawerMovementsTime,
+    PosPermissionCodes.cashDrawerMovementsCashier,
+    PosPermissionCodes.cashDrawerMovementsAmountView,
+    PosPermissionCodes.cashDrawerOpenReasonProvideChange,
+    PosPermissionCodes.cashDrawerOpenReasonTillCheck,
+    PosPermissionCodes.cashDrawerOpenReasonCashCount,
+    PosPermissionCodes.cashDrawerOpenReasonManagerOperation,
+    PosPermissionCodes.cashDrawerOpenReasonOther,
+  };
+
   CashDrawerSummary openSummary({
     String tillName = 'Till 01',
     String status = 'OPEN',
@@ -139,12 +167,7 @@ void main() {
     await pumpScreen(
       tester,
       overrides: overrides(
-        permissions: {
-          PosPermissionCodes.viewCashDrawer,
-          PosPermissionCodes.manageCashDrawer,
-          PosPermissionCodes.createCashDrawerMovement,
-          PosPermissionCodes.closeTill,
-        },
+        permissions: fullDrawerPermissions,
       ),
     );
 
@@ -160,7 +183,7 @@ void main() {
     expect(find.textContaining('68,000.00'), findsWidgets);
     expect(find.text('Open Drawer'), findsOneWidget);
     expect(find.text('Cash In'), findsOneWidget);
-    expect(find.text('Cash Out / Drop'), findsOneWidget);
+    expect(find.text('Cash Drop'), findsOneWidget);
     expect(find.text('Close Till'), findsOneWidget);
     expect(find.text('RECENT CASH MOVEMENTS'), findsOneWidget);
     expect(find.text('Cash Sale'), findsOneWidget);
@@ -175,7 +198,10 @@ void main() {
     await pumpScreen(
       tester,
       overrides: overrides(
-        permissions: {PosPermissionCodes.viewCashDrawer},
+        permissions: {
+          PosPermissionCodes.viewCashDrawer,
+          PosPermissionCodes.cashDrawerMovementsList,
+        },
         drawerState:
             CashDrawerState(summary: openSummary(), movements: const []),
       ),
@@ -225,8 +251,7 @@ void main() {
     );
   });
 
-  testWidgets('permission disables movement and manage actions',
-      (tester) async {
+  testWidgets('permission hides movement and manage actions', (tester) async {
     await pumpScreen(
       tester,
       overrides: overrides(
@@ -234,16 +259,10 @@ void main() {
       ),
     );
 
-    InkWell inkFor(String label) => tester.widget<InkWell>(
-          find
-              .ancestor(of: find.text(label), matching: find.byType(InkWell))
-              .first,
-        );
-
-    expect(inkFor('Cash In').onTap, isNull);
-    expect(inkFor('Cash Out / Drop').onTap, isNull);
-    expect(inkFor('Open Drawer').onTap, isNull);
-    expect(inkFor('Close Till').onTap, isNull);
+    expect(find.text('Cash In'), findsNothing);
+    expect(find.text('Cash Drop'), findsNothing);
+    expect(find.text('Open Drawer'), findsNothing);
+    expect(find.text('Close Till'), findsNothing);
   });
 
   testWidgets('cash in navigation', (tester) async {
@@ -252,6 +271,7 @@ void main() {
       overrides: overrides(
         permissions: {
           PosPermissionCodes.viewCashDrawer,
+          PosPermissionCodes.cashDrawerCashIn,
           PosPermissionCodes.createCashDrawerMovement,
         },
       ),
@@ -261,17 +281,18 @@ void main() {
     expect(find.text('Cash In Route'), findsOneWidget);
   });
 
-  testWidgets('cash out navigation', (tester) async {
+  testWidgets('cash drop navigation', (tester) async {
     await pumpScreen(
       tester,
       overrides: overrides(
         permissions: {
           PosPermissionCodes.viewCashDrawer,
+          PosPermissionCodes.cashDrawerCashDrop,
           PosPermissionCodes.createCashDrawerMovement,
         },
       ),
     );
-    await tester.tap(find.text('Cash Out / Drop'));
+    await tester.tap(find.text('Cash Drop'));
     await tester.pumpAndSettle();
     expect(find.text('Cash Drop Route'), findsOneWidget);
   });
@@ -283,6 +304,7 @@ void main() {
         permissions: {
           PosPermissionCodes.viewCashDrawer,
           PosPermissionCodes.closeTill,
+          PosPermissionCodes.tillSessionClose,
         },
       ),
     );
@@ -296,12 +318,7 @@ void main() {
       tester,
       size: const Size(390, 844),
       overrides: overrides(
-        permissions: {
-          PosPermissionCodes.viewCashDrawer,
-          PosPermissionCodes.manageCashDrawer,
-          PosPermissionCodes.createCashDrawerMovement,
-          PosPermissionCodes.closeTill,
-        },
+        permissions: fullDrawerPermissions,
       ),
     );
     expect(find.text('Cash Drawer'), findsOneWidget);
@@ -319,12 +336,7 @@ void main() {
         tester,
         size: size,
         overrides: overrides(
-          permissions: {
-            PosPermissionCodes.viewCashDrawer,
-            PosPermissionCodes.manageCashDrawer,
-            PosPermissionCodes.createCashDrawerMovement,
-            PosPermissionCodes.closeTill,
-          },
+          permissions: fullDrawerPermissions,
           drawerState: CashDrawerState(
             summary: openSummary(
               tillName: 'Very Long Till Name For Layout Testing 01',

@@ -42,6 +42,7 @@ import 'package:nytroz_pos/features/pos/data/datasources/remote/pos_barcode_remo
 import 'package:nytroz_pos/features/pos/presentation/providers/pos_catalog_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/pos/presentation/providers/pos_new_sale_search_coordinator.dart';
+import 'package:nytroz_pos/features/pos/presentation/widgets/new_sale/cart/pos_quantity_stepper.dart';
 import 'package:nytroz_pos/features/pos/presentation/widgets/new_sale/actions/pos_new_sale_action_bar.dart';
 import 'package:nytroz_pos/features/cash_drawer/presentation/screens/pos_close_till_screen.dart';
 import 'package:nytroz_pos/features/pos/presentation/providers/new_sale/pos_barcode_scan_controller.dart';
@@ -230,8 +231,10 @@ void main() {
         permissionCodes: const [
           PosPermissionCodes.viewHome,
           PosPermissionCodes.viewNewSale,
-          PosPermissionCodes.viewOrders,
+          PosPermissionCodes.shellBottomNavContainer,
+          PosPermissionCodes.receiptsDigitalView,
           PosPermissionCodes.viewNewSaleCustomers,
+          PosPermissionCodes.shellNavigationSettings,
           PosPermissionCodes.viewReturns,
           PosPermissionCodes.viewRefunds,
           PosPermissionCodes.viewCashDrawer,
@@ -280,6 +283,9 @@ void main() {
           PosPermissionCodes.viewHome,
           PosPermissionCodes.viewNewSale,
           PosPermissionCodes.viewProducts,
+          PosPermissionCodes.salesCatalogView,
+          PosPermissionCodes.catalogSectionsQuickProducts,
+          PosPermissionCodes.newSaleChromeEmptyCart,
         ],
       );
 
@@ -322,6 +328,11 @@ void main() {
         permissionCodes: const [
           PosPermissionCodes.viewHome,
           PosPermissionCodes.viewNewSale,
+          PosPermissionCodes.shellTopbarContainer,
+          PosPermissionCodes.shellTopbarBrand,
+          PosPermissionCodes.shellBottomNavContainer,
+          PosPermissionCodes.newSaleChromeCheckoutAction,
+          PosPermissionCodes.cartSummaryTotal,
         ],
       );
 
@@ -405,9 +416,27 @@ void main() {
           PosPermissionCodes.viewHome,
           PosPermissionCodes.viewNewSale,
           PosPermissionCodes.viewProducts,
+          PosPermissionCodes.salesCatalogView,
+          PosPermissionCodes.catalogSectionsQuickProducts,
+          PosPermissionCodes.catalogProductCardName,
+          PosPermissionCodes.catalogProductCardRegularPrice,
+          PosPermissionCodes.catalogProductCardSalePrice,
           PosPermissionCodes.addCartItem,
           PosPermissionCodes.updateCartItem,
           PosPermissionCodes.removeCartItem,
+          PosPermissionCodes.manageCart,
+          PosPermissionCodes.cartSummaryView,
+          PosPermissionCodes.cartSummarySubtotal,
+          PosPermissionCodes.cartSummaryDiscount,
+          PosPermissionCodes.cartSummaryTax,
+          PosPermissionCodes.cartSummaryTotal,
+          PosPermissionCodes.cartLinesList,
+          PosPermissionCodes.cartLinesName,
+          PosPermissionCodes.cartLinesQuantity,
+          PosPermissionCodes.cartLinesUnitPrice,
+          PosPermissionCodes.cartLinesLineTotal,
+          PosPermissionCodes.newSaleChromeEmptyCart,
+          PosPermissionCodes.newSaleChromeCheckoutAction,
           PosPermissionCodes.checkoutSale,
           PosPermissionCodes.acceptCashPayment,
         ],
@@ -436,7 +465,13 @@ void main() {
       expect(find.text('Subtotal'), findsOneWidget);
       expect(find.text('Discount'), findsOneWidget);
       expect(find.text('Tax'), findsOneWidget);
-      expect(find.text('Qty 1'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(PosQuantityStepper),
+          matching: find.text('1'),
+        ),
+        findsOneWidget,
+      );
       // Product card + cart unit price show catalog values; line total waits for
       // authoritative checkout pricing.
       expect(find.text('LKR 1,500.00'), findsNWidgets(2));
@@ -448,14 +483,26 @@ void main() {
       await tester.tap(find.text('General Admission').first);
       await tester.pumpAndSettle();
 
-      expect(find.text('Qty 2'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(PosQuantityStepper),
+          matching: find.text('2'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('LKR 1,500.00'), findsNWidgets(2));
       expect(find.text('—'), findsNWidgets(4));
 
       await tester.tap(find.byIcon(Icons.remove));
       await tester.pumpAndSettle();
 
-      expect(find.text('Qty 1'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(PosQuantityStepper),
+          matching: find.text('1'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('LKR 1,500.00'), findsNWidgets(2));
       expect(find.text('—'), findsNWidgets(4));
 
@@ -480,6 +527,12 @@ void main() {
           PosPermissionCodes.viewNewSale,
           PosPermissionCodes.viewProducts,
           PosPermissionCodes.searchProducts,
+          PosPermissionCodes.shellTopbarContainer,
+          PosPermissionCodes.shellTopbarBrand,
+          PosPermissionCodes.catalogSearchScannerHint,
+          PosPermissionCodes.catalogProductCardName,
+          PosPermissionCodes.catalogSectionsQuickProducts,
+          PosPermissionCodes.catalogSectionsPopular,
         ],
       );
 
@@ -743,6 +796,15 @@ void main() {
           PosPermissionCodes.addCartItem,
           PosPermissionCodes.updateCartItem,
           PosPermissionCodes.removeCartItem,
+          PosPermissionCodes.shellTopbarContainer,
+          PosPermissionCodes.shellTopbarBrand,
+          PosPermissionCodes.catalogSearchScannerHint,
+          PosPermissionCodes.catalogProductCardName,
+          PosPermissionCodes.catalogSectionsQuickProducts,
+          PosPermissionCodes.catalogSectionsPopular,
+          PosPermissionCodes.manageCart,
+          PosPermissionCodes.cartLinesList,
+          PosPermissionCodes.cartLinesQuantity,
         ],
       );
 
@@ -762,7 +824,13 @@ void main() {
         ),
         findsNothing,
       );
-      expect(find.text('Qty 1'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(PosQuantityStepper),
+          matching: find.text('1'),
+        ),
+        findsOneWidget,
+      );
 
       _goFromWidget<PosNewSaleScreen>(tester, '/pos/home');
       await tester.pumpAndSettle();
@@ -779,7 +847,13 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Qty 1'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(PosQuantityStepper),
+          matching: find.text('1'),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('New Sale hides secondary category action', (tester) async {
@@ -791,6 +865,9 @@ void main() {
           PosPermissionCodes.viewNewSale,
           PosPermissionCodes.viewProducts,
           PosPermissionCodes.searchProducts,
+          PosPermissionCodes.catalogProductCardName,
+          PosPermissionCodes.catalogSectionsQuickProducts,
+          PosPermissionCodes.catalogSectionsPopular,
         ],
       );
 
@@ -1024,6 +1101,8 @@ void main() {
         permissionCodes: const [
           PosPermissionCodes.viewHome,
           PosPermissionCodes.viewNewSale,
+          PosPermissionCodes.shellTopbarContainer,
+          PosPermissionCodes.shellTopbarBrand,
         ],
       );
 
@@ -1051,6 +1130,9 @@ void main() {
           PosPermissionCodes.viewNewSaleCustomers,
           PosPermissionCodes.createParkedSale,
           PosPermissionCodes.viewCashDrawer,
+          PosPermissionCodes.shellBottomNavContainer,
+          PosPermissionCodes.salesCatalogView,
+          PosPermissionCodes.catalogSectionsQuickProducts,
         ],
       );
 
@@ -1087,6 +1169,15 @@ void main() {
           PosPermissionCodes.createNewSaleCustomer,
           PosPermissionCodes.checkoutSale,
           PosPermissionCodes.acceptCashPayment,
+          PosPermissionCodes.manageCart,
+          PosPermissionCodes.cartLinesList,
+          PosPermissionCodes.cartLinesName,
+          PosPermissionCodes.cartLinesQuantity,
+          PosPermissionCodes.cartSummaryView,
+          PosPermissionCodes.cartSummaryTotal,
+          PosPermissionCodes.newSaleChromeCheckoutAction,
+          PosPermissionCodes.salesCatalogView,
+          PosPermissionCodes.catalogSectionsQuickProducts,
         ],
       );
 
@@ -1280,6 +1371,82 @@ Future<void> _pumpPosHome(
   }
 }
 
+/// Shell / home chrome required for Chunk 14 gated POS Home + shell chrome.
+const _shellHomeChromePermissions = [
+  PosPermissionCodes.salesDashboardView,
+  PosPermissionCodes.homeProfileView,
+  PosPermissionCodes.homeProfileAvatar,
+  PosPermissionCodes.homeProfileName,
+  PosPermissionCodes.homeProfileRole,
+  PosPermissionCodes.homeSessionSummaryView,
+  PosPermissionCodes.homeSessionSummaryTotalSales,
+  PosPermissionCodes.homeSessionSummaryTransactionCount,
+  PosPermissionCodes.homeSessionSummaryReturns,
+  PosPermissionCodes.homeSessionSummaryDiscounts,
+  PosPermissionCodes.homeSessionSummaryNetSales,
+  PosPermissionCodes.homeActionsReturnsEntry,
+  PosPermissionCodes.cashDrawerPositionView,
+  PosPermissionCodes.heldSalesView,
+  PosPermissionCodes.tillSessionClose,
+  PosPermissionCodes.shellTopbarContainer,
+  PosPermissionCodes.shellTopbarBrand,
+  PosPermissionCodes.shellTopbarSessionStatus,
+  PosPermissionCodes.shellTopbarOutlet,
+  PosPermissionCodes.shellTopbarTill,
+  PosPermissionCodes.shellTopbarConnectivity,
+  PosPermissionCodes.shellTopbarClock,
+  PosPermissionCodes.shellTopbarNotificationBell,
+  PosPermissionCodes.shellBottomNavContainer,
+  PosPermissionCodes.shellNavigationSettings,
+  PosPermissionCodes.notificationsPanelView,
+  PosPermissionCodes.notificationsPanelUnreadCount,
+  PosPermissionCodes.receiptsDigitalView,
+];
+
+/// New Sale catalog / cart / chrome children for happy-path widget coverage.
+const _newSaleChromePermissions = [
+  PosPermissionCodes.salesNewSaleView,
+  PosPermissionCodes.salesCatalogView,
+  PosPermissionCodes.salesCatalogSearch,
+  PosPermissionCodes.catalogSearchBar,
+  PosPermissionCodes.catalogSearchClear,
+  PosPermissionCodes.catalogSearchResults,
+  PosPermissionCodes.catalogSearchScannerHint,
+  PosPermissionCodes.catalogSectionsQuickProducts,
+  PosPermissionCodes.catalogSectionsPopular,
+  PosPermissionCodes.catalogSectionsFrequentlySold,
+  PosPermissionCodes.catalogSectionsOffers,
+  PosPermissionCodes.catalogProductCardImage,
+  PosPermissionCodes.catalogProductCardName,
+  PosPermissionCodes.catalogProductCardRegularPrice,
+  PosPermissionCodes.catalogProductCardSalePrice,
+  PosPermissionCodes.catalogProductCardDiscountBadge,
+  PosPermissionCodes.catalogProductCardOpenDetails,
+  PosPermissionCodes.manageCart,
+  PosPermissionCodes.salesCartManage,
+  PosPermissionCodes.salesCartAddItem,
+  PosPermissionCodes.salesCartUpdateItem,
+  PosPermissionCodes.salesCartClear,
+  PosPermissionCodes.cartSummaryView,
+  PosPermissionCodes.cartSummaryItemCount,
+  PosPermissionCodes.cartSummarySubtotal,
+  PosPermissionCodes.cartSummaryDiscount,
+  PosPermissionCodes.cartSummaryTax,
+  PosPermissionCodes.cartSummaryTotal,
+  PosPermissionCodes.cartLinesList,
+  PosPermissionCodes.cartLinesName,
+  PosPermissionCodes.cartLinesQuantity,
+  PosPermissionCodes.cartLinesUnitPrice,
+  PosPermissionCodes.cartLinesLineTotal,
+  PosPermissionCodes.newSaleChromeHeader,
+  PosPermissionCodes.newSaleChromeEmptyCart,
+  PosPermissionCodes.newSaleChromeCheckoutAction,
+  PosPermissionCodes.newSaleChromeParkAction,
+  PosPermissionCodes.newSaleChromeClearCartAction,
+  PosPermissionCodes.newSaleChromeCustomerChip,
+  PosPermissionCodes.newSaleChromeHeldCount,
+];
+
 const _defaultPermissions = [
   PosPermissionCodes.viewHome,
   PosPermissionCodes.viewNewSale,
@@ -1305,12 +1472,15 @@ const _defaultPermissions = [
   PosPermissionCodes.createCashDrawerMovement,
   PosPermissionCodes.viewTillSession,
   PosPermissionCodes.viewNotifications,
+  ..._shellHomeChromePermissions,
+  ..._newSaleChromePermissions,
 ];
 
 const _permissionsWithOnlineOrders = [
   ..._defaultPermissions,
   PosPermissionCodes.viewOrders,
   PosPermissionCodes.manageOnlineOrders,
+  PosPermissionCodes.homeActionsOnlineOrdersEntry,
 ];
 
 class _TestAuthSessionStorage extends AuthSessionStorage {
@@ -1590,10 +1760,12 @@ PosHomeDashboardState _referenceDashboardState(
         iconKey: 'new-sale',
         buttonLabel: 'Start New Sale',
         isEnabled: startSaleEnabled &&
-            permissions.contains(PosPermissionCodes.viewNewSale),
+            (permissions.contains(PosPermissionCodes.viewNewSale) ||
+                permissions.contains(PosPermissionCodes.salesNewSaleView) ||
+                permissions.contains(PosPermissionCodes.createSale)),
         targetRoute: '/pos/new-sale',
         featureKey: PosFeatureCodes.sales,
-        permissionKey: PosPermissionCodes.viewNewSale,
+        permissionKey: PosPermissionCodes.salesNewSaleView,
       ),
       if (includeOnlineOrders)
         PosHomeAction(
@@ -1602,12 +1774,13 @@ PosHomeDashboardState _referenceDashboardState(
           description: 'Review incoming online orders from one place.',
           iconKey: 'online-orders',
           buttonLabel: 'View Orders',
-          isEnabled:
-              permissions.contains(PosPermissionCodes.manageOnlineOrders),
+          isEnabled: permissions.contains(PosPermissionCodes.manageOnlineOrders) ||
+              permissions
+                  .contains(PosPermissionCodes.homeActionsOnlineOrdersEntry),
           routeExists: false,
           onTapActionKey: 'manage-online-orders',
           featureKey: PosFeatureCodes.onlineOrders,
-          permissionKey: PosPermissionCodes.manageOnlineOrders,
+          permissionKey: PosPermissionCodes.homeActionsOnlineOrdersEntry,
         ),
       PosHomeAction(
         key: 'returns-refunds',
@@ -1615,10 +1788,11 @@ PosHomeDashboardState _referenceDashboardState(
         description: 'Review eligible items for return or refund.',
         iconKey: 'return',
         buttonLabel: 'Start Return',
-        isEnabled: permissions.contains(PosPermissionCodes.viewReturns),
+        isEnabled: permissions.contains(PosPermissionCodes.viewReturns) ||
+            permissions.contains(PosPermissionCodes.homeActionsReturnsEntry),
         targetRoute: '/pos/returns-refunds',
         featureKey: PosFeatureCodes.returns,
-        permissionKey: PosPermissionCodes.viewReturns,
+        permissionKey: PosPermissionCodes.homeActionsReturnsEntry,
         metricValue: '0',
         metricLabel: 'Pending today',
       ),
@@ -1632,7 +1806,7 @@ PosHomeDashboardState _referenceDashboardState(
             permissions.contains(PosPermissionCodes.viewNewSaleCustomers),
         targetRoute: '/pos/customers',
         featureKey: PosFeatureCodes.customers,
-        permissionKey: PosPermissionCodes.viewNewSaleCustomers,
+        permissionKey: PosPermissionCodes.createNewSaleCustomer,
         metricValue: '0',
         metricLabel: 'Customer profiles',
       ),
@@ -1642,10 +1816,11 @@ PosHomeDashboardState _referenceDashboardState(
         description: 'View sales that were parked for later.',
         iconKey: 'parked-sales',
         buttonLabel: 'View Parked Sales',
-        isEnabled: permissions.contains(PosPermissionCodes.createParkedSale),
+        isEnabled: permissions.contains(PosPermissionCodes.createParkedSale) ||
+            permissions.contains(PosPermissionCodes.heldSalesView),
         targetRoute: '/pos/parked-sales',
         featureKey: PosFeatureCodes.sales,
-        permissionKey: PosPermissionCodes.createParkedSale,
+        permissionKey: PosPermissionCodes.heldSalesView,
         metricValue: '0',
         metricLabel: 'Waiting to resume',
       ),
@@ -1655,10 +1830,11 @@ PosHomeDashboardState _referenceDashboardState(
         description: 'View the current till cash summary.',
         iconKey: 'cash-drawer',
         buttonLabel: 'View Cash Drawer',
-        isEnabled: permissions.contains(PosPermissionCodes.viewCashDrawer),
+        isEnabled: permissions.contains(PosPermissionCodes.viewCashDrawer) ||
+            permissions.contains(PosPermissionCodes.cashDrawerPositionView),
         targetRoute: '/pos/cash-drawer',
         featureKey: PosFeatureCodes.till,
-        permissionKey: PosPermissionCodes.viewCashDrawer,
+        permissionKey: PosPermissionCodes.cashDrawerPositionView,
         metricValue: 'LKR 1000.00',
         metricLabel: 'Drawer balance',
       ),

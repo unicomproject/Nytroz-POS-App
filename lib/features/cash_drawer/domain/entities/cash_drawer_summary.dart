@@ -22,13 +22,13 @@ class CashDrawerSummary {
   final String status;
   final String openedBy;
   final DateTime? openedTime;
-  final double openingCash;
-  final double cashSales;
+  final double? openingCash;
+  final double? cashSales;
   final double cashRefunds;
   final double cashDrops;
   final double cashIns;
   final double cashOuts;
-  final double currentExpectedCash;
+  final double? currentExpectedCash;
   final String currencyCode;
 
   bool get isOpen => status.toLowerCase() == 'open';

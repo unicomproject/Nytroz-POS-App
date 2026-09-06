@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
-import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
+import 'package:nytroz_pos/core/access/pos_sales_permission_visibility.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/sale/domain/entities/pos_checkout_summary.dart';
 
@@ -21,7 +22,7 @@ class PosCartRow extends ConsumerWidget {
   });
 
   final PosNewSaleCartItem item;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final PosCalculatedCartLinePayload? linePricing;
   final bool isAuthoritative;
   final String currency;
@@ -29,10 +30,35 @@ class PosCartRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(posNewSaleCartProvider.notifier);
-    final session = ref.watch(authSessionProvider);
-    final granted = session?.permissionCodes.toSet() ?? const <String>{};
-    final canUpdateItems = PosPermissionAccess.canUpdateCartItem(granted);
-    final canRemoveItems = PosPermissionAccess.canRemoveCartItem(granted);
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    final canUpdateItems =
+        PosPermissionAccess.canUpdateCartItem(permissions.codes.toSet());
+    final canRemoveItems =
+        PosPermissionAccess.canRemoveCartItem(permissions.codes.toSet());
+
+    final showImage =
+        PosSalesPermissionVisibility.canShowCartLineImage(permissions);
+    final showName =
+        PosSalesPermissionVisibility.canShowCartLineName(permissions);
+    final showNote =
+        PosSalesPermissionVisibility.canShowCartLineNote(permissions);
+    final showQty =
+        PosSalesPermissionVisibility.canShowCartLineQuantity(permissions);
+    final showUnitPrice =
+        PosSalesPermissionVisibility.canShowCartLineUnitPrice(permissions);
+    final showLineTotal =
+        PosSalesPermissionVisibility.canShowCartLineTotal(permissions);
+
+    if (!showImage &&
+        !showName &&
+        !showNote &&
+        !showQty &&
+        !showUnitPrice &&
+        !showLineTotal &&
+        !canRemoveItems) {
+      return const SizedBox.shrink();
+    }
+
     void reportBlockedMutation(bool changed) {
       if (changed) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -42,108 +68,123 @@ class PosCartRow extends ConsumerWidget {
       ));
     }
 
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: TenantAdminSpacing.sm),
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            children: [
-              SizedBox.shrink(
-                child: Text(
-                  'Qty ${item.quantity}',
-                  style:
-                      const TextStyle(fontSize: 0, color: Colors.transparent),
-                ),
-              ),
-              _CartProductThumbnail(product: item.product),
-              const SizedBox(width: TenantAdminSpacing.md),
-              Expanded(
-                flex: 5,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.product.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: TenantAdminColors.bodyText,
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                    if (item.product.variantSummary.isNotEmpty)
-                      Text(
-                        item.product.variantSummary,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: TenantAdminColors.mutedText,
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                    if (item.product.normalizedLineNote.isNotEmpty)
-                      Text(
-                        'Note: ${item.product.normalizedLineNote}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: TenantAdminColors.mutedText,
-                            ),
-                      ),
-                  ],
-                ),
-              ),
-              Expanded(
-                flex: 4,
-                child: Center(
-                  child: PosQuantityStepper(
-                    quantity: item.quantity,
-                    onIncrement: canUpdateItems
-                        ? () => reportBlockedMutation(
-                            notifier.increaseQuantity(item.product.cartLineKey))
-                        : null,
-                    onDecrement: canUpdateItems
-                        ? () => reportBlockedMutation(
-                            notifier.decreaseQuantity(item.product.cartLineKey))
-                        : null,
+    final semanticParts = <String>[
+      if (showName) item.product.name,
+      if (showQty) 'Qty ${item.quantity}',
+      if (showUnitPrice) 'unit price',
+      if (showLineTotal) 'line total',
+    ];
+
+    return Semantics(
+      label: semanticParts.isEmpty ? 'Cart line' : semanticParts.join(', '),
+      button: onTap != null,
+      container: true,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: TenantAdminSpacing.sm),
+          child: SizedBox(
+            height: 64,
+            child: Row(
+              children: [
+                if (showImage) ...[
+                  _CartProductThumbnail(product: item.product),
+                  const SizedBox(width: TenantAdminSpacing.md),
+                ],
+                Expanded(
+                  flex: 5,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (showName)
+                        Text(
+                          item.product.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: TenantAdminColors.bodyText,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                        ),
+                      if (showName && item.product.variantSummary.isNotEmpty)
+                        Text(
+                          item.product.variantSummary,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: TenantAdminColors.mutedText,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                      if (showNote &&
+                          item.product.normalizedLineNote.isNotEmpty)
+                        Text(
+                          'Note: ${item.product.normalizedLineNote}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: TenantAdminColors.mutedText,
+                                  ),
+                        ),
+                    ],
                   ),
                 ),
-              ),
-              Expanded(
-                flex: 4,
-                child: PosCartAuthoritativeUnitPriceDisplay(
-                  catalogUnitPrice: item.product.price,
-                  currency: currency,
-                  isAuthoritative: isAuthoritative,
-                  linePricing: linePricing,
+                if (showQty)
+                  Expanded(
+                    flex: 4,
+                    child: Center(
+                      child: PosQuantityStepper(
+                        quantity: item.quantity,
+                        onIncrement: canUpdateItems
+                            ? () => reportBlockedMutation(notifier
+                                .increaseQuantity(item.product.cartLineKey))
+                            : null,
+                        onDecrement: canUpdateItems
+                            ? () => reportBlockedMutation(notifier
+                                .decreaseQuantity(item.product.cartLineKey))
+                            : null,
+                      ),
+                    ),
+                  ),
+                if (showUnitPrice)
+                  Expanded(
+                    flex: 4,
+                    child: PosCartAuthoritativeUnitPriceDisplay(
+                      catalogUnitPrice: item.product.price,
+                      currency: currency,
+                      isAuthoritative: isAuthoritative,
+                      linePricing: linePricing,
+                    ),
+                  ),
+                if (showLineTotal)
+                  Expanded(
+                    flex: 4,
+                    child: PosCartAuthoritativeLineTotalDisplay(
+                      catalogLineTotal: item.lineTotal,
+                      currency: currency,
+                      isAuthoritative: isAuthoritative,
+                      linePricing: linePricing,
+                    ),
+                  ),
+                SizedBox(
+                  width: 36,
+                  child: canRemoveItems
+                      ? IconButton(
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => reportBlockedMutation(
+                              notifier.removeItem(item.product.cartLineKey)),
+                          icon: const Icon(Icons.close_rounded, size: 20),
+                          color: const Color(0xFF2563EB),
+                          tooltip: 'Remove item',
+                        )
+                      : null,
                 ),
-              ),
-              Expanded(
-                flex: 4,
-                child: PosCartAuthoritativeLineTotalDisplay(
-                  catalogLineTotal: item.lineTotal,
-                  currency: currency,
-                  isAuthoritative: isAuthoritative,
-                  linePricing: linePricing,
-                ),
-              ),
-              SizedBox(
-                width: 36,
-                child: canRemoveItems
-                    ? IconButton(
-                        visualDensity: VisualDensity.compact,
-                        onPressed: () => reportBlockedMutation(
-                            notifier.removeItem(item.product.cartLineKey)),
-                        icon: const Icon(Icons.close_rounded, size: 20),
-                        color: const Color(0xFF2563EB),
-                        tooltip: 'Remove item',
-                      )
-                    : null,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

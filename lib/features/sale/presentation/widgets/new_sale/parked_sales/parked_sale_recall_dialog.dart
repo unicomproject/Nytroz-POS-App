@@ -34,23 +34,29 @@ Future<void> beginParkedSaleRecall(
     );
     return;
   }
-  final providerContainer = ProviderScope.containerOf(context);
-  final recalled = await showAppDialog<PosParkedSale>(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => UncontrolledProviderScope(
-      container: providerContainer,
-      child: ParkedSaleRecallDialog(sale: sale),
-    ),
-  );
-  if (recalled == null) {
-    return;
+  try {
+    final recalled =
+        await ref.read(posParkedSaleProvider.notifier).recall(sale.id);
+    // null = duplicate in-flight recall; cart already restored by notifier.
+    if (recalled == null) return;
+
+    // After recall, the parked list drops this row and the Recall button's
+    // context is often unmounted. Still notify the parent so Parked Sales
+    // can dismiss / navigate — do not gate success on the row context.
+    if (context.mounted) {
+      surfaceRecallValidationMessages(context, ref);
+    }
+    // Parent handlers capture a stable panel/dialog/screen context and ignore
+    // this row context, which is often unmounted after the hold leaves the list.
+    // ignore: use_build_context_synchronously
+    onRecallSuccess(context, ref, recalled);
+  } catch (error) {
+    // Failure: keep Parked Sales open; only surface the error if we can.
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(error.toString())));
   }
-  if (!context.mounted) {
-    return;
-  }
-  surfaceRecallValidationMessages(context, ref);
-  onRecallSuccess(context, ref, recalled);
 }
 
 void surfaceRecallValidationMessages(BuildContext context, WidgetRef ref) {

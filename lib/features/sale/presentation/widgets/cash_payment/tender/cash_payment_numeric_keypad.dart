@@ -1,252 +1,216 @@
 import 'package:flutter/material.dart';
-import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
-/// Target Cash Payment keypad typography — bold dark black digits.
-abstract final class CashPaymentKeypadStyle {
-  static const digitColor = Color(0xFF030303);
-  static const digitFontSize = 22.0;
-  static const actionLabelColor = Color(0xFF030303);
-  static const actionLabelFontSize = 10.0;
-}
+import 'package:nytroz_pos/core/access/effective_permission_set.dart';
+import 'package:nytroz_pos/core/access/pos_payment_permission_visibility.dart';
+import '../../payment_method/payment_method_style.dart';
 
 class CashPaymentNumericKeypad extends StatelessWidget {
   const CashPaymentNumericKeypad({
     super.key,
+    required this.permissions,
     required this.onDigitPressed,
     required this.onDoubleZeroPressed,
     required this.onBackspacePressed,
     required this.onClearPressed,
+    this.enabled = true,
   });
 
+  final EffectivePermissionSet permissions;
   final ValueChanged<String> onDigitPressed;
   final VoidCallback onDoubleZeroPressed;
   final VoidCallback onBackspacePressed;
   final VoidCallback onClearPressed;
+  final bool enabled;
+
+  static const double _gap = 8.0;
+
+  /// Canonical digit order for reflow (denied keys omitted — no blank slots).
+  static const _digitOrder = [
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '00',
+    '0',
+    '.',
+  ];
 
   @override
   Widget build(BuildContext context) {
+    final digits = _digitOrder
+        .where(
+          (d) =>
+              PosPaymentPermissionVisibility.canShowNumpadDigit(permissions, d),
+        )
+        .toList(growable: false);
+    final showBackspace =
+        PosPaymentPermissionVisibility.canShowNumpadBackspace(permissions);
+    final showClear =
+        PosPaymentPermissionVisibility.canShowNumpadClear(permissions);
+
+    if (digits.isEmpty && !showBackspace && !showClear) {
+      return const SizedBox.shrink();
+    }
+
+    final digitRows = <List<String>>[];
+    for (var i = 0; i < digits.length; i += 3) {
+      digitRows.add(digits.sublist(i, (i + 3).clamp(0, digits.length)));
+    }
+
+    final sideKeys = <Widget>[
+      if (showBackspace) Expanded(child: _backspaceKey(context)),
+      if (showBackspace && showClear) const SizedBox(height: _gap),
+      if (showClear) Expanded(child: _clearKey(context)),
+    ];
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
           flex: 3,
-          child: Column(
-            children: [
-              Expanded(
-                child: Row(
+          child: digitRows.isEmpty
+              ? const SizedBox.shrink()
+              : Column(
                   children: [
-                    _buildDigitKey('7', context),
-                    _buildDigitKey('8', context),
-                    _buildDigitKey('9', context),
+                    for (var r = 0; r < digitRows.length; r++) ...[
+                      if (r > 0) const SizedBox(height: _gap),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            for (var c = 0; c < digitRows[r].length; c++) ...[
+                              if (c > 0) const SizedBox(width: _gap),
+                              _digitOrSpecial(digitRows[r][c], context),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
-              ),
-              const SizedBox(height: 6),
-              Expanded(
-                child: Row(
-                  children: [
-                    _buildDigitKey('4', context),
-                    _buildDigitKey('5', context),
-                    _buildDigitKey('6', context),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 6),
-              Expanded(
-                child: Row(
-                  children: [
-                    _buildDigitKey('1', context),
-                    _buildDigitKey('2', context),
-                    _buildDigitKey('3', context),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 6),
-              Expanded(
-                child: Row(
-                  children: [
-                    _buildKey(
-                      label: '00',
-                      onTap: onDoubleZeroPressed,
-                      context: context,
-                    ),
-                    _buildDigitKey('0', context),
-                    _buildDisabledKey('.', context),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Column(
-            children: [
-              Expanded(
-                flex: 2,
-                child: _buildActionKey(
-                  icon: Icons.backspace_outlined,
-                  actionLabel: 'Backspace',
-                  onTap: onBackspacePressed,
-                  context: context,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Expanded(
-                flex: 2,
-                child: _buildActionKey(
-                  label: 'C',
-                  actionLabel: 'Clear',
-                  color: TenantAdminColors.danger,
-                  onTap: onClearPressed,
-                  context: context,
-                ),
-              ),
-            ],
+        if (sideKeys.isNotEmpty) ...[
+          const SizedBox(width: _gap),
+          Expanded(
+            flex: 1,
+            child: Column(children: sideKeys),
           ),
-        ),
+        ],
       ],
     );
   }
 
-  Widget _buildDigitKey(String digit, BuildContext context) {
-    return _buildKey(
-      label: digit,
-      onTap: () => onDigitPressed(digit),
-      context: context,
-    );
+  Widget _digitOrSpecial(String label, BuildContext context) {
+    if (label == '00') {
+      return _key(
+        key: const ValueKey('cash-key-00'),
+        label: '00',
+        onTap: enabled ? onDoubleZeroPressed : null,
+        context: context,
+      );
+    }
+    if (label == '.') {
+      return _key(
+        key: const ValueKey('cash-key-dot'),
+        label: '.',
+        onTap: enabled ? () => onDigitPressed('.') : null,
+        context: context,
+      );
+    }
+    return _digit(label, context);
   }
 
-  TextStyle _digitStyle(BuildContext context) {
-    return Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w900,
-              fontSize: CashPaymentKeypadStyle.digitFontSize,
-              color: CashPaymentKeypadStyle.digitColor,
-              height: 1,
-            ) ??
-        const TextStyle(
-          fontWeight: FontWeight.w900,
-          fontSize: CashPaymentKeypadStyle.digitFontSize,
-          color: CashPaymentKeypadStyle.digitColor,
-          height: 1,
-        );
-  }
+  Widget _digit(String digit, BuildContext context) => _key(
+        key: ValueKey('cash-key-$digit'),
+        label: digit,
+        onTap: enabled ? () => onDigitPressed(digit) : null,
+        context: context,
+      );
 
-  Widget _buildKey({
-    String? label,
-    IconData? icon,
-    Color? color,
-    required VoidCallback onTap,
+  Widget _key({
+    required Key key,
+    required String label,
+    required VoidCallback? onTap,
     required BuildContext context,
   }) {
     return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 3),
-        child: Material(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-            child: Container(
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-                border: Border.all(color: TenantAdminColors.border),
-              ),
-              child: icon != null
-                  ? Icon(
-                      icon,
-                      size: 20,
-                      color: color ?? CashPaymentKeypadStyle.digitColor,
-                    )
-                  : Text(
-                      label ?? '',
-                      style: _digitStyle(context).copyWith(
-                        color: color ?? CashPaymentKeypadStyle.digitColor,
-                      ),
-                    ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDisabledKey(String label, BuildContext context) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 3),
-        child: Container(
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: TenantAdminColors.subtleBackground,
-            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-            border: Border.all(color: TenantAdminColors.border),
-          ),
-          child: Text(
-            label,
-            style: _digitStyle(context).copyWith(
-              color: TenantAdminColors.mutedText.withValues(alpha: 0.45),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionKey({
-    String? label,
-    IconData? icon,
-    String? actionLabel,
-    Color? color,
-    required VoidCallback onTap,
-    required BuildContext context,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 3),
       child: Material(
+        key: key,
         color: Colors.white,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: const BorderSide(color: PaymentMethodStyle.border),
+        ),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-          child: Container(
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-              border: Border.all(color: TenantAdminColors.border),
+          borderRadius: BorderRadius.circular(10),
+          child: Center(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: PaymentMethodStyle.navy,
+              ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (icon != null)
-                  Icon(
-                    icon,
-                    size: 22,
-                    color: color ?? CashPaymentKeypadStyle.digitColor,
-                  )
-                else
-                  Text(
-                    label ?? '',
-                    style: _digitStyle(context).copyWith(
-                      fontSize: 24,
-                      color: color ?? CashPaymentKeypadStyle.digitColor,
-                    ),
-                  ),
-                if (actionLabel != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    actionLabel,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          fontSize: CashPaymentKeypadStyle.actionLabelFontSize,
-                          color:
-                              color ?? CashPaymentKeypadStyle.actionLabelColor,
-                        ),
-                  ),
-                ],
-              ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _backspaceKey(BuildContext context) {
+    return Material(
+      key: const ValueKey('cash-key-backspace'),
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: PaymentMethodStyle.border),
+      ),
+      child: InkWell(
+        onTap: enabled ? onBackspacePressed : null,
+        borderRadius: BorderRadius.circular(10),
+        child: Semantics(
+          button: true,
+          label: 'Backspace',
+          child: const Center(
+            child: Icon(
+              Icons.backspace_outlined,
+              size: 22,
+              color: Color(0xFF475569),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _clearKey(BuildContext context) {
+    return Material(
+      key: const ValueKey('cash-key-clear'),
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: PaymentMethodStyle.border),
+      ),
+      child: InkWell(
+        onTap: enabled ? onClearPressed : null,
+        borderRadius: BorderRadius.circular(10),
+        child: Semantics(
+          button: true,
+          label: 'Clear',
+          child: const Center(
+            child: Text(
+              'C',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFFDC2626),
+              ),
             ),
           ),
         ),

@@ -19,7 +19,8 @@ import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin
 // Verifies the mutually-exclusive Park Sale / Recall Sale visibility
 // contract on `PosNewSaleActionBar`:
 //   - non-empty cart + createParkedSale permission -> "Park Sale" only
-//   - empty cart + viewBackendParkedSales permission -> "Recall Sale" only
+//   - empty cart + heldSalesRecall / recallBackendParkedSale -> "Recall Sale" only
+//   - view alone must NOT show Recall
 //   - the applicable action's own permission gates it; the other action's
 //     permission never substitutes and a disabled wrong-label button is
 //     never shown.
@@ -37,12 +38,12 @@ void main() {
     expect(find.text('Recall Sale'), findsNothing);
   });
 
-  testWidgets('empty cart with view permission shows Recall Sale only',
+  testWidgets('empty cart with recall permission shows Recall Sale only',
       (tester) async {
     final harness = await _pump(
       tester,
       hasItems: false,
-      permissions: const {PosPermissionCodes.viewBackendParkedSales},
+      permissions: const {PosPermissionCodes.recallBackendParkedSale},
     );
     addTearDown(harness.dispose);
 
@@ -52,11 +53,11 @@ void main() {
 
   testWidgets(
       'non-empty cart missing create permission hides the action entirely '
-      '(even though view permission is granted)', (tester) async {
+      '(even though recall permission is granted)', (tester) async {
     final harness = await _pump(
       tester,
       hasItems: true,
-      permissions: const {PosPermissionCodes.viewBackendParkedSales},
+      permissions: const {PosPermissionCodes.recallBackendParkedSale},
     );
     addTearDown(harness.dispose);
 
@@ -65,7 +66,7 @@ void main() {
   });
 
   testWidgets(
-      'empty cart missing view permission hides the action entirely '
+      'empty cart missing recall permission hides the action entirely '
       '(even though create permission is granted)', (tester) async {
     final harness = await _pump(
       tester,
@@ -86,7 +87,7 @@ void main() {
       hasItems: true,
       permissions: const {
         PosPermissionCodes.createParkedSale,
-        PosPermissionCodes.viewBackendParkedSales,
+        PosPermissionCodes.recallBackendParkedSale,
       },
     );
     addTearDown(harness.dispose);
@@ -103,7 +104,7 @@ void main() {
       hasItems: false,
       permissions: const {
         PosPermissionCodes.createParkedSale,
-        PosPermissionCodes.viewBackendParkedSales,
+        PosPermissionCodes.recallBackendParkedSale,
       },
     );
     addTearDown(harness.dispose);
@@ -168,7 +169,7 @@ void main() {
       hasItems: false,
       permissions: const {
         PosPermissionCodes.createParkedSale,
-        PosPermissionCodes.viewBackendParkedSales,
+        PosPermissionCodes.recallBackendParkedSale,
       },
       attachCustomer: true,
     );
@@ -188,7 +189,7 @@ void main() {
       hasItems: false,
       permissions: const {
         PosPermissionCodes.createParkedSale,
-        PosPermissionCodes.viewBackendParkedSales,
+        PosPermissionCodes.recallBackendParkedSale,
       },
       discountOnlyCart: true,
     );
