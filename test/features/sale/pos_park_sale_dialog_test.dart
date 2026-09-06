@@ -162,7 +162,8 @@ void main() {
 
     repository.pending!.complete(_hold);
     await tester.pumpAndSettle();
-    expect(find.text('PS-2026-00012'), findsOneWidget);
+    expect(find.byType(Dialog), findsNothing);
+    expect(harness.container.read(posNewSaleCartProvider).hasItems, isFalse);
   });
 
   testWidgets('recoverable failure preserves note and cart', (tester) async {
