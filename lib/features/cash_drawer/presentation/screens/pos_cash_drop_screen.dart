@@ -55,8 +55,7 @@ class _PosCashDropScreenState extends ConsumerState<PosCashDropScreen> {
     final session = ref.watch(authSessionProvider);
     final granted = session?.permissionCodes.toSet() ?? const {};
 
-    if (!PosPermissionAccess.canViewCashDrawer(granted) ||
-        !PosPermissionAccess.canCreateCashDrawerMovement(granted)) {
+    if (!PosPermissionAccess.canCashDrop(granted)) {
       return const TenantAdminForbiddenScreen();
     }
 
@@ -110,6 +109,7 @@ class _PosCashDropScreenState extends ConsumerState<PosCashDropScreen> {
     final canConfirm = formState.hasValidAmount &&
         formState.hasSelectedMovementType &&
         catalog.status == CashDropCatalogStatus.ready &&
+        availableCash != null &&
         (formState.parsedAmount ?? 0) <= availableCash;
 
     return ColoredBox(

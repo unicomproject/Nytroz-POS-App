@@ -54,6 +54,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
           showTopBarSearch: shouldShowPosTopBarSearch(state.uri.path),
           showSidebar: state.uri.path != '/pos/home' &&
               state.uri.path != '/pos/new-sale' &&
+              state.uri.path != '/pos/new-sale/customer' &&
               state.uri.path != '/pos/customers' &&
               state.uri.path != '/pos/parked-sales' &&
               !state.uri.path.startsWith('/pos/online-orders') &&
@@ -91,6 +92,13 @@ List<RouteBase> posShellRoutes(Ref ref) {
                   ? const PosNewSaleScreen()
                   : const TenantAdminForbiddenScreen(),
           routes: [
+            GoRoute(
+              path: 'customer',
+              builder: (context, state) =>
+                  _canAccessCheckoutCustomer(ref.read(authSessionProvider))
+                      ? const PosCheckoutCustomerScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
             GoRoute(
               path: 'payment',
               builder: (context, state) =>
@@ -401,7 +409,8 @@ bool shouldShowPosTopBar(String path) {
 
   // The checkout-customer route owns the shared dark POS top bar so its
   // unified target workspace is not wrapped by a second desktop header.
-  if (path == '/pos/new-sale/payment/customer') {
+  if (path == '/pos/new-sale/payment/customer' ||
+      path == '/pos/new-sale/customer') {
     return false;
   }
 
@@ -451,7 +460,9 @@ _PosShellHeader _headerForPath(String path) {
   final title = switch (path) {
     '/pos/home' => 'Home',
     '/pos/new-sale' => 'New Sale',
+    '/pos/new-sale/customer' => 'Customer',
     '/pos/new-sale/payment' => 'Payment Method',
+    '/pos/new-sale/payment/customer' => 'Customer',
     '/pos/new-sale/payment/cash' => 'Cash Payment',
     '/pos/new-sale/payment/cash/success' => 'Cash Payment',
     '/pos/new-sale/payment/cash/success/print-receipt' => 'Print Receipt',
@@ -593,11 +604,7 @@ bool _canViewCustomers(AuthSession? session) {
 }
 
 bool _canAccessCheckoutCustomer(AuthSession? session) {
-  if (!_canProceedToPayment(session)) return false;
-  return PosPermissionAccess.hasAny(
-    session?.permissionCodes.toSet() ?? const {},
-    PosPermissionAccess.customerViewOrCreateAccessCodes,
-  );
+  return _canProceedToPayment(session);
 }
 
 bool _canViewReturnsRefunds(AuthSession? session) {

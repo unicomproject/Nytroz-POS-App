@@ -1,152 +1,278 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_payment_permission_visibility.dart';
 import '../../payment_method_style.dart';
 
-class SaleSummaryCard extends StatelessWidget {
-  const SaleSummaryCard({super.key, required this.cart});
+class SaleSummaryCard extends ConsumerWidget {
+  const SaleSummaryCard({
+    super.key,
+    required this.cart,
+    this.currency = '',
+    this.surface = PaymentSummaryPermissionSurface.checkout,
+  });
+
   final PosNewSaleCartState cart;
+  final String currency;
+  final PaymentSummaryPermissionSurface surface;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    final showQty = surface == PaymentSummaryPermissionSurface.checkout
+        ? PosPaymentPermissionVisibility.canShowCheckoutSummaryQuantity(
+            permissions,
+          )
+        : PosPaymentPermissionVisibility.canShowCashLineQuantity(permissions);
+    final showLineTotal = surface == PaymentSummaryPermissionSurface.checkout
+        ? PosPaymentPermissionVisibility.canShowCheckoutSummaryLineTotal(
+            permissions,
+          )
+        : PosPaymentPermissionVisibility.canShowCashLineItemTotal(permissions);
+    final showItem = surface == PaymentSummaryPermissionSurface.checkout
+        ? PosPaymentPermissionVisibility.canShowCheckoutSummaryItems(
+            permissions,
+          )
+        : PosPaymentPermissionVisibility.canShowCashLineItem(permissions);
+    final showItemCount = showQty;
+
     final items =
         cart.itemList.fold<int>(0, (sum, line) => sum + line.quantity);
+    final countLabel = '$items ${items == 1 ? 'Item' : 'Items'}';
+
+    if (!showItem && !showQty && !showLineTotal) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       key: const ValueKey('sale-summary-card'),
-      child: Column(children: [
-        Row(children: [
-          const Icon(Icons.shopping_cart_outlined,
-              color: PaymentMethodStyle.orange, size: 27),
-          const SizedBox(width: 11),
-          const Expanded(
-              child: Text('SALE SUMMARY',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900))),
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-              decoration: BoxDecoration(
-                  border: Border.all(color: PaymentMethodStyle.border),
-                  borderRadius: BorderRadius.circular(8)),
-              child: Text('$items Items • ${cart.itemList.length} Lines',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'SALE SUMMARY',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: PaymentMethodStyle.navy,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
+              if (showItemCount)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: PaymentMethodStyle.subtleBackground,
+                    border: Border.all(color: PaymentMethodStyle.border),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    countLabel,
+                    style: const TextStyle(
                       color: PaymentMethodStyle.navy,
-                      fontWeight: FontWeight.w700)),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ProductTableHeader(
+            currency: currency,
+            showItem: showItem,
+            showQty: showQty,
+            showAmount: showLineTotal,
+          ),
+          const Divider(height: 1, color: PaymentMethodStyle.border),
+          Expanded(
+            child: ListView.separated(
+              key: const ValueKey('payment-product-list'),
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              itemCount: cart.itemList.length,
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 1, color: PaymentMethodStyle.border),
+              itemBuilder: (_, index) => PaymentProductRow(
+                key: ValueKey('payment-product-row-$index'),
+                item: cart.itemList[index],
+                currency: currency,
+                showItem: showItem,
+                showQty: showQty,
+                showAmount: showLineTotal,
+              ),
             ),
           ),
-        ]),
-        const SizedBox(height: 12),
-        const ProductTableHeader(),
-        const Divider(height: 1, color: PaymentMethodStyle.border),
-        Expanded(
-          child: ListView.separated(
-            key: const ValueKey('payment-product-list'),
-            itemCount: cart.itemList.length,
-            separatorBuilder: (_, __) =>
-                const Divider(height: 1, color: PaymentMethodStyle.border),
-            itemBuilder: (_, index) => PaymentProductRow(
-              key: ValueKey('payment-product-row-$index'),
-              item: cart.itemList[index],
-            ),
-          ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
 
 class ProductTableHeader extends StatelessWidget {
-  const ProductTableHeader({super.key});
-  @override
-  Widget build(BuildContext context) => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 9),
-        child: Row(children: [
-          Expanded(flex: 5, child: _Header('Item')),
-          SizedBox(width: 52, child: _Header('Qty', center: true)),
-          SizedBox(width: 106, child: _Header('Price', right: true)),
-          SizedBox(width: 112, child: _Header('Total', right: true)),
-        ]),
-      );
-}
-
-class PaymentProductRow extends StatelessWidget {
-  const PaymentProductRow({super.key, required this.item});
-  final PosNewSaleCartItem item;
+  const ProductTableHeader({
+    super.key,
+    this.currency = '',
+    this.showItem = true,
+    this.showQty = true,
+    this.showAmount = true,
+  });
+  final String currency;
+  final bool showItem;
+  final bool showQty;
+  final bool showAmount;
 
   @override
   Widget build(BuildContext context) {
-    final image = item.product.imageUrl;
-    return SizedBox(
-      height: 62,
-      child: Row(children: [
-        Expanded(
-          flex: 5,
-          child: Row(children: [
-            SizedBox.square(
-              dimension: 42,
-              child: image?.isNotEmpty == true
-                  ? Image.network(image!,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const _ImageFallback())
-                  : const _ImageFallback(),
+    final currencyLabel = currency.trim().isNotEmpty ? currency.trim() : 'LKR';
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          if (showItem) const Expanded(flex: 5, child: _Header('Item')),
+          if (showQty)
+            const SizedBox(width: 48, child: _Header('Qty', center: true)),
+          if (showAmount)
+            SizedBox(
+              width: 120,
+              child: _Header('Amount ($currencyLabel)', right: true),
             ),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item.product.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
-                  if (item.product.variantSummary.isNotEmpty)
-                    Text(item.product.variantSummary,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 12, color: Color(0xFF63718A))),
-                ],
-              ),
-            ),
-          ]),
-        ),
-        SizedBox(
-            width: 52,
-            child: Center(child: QuantityPill(value: item.quantity))),
-        SizedBox(
-            width: 106,
-            child: Text(paymentMoney(item.product.price),
-                textAlign: TextAlign.right,
-                maxLines: 1,
-                style: const TextStyle(color: PaymentMethodStyle.navy))),
-        SizedBox(
-            width: 112,
-            child: Text(paymentMoney(item.lineTotal),
-                textAlign: TextAlign.right,
-                maxLines: 1,
-                style: const TextStyle(fontWeight: FontWeight.w700))),
-      ]),
+        ],
+      ),
     );
   }
 }
 
-class QuantityPill extends StatelessWidget {
-  const QuantityPill({super.key, required this.value});
-  final int value;
+class PaymentProductRow extends StatelessWidget {
+  const PaymentProductRow({
+    super.key,
+    required this.item,
+    this.currency = '',
+    this.showItem = true,
+    this.showQty = true,
+    this.showAmount = true,
+  });
+
+  final PosNewSaleCartItem item;
+  final String currency;
+  final bool showItem;
+  final bool showQty;
+  final bool showAmount;
+
   @override
-  Widget build(BuildContext context) => Container(
-        width: 40,
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        decoration: BoxDecoration(
-            border: Border.all(color: PaymentMethodStyle.border),
-            borderRadius: BorderRadius.circular(20)),
-        child: Text('$value',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-                color: PaymentMethodStyle.navy, fontWeight: FontWeight.w700)),
-      );
+  Widget build(BuildContext context) {
+    final image = item.product.imageUrl;
+    final sku = item.product.sku?.trim();
+    final variant = item.product.variantSummary.trim();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          if (showItem)
+            Expanded(
+              flex: 5,
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: SizedBox.square(
+                      dimension: 48,
+                      child: image?.isNotEmpty == true
+                          ? Image.network(
+                              image!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  const _ImageFallback(),
+                            )
+                          : const _ImageFallback(),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.product.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: PaymentMethodStyle.navy,
+                          ),
+                        ),
+                        if (variant.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            variant,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                        if (sku != null && sku.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            'SKU: $sku',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF94A3B8),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (showQty)
+            SizedBox(
+              width: 48,
+              child: Text(
+                '${item.quantity}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: PaymentMethodStyle.navy,
+                ),
+              ),
+            ),
+          if (showAmount)
+            SizedBox(
+              width: 120,
+              child: Text(
+                paymentMoney(item.lineTotal, currency),
+                textAlign: TextAlign.right,
+                maxLines: 1,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: PaymentMethodStyle.navy,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Header extends StatelessWidget {
@@ -154,23 +280,33 @@ class _Header extends StatelessWidget {
   final String text;
   final bool center;
   final bool right;
+
   @override
-  Widget build(BuildContext context) => Text(text,
-      textAlign: right
-          ? TextAlign.right
-          : center
-              ? TextAlign.center
-              : TextAlign.left,
-      style: const TextStyle(
-          color: PaymentMethodStyle.navy, fontWeight: FontWeight.w700));
+  Widget build(BuildContext context) => Text(
+        text,
+        textAlign: right
+            ? TextAlign.right
+            : center
+                ? TextAlign.center
+                : TextAlign.left,
+        style: const TextStyle(
+          color: Color(0xFF64748B),
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      );
 }
 
 class _ImageFallback extends StatelessWidget {
   const _ImageFallback();
+
   @override
-  Widget build(BuildContext context) => const ColoredBox(
-        color: Color(0xFFF4F6F9),
-        child:
-            Icon(Icons.image_not_supported_outlined, color: Color(0xFF7B8798)),
+  Widget build(BuildContext context) => Container(
+        color: const Color(0xFFF1F5F9),
+        child: const Icon(
+          Icons.shopping_bag_outlined,
+          color: Color(0xFF94A3B8),
+          size: 24,
+        ),
       );
 }

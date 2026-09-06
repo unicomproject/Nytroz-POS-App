@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
+import 'package:nytroz_pos/core/access/pos_sales_permission_visibility.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/discount/presentation/providers/pos_discount_provider.dart';
@@ -25,8 +27,17 @@ class PosPaymentBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authSessionProvider);
+    final permissions = ref.watch(effectivePermissionSetProvider);
     final deviceState = ref.watch(deviceActivationProvider);
     final tillState = ref.watch(tillProvider);
+    final showTotal =
+        PosSalesPermissionVisibility.canShowCartTotal(permissions);
+    final showCheckout =
+        PosSalesPermissionVisibility.canShowCheckoutAction(permissions);
+    if (!showTotal && !showCheckout) {
+      return const SizedBox.shrink();
+    }
+
     final canCheckout = PosPermissionAccess.canCheckoutSession(session);
     final hasPaymentMethod =
         allowedPosPaymentMethods(session?.permissionCodes.toSet() ?? const {})
@@ -42,7 +53,8 @@ class PosPaymentBar extends ConsumerWidget {
       cart: cart,
       pricingAsync: pricingAsync,
     );
-    final canProceed = cart.hasItems &&
+    final canProceed = showCheckout &&
+        cart.hasItems &&
         canCheckout &&
         hasPaymentMethod &&
         hasTrustedDevice &&
@@ -70,95 +82,102 @@ class PosPaymentBar extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              Expanded(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Total',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: totalTextSize,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(width: TenantAdminSpacing.sm),
-                    Text(
-                      '|',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: amountTextSize,
-                        fontWeight: FontWeight.w300,
-                      ),
-                    ),
-                    const SizedBox(width: TenantAdminSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        pricingState.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+              if (showTotal)
+                Expanded(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Total',
                         style: TextStyle(
                           color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: amountTextSize,
+                          fontSize: totalTextSize,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: TenantAdminSpacing.sm),
-              FilledButton.icon(
-                onPressed: canProceed
-                    ? () async {
-                        final pending = cart.cartDiscount?.isPendingSync ==
-                                true ||
-                            cart.items.values.any(
-                                (item) => item.discount?.isPendingSync == true);
-                        if (pending) {
-                          await syncPendingPosDiscounts(ref: ref);
-                          final refreshed = ref.read(posNewSaleCartProvider);
-                          final stillPending =
-                              refreshed.cartDiscount?.isPendingSync == true ||
-                                  refreshed.items.values.any((item) =>
-                                      item.discount?.isPendingSync == true);
-                          if (stillPending) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                  'Discount is saved offline and must sync before payment.',
-                                )),
-                              );
+                      const SizedBox(width: TenantAdminSpacing.sm),
+                      Text(
+                        '|',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: amountTextSize,
+                          fontWeight: FontWeight.w300,
+                        ),
+                      ),
+                      const SizedBox(width: TenantAdminSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          pricingState.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: amountTextSize,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                const Spacer(),
+              if (showCheckout) ...[
+                const SizedBox(width: TenantAdminSpacing.sm),
+                FilledButton.icon(
+                  onPressed: canProceed
+                      ? () async {
+                          final pending = cart.cartDiscount?.isPendingSync ==
+                                  true ||
+                              cart.items.values.any((item) =>
+                                  item.discount?.isPendingSync == true);
+                          if (pending) {
+                            await syncPendingPosDiscounts(ref: ref);
+                            final refreshed = ref.read(posNewSaleCartProvider);
+                            final stillPending = refreshed
+                                        .cartDiscount?.isPendingSync ==
+                                    true ||
+                                refreshed.items.values.any((item) =>
+                                    item.discount?.isPendingSync == true);
+                            if (stillPending) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                    'Discount is saved offline and must sync before payment.',
+                                  )),
+                                );
+                              }
+                              return;
                             }
-                            return;
+                          }
+                          if (context.mounted) {
+                            context.push('/pos/new-sale/customer');
                           }
                         }
-                        if (context.mounted) {
-                          context.push('/pos/new-sale/payment');
-                        }
-                      }
-                    : null,
-                icon: isNarrow
-                    ? const SizedBox.shrink()
-                    : const Icon(Icons.arrow_forward_rounded, size: 16),
-                label: Text(isNarrow ? 'Pay' : 'Proceed to Payment'),
-                style: FilledButton.styleFrom(
-                  minimumSize: Size(isNarrow ? 80 : 150, 44),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  backgroundColor: Colors.white,
-                  foregroundColor: accentColor,
-                  disabledBackgroundColor: Colors.white.withValues(alpha: 0.68),
-                  disabledForegroundColor: TenantAdminColors.offline,
-                  textStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                      : null,
+                  icon: isNarrow
+                      ? const SizedBox.shrink()
+                      : const Icon(Icons.arrow_forward_rounded, size: 16),
+                  label: Text(isNarrow ? 'Pay' : 'Proceed to Payment'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: Size(isNarrow ? 80 : 150, 44),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    backgroundColor: Colors.white,
+                    foregroundColor: accentColor,
+                    disabledBackgroundColor:
+                        Colors.white.withValues(alpha: 0.68),
+                    disabledForegroundColor: TenantAdminColors.offline,
+                    textStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         );

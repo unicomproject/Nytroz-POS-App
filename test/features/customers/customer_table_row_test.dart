@@ -1,10 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nytroz_pos/core/access/effective_permission_set.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/customers/presentation/widgets/customer_table_row.dart';
 import 'package:nytroz_pos/features/customers/presentation/widgets/customers_table_section.dart';
 import 'package:nytroz_pos/features/sale/domain/entities/pos_customer.dart';
 
+/// Secondary-column list fields needed for row/header assertions.
+final _fullListColumnPermissions = EffectivePermissionSet.fromIterable({
+  PosPermissionCodes.customersListId,
+  PosPermissionCodes.customersListName,
+  PosPermissionCodes.customersListPhone,
+  PosPermissionCodes.customersListEmail,
+  PosPermissionCodes.customersListSource,
+  PosPermissionCodes.customersListStatus,
+  PosPermissionCodes.customersListOrderCount,
+  PosPermissionCodes.customersListTotalSpend,
+});
+
 void main() {
+  Future<void> pumpWithPermissions(
+    WidgetTester tester,
+    Widget child, {
+    EffectivePermissionSet? permissions,
+  }) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          effectivePermissionSetProvider.overrideWithValue(
+            permissions ?? _fullListColumnPermissions,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(body: child),
+        ),
+      ),
+    );
+  }
+
   testWidgets('CustomerTableRow binds source, orders, and spent display',
       (tester) async {
     const customer = PosCustomer(
@@ -17,16 +52,13 @@ void main() {
       currencyCode: 'USD',
     );
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: CustomerTableRow(
-            customer: customer,
-            selected: false,
-            showSecondaryColumns: true,
-            onSelect: () {},
-          ),
-        ),
+    await pumpWithPermissions(
+      tester,
+      CustomerTableRow(
+        customer: customer,
+        selected: false,
+        showSecondaryColumns: true,
+        onSelect: () {},
       ),
     );
 
@@ -50,16 +82,13 @@ void main() {
       isMixedCurrencySpend: true,
     );
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: CustomerTableRow(
-            customer: customer,
-            selected: false,
-            showSecondaryColumns: true,
-            onSelect: () {},
-          ),
-        ),
+    await pumpWithPermissions(
+      tester,
+      CustomerTableRow(
+        customer: customer,
+        selected: false,
+        showSecondaryColumns: true,
+        onSelect: () {},
       ),
     );
 
@@ -86,31 +115,28 @@ void main() {
       ),
     );
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: SizedBox(
-              width: 1200,
-              height: 320,
-              child: CustomersTableSection(
-                customers: customers,
-                selectedCustomerId: null,
-                isLoading: false,
-                errorMessage: null,
-                query: '',
-                page: 1,
-                totalPages: 3,
-                rangeStart: 1,
-                rangeEnd: 4,
-                totalCount: 12,
-                useCardLayout: false,
-                showSecondaryColumns: true,
-                onSelect: (_) {},
-                onRetry: () {},
-                onPageChanged: (_) {},
-              ),
-            ),
+    await pumpWithPermissions(
+      tester,
+      Center(
+        child: SizedBox(
+          width: 1200,
+          height: 320,
+          child: CustomersTableSection(
+            customers: customers,
+            selectedCustomerId: null,
+            isLoading: false,
+            errorMessage: null,
+            query: '',
+            page: 1,
+            totalPages: 3,
+            rangeStart: 1,
+            rangeEnd: 4,
+            totalCount: 12,
+            useCardLayout: false,
+            showSecondaryColumns: true,
+            onSelect: (_) {},
+            onRetry: () {},
+            onPageChanged: (_) {},
           ),
         ),
       ),

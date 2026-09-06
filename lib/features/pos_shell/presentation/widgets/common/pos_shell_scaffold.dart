@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../pos/presentation/widgets/new_sale/navigation/pos_cashier_bottom_navigation.dart';
+import '../../../../../core/access/permission_access_providers.dart';
 import 'pos_desktop_top_bar.dart';
 import 'pos_mobile_top_bar.dart';
+import 'pos_shell_bottom_nav_destinations.dart';
+import 'pos_shell_top_bar_visibility.dart';
 import 'pos_top_bar.dart';
 import '../sidebar/pos_sidebar.dart';
 import '../home/pos_dashboard_top_bar_content.dart';
@@ -10,7 +14,7 @@ import 'package:nytroz_pos/features/pos/presentation/widgets/new_sale/pos_new_sa
 
 const double _posShellMobileBreakpoint = 900;
 
-class PosShellScaffold extends StatelessWidget {
+class PosShellScaffold extends ConsumerWidget {
   const PosShellScaffold({
     super.key,
     required this.title,
@@ -35,7 +39,13 @@ class PosShellScaffold extends StatelessWidget {
   final bool isDashboard;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    final topBarAllowed =
+        showTopBar && PosShellTopBarVisibility.shouldRenderTopBar(permissions);
+    final bottomNavAllowed = showBottomNavigation &&
+        shouldShowPosCashierBottomNav(permissions);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final useDesktopShell =
@@ -54,9 +64,9 @@ class PosShellScaffold extends StatelessWidget {
                     child: _PosShellContent(
                       title: title,
                       subtitle: subtitle,
-                      showTopBar: showTopBar,
+                      showTopBar: topBarAllowed,
                       showTopBarSearch: showTopBarSearch,
-                      showBottomNavigation: showBottomNavigation,
+                      showBottomNavigation: bottomNavAllowed,
                       isNewSale: isNewSale,
                       isDashboard: isDashboard,
                       child: child,
@@ -69,16 +79,16 @@ class PosShellScaffold extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: showTopBar ? const PosMobileTopBar() : null,
+          appBar: topBarAllowed ? const PosMobileTopBar() : null,
           body: _PosShellContent(
             title: title,
             subtitle: subtitle,
             showTopBar: false,
             showTopBarSearch: showTopBarSearch,
-            showBottomNavigation: showBottomNavigation,
+            showBottomNavigation: bottomNavAllowed,
             isNewSale: isNewSale,
             isDashboard: isDashboard,
-            applyTopSafeArea: !showTopBar,
+            applyTopSafeArea: !topBarAllowed,
             child: child,
           ),
         );

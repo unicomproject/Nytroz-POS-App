@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import '../../../../core/access/effective_permission_set.dart';
 import '../../domain/entities/setup_token_validation.dart';
 import '../../domain/entities/auth_branding.dart';
 import '../../domain/entities/auth_exception.dart';
@@ -124,7 +125,7 @@ List<String> _resolvePermissionCodes({
 }) {
   final fromPayload = _permissionCodesFromJson(payload);
   if (fromPayload.isNotEmpty) {
-    return fromPayload;
+    return EffectivePermissionSet.normalizeToList(fromPayload);
   }
 
   final fromJwt = readJwtPermissionCodes(accessToken);
@@ -133,13 +134,27 @@ List<String> _resolvePermissionCodes({
       'Permissions resolved from JWT claims. count=${fromJwt.length}',
       name: 'auth.mapper',
     );
-    return fromJwt;
+    return EffectivePermissionSet.normalizeToList(fromJwt);
   }
 
-  return fromPayload;
+  return EffectivePermissionSet.normalizeToList(fromPayload);
 }
 
 List<String> _permissionCodesFromJson(Map<String, dynamic> payload) {
+  // Chunk 5: prefer authoritative effective permission fields when present.
+  final rawEffectiveCodes = payload['effectivePermissionCodes'] ??
+      payload['EffectivePermissionCodes'] ??
+      payload['effectivePermissions'] ??
+      payload['EffectivePermissions'] ??
+      _mapValue(payload['user'], 'effectivePermissionCodes') ??
+      _mapValue(payload['user'], 'EffectivePermissionCodes');
+  if (rawEffectiveCodes is Iterable) {
+    final parsed = _parsePermissionIterable(rawEffectiveCodes);
+    if (parsed.isNotEmpty) {
+      return parsed;
+    }
+  }
+
   final rawPermissionCodes = payload['permissionCodes'] ??
       payload['PermissionCodes'] ??
       _mapValue(payload['user'], 'permissionCodes') ??
@@ -161,28 +176,31 @@ List<String> _permissionCodesFromJson(Map<String, dynamic> payload) {
       name: 'auth.mapper');
 
   if (rawPermissions is Iterable) {
-    final parsed = rawPermissions
-        .map((item) {
-          if (item is Map) {
-            return item['permissionCode']?.toString() ??
-                item['PermissionCode']?.toString() ??
-                item['code']?.toString() ??
-                item['Code']?.toString();
-          }
-
-          return item.toString();
-        })
-        .whereType<String>()
-        .map((item) => item.trim())
-        .where((item) => item.isNotEmpty)
-        .toList(growable: false);
-
+    final parsed = _parsePermissionIterable(rawPermissions);
     developer.log('Final parsed permissions: $parsed', name: 'auth.mapper');
     return parsed;
   }
 
   developer.log('No permissions found or not iterable.', name: 'auth.mapper');
   return const [];
+}
+
+List<String> _parsePermissionIterable(Iterable rawPermissions) {
+  return rawPermissions
+      .map((item) {
+        if (item is Map) {
+          return item['permissionCode']?.toString() ??
+              item['PermissionCode']?.toString() ??
+              item['code']?.toString() ??
+              item['Code']?.toString();
+        }
+
+        return item.toString();
+      })
+      .whereType<String>()
+      .map((item) => item.trim())
+      .where((item) => item.isNotEmpty)
+      .toList(growable: false);
 }
 
 Object? _mapValue(Object? value, String key) {

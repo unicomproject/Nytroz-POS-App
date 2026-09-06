@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_payment_permission_visibility.dart';
 
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
-class PaymentSuccessStatusHeader extends StatelessWidget {
+class PaymentSuccessStatusHeader extends ConsumerWidget {
   const PaymentSuccessStatusHeader({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    if (!PosPaymentPermissionVisibility.canShowSaleCompleteSuccessMessage(
+      permissions,
+    )) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       children: [
         const Icon(

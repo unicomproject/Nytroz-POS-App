@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_sales_permission_visibility.dart';
 
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
-class ParkedSalesListHeader extends StatelessWidget {
+class ParkedSalesListHeader extends ConsumerWidget {
   const ParkedSalesListHeader({
     super.key,
     required this.count,
@@ -17,23 +20,31 @@ class ParkedSalesListHeader extends StatelessWidget {
   final VoidCallback? onClose;
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(
-          TenantAdminSpacing.lg,
-          TenantAdminSpacing.lg,
-          TenantAdminSpacing.sm,
-          TenantAdminSpacing.md,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Parked Sales',
-                    style: TenantAdminTextStyles.pageTitle(context),
-                  ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    final showCount =
+        PosSalesPermissionVisibility.canShowHeldActiveCount(permissions);
+    final canRefresh =
+        PosSalesPermissionVisibility.canRefreshHeldList(permissions);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        TenantAdminSpacing.lg,
+        TenantAdminSpacing.lg,
+        TenantAdminSpacing.sm,
+        TenantAdminSpacing.md,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Parked Sales',
+                  style: TenantAdminTextStyles.pageTitle(context),
+                ),
+                if (showCount) ...[
                   const SizedBox(height: TenantAdminSpacing.xs),
                   Semantics(
                     liveRegion: true,
@@ -43,8 +54,10 @@ class ParkedSalesListHeader extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
+              ],
             ),
+          ),
+          if (canRefresh)
             IconButton(
               tooltip: refreshing
                   ? 'Refreshing parked sales'
@@ -57,13 +70,14 @@ class ParkedSalesListHeader extends StatelessWidget {
                     )
                   : const Icon(Icons.refresh_rounded),
             ),
-            if (onClose != null)
-              IconButton(
-                tooltip: 'Close Parked Sales',
-                onPressed: onClose,
-                icon: const Icon(Icons.close_rounded),
-              ),
-          ],
-        ),
-      );
+          if (onClose != null)
+            IconButton(
+              tooltip: 'Close Parked Sales',
+              onPressed: onClose,
+              icon: const Icon(Icons.close_rounded),
+            ),
+        ],
+      ),
+    );
+  }
 }

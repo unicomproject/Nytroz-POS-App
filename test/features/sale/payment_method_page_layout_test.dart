@@ -1,11 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nytroz_pos/core/access/effective_permission_set.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/discount/domain/entities/pos_cart_discount.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/sale/domain/entities/pos_customer.dart';
 import 'package:nytroz_pos/features/sale/domain/entities/pos_payment_method_type.dart';
 import 'package:nytroz_pos/features/sale/presentation/providers/pos_checkout_summary_provider.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/payment_method/pages/payment_method_page.dart';
+
+/// Full checkout payment-method screen grant (Chunk 14 fine-grained keys).
+final _fullCheckoutPaymentPermissions = EffectivePermissionSet.fromIterable({
+  PosPermissionCodes.checkoutSale,
+  PosPermissionCodes.checkoutMethodsContainer,
+  PosPermissionCodes.acceptCashPayment,
+  PosPermissionCodes.acceptCardPayment,
+  PosPermissionCodes.acceptQrPayment,
+  PosPermissionCodes.acceptSplitPayment,
+  PosPermissionCodes.checkoutCustomerSummary,
+  PosPermissionCodes.checkoutSummaryItems,
+  PosPermissionCodes.checkoutSummaryQuantity,
+  PosPermissionCodes.checkoutSummaryPrice,
+  PosPermissionCodes.checkoutSummaryLineTotal,
+  PosPermissionCodes.checkoutSummarySubtotal,
+  PosPermissionCodes.checkoutSummaryDiscount,
+  PosPermissionCodes.checkoutSummaryTax,
+  PosPermissionCodes.checkoutSummaryTotal,
+});
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -14,9 +37,26 @@ void main() {
       (tester) async {
     await _pumpPage(tester, cart: _cart());
     expect(find.byKey(const ValueKey('sale-summary-card')), findsOneWidget);
+    expect(find.byKey(const ValueKey('payment-method-workspace-card')),
+        findsOneWidget);
     expect(find.byKey(const ValueKey('payment-customer-card')), findsOneWidget);
+    expect(find.byKey(const ValueKey('payment-change-customer-action')),
+        findsNothing);
     expect(find.byKey(const ValueKey('payment-discount-card')), findsNothing);
     expect(find.byKey(const ValueKey('payment-product-list')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('selected customer card carries the change action',
+      (tester) async {
+    await _pumpPage(tester, cart: _cart(customer: true));
+
+    expect(find.text('Maya Silva'), findsOneWidget);
+    expect(find.byKey(const ValueKey('payment-customer-change-hint')),
+        findsOneWidget);
+    expect(find.text('Tap to change customer'), findsOneWidget);
+    expect(find.byKey(const ValueKey('payment-change-customer-action')),
+        findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -71,6 +111,8 @@ void main() {
       );
 
       expect(find.byKey(const ValueKey('payment-method-page')), findsOneWidget);
+      expect(find.byKey(const ValueKey('payment-method-workspace-card')),
+          findsOneWidget);
       expect(find.byKey(const ValueKey('payment-methods-section')),
           findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -88,6 +130,11 @@ Future<void> _pumpPage(
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [
+        effectivePermissionSetProvider.overrideWithValue(
+          _fullCheckoutPaymentPermissions,
+        ),
+      ],
       child: MaterialApp(
         home: MediaQuery(
           data: MediaQueryData(
@@ -111,7 +158,7 @@ Future<void> _pumpPage(
   await tester.pump();
 }
 
-PosNewSaleCartState _cart({bool discount = false}) {
+PosNewSaleCartState _cart({bool discount = false, bool customer = false}) {
   const product = PosNewSaleProduct(
     id: 'line-1',
     productId: 'product-1',
@@ -132,6 +179,14 @@ PosNewSaleCartState _cart({bool discount = false}) {
             reason: 'Approved offer',
             applicationId: 'application-1',
             status: 'applied',
+          )
+        : null,
+    selectedCustomer: customer
+        ? const PosCustomer(
+            customerId: 'customer-1',
+            fullName: 'Maya Silva',
+            phone: '+94771234567',
+            status: 'ACTIVE',
           )
         : null,
   );

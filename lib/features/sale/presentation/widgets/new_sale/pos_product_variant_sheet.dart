@@ -3,7 +3,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
+import 'package:nytroz_pos/core/access/pos_sales_permission_visibility.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/pos/presentation/providers/pos_catalog_provider.dart';
@@ -42,6 +44,7 @@ String _newUuidV4() {
 
 abstract final class _PopupTokens {
   static const primary = Color(0xFFFF3B0A);
+  static const addToCart = Color(0xFFFF6A00);
   static const navy = Color(0xFF0C1F4A);
   static const secondaryText = Color(0xFF667085);
   static const border = Color(0xFFE4E7EC);
@@ -56,6 +59,14 @@ Future<void> showPosProductVariantSheet({
   required PosCatalogProductSummary summary,
   PosNewSaleCartItem? existingCartItem,
 }) {
+  final permissions = ref.read(effectivePermissionSetProvider);
+  if (!PosSalesPermissionVisibility.canViewProductDetail(permissions)) {
+    PosPermissionAccess.showAccessDeniedSnackBar(
+      context,
+      'You do not have permission to view product details.',
+    );
+    return Future.value();
+  }
   return showAppDialog<void>(
     context: context,
     barrierDismissible: true,
@@ -115,6 +126,17 @@ class _PosProductVariantSheetState
 
   @override
   Widget build(BuildContext context) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    if (!PosSalesPermissionVisibility.canViewProductDetail(permissions)) {
+      return _buildDialogShell(
+        context,
+        _buildUnavailableMessage(
+          context,
+          'Product details are not available.',
+        ),
+      );
+    }
+
     final detailAsync =
         ref.watch(posProductDetailProvider(widget.summary.productId));
     final recommendationsAsync = ref.watch(posProductRecommendationsProvider(
@@ -283,12 +305,23 @@ class _PosProductVariantSheetState
       recommendations: recommendations,
     );
 
-    final recommendationPane = _buildRecommendationsPanel(
-      context,
-      recommendations,
-      recommendationError,
-      currency,
-    );
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    final showImage =
+        PosSalesPermissionVisibility.canShowDetailImage(permissions);
+    final showRecommendations =
+        PosSalesPermissionVisibility.canShowDetailRecommendations(permissions);
+    // Close chrome vs structural dismiss: close permission gates branded chrome
+    // semantics only; IconButton always remains so the sheet is not trapped.
+    final recommendationPane = showRecommendations
+        ? _buildRecommendationsPanel(
+            context,
+            recommendations,
+            recommendationError,
+            currency,
+          )
+        : null;
+
+    Widget? imagePane = showImage ? _buildImagePane(imageUrl) : null;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -305,8 +338,10 @@ class _PosProductVariantSheetState
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 34, child: _buildImagePane(imageUrl)),
-              const SizedBox(width: 28),
+              if (imagePane != null) ...[
+                Expanded(flex: 34, child: imagePane),
+                const SizedBox(width: 28),
+              ],
               Expanded(
                 flex: 40,
                 child: ConstrainedBox(
@@ -317,8 +352,10 @@ class _PosProductVariantSheetState
                   ),
                 ),
               ),
-              const SizedBox(width: 28),
-              Expanded(flex: 26, child: recommendationPane),
+              if (recommendationPane != null) ...[
+                const SizedBox(width: 28),
+                Expanded(flex: 26, child: recommendationPane),
+              ],
             ],
           )
         else
@@ -330,24 +367,31 @@ class _PosProductVariantSheetState
                 children: [
                   if (useTwoColumns)
                     Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: _buildImagePane(imageUrl)),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (imagePane != null) ...[
+                          Expanded(child: imagePane),
                           const SizedBox(width: 24),
-                          Expanded(child: detailsPane),
-                        ])
+                        ],
+                        Expanded(child: detailsPane),
+                      ],
+                    )
                   else ...[
-                    Align(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 360),
-                        child: _buildImagePane(imageUrl),
+                    if (imagePane != null) ...[
+                      Align(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 360),
+                          child: imagePane,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 22),
+                      const SizedBox(height: 22),
+                    ],
                     detailsPane,
                   ],
-                  const SizedBox(height: 22),
-                  recommendationPane,
+                  if (recommendationPane != null) ...[
+                    const SizedBox(height: 22),
+                    recommendationPane,
+                  ],
                 ],
               ),
             ),
@@ -401,33 +445,76 @@ class _PosProductVariantSheetState
     required bool canSubmit,
     required List<PosProductRecommendation> recommendations,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    final showName =
+        PosSalesPermissionVisibility.canShowDetailName(permissions);
+    final showPrice =
+        PosSalesPermissionVisibility.canShowDetailPrice(permissions);
+    final showStock =
+        PosSalesPermissionVisibility.canShowDetailStock(permissions);
+    final showSku = PosSalesPermissionVisibility.canShowDetailSku(permissions);
+    final showDescription =
+        PosSalesPermissionVisibility.canShowDetailDescription(permissions);
+    final showVariants =
+        PosSalesPermissionVisibility.canShowDetailVariants(permissions);
+    final canSelectVariant =
+        PosSalesPermissionVisibility.canSelectDetailVariant(permissions);
+    final showAvailableQty =
+        PosSalesPermissionVisibility.canShowDetailAvailableQty(permissions);
+    final showQuantity =
+        PosSalesPermissionVisibility.canShowDetailQuantity(permissions);
+    final canMutateQty =
+        PosSalesPermissionVisibility.canMutateDetailQuantity(permissions);
+    final showNoteView =
+        PosSalesPermissionVisibility.canShowDetailNoteView(permissions);
+    final canEditNote =
+        PosSalesPermissionVisibility.canEditDetailNote(permissions);
+    final showCancel =
+        PosSalesPermissionVisibility.canShowDetailCancel(permissions);
+    final session = ref.watch(authSessionProvider);
+    final canAdd = PosPermissionAccess.canAddCartItemSession(session);
+    final canUpdate = PosPermissionAccess.canUpdateCartItemSession(session);
+    final canCartAction =
+        widget.existingCartItem == null ? canAdd : canUpdate;
+
+    final children = <Widget>[];
+
+    if (showName || showStock) {
+      children.add(
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Text(
-                detail.summary.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 25,
-                  height: 1.15,
-                  fontWeight: FontWeight.w700,
-                  color: _PopupTokens.navy,
+            if (showName)
+              Expanded(
+                child: Text(
+                  detail.summary.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 25,
+                    height: 1.15,
+                    fontWeight: FontWeight.w700,
+                    color: _PopupTokens.navy,
+                  ),
                 ),
+              )
+            else
+              const Spacer(),
+            if (showStock) ...[
+              const SizedBox(width: TenantAdminSpacing.sm),
+              _StockStatusBadge(
+                stockStatus:
+                    matchedVariant?.stockStatus ?? detail.summary.stockStatus,
               ),
-            ),
-            const SizedBox(width: TenantAdminSpacing.sm),
-            _StockStatusBadge(
-              stockStatus:
-                  matchedVariant?.stockStatus ?? detail.summary.stockStatus,
-            ),
+            ],
           ],
         ),
-        const SizedBox(height: 8),
+      );
+    }
+
+    if (showPrice) {
+      children.add(const SizedBox(height: 8));
+      children.add(
         Text(
           _formatMoney(unitPrice, currency),
           style: const TextStyle(
@@ -436,7 +523,12 @@ class _PosProductVariantSheetState
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 8),
+      );
+    }
+
+    if (showSku) {
+      children.add(const SizedBox(height: 8));
+      children.add(
         Text(
           'SKU: ${(matchedVariant?.sku ?? detail.summary.sku ?? '').trim().isEmpty ? 'Unavailable' : (matchedVariant?.sku ?? detail.summary.sku)}',
           style: const TextStyle(
@@ -445,30 +537,41 @@ class _PosProductVariantSheetState
             fontWeight: FontWeight.w500,
           ),
         ),
-        if (detail.summary.description?.trim().isNotEmpty == true) ...[
-          const SizedBox(height: 10),
-          Text(
-            detail.summary.description!,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: _PopupTokens.secondaryText,
-              fontSize: 14,
-              height: 1.4,
-            ),
+      );
+    }
+
+    if (showDescription &&
+        detail.summary.description?.trim().isNotEmpty == true) {
+      children.add(const SizedBox(height: 10));
+      children.add(
+        Text(
+          detail.summary.description!,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: _PopupTokens.secondaryText,
+            fontSize: 14,
+            height: 1.4,
           ),
-        ],
-        const SizedBox(height: TenantAdminSpacing.md),
-        const Divider(height: 1, color: TenantAdminColors.border),
-        const SizedBox(height: TenantAdminSpacing.md),
-        for (final group in detail.variantGroups) ...[
+        ),
+      );
+    }
+
+    if (showVariants && detail.variantGroups.isNotEmpty) {
+      children.add(const SizedBox(height: TenantAdminSpacing.md));
+      children.add(const Divider(height: 1, color: TenantAdminColors.border));
+      children.add(const SizedBox(height: TenantAdminSpacing.md));
+      for (final group in detail.variantGroups) {
+        children.add(
           Text(
             group.name,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
           ),
-          const SizedBox(height: TenantAdminSpacing.sm),
+        );
+        children.add(const SizedBox(height: TenantAdminSpacing.sm));
+        children.add(
           Wrap(
             spacing: TenantAdminSpacing.sm,
             runSpacing: TenantAdminSpacing.sm,
@@ -487,33 +590,43 @@ class _PosProductVariantSheetState
                       ? _selectedValueIds[group.optionId] ==
                           option.optionValueId
                       : _selectedAttributes[group.name] == option.displayName,
-                  enabled: group.values.isNotEmpty
-                      ? _isOptionValueSelectable(
-                          detail, group.optionId, option.optionValueId)
-                      : _isLegacyOptionSelectable(
-                          detail, group.name, option.displayName),
-                  onSelected: () => group.values.isNotEmpty
-                      ? _selectOptionValue(
-                          detail, group.optionId, option.optionValueId)
-                      : setState(() {
-                          _selectedAttributes[group.name] = option.displayName;
-                          _availabilityMessage = null;
-                        }),
+                  enabled: canSelectVariant &&
+                      (group.values.isNotEmpty
+                          ? _isOptionValueSelectable(
+                              detail, group.optionId, option.optionValueId)
+                          : _isLegacyOptionSelectable(
+                              detail, group.name, option.displayName)),
+                  onSelected: canSelectVariant
+                      ? () => group.values.isNotEmpty
+                          ? _selectOptionValue(
+                              detail, group.optionId, option.optionValueId)
+                          : setState(() {
+                              _selectedAttributes[group.name] =
+                                  option.displayName;
+                              _availabilityMessage = null;
+                            })
+                      : null,
                 ),
             ],
           ),
-          const SizedBox(height: TenantAdminSpacing.md),
-        ],
+        );
+        children.add(const SizedBox(height: TenantAdminSpacing.md));
+      }
+    }
+
+    if (showQuantity || showAvailableQty) {
+      children.add(
         Row(
           children: [
-            Text(
-              'Quantity',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
+            if (showQuantity)
+              Text(
+                'Quantity',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
             const Spacer(),
-            if (maxQuantity != null)
+            if (showAvailableQty && maxQuantity != null)
               Text(
                 'Available: $maxQuantity',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -523,107 +636,158 @@ class _PosProductVariantSheetState
               ),
           ],
         ),
-        const SizedBox(height: TenantAdminSpacing.sm),
+      );
+    }
+
+    if (showQuantity) {
+      children.add(const SizedBox(height: TenantAdminSpacing.sm));
+      children.add(
         _QuantityStepper(
           quantity: _quantity,
-          canDecrease: _quantity > 1,
-          canIncrease: maxQuantity == null || _quantity < maxQuantity,
+          canDecrease: canMutateQty && _quantity > 1,
+          canIncrease: canMutateQty &&
+              (maxQuantity == null || _quantity < maxQuantity),
+          showDecrease: canMutateQty,
+          showIncrease: canMutateQty,
           onDecrease: () => setState(() => _quantity -= 1),
           onIncrease: () => setState(() => _quantity += 1),
         ),
-        if ((_submissionError ?? _availabilityMessage) != null) ...[
-          const SizedBox(height: TenantAdminSpacing.sm),
+      );
+    }
+
+    if ((_submissionError ?? _availabilityMessage) != null) {
+      children.add(const SizedBox(height: TenantAdminSpacing.sm));
+      children.add(
+        Text(
+          (_submissionError ?? _availabilityMessage)!,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: TenantAdminColors.danger,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      );
+    }
+
+    if (showNoteView || canEditNote) {
+      children.add(const SizedBox(height: TenantAdminSpacing.md));
+      if (showNoteView || canEditNote) {
+        children.add(
+          const Text(
+            'Note (Optional)',
+            style: TextStyle(
+              color: _PopupTokens.navy,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        );
+        children.add(const SizedBox(height: 8));
+      }
+      if (canEditNote) {
+        children.add(
+          TextField(
+            key: const Key('product-line-note'),
+            controller: _noteController,
+            maxLength: 500,
+            minLines: 1,
+            maxLines: 2,
+            textInputAction: TextInputAction.newline,
+            decoration: InputDecoration(
+              hintText: 'Add note about this product',
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(9),
+                borderSide: const BorderSide(color: _PopupTokens.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(9),
+                borderSide:
+                    const BorderSide(color: _PopupTokens.primary, width: 1.5),
+              ),
+            ),
+          ),
+        );
+      } else if (showNoteView && _noteController.text.trim().isNotEmpty) {
+        children.add(
           Text(
-            (_submissionError ?? _availabilityMessage)!,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: TenantAdminColors.danger,
-                  fontWeight: FontWeight.w700,
-                ),
+            _noteController.text,
+            style: const TextStyle(
+              color: _PopupTokens.secondaryText,
+              fontSize: 14,
+            ),
           ),
-        ],
-        const SizedBox(height: TenantAdminSpacing.md),
-        const Text(
-          'Note (Optional)',
-          style: TextStyle(
-            color: _PopupTokens.navy,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
+        );
+      }
+    }
+
+    final actionChildren = <Widget>[];
+    if (canCartAction) {
+      actionChildren.add(
+        Expanded(
+          flex: 3,
+          child: SizedBox(
+            height: 48,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: _PopupTokens.addToCart,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: _PopupTokens.border,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(9)),
+              ),
+              onPressed: canSubmit && matchedVariant != null
+                  ? () => _submit(detail, matchedVariant, recommendations)
+                  : null,
+              icon: _isSubmitting
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.shopping_cart_outlined),
+              label: Text(widget.existingCartItem == null
+                  ? 'Add to Cart'
+                  : 'Update Cart'),
+            ),
           ),
         ),
-        const SizedBox(height: 8),
-        TextField(
-          key: const Key('product-line-note'),
-          controller: _noteController,
-          maxLength: 500,
-          minLines: 1,
-          maxLines: 2,
-          textInputAction: TextInputAction.newline,
-          decoration: InputDecoration(
-            hintText: 'Add note about this product',
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(9),
-              borderSide: const BorderSide(color: _PopupTokens.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(9),
-              borderSide:
-                  const BorderSide(color: _PopupTokens.primary, width: 1.5),
+      );
+    }
+    if (showCancel) {
+      if (actionChildren.isNotEmpty) {
+        actionChildren.add(const SizedBox(width: 16));
+      }
+      actionChildren.add(
+        Expanded(
+          flex: 2,
+          child: SizedBox(
+            height: 48,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _PopupTokens.navy,
+                side: const BorderSide(color: _PopupTokens.border),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(9)),
+              ),
+              onPressed:
+                  _isSubmitting ? null : () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
             ),
           ),
         ),
-        const SizedBox(height: 24),
-        Row(children: [
-          Expanded(
-            flex: 3,
-            child: SizedBox(
-              height: 48,
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: _PopupTokens.primary,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: _PopupTokens.border,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(9)),
-                ),
-                onPressed: canSubmit && matchedVariant != null
-                    ? () => _submit(detail, matchedVariant, recommendations)
-                    : null,
-                icon: _isSubmitting
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
-                    : const Icon(Icons.shopping_cart_outlined),
-                label: Text(widget.existingCartItem == null
-                    ? 'Add to Cart'
-                    : 'Update Cart'),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 2,
-            child: SizedBox(
-              height: 48,
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _PopupTokens.navy,
-                  side: const BorderSide(color: _PopupTokens.border),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(9)),
-                ),
-                onPressed:
-                    _isSubmitting ? null : () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-            ),
-          ),
-        ]),
-      ],
+      );
+    }
+
+    if (actionChildren.isNotEmpty) {
+      children.add(const SizedBox(height: 24));
+      children.add(Row(children: actionChildren));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: children,
     );
   }
 
@@ -955,10 +1119,13 @@ class _QuantityStepper extends StatelessWidget {
     required this.canIncrease,
     required this.onDecrease,
     required this.onIncrease,
+    this.showDecrease = true,
+    this.showIncrease = true,
   });
 
   final int quantity;
   final bool canDecrease, canIncrease;
+  final bool showDecrease, showIncrease;
   final VoidCallback onDecrease, onIncrease;
 
   @override
@@ -982,13 +1149,14 @@ class _QuantityStepper extends StatelessWidget {
           borderRadius: BorderRadius.circular(9),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          segment(
-            Icon(Icons.remove_rounded,
-                color: canDecrease
-                    ? _PopupTokens.navy
-                    : _PopupTokens.secondaryText.withValues(alpha: 0.4)),
-            canDecrease ? onDecrease : null,
-          ),
+          if (showDecrease)
+            segment(
+              Icon(Icons.remove_rounded,
+                  color: canDecrease
+                      ? _PopupTokens.navy
+                      : _PopupTokens.secondaryText.withValues(alpha: 0.4)),
+              canDecrease ? onDecrease : null,
+            ),
           Container(
             width: 58,
             height: 44,
@@ -1005,13 +1173,14 @@ class _QuantityStepper extends StatelessWidget {
                     fontSize: 16,
                     fontWeight: FontWeight.w700)),
           ),
-          segment(
-            Icon(Icons.add_rounded,
-                color: canIncrease
-                    ? _PopupTokens.primary
-                    : _PopupTokens.secondaryText.withValues(alpha: 0.4)),
-            canIncrease ? onIncrease : null,
-          ),
+          if (showIncrease)
+            segment(
+              Icon(Icons.add_rounded,
+                  color: canIncrease
+                      ? _PopupTokens.primary
+                      : _PopupTokens.secondaryText.withValues(alpha: 0.4)),
+              canIncrease ? onIncrease : null,
+            ),
         ]),
       ),
     );
@@ -1112,28 +1281,50 @@ class _VariantOptionChip extends StatelessWidget {
   final String label;
   final bool selected;
   final bool enabled;
-  final VoidCallback onSelected;
+  final VoidCallback? onSelected;
   final String? colorHex;
 
   @override
   Widget build(BuildContext context) {
+    final labelRow = Row(mainAxisSize: MainAxisSize.min, children: [
+      if (_parseColor(colorHex) case final color?) ...[
+        Container(
+          width: 18,
+          height: 18,
+          decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(color: TenantAdminColors.border)),
+        ),
+        const SizedBox(width: TenantAdminSpacing.xs),
+      ],
+      Text(label),
+    ]);
+
+    if (onSelected == null) {
+      return Chip(
+        label: labelRow,
+        backgroundColor: selected
+            ? _PopupTokens.primary.withValues(alpha: 0.06)
+            : Colors.white,
+        side: BorderSide(
+          color: selected ? _PopupTokens.primary : _PopupTokens.border,
+          width: selected ? 1.5 : 1,
+        ),
+        labelStyle: TextStyle(
+          color: _PopupTokens.navy,
+          fontWeight: FontWeight.w700,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(9),
+        ),
+      );
+    }
+
     return ChoiceChip(
-      label: Row(mainAxisSize: MainAxisSize.min, children: [
-        if (_parseColor(colorHex) case final color?) ...[
-          Container(
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                border: Border.all(color: TenantAdminColors.border)),
-          ),
-          const SizedBox(width: TenantAdminSpacing.xs),
-        ],
-        Text(label),
-      ]),
+      label: labelRow,
       selected: selected,
-      onSelected: enabled ? (_) => onSelected() : null,
+      onSelected: enabled ? (_) => onSelected!() : null,
       selectedColor: _PopupTokens.primary.withValues(alpha: 0.06),
       backgroundColor: Colors.white,
       disabledColor: _PopupTokens.controlBackground,

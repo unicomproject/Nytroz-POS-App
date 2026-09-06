@@ -194,15 +194,21 @@ final cashDropCatalogProvider = StateNotifierProvider.autoDispose<
   return CashDropCatalogController(ref.watch(cashDrawerRepositoryProvider));
 });
 
-double cashDropRemainingExpectedCash({
-  required double currentExpectedCash,
+double? cashDropRemainingExpectedCash({
+  required double? currentExpectedCash,
   required CashDropFormState form,
 }) {
+  if (currentExpectedCash == null) {
+    return null;
+  }
   final amount = form.parsedAmount ?? 0;
   return currentExpectedCash - amount;
 }
 
-String? validateCashDropAmount(String? value, {required double maxAvailable}) {
+String? validateCashDropAmount(String? value, {required double? maxAvailable}) {
+  if (maxAvailable == null) {
+    return 'Available cash is unavailable';
+  }
   final raw = value?.trim() ?? '';
   if (raw.isEmpty) {
     return 'Drop amount is required';

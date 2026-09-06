@@ -6,7 +6,9 @@ import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../../core/access/permission_access_providers.dart';
 import '../../../../core/access/pos_permission_access.dart';
+import '../../../../core/access/pos_payment_permission_visibility.dart';
 import '../../domain/entities/pos_checkout_api_exception.dart';
 import '../../domain/entities/pos_payment_method_type.dart';
 import '../providers/pos_checkout_summary_provider.dart';
@@ -29,6 +31,7 @@ class _PosPaymentMethodScreenState
   Widget build(BuildContext context) {
     final cart = ref.watch(posNewSaleCartProvider);
     final session = ref.watch(authSessionProvider);
+    final permissions = ref.watch(effectivePermissionSetProvider);
     final summaryAsync = ref.watch(posCheckoutSummaryProvider);
 
     if (!PosPermissionAccess.canAccessPaymentMethodScreenSession(session)) {
@@ -69,22 +72,37 @@ class _PosPaymentMethodScreenState
         );
       },
       data: (summary) {
-        final methods = summary.paymentMethods.toSet();
+        final methods = summary.paymentMethods
+            .where(
+              (m) => PosPaymentPermissionVisibility.canShowMethod(
+                permissions,
+                m,
+              ),
+            )
+            .toSet();
+        if (_selectedMethod != null && !methods.contains(_selectedMethod)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted &&
+                _selectedMethod != null &&
+                !methods.contains(_selectedMethod)) {
+              setState(() => _selectedMethod = null);
+            }
+          });
+        }
         return PaymentMethodPage(
           summary: summary,
           cart: cart,
           allowedMethods: methods,
-          selectedMethod: _selectedMethod,
+          selectedMethod:
+              methods.contains(_selectedMethod) ? _selectedMethod : null,
           isNavigating: _isNavigating,
           onSelectMethod: (method) {
-            if (method == PosPaymentMethodType.cash) {
-              setState(() => _selectedMethod = method);
-            }
+            setState(() => _selectedMethod = method);
           },
-          onContinue: _selectedMethod == PosPaymentMethodType.cash &&
+          onContinue: _selectedMethod != null &&
                   !summary.usedFallback &&
-                  methods.contains(PosPaymentMethodType.cash)
-              ? () => _continueToCash(
+                  methods.contains(_selectedMethod)
+              ? () => _continueToPayment(
                     session?.permissionCodes.toSet() ?? const {},
                     summary,
                   )
@@ -103,25 +121,27 @@ class _PosPaymentMethodScreenState
     );
   }
 
-  Future<void> _continueToCash(
+  Future<void> _continueToPayment(
     Set<String> permissions,
     PosCheckoutSummaryViewData summary,
   ) async {
-    if (_isNavigating || _selectedMethod != PosPaymentMethodType.cash) return;
+    final selectedMethod = _selectedMethod;
+    if (_isNavigating || selectedMethod == null) return;
     if (summary.usedFallback ||
+        !summary.paymentMethods.contains(selectedMethod) ||
         !PosPermissionAccess.canContinueWithPaymentPermission(
           permissions,
-          PosPaymentMethodType.cash.permissionCode,
+          selectedMethod.permissionCode,
         )) {
       PosPermissionAccess.showAccessDeniedSnackBar(
         context,
-        'Cash payment is not available for this sale.',
+        '${selectedMethod.title} is not available for this sale.',
       );
       return;
     }
     setState(() => _isNavigating = true);
     try {
-      await context.push(PosPaymentMethodType.cash.paymentRoutePath);
+      await context.push(selectedMethod.paymentRoutePath);
     } finally {
       if (mounted) setState(() => _isNavigating = false);
     }

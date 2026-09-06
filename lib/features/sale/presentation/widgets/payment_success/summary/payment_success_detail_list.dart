@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_payment_permission_visibility.dart';
 
 import '../../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -7,7 +10,7 @@ import '../../../../domain/entities/pos_receipt_snapshot.dart';
 import '../../../utils/receipt_cashier_display.dart';
 import '../../../providers/pos_cash_payment_success_provider.dart';
 
-class PaymentSuccessDetailList extends StatelessWidget {
+class PaymentSuccessDetailList extends ConsumerWidget {
   const PaymentSuccessDetailList({
     super.key,
     required this.successData,
@@ -18,7 +21,8 @@ class PaymentSuccessDetailList extends StatelessWidget {
   final String cashierName;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
     final snapshot = PosReceiptSnapshot.parse(successData.receiptDataJson);
 
     final String paymentMethodLabel;
@@ -29,16 +33,24 @@ class PaymentSuccessDetailList extends StatelessWidget {
         final tender = snapshot.tenders.first;
         paymentMethodLabel = tender.paymentMethod;
         if (tender.paymentMethod.toLowerCase() == 'cash') {
-          tenderRows.add(_DetailRow(
-            icon: Icons.payments_outlined,
-            label: 'Cash Received',
-            value: _formatCurrency(successData.cashReceived),
-          ));
-          tenderRows.add(_DetailRow(
-            icon: Icons.change_circle_outlined,
-            label: 'Change Due',
-            value: _formatCurrency(successData.changeDue),
-          ));
+          if (PosPaymentPermissionVisibility.canShowSaleCompleteCashReceived(
+            permissions,
+          )) {
+            tenderRows.add(_DetailRow(
+              icon: Icons.payments_outlined,
+              label: 'Cash Received',
+              value: _formatCurrency(successData.cashReceived),
+            ));
+          }
+          if (PosPaymentPermissionVisibility.canShowSaleCompleteChangeDue(
+            permissions,
+          )) {
+            tenderRows.add(_DetailRow(
+              icon: Icons.change_circle_outlined,
+              label: 'Change Due',
+              value: _formatCurrency(successData.changeDue),
+            ));
+          }
         } else {
           if (tender.safeReference != null &&
               tender.safeReference!.isNotEmpty) {
@@ -58,7 +70,10 @@ class PaymentSuccessDetailList extends StatelessWidget {
             value: _formatCurrency(tender.amount),
           ));
         }
-        if (successData.changeDue > 0) {
+        if (successData.changeDue > 0 &&
+            PosPaymentPermissionVisibility.canShowSaleCompleteChangeDue(
+              permissions,
+            )) {
           tenderRows.add(_DetailRow(
             icon: Icons.change_circle_outlined,
             label: 'Change Due',
@@ -67,59 +82,85 @@ class PaymentSuccessDetailList extends StatelessWidget {
         }
       }
     } else {
-      paymentMethodLabel = 'Cash'; // Fallback to local state if missing
-      tenderRows.add(_DetailRow(
-        icon: Icons.payments_outlined,
-        label: 'Cash Received',
-        value: _formatCurrency(successData.cashReceived),
-      ));
-      tenderRows.add(_DetailRow(
-        icon: Icons.change_circle_outlined,
-        label: 'Change Due',
-        value: _formatCurrency(successData.changeDue),
-      ));
+      paymentMethodLabel = 'Cash';
+      if (PosPaymentPermissionVisibility.canShowSaleCompleteCashReceived(
+        permissions,
+      )) {
+        tenderRows.add(_DetailRow(
+          icon: Icons.payments_outlined,
+          label: 'Cash Received',
+          value: _formatCurrency(successData.cashReceived),
+        ));
+      }
+      if (PosPaymentPermissionVisibility.canShowSaleCompleteChangeDue(
+        permissions,
+      )) {
+        tenderRows.add(_DetailRow(
+          icon: Icons.change_circle_outlined,
+          label: 'Change Due',
+          value: _formatCurrency(successData.changeDue),
+        ));
+      }
     }
 
     return Column(
       children: [
-        _DetailRow(
-          icon: Icons.receipt_long_outlined,
-          label: 'Receipt No.',
-          value: successData.receiptNumber,
-        ),
-        _DetailRow(
-          icon: Icons.payment_outlined,
-          label: 'Payment Method',
-          value: paymentMethodLabel,
-        ),
-        _DetailRow(
-          icon: Icons.access_time_rounded,
-          label: 'Date & Time',
-          value: _formatDateTime(successData.completedAt),
-        ),
-        _DetailRow(
-          icon: Icons.person_outline,
-          label: 'Cashier',
-          value: resolveReceiptCashierDisplayName(
-            receiptDataJson: successData.receiptDataJson,
-            paymentCashierName: successData.cashierName,
-            sessionDisplayName: cashierName,
+        if (PosPaymentPermissionVisibility.canShowSaleCompleteReceiptNumber(
+          permissions,
+        ))
+          _DetailRow(
+            icon: Icons.receipt_long_outlined,
+            label: 'Receipt No.',
+            value: successData.receiptNumber,
           ),
-        ),
-        _DetailRow(
-          icon: Icons.person_pin_outlined,
-          label: 'Customer',
-          value: successData.customerName?.trim().isNotEmpty == true
-              ? successData.customerName!.trim()
-              : 'Walk-in Customer',
-        ),
+        if (PosPaymentPermissionVisibility.canShowSaleCompletePaymentMethod(
+          permissions,
+        ))
+          _DetailRow(
+            icon: Icons.payment_outlined,
+            label: 'Payment Method',
+            value: paymentMethodLabel,
+          ),
+        if (PosPaymentPermissionVisibility.canShowSaleCompleteDatetime(
+          permissions,
+        ))
+          _DetailRow(
+            icon: Icons.access_time_rounded,
+            label: 'Date & Time',
+            value: _formatDateTime(successData.completedAt),
+          ),
+        if (PosPaymentPermissionVisibility.canShowSaleCompleteCashier(
+          permissions,
+        ))
+          _DetailRow(
+            icon: Icons.person_outline,
+            label: 'Cashier',
+            value: resolveReceiptCashierDisplayName(
+              receiptDataJson: successData.receiptDataJson,
+              paymentCashierName: successData.cashierName,
+              sessionDisplayName: cashierName,
+            ),
+          ),
+        if (PosPaymentPermissionVisibility.canShowSaleCompleteCustomer(
+          permissions,
+        ))
+          _DetailRow(
+            icon: Icons.person_pin_outlined,
+            label: 'Customer',
+            value: successData.customerName?.trim().isNotEmpty == true
+                ? successData.customerName!.trim()
+                : 'Walk-in Customer',
+          ),
         ...tenderRows,
-        _DetailRow(
-          icon: Icons.attach_money_rounded,
-          label: 'Total Paid',
-          value: _formatCurrency(successData.total),
-          isTotal: true,
-        ),
+        if (PosPaymentPermissionVisibility.canShowSaleCompleteTotalPaid(
+          permissions,
+        ))
+          _DetailRow(
+            icon: Icons.attach_money_rounded,
+            label: 'Total Paid',
+            value: _formatCurrency(successData.total),
+            isTotal: true,
+          ),
       ],
     );
   }

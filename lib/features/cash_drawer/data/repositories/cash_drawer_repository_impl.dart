@@ -18,13 +18,13 @@ class CashDrawerRepositoryImpl implements CashDrawerRepository {
       status: _text(json['status']),
       openedBy: _text(json['openedBy']),
       openedTime: DateTime.tryParse(_text(json['openedAt'])),
-      openingCash: _number(json['openingCash']),
-      cashSales: _number(json['cashSales']),
+      openingCash: _optionalNumber(json['openingCash']),
+      cashSales: _optionalNumber(json['cashSales']),
       cashRefunds: _number(json['cashRefunds']),
       cashDrops: _number(json['cashDrops']),
       cashIns: _number(json['cashIn']),
       cashOuts: _number(json['cashOut']),
-      currentExpectedCash: _number(json['currentExpectedCash']),
+      currentExpectedCash: _optionalNumber(json['currentExpectedCash']),
       currencyCode: _text(json['currencyCode']),
     );
   }
@@ -132,7 +132,7 @@ class CashDrawerRepositoryImpl implements CashDrawerRepository {
   CashMovement _movement(Map<String, dynamic> json) => CashMovement(
         id: _text(json['movementId']),
         type: _type(_text(json['movementType'])),
-        amount: _number(json['amount']),
+        amount: _optionalNumber(json['amount']),
         dateTime: DateTime.parse(_text(json['performedAt'])),
         userName: _text(json['performedBy']),
         direction: _text(json['direction']),
@@ -143,6 +143,11 @@ class CashDrawerRepositoryImpl implements CashDrawerRepository {
   static String _text(Object? value) => value?.toString() ?? '';
   static double _number(Object? value) =>
       value is num ? value.toDouble() : double.parse(value.toString());
+  static double? _optionalNumber(Object? value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
+  }
   static String _code(CashMovementType type) => switch (type) {
         CashMovementType.cashIn => 'CASH_IN',
         CashMovementType.cashOut => 'CASH_OUT',

@@ -10,12 +10,14 @@ class CustomerRecentOrdersSection extends StatelessWidget {
     this.isLoading = false,
     this.errorMessage,
     this.onViewAll,
+    this.showAmounts = true,
   });
 
   final List<PosCustomerOrder> orders;
   final bool isLoading;
   final String? errorMessage;
   final VoidCallback? onViewAll;
+  final bool showAmounts;
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +111,7 @@ class CustomerRecentOrdersSection extends StatelessWidget {
       children: [
         for (var i = 0; i < orders.length; i++) ...[
           if (i > 0) const SizedBox(height: 8),
-          _OrderRow(order: orders[i]),
+          _OrderRow(order: orders[i], showAmounts: showAmounts),
         ],
       ],
     );
@@ -117,15 +119,20 @@ class CustomerRecentOrdersSection extends StatelessWidget {
 }
 
 class _OrderRow extends StatelessWidget {
-  const _OrderRow({required this.order});
+  const _OrderRow({required this.order, required this.showAmounts});
 
   final PosCustomerOrder order;
+  final bool showAmounts;
 
   @override
   Widget build(BuildContext context) {
     final amount = order.currencyCode.trim().isEmpty
-        ? 'LKR ${order.totalAmount.toStringAsFixed(2)}'
-        : '${order.currencyCode} ${order.totalAmount.toStringAsFixed(2)}';
+        ? (order.totalAmount == null
+            ? '—'
+            : 'LKR ${order.totalAmount!.toStringAsFixed(2)}')
+        : (order.totalAmount == null
+            ? '—'
+            : '${order.currencyCode} ${order.totalAmount!.toStringAsFixed(2)}');
     final date = order.orderDate == null
         ? 'Today, 10:45 AM'
         : _formatOrderDate(order.orderDate!);
@@ -183,14 +190,15 @@ class _OrderRow extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            amount,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
-              color: Colors.black,
+          if (showAmounts)
+            Text(
+              amount,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+                color: Colors.black,
+              ),
             ),
-          ),
         ],
       ),
     );

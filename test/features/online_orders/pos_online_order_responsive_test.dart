@@ -8,7 +8,11 @@ import 'package:nytroz_pos/features/fulfilment_pickup/presentation/screens/ready
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/screens/review_pack_screen.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/oo01_online_orders_widgets.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/online_order_ui.dart';
-import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/picking_widgets.dart';
+import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/picking/fulfilment_stepper.dart';
+import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/picking/pick_quantity_panel.dart';
+import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/picking/picking_header.dart';
+import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/picking/picking_item_card.dart';
+import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/picking/picking_order_sidebar.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/start_fulfilment_dialog.dart';
 
 void main() {

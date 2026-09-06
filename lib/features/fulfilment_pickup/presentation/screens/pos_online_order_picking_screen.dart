@@ -7,7 +7,9 @@ import '../../../auth/presentation/providers/session_provider.dart';
 import '../../domain/entities/pos_online_order.dart';
 import '../providers/pos_online_orders_provider.dart';
 import '../widgets/online_order_ui.dart';
-import '../widgets/picking_widgets.dart';
+import '../widgets/picking/picking_header.dart';
+import '../widgets/picking/picking_items_list.dart';
+import '../widgets/picking/picking_order_sidebar.dart';
 import 'ready_for_collection_screen.dart';
 import 'review_pack_screen.dart';
 
@@ -42,7 +44,7 @@ class _PosOnlineOrderPickingScreenState
     return ColoredBox(
       color: OnlineOrderUi.canvas,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 14),
+        padding: const EdgeInsets.fromLTRB(24, 10, 24, 10),
         child: order.when(
           loading: () => const OnlineOrderScreenState(
             message: 'Loading fulfilment workspace…',
@@ -82,7 +84,7 @@ class _PosOnlineOrderPickingScreenState
                   onBack: () =>
                       context.go('/pos/online-orders/${widget.orderId}'),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 Expanded(
                   child: status == 'PICKED' || status == 'PACKED'
                       ? ReviewPackScreen(order: value)
@@ -128,17 +130,22 @@ class PickingWorkspace extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(flex: 64, child: items),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(flex: 36, child: side),
               ],
             );
           }
+          // Narrow / phone: existing stacked path may scroll. Landscape tablet+
+          // above remains fixed (no page scroll).
           return SingleChildScrollView(
-            child: Column(children: [
-              SizedBox(height: 620, child: items),
-              const SizedBox(height: 12),
-              side,
-            ]),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(height: 560, child: items),
+                const SizedBox(height: 10),
+                side,
+              ],
+            ),
           );
         },
       );

@@ -7,10 +7,12 @@ class PosHomeNotificationButton extends StatelessWidget {
     super.key,
     required this.onPressed,
     required this.notificationCount,
+    this.showUnreadBadge = true,
   });
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final int notificationCount;
+  final bool showUnreadBadge;
 
   static const _buttonSize = 48.0;
   static const _notificationIconSize = 25.0;
@@ -19,6 +21,8 @@ class PosHomeNotificationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showBadge = showUnreadBadge && notificationCount > 0;
+
     return Material(
       color: TenantAdminColors.surface,
       shape: const CircleBorder(
@@ -38,7 +42,7 @@ class PosHomeNotificationButton extends StatelessWidget {
                 color: TenantAdminColors.bodyText,
                 size: _notificationIconSize,
               ),
-              if (notificationCount > 0)
+              if (showBadge)
                 Positioned(
                   top: TenantAdminSpacing.sm,
                   right: TenantAdminSpacing.sm,

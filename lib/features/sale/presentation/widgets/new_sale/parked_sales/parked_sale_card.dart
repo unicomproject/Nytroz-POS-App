@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_sales_permission_visibility.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_parked_sale_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
@@ -35,12 +37,36 @@ class ParkedSaleCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    // Reference has no independent list.* code — shown as list identity.
+    final showCustomer =
+        PosSalesPermissionVisibility.canShowHeldCustomer(permissions);
+    final showValue =
+        PosSalesPermissionVisibility.canShowHeldValue(permissions);
+    final showItemCount =
+        PosSalesPermissionVisibility.canShowHeldItemCount(permissions);
+    final showParkedTime =
+        PosSalesPermissionVisibility.canShowHeldParkedTime(permissions);
+    final showExpiry =
+        PosSalesPermissionVisibility.canShowHeldExpiryTime(permissions);
+    final showItems =
+        PosSalesPermissionVisibility.canShowHeldItems(permissions);
+    final showDetails =
+        PosSalesPermissionVisibility.canShowHeldDetails(permissions);
+
     final customerName = sale.primaryDisplayName;
     final initials = _getInitials(customerName);
 
+    final semanticParts = <String>[
+      'Parked sale ${sale.reference}',
+      if (showItems) 'Items: ${sale.itemPreview}',
+      if (showValue) 'Value',
+      if (showCustomer) 'Customer',
+    ];
+
     return Semantics(
       container: true,
-      label: 'Parked sale ${sale.reference}. Items: ${sale.itemPreview}',
+      label: semanticParts.join('. '),
       child: Container(
         key: ValueKey('parked-sale-card-${sale.id}'),
         padding: const EdgeInsets.all(TenantAdminSpacing.md),
@@ -59,7 +85,6 @@ class ParkedSaleCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Row 1: Document icon + Reference ... Amount
             Row(
               children: [
                 const Icon(
@@ -77,102 +102,106 @@ class ParkedSaleCard extends ConsumerWidget {
                   ),
                 ),
                 const Spacer(),
-                Text(
-                  formatMoney(sale.currency, sale.total),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 17,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            // Row 2: Customer Circle + Name + Subtitle
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: const Color(0xFFE0F2FE),
-                  child: Text(
-                    initials,
+                if (showValue)
+                  Text(
+                    formatMoney(sale.currency, sale.total),
                     style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF0284C7),
+                      fontWeight: FontWeight.w900,
+                      fontSize: 17,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      customerName,
+              ],
+            ),
+            if (showCustomer) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: const Color(0xFFE0F2FE),
+                    child: Text(
+                      initials,
                       style: const TextStyle(
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: Color(0xFF1E293B),
+                        color: Color(0xFF0284C7),
                       ),
                     ),
-                    Text(
-                      customerName == 'Walk-in customer'
-                          ? 'Walk-in Customer'
-                          : 'Customer',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Row 3: Metadata Badges (Items, Parked Time, Expires Time)
-            Wrap(
-              spacing: 10,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                ParkedSaleMetaChip(
-                  icon: Icons.shopping_bag_outlined,
-                  label:
-                      '${sale.itemCount} ${sale.itemCount == 1 ? 'item' : 'items'}',
-                ),
-                ParkedSaleBadge(
-                  icon: Icons.access_time_rounded,
-                  title: 'Parked ${formatTimeOnly(sale.createdAt)}',
-                  subtitle: formatDateOnly(sale.createdAt),
-                ),
-                if (sale.expiresAt != null)
-                  ParkedSaleBadge(
-                    icon: Icons.timer_outlined,
-                    title:
-                        'Expires ${formatTimeOnly(sale.expiresAt!)} Tomorrow',
-                    subtitle: formatDateOnly(sale.expiresAt!),
                   ),
-              ],
-            ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        customerName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      Text(
+                        customerName == 'Walk-in customer'
+                            ? 'Walk-in Customer'
+                            : 'Customer',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+            if (showItemCount || showParkedTime || showExpiry) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  if (showItemCount)
+                    ParkedSaleMetaChip(
+                      icon: Icons.shopping_bag_outlined,
+                      label:
+                          '${sale.itemCount} ${sale.itemCount == 1 ? 'item' : 'items'}',
+                    ),
+                  if (showParkedTime)
+                    ParkedSaleBadge(
+                      icon: Icons.access_time_rounded,
+                      title: 'Parked ${formatTimeOnly(sale.createdAt)}',
+                      subtitle: formatDateOnly(sale.createdAt),
+                    ),
+                  if (showExpiry && sale.expiresAt != null)
+                    ParkedSaleBadge(
+                      icon: Icons.timer_outlined,
+                      title:
+                          'Expires ${formatTimeOnly(sale.expiresAt!)} Tomorrow',
+                      subtitle: formatDateOnly(sale.expiresAt!),
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: 14),
-
-            // Row 4: Item Preview Text (Left) & Action Buttons (Right)
             Row(
               children: [
-                Expanded(
-                  child: Text(
-                    sale.itemPreview,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF334155),
+                if (showItems)
+                  Expanded(
+                    child: Text(
+                      sale.itemPreview,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF334155),
+                      ),
                     ),
-                  ),
-                ),
+                  )
+                else
+                  const Spacer(),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Align(
@@ -181,6 +210,7 @@ class ParkedSaleCard extends ConsumerWidget {
                       sale: sale,
                       canRecall: canRecall,
                       canCancel: canCancel,
+                      canViewDetails: showDetails,
                       onRecallSuccess: onRecallSuccess,
                     ),
                   ),
@@ -285,10 +315,12 @@ class ParkedSaleRowActions extends ConsumerStatefulWidget {
     required this.canRecall,
     required this.canCancel,
     required this.onRecallSuccess,
+    this.canViewDetails = true,
   });
 
   final PosParkedSale sale;
   final bool canRecall, canCancel;
+  final bool canViewDetails;
   final PosParkedSaleRecallHandler onRecallSuccess;
 
   @override
@@ -306,26 +338,27 @@ class _ParkedSaleRowActionsState extends ConsumerState<ParkedSaleRowActions> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            OutlinedButton.icon(
-              key: ValueKey('view-${widget.sale.id}'),
-              onPressed: _busy ? null : _handleView,
-              icon: const Icon(Icons.visibility_outlined, size: 18),
-              label: const Text(
-                'View Details',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-              ),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(0, 42),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                foregroundColor: const Color(0xFF334155),
-                side: const BorderSide(
-                    color: TenantAdminColors.border, width: 1.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+            if (widget.canViewDetails)
+              OutlinedButton.icon(
+                key: ValueKey('view-${widget.sale.id}'),
+                onPressed: _busy ? null : _handleView,
+                icon: const Icon(Icons.visibility_outlined, size: 18),
+                label: const Text(
+                  'View Details',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                ),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 42),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  foregroundColor: const Color(0xFF334155),
+                  side: const BorderSide(
+                      color: TenantAdminColors.border, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+                  ),
                 ),
               ),
-            ),
             if (widget.canCancel) ...[
               const SizedBox(width: 8),
               OutlinedButton.icon(
@@ -367,17 +400,11 @@ class _ParkedSaleRowActionsState extends ConsumerState<ParkedSaleRowActions> {
                   backgroundColor: TenantAdminColors.posNewSaleAccent,
                   foregroundColor: TenantAdminColors.surface,
                   elevation: 1,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-                  ),
                 ),
-                icon: const Icon(Icons.history_rounded, size: 18),
+                icon: const Icon(Icons.replay_rounded, size: 18),
                 label: const Text(
-                  'Recall Sale',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                  ),
+                  'Recall',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
                 ),
               ),
             ],
@@ -385,20 +412,31 @@ class _ParkedSaleRowActionsState extends ConsumerState<ParkedSaleRowActions> {
         ),
       );
 
-  Future<void> _handleRecall() => _guard(() =>
-      beginParkedSaleRecall(context, ref, widget.sale, widget.onRecallSuccess));
+  Future<void> _handleView() async {
+    if (!widget.canViewDetails) return;
+    await showParkedSaleViewDialog(context, widget.sale);
+  }
 
-  Future<void> _handleView() =>
-      _guard(() => showParkedSaleViewDialog(context, widget.sale));
-
-  Future<void> _handleCancel() =>
-      _guard(() => showParkedSaleCancelDialog(context, ref, widget.sale));
-
-  Future<void> _guard(Future<void> Function() action) async {
-    if (_busy) return;
+  Future<void> _handleCancel() async {
+    if (!widget.canCancel || _busy) return;
     setState(() => _busy = true);
     try {
-      await action();
+      await showParkedSaleCancelDialog(context, ref, widget.sale);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _handleRecall() async {
+    if (!widget.canRecall || _busy) return;
+    setState(() => _busy = true);
+    try {
+      await beginParkedSaleRecall(
+        context,
+        ref,
+        widget.sale,
+        widget.onRecallSuccess,
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }

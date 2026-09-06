@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_cash_drawer_till_visibility.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/cash_drawer_summary.dart';
 import '../providers/cash_drawer_provider.dart';
 
-class CashDrawerTillSummarySection extends StatelessWidget {
+class CashDrawerTillSummarySection extends ConsumerWidget {
   const CashDrawerTillSummarySection({
     super.key,
     required this.summary,
@@ -15,7 +18,70 @@ class CashDrawerTillSummarySection extends StatelessWidget {
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = ref.watch(effectivePermissionSetProvider);
+    final tiles = <Widget>[
+      if (PosCashDrawerTillVisibility.canShowSummaryTill(p))
+        _SummaryTile(
+          label: 'Till',
+          value: summary.tillName,
+          icon: Icons.point_of_sale_rounded,
+          iconColor: TenantAdminColors.posHomeAccentOrange,
+          compact: compact,
+        ),
+      if (PosCashDrawerTillVisibility.canShowSummaryStatus(p))
+        _SummaryTile(
+          label: 'Status',
+          value: summary.isOpen ? 'Open' : summary.status,
+          icon: Icons.show_chart_rounded,
+          iconColor: summary.isOpen
+              ? TenantAdminColors.success
+              : TenantAdminColors.mutedText,
+          valueColor: summary.isOpen
+              ? TenantAdminColors.success
+              : TenantAdminColors.mutedText,
+          compact: compact,
+        ),
+      if (PosCashDrawerTillVisibility.canShowOpeningCash(p))
+        _SummaryTile(
+          label: 'Opening Cash',
+          value: formatCashDrawerAmount(
+            summary.openingCash,
+            currencyCode: summary.currencyCode,
+          ),
+          icon: Icons.account_balance_wallet_outlined,
+          iconColor: TenantAdminColors.posHomeAccentOrange,
+          compact: compact,
+        ),
+      if (PosCashDrawerTillVisibility.canShowCashSales(p))
+        _SummaryTile(
+          label: 'Cash Sales',
+          value: formatCashDrawerAmount(
+            summary.cashSales,
+            currencyCode: summary.currencyCode,
+          ),
+          icon: Icons.bar_chart_rounded,
+          iconColor: TenantAdminColors.success,
+          compact: compact,
+        ),
+      if (PosCashDrawerTillVisibility.canShowExpectedCash(p))
+        _SummaryTile(
+          label: 'Current Expected Cash',
+          value: formatCashDrawerAmount(
+            summary.currentExpectedCash,
+            currencyCode: summary.currencyCode,
+          ),
+          icon: Icons.account_balance_wallet_rounded,
+          iconColor: TenantAdminColors.posHomeAccentOrange,
+          emphasize: true,
+          compact: compact,
+        ),
+    ];
+
+    if (tiles.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -34,9 +100,9 @@ class CashDrawerTillSummarySection extends StatelessWidget {
           builder: (context, constraints) {
             final width = constraints.maxWidth;
             final columns = compact
-                ? 5
+                ? tiles.length.clamp(1, 5)
                 : width >= TenantAdminBreakpoints.desktop
-                    ? 5
+                    ? tiles.length.clamp(1, 5)
                     : width >= TenantAdminBreakpoints.tablet
                         ? 3
                         : width >= TenantAdminBreakpoints.mobile
@@ -46,59 +112,6 @@ class CashDrawerTillSummarySection extends StatelessWidget {
             final tileWidth = columns == 1
                 ? width
                 : ((width - gap * (columns - 1)) / columns).floorToDouble();
-
-            final tiles = [
-              _SummaryTile(
-                label: 'Till',
-                value: summary.tillName,
-                icon: Icons.point_of_sale_rounded,
-                iconColor: TenantAdminColors.posHomeAccentOrange,
-                compact: compact,
-              ),
-              _SummaryTile(
-                label: 'Status',
-                value: summary.isOpen ? 'Open' : summary.status,
-                icon: Icons.show_chart_rounded,
-                iconColor: summary.isOpen
-                    ? TenantAdminColors.success
-                    : TenantAdminColors.mutedText,
-                valueColor: summary.isOpen
-                    ? TenantAdminColors.success
-                    : TenantAdminColors.mutedText,
-                compact: compact,
-              ),
-              _SummaryTile(
-                label: 'Opening Cash',
-                value: formatCashDrawerAmount(
-                  summary.openingCash,
-                  currencyCode: summary.currencyCode,
-                ),
-                icon: Icons.account_balance_wallet_outlined,
-                iconColor: TenantAdminColors.posHomeAccentOrange,
-                compact: compact,
-              ),
-              _SummaryTile(
-                label: 'Cash Sales',
-                value: formatCashDrawerAmount(
-                  summary.cashSales,
-                  currencyCode: summary.currencyCode,
-                ),
-                icon: Icons.bar_chart_rounded,
-                iconColor: TenantAdminColors.success,
-                compact: compact,
-              ),
-              _SummaryTile(
-                label: 'Current Expected Cash',
-                value: formatCashDrawerAmount(
-                  summary.currentExpectedCash,
-                  currencyCode: summary.currencyCode,
-                ),
-                icon: Icons.account_balance_wallet_rounded,
-                iconColor: TenantAdminColors.posHomeAccentOrange,
-                emphasize: true,
-                compact: compact,
-              ),
-            ];
 
             return Wrap(
               spacing: gap,

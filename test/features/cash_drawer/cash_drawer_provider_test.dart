@@ -130,7 +130,7 @@ void main() {
     expect(repository.movementCalls, greaterThan(movementCallsBefore));
     expect(
       container.read(cashDrawerProvider).summary!.currentExpectedCash,
-      beforeExpected + 500,
+      (beforeExpected ?? 0) + 500,
     );
     expect(
       container.read(cashDrawerProvider).movements.length,

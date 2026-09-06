@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/access/pos_access_codes.dart';
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../application/state/pos_home_dashboard_state.dart';
 import 'pos_home_greeting.dart';
@@ -23,13 +22,11 @@ class PosHomeHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final perms = dashboard.grantedPermissionKeys ?? const {};
     final userDisplayName = dashboard.fallbackUserDisplayName;
-    final canViewNotifications =
-        perms.contains(PosPermissionCodes.viewNotifications);
-    final canViewTillSession =
-        perms.contains(PosPermissionCodes.viewTillSession);
     final now = DateTime.now();
+    // Till chip remains business/home presentation (Chunk 10); notification
+    // chrome is gated in PosHomeHeaderContext via shell/notification codes.
+    const showTillStatus = true;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -46,8 +43,7 @@ class PosHomeHeader extends ConsumerWidget {
         final contextItems = PosHomeHeaderContext(
           now: now,
           dashboard: dashboard,
-          showNotification: canViewNotifications,
-          showTillStatus: canViewTillSession,
+          showTillStatus: showTillStatus,
           notificationCount: dashboard.notificationCount,
         );
 

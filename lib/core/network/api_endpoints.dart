@@ -106,6 +106,7 @@ class ApiEndpoints {
 
   static const currentTillSession = '/api/v1/tills/current-session';
   static const posHome = '/api/v1/pos/home';
+  static const posNotifications = '/api/v1/pos/notifications';
   static const posHardwareConfigurations =
       '/api/v1/pos/hardware/configurations';
   static const posHardwareTests = '/api/v1/pos/hardware/tests';

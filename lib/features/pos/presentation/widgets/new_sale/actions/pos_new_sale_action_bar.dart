@@ -8,6 +8,7 @@ import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_parke
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_park_sale_dialog.dart';
 import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
+import '../../../../../../core/access/permission_access_providers.dart';
 import '../../../../../../core/access/pos_access_codes.dart';
 import '../../../../../../core/access/pos_permission_access.dart';
 import '../../../../../auth/presentation/providers/session_provider.dart';
@@ -23,22 +24,30 @@ class PosNewSaleActionBar extends ConsumerWidget {
     final session = ref.watch(authSessionProvider);
     final cart = ref.watch(posNewSaleCartProvider);
     final parkedSaleCount = ref.watch(posParkedSaleCountProvider);
-    final canApplyDiscount =
-        session?.hasPermission(PosPermissionCodes.applySaleDiscount) == true;
-    final canClearCart = PosPermissionAccess.canClearCart(
-      session?.permissionCodes.toSet() ?? const {},
-    );
-    final canCreateParkedSale =
-        session?.hasPermission(PosPermissionCodes.createParkedSale) == true;
-    final canViewParkedSales =
-        session?.hasPermission(PosPermissionCodes.viewBackendParkedSales) ==
-            true;
+    final permissions = session?.permissionCodes.toSet() ?? const <String>{};
+    final canApplyDiscount = PosPermissionAccess.hasAny(permissions, [
+      PosPermissionCodes.salesManualDiscountApply,
+      PosPermissionCodes.discountPanelView,
+      PosPermissionCodes.applySaleDiscount,
+      PosPermissionCodes.applyDiscount,
+    ]);
+    final canClearCart = PosPermissionAccess.canClearCart(permissions);
+    final canCreateParkedSale = PosPermissionAccess.hasAny(permissions, [
+      PosPermissionCodes.heldSalesCreate,
+      PosPermissionCodes.createParkedSale,
+      PosPermissionCodes.newSaleChromeParkAction,
+    ]);
+    final canRecallParkedSales = PosPermissionAccess.hasAny(permissions, [
+      PosPermissionCodes.heldSalesRecall,
+      PosPermissionCodes.recallBackendParkedSale,
+    ]);
     // Park Sale and Recall Sale are mutually exclusive: an empty cart can
     // only recall, a non-empty cart can only park. Each is gated on its own
     // permission — never fall back to showing the other action's label on a
     // disabled button when the applicable permission is missing.
+    // View-only held list must NOT show Recall (recall child required).
     final showParkAction = cart.hasItems && canCreateParkedSale;
-    final showRecallAction = !cart.hasItems && canViewParkedSales;
+    final showRecallAction = !cart.hasItems && canRecallParkedSales;
     final actions = <_ActionButton>[
       if (showParkAction)
         _ActionButton(
@@ -188,6 +197,7 @@ class PosNewSaleActionBar extends ConsumerWidget {
         ),
         actionsAlignment: MainAxisAlignment.end,
         actions: [
+          // Structural dismiss — not a business Clear permission.
           OutlinedButton(
             key: const ValueKey('clear-cart-cancel'),
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -202,21 +212,32 @@ class PosNewSaleActionBar extends ConsumerWidget {
             ),
             child: const Text('Cancel'),
           ),
-          FilledButton.icon(
-            key: const ValueKey('clear-cart-confirm'),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(148, 48),
-              backgroundColor: TenantAdminColors.posNewSaleClearAction,
-              foregroundColor: TenantAdminColors.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          if (PosPermissionAccess.canClearCart(
+            ref.read(effectivePermissionSetProvider).codes.toSet(),
+          ))
+            FilledButton.icon(
+              key: const ValueKey('clear-cart-confirm'),
+              onPressed: () {
+                if (!PosPermissionAccess.canClearCart(
+                  ref.read(effectivePermissionSetProvider).codes.toSet(),
+                )) {
+                  Navigator.of(dialogContext).pop(false);
+                  return;
+                }
+                Navigator.of(dialogContext).pop(true);
+              },
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(148, 48),
+                backgroundColor: TenantAdminColors.posNewSaleClearAction,
+                foregroundColor: TenantAdminColors.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                ),
+                textStyle: const TextStyle(fontWeight: FontWeight.w800),
               ),
-              textStyle: const TextStyle(fontWeight: FontWeight.w800),
+              icon: const Icon(Icons.delete_outline_rounded, size: 20),
+              label: const Text('Clear Cart'),
             ),
-            icon: const Icon(Icons.delete_outline_rounded, size: 20),
-            label: const Text('Clear Cart'),
-          ),
         ],
       ),
     );
@@ -250,14 +271,7 @@ class PosNewSaleActionBar extends ConsumerWidget {
   }
 
   Future<void> _recallParkedSale(BuildContext context, WidgetRef ref) async {
-    final sale = await showPosParkedSaleDialog(context: context, ref: ref);
-    if (sale == null || !context.mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${sale.reference} recalled.')),
-    );
+    await showPosParkedSaleDialog(context: context, ref: ref);
   }
 }
 

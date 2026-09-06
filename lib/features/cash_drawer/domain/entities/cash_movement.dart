@@ -37,7 +37,7 @@ class CashMovement {
 
   final String id;
   final CashMovementType type;
-  final double amount;
+  final double? amount;
   final DateTime dateTime;
   final String userName;
   final String direction;

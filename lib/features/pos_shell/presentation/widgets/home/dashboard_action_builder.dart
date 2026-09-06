@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../core/access/pos_access_codes.dart';
+import '../../../../../core/access/pos_permission_access.dart';
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../application/state/pos_home_dashboard_state.dart';
 import '../../../domain/entities/pos_home_action.dart';
@@ -136,7 +136,7 @@ PosHomeAction? _findAction(PosHomeDashboardState dashboard, String key) {
 PosHomeActionAccess _endShiftAccess(PosHomeDashboardState dashboard) {
   final permissions = dashboard.grantedPermissionKeys;
   if (permissions != null &&
-      !permissions.contains(PosPermissionCodes.closeTill)) {
+      !PosPermissionAccess.canCloseTill(permissions)) {
     return const PosHomeActionAccess(isVisible: false, isEnabled: false);
   }
   if (dashboard.hasOpenTillSession == false) {

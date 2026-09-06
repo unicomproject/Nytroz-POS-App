@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../payment_method_style.dart';
@@ -44,12 +45,29 @@ class _PaymentTopBarContentState extends ConsumerState<PaymentTopBarContent> {
         Expanded(
           child: Container(
             height: 64,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(children: [
+              IconButton(
+                key: const ValueKey('payment-top-bar-back'),
+                tooltip: 'Back',
+                onPressed: () {
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  } else {
+                    GoRouter.of(context).go('/pos/new-sale/customer');
+                  }
+                },
+                icon: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: PaymentMethodStyle.navy,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 8),
               const Icon(Icons.credit_card_rounded,
                   color: PaymentMethodStyle.orange, size: 32),
               const SizedBox(width: 16),
@@ -57,15 +75,25 @@ class _PaymentTopBarContentState extends ConsumerState<PaymentTopBarContent> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Proceed to Payment',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w900, color: Colors.black)),
-                    const Text('Review sale and select a payment method.',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            color: PaymentMethodStyle.navy, fontSize: 13)),
+                  children: const [
+                    Text(
+                      'Proceed to Payment',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Review sale and select a payment method.',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: PaymentMethodStyle.navy,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
               ),
