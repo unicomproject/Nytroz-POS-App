@@ -42,10 +42,7 @@ class _PosParkSaleDialogState extends ConsumerState<_PosParkSaleDialog> {
   final _formKey = GlobalKey<FormState>();
   final _noteController = TextEditingController();
   final _noteFocus = FocusNode();
-  PosParkedSale? _successfulSale;
   String? _errorMessage;
-  // Guards against a rapid double-tap on Done invoking Navigator.pop twice.
-  bool _donePressed = false;
 
   @override
   void dispose() {
@@ -86,8 +83,7 @@ class _PosParkSaleDialogState extends ConsumerState<_PosParkSaleDialog> {
     final showNote = PosSalesPermissionVisibility.canShowParkNote(permissions);
     final showExpiry =
         PosSalesPermissionVisibility.canShowParkExpiry(permissions);
-    final canConfirm =
-        PosSalesPermissionVisibility.canConfirmPark(permissions);
+    final canConfirm = PosSalesPermissionVisibility.canConfirmPark(permissions);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -180,74 +176,6 @@ class _PosParkSaleDialogState extends ConsumerState<_PosParkSaleDialog> {
     );
   }
 
-  Widget _buildSuccess(BuildContext context, PosParkedSale sale) {
-    return Padding(
-      padding: const EdgeInsets.all(TenantAdminSpacing.xl),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Semantics(
-            label: 'Sale parked successfully',
-            child: Container(
-              key: const Key('park-sale-success-icon'),
-              width: 64,
-              height: 64,
-              decoration: const BoxDecoration(
-                color: TenantAdminColors.posHomeReturnsCard,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_rounded,
-                size: 36,
-                color: TenantAdminColors.posNewSaleAccent,
-              ),
-            ),
-          ),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          Text(
-            'Sale parked successfully',
-            textAlign: TextAlign.center,
-            style: TenantAdminTextStyles.pageTitle(context),
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          Text(
-            'Park Reference',
-            style: TenantAdminTextStyles.muted(context),
-          ),
-          const SizedBox(height: TenantAdminSpacing.xs),
-          SelectableText(
-            sale.reference,
-            key: const Key('park-sale-success-reference'),
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: TenantAdminColors.posNewSaleAccent,
-                  fontWeight: FontWeight.w900,
-                ),
-          ),
-          const SizedBox(height: TenantAdminSpacing.xl),
-          FilledButton(
-            key: const Key('park-sale-success-done'),
-            onPressed: _handleDone,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(
-                PosPrimaryActionTokens.compactHeight,
-              ),
-              backgroundColor: TenantAdminColors.posNewSaleAccent,
-              foregroundColor: TenantAdminColors.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-              ),
-            ),
-            child: const Text(
-              'Done',
-              style: TextStyle(fontWeight: FontWeight.w800),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _submit() async {
     FocusManager.instance.primaryFocus?.unfocus();
     final permissions = ref.read(effectivePermissionSetProvider);
@@ -283,13 +211,6 @@ class _PosParkSaleDialogState extends ConsumerState<_PosParkSaleDialog> {
     return trimmed.isEmpty ? null : trimmed;
   }
 
-  // Only Navigator.pop — no API call, no cart clear. The cart was already
-  // cleared on successful park; this just dismisses the confirmation.
-  void _handleDone() {
-    if (_donePressed) return;
-    _donePressed = true;
-    Navigator.of(context).pop();
-  }
 }
 
 class _ParkDialogHeader extends StatelessWidget {
