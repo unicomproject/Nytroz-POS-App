@@ -10,7 +10,9 @@ import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.d
 import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/pos_shell/application/state/pos_home_dashboard_state.dart';
+import 'package:nytroz_pos/features/pos_shell/data/datasources/pos_notifications_remote_datasource.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_home_dashboard_provider.dart';
+import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_notifications_provider.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_top_bar.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_top_bar_notification_button.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/pos_branding.dart';
@@ -129,6 +131,11 @@ void main() {
               (ref) => _testDashboardState,
             ),
             appDioProvider.overrideWithValue(Dio()),
+            posNotificationsProvider.overrideWith(
+              (ref) => Future.value(
+                const PosNotificationInbox(items: [], unreadCount: 0),
+              ),
+            ),
           ],
           child: const MaterialApp(
             home: Scaffold(
