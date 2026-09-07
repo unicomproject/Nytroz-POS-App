@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/pos_theme_provider.dart';
 import '../features/auth/presentation/providers/auth_network_provider.dart';
 import '../features/auth/presentation/providers/session_provider.dart';
+import '../features/notifications/presentation/providers/notification_provider.dart';
 import '../features/sale/presentation/providers/completed_sale_print_provider.dart';
 import '../features/tenant_admin/presentation/providers/tenant_admin_session_sync_provider.dart';
 import '../features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -46,6 +47,7 @@ class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
     ref.watch(tenantAdminSessionSyncProvider);
     ref.watch(posSessionBootstrapProvider);
     ref.watch(completedSalePrintProvider);
+    ref.watch(notificationInboxProvider);
     final router = ref.watch(appRouterProvider);
     final posTheme = ref.watch(posThemeProvider);
 

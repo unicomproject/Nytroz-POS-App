@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:nytroz_pos/core/access/permission_access_providers.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
-import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_home_dashboard_provider.dart';
+import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_notifications_provider.dart';
 import 'pos_notifications_dialog.dart';
 import 'pos_shell_top_bar_visibility.dart';
 
@@ -23,8 +23,7 @@ class PosTopBarNotificationButton extends ConsumerWidget {
         PosShellTopBarVisibility.canShowNotificationPanel(permissions);
     final canShowUnread =
         PosShellTopBarVisibility.canShowUnreadCount(permissions);
-    final dashboard = ref.watch(posHomeDashboardProvider).asData?.value;
-    final count = dashboard?.notificationCount ?? 0;
+    final count = ref.watch(posNotificationsProvider).asData?.value.unreadCount ?? 0;
     final showBadge = canShowUnread && count > 0;
 
     return Padding(

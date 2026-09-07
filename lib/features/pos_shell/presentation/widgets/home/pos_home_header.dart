@@ -44,7 +44,6 @@ class PosHomeHeader extends ConsumerWidget {
           now: now,
           dashboard: dashboard,
           showTillStatus: showTillStatus,
-          notificationCount: dashboard.notificationCount,
         );
 
         if (isCompact) {

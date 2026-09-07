@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../notifications/presentation/providers/notification_provider.dart';
+import '../../../../notifications/presentation/widgets/notification_panel.dart';
 import '../../../domain/entities/tenant_admin_context.dart';
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
@@ -43,7 +46,6 @@ class TenantAdminDashboardHeaderActions extends StatelessWidget {
     if (visibility.showNotifications) {
       actions.add(
         _NotificationBell(
-          count: visibility.notificationCount,
           canRead: visibility.showNotificationReadAction,
         ),
       );
@@ -112,17 +114,19 @@ class _FilterChipButton extends StatelessWidget {
   }
 }
 
-class _NotificationBell extends StatelessWidget {
+class _NotificationBell extends ConsumerWidget {
   const _NotificationBell({
-    required this.count,
     required this.canRead,
   });
 
-  final int? count;
   final bool canRead;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(
+      notificationInboxProvider.select((state) => state.unreadCount),
+    );
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -135,12 +139,12 @@ class _NotificationBell extends StatelessWidget {
             border: Border.all(color: TenantAdminColors.border),
           ),
           child: IconButton(
-            onPressed: canRead ? () {} : null,
+            onPressed: canRead ? () => showNotificationPanel(context) : null,
             icon: const Icon(Icons.notifications_none),
             color: TenantAdminColors.bodyText,
           ),
         ),
-        if (count != null && count! > 0)
+        if (count > 0)
           Positioned(
             right: 6,
             top: 6,
@@ -152,7 +156,7 @@ class _NotificationBell extends StatelessWidget {
               ),
               constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
               child: Text(
-                count! > 99 ? '99+' : '$count',
+                count > 99 ? '99+' : '$count',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
