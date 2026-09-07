@@ -7,6 +7,8 @@ import 'package:nytroz_pos/core/access/permission_access_providers.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/core/utils/timezone_resolver.dart';
 import 'package:nytroz_pos/features/pos_shell/application/state/pos_home_dashboard_state.dart';
+import 'package:nytroz_pos/features/pos_shell/data/datasources/pos_notifications_remote_datasource.dart';
+import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_notifications_provider.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/pos_home_header.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/pos_status_chip.dart';
 
@@ -54,12 +56,22 @@ void main() {
     WidgetTester tester, {
     required PosHomeDashboardState state,
     EffectivePermissionSet? permissions,
+    int unreadNotificationCount = 0,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
+        key: UniqueKey(),
         overrides: [
           effectivePermissionSetProvider.overrideWithValue(
             permissions ?? _fullHeaderPermissions,
+          ),
+          posNotificationsProvider.overrideWith(
+            (ref) => Future.value(
+              PosNotificationInbox(
+                items: const [],
+                unreadCount: unreadNotificationCount,
+              ),
+            ),
           ),
         ],
         child: MaterialApp(
@@ -69,6 +81,7 @@ void main() {
         ),
       ),
     );
+    await tester.pump();
   }
 
   group('PosHomeHeader Widget Tests', () {
@@ -88,13 +101,12 @@ void main() {
         'notification badge shows actual count for <= 99 and 99+ for > 99',
         (tester) async {
       // Test count <= 99
-      final state5 = createTestState(notificationCount: 5);
-      await pumpHeader(tester, state: state5);
+      final state = createTestState();
+      await pumpHeader(tester, state: state, unreadNotificationCount: 5);
       expect(find.text('5'), findsOneWidget);
 
       // Test count > 99 -> displays 99+
-      final state120 = createTestState(notificationCount: 120);
-      await pumpHeader(tester, state: state120);
+      await pumpHeader(tester, state: state, unreadNotificationCount: 120);
       expect(find.text('99+'), findsOneWidget);
     });
 
