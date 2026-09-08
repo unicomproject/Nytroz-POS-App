@@ -361,7 +361,7 @@ void main() {
     );
   });
 
-  AddProductWizardState _variantWizard({
+  AddProductWizardState variantWizard({
     List<VariantPriceDto> prices = const [],
   }) {
     return AddProductWizardState(
@@ -374,18 +374,18 @@ void main() {
       taxExclusive: true,
       variantPrices: prices,
       step4State: Step4VariantConfigurationState(
-        generatedVariants: [
-          const GeneratedVariantRow(
+        generatedVariants: const [
+          GeneratedVariantRow(
             clientCombinationKey: 'blue-500',
             combinationLabel: 'Blue / 500ml',
             displayLabel: 'Blue / 500ml',
           ),
-          const GeneratedVariantRow(
+          GeneratedVariantRow(
             clientCombinationKey: 'blue-1l',
             combinationLabel: 'Blue / 1L',
             displayLabel: 'Blue / 1L',
           ),
-          const GeneratedVariantRow(
+          GeneratedVariantRow(
             clientCombinationKey: 'black-500',
             combinationLabel: 'Black / 500ml',
             displayLabel: 'Black / 500ml',
@@ -410,7 +410,7 @@ void main() {
     );
   }
 
-  Future<void> _pumpStep6(
+  Future<void> pumpStep6(
     WidgetTester tester,
     AddProductWizardState initial,
   ) async {
@@ -473,7 +473,7 @@ void main() {
   });
 
   testWidgets('UI-02 VARIANT renders Variant Step 6', (tester) async {
-    await _pumpStep6(tester, _variantWizard());
+    await pumpStep6(tester, variantWizard());
     expect(find.text('Pricing & Tax — Variant Product'), findsOneWidget);
     expect(find.textContaining('Prices are managed at variant level'),
         findsOneWidget);
@@ -481,7 +481,7 @@ void main() {
   });
 
   testWidgets('UI-03/04 table shows included variants only', (tester) async {
-    await _pumpStep6(tester, _variantWizard());
+    await pumpStep6(tester, variantWizard());
     expect(find.text('Blue / 500ml'), findsOneWidget);
     expect(find.text('Blue / 1L'), findsOneWidget);
     expect(find.text('Black / 500ml'), findsNothing);
@@ -489,13 +489,13 @@ void main() {
   });
 
   testWidgets('UI-05 each row shows Step 5 SKU', (tester) async {
-    await _pumpStep6(tester, _variantWizard());
+    await pumpStep6(tester, variantWizard());
     expect(find.text('741853595-500B'), findsOneWidget);
     expect(find.text('741853595-1LB'), findsOneWidget);
   });
 
   testWidgets('UI-08 Apply to All populates all rows', (tester) async {
-    await _pumpStep6(tester, _variantWizard());
+    await pumpStep6(tester, variantWizard());
     expect(find.text('Set Same Price for All Variants'), findsOneWidget);
     expect(find.text('Default Selling Price'), findsNothing);
     expect(find.textContaining('Default Price'), findsNothing);
@@ -507,7 +507,7 @@ void main() {
   });
 
   testWidgets('UI-09 Apply to All then override one row', (tester) async {
-    await _pumpStep6(tester, _variantWizard());
+    await pumpStep6(tester, variantWizard());
     await tester.enterText(find.byType(TextField).first, '650');
     await tester.tap(find.widgetWithText(FilledButton, 'Apply to All'));
     await tester.pumpAndSettle();
@@ -520,9 +520,9 @@ void main() {
 
   testWidgets('UX-09 overwrite confirmation when rows already priced',
       (tester) async {
-    await _pumpStep6(
+    await pumpStep6(
       tester,
-      _variantWizard(prices: const [
+      variantWizard(prices: const [
         VariantPriceDto(
           clientCombinationKey: 'blue-500',
           sellingPrice: 750,
@@ -556,7 +556,7 @@ void main() {
 
   testWidgets('UI-15/16/17 common tax class; resolved rate; no per-row tax',
       (tester) async {
-    await _pumpStep6(tester, _variantWizard());
+    await pumpStep6(tester, variantWizard());
     expect(find.text('Tax Class *'), findsOneWidget);
     expect(find.textContaining('15.00%'), findsOneWidget);
     expect(find.text('Tax Exclusive'), findsOneWidget);
@@ -569,7 +569,7 @@ void main() {
       ProviderScope(
         overrides: [
           addProductWizardControllerProvider.overrideWith((ref) {
-            controller = _FakeAddProductWizardController(_variantWizard());
+            controller = _FakeAddProductWizardController(variantWizard());
             return controller;
           }),
         ],
@@ -594,7 +594,7 @@ void main() {
         overrides: [
           addProductWizardControllerProvider.overrideWith((ref) {
             controller = _FakeAddProductWizardController(
-              _variantWizard(prices: const [
+              variantWizard(prices: const [
                 VariantPriceDto(
                   clientCombinationKey: 'blue-500',
                   sellingPrice: 750,
@@ -625,7 +625,7 @@ void main() {
         overrides: [
           addProductWizardControllerProvider.overrideWith((ref) {
             controller = _FakeAddProductWizardController(
-              _variantWizard(prices: const [
+              variantWizard(prices: const [
                 VariantPriceDto(
                   clientCombinationKey: 'blue-500',
                   sellingPrice: 750,

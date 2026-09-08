@@ -7,6 +7,7 @@ void main() {
     test('maps update request with optional pricing and variants', () {
       const dto = ProductCreateRequestDto(
         productName: 'Espresso Beans',
+        productCode: 'PROD-001',
         sku: 'ESP-001',
         categoryId: '11111111-1111-1111-1111-111111111111',
         unitType: 'EA',

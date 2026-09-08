@@ -239,7 +239,7 @@ class Step5IdentifierTable extends StatelessWidget {
         (!editOnlyWhenSelected || selected);
     final isComplete = effectiveStatus == 'COMPLETE';
     final showCompleteFieldStyle = isComplete && !canEditInline;
-    final accent = TenantAdminColors.posHomeAccentOrange;
+    const accent = TenantAdminColors.posHomeAccentOrange;
     const completeGreen = Color(0xFF22C55E);
     final displaySku =
         draftSkus[assignment.clientCombinationKey] ?? assignment.sku ?? '';

@@ -42,7 +42,7 @@ class GeneratedVariantsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accentColor = TenantAdminColors.posHomeAccentOrange;
+    const accentColor = TenantAdminColors.posHomeAccentOrange;
     final fallbackImageUrl = _resolveFallbackImageUrl(ref, state);
 
     return Column(

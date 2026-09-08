@@ -506,7 +506,7 @@ class _RequiredLabel extends StatelessWidget {
   final String text;
   final bool required;
 
-  const _RequiredLabel(this.text, {this.required = true});
+  const _RequiredLabel(this.text) : required = true;
 
   @override
   Widget build(BuildContext context) {

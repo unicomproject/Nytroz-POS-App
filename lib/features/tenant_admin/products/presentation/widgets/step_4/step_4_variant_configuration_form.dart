@@ -57,7 +57,7 @@ class _Step4VariantConfigurationFormState
   @override
   Widget build(BuildContext context) {
     final step4State = state.step4State;
-    final accentColor = TenantAdminColors.posHomeAccentOrange;
+    const accentColor = TenantAdminColors.posHomeAccentOrange;
     final hasGeneratedVariants = step4State.generatedVariants.isNotEmpty;
     final showingGeneratedView = _showVariantsView && hasGeneratedVariants;
 
@@ -735,7 +735,7 @@ class _AddValueButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = TenantAdminColors.posHomeAccentOrange;
+    const accentColor = TenantAdminColors.posHomeAccentOrange;
 
     return InkWell(
       onTap: onTap,

@@ -151,7 +151,7 @@ void main() {
     });
 
     test('REC-UI preserve by identity; new pending; exclude removed', () {
-      final existing = const [
+      const existing = [
         VariantPriceDto(
           productVariantId: 'id-a',
           clientCombinationKey: 'a',
@@ -193,7 +193,7 @@ void main() {
     });
 
     test('maps variantPrices[n] server error to submitted identity', () {
-      final snapshot = const [
+      const snapshot = [
         VariantPriceDto(
           productVariantId: 'id-a',
           clientCombinationKey: 'a',

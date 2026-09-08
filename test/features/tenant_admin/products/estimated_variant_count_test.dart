@@ -82,7 +82,7 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
 
-      final longName =
+      const longName =
           'Extra Long Attribute Name For Responsive Layout Validation';
       await tester.pumpWidget(
         MaterialApp(

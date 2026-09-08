@@ -7,6 +7,7 @@ void main() {
     test('maps create request to backend payload', () {
       const dto = ProductCreateRequestDto(
         productName: 'Espresso Beans',
+        productCode: 'PROD-001',
         sku: 'ESP-001',
         barcode: '1234567890',
         categoryId: '11111111-1111-1111-1111-111111111111',

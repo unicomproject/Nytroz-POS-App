@@ -182,7 +182,7 @@ class _EditVariantDrawerState extends ConsumerState<EditVariantDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = TenantAdminColors.posHomeAccentOrange;
+    const accentColor = TenantAdminColors.posHomeAccentOrange;
     final variant = _variant;
     final groupValue = _primaryGroupValue;
     final fallbackProductImage = widget.state.productImages.isEmpty
