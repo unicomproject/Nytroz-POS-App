@@ -10,7 +10,8 @@ class UpdateRoleStatusRequestDto {
   Map<String, dynamic> toJson() {
     return {
       'isActive': isActive,
-      if (expectedUpdatedAt != null) 'expectedUpdatedAt': expectedUpdatedAt!.toIso8601String(),
+      if (expectedUpdatedAt != null)
+        'expectedUpdatedAt': expectedUpdatedAt!.toIso8601String(),
     };
   }
 }

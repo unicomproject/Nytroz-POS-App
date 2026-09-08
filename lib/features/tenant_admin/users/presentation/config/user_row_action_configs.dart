@@ -41,10 +41,14 @@ const userRowActionConfigs = <UserRowActionConfig>[
     actionId: UserRowActionId.edit,
     label: 'Edit',
     icon: Icons.edit_outlined,
-    // Intentionally excludes tenant.user.manage: its alias expansion
-    // includes granular view permissions, which would let view-only
-    // users see the edit action. See canUpdateUser() for details.
-    permission: TenantAdminPermissionCodes.tenantUsersUpdate,
+    permissionsAny: [
+      TenantAdminPermissionCodes.tenantUsersUpdate,
+      TenantAdminPermissionCodes.tenantUsersDisable,
+      TenantAdminPermissionCodes.tenantUsersRolesAssign,
+      TenantAdminPermissionCodes.tenantUsersOutletsAssign,
+      TenantAdminPermissionCodes.tenantUsersTillsAssign,
+      TenantAdminPermissionCodes.tenantUsersPermissionOverride,
+    ],
   ),
   UserRowActionConfig(
     id: 'delete',

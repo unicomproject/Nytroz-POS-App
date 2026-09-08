@@ -61,7 +61,7 @@ const tenantAdminMenuCatalog = <TenantAdminMenuItem>[
     route: '/tenant-admin/roles-permissions',
     iconKey: 'shield',
     featureCode: TenantAdminFeatureCodes.rolePermission,
-    permissionCode: TenantAdminPermissionCodes.rolesPermissionsView,
+    permissionCode: TenantAdminPermissionCodes.tenantRolesPermissionsView,
     visible: true,
     order: 6,
   ),

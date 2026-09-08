@@ -68,6 +68,63 @@ final userUpdateAccessProvider = Provider<bool>((ref) {
   );
 });
 
+final userStatusUpdateAccessProvider = Provider<bool>((ref) {
+  final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+  return accessState.maybeWhen(
+    data: (checker) => checker.canUpdateUserStatus(),
+    orElse: () => false,
+  );
+});
+
+final userRoleAssignAccessProvider = Provider<bool>((ref) {
+  final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+  return accessState.maybeWhen(
+    data: (checker) => checker.canAssignUserRole(),
+    orElse: () => false,
+  );
+});
+
+final userOutletAssignAccessProvider = Provider<bool>((ref) {
+  final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+  return accessState.maybeWhen(
+    data: (checker) => checker.canAssignUserOutlets(),
+    orElse: () => false,
+  );
+});
+
+final userTillAssignAccessProvider = Provider<bool>((ref) {
+  final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+  return accessState.maybeWhen(
+    data: (checker) => checker.canAssignUserTills(),
+    orElse: () => false,
+  );
+});
+
+final userInviteResendAccessProvider = Provider<bool>((ref) {
+  final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+  return accessState.maybeWhen(
+    data: (checker) => checker.canResendUserInvite(),
+    orElse: () => false,
+  );
+});
+
+final userInviteRevokeAccessProvider = Provider<bool>((ref) {
+  final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+  return accessState.maybeWhen(
+    data: (checker) => checker.canRevokeUserInvite(),
+    orElse: () => false,
+  );
+});
+
+final userMutationAccessProvider = Provider<bool>((ref) {
+  return ref.watch(userUpdateAccessProvider) ||
+      ref.watch(userStatusUpdateAccessProvider) ||
+      ref.watch(userRoleAssignAccessProvider) ||
+      ref.watch(userOutletAssignAccessProvider) ||
+      ref.watch(userTillAssignAccessProvider) ||
+      ref.watch(userPermissionOverrideAccessProvider);
+});
+
 final userDeleteAccessProvider = Provider<bool>((ref) {
   final accessState = ref.watch(tenantAdminAccessCheckerProvider);
 

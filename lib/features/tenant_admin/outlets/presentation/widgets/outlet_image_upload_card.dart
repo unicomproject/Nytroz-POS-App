@@ -11,6 +11,7 @@ class OutletImageUploadCard extends StatelessWidget {
     required this.onReplace,
     required this.onRemove,
     required this.onRetry,
+    this.enabled = true,
   });
 
   final OutletImageUploadState state;
@@ -18,6 +19,7 @@ class OutletImageUploadCard extends StatelessWidget {
   final VoidCallback onReplace;
   final VoidCallback onRemove;
   final VoidCallback onRetry;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +41,7 @@ class OutletImageUploadCard extends StatelessWidget {
       onChooseImage: hasImage ? onReplace : onChoose,
       onRemoveImage: hasImage ? onRemove : null,
       onRetry: state.errorMessage == null ? null : onRetry,
+      enabled: enabled,
     );
   }
 

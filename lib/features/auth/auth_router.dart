@@ -12,6 +12,11 @@ import 'presentation/screens/login_screen.dart';
 List<RouteBase> authRoutes() {
   return [
     GoRoute(
+      path: '/tenant-admin/setup',
+      builder: (context, state) =>
+          const SetupLinkValidationScreen(setupToken: ''),
+    ),
+    GoRoute(
       path: '/tenant-admin/payment/processing',
       builder: (context, state) => PaymentProcessingScreen(
         paymentToken: state.uri.queryParameters['paymentToken'] ?? '',

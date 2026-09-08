@@ -11,6 +11,8 @@ abstract class RolePermissionRepository {
 
   Future<List<RoleSetupOption>> getSetupOptions();
 
+  Future<RoleAssignmentOptions> getAssignmentOptions();
+
   Future<SaveRoleSetupResult> saveRoleSetup(
     String roleId,
     SaveRoleSetupRequest request,

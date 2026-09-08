@@ -10,6 +10,7 @@ import '../../../presentation/widgets/tenant_admin_row_action.dart';
 import '../../../presentation/widgets/tenant_admin_status_badge.dart';
 import '../config/outlet_row_action_configs.dart';
 import '../config/outlet_table_column_configs.dart';
+import '../providers/outlet_detail_providers.dart';
 import '../providers/outlet_providers.dart';
 import '../providers/outlet_visibility_provider.dart';
 import '../providers/selected_outlet_provider.dart';
@@ -49,6 +50,9 @@ class OutletTable extends ConsumerWidget {
     final canDelete = rowActions.any(
       (action) => action.actionId == OutletRowActionId.delete,
     );
+    final canUpdateStatus = rowActions.any(
+      (action) => action.actionId == OutletRowActionId.toggleStatus,
+    );
 
     return TenantAdminDataTable(
       showCheckboxColumn: false,
@@ -75,7 +79,15 @@ class OutletTable extends ConsumerWidget {
             onSelectChanged: (_) => _handleRowTap(context, ref, outlet.id),
             cells: [
               for (final column in columns)
-                _buildCell(context, ref, column, outlet, canEdit, canDelete),
+                _buildCell(
+                  context,
+                  ref,
+                  column,
+                  outlet,
+                  canEdit,
+                  canUpdateStatus,
+                  canDelete,
+                ),
             ],
           ),
       ],
@@ -154,6 +166,7 @@ class OutletTable extends ConsumerWidget {
     OutletTableColumnConfig column,
     Outlet outlet,
     bool canEdit,
+    bool canUpdateStatus,
     bool canDelete,
   ) {
     switch (column.columnId) {
@@ -195,7 +208,7 @@ class OutletTable extends ConsumerWidget {
       case OutletTableColumnId.type:
         return DataCell(_PlainCell(_outletType(outlet)));
       case OutletTableColumnId.manager:
-        return DataCell(_PlainCell(_mockManager(outlet.code)));
+        return DataCell(_PlainCell(outlet.managerName ?? 'Unassigned'));
       case OutletTableColumnId.city:
         return DataCell(_PlainCell(_cityLabel(outlet)));
       case OutletTableColumnId.status:
@@ -224,6 +237,20 @@ class OutletTable extends ConsumerWidget {
                     onSelected: () => context.go(
                       '/tenant-admin/outlets/${outlet.id}/edit',
                     ),
+                  ),
+                if (canUpdateStatus)
+                  TenantAdminOverflowAction(
+                    id: 'status',
+                    icon: outlet.status.toUpperCase() == 'ACTIVE'
+                        ? Icons.block_outlined
+                        : Icons.check_circle_outline,
+                    label: outlet.status.toUpperCase() == 'ACTIVE'
+                        ? 'Deactivate'
+                        : 'Activate',
+                    destructive: outlet.status.toUpperCase() == 'ACTIVE',
+                    success: outlet.status.toUpperCase() != 'ACTIVE',
+                    onSelected: () =>
+                        _confirmStatusChange(context, ref, outlet),
                   ),
                 if (canDelete)
                   TenantAdminOverflowAction(
@@ -305,6 +332,58 @@ class OutletTable extends ConsumerWidget {
           backgroundColor: TenantAdminColors.danger,
         ),
       );
+    }
+  }
+
+  Future<void> _confirmStatusChange(
+    BuildContext context,
+    WidgetRef ref,
+    Outlet outlet,
+  ) async {
+    final isActive = outlet.status.toUpperCase() == 'ACTIVE';
+    final action = isActive ? 'Deactivate' : 'Activate';
+    final confirmed = await showAppDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('$action outlet?'),
+        content: Text(
+          'Are you sure you want to ${action.toLowerCase()} "${outlet.name}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(action),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await ref
+          .read(updateOutletStatusProvider)
+          .call(outlet.id, isActive ? 'INACTIVE' : 'ACTIVE');
+      ref.invalidate(outletListProvider);
+      ref.invalidate(outletSummaryDashboardProvider);
+      ref.invalidate(tenantAdminOutletOverviewProvider(outlet.id));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${outlet.name} updated successfully')),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unable to update outlet: $error'),
+            backgroundColor: TenantAdminColors.danger,
+          ),
+        );
+      }
     }
   }
 }
@@ -410,13 +489,4 @@ TenantAdminStatusType _statusType(String status) {
     default:
       return TenantAdminStatusType.warning;
   }
-}
-
-String _mockManager(String code) {
-  if (code.contains('DEV')) return 'Kavindu Silva';
-  if (code.contains('CITY')) return 'Nadeesha Perera';
-  if (code.contains('WH')) return 'Admin Team';
-  if (code.contains('FEST')) return 'Tharushi';
-  if (code.contains('MALL')) return 'Isuru Fernando';
-  return 'Unassigned';
 }

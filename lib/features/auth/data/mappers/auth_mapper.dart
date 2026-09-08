@@ -56,6 +56,7 @@ extension SetupTokenValidationDtoMapper on SetupTokenValidationDto {
       expired: expired,
       email: email,
       message: message,
+      code: code,
     );
   }
 }

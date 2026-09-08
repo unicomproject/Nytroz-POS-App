@@ -335,7 +335,12 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         featureKey: PosFeatureCodes.sales,
         permissionKey: PosPermissionCodes.salesNewSaleView,
       ),
-      if (onlineOrdersCard != null)
+      if (onlineOrdersCard != null &&
+      (PosPermissionAccess.canViewOnlineOrders(permissions) ||
+      permissions.contains(PosPermissionCodes.manageOnlineOrders) ||
+      permissions.contains(
+        PosPermissionCodes.homeActionsOnlineOrdersEntry,
+      )))
         PosHomeAction(
           key: 'manage-online-orders',
           label: 'Manage Online Orders',

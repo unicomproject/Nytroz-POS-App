@@ -152,7 +152,7 @@ final tillCreateOptionsProvider = FutureProvider.autoDispose
     .family<TillCreateOptions?, String?>((ref, outletId) async {
   final accessChecker =
       await ref.watch(tenantAdminAccessCheckerProvider.future);
-  if (!accessChecker.canAccessTillModule()) {
+  if (!accessChecker.canCreateTill()) {
     return null;
   }
   return ref.watch(tillRepositoryProvider).getCreateOptions(outletId: outletId);

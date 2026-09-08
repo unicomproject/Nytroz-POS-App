@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
@@ -55,6 +55,7 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
 
   bool _isDirty = false;
   bool _isSubmitting = false;
+  bool _configureHardwareNow = false;
   Map<String, String> _backendErrors = {};
 
   @override
@@ -73,6 +74,7 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
       }
     }
     _selectedStatus ??= statuses.isNotEmpty ? statuses.first : null;
+    _configureHardwareNow = widget.canManageHardware;
   }
 
   @override
@@ -118,12 +120,16 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
         }
       }
 
-      addDevice(_selectedScannerId);
-      addDevice(_selectedPrinterId);
-      addDevice(_selectedCashDrawerId);
-      addDevice(_selectedCardReaderId);
+      if (_configureHardwareNow && widget.canManageHardware) {
+        addDevice(_selectedScannerId);
+        addDevice(_selectedPrinterId);
+        addDevice(_selectedCashDrawerId);
+        addDevice(_selectedCardReaderId);
+      }
 
-      final realPosDeviceId = (_selectedPosDeviceId != null && !_selectedPosDeviceId!.startsWith('pos-'))
+      final realPosDeviceId = _configureHardwareNow &&
+              widget.canManageHardware &&
+              _selectedPosDeviceId != null
           ? _selectedPosDeviceId
           : null;
 
@@ -136,11 +142,21 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
         defaultOpeningFloatAmount: _floatController.text.trim(),
         posDeviceId: realPosDeviceId,
         hardwareAssignments: hardwareAssignments,
-        deviceName: _posDeviceNameController.text.trim(),
-        scannerName: _scannerNameController.text.trim(),
-        printerName: _printerNameController.text.trim(),
-        cashDrawerName: _cashDrawerNameController.text.trim(),
-        cardReaderName: _cardReaderNameController.text.trim(),
+        deviceName: realPosDeviceId == null
+            ? null
+            : _posDeviceNameController.text.trim(),
+        scannerName: hardwareAssignments.isEmpty
+            ? null
+            : _scannerNameController.text.trim(),
+        printerName: hardwareAssignments.isEmpty
+            ? null
+            : _printerNameController.text.trim(),
+        cashDrawerName: hardwareAssignments.isEmpty
+            ? null
+            : _cashDrawerNameController.text.trim(),
+        cardReaderName: hardwareAssignments.isEmpty
+            ? null
+            : _cardReaderNameController.text.trim(),
       );
       final createTillSetup = ref.read(createTillSetupProvider);
       await createTillSetup(formData);
@@ -252,26 +268,8 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
                     ref.watch(tillCreateOptionsProvider(_selectedOutletId));
                 final scopedOptions = scopedOptionsState.valueOrNull;
 
-                var hwDevices = scopedOptions?.hardwareDevices ?? [];
-                var pDevices = scopedOptions?.posDevices ?? [];
-
-                // Inject dummy devices for the selected outlet to allow UI testing of pairing flow
-                if (_selectedOutletId != null) {
-                  final dummyHw = [
-                    TillHardwareDeviceOption(id: 'hw-1', code: 'SCN-01', name: 'Zebra Barcode Scanner', type: 'barcode_scanner', outletId: _selectedOutletId!, status: 'ACTIVE', isAssigned: false),
-                    TillHardwareDeviceOption(id: 'hw-2', code: 'SCN-02', name: 'Honeywell Scanner', type: 'barcode_scanner', outletId: _selectedOutletId!, status: 'ACTIVE', isAssigned: false),
-                    TillHardwareDeviceOption(id: 'hw-3', code: 'PRN-01', name: 'Epson Receipt Printer', type: 'receipt_printer', outletId: _selectedOutletId!, status: 'ACTIVE', isAssigned: false),
-                    TillHardwareDeviceOption(id: 'hw-4', code: 'DRW-01', name: 'Star Cash Drawer', type: 'cash_drawer', outletId: _selectedOutletId!, status: 'ACTIVE', isAssigned: false),
-                    TillHardwareDeviceOption(id: 'hw-5', code: 'CRD-01', name: 'Verifone Card Reader', type: 'payment_terminal', outletId: _selectedOutletId!, status: 'ACTIVE', isAssigned: false),
-                  ];
-                  hwDevices = [...hwDevices, ...dummyHw];
-
-                  final dummyPos = [
-                    TillPosDeviceOption(id: 'pos-1', code: 'POS-01', name: 'Main Register iPad', outletId: _selectedOutletId!, status: 'ACTIVE', isTrusted: true, isAssigned: false),
-                    TillPosDeviceOption(id: 'pos-2', code: 'POS-02', name: 'Counter 2 Tablet', outletId: _selectedOutletId!, status: 'ACTIVE', isTrusted: true, isAssigned: false),
-                  ];
-                  pDevices = [...pDevices, ...dummyPos];
-                }
+                final hwDevices = scopedOptions?.hardwareDevices ?? [];
+                final pDevices = scopedOptions?.posDevices ?? [];
 
                 final effectiveOptions = TillCreateOptions(
                   outlets: widget.options.outlets,
@@ -326,6 +324,7 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
 
                 final hardwareSection = widget.canViewHardware
                     ? AddTillHardwareSection(
+                        enabled: widget.canManageHardware,
                         options: effectiveOptions,
                         selectedOutletId: _selectedOutletId,
                         selectedPosDeviceId: _selectedPosDeviceId,
@@ -446,14 +445,17 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFFF3F4F6),
                     foregroundColor: const Color(0xFF374151),
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16, horizontal: 32),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: const Text('Cancel',
                       style: TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 15, letterSpacing: 0.3)),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          letterSpacing: 0.3)),
                 ),
                 const SizedBox(width: TenantAdminSpacing.lg),
                 ElevatedButton(
@@ -465,7 +467,8 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
                         .posHomeAccentOrange
                         .withValues(alpha: 0.45),
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16, horizontal: 32),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -478,7 +481,9 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
                               strokeWidth: 2, color: Colors.white))
                       : const Text('Create Till',
                           style: TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 15, letterSpacing: 0.3)),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              letterSpacing: 0.3)),
                 ),
               ],
             ),
@@ -519,7 +524,8 @@ class _AddTillSinglePageFormState extends ConsumerState<AddTillSinglePageForm> {
     }
 
     final outletDevices = effectiveOptions.hardwareDevices
-        .where((d) => d.outletId == _selectedOutletId && selectedIds.contains(d.id))
+        .where((d) =>
+            d.outletId == _selectedOutletId && selectedIds.contains(d.id))
         .toList();
 
     for (final hw in outletDevices) {

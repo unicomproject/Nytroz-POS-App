@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:nytroz_pos/app/app.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
+import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/core/network/dio_provider.dart';
 import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
 import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.dart';
@@ -1262,7 +1263,7 @@ Future<void> _pumpPosHome(
     accessToken: 'test-access-token',
     userId: 'test-user',
     userDisplayName: 'Cashier',
-    permissionCodes: permissionCodes,
+    permissionCodes: ['workspace.pos.access', ...permissionCodes],
   );
 
   tester.view.devicePixelRatio = 1;
@@ -1479,6 +1480,8 @@ const _defaultPermissions = [
 const _permissionsWithOnlineOrders = [
   ..._defaultPermissions,
   PosPermissionCodes.viewOrders,
+  PosPermissionCodes.accessOnlineOrders,
+  PosPermissionCodes.viewOnlineOrders,
   PosPermissionCodes.manageOnlineOrders,
   PosPermissionCodes.homeActionsOnlineOrdersEntry,
 ];
@@ -1774,9 +1777,10 @@ PosHomeDashboardState _referenceDashboardState(
           description: 'Review incoming online orders from one place.',
           iconKey: 'online-orders',
           buttonLabel: 'View Orders',
-          isEnabled: permissions.contains(PosPermissionCodes.manageOnlineOrders) ||
-              permissions
-                  .contains(PosPermissionCodes.homeActionsOnlineOrdersEntry),
+      isEnabled: PosPermissionAccess.canViewOnlineOrders(permissions) ||
+        permissions.contains(PosPermissionCodes.manageOnlineOrders) ||
+        permissions
+          .contains(PosPermissionCodes.homeActionsOnlineOrdersEntry),
           routeExists: false,
           onTapActionKey: 'manage-online-orders',
           featureKey: PosFeatureCodes.onlineOrders,

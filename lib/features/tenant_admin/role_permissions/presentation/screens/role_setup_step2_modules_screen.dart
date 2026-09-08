@@ -21,8 +21,10 @@ class RoleSetupStep2ModulesScreen extends ConsumerWidget {
     'sales_pos': Icons.receipt_long_outlined,
     'reports': Icons.bar_chart_outlined,
     'roles-access': Icons.admin_panel_settings_outlined,
+    'roles_access': Icons.admin_panel_settings_outlined,
     'online-store': Icons.shopping_bag_outlined,
     'online_store': Icons.shopping_bag_outlined,
+    'hardware': Icons.devices_other_outlined,
     'settings': Icons.settings_outlined,
   };
 
@@ -42,7 +44,7 @@ class RoleSetupStep2ModulesScreen extends ConsumerWidget {
               step: 2,
               title: 'Select Modules',
               subtitle:
-                  'Choose the available modules this system role can access.',
+                  'Choose the business areas this role can access. Only permissions you can delegate are shown.',
             ),
             if (state.errorMessage != null) ...[
               RoleSetupWarningBanner(message: state.errorMessage!),
@@ -98,7 +100,7 @@ class RoleSetupStep2ModulesScreen extends ConsumerWidget {
             const SizedBox(height: TenantAdminSpacing.md),
             const RoleSetupInfoBanner(
               message:
-                  'Modules and permissions are supplied by the tenant permission catalog.',
+                  'Modules are grouped by business area. Subscription entitlements and your delegation rights are enforced automatically.',
             ),
             RoleSetupFooterActions(
               onBack: () {

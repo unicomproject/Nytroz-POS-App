@@ -54,6 +54,18 @@ class TenantUserRepositoryImpl implements TenantUserRepository {
   }
 
   @override
+  Future<TenantUserDetail> resendInvite(String id) async {
+    final dto = await _remoteDatasource.resendInvite(id);
+    return TenantUserMapper.toDetailEntity(dto);
+  }
+
+  @override
+  Future<TenantUserDetail> revokeInvite(String id) async {
+    final dto = await _remoteDatasource.revokeInvite(id);
+    return TenantUserMapper.toDetailEntity(dto);
+  }
+
+  @override
   Future<UserProfileImageUpload> uploadProfileImage(
     UserProfileImageUploadInput input, {
     void Function(int sent, int total)? onProgress,

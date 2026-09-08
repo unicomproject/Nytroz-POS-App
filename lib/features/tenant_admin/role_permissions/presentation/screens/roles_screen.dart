@@ -91,18 +91,17 @@ class RolesScreen extends ConsumerWidget {
                       'Manage user roles and their associated permissions.',
                   actions: [
                     if (visibility.showCreateCustomRole)
-                          _CreateCustomRoleButton(
-                            onPressed: () =>
-                                context.go('/tenant-admin/roles/add'),
-                          ),
+                      _CreateCustomRoleButton(
+                        onPressed: () => context.go('/tenant-admin/roles/add'),
+                      ),
                     if (visibility.showCreateCustomRole &&
                         visibility.showConfigureRole)
                       const SizedBox(width: TenantAdminSpacing.md),
                     if (visibility.showConfigureRole)
-                          _RolesAddButton(
-                            onPressed: () => context.go(
-                                '/tenant-admin/roles-permissions/create/select-role'),
-                          ),
+                      _RolesAddButton(
+                        onPressed: () => context.go(
+                            '/tenant-admin/roles-permissions/create/select-role'),
+                      ),
                   ],
                   scrollable: !showDetailPanel,
                   child: Column(

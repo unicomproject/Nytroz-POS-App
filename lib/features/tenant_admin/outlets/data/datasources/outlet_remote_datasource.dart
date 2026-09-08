@@ -131,7 +131,27 @@ class OutletRemoteDatasource {
   }
 
   Future<List<OutletManagerOptionDto>> getManagerOptions() async {
-    return const [];
+    final response = await _dio.get<dynamic>(
+      '$_tenantAdminBase/manager-options',
+    );
+    final root = response.data is Map
+        ? Map<String, dynamic>.from(response.data as Map)
+        : const <String, dynamic>{};
+    final payload = root['data'] ?? root['items'];
+    return _mapList(payload, OutletManagerOptionDto.fromJson)
+        .where((manager) => manager.id.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  Future<void> setOutletManager(String id, String tenantUserId) async {
+    await _dio.put<void>(
+      '$_tenantAdminBase/$id/manager',
+      data: {'tenantUserId': tenantUserId},
+    );
+  }
+
+  Future<void> removeOutletManager(String id) async {
+    await _dio.delete<void>('$_tenantAdminBase/$id/manager');
   }
 
   Map<String, dynamic> _listQueryParameters(OutletListQuery query) {
@@ -275,20 +295,35 @@ class OutletRemoteDatasource {
   }
 
   Future<OutletRevenueSummaryDto> getOutletRevenueSummary(String id) async {
-    throw UnsupportedError(
-      'Outlet revenue summary is not supported by the current backend contract.',
+    final response =
+        await _dio.get<dynamic>('$_tenantAdminBase/$id/revenue-summary');
+    return OutletRevenueSummaryDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
     );
   }
 
   Future<OutletAssignedUsersDto> getOutletAssignedUsers(String id) async {
-    throw UnsupportedError(
-      'Outlet assigned users are not supported by the current backend contract.',
+    final response = await _dio.get<dynamic>('$_tenantAdminBase/$id/users');
+    return OutletAssignedUsersDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
     );
   }
 
   Future<OutletTillsDetailDto> getOutletTillsDetail(String id) async {
-    throw UnsupportedError(
-      'Outlet tills detail is not supported by the current backend contract.',
+    final response = await _dio.get<dynamic>('$_tenantAdminBase/$id/tills');
+    return OutletTillsDetailDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
     );
+  }
+
+  List<T> _mapList<T>(
+    Object? value,
+    T Function(Map<String, dynamic> json) mapper,
+  ) {
+    if (value is! List) return const [];
+    return value
+        .whereType<Map>()
+        .map((item) => mapper(Map<String, dynamic>.from(item)))
+        .toList(growable: false);
   }
 }

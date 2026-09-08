@@ -364,6 +364,13 @@ class TenantUserDetailDto {
     this.createdAt,
     this.profileImageUrl,
     this.profileMediaAssetId,
+    this.outletAccessScope = 'ALL_OUTLETS',
+    this.defaultOutletId,
+    this.tillAccessScope = 'ALL_ACCESSIBLE_TILLS',
+    this.tills = const [],
+    this.defaultTillId,
+    this.invitationStatus,
+    this.effectivePermissionCodes = const [],
   });
 
   factory TenantUserDetailDto.fromJson(Map<String, dynamic> json) {
@@ -398,6 +405,14 @@ class TenantUserDetailDto {
       profileImageUrl: json['profileImageUrl'] as String?,
       profileMediaAssetId: json['profileMediaAssetId']?.toString() ??
           json['profileImageMediaAssetId']?.toString(),
+      outletAccessScope: json['outletAccessScope']?.toString() ?? 'ALL_OUTLETS',
+      defaultOutletId: json['defaultOutletId']?.toString(),
+      tillAccessScope:
+          json['tillAccessScope']?.toString() ?? 'ALL_ACCESSIBLE_TILLS',
+      tills: _mapList(json['tills'], UserTillOptionDto.fromJson),
+      defaultTillId: json['defaultTillId']?.toString(),
+      invitationStatus: json['invitationStatus']?.toString(),
+      effectivePermissionCodes: _stringList(json['effectivePermissionCodes']),
     );
   }
 
@@ -420,6 +435,13 @@ class TenantUserDetailDto {
   final DateTime? createdAt;
   final String? profileImageUrl;
   final String? profileMediaAssetId;
+  final String outletAccessScope;
+  final String? defaultOutletId;
+  final String tillAccessScope;
+  final List<UserTillOptionDto> tills;
+  final String? defaultTillId;
+  final String? invitationStatus;
+  final List<String> effectivePermissionCodes;
 }
 
 class TenantUserAccessSummaryDto {
@@ -427,6 +449,9 @@ class TenantUserAccessSummaryDto {
     required this.outletCount,
     required this.moduleCount,
     required this.permissionCount,
+    this.tillCount = 0,
+    this.inheritedPermissionCount = 0,
+    this.directPermissionCount = 0,
   });
 
   factory TenantUserAccessSummaryDto.fromJson(Map<String, dynamic> json) {
@@ -434,12 +459,18 @@ class TenantUserAccessSummaryDto {
       outletCount: _intValue(json['outletCount']),
       moduleCount: _intValue(json['moduleCount']),
       permissionCount: _intValue(json['permissionCount']),
+      tillCount: _intValue(json['tillCount']),
+      inheritedPermissionCount: _intValue(json['inheritedPermissionCount']),
+      directPermissionCount: _intValue(json['directPermissionCount']),
     );
   }
 
   final int outletCount;
   final int moduleCount;
   final int permissionCount;
+  final int tillCount;
+  final int inheritedPermissionCount;
+  final int directPermissionCount;
 }
 
 int _intValue(dynamic value, {int fallback = 0}) {

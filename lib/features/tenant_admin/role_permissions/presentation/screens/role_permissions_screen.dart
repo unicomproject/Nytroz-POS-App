@@ -34,7 +34,15 @@ class RolePermissionsScreen extends ConsumerWidget {
       );
     }
 
-    final availableRoles = ref.watch(rolePermissionsAvailableRolesProvider);
+    final availableRolesState =
+        ref.watch(rolePermissionsAvailableRolesProvider);
+    if (availableRolesState.isLoading) {
+      return const TenantAdminPageScaffold(
+        title: 'Roles & Permissions',
+        child: TenantAdminLoadingSkeleton(rowCount: 5),
+      );
+    }
+    final availableRoles = availableRolesState.valueOrNull ?? const [];
     final selectedRoleId = ref.watch(rolePermissionsSelectedRoleIdProvider) ??
         initialRoleId ??
         (availableRoles.isNotEmpty ? availableRoles.first.id : null);

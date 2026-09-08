@@ -133,9 +133,17 @@ class TenantAdminPermissionAliases {
     'outlet.create': [
       'outlet.create',
       'outlets.create',
+      'tenant.outlets.create',
       'tenant.outlets.manage',
     ],
     'outlets.create': [
+      'outlet.create',
+      'outlets.create',
+      'tenant.outlets.create',
+      'tenant.outlets.manage',
+    ],
+    'tenant.outlets.create': [
+      'tenant.outlets.create',
       'outlet.create',
       'outlets.create',
       'tenant.outlets.manage',
@@ -184,6 +192,12 @@ class TenantAdminPermissionAliases {
       'tenant.outlets.manage',
     ],
     'outlet.delete': [
+      'outlet.delete',
+      'tenant.outlets.delete',
+      'tenant.outlets.manage',
+    ],
+    'tenant.outlets.delete': [
+      'tenant.outlets.delete',
       'outlet.delete',
       'tenant.outlets.manage',
     ],
@@ -247,6 +261,8 @@ class TenantAdminPermissionAliases {
       'tenant.users.create',
       'user.create',
       'users.create',
+      'tenant.users.manage',
+      'tenant.user.manage',
     ],
     'user.invite.view': [
       'user.invite.view',
@@ -272,11 +288,15 @@ class TenantAdminPermissionAliases {
       'tenant.users.invite',
       'user.invite.create',
       'users.invite',
+      'tenant.users.manage',
+      'tenant.user.manage',
     ],
     'tenant.users.update': [
       'tenant.users.update',
       'user.update',
       'users.update',
+      'tenant.users.manage',
+      'tenant.user.manage',
     ],
     'user.update': [
       'tenant.users.update',
@@ -292,6 +312,8 @@ class TenantAdminPermissionAliases {
       'tenant.users.delete',
       'user.delete',
       'users.delete',
+      'tenant.users.manage',
+      'tenant.user.manage',
     ],
     'user.delete': [
       'tenant.users.delete',
@@ -307,6 +329,33 @@ class TenantAdminPermissionAliases {
       'tenant.users.disable',
       'user.disable',
       'users.disable',
+      'tenant.users.manage',
+      'tenant.user.manage',
+    ],
+    'tenant.users.roles.assign': [
+      'tenant.users.roles.assign',
+      'tenant.users.manage',
+      'tenant.user.manage',
+    ],
+    'tenant.users.outlets.assign': [
+      'tenant.users.outlets.assign',
+      'tenant.users.manage',
+      'tenant.user.manage',
+    ],
+    'tenant.users.tills.assign': [
+      'tenant.users.tills.assign',
+      'tenant.users.manage',
+      'tenant.user.manage',
+    ],
+    'tenant.users.invites.resend': [
+      'tenant.users.invites.resend',
+      'tenant.users.manage',
+      'tenant.user.manage',
+    ],
+    'tenant.users.invites.revoke': [
+      'tenant.users.invites.revoke',
+      'tenant.users.manage',
+      'tenant.user.manage',
     ],
     'user.disable': [
       'tenant.users.disable',
@@ -379,11 +428,62 @@ class TenantAdminPermissionAliases {
     ],
     'roles.permissions.view': [
       'roles.permissions.view',
+      'tenant.roles.permissions.view',
       'permission.view',
       'permissions.view',
+      'tenant.permissions.view',
     ],
     'roles.permissions.update': [
       'roles.permissions.update',
+      'tenant.roles.permissions.update',
+    ],
+    'tenant.roles.permissions.view': [
+      'tenant.roles.permissions.view',
+      'roles.permissions.view',
+    ],
+    'tenant.roles.permissions.update': [
+      'tenant.roles.permissions.update',
+      'roles.permissions.update',
+    ],
+    'tenant.roles.create': [
+      'tenant.roles.create',
+      'tenant.roles.manage',
+      'tenant.role.manage',
+    ],
+    'tenant.roles.update': [
+      'tenant.roles.update',
+      'tenant.roles.manage',
+      'tenant.role.manage',
+    ],
+    'tenant.roles.delete': [
+      'tenant.roles.delete',
+      'tenant.roles.manage',
+      'tenant.role.manage',
+    ],
+    'tenant.roles.assignments.view': [
+      'tenant.roles.assignments.view',
+      'tenant.roles.manage',
+      'tenant.role.manage',
+    ],
+    'tenant.roles.assignments.update': [
+      'tenant.roles.assignments.update',
+      'tenant.roles.manage',
+      'tenant.role.manage',
+    ],
+    'tenant.roles.status.update': [
+      'tenant.roles.status.update',
+      'tenant.roles.manage',
+      'tenant.role.manage',
+    ],
+    'tenant.roles.users.assign': [
+      'tenant.roles.users.assign',
+      'tenant.roles.manage',
+      'tenant.role.manage',
+    ],
+    'tenant.roles.outlets.assign': [
+      'tenant.roles.outlets.assign',
+      'tenant.roles.manage',
+      'tenant.role.manage',
     ],
     'tenant.products.view': [
       'tenant.products.view',
@@ -706,45 +806,33 @@ class TenantAdminPermissionAliases {
       'tenant.users.permission_override',
     ],
     'tenant.role.manage': [
-      'roles.view',
-      'permissions.view',
-      'role.view',
-      'permission.view',
       'tenant.role.manage',
       'tenant.roles.manage',
     ],
     'tenant.roles.manage': [
-      'roles.view',
-      'permissions.view',
-      'role.view',
-      'permission.view',
       'tenant.role.manage',
       'tenant.roles.manage',
     ],
     'tenant.outlets.manage': [
       'tenant.outlets.manage',
-      'tenant.outlets.view',
-      'tenant.outlets.update',
-      'outlet.view',
-      'outlets.view',
-      'outlet.create',
-      'outlets.create',
-      'outlet.update',
-      'outlets.update',
-      'outlet.delete',
-      'outlet.status.update',
-      'outlet.detail.view',
-      'tenant.outlets.details.view',
-      'tenant.outlets.revenue.view',
-      'tenant.outlets.users.view',
-      'tenant.outlets.tills.view',
-      'dashboard.outlet_summary.view',
     ],
     'tenant.outlets.update': [
       'tenant.outlets.update',
       'tenant.outlets.manage',
       'outlet.update',
       'outlets.update',
+    ],
+    'tenant.outlets.status.update': [
+      'tenant.outlets.status.update',
+      'tenant.outlets.manage',
+    ],
+    'tenant.outlets.manager.assign': [
+      'tenant.outlets.manager.assign',
+      'tenant.outlets.manage',
+    ],
+    'tenant.outlets.image.update': [
+      'tenant.outlets.image.update',
+      'tenant.outlets.manage',
     ],
     'tenant.outlets.details.view': [
       'tenant.outlets.details.view',
@@ -780,22 +868,31 @@ class TenantAdminPermissionAliases {
       'till.view',
       'tills.view',
       'tenant.till.manage',
+      'tenant.tills.manage',
     ],
     'tenant.tills.create': [
       'tenant.tills.create',
       'till.create',
       'tills.create',
       'tenant.till.manage',
+      'tenant.tills.manage',
     ],
     'tenant.tills.update': [
       'tenant.tills.update',
       'till.update',
       'tenant.till.manage',
+      'tenant.tills.manage',
     ],
     'tenant.tills.delete': [
       'tenant.tills.delete',
       'till.delete',
       'tenant.till.manage',
+      'tenant.tills.manage',
+    ],
+    'tenant.tills.assign_outlet': [
+      'tenant.tills.assign_outlet',
+      'tenant.till.manage',
+      'tenant.tills.manage',
     ],
     'tenant.hardware.view': [
       'tenant.hardware.view',

@@ -20,6 +20,8 @@ class OutletForm extends ConsumerStatefulWidget {
     this.backendErrors = const {},
     this.submitting = false,
     this.onDiscard,
+    this.canUpdateStatus = true,
+    this.canUpdateImage = true,
   });
 
   final OutletFormData? initialValue;
@@ -28,6 +30,8 @@ class OutletForm extends ConsumerStatefulWidget {
   final bool submitting;
   final Future<void> Function(OutletFormData form) onSubmit;
   final Future<void> Function(String? mediaAssetId)? onDiscard;
+  final bool canUpdateStatus;
+  final bool canUpdateImage;
 
   @override
   ConsumerState<OutletForm> createState() => _OutletFormState();
@@ -194,6 +198,7 @@ class _OutletFormState extends ConsumerState<OutletForm> {
           errors: widget.backendErrors,
           onOutletTypeChanged: (value) => setState(() => _outletType = value),
           onStatusChanged: (value) => setState(() => _status = value),
+          statusEnabled: widget.canUpdateStatus,
           onDefaultChanged: (value) => setState(() => _isDefaultOutlet = value),
         ),
       1 => Consumer(builder: (context, ref, _) {
@@ -217,6 +222,7 @@ class _OutletFormState extends ConsumerState<OutletForm> {
             onReplaceImage: imageController.replaceImage,
             onRemoveImage: imageController.removeImage,
             onRetryImageUpload: imageController.retryUpload,
+            imageEnabled: widget.canUpdateImage,
           );
         }),
       2 => BusinessHoursEditor(
@@ -459,6 +465,7 @@ class _OutletDetailsStep extends StatelessWidget {
     required this.onOutletTypeChanged,
     required this.onStatusChanged,
     required this.onDefaultChanged,
+    required this.statusEnabled,
   });
 
   final TextEditingController outletName;
@@ -474,6 +481,7 @@ class _OutletDetailsStep extends StatelessWidget {
   final ValueChanged<String> onOutletTypeChanged;
   final ValueChanged<String> onStatusChanged;
   final ValueChanged<bool> onDefaultChanged;
+  final bool statusEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -947,7 +955,7 @@ class _OutletDetailsStep extends StatelessWidget {
                   value: 'ACTIVE',
                   icon: Icons.check_circle_outline,
                   isSelected: status == 'ACTIVE',
-                  onTap: () => onStatusChanged('ACTIVE'),
+                  onTap: statusEnabled ? () => onStatusChanged('ACTIVE') : null,
                 ),
               ),
               Expanded(
@@ -956,7 +964,8 @@ class _OutletDetailsStep extends StatelessWidget {
                   value: 'INACTIVE',
                   icon: Icons.highlight_off,
                   isSelected: status == 'INACTIVE',
-                  onTap: () => onStatusChanged('INACTIVE'),
+                  onTap:
+                      statusEnabled ? () => onStatusChanged('INACTIVE') : null,
                 ),
               ),
             ],
@@ -978,7 +987,7 @@ class _OutletDetailsStep extends StatelessWidget {
     required String value,
     required IconData icon,
     required bool isSelected,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -1043,6 +1052,7 @@ class _OutletLocationContactStep extends StatelessWidget {
     required this.onReplaceImage,
     required this.onRemoveImage,
     required this.onRetryImageUpload,
+    required this.imageEnabled,
   });
 
   final TextEditingController addressLine1;
@@ -1061,6 +1071,7 @@ class _OutletLocationContactStep extends StatelessWidget {
   final VoidCallback onReplaceImage;
   final VoidCallback onRemoveImage;
   final VoidCallback onRetryImageUpload;
+  final bool imageEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -1124,6 +1135,7 @@ class _OutletLocationContactStep extends StatelessWidget {
       onReplace: onReplaceImage,
       onRemove: onRemoveImage,
       onRetry: onRetryImageUpload,
+      enabled: imageEnabled,
     );
 
     return Column(

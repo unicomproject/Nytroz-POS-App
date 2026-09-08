@@ -302,6 +302,14 @@ class _FakeRepository implements TenantUserRepository {
       throw UnimplementedError();
 
   @override
+  Future<TenantUserDetail> resendInvite(String id) =>
+      throw UnimplementedError();
+
+  @override
+  Future<TenantUserDetail> revokeInvite(String id) =>
+      throw UnimplementedError();
+
+  @override
   Future<TenantUserDetail> updateUser(String id, UserFormData form) =>
       throw UnimplementedError();
 }

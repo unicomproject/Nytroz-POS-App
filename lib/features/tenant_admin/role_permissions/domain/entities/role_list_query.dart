@@ -28,19 +28,19 @@ class RoleListQuery {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-  
+
     return other is RoleListQuery &&
-      other.page == page &&
-      other.pageSize == pageSize &&
-      other.search == search &&
-      other.status == status;
+        other.page == page &&
+        other.pageSize == pageSize &&
+        other.search == search &&
+        other.status == status;
   }
 
   @override
   int get hashCode {
     return page.hashCode ^
-      pageSize.hashCode ^
-      search.hashCode ^
-      status.hashCode;
+        pageSize.hashCode ^
+        search.hashCode ^
+        status.hashCode;
   }
 }

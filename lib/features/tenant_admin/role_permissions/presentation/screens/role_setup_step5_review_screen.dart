@@ -126,8 +126,7 @@ class RoleSetupStep5ReviewScreen extends ConsumerWidget {
                   ];
                   final crossAxisCount = constraints.maxWidth >= 880 ? 2 : 1;
                   return GridView.builder(
-                    gridDelegate:
-                        SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: crossAxisCount,
                       mainAxisExtent: crossAxisCount == 2 ? 196 : 184,
                       crossAxisSpacing: TenantAdminSpacing.md,

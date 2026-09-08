@@ -13,6 +13,7 @@ import '../providers/outlet_visibility_provider.dart';
 import '../widgets/outlet_assigned_users_tab.dart';
 import '../widgets/outlet_detail_header.dart';
 import '../widgets/outlet_information_tab.dart';
+import '../widgets/outlet_manager_card.dart';
 import '../widgets/outlet_revenue_tab.dart';
 import '../widgets/outlet_tabs.dart';
 import '../widgets/outlet_tills_tab.dart';
@@ -141,6 +142,11 @@ class _OutletDetailsScreenState extends ConsumerState<OutletDetailsScreen> {
                       outletOptions: outletOptions,
                       onOutletSelected: (id) =>
                           context.go('/tenant-admin/outlets/$id'),
+                    ),
+                    const SizedBox(height: TenantAdminSpacing.lg),
+                    OutletManagerCard(
+                      outletId: widget.outletId,
+                      canManage: access.canAssignOutletManager(),
                     ),
                     const SizedBox(height: TenantAdminSpacing.lg),
                     OutletTabs(

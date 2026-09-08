@@ -74,6 +74,7 @@ class AuthSession {
       TenantAdminPermissionCodes.tenantContextView,
       TenantAdminPermissionCodes.dashboardView,
       TenantAdminPermissionCodes.tenantDashboardView,
+      'workspace.tenant_admin.access',
       'tenant.dashboard.view',
       'dashboard.view',
       'tenant_admin.dashboard.view',

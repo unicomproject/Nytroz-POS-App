@@ -4,11 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_search_field.dart';
-import '../../../tills/domain/entities/till.dart';
-import '../../../tills/presentation/providers/till_providers.dart';
-import '../../../users/domain/entities/tenant_user.dart';
-import '../../../users/presentation/providers/tenant_user_providers.dart';
 import '../../domain/entities/role_assignment.dart';
+import '../providers/role_permissions_providers.dart';
 import '../providers/role_setup_wizard_provider.dart';
 import '../widgets/role_setup_components.dart';
 import 'role_setup_shell.dart';
@@ -18,19 +15,6 @@ final roleSetupUserSearchProvider =
 final roleSetupOutletSearchProvider =
     StateProvider.autoDispose<String>((ref) => '');
 
-final roleSetupUsersProvider =
-    FutureProvider.autoDispose<List<TenantUser>>((ref) async {
-  final search = ref.watch(roleSetupUserSearchProvider);
-  final result = await ref.watch(getUsersProvider)(
-    query: TenantUserListQuery(
-      search: search.isEmpty ? null : search,
-      page: 1,
-      pageSize: 50,
-    ),
-  );
-  return result.items;
-});
-
 class RoleSetupStep4AssignmentsScreen extends ConsumerWidget {
   const RoleSetupStep4AssignmentsScreen({super.key});
 
@@ -38,8 +22,9 @@ class RoleSetupStep4AssignmentsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(roleSetupWizardProvider);
     final controller = ref.read(roleSetupWizardProvider.notifier);
-    final users = ref.watch(roleSetupUsersProvider);
-    final outlets = ref.watch(tillOutletOptionsProvider);
+    final assignmentOptions = ref.watch(roleAssignmentOptionsProvider);
+    final users = assignmentOptions.whenData((value) => value.users);
+    final outlets = assignmentOptions.whenData((value) => value.outlets);
     final userSearch = ref.watch(roleSetupUserSearchProvider);
     final outletSearch = ref.watch(roleSetupOutletSearchProvider);
 
@@ -139,12 +124,12 @@ class _UserPanel extends StatelessWidget {
     required this.onSelect,
   });
 
-  final AsyncValue<List<TenantUser>> users;
+  final AsyncValue<List<RoleAssignmentUserOption>> users;
   final Set<String> selectedIds;
   final String? activeUserId;
   final String search;
   final ValueChanged<String> onSearch;
-  final void Function(TenantUser user) onToggle;
+  final void Function(RoleAssignmentUserOption user) onToggle;
   final ValueChanged<String> onSelect;
 
   @override
@@ -153,7 +138,7 @@ class _UserPanel extends StatelessWidget {
         child: Column(
           children: [
             TenantAdminSearchField(
-              hint: 'Search name, email or staff code',
+              hint: 'Search name or email',
               onChanged: onSearch,
             ),
             const SizedBox(height: TenantAdminSpacing.md),
@@ -163,7 +148,16 @@ class _UserPanel extends StatelessWidget {
                 error: (_, __) =>
                     const Center(child: Text('Unable to load users.')),
                 data: (items) {
-                  if (items.isEmpty) {
+                  final term = search.trim().toLowerCase();
+                  final visibleItems = items
+                      .where((user) =>
+                          term.isEmpty ||
+                          user.fullName.toLowerCase().contains(term) ||
+                          user.email.toLowerCase().contains(term) ||
+                          (user.staffCode?.toLowerCase().contains(term) ??
+                              false))
+                      .toList(growable: false);
+                  if (visibleItems.isEmpty) {
                     return Center(
                       child: Text(
                         search.trim().isEmpty
@@ -174,34 +168,34 @@ class _UserPanel extends StatelessWidget {
                     );
                   }
                   return ListView.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final user = items[index];
-                    final selected = selectedIds.contains(user.id);
-                    return ListTile(
-                      selected: user.id == activeUserId,
-                      selectedTileColor:
-                          TenantAdminColors.primary.withValues(alpha: 0.08),
-                      leading: Checkbox(
-                        value: selected,
-                        activeColor: TenantAdminColors.primary,
-                        onChanged: (_) => onToggle(user),
-                      ),
-                      title: Text(user.fullName),
-                      subtitle: Text(
-                        [
-                          user.email,
-                          if (user.staffCode?.isNotEmpty == true)
-                            user.staffCode!
-                        ].join(' • '),
-                      ),
-                      trailing: Text(user.status),
-                      onTap: selected
-                          ? () => onSelect(user.id)
-                          : () => onToggle(user),
-                    );
-                  },
+                    itemCount: visibleItems.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final user = visibleItems[index];
+                      final selected = selectedIds.contains(user.id);
+                      return ListTile(
+                        selected: user.id == activeUserId,
+                        selectedTileColor:
+                            TenantAdminColors.primary.withValues(alpha: 0.08),
+                        leading: Checkbox(
+                          value: selected,
+                          activeColor: TenantAdminColors.primary,
+                          onChanged: (_) => onToggle(user),
+                        ),
+                        title: Text(user.fullName),
+                        subtitle: Text(
+                          [
+                            user.email,
+                            if (user.staffCode?.isNotEmpty == true)
+                              user.staffCode!
+                          ].join(' • '),
+                        ),
+                        trailing: Text(user.status),
+                        onTap: selected
+                            ? () => onSelect(user.id)
+                            : () => onToggle(user),
+                      );
+                    },
                   );
                 },
               ),
@@ -222,7 +216,7 @@ class _ScopePanel extends StatelessWidget {
   });
 
   final RoleAssignment? assignment;
-  final AsyncValue<List<OutletOption>> outlets;
+  final AsyncValue<List<RoleAssignmentOutletOption>> outlets;
   final String search;
   final ValueChanged<String> onSearch;
   final ValueChanged<RoleAccessScopeType> onScopeChanged;

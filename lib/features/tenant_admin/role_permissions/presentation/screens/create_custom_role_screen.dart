@@ -8,8 +8,10 @@ import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/permission_catalog.dart';
+import '../../domain/entities/role_assignment.dart';
 import '../providers/role_mutation_controller.dart';
 import '../providers/role_permissions_providers.dart';
+import '../widgets/role_assignment_editor.dart';
 
 final customRolePermissionCatalogProvider =
     FutureProvider.autoDispose<PermissionCatalog>((ref) async {
@@ -31,6 +33,7 @@ class _CreateCustomRoleScreenState
   final _roleNameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final Set<String> _permissionCodes = {};
+  List<RoleAssignment> _assignments = const [];
   String? _validationMessage;
 
   @override
@@ -49,17 +52,26 @@ class _CreateCustomRoleScreenState
       });
       return;
     }
+    if (_assignments.any((assignment) =>
+        assignment.scopeType == RoleAccessScopeType.selectedOutlets &&
+        assignment.outletIds.isEmpty)) {
+      setState(() {
+        _validationMessage =
+            'Select at least one outlet for every outlet-scoped user.';
+      });
+      return;
+    }
 
     setState(() => _validationMessage = null);
-    final roleId = await ref
-        .read(roleMutationControllerProvider.notifier)
-        .createRole(
-          _roleNameController.text.trim(),
-          _descriptionController.text.trim().isEmpty
-              ? null
-              : _descriptionController.text.trim(),
-          _permissionCodes.toList(growable: false)..sort(),
-        );
+    final roleId =
+        await ref.read(roleMutationControllerProvider.notifier).createRole(
+              _roleNameController.text.trim(),
+              _descriptionController.text.trim().isEmpty
+                  ? null
+                  : _descriptionController.text.trim(),
+              _permissionCodes.toList(growable: false)..sort(),
+              _assignments,
+            );
 
     if (roleId != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -72,6 +84,7 @@ class _CreateCustomRoleScreenState
   @override
   Widget build(BuildContext context) {
     final catalogState = ref.watch(customRolePermissionCatalogProvider);
+    final assignmentOptions = ref.watch(roleAssignmentOptionsProvider);
     final mutationState = ref.watch(roleMutationControllerProvider);
 
     return TenantAdminPageScaffold(
@@ -125,7 +138,8 @@ class _CreateCustomRoleScreenState
               error: (error, stackTrace) => TenantAdminErrorState(
                 title: 'Unable to load permissions',
                 message: 'Please try again.',
-                onRetry: () => ref.invalidate(customRolePermissionCatalogProvider),
+                onRetry: () =>
+                    ref.invalidate(customRolePermissionCatalogProvider),
               ),
               data: (catalog) {
                 final modules = catalog.modules
@@ -139,7 +153,8 @@ class _CreateCustomRoleScreenState
                 if (modules.isEmpty) {
                   return const TenantAdminEmptyState(
                     title: 'No permissions available',
-                    message: 'No assignable permissions are available for this tenant.',
+                    message:
+                        'No assignable permissions are available for this tenant.',
                   );
                 }
 
@@ -165,6 +180,28 @@ class _CreateCustomRoleScreenState
                   ],
                 );
               },
+            ),
+            const SizedBox(height: TenantAdminSpacing.xl),
+            Text(
+              'Users & outlet access',
+              style: TenantAdminTextStyles.sectionTitle(context),
+            ),
+            const SizedBox(height: TenantAdminSpacing.md),
+            assignmentOptions.when(
+              loading: () => const TenantAdminLoadingSkeleton(rowCount: 4),
+              error: (error, stackTrace) => TenantAdminErrorState(
+                title: 'Unable to load assignment options',
+                message: 'Please try again.',
+                onRetry: () => ref.invalidate(roleAssignmentOptionsProvider),
+              ),
+              data: (options) => RoleAssignmentEditor(
+                options: options,
+                assignments: _assignments,
+                onChanged: (value) => setState(() {
+                  _assignments = value;
+                  _validationMessage = null;
+                }),
+              ),
             ),
           ],
         ),

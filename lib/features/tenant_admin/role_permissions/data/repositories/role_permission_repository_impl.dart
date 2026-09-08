@@ -50,6 +50,44 @@ class RolePermissionRepositoryImpl implements RolePermissionRepository {
   }
 
   @override
+  Future<RoleAssignmentOptions> getAssignmentOptions() async {
+    final payload = await _remoteDatasource.getAssignmentOptions();
+    final users = (payload['users'] as List? ?? const [])
+        .whereType<Map>()
+        .map((item) {
+          final json = Map<String, dynamic>.from(item);
+          return RoleAssignmentUserOption(
+            id: json['userId']?.toString() ?? '',
+            fullName: json['fullName']?.toString() ?? '',
+            email: json['email']?.toString() ?? '',
+            staffCode: json['staffCode']?.toString(),
+            status: json['status']?.toString() ?? '',
+          );
+        })
+        .where((item) => item.id.isNotEmpty)
+        .toList(growable: false);
+    final outlets = (payload['outlets'] as List? ?? const [])
+        .whereType<Map>()
+        .map((item) {
+          final json = Map<String, dynamic>.from(item);
+          return RoleAssignmentOutletOption(
+            id: json['outletId']?.toString() ?? '',
+            name: json['outletName']?.toString() ?? '',
+            code: json['outletCode']?.toString() ?? '',
+            status: json['status']?.toString() ?? '',
+          );
+        })
+        .where((item) => item.id.isNotEmpty)
+        .toList(growable: false);
+    return RoleAssignmentOptions(
+      users: users,
+      outlets: outlets,
+      canAssignUsers: payload['canAssignUsers'] as bool? ?? false,
+      canAssignOutlets: payload['canAssignOutlets'] as bool? ?? false,
+    );
+  }
+
+  @override
   Future<SaveRoleSetupResult> saveRoleSetup(
     String roleId,
     SaveRoleSetupRequest request,

@@ -92,10 +92,41 @@ void main() {
       expect(adapter.lastBody['confirmPassword'], 'SecurePass123');
     });
   });
+
+  group('TenantUserRemoteDatasource invitation actions', () {
+    test('posts to the resend invitation endpoint', () async {
+      final dio = Dio();
+      final adapter = _RecordingAdapter();
+      dio.httpClientAdapter = adapter;
+
+      final result =
+          await TenantUserRemoteDatasource(dio).resendInvite('user-1');
+
+      expect(adapter.lastMethod, 'POST');
+      expect(
+          adapter.lastPath, '/api/v1/tenant-admin/users/user-1/resend-invite');
+      expect(result.id, 'user-1');
+    });
+
+    test('posts to the revoke invitation endpoint', () async {
+      final dio = Dio();
+      final adapter = _RecordingAdapter();
+      dio.httpClientAdapter = adapter;
+
+      final result =
+          await TenantUserRemoteDatasource(dio).revokeInvite('user-1');
+
+      expect(adapter.lastMethod, 'POST');
+      expect(
+          adapter.lastPath, '/api/v1/tenant-admin/users/user-1/revoke-invite');
+      expect(result.id, 'user-1');
+    });
+  });
 }
 
 class _RecordingAdapter implements HttpClientAdapter {
   String? lastPath;
+  String? lastMethod;
   Map<String, dynamic> lastHeaders = const {};
   Map<String, dynamic> lastBody = const {};
 
@@ -109,6 +140,7 @@ class _RecordingAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     lastPath = options.path;
+    lastMethod = options.method;
     lastHeaders = Map<String, dynamic>.from(options.headers);
     if (requestStream != null) {
       final chunks = await requestStream.toList();

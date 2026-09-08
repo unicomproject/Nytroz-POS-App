@@ -44,7 +44,8 @@ class EditRoleState {
       roleName: roleName ?? this.roleName,
       description: description ?? this.description,
       roleCode: roleCode ?? this.roleCode,
-      selectedPermissionCodes: selectedPermissionCodes ?? this.selectedPermissionCodes,
+      selectedPermissionCodes:
+          selectedPermissionCodes ?? this.selectedPermissionCodes,
       assignments: assignments ?? this.assignments,
       isSaving: isSaving ?? this.isSaving,
       error: clearError ? null : error ?? this.error,
@@ -53,7 +54,8 @@ class EditRoleState {
   }
 }
 
-class EditRoleController extends AutoDisposeFamilyNotifier<EditRoleState, String> {
+class EditRoleController
+    extends AutoDisposeFamilyNotifier<EditRoleState, String> {
   @override
   EditRoleState build(String arg) {
     _initialize(arg);
@@ -63,7 +65,7 @@ class EditRoleController extends AutoDisposeFamilyNotifier<EditRoleState, String
   Future<void> _initialize(String roleId) async {
     try {
       final repo = ref.read(rolePermissionRepositoryProvider);
-      
+
       final roleDetails = await repo.getRoleById(roleId);
       final permissions = await ref.read(getRolePermissionsProvider)(roleId);
       final assignments = await repo.getRoleAssignments(roleId);
@@ -104,33 +106,42 @@ class EditRoleController extends AutoDisposeFamilyNotifier<EditRoleState, String
     state = state.copyWith(assignments: newAssignments, clearError: true);
   }
 
-  Future<bool> save(String roleId) async {
+  Future<bool> save(
+    String roleId, {
+    required bool canUpdateDetails,
+    required bool canUpdatePermissions,
+    required bool canUpdateAssignments,
+  }) async {
     if (state.isSaving) return false;
-    
+
     state = state.copyWith(isSaving: true, clearError: true);
-    
+
     try {
       final repo = ref.read(rolePermissionRepositoryProvider);
-      
-      // 1. Update general details
-      await repo.updateRole(
-        roleId,
-        state.roleName,
-        state.description,
-        state.roleCode,
-        null, // Ignoring concurrency check for simplicity in this implementation if needed, but should use expectedUpdatedAt ideally.
-      );
 
-      // 2. Update permissions
-      await ref.read(updateRolePermissionsProvider)(
-        roleId,
-        UpdateRolePermissionsRequest(
-          permissionCodes: state.selectedPermissionCodes.toList(growable: false)..sort(),
-        ),
-      );
+      if (canUpdateDetails) {
+        await repo.updateRole(
+          roleId,
+          state.roleName,
+          state.description,
+          state.roleCode,
+          null,
+        );
+      }
 
-      // 3. Update assignments
-      await repo.updateRoleAssignments(roleId, state.assignments);
+      if (canUpdatePermissions) {
+        await ref.read(updateRolePermissionsProvider)(
+          roleId,
+          UpdateRolePermissionsRequest(
+            permissionCodes:
+                state.selectedPermissionCodes.toList(growable: false)..sort(),
+          ),
+        );
+      }
+
+      if (canUpdateAssignments) {
+        await repo.updateRoleAssignments(roleId, state.assignments);
+      }
 
       state = state.copyWith(isSaving: false);
       ref.invalidate(rolesListProvider);
@@ -149,6 +160,7 @@ class EditRoleController extends AutoDisposeFamilyNotifier<EditRoleState, String
   }
 }
 
-final editRoleControllerProvider = NotifierProvider.autoDispose.family<EditRoleController, EditRoleState, String>(
+final editRoleControllerProvider = NotifierProvider.autoDispose
+    .family<EditRoleController, EditRoleState, String>(
   EditRoleController.new,
 );

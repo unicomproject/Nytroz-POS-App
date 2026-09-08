@@ -5,6 +5,7 @@ class SetupTokenValidationDto {
     required this.expired,
     this.email,
     this.message,
+    this.code,
   });
 
   factory SetupTokenValidationDto.fromJson(Map<String, dynamic> json) {
@@ -14,6 +15,7 @@ class SetupTokenValidationDto {
       expired: json['expired'] as bool? ?? false,
       email: json['email'] as String?,
       message: json['message'] as String?,
+      code: json['code'] as String?,
     );
   }
 
@@ -22,4 +24,5 @@ class SetupTokenValidationDto {
   final bool expired;
   final String? email;
   final String? message;
+  final String? code;
 }

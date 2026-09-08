@@ -16,7 +16,8 @@ class CreateRoleRequestDto {
       if (roleDescription != null) 'roleDescription': roleDescription,
       if (permissionCodes != null) 'permissionCodes': permissionCodes,
       if (assignments != null)
-        'assignments': assignments?.map((e) => e.toJson()).toList(growable: false),
+        'assignments':
+            assignments?.map((e) => e.toJson()).toList(growable: false),
     };
   }
 

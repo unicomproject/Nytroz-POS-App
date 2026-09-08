@@ -286,6 +286,13 @@ class TenantUserDetail {
     this.createdAt,
     this.profileImageUrl,
     this.profileMediaAssetId,
+    this.outletAccessScope = 'ALL_OUTLETS',
+    this.defaultOutletId,
+    this.tillAccessScope = 'ALL_ACCESSIBLE_TILLS',
+    this.tills = const [],
+    this.defaultTillId,
+    this.invitationStatus,
+    this.effectivePermissionCodes = const [],
   });
 
   final String id;
@@ -307,6 +314,13 @@ class TenantUserDetail {
   final DateTime? createdAt;
   final String? profileImageUrl;
   final String? profileMediaAssetId;
+  final String outletAccessScope;
+  final String? defaultOutletId;
+  final String tillAccessScope;
+  final List<UserTillOption> tills;
+  final String? defaultTillId;
+  final String? invitationStatus;
+  final List<String> effectivePermissionCodes;
 }
 
 class TenantUserAccessSummary {
@@ -314,11 +328,17 @@ class TenantUserAccessSummary {
     required this.outletCount,
     required this.moduleCount,
     required this.permissionCount,
+    this.tillCount = 0,
+    this.inheritedPermissionCount = 0,
+    this.directPermissionCount = 0,
   });
 
   final int outletCount;
   final int moduleCount;
   final int permissionCount;
+  final int tillCount;
+  final int inheritedPermissionCount;
+  final int directPermissionCount;
 }
 
 class UserFormData {

@@ -58,6 +58,14 @@ void main() {
 }
 
 class _FakeRolePermissionRepository implements RolePermissionRepository {
+  @override
+  Future<RoleAssignmentOptions> getAssignmentOptions() async =>
+      const RoleAssignmentOptions(
+        users: [],
+        outlets: [],
+        canAssignUsers: true,
+        canAssignOutlets: true,
+      );
   SaveRoleSetupRequest? savedRequest;
 
   @override
