@@ -194,6 +194,8 @@ class ProductTypeTracking extends StatelessWidget {
   }
 
   Widget _buildDynamicContent(BuildContext context) {
+    if (!state.productStructureConfirmed) return const SizedBox.shrink();
+    
     switch (state.productStructure) {
       case 'VARIANT':
         return _buildVariantTrackingContent(context);

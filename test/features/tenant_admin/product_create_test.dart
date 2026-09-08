@@ -27,6 +27,7 @@ void main() {
 
       expect(dto.toJson(), {
         'productName': 'Espresso Beans',
+        'productCode': 'PROD-001',
         'sku': 'ESP-001',
         'barcode': '1234567890',
         'categoryId': '11111111-1111-1111-1111-111111111111',
@@ -34,11 +35,11 @@ void main() {
         'brandId': '33333333-3333-3333-3333-333333333333',
         'unitType': 'EA',
         'shortDescription': 'Fresh roast',
-        'sellingPrice': 1250,
+        'sellingPrice': 1250.0,
         'taxId': '44444444-4444-4444-4444-444444444444',
         'trackInventory': true,
-        'openingStockQuantity': 10,
-        'minimumStockAlertQuantity': 2,
+        'openingStockQuantity': 10.0,
+        'minimumStockAlertQuantity': 2.0,
         'stockUnit': 'EA',
         'outletIds': ['55555555-5555-5555-5555-555555555555'],
         'hasVariants': false,

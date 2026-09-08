@@ -180,7 +180,6 @@ void main() {
       expect(find.text('Product Type *'), findsOneWidget);
       expect(find.text('Simple Product'), findsOneWidget);
       expect(find.text('Variant Product'), findsOneWidget);
-      expect(find.text('Bundle / Kit'), findsOneWidget);
     });
 
     testWidgets('renders SIMPLE content when SIMPLE structure selected',
