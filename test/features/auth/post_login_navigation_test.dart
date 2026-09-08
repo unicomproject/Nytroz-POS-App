@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/core/network/dio_provider.dart';
 import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
+import 'package:nytroz_pos/core/storage/secure_storage_provider.dart';
 import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.dart';
 import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/post_login_navigation_provider.dart';
@@ -75,6 +76,15 @@ void main() {
       expect(route, PostLoginRoute.tenantAdminDashboard);
     });
 
+    test('routes dual-access user to workspace chooser', () {
+      final container = _createContainer(session: _tenantAdminWithPosSession);
+      addTearDown(container.dispose);
+
+      final route = container.read(postLoginRouteProvider);
+
+      expect(route, PostLoginRoute.workspace);
+    });
+
     test('bootstrap exposes device API failures instead of becoming ready',
         () async {
       final container = _createContainer(
@@ -110,6 +120,7 @@ ProviderContainer _createContainer({
         Dio(BaseOptions(baseUrl: 'https://test.local')),
       ),
       authSessionStorageProvider.overrideWithValue(_TestAuthSessionStorage()),
+      secureStorageProvider.overrideWithValue(_TestSecureStorage()),
       authSessionProvider.overrideWith(
         (ref) => _PresetAuthSessionNotifier(session),
       ),
@@ -249,6 +260,25 @@ class _TestAuthSessionStorage extends AuthSessionStorage {
   Future<void> clear() async {}
 }
 
+class _TestSecureStorage extends AppSecureStorage {
+  _TestSecureStorage() : super(const FlutterSecureStorage());
+
+  final Map<String, String> values = {};
+
+  @override
+  Future<String?> read(String key) async => values[key];
+
+  @override
+  Future<void> write(String key, String value) async {
+    values[key] = value;
+  }
+
+  @override
+  Future<void> delete(String key) async {
+    values.remove(key);
+  }
+}
+
 class _TestDeviceContextStorage extends DeviceContextStorage {
   _TestDeviceContextStorage(this._deviceContext)
       : super(const AppSecureStorage(FlutterSecureStorage()));
@@ -298,6 +328,7 @@ const _posOperatorSession = AuthSession(
   userId: 'cashier-1',
   userDisplayName: 'Cashier',
   permissionCodes: [
+    'workspace.pos.access',
     'tenant.till.manage',
     'pos.till.open',
     'pos.home.view',
@@ -309,6 +340,7 @@ const _cashierSession = AuthSession(
   userId: 'cashier-1',
   userDisplayName: 'Cashier',
   permissionCodes: [
+    'workspace.pos.access',
     'pos.till.open',
     'pos.home.view',
   ],
@@ -319,9 +351,23 @@ const _tenantAdminSession = AuthSession(
   userId: 'tenant-admin-1',
   userDisplayName: 'Tenant Admin',
   permissionCodes: [
+    'workspace.tenant_admin.access',
     'tenant.context.view',
     'dashboard.view',
     'tills.view',
+  ],
+);
+
+const _tenantAdminWithPosSession = AuthSession(
+  accessToken: 'token',
+  userId: 'tenant-admin-1',
+  userDisplayName: 'Tenant Admin',
+  permissionCodes: [
+    'workspace.tenant_admin.access',
+    'workspace.pos.access',
+    'tenant.dashboard.view',
+    'pos.till.open',
+    'pos.home.view',
   ],
 );
 

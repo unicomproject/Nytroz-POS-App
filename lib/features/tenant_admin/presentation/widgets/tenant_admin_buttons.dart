@@ -162,10 +162,13 @@ class _ButtonContent extends StatelessWidget {
           Icon(icon, size: iconSize),
           const SizedBox(width: TenantAdminSpacing.sm),
         ],
-        Text(
-          label,
-          style: TenantAdminTextStyles.buttonLabel(context).copyWith(
-            fontSize: fontSize,
+        Flexible(
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TenantAdminTextStyles.buttonLabel(context).copyWith(
+              fontSize: fontSize,
+            ),
           ),
         ),
       ],

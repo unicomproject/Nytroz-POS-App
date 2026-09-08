@@ -109,6 +109,7 @@ void main() {
         permissions: [
           TenantAdminPermissionCodes.outletView,
           TenantAdminPermissionCodes.outletUpdate,
+          TenantAdminPermissionCodes.tenantOutletsStatusUpdate,
           TenantAdminPermissionCodes.outletDelete,
         ],
         features: [TenantAdminFeatureCodes.outletManagement],
@@ -117,13 +118,18 @@ void main() {
       final visibility = OutletListVisibility.resolve(access: access);
 
       expect(visibility.showActionsColumn, isTrue);
-      expect(visibility.visibleRowActions.length, 2);
+      expect(visibility.visibleRowActions.length, 3);
       expect(
         visibility.visibleRowActions.any((action) => action.id == 'edit'),
         isTrue,
       );
       expect(
         visibility.visibleRowActions.any((action) => action.id == 'delete'),
+        isTrue,
+      );
+      expect(
+        visibility.visibleRowActions
+            .any((action) => action.id == 'toggle_status'),
         isTrue,
       );
       expect(

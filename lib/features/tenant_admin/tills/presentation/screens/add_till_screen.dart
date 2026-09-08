@@ -7,7 +7,7 @@ import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../providers/till_providers.dart';
 import '../providers/till_visibility_provider.dart';
-import '../widgets/add_till_single_page_form.dart';
+import '../widgets/add_till_setup_wizard.dart';
 
 class AddTillScreen extends ConsumerWidget {
   const AddTillScreen({super.key});
@@ -34,7 +34,7 @@ class AddTillScreen extends ConsumerWidget {
 
     return TenantAdminPageScaffold(
       title: 'Add till',
-      subtitle: 'Enter the details for the new till.',
+      subtitle: 'Create the till, assign hardware and review its readiness.',
       child: optionsState.when(
         loading: () => const TenantAdminLoadingSkeleton(rowCount: 4),
         error: (error, stackTrace) {
@@ -66,7 +66,7 @@ class AddTillScreen extends ConsumerWidget {
             );
           }
 
-          return AddTillSinglePageForm(
+          return AddTillSetupWizard(
             options: options,
             canViewHardware: canViewHardware,
             canManageHardware: canManageHardware,

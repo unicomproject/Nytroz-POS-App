@@ -14,7 +14,6 @@ import '../providers/tenant_user_visibility_provider.dart';
 import '../utils/user_list_filters.dart';
 import 'user_details_modal.dart';
 import 'user_mobile_list.dart';
-import 'user_table.dart';
 
 class UserListPanel extends ConsumerWidget {
   const UserListPanel({
@@ -89,35 +88,23 @@ class UserListPanel extends ConsumerWidget {
                         : null,
               ),
             )
-          else if (isMobile)
+          else
             Padding(
               padding: const EdgeInsets.all(TenantAdminSpacing.lg),
               child: UserMobileList(
                 users: result.items,
                 visibility: visibility,
+                selectedUserId: selectedUserId,
                 onView: (user) {
                   onSelect(user);
-                  showUserDetailsModal(context, user.id);
+                  if (!showDetailPanel) {
+                    showUserDetailsModal(context, user.id);
+                  }
                 },
                 onEdit: (user) =>
                     context.go('/tenant-admin/staff/${user.id}/edit'),
                 onDelete: (user) => _confirmDelete(context, ref, user),
               ),
-            )
-          else
-            UserTable(
-              users: result.items,
-              visibility: visibility,
-              selectedUserId: selectedUserId,
-              onView: (user) {
-                onSelect(user);
-                if (!showDetailPanel) {
-                  showUserDetailsModal(context, user.id);
-                }
-              },
-              onEdit: (user) =>
-                  context.go('/tenant-admin/staff/${user.id}/edit'),
-              onDelete: (user) => _confirmDelete(context, ref, user),
             ),
           if (visibility.showPagination && result.totalCount > 0)
             TenantAdminPaginationBar(

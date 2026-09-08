@@ -95,6 +95,8 @@ extension PermissionCatalogPermissionMapper on PermissionCatalogPermissionDto {
       sortOrder: sortOrder,
       isActive: isActive,
       source: source,
+      assignable: assignable,
+      blockedReason: blockedReason,
     );
   }
 }
@@ -109,6 +111,7 @@ extension RolePermissionsMapper on RolePermissionsDto {
       isSystem: isSystem,
       assignedPermissionCodes: assignedPermissionCodes,
       assignedPermissionIds: assignedPermissionIds,
+      updatedAt: updatedAt,
     );
   }
 }

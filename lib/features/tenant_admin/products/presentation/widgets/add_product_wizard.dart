@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/add_product_wizard_state.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_wizard_capabilities.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_create_options.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/providers/tenant_product_providers.dart';
@@ -16,6 +17,7 @@ import 'step_3/units_pack_conversion.dart';
 import 'step_4/step_4_variant_configuration_form.dart';
 import 'step_5/step_5_barcode_sku_form.dart';
 import 'step_6/step_6_pricing_tax_form.dart';
+import 'step_7/product_created_success.dart';
 import 'step_7/step_7_review_create.dart';
 import 'wizard_actions_footer.dart';
 
@@ -27,6 +29,8 @@ class AddProductWizard extends ConsumerStatefulWidget {
     required this.canCreate,
     this.resumeProductId,
     this.resumeLocalDraftId,
+    this.duplicateFromProductId,
+    this.capabilities,
   });
 
   final TenantProductCreateOptions options;
@@ -34,6 +38,8 @@ class AddProductWizard extends ConsumerStatefulWidget {
   final bool canCreate;
   final String? resumeProductId;
   final String? resumeLocalDraftId;
+  final String? duplicateFromProductId;
+  final ProductWizardCapabilities? capabilities;
 
   @override
   ConsumerState<AddProductWizard> createState() => _AddProductWizardState();
@@ -44,7 +50,10 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
   late final TextEditingController _codeController;
   late final TextEditingController _shortDescriptionController;
   late final TextEditingController _longDescriptionController;
+  late final TextEditingController _batchController;
+  late final TextEditingController _serialController;
   final GlobalKey<FormState> _step4FormKey = GlobalKey<FormState>();
+  ProductCreateSuccessSnapshot? _createSuccess;
 
   @override
   void initState() {
@@ -53,6 +62,8 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
     _codeController = TextEditingController();
     _shortDescriptionController = TextEditingController();
     _longDescriptionController = TextEditingController();
+    _batchController = TextEditingController();
+    _serialController = TextEditingController();
 
     _nameController.addListener(() {
       final controller = ref.read(addProductWizardControllerProvider.notifier);
@@ -86,11 +97,31 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
       }
     });
 
+    _batchController.addListener(() {
+      final controller = ref.read(addProductWizardControllerProvider.notifier);
+      if (_batchController.text !=
+          ref.read(addProductWizardControllerProvider).initialBatchNumber) {
+        controller.updateInitialBatchNumber(_batchController.text);
+      }
+    });
+
+    _serialController.addListener(() {
+      final controller = ref.read(addProductWizardControllerProvider.notifier);
+      if (_serialController.text !=
+          ref.read(addProductWizardControllerProvider).initialSerialNumber) {
+        controller.updateInitialSerialNumber(_serialController.text);
+      }
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final controller = ref.read(addProductWizardControllerProvider.notifier);
+      if (widget.capabilities != null) {
+        controller.bindCapabilities(widget.capabilities!);
+      }
       controller.initWizard(
         resumeProductId: widget.resumeProductId,
         resumeLocalDraftId: widget.resumeLocalDraftId,
+        duplicateFromProductId: widget.duplicateFromProductId,
       );
     });
   }
@@ -101,6 +132,8 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
     _codeController.dispose();
     _shortDescriptionController.dispose();
     _longDescriptionController.dispose();
+    _batchController.dispose();
+    _serialController.dispose();
     super.dispose();
   }
 
@@ -118,12 +151,20 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
     if (_longDescriptionController.text != state.longDescription) {
       _longDescriptionController.text = state.longDescription;
     }
+    if (_batchController.text != state.initialBatchNumber) {
+      _batchController.text = state.initialBatchNumber;
+    }
+    if (_serialController.text != state.initialSerialNumber) {
+      _serialController.text = state.initialSerialNumber;
+    }
   }
 
   Future<void> _handleCancel() async {
     final state = ref.read(addProductWizardControllerProvider);
     if (!state.isDirty) {
       if (context.mounted) {
+        ref.read(addProductWizardControllerProvider.notifier).discardAutoSave();
+        ref.invalidate(addProductWizardControllerProvider);
         context.go('/tenant-admin/products');
       }
       return;
@@ -154,7 +195,28 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
     );
 
     if (result == true && mounted) {
+      ref.read(addProductWizardControllerProvider.notifier).discardAutoSave();
+      ref.invalidate(addProductWizardControllerProvider);
       context.go('/tenant-admin/products');
+    }
+  }
+
+  Future<void> _handleAddAnother() async {
+    final controller = ref.read(addProductWizardControllerProvider.notifier);
+    await controller.startFreshWizard();
+    if (!mounted) return;
+    _nameController.clear();
+    _codeController.clear();
+    _shortDescriptionController.clear();
+    _longDescriptionController.clear();
+    _batchController.clear();
+    _serialController.clear();
+    setState(() => _createSuccess = null);
+    final needsCleanRoute = widget.resumeProductId != null ||
+        widget.resumeLocalDraftId != null ||
+        widget.duplicateFromProductId != null;
+    if (needsCleanRoute) {
+      context.go('/tenant-admin/products/add');
     }
   }
 
@@ -162,15 +224,36 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
   Widget build(BuildContext context) {
     final state = ref.watch(addProductWizardControllerProvider);
     final controller = ref.read(addProductWizardControllerProvider.notifier);
+    final createSuccess = _createSuccess;
 
     ref.listen(addProductWizardControllerProvider, (previous, next) {
       if (previous?.productName != next.productName ||
           previous?.internalCode != next.internalCode ||
           previous?.shortDescription != next.shortDescription ||
-          previous?.longDescription != next.longDescription) {
+          previous?.longDescription != next.longDescription ||
+          previous?.initialBatchNumber != next.initialBatchNumber ||
+          previous?.initialSerialNumber != next.initialSerialNumber) {
         _syncControllersWithState();
       }
+      if (next.pageError != null && next.pageError != previous?.pageError) {
+        showAppToast(
+          context,
+          title: 'Validation Error',
+          message: next.pageError!,
+          type: AppToastType.error,
+        );
+      }
     });
+
+    if (createSuccess != null) {
+      return ProductCreatedSuccess(
+        snapshot: createSuccess,
+        onViewProduct: () =>
+            context.go('/tenant-admin/products/${createSuccess.productId}'),
+        onAddAnother: _handleAddAnother,
+        onBackToProducts: () => context.go('/tenant-admin/products'),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -239,8 +322,19 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
               context.go('/tenant-admin/products');
             }
           },
-          onSkip: null,
-          showSkip: false,
+          onSkip: controller.canSkipCurrentStep
+              ? () async {
+                  final success = await controller.skip();
+                  if (success && context.mounted) {
+                    showProductSaveToast(
+                      context,
+                      title: 'Step Skipped',
+                      message: 'Moved to the next step.',
+                    );
+                  }
+                }
+              : null,
+          showSkip: state.currentStep >= 2 && state.currentStep <= 5,
           onSaveAndContinue: () async {
             final isStep7 = state.currentStep == 7;
             if (isStep7 && state.isSubmitting) {
@@ -252,12 +346,11 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
                 ref.invalidate(localProductWizardDraftsProvider);
                 ref.invalidate(productListProvider);
                 ref.invalidate(productSummaryProvider);
-                showProductSaveToast(
-                  context,
-                  title: 'Product Created',
-                  message: 'Product created successfully',
-                );
-                context.go('/tenant-admin/products');
+                setState(() {
+                  _createSuccess = ProductCreateSuccessSnapshot.fromWizard(
+                    ref.read(addProductWizardControllerProvider),
+                  );
+                });
               } else {
                 showProductSaveToast(
                   context,
@@ -294,6 +387,13 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
         return ProductTypeTracking(
           state: state,
           controller: controller,
+          canManageVariants: widget.capabilities?.canManageVariants ?? true,
+          canManageBundleComponents:
+              widget.capabilities?.canManageBundleComponents ?? false,
+          canUseAdvancedInventoryTracking:
+              widget.capabilities?.canUseAdvancedInventoryTracking ?? true,
+          batchController: _batchController,
+          serialController: _serialController,
         );
       case 3:
         return UnitsPackConversionForm(
@@ -319,7 +419,12 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
       case 6:
         return const Step6PricingTaxForm();
       case 7:
-        return Step7ReviewCreate(state: state);
+        return Step7ReviewCreate(
+          state: state,
+          controller: controller,
+          canViewProductCost:
+              widget.capabilities?.canViewProductCost ?? true,
+        );
       default:
         return Step1BasicDetails(
           state: state,

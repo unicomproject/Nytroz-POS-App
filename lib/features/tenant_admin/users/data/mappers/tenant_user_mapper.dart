@@ -10,6 +10,8 @@ class TenantUserMapper {
       fullName: dto.fullName,
       email: dto.email,
       phone: dto.phone,
+      staffCode: dto.staffCode,
+      profileImageUrl: dto.profileImageUrl,
       roleId: dto.roleId,
       roleName: dto.roleName,
       roleDescription: dto.roleDescription,
@@ -36,6 +38,11 @@ class TenantUserMapper {
       name: dto.name,
       code: dto.code,
       roleDescription: dto.roleDescription,
+      isActive: dto.isActive,
+      moduleCount: dto.moduleCount,
+      permissionCount: dto.permissionCount,
+      modulePreview: dto.modulePreview,
+      permissionPreview: dto.permissionPreview,
     );
   }
 
@@ -48,12 +55,29 @@ class TenantUserMapper {
     );
   }
 
+  static UserTillOption toTillOption(UserTillOptionDto dto) {
+    return UserTillOption(
+      id: dto.id,
+      outletId: dto.outletId,
+      name: dto.name,
+      code: dto.code,
+      status: dto.status,
+    );
+  }
+
   static PermissionItem toPermissionItem(PermissionItemDto dto) {
     return PermissionItem(
       id: dto.id,
       code: dto.code,
       actionType: dto.actionType,
       description: dto.description,
+      name: dto.name,
+      moduleId: dto.moduleId,
+      moduleCode: dto.moduleCode,
+      moduleName: dto.moduleName,
+      sortOrder: dto.sortOrder,
+      isAssignable: dto.isAssignable,
+      isLocked: dto.isLocked,
     );
   }
 
@@ -62,6 +86,10 @@ class TenantUserMapper {
       groupName: dto.groupName,
       permissions:
           dto.permissions.map(toPermissionItem).toList(growable: false),
+      moduleId: dto.moduleId,
+      moduleCode: dto.moduleCode,
+      description: dto.description,
+      sortOrder: dto.sortOrder,
     );
   }
 
@@ -73,6 +101,32 @@ class TenantUserMapper {
       outlets: dto.outlets.map(toOutletOption).toList(growable: false),
       permissionGroups:
           dto.permissionGroups.map(toPermissionGroup).toList(growable: false),
+      supportedStatuses: dto.supportedStatuses,
+      tills: dto.tills.map(toTillOption).toList(growable: false),
+      supportedOutletAccessScopes: dto.supportedOutletAccessScopes,
+      supportedTillAccessScopes: dto.supportedTillAccessScopes,
+      capabilities: TenantUserCreateCapabilities(
+        supportsInvitedUserCreation:
+            dto.capabilities.supportsInvitedUserCreation,
+        supportsDirectActiveCreation:
+            dto.capabilities.supportsDirectActiveCreation,
+        supportsUserPermissionOverrides:
+            dto.capabilities.supportsUserPermissionOverrides,
+        supportsPermissionDenies: dto.capabilities.supportsPermissionDenies,
+        supportsAllOutletAccess: dto.capabilities.supportsAllOutletAccess,
+        supportsNoOutletAccess: dto.capabilities.supportsNoOutletAccess,
+        supportsExplicitTillAccess: dto.capabilities.supportsExplicitTillAccess,
+        supportsDefaultOutlet: dto.capabilities.supportsDefaultOutlet,
+        supportsDefaultTill: dto.capabilities.supportsDefaultTill,
+        supportsAccessStartDate: dto.capabilities.supportsAccessStartDate,
+        supportsTemporaryPassword: dto.capabilities.supportsTemporaryPassword,
+        supportsForcePasswordChange:
+            dto.capabilities.supportsForcePasswordChange,
+        supportsTwoFactorDuringCreation:
+            dto.capabilities.supportsTwoFactorDuringCreation,
+        supportsSaveDraft: dto.capabilities.supportsSaveDraft,
+      ),
+      permissionCatalogVersion: dto.permissionCatalogVersion,
     );
   }
 
@@ -93,6 +147,10 @@ class TenantUserMapper {
               outletCount: dto.accessSummary!.outletCount,
               moduleCount: dto.accessSummary!.moduleCount,
               permissionCount: dto.accessSummary!.permissionCount,
+              tillCount: dto.accessSummary!.tillCount,
+              inheritedPermissionCount:
+                  dto.accessSummary!.inheritedPermissionCount,
+              directPermissionCount: dto.accessSummary!.directPermissionCount,
             ),
       status: dto.status,
       permissionOverrideEnabled: dto.permissionOverrideEnabled,
@@ -101,6 +159,13 @@ class TenantUserMapper {
       createdAt: dto.createdAt,
       profileImageUrl: dto.profileImageUrl,
       profileMediaAssetId: dto.profileMediaAssetId,
+      outletAccessScope: dto.outletAccessScope,
+      defaultOutletId: dto.defaultOutletId,
+      tillAccessScope: dto.tillAccessScope,
+      tills: dto.tills.map(toTillOption).toList(growable: false),
+      defaultTillId: dto.defaultTillId,
+      invitationStatus: dto.invitationStatus,
+      effectivePermissionCodes: dto.effectivePermissionCodes,
     );
   }
 }

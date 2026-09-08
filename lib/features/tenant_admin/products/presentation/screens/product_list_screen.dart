@@ -75,6 +75,8 @@ class ProductListScreen extends ConsumerWidget {
             final isMobile = constraints.maxWidth < 700;
             final productsState = ref.watch(productListProvider);
             final isFirstTimeEmpty = productsState.maybeWhen(
+              skipLoadingOnReload: true,
+              skipLoadingOnRefresh: true,
               data: (result) =>
                   result != null &&
                   result.totalCount == 0 &&
@@ -87,6 +89,7 @@ class ProductListScreen extends ConsumerWidget {
               subtitle: (visibility.showSubtitle && !isFirstTimeEmpty)
                   ? 'Manage your products, categories and pricing.'
                   : null,
+              headerSpacing: TenantAdminSpacing.sm,
               scrollable: false,
               actions: [
                 if (visibility.showAddProduct)
@@ -133,44 +136,14 @@ class _ProductListBody extends ConsumerWidget {
     }
 
     return productsState.when(
+      skipLoadingOnReload: true,
+      skipLoadingOnRefresh: true,
+      skipError: true,
       loading: () => const TenantAdminLoadingSkeleton(rowCount: 6),
-      error: (error, stackTrace) => Padding(
-        padding: const EdgeInsets.all(TenantAdminSpacing.xl),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                size: 48,
-                color: TenantAdminColors.danger,
-              ),
-              const SizedBox(height: TenantAdminSpacing.md),
-              const Text(
-                'Failed to load products list',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: TenantAdminColors.bodyText,
-                ),
-              ),
-              const SizedBox(height: TenantAdminSpacing.xs),
-              Text(
-                error.toString(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: TenantAdminColors.mutedText),
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              TextButton.icon(
-                onPressed: () {
-                  ref.invalidate(productListProvider);
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
+      error: (error, stackTrace) => TenantAdminErrorState(
+        title: 'Unable to load products',
+        message: 'Please try again.',
+        onRetry: () => ref.invalidate(productListProvider),
       ),
       data: (result) {
         if (result == null) {
@@ -180,6 +153,11 @@ class _ProductListBody extends ConsumerWidget {
             icon: Icons.inventory_2_outlined,
           );
         }
+
+        final isRefetching =
+            productsState.isLoading && productsState.hasValue;
+        final refetchFailed =
+            productsState.hasError && productsState.hasValue;
 
         if (result.totalCount == 0 && result.catalogTotalCount == 0) {
           return Center(
@@ -237,9 +215,56 @@ class _ProductListBody extends ConsumerWidget {
           );
         }
 
-        return ProductListPanel(
-          result: result,
-          visibility: visibility,
+        return Stack(
+          children: [
+            ProductListPanel(
+              result: result,
+              visibility: visibility,
+            ),
+            if (isRefetching)
+              const Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: LinearProgressIndicator(
+                  minHeight: 2,
+                  color: TenantAdminColors.posHomeAccentOrange,
+                ),
+              ),
+            if (refetchFailed)
+              Positioned(
+                top: isRefetching ? 2 : 0,
+                left: 0,
+                right: 0,
+                child: Material(
+                  color: TenantAdminColors.danger.withValues(alpha: 0.12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: TenantAdminSpacing.md,
+                      vertical: TenantAdminSpacing.xs,
+                    ),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Could not refresh the product list.',
+                            style: TextStyle(
+                              color: TenantAdminColors.danger,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              ref.invalidate(productListProvider),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );
@@ -272,8 +297,9 @@ class _ProductSearchToolbar extends ConsumerWidget {
     final optionsAsync = ref.watch(productFilterOptionsProvider);
 
     final searchField = TenantAdminSearchField(
-      hint: 'Search products...',
+      hint: 'Search by product name, code, SKU or barcode',
       value: filterState.search,
+      debounceDuration: const Duration(milliseconds: 200),
       onChanged: filterNotifier.setSearch,
     );
 
@@ -285,7 +311,7 @@ class _ProductSearchToolbar extends ConsumerWidget {
 
     final resetButton = TextButton.icon(
       style: TextButton.styleFrom(
-        foregroundColor: const Color(0xFFFF4D4F),
+        foregroundColor: const Color(0xFF6B7280),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
       onPressed: isFiltered ? filterNotifier.resetFilters : null,
@@ -299,276 +325,177 @@ class _ProductSearchToolbar extends ConsumerWidget {
       ),
     );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        // On wider screens (laptop/desktop, say >= 1000), keep everything in a clean horizontal layout
-        final isWide = width >= 1000;
+    Widget buildFilters(TenantProductFilterOptions? options, bool loading) {
+      final categories = options?.categories ?? [];
+      final brands = options?.brands ?? [];
+      final productStatuses = options?.productStatuses ?? [];
+      final stockStatuses = options?.stockStatuses ?? [];
 
-        Widget buildFilters(TenantProductFilterOptions? options, bool loading) {
-          final categories = options?.categories ?? [];
-          final brands = options?.brands ?? [];
-          final productStatuses =
-              options?.productStatuses ?? ['DRAFT', 'ACTIVE', 'INACTIVE'];
-          final stockStatuses = options?.stockStatuses ??
-              ['NOT_TRACKED', 'IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK'];
+      final dropdownDecoration = InputDecoration(
+        filled: true,
+        fillColor: TenantAdminColors.surface,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          borderSide: const BorderSide(color: TenantAdminColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          borderSide: const BorderSide(color: TenantAdminColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          borderSide: const BorderSide(color: TenantAdminColors.primary),
+        ),
+        isDense: true,
+      );
 
-          final categoryDropdown = DropdownButtonFormField<String?>(
-            key: ValueKey(filterState.categoryId),
-            initialValue: filterState.categoryId,
-            icon: const Icon(Icons.keyboard_arrow_down,
-                color: TenantAdminColors.mutedText),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: TenantAdminColors.surface,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                borderSide: const BorderSide(color: TenantAdminColors.border),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                borderSide: const BorderSide(color: TenantAdminColors.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                borderSide: const BorderSide(color: TenantAdminColors.primary),
-              ),
-              isDense: true,
-            ),
-            items: [
-              const DropdownMenuItem<String?>(
-                value: null,
-                child: Text('All Categories'),
-              ),
-              ...categories.map(
-                (c) => DropdownMenuItem<String?>(
-                  value: c.id,
-                  child: Text(c.name, overflow: TextOverflow.ellipsis),
-                ),
-              ),
-            ],
-            onChanged: loading ? null : filterNotifier.setCategory,
-            isExpanded: true,
-          );
-
-          final brandDropdown = DropdownButtonFormField<String?>(
-            key: ValueKey(filterState.brandId),
-            initialValue: filterState.brandId,
-            icon: const Icon(Icons.keyboard_arrow_down,
-                color: TenantAdminColors.mutedText),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: TenantAdminColors.surface,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                borderSide: const BorderSide(color: TenantAdminColors.border),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                borderSide: const BorderSide(color: TenantAdminColors.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                borderSide: const BorderSide(color: TenantAdminColors.primary),
-              ),
-              isDense: true,
-            ),
-            items: [
-              const DropdownMenuItem<String?>(
-                value: null,
-                child: Text('All Brands'),
-              ),
-              ...brands.map(
-                (b) => DropdownMenuItem<String?>(
-                  value: b.id,
-                  child: Text(b.name, overflow: TextOverflow.ellipsis),
-                ),
-              ),
-            ],
-            onChanged: loading ? null : filterNotifier.setBrand,
-            isExpanded: true,
-          );
-
-          final statusDropdown = DropdownButtonFormField<String?>(
-            key: ValueKey(filterState.productStatus),
-            initialValue: filterState.productStatus,
-            icon: const Icon(Icons.keyboard_arrow_down,
-                color: TenantAdminColors.mutedText),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: TenantAdminColors.surface,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                borderSide: const BorderSide(color: TenantAdminColors.border),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                borderSide: const BorderSide(color: TenantAdminColors.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                borderSide: const BorderSide(color: TenantAdminColors.primary),
-              ),
-              isDense: true,
-            ),
-            items: [
-              const DropdownMenuItem<String?>(
-                value: null,
-                child: Text('All Status'),
-              ),
-              ...productStatuses.map(
-                (s) => DropdownMenuItem<String?>(
-                  value: s,
-                  child: Text(s),
-                ),
-              ),
-            ],
-            onChanged: loading ? null : filterNotifier.setProductStatus,
-            isExpanded: true,
-          );
-
-          final stockStatusDropdown = DropdownButtonFormField<String?>(
-            key: ValueKey(filterState.stockStatus),
-            initialValue: filterState.stockStatus,
-            icon: const Icon(Icons.keyboard_arrow_down,
-                color: TenantAdminColors.mutedText),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: TenantAdminColors.surface,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                borderSide: const BorderSide(color: TenantAdminColors.border),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                borderSide: const BorderSide(color: TenantAdminColors.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                borderSide: const BorderSide(color: TenantAdminColors.primary),
-              ),
-              isDense: true,
-            ),
-            items: [
-              const DropdownMenuItem<String?>(
-                value: null,
-                child: Text('All Stock Status'),
-              ),
-              ...stockStatuses.map(
-                (s) => DropdownMenuItem<String?>(
-                  value: s,
-                  child: Text(s.replaceAll('_', ' ')),
-                ),
-              ),
-            ],
-            onChanged: loading ? null : filterNotifier.setStockStatus,
-            isExpanded: true,
-          );
-
-          if (isWide) {
-            return Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: searchField,
-                ),
-                const SizedBox(width: TenantAdminSpacing.md),
-                Expanded(
-                  flex: 2,
-                  child: categoryDropdown,
-                ),
-                const SizedBox(width: TenantAdminSpacing.md),
-                Expanded(
-                  flex: 2,
-                  child: brandDropdown,
-                ),
-                const SizedBox(width: TenantAdminSpacing.md),
-                Expanded(
-                  flex: 2,
-                  child: statusDropdown,
-                ),
-                if (canViewStock) ...[
-                  const SizedBox(width: TenantAdminSpacing.md),
-                  Expanded(
-                    flex: 2,
-                    child: stockStatusDropdown,
-                  ),
-                ],
-                const SizedBox(width: TenantAdminSpacing.md),
-                resetButton,
-              ],
-            );
-          }
-
-          // Compute wrapping dropdown width
-          final double dropdownWidth;
-          final numItems = canViewStock ? 4.0 : 3.0;
-          if (width >= 800) {
-            dropdownWidth =
-                (width - (numItems * TenantAdminSpacing.md)) / (numItems + 1);
-          } else if (width >= 550) {
-            dropdownWidth = (width - TenantAdminSpacing.md) / 2;
-          } else {
-            dropdownWidth = width;
-          }
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              searchField,
-              const SizedBox(height: TenantAdminSpacing.md),
-              Wrap(
-                spacing: TenantAdminSpacing.md,
-                runSpacing: TenantAdminSpacing.md,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  SizedBox(width: dropdownWidth, child: categoryDropdown),
-                  SizedBox(width: dropdownWidth, child: brandDropdown),
-                  SizedBox(width: dropdownWidth, child: statusDropdown),
-                  if (canViewStock)
-                    SizedBox(width: dropdownWidth, child: stockStatusDropdown),
-                  resetButton,
-                ],
-              ),
-            ],
-          );
-        }
-
-        return optionsAsync.when(
-          loading: () => buildFilters(null, true),
-          error: (err, stack) => Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              searchField,
-              const SizedBox(height: TenantAdminSpacing.md),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 16),
-                  const SizedBox(width: 8),
-                  const Text('Error loading filters',
-                      style: TextStyle(color: Colors.red)),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    icon: const Icon(Icons.refresh, size: 16),
-                    onPressed: () =>
-                        ref.invalidate(productFilterOptionsProvider),
-                  ),
-                ],
-              ),
-            ],
+      final categoryDropdown = DropdownButtonFormField<String?>(
+        key: ValueKey(filterState.categoryId),
+        initialValue: filterState.categoryId,
+        icon: const Icon(Icons.keyboard_arrow_down,
+            color: TenantAdminColors.mutedText),
+        dropdownColor: TenantAdminOverlaySurfaces.color,
+        decoration: dropdownDecoration,
+        items: [
+          const DropdownMenuItem<String?>(
+            value: null,
+            child: Text('Category', style: TextStyle(fontSize: 12.5), maxLines: 1, overflow: TextOverflow.ellipsis),
           ),
-          data: (options) => buildFilters(options, false),
-        );
-      },
+          ...categories.map(
+            (c) => DropdownMenuItem<String?>(
+              value: c.id,
+              child: Text(c.name, overflow: TextOverflow.ellipsis),
+            ),
+          ),
+        ],
+        onChanged: loading ? null : filterNotifier.setCategory,
+        isExpanded: true,
+      );
+
+      final brandDropdown = DropdownButtonFormField<String?>(
+        key: ValueKey(filterState.brandId),
+        initialValue: filterState.brandId,
+        icon: const Icon(Icons.keyboard_arrow_down,
+            color: TenantAdminColors.mutedText),
+        dropdownColor: TenantAdminOverlaySurfaces.color,
+        decoration: dropdownDecoration,
+        items: [
+          const DropdownMenuItem<String?>(
+            value: null,
+            child: Text('Brand', style: TextStyle(fontSize: 12.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          ...brands.map(
+            (b) => DropdownMenuItem<String?>(
+              value: b.id,
+              child: Text(b.name, overflow: TextOverflow.ellipsis),
+            ),
+          ),
+        ],
+        onChanged: loading ? null : filterNotifier.setBrand,
+        isExpanded: true,
+      );
+
+      final statusDropdown = DropdownButtonFormField<String?>(
+        key: ValueKey(filterState.productStatus),
+        initialValue: filterState.productStatus,
+        icon: const Icon(Icons.keyboard_arrow_down,
+            color: TenantAdminColors.mutedText),
+        dropdownColor: TenantAdminOverlaySurfaces.color,
+        decoration: dropdownDecoration,
+        items: [
+          const DropdownMenuItem<String?>(
+            value: null,
+            child: Text('Product Status', style: TextStyle(fontSize: 12.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          ...productStatuses.map(
+            (s) => DropdownMenuItem<String?>(
+              value: s,
+              child: Text(s),
+            ),
+          ),
+        ],
+        onChanged: loading ? null : filterNotifier.setProductStatus,
+        isExpanded: true,
+      );
+
+      final stockStatusDropdown = DropdownButtonFormField<String?>(
+        key: ValueKey(filterState.stockStatus),
+        initialValue: filterState.stockStatus,
+        icon: const Icon(Icons.keyboard_arrow_down,
+            color: TenantAdminColors.mutedText),
+        dropdownColor: TenantAdminOverlaySurfaces.color,
+        decoration: dropdownDecoration,
+        items: [
+          const DropdownMenuItem<String?>(
+            value: null,
+            child: Text('Stock Status', style: TextStyle(fontSize: 12.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          ...stockStatuses.map(
+            (s) => DropdownMenuItem<String?>(
+              value: s,
+              child: Text(s.replaceAll('_', ' ')),
+            ),
+          ),
+        ],
+        onChanged: loading ? null : filterNotifier.setStockStatus,
+        isExpanded: true,
+      );
+
+      // Always single row: search (wider) + filters (shorter) + reset
+      return Row(
+        children: [
+          Expanded(
+            flex: 7,
+            child: searchField,
+          ),
+          const SizedBox(width: TenantAdminSpacing.md),
+          Expanded(
+            flex: 4,
+            child: categoryDropdown,
+          ),
+          const SizedBox(width: TenantAdminSpacing.md),
+          Expanded(
+            flex: 3,
+            child: brandDropdown,
+          ),
+          const SizedBox(width: TenantAdminSpacing.md),
+          Expanded(
+            flex: 5,
+            child: statusDropdown,
+          ),
+          if (canViewStock) ...[
+            const SizedBox(width: TenantAdminSpacing.md),
+            Expanded(
+              flex: 5,
+              child: stockStatusDropdown,
+            ),
+          ],
+          const SizedBox(width: TenantAdminSpacing.md),
+          resetButton,
+        ],
+      );
+    }
+
+    return optionsAsync.when(
+      loading: () => buildFilters(null, true),
+      error: (err, stack) => Row(
+        children: [
+          Expanded(flex: 10, child: searchField),
+          const SizedBox(width: TenantAdminSpacing.md),
+          const Icon(Icons.error_outline, color: Colors.red, size: 16),
+          const SizedBox(width: 8),
+          const Text('Error loading filters',
+              style: TextStyle(color: Colors.red)),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(Icons.refresh, size: 16),
+            onPressed: () => ref.invalidate(productFilterOptionsProvider),
+          ),
+        ],
+      ),
+      data: (options) => buildFilters(options, false),
     );
   }
 }

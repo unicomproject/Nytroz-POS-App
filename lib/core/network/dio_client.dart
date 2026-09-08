@@ -26,6 +26,8 @@ Dio buildAppDio({
           final requestUri = error.requestOptions.uri;
           final safeRequestUri = requestUri.replace(
             userInfo: '',
+            // Request paths can contain invitation/reset/payment secrets.
+            path: '',
             query: '',
             fragment: '',
           );

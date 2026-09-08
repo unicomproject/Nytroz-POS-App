@@ -18,6 +18,7 @@ class TillForm extends StatefulWidget {
     this.submitLabel = 'Create Till',
     this.showHardwareSection = true,
     this.hardwareReadOnly = false,
+    this.canChangeOutlet = true,
   });
 
   final List<OutletOption> outlets;
@@ -28,6 +29,7 @@ class TillForm extends StatefulWidget {
   final String submitLabel;
   final bool showHardwareSection;
   final bool hardwareReadOnly;
+  final bool canChangeOutlet;
 
   @override
   State<TillForm> createState() => _TillFormState();
@@ -472,7 +474,7 @@ class _TillFormState extends State<TillForm> {
                 child: Text(outlet.name),
               ),
           ],
-          onChanged: widget.submitting
+          onChanged: widget.submitting || !widget.canChangeOutlet
               ? null
               : (value) => setState(() => _selectedOutletId = value),
           validator: (value) {
@@ -483,9 +485,11 @@ class _TillFormState extends State<TillForm> {
           },
         ),
         const SizedBox(height: TenantAdminSpacing.xs),
-        const Text(
-          'Choose the outlet this till belongs to.',
-          style: TextStyle(
+        Text(
+          widget.canChangeOutlet
+              ? 'Choose the outlet this till belongs to.'
+              : 'You do not have permission to change the assigned outlet.',
+          style: const TextStyle(
             color: TenantAdminColors.mutedText,
             fontSize: 12,
           ),

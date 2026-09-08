@@ -1,6 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nytroz_pos/core/access/effective_permission_set.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/till/presentation/widgets/open_till_form.dart';
+
+/// Full Open Till UI grant for fixture tests (Chunk 14 fine-grained keys).
+final _fullOpenTillPermissions = EffectivePermissionSet.fromIterable([
+  PosPermissionCodes.tillSessionOpen,
+  PosPermissionCodes.tillOpeningStartingCashView,
+  PosPermissionCodes.tillOpeningStartingCashEntry,
+  PosPermissionCodes.tillOpeningValidationMessage,
+  PosPermissionCodes.tillOpeningNoteView,
+  PosPermissionCodes.tillOpeningNoteEntry,
+  PosPermissionCodes.tillOpeningQuickAmounts,
+  PosPermissionCodes.tillOpeningQuickSlot1,
+  PosPermissionCodes.tillOpeningQuickSlot2,
+  PosPermissionCodes.tillOpeningQuickSlot3,
+  PosPermissionCodes.tillOpeningNumpad,
+  PosPermissionCodes.tillOpeningBackspace,
+  PosPermissionCodes.tillOpeningClear,
+  PosPermissionCodes.tillOpeningConfirmMessage,
+  PosPermissionCodes.tillOpeningKey0,
+  PosPermissionCodes.tillOpeningKey1,
+  PosPermissionCodes.tillOpeningKey2,
+  PosPermissionCodes.tillOpeningKey3,
+  PosPermissionCodes.tillOpeningKey4,
+  PosPermissionCodes.tillOpeningKey5,
+  PosPermissionCodes.tillOpeningKey6,
+  PosPermissionCodes.tillOpeningKey7,
+  PosPermissionCodes.tillOpeningKey8,
+  PosPermissionCodes.tillOpeningKey9,
+  PosPermissionCodes.tillOpeningKey00,
+  PosPermissionCodes.tillOpeningKeyDecimal,
+]);
 
 void main() {
   group('OpenTillForm', () {
@@ -154,25 +188,32 @@ Future<void> _pumpOpenTillForm(
   addTearDown(tester.view.resetDevicePixelRatio);
 
   await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: SafeArea(
-          child: Center(
-            child: SizedBox(
-              width: size.width,
-              height: size.height,
-              child: OpenTillForm(
-                formKey: formKey,
-                openingFloatController: openingFloatController,
-                openingNoteController: openingNoteController,
-                isSubmitting: isSubmitting,
-                outletName: outletName,
-                tillName: tillName,
-                deviceName: deviceName,
-                currencyCode: currencyCode,
-                openingBy: openingBy,
-                errorMessage: errorMessage,
-                onSubmit: () {},
+    ProviderScope(
+      overrides: [
+        effectivePermissionSetProvider.overrideWithValue(
+          _fullOpenTillPermissions,
+        ),
+      ],
+      child: MaterialApp(
+        home: Scaffold(
+          body: SafeArea(
+            child: Center(
+              child: SizedBox(
+                width: size.width,
+                height: size.height,
+                child: OpenTillForm(
+                  formKey: formKey,
+                  openingFloatController: openingFloatController,
+                  openingNoteController: openingNoteController,
+                  isSubmitting: isSubmitting,
+                  outletName: outletName,
+                  tillName: tillName,
+                  deviceName: deviceName,
+                  currencyCode: currencyCode,
+                  openingBy: openingBy,
+                  errorMessage: errorMessage,
+                  onSubmit: () {},
+                ),
               ),
             ),
           ),

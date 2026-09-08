@@ -8,6 +8,9 @@ import '../../application/usecases/get_outlets.dart';
 import '../../application/usecases/update_outlet.dart';
 import '../../application/usecases/upload_outlet_image.dart';
 import '../../application/usecases/delete_staged_outlet_image.dart';
+import '../../application/usecases/update_outlet_status.dart';
+import '../../application/usecases/set_outlet_manager.dart';
+import '../../application/usecases/remove_outlet_manager.dart';
 import '../../data/datasources/outlet_remote_datasource.dart';
 import '../../data/repositories/outlet_repository_impl.dart';
 import '../../domain/entities/outlet.dart';
@@ -44,6 +47,18 @@ final updateOutletProvider = Provider<UpdateOutlet>((ref) {
 
 final deleteOutletProvider = Provider<DeleteOutlet>((ref) {
   return DeleteOutlet(ref.watch(outletRepositoryProvider));
+});
+
+final updateOutletStatusProvider = Provider<UpdateOutletStatus>((ref) {
+  return UpdateOutletStatus(ref.watch(outletRepositoryProvider));
+});
+
+final setOutletManagerProvider = Provider<SetOutletManager>((ref) {
+  return SetOutletManager(ref.watch(outletRepositoryProvider));
+});
+
+final removeOutletManagerProvider = Provider<RemoveOutletManager>((ref) {
+  return RemoveOutletManager(ref.watch(outletRepositoryProvider));
 });
 
 final uploadOutletImageProvider = Provider<UploadOutletImage>((ref) {

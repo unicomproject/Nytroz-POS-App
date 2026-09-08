@@ -19,6 +19,7 @@ class ProductChannelAvailabilityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(TenantAdminSpacing.md),
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
@@ -26,17 +27,28 @@ class ProductChannelAvailabilityCard extends StatelessWidget {
         border: Border.all(color: TenantAdminColors.border),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Channel Availability',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: TenantAdminColors.bodyText,
-            ),
+          const Row(
+            children: [
+              Icon(
+                Icons.storefront_outlined,
+                color: TenantAdminColors.posHomeAccentOrange,
+                size: 20,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Channel Availability',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: TenantAdminColors.bodyText,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: TenantAdminSpacing.md),
+          const SizedBox(height: TenantAdminSpacing.sm),
           _buildToggleTile(
             title: 'In-Store POS',
             subtitle: 'Enable to sell in POS',
@@ -62,12 +74,13 @@ class ProductChannelAvailabilityCard extends StatelessWidget {
     required ValueChanged<bool> onChanged,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: TenantAdminSpacing.sm),
+      padding: const EdgeInsets.symmetric(vertical: TenantAdminSpacing.xs),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -81,6 +94,8 @@ class ProductChannelAvailabilityCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 12,
                     color: TenantAdminColors.mutedText,
@@ -89,8 +104,10 @@ class ProductChannelAvailabilityCard extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(width: TenantAdminSpacing.sm),
           Switch.adaptive(
             value: value,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             activeTrackColor: TenantAdminColors.success,
             onChanged: onChanged,
           ),

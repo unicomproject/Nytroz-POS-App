@@ -9,7 +9,7 @@ class PosCustomer {
     this.sourceType,
     this.joinedAt,
     this.totalOrderCount = 0,
-    this.totalSpentAmount = 0,
+    this.totalSpentAmount,
     this.currencyCode,
     this.isMixedCurrencySpend = false,
     this.lastPurchaseAt,
@@ -24,7 +24,7 @@ class PosCustomer {
   final String? sourceType;
   final DateTime? joinedAt;
   final int totalOrderCount;
-  final double totalSpentAmount;
+  final double? totalSpentAmount;
   final String? currencyCode;
   final bool isMixedCurrencySpend;
   final DateTime? lastPurchaseAt;
@@ -56,10 +56,10 @@ class PosCustomer {
   String get ordersDisplay => totalOrderCount.toString();
 
   String get spentDisplay {
-    if (isMixedCurrencySpend) {
+    if (isMixedCurrencySpend || totalSpentAmount == null) {
       return '—';
     }
-    final amount = totalSpentAmount.toStringAsFixed(2);
+    final amount = totalSpentAmount!.toStringAsFixed(2);
     final currency = currencyCode?.trim();
     if (currency != null && currency.isNotEmpty) {
       return '$currency $amount';
@@ -68,10 +68,12 @@ class PosCustomer {
   }
 
   String get averageOrderValueDisplay {
-    if (isMixedCurrencySpend || totalOrderCount <= 0) {
+    if (isMixedCurrencySpend ||
+        totalSpentAmount == null ||
+        totalOrderCount <= 0) {
       return '—';
     }
-    final average = (totalSpentAmount / totalOrderCount).toStringAsFixed(2);
+    final average = (totalSpentAmount! / totalOrderCount).toStringAsFixed(2);
     final currency = currencyCode?.trim();
     return currency == null || currency.isEmpty
         ? average
@@ -126,7 +128,7 @@ class PosCustomer {
       totalOrderCount: _readInt(
         json['totalOrderCount'] ?? json['TotalOrderCount'],
       ),
-      totalSpentAmount: _readDouble(
+      totalSpentAmount: _readOptionalDouble(
         json['totalSpentAmount'] ?? json['TotalSpentAmount'],
       ),
       currencyCode:
@@ -173,7 +175,7 @@ class PosCustomerOrder {
   final String orderId;
   final String orderNumber;
   final DateTime? orderDate;
-  final double totalAmount;
+  final double? totalAmount;
   final String currencyCode;
   final String status;
   final String? outletDisplayName;
@@ -186,7 +188,7 @@ class PosCustomerOrder {
           json['OrderNumber']?.toString() ??
           '',
       orderDate: _readDate(json['orderDate'] ?? json['OrderDate']),
-      totalAmount: _readDouble(json['totalAmount'] ?? json['TotalAmount']),
+      totalAmount: _readOptionalDouble(json['totalAmount'] ?? json['TotalAmount']),
       currencyCode: json['currencyCode']?.toString() ??
           json['CurrencyCode']?.toString() ??
           '',
@@ -271,11 +273,14 @@ int _readInt(Object? value) {
   return int.tryParse(value?.toString() ?? '') ?? 0;
 }
 
-double _readDouble(Object? value) {
+double? _readOptionalDouble(Object? value) {
+  if (value == null) {
+    return null;
+  }
   if (value is num) {
     return value.toDouble();
   }
-  return double.tryParse(value?.toString() ?? '') ?? 0;
+  return double.tryParse(value.toString());
 }
 
 bool _readBool(Object? value) {

@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
+import '../../../presentation/providers/tenant_admin_access_provider.dart';
 import '../../domain/entities/outlet_details.dart';
 import '../providers/outlet_providers.dart';
+import '../providers/outlet_detail_providers.dart';
 import '../providers/outlet_visibility_provider.dart';
 import '../utils/outlet_api_errors.dart';
 import '../widgets/outlet_form.dart';
@@ -29,6 +31,7 @@ class _EditOutletScreenState extends ConsumerState<EditOutletScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final accessState = ref.watch(tenantAdminAccessCheckerProvider);
     final detailsState = ref.watch(outletDetailsProvider(widget.outletId));
     final optionsState = ref.watch(outletCreateOptionsProvider);
 
@@ -56,35 +59,52 @@ class _EditOutletScreenState extends ConsumerState<EditOutletScreen> {
       );
     }
 
-    return detailsState.when(
+    return accessState.when(
       loading: () => const TenantAdminPageScaffold(
         title: 'Edit outlet',
         subtitle: 'Update outlet details.',
         child: TenantAdminLoadingSkeleton(rowCount: 8),
       ),
-      error: (error, stackTrace) => TenantAdminPageScaffold(
+      error: (error, stackTrace) => const TenantAdminPageScaffold(
         title: 'Edit outlet',
         subtitle: 'Update outlet details.',
         child: TenantAdminErrorState(
-          title: 'Unable to load outlet',
+          title: 'Unable to load permissions',
           message: 'Please try again.',
-          onRetry: () {
-            ref
-                .refresh(outletDetailsProvider(widget.outletId))
-                .maybeWhen(orElse: () {});
-          },
         ),
       ),
-      data: (outlet) => TenantAdminPageScaffold(
-        title: 'Edit outlet',
-        subtitle: 'Update outlet details.',
-        child: OutletForm(
-          initialValue: _initialForm(outlet),
-          createOptions: optionsState.value,
-          backendErrors: _fieldErrors,
-          submitting: _submitting,
-          onSubmit: _submit,
-          onDiscard: (_) async => context.go('/tenant-admin/outlets'),
+      data: (access) => detailsState.when(
+        loading: () => const TenantAdminPageScaffold(
+          title: 'Edit outlet',
+          subtitle: 'Update outlet details.',
+          child: TenantAdminLoadingSkeleton(rowCount: 8),
+        ),
+        error: (error, stackTrace) => TenantAdminPageScaffold(
+          title: 'Edit outlet',
+          subtitle: 'Update outlet details.',
+          child: TenantAdminErrorState(
+            title: 'Unable to load outlet',
+            message: 'Please try again.',
+            onRetry: () {
+              ref
+                  .refresh(outletDetailsProvider(widget.outletId))
+                  .maybeWhen(orElse: () {});
+            },
+          ),
+        ),
+        data: (outlet) => TenantAdminPageScaffold(
+          title: 'Edit outlet',
+          subtitle: 'Update outlet details.',
+          child: OutletForm(
+            initialValue: _initialForm(outlet),
+            createOptions: optionsState.value,
+            backendErrors: _fieldErrors,
+            submitting: _submitting,
+            canUpdateStatus: access.canUpdateOutletStatus(),
+            canUpdateImage: access.canUpdateOutletImage(),
+            onSubmit: _submit,
+            onDiscard: (_) async => context.go('/tenant-admin/outlets'),
+          ),
         ),
       ),
     );
@@ -103,6 +123,7 @@ class _EditOutletScreenState extends ConsumerState<EditOutletScreen> {
       ref
           .refresh(outletDetailsProvider(widget.outletId))
           .maybeWhen(orElse: () {});
+      ref.invalidate(tenantAdminOutletOverviewProvider(widget.outletId));
       if (!mounted) {
         return;
       }

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_customers_orders_returns_visibility.dart';
+import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 
-import '../../../../core/access/pos_access_codes.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../hardware/receipt_printer/models/completed_sale_receipt.dart';
 import '../../../sale/presentation/providers/completed_sale_print_provider.dart';
+import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../domain/receipt_history_models.dart';
 import '../providers/receipt_history_provider.dart';
 
@@ -30,6 +33,13 @@ class _PosReceiptHistoryScreenState
 
   @override
   Widget build(BuildContext context) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    if (!PosCustomersOrdersReturnsVisibility.canViewReceiptHistory(
+      permissions,
+    )) {
+      return const TenantAdminForbiddenScreen();
+    }
+
     final result = ref.watch(receiptSearchProvider(_query));
     final audit = ref.watch(receiptReprintAuditProvider);
     return ColoredBox(
@@ -91,6 +101,21 @@ class _PosReceiptHistoryScreenState
                         separatorBuilder: (_, __) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final item = page.items[index];
+                          final title = PosCustomersOrdersReturnsVisibility
+                                  .canShowHistoryReceiptNumber(permissions)
+                              ? item.receiptNumber
+                              : 'Receipt';
+                          final subtitleParts = <String>[
+                            if (PosCustomersOrdersReturnsVisibility
+                                .canShowHistoryCashier(permissions))
+                              item.cashierName,
+                            if (PosCustomersOrdersReturnsVisibility
+                                .canShowHistoryTerminal(permissions))
+                              item.tillName,
+                            if (PosCustomersOrdersReturnsVisibility
+                                .canShowHistoryPaymentMethod(permissions))
+                              item.paymentMethod,
+                          ];
                           return Card(
                             child: ListTile(
                               leading: const CircleAvatar(
@@ -98,26 +123,31 @@ class _PosReceiptHistoryScreenState
                                 child: Icon(Icons.receipt_long,
                                     color: Color(0xFFFF5A1F)),
                               ),
-                              title: Text(item.receiptNumber,
+                              title: Text(title,
                                   style: const TextStyle(
                                       fontWeight: FontWeight.w700)),
-                              subtitle: Text(
-                                '${item.saleNumber} • ${item.cashierName}\n'
-                                '${item.tillName} • ${item.paymentMethod}',
-                              ),
-                              isThreeLine: true,
-                              trailing: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    '${item.currency} ${item.total.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w800),
-                                  ),
-                                  Text('${item.reprintCount} reprints'),
-                                ],
-                              ),
+                              subtitle: subtitleParts.isEmpty
+                                  ? Text(item.saleNumber)
+                                  : Text(
+                                      '${item.saleNumber} • ${subtitleParts.join(' • ')}',
+                                    ),
+                              trailing: PosCustomersOrdersReturnsVisibility
+                                      .canShowHistoryTotal(permissions)
+                                  ? Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          '${item.currency} ${item.total.toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w800),
+                                        ),
+                                        Text('${item.reprintCount} reprints'),
+                                      ],
+                                    )
+                                  : null,
                               onTap: () => _showDetail(item.receiptId),
                             ),
                           );
@@ -155,73 +185,142 @@ class _ReceiptDetailDialog extends ConsumerWidget {
           error: (_, __) => _ErrorState(
             onRetry: () => ref.invalidate(receiptDetailProvider(receiptId)),
           ),
-          data: (receipt) => Column(
-            children: [
-              ListTile(
-                title: Text(receipt.summary.receiptNumber),
-                subtitle: Text(
-                    '${receipt.summary.type} • ${receipt.summary.outletName} • ${receipt.summary.tillName}'),
-                trailing: IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    for (final line in receipt.lines)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(line.name),
-                        subtitle: Text(
-                            '${line.quantity.toStringAsFixed(line.quantity % 1 == 0 ? 0 : 2)} × ${line.unitPrice.toStringAsFixed(2)}'),
-                        trailing: Text(line.lineTotal.toStringAsFixed(2)),
-                      ),
-                    const Divider(),
-                    _MoneyRow('Subtotal', receipt.subtotal),
-                    _MoneyRow('Discount', receipt.discount),
-                    _MoneyRow('Tax', receipt.tax),
-                    _MoneyRow('Total', receipt.total, strong: true),
-                    _MoneyRow('Paid', receipt.paid),
-                    _MoneyRow('Change', receipt.change),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF5A1F)),
-                    onPressed: historicalReprint.status ==
-                            HistoricalReprintStatus.printing
-                        ? null
-                        : historicalReprint.status ==
-                                HistoricalReprintStatus.auditPending
-                            ? () => ref
-                                .read(historicalReprintProvider.notifier)
-                                .retryAuditOnly()
-                            : ref.watch(authSessionProvider)?.hasPermission(
-                                        PosPermissionCodes.reprintReceipts) ==
-                                    true
-                                ? () => _requestReprint(context, ref, receipt)
-                                : null,
-                    icon: const Icon(Icons.print),
-                    label: Text(historicalReprint.status ==
-                            HistoricalReprintStatus.auditPending
-                        ? 'Retry audit only'
-                        : historicalReprint.status ==
-                                HistoricalReprintStatus.printing
-                            ? 'Processing…'
-                            : 'Reprint receipt'),
+          data: (receipt) {
+            final permissions = ref.watch(effectivePermissionSetProvider);
+            final showNumber =
+                PosCustomersOrdersReturnsVisibility.canShowHistoryReceiptNumber(
+              permissions,
+            );
+            final showTerminal =
+                PosCustomersOrdersReturnsVisibility.canShowHistoryTerminal(
+              permissions,
+            );
+            final showItems =
+                PosCustomersOrdersReturnsVisibility.canShowHistoryItems(
+              permissions,
+            );
+            final showQty =
+                PosCustomersOrdersReturnsVisibility.canShowHistoryItemQuantity(
+              permissions,
+            );
+            final showRate =
+                PosCustomersOrdersReturnsVisibility.canShowHistoryItemRate(
+              permissions,
+            );
+            final showValue =
+                PosCustomersOrdersReturnsVisibility.canShowHistoryItemValue(
+              permissions,
+            );
+            return Column(
+              children: [
+                ListTile(
+                  title: Text(
+                    showNumber ? receipt.summary.receiptNumber : 'Receipt',
+                  ),
+                  subtitle: Text(
+                    [
+                      receipt.summary.type,
+                      if (PosCustomersOrdersReturnsVisibility
+                          .canShowHistoryStore(permissions))
+                        receipt.summary.outletName,
+                      if (showTerminal) receipt.summary.tillName,
+                    ].where((e) => e.trim().isNotEmpty).join(' • '),
+                  ),
+                  trailing: IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
                   ),
                 ),
-              ),
-            ],
-          ),
+                const Divider(height: 1),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      if (showItems)
+                        for (final line in receipt.lines)
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(line.name),
+                            subtitle: (showQty || showRate)
+                                ? Text(
+                                    [
+                                      if (showQty)
+                                        line.quantity.toStringAsFixed(
+                                          line.quantity % 1 == 0 ? 0 : 2,
+                                        ),
+                                      if (showQty && showRate) ' × ',
+                                      if (showRate)
+                                        line.unitPrice.toStringAsFixed(2),
+                                    ].join(),
+                                  )
+                                : null,
+                            trailing: showValue
+                                ? Text(line.lineTotal.toStringAsFixed(2))
+                                : null,
+                          ),
+                      if (showItems) const Divider(),
+                      if (PosCustomersOrdersReturnsVisibility
+                          .canShowHistorySubtotal(permissions))
+                        _MoneyRow('Subtotal', receipt.subtotal),
+                      if (PosCustomersOrdersReturnsVisibility
+                          .canShowHistoryDiscount(permissions))
+                        _MoneyRow('Discount', receipt.discount),
+                      // Tax has no Chunk 2 child code (NO_CANONICAL_MAPPING) —
+                      // omitted so financial values are not exposed without a code.
+                      if (PosCustomersOrdersReturnsVisibility
+                          .canShowHistoryTotal(permissions))
+                        _MoneyRow('Total', receipt.total, strong: true),
+                      if (PosCustomersOrdersReturnsVisibility
+                          .canShowHistoryPaidAmount(permissions))
+                        _MoneyRow('Paid', receipt.paid),
+                      if (PosCustomersOrdersReturnsVisibility
+                          .canShowHistoryChangeDue(permissions))
+                        _MoneyRow('Change', receipt.change),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Builder(builder: (context) {
+                    final canReprint =
+                        PosPermissionAccess.canReprintReceiptsSession(
+                      ref.watch(authSessionProvider),
+                    );
+                    if (!canReprint &&
+                        historicalReprint.status !=
+                            HistoricalReprintStatus.auditPending) {
+                      return const SizedBox.shrink();
+                    }
+                    return SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF5A1F)),
+                        onPressed: historicalReprint.status ==
+                                HistoricalReprintStatus.printing
+                            ? null
+                            : historicalReprint.status ==
+                                    HistoricalReprintStatus.auditPending
+                                ? () => ref
+                                    .read(historicalReprintProvider.notifier)
+                                    .retryAuditOnly()
+                                : () =>
+                                    _requestReprint(context, ref, receipt),
+                        icon: const Icon(Icons.print),
+                        label: Text(historicalReprint.status ==
+                                HistoricalReprintStatus.auditPending
+                            ? 'Retry audit only'
+                            : historicalReprint.status ==
+                                    HistoricalReprintStatus.printing
+                                ? 'Processing…'
+                                : 'Reprint receipt'),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

@@ -39,7 +39,7 @@ void main() {
       expect(adapter.lastBody['outletIds'], ['outlet-1']);
       expect(adapter.lastBody['permissionOverrideEnabled'], isTrue);
       expect(adapter.lastBody['overriddenPermissionIds'], ['perm-1']);
-      expect(adapter.lastBody['status'], 'INVITED');
+      expect(adapter.lastBody['createStatus'], 'INVITED');
       expect(adapter.lastBody['profileMediaAssetId'], 'media-1');
       expect(adapter.lastBody.containsKey('staffCode'), isFalse);
       expect(adapter.lastBody.containsKey('defaultOutletId'), isFalse);
@@ -67,13 +67,66 @@ void main() {
       expect(adapter.lastBody.containsKey('phoneNumber'), isFalse);
       expect(adapter.lastBody.containsKey('employeeId'), isFalse);
       expect(adapter.lastBody.containsKey('sendInviteEmail'), isFalse);
-      expect(adapter.lastBody['status'], 'INACTIVE');
+      expect(adapter.lastBody['createStatus'], 'INACTIVE');
+    });
+
+    test('sends password fields only for direct active creation', () async {
+      final dio = Dio();
+      final adapter = _RecordingAdapter();
+      dio.httpClientAdapter = adapter;
+      final datasource = TenantUserRemoteDatasource(dio);
+
+      await datasource.createUser(
+        const UserWriteRequestDto(
+          fullName: 'Direct User',
+          email: 'direct@oneverz.com',
+          roleId: 'role-1',
+          status: 'ACTIVE',
+          password: 'SecurePass123',
+          confirmPassword: 'SecurePass123',
+        ),
+      );
+
+      expect(adapter.lastBody['createStatus'], 'ACTIVE');
+      expect(adapter.lastBody['password'], 'SecurePass123');
+      expect(adapter.lastBody['confirmPassword'], 'SecurePass123');
+    });
+  });
+
+  group('TenantUserRemoteDatasource invitation actions', () {
+    test('posts to the resend invitation endpoint', () async {
+      final dio = Dio();
+      final adapter = _RecordingAdapter();
+      dio.httpClientAdapter = adapter;
+
+      final result =
+          await TenantUserRemoteDatasource(dio).resendInvite('user-1');
+
+      expect(adapter.lastMethod, 'POST');
+      expect(
+          adapter.lastPath, '/api/v1/tenant-admin/users/user-1/resend-invite');
+      expect(result.id, 'user-1');
+    });
+
+    test('posts to the revoke invitation endpoint', () async {
+      final dio = Dio();
+      final adapter = _RecordingAdapter();
+      dio.httpClientAdapter = adapter;
+
+      final result =
+          await TenantUserRemoteDatasource(dio).revokeInvite('user-1');
+
+      expect(adapter.lastMethod, 'POST');
+      expect(
+          adapter.lastPath, '/api/v1/tenant-admin/users/user-1/revoke-invite');
+      expect(result.id, 'user-1');
     });
   });
 }
 
 class _RecordingAdapter implements HttpClientAdapter {
   String? lastPath;
+  String? lastMethod;
   Map<String, dynamic> lastHeaders = const {};
   Map<String, dynamic> lastBody = const {};
 
@@ -87,6 +140,7 @@ class _RecordingAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     lastPath = options.path;
+    lastMethod = options.method;
     lastHeaders = Map<String, dynamic>.from(options.headers);
     if (requestStream != null) {
       final chunks = await requestStream.toList();

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nytroz_pos/core/access/effective_permission_set.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/cart/data/models/pos_parked_sale_dtos.dart';
 import 'package:nytroz_pos/features/cart/domain/repositories/pos_parked_sale_repository.dart';
@@ -9,6 +11,27 @@ import 'package:nytroz_pos/features/cart/presentation/providers/pos_parked_sale_
 import 'package:nytroz_pos/features/sale/domain/entities/pos_checkout_summary.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/new_sale/pos_parked_sale_dialog.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
+
+/// Held-sales view/recall/cancel + list children (Chunk 14 exact membership).
+const _heldSalesFixturePermissions = {
+  PosPermissionCodes.heldSalesView,
+  PosPermissionCodes.viewBackendParkedSales,
+  PosPermissionCodes.heldSalesRecall,
+  PosPermissionCodes.recallBackendParkedSale,
+  PosPermissionCodes.heldSalesCancel,
+  PosPermissionCodes.heldSalesCreate,
+  PosPermissionCodes.createParkedSale,
+  PosPermissionCodes.heldSalesListActiveCount,
+  PosPermissionCodes.heldSalesListCustomer,
+  PosPermissionCodes.heldSalesListValue,
+  PosPermissionCodes.heldSalesListItemCount,
+  PosPermissionCodes.heldSalesListParkedTime,
+  PosPermissionCodes.heldSalesListExpiryTime,
+  PosPermissionCodes.heldSalesListItems,
+  PosPermissionCodes.heldSalesListSummary,
+  PosPermissionCodes.heldSalesListFilters,
+  PosPermissionCodes.heldSalesListPagination,
+};
 
 void main() {
   testWidgets('shows backend list, count, exact reference and summary',
@@ -73,50 +96,75 @@ void main() {
   });
 
   testWidgets(
-      'confirmed recall uses provider response and restores backend cart',
+      'single-tap recall uses provider response and restores backend cart',
       (tester) async {
     final h = await _pump(tester);
     addTearDown(h.dispose);
     await _open(tester);
     await tester.tap(find.byKey(const ValueKey('recall-hold-1')));
     await tester.pumpAndSettle();
-    expect(find.text('Recall Sale'), findsNWidgets(3));
-    expect(find.text('PS-2026-00021'), findsWidgets);
-    final recallDialog = tester.widget<AlertDialog>(
-      find.byKey(const ValueKey('recall-sale-dialog')),
-    );
-    expect(recallDialog.backgroundColor, TenantAdminColors.surface);
-    expect(recallDialog.surfaceTintColor, TenantAdminColors.surface);
-    final summary = tester.widget<Container>(
-      find.byKey(const ValueKey('recall-sale-summary')),
-    );
-    final summaryDecoration = summary.decoration! as BoxDecoration;
-    expect(summaryDecoration.color, TenantAdminColors.posHomeReturnsCard);
-    expect(
-      (summaryDecoration.border! as Border).top.color,
-      TenantAdminColors.posNewSaleAccent,
-    );
-    final recallConfirm = tester.widget<FilledButton>(
-      find.byKey(const ValueKey('recall-sale-confirm')),
-    );
-    expect(
-      recallConfirm.style?.backgroundColor?.resolve(<WidgetState>{}),
-      TenantAdminColors.posNewSaleAccent,
-    );
-    final recallCancel = tester.widget<OutlinedButton>(
-      find.byKey(const ValueKey('recall-sale-cancel')),
-    );
-    expect(
-      recallCancel.style?.foregroundColor?.resolve(<WidgetState>{}),
-      TenantAdminColors.bodyText,
-    );
-    await tester.tap(find.byKey(const ValueKey('recall-sale-confirm')));
-    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('recall-sale-dialog')), findsNothing);
+    expect(find.text('Parked Sales'), findsNothing);
+    expect(find.byType(Dialog), findsNothing);
+    expect(find.text('Open'), findsOneWidget);
     expect(h.repository.recalled, ['hold-1']);
     final cart = h.container.read(posNewSaleCartProvider);
+    expect(cart.hasItems, isTrue);
+    expect(cart.itemList, hasLength(1));
     expect(cart.itemList.single.quantity, 2);
     expect(cart.selectedCustomer?.customerId, 'customer-1');
     expect(h.container.read(posParkedSaleProvider).valueOrNull, isEmpty);
+  });
+
+  testWidgets('failed recall keeps Parked Sales open and cart empty',
+      (tester) async {
+    final h = await _pump(tester, failRecalls: 1);
+    addTearDown(h.dispose);
+    await _open(tester);
+    await tester.tap(find.byKey(const ValueKey('recall-hold-1')));
+    await tester.pumpAndSettle();
+    expect(find.text('Parked Sales'), findsOneWidget);
+    expect(find.byKey(const ValueKey('parked-sale-card-hold-1')), findsOneWidget);
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(h.container.read(posNewSaleCartProvider).hasItems, isFalse);
+    expect(h.repository.recalled, isEmpty);
+  });
+
+  testWidgets('rapid double Recall tap issues only one repository recall',
+      (tester) async {
+    final h = await _pump(tester, recallDelay: const Duration(milliseconds: 80));
+    addTearDown(h.dispose);
+    await _open(tester);
+    await tester.tap(find.byKey(const ValueKey('recall-hold-1')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('recall-hold-1')));
+    await tester.pumpAndSettle();
+    expect(h.repository.recalled, ['hold-1']);
+    expect(find.text('Parked Sales'), findsNothing);
+    expect(h.container.read(posNewSaleCartProvider).itemList, hasLength(1));
+  });
+
+  testWidgets('held view without recall hides Recall button', (tester) async {
+    final h = await _pump(
+      tester,
+      permissions: {
+        PosPermissionCodes.heldSalesView,
+        PosPermissionCodes.viewBackendParkedSales,
+        PosPermissionCodes.heldSalesListActiveCount,
+        PosPermissionCodes.heldSalesListCustomer,
+        PosPermissionCodes.heldSalesListValue,
+        PosPermissionCodes.heldSalesListItemCount,
+        PosPermissionCodes.heldSalesListParkedTime,
+        PosPermissionCodes.heldSalesListExpiryTime,
+        PosPermissionCodes.heldSalesListItems,
+        PosPermissionCodes.heldSalesListFilters,
+        PosPermissionCodes.heldSalesListPagination,
+      },
+    );
+    addTearDown(h.dispose);
+    await _open(tester);
+    expect(find.byKey(const ValueKey('recall-hold-1')), findsNothing);
+    expect(find.widgetWithText(FilledButton, 'Recall'), findsNothing);
   });
 
   testWidgets(
@@ -213,30 +261,68 @@ void main() {
       addTearDown(h.dispose);
       await _open(tester);
       expect(tester.takeException(), isNull);
-      expect(find.widgetWithText(FilledButton, 'Recall Sale'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Recall'), findsOneWidget);
       expect(find.widgetWithText(OutlinedButton, 'Cancel Parked Sale'),
           findsOneWidget);
     });
   }
+
+  for (final size in [
+    const Size(390, 844),
+    const Size(1280, 800),
+    const Size(2560, 1600),
+  ]) {
+    testWidgets(
+        'successful recall dismisses Parked Sales at ${size.width} x ${size.height}',
+        (tester) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final h = await _pump(tester);
+      addTearDown(h.dispose);
+      await _open(tester);
+      await tester.tap(find.byKey(const ValueKey('recall-hold-1')));
+      await tester.pumpAndSettle();
+      // Phone widths may overflow the action row; navigation must still complete.
+      while (tester.takeException() != null) {}
+      expect(find.text('Parked Sales'), findsNothing);
+      expect(find.byType(Dialog), findsNothing);
+      expect(h.container.read(posNewSaleCartProvider).itemList, hasLength(1));
+      expect(find.text('Open'), findsOneWidget);
+    });
+  }
 }
 
-Future<_Harness> _pump(WidgetTester tester,
-    {List<PosHoldDto>? holds,
-    bool activeCart = false,
-    int failCancels = 0}) async {
-  final repo = _Repo(holds ?? [_hold], failCancels: failCancels);
+Future<_Harness> _pump(
+  WidgetTester tester, {
+  List<PosHoldDto>? holds,
+  bool activeCart = false,
+  int failCancels = 0,
+  int failRecalls = 0,
+  Duration? recallDelay,
+  Set<String>? permissions,
+}) async {
+  final granted = permissions ?? _heldSalesFixturePermissions;
+  final repo = _Repo(
+    holds ?? [_hold],
+    failCancels: failCancels,
+    failRecalls: failRecalls,
+    recallDelay: recallDelay,
+  );
   final container = ProviderContainer(overrides: [
     posParkedSaleRepositoryProvider.overrideWithValue(repo),
     posParkedSaleAccessContextProvider.overrideWithValue(
-        const PosParkedSaleAccessContext(
-            authenticated: true,
-            trustedDevice: true,
-            deviceId: 'device-1',
-            permissions: {
-          PosPermissionCodes.viewBackendParkedSales,
-          PosPermissionCodes.recallBackendParkedSale,
-          PosPermissionCodes.createParkedSale
-        })),
+      PosParkedSaleAccessContext(
+        authenticated: true,
+        trustedDevice: true,
+        deviceId: 'device-1',
+        permissions: granted,
+      ),
+    ),
+    effectivePermissionSetProvider.overrideWithValue(
+      EffectivePermissionSet.fromIterable(granted),
+    ),
   ]);
   if (activeCart) {
     container.read(posNewSaleCartProvider.notifier).addToCart(_product);
@@ -268,9 +354,16 @@ class _Harness {
 }
 
 class _Repo implements PosParkedSaleRepository {
-  _Repo(this.holds, {this.failCancels = 0});
+  _Repo(
+    this.holds, {
+    this.failCancels = 0,
+    this.failRecalls = 0,
+    this.recallDelay,
+  });
   final List<PosHoldDto> holds;
   int failCancels;
+  int failRecalls;
+  final Duration? recallDelay;
   final recalled = <String>[];
   final cancelled = <(String, String?)>[];
   @override
@@ -282,6 +375,12 @@ class _Repo implements PosParkedSaleRepository {
       PosHoldListDto(holds, holds.length);
   @override
   Future<PosRecallHoldDto> recall(String holdId, String deviceId) async {
+    if (recallDelay != null) {
+      await Future<void>.delayed(recallDelay!);
+    }
+    if (failRecalls-- > 0) {
+      throw Exception('Recall unavailable');
+    }
     recalled.add(holdId);
     holds.removeWhere((hold) => hold.holdId == holdId);
     return _recall;

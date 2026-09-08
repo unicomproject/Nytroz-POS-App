@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 
 import 'role_permissions_providers.dart';
 import 'roles_list_providers.dart';
+import '../../domain/entities/role_assignment.dart';
 
 class RoleMutationState {
   const RoleMutationState({
@@ -37,6 +38,35 @@ class RoleMutationController extends AutoDisposeNotifier<RoleMutationState> {
     return const RoleMutationState(isLoading: false);
   }
 
+  Future<String?> createRole(
+    String roleName,
+    String? description,
+    List<String> permissionCodes,
+    List<RoleAssignment> assignments,
+  ) async {
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearMessage: true);
+    try {
+      final repo = ref.read(rolePermissionRepositoryProvider);
+      final created = await repo.createRole(
+        roleName,
+        description,
+        _clientRoleCode(roleName),
+        permissionCodes: permissionCodes,
+        assignments: assignments,
+      );
+      state = state.copyWith(
+        isLoading: false,
+        message: 'Custom role created successfully.',
+      );
+      ref.invalidate(rolesListProvider);
+      return created.id;
+    } catch (e) {
+      _handleError(e);
+      return null;
+    }
+  }
+
   Future<bool> updateRole(
     String roleId,
     String roleName,
@@ -44,11 +74,14 @@ class RoleMutationController extends AutoDisposeNotifier<RoleMutationState> {
     String roleCode,
     DateTime? expectedUpdatedAt,
   ) async {
-    state = state.copyWith(isLoading: true, clearError: true, clearMessage: true);
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearMessage: true);
     try {
       final repo = ref.read(rolePermissionRepositoryProvider);
-      await repo.updateRole(roleId, roleName, description, roleCode, expectedUpdatedAt);
-      state = state.copyWith(isLoading: false, message: 'Role updated successfully.');
+      await repo.updateRole(
+          roleId, roleName, description, roleCode, expectedUpdatedAt);
+      state = state.copyWith(
+          isLoading: false, message: 'Role updated successfully.');
       ref.invalidate(rolesListProvider);
       return true;
     } catch (e) {
@@ -62,11 +95,13 @@ class RoleMutationController extends AutoDisposeNotifier<RoleMutationState> {
     bool isActive,
     DateTime? expectedUpdatedAt,
   ) async {
-    state = state.copyWith(isLoading: true, clearError: true, clearMessage: true);
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearMessage: true);
     try {
       final repo = ref.read(rolePermissionRepositoryProvider);
       await repo.updateRoleStatus(roleId, isActive, expectedUpdatedAt);
-      state = state.copyWith(isLoading: false, message: 'Role status updated successfully.');
+      state = state.copyWith(
+          isLoading: false, message: 'Role status updated successfully.');
       ref.invalidate(rolesListProvider);
       return true;
     } catch (e) {
@@ -76,11 +111,13 @@ class RoleMutationController extends AutoDisposeNotifier<RoleMutationState> {
   }
 
   Future<bool> deleteRole(String roleId, DateTime? expectedUpdatedAt) async {
-    state = state.copyWith(isLoading: true, clearError: true, clearMessage: true);
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearMessage: true);
     try {
       final repo = ref.read(rolePermissionRepositoryProvider);
       await repo.deleteRole(roleId, expectedUpdatedAt);
-      state = state.copyWith(isLoading: false, message: 'Role deleted successfully.');
+      state = state.copyWith(
+          isLoading: false, message: 'Role deleted successfully.');
       ref.invalidate(rolesListProvider);
       return true;
     } catch (e) {
@@ -98,8 +135,18 @@ class RoleMutationController extends AutoDisposeNotifier<RoleMutationState> {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
+
+  String _clientRoleCode(String roleName) {
+    final normalized = roleName
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
+    return normalized.isEmpty ? 'custom_role' : normalized;
+  }
 }
 
-final roleMutationControllerProvider = NotifierProvider.autoDispose<RoleMutationController, RoleMutationState>(
+final roleMutationControllerProvider =
+    NotifierProvider.autoDispose<RoleMutationController, RoleMutationState>(
   RoleMutationController.new,
 );

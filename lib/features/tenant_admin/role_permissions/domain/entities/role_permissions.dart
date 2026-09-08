@@ -7,6 +7,7 @@ class RolePermissions {
     required this.isSystem,
     required this.assignedPermissionCodes,
     required this.assignedPermissionIds,
+    this.updatedAt,
   });
 
   final String roleId;
@@ -16,6 +17,7 @@ class RolePermissions {
   final bool isSystem;
   final List<String> assignedPermissionCodes;
   final List<String> assignedPermissionIds;
+  final DateTime? updatedAt;
 }
 
 class UpdateRolePermissionsRequest {

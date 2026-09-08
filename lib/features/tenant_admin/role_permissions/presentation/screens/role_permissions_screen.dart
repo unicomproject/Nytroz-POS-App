@@ -34,7 +34,15 @@ class RolePermissionsScreen extends ConsumerWidget {
       );
     }
 
-    final availableRoles = ref.watch(rolePermissionsAvailableRolesProvider);
+    final availableRolesState =
+        ref.watch(rolePermissionsAvailableRolesProvider);
+    if (availableRolesState.isLoading) {
+      return const TenantAdminPageScaffold(
+        title: 'Roles & Permissions',
+        child: TenantAdminLoadingSkeleton(rowCount: 5),
+      );
+    }
+    final availableRoles = availableRolesState.valueOrNull ?? const [];
     final selectedRoleId = ref.watch(rolePermissionsSelectedRoleIdProvider) ??
         initialRoleId ??
         (availableRoles.isNotEmpty ? availableRoles.first.id : null);
@@ -76,9 +84,10 @@ class RolePermissionsScreen extends ConsumerWidget {
       actions: [
         if (canUpdate) ...[
           TenantAdminSecondaryButton(
-            label: 'Create Role',
+            label: 'Configure Role Access',
             icon: Icons.add,
-            onPressed: () => context.go('/tenant-admin/roles-permissions/create/select-role'),
+            onPressed: () => context
+                .go('/tenant-admin/roles-permissions/create/select-role'),
           ),
           const SizedBox(width: TenantAdminSpacing.md),
           TenantAdminPrimaryButton(

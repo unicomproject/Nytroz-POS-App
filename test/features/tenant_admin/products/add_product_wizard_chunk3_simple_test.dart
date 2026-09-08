@@ -152,6 +152,12 @@ void main() {
     controller = AddProductWizardController(repo);
   });
 
+  tearDown(() {
+    if (controller.mounted) {
+      controller.dispose();
+    }
+  });
+
   group('Chunk 3 SIMPLE flow', () {
     test('1. SIMPLE Track ON → Step 3', () async {
       await controller.initWizard();
@@ -363,12 +369,19 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Variant Configuration'), findsNothing);
-      expect(find.text('Basic Information'), findsOneWidget);
+      expect(find.text('Product Configuration'), findsNothing);
+      expect(find.text('Basic Details'), findsOneWidget);
+      expect(find.text('Product Type & Tracking'), findsOneWidget);
       expect(find.text('Units & Pack Conversion'), findsOneWidget);
+      expect(find.text('Barcode & SKU'), findsOneWidget);
       expect(find.text('SKU'), findsWidgets);
       expect(find.text('TEST-SIMPLE-001'), findsWidgets);
       expect(find.text('Pricing & Tax'), findsOneWidget);
       expect(find.text('VAT 15%'), findsOneWidget);
+      expect(find.text('Simple Product'), findsWidgets);
+      expect(find.text('Variant Product'), findsNothing);
+      
+      await tester.pump(const Duration(seconds: 1));
     });
   });
 }

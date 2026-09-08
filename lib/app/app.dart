@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../features/tenant_admin/presentation/providers/tenant_admin_session_sync_provider.dart';
-import '../features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../core/theme/pos_theme_provider.dart';
 import '../features/auth/presentation/providers/auth_network_provider.dart';
 import '../features/auth/presentation/providers/session_provider.dart';
+import '../features/notifications/presentation/providers/notification_provider.dart';
 import '../features/sale/presentation/providers/completed_sale_print_provider.dart';
+import '../features/tenant_admin/presentation/providers/tenant_admin_session_sync_provider.dart';
+import '../features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../shared/pos_session/pos_session_bootstrap_provider.dart';
+import 'nytroz_scroll_behavior.dart';
 import 'router/app_router.dart';
 
 class NytrozPosApp extends ConsumerStatefulWidget {
@@ -19,29 +22,10 @@ class NytrozPosApp extends ConsumerStatefulWidget {
 
 class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
     with WidgetsBindingObserver {
-  late final ThemeData _themeData;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _themeData = ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: TenantAdminColors.primary,
-      ),
-      scaffoldBackgroundColor: TenantAdminColors.background,
-      useMaterial3: true,
-      textTheme: GoogleFonts.interTextTheme().copyWith(
-        displayLarge: GoogleFonts.poppins(),
-        displayMedium: GoogleFonts.poppins(),
-        displaySmall: GoogleFonts.poppins(),
-        headlineLarge: GoogleFonts.poppins(),
-        headlineMedium: GoogleFonts.poppins(),
-        headlineSmall: GoogleFonts.poppins(),
-        titleLarge: GoogleFonts.poppins(),
-        titleMedium: GoogleFonts.poppins(),
-        titleSmall: GoogleFonts.poppins(),
-      ),
-    );
   }
 
   @override
@@ -64,12 +48,39 @@ class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
     ref.watch(tenantAdminSessionSyncProvider);
     ref.watch(posSessionBootstrapProvider);
     ref.watch(completedSalePrintProvider);
+    ref.watch(notificationInboxProvider);
     final router = ref.watch(appRouterProvider);
+    final posTheme = ref.watch(posThemeProvider);
 
     return MaterialApp.router(
       title: 'Nytroz POS',
       debugShowCheckedModeBanner: false,
-      theme: _themeData,
+      theme: ThemeData(
+        colorScheme: TenantAdminOverlaySurfaces.withoutPeachTint(
+          ColorScheme.fromSeed(seedColor: posTheme.primary).copyWith(
+            primary: posTheme.primary,
+            secondary: posTheme.secondary,
+          ),
+        ),
+        canvasColor: TenantAdminOverlaySurfaces.color,
+        scaffoldBackgroundColor: TenantAdminColors.background,
+        useMaterial3: true,
+        popupMenuTheme: TenantAdminOverlaySurfaces.popupMenuTheme,
+        dropdownMenuTheme: TenantAdminOverlaySurfaces.dropdownMenuTheme,
+        menuTheme: TenantAdminOverlaySurfaces.menuTheme,
+        textTheme: GoogleFonts.interTextTheme().copyWith(
+          displayLarge: GoogleFonts.poppins(),
+          displayMedium: GoogleFonts.poppins(),
+          displaySmall: GoogleFonts.poppins(),
+          headlineLarge: GoogleFonts.poppins(),
+          headlineMedium: GoogleFonts.poppins(),
+          headlineSmall: GoogleFonts.poppins(),
+          titleLarge: GoogleFonts.poppins(),
+          titleMedium: GoogleFonts.poppins(),
+          titleSmall: GoogleFonts.poppins(),
+        ),
+      ),
+      scrollBehavior: const NytrozScrollBehavior(),
       routerConfig: router,
     );
   }

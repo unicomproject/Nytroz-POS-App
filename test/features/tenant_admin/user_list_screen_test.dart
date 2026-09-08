@@ -46,6 +46,7 @@ void main() {
         permissions: [
           TenantAdminPermissionCodes.tenantUsersView,
           TenantAdminPermissionCodes.tenantUsersCreate,
+          TenantAdminPermissionCodes.tenantUsersRolesAssign,
         ],
         features: [TenantAdminFeatureCodes.staffManagement],
         width: 1200,

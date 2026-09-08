@@ -105,6 +105,38 @@ class _Centered extends StatelessWidget {
         child: child ?? Text(text!, textAlign: TextAlign.center),
       );
 }
+    return ListView.separated(
+      itemCount: brands.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (context, index) => _BrandCard(
+        brand: brands[index],
+        canEdit: canEdit,
+        canDelete: canDelete,
+        onEdit: () => openBrandDetailsPanel(
+          context: context,
+          existing: brands[index],
+          canSave: canEdit,
+        ),
+        onView: () => openBrandDetailsPanel(
+          context: context,
+          existing: brands[index],
+          canSave: false,
+        ),
+        onDelete: () => _deleteBrand(context, ref, brands[index]),
+      ),
+    );
+  }
+}
+
+class _BrandCard extends StatelessWidget {
+  const _BrandCard({
+    required this.brand,
+    required this.canEdit,
+    required this.canDelete,
+    required this.onView,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
 class _Actions extends ConsumerWidget {
   const _Actions(
@@ -112,6 +144,9 @@ class _Actions extends ConsumerWidget {
   final Brand brand;
   final bool canEdit;
   final bool canDelete;
+  final VoidCallback onView;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => Row(
@@ -153,6 +188,69 @@ class _Actions extends ConsumerWidget {
             ),
         ],
       );
+          ],
+        );
+
+        final actions = TenantAdminOverflowMenu(
+          actions: [
+            if (canEdit)
+              TenantAdminOverflowAction(
+                id: 'edit',
+                icon: Icons.edit_outlined,
+                label: 'Edit',
+                onSelected: onEdit,
+              ),
+            if (canDelete)
+              TenantAdminOverflowAction(
+                id: 'delete',
+                icon: Icons.delete_outline,
+                label: 'Delete',
+                destructive: true,
+                onSelected: onDelete,
+              ),
+          ],
+        );
+
+        return Material(
+          color: TenantAdminColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            onTap: onView,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: TenantAdminColors.border),
+              ),
+              child: compact
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        information,
+                        if (canEdit || canDelete) ...[
+                          const SizedBox(height: 8),
+                          Align(
+                              alignment: Alignment.centerRight, child: actions),
+                        ],
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(child: information),
+                        if (canEdit || canDelete) ...[
+                          const SizedBox(width: 16),
+                          actions,
+                        ],
+                      ],
+                    ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _BrandPagination extends ConsumerWidget {
@@ -285,6 +383,37 @@ class _BrandMobileCardList extends ConsumerWidget {
           );
         },
       );
+class _BrandMetric extends StatelessWidget {
+  const _BrandMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: TenantAdminColors.mutedText,
+            fontSize: 9,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(
+            color: TenantAdminColors.bodyText,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 Future<void> _deleteBrand(

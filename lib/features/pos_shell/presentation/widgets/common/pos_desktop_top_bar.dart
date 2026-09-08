@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/providers/pos_home_dashboard_provider.dart';
+import 'package:nytroz_pos/features/pos_shell/presentation/widgets/common/pos_shell_top_bar_visibility.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'pos_top_bar_notification_button.dart';
@@ -106,20 +108,56 @@ class _PosDesktopTopBarState extends State<PosDesktopTopBar> {
                   ),
                 ] else
                   const Spacer(),
-                const PosTopBarNotificationButton(dark: false),
-                if (!veryCompact) ...[
-                  const SizedBox(width: TenantAdminSpacing.sm),
-                  const _TillStatusChip(),
-                ],
-                if (!compact) ...[
-                  const SizedBox(width: TenantAdminSpacing.md),
-                  _DateTimeBlock(now: _now),
-                ],
+                _DesktopTopBarTrailing(
+                  now: _now,
+                  showSessionStatus: !veryCompact,
+                  showClock: !compact,
+                ),
               ],
             ),
           );
         },
       ),
+    );
+  }
+}
+
+class _DesktopTopBarTrailing extends ConsumerWidget {
+  const _DesktopTopBarTrailing({
+    required this.now,
+    required this.showSessionStatus,
+    required this.showClock,
+  });
+
+  final DateTime now;
+  final bool showSessionStatus;
+  final bool showClock;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    final items = <Widget>[
+      if (PosShellTopBarVisibility.canShowNotificationBell(permissions))
+        const PosTopBarNotificationButton(dark: false),
+      if (showSessionStatus &&
+          PosShellTopBarVisibility.canShowSessionStatus(permissions))
+        const _TillStatusChip(),
+      if (showClock && PosShellTopBarVisibility.canShowClock(permissions))
+        _DateTimeBlock(now: now),
+    ];
+
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < items.length; i++) ...[
+          if (i > 0) const SizedBox(width: TenantAdminSpacing.sm),
+          items[i],
+        ],
+      ],
     );
   }
 }
@@ -287,10 +325,6 @@ class _TillStatusChip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(authSessionProvider);
-    if (session?.hasPermission(PosPermissionCodes.viewTillSession) != true) {
-      return const SizedBox.shrink();
-    }
     final tillState = ref.watch(tillProvider);
     final homeAsync = ref.watch(posHomeDashboardProvider);
     final isOpen = resolveAuthoritativeTillOpen(

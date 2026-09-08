@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../utils/variant_estimated_count_calculator.dart';
+
 @immutable
 class Step4VariantConfigurationState {
   final List<AttributeConfigRow> attributeRows;
@@ -25,6 +27,9 @@ class Step4VariantConfigurationState {
   int get totalGeneratedCount => generatedVariants.length;
   int get includedCount => generatedVariants.where((v) => v.isIncluded).length;
   int get activeAttributeCount => attributeRows.where((r) => r.isValid).length;
+
+  VariantEstimatedCountResult get estimatedCountResult =>
+      VariantEstimatedCountCalculator.calculate(attributeRows);
 
   Step4VariantConfigurationState copyWith({
     List<AttributeConfigRow>? attributeRows,

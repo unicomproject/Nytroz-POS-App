@@ -153,10 +153,16 @@ void main() {
   }
 
   Future<void> completeStep6Pricing() async {
-    controller.updateCostPrice(100);
-    controller.updateStandardSellingPrice(150);
-    controller.updateDiscountPrice(140);
     controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
+    final structure = controller.wizardState.productStructure.toUpperCase();
+    if (structure == 'VARIANT') {
+      controller.reconcileVariantPricesWithVariants();
+      controller.applyDefaultSellingPriceToAllVariants(150);
+    } else {
+      controller.updateCostPrice(100);
+      controller.updateStandardSellingPrice(150);
+      controller.updateDiscountPrice(140);
+    }
     expect(await controller.saveAndContinue(), isTrue);
   }
 
@@ -316,12 +322,72 @@ void main() {
       expect(repo.createProductCallCount, 0);
     });
 
-    test('Skip is disabled and does not advance or mutate', () async {
+    test('Skip on Step 2 without Product Type does not advance', () async {
       await controller.initWizard();
       await completeStep1();
       final skipped = await controller.skip();
       expect(skipped, isFalse);
       expect(controller.wizardState.currentStep, 2);
+      expect(repo.saveDraftCallCount, 0);
+    });
+
+    test('Skip on Step 2 SIMPLE advances to Step 3 without persistence',
+        () async {
+      await controller.initWizard();
+      await completeStep1();
+      controller.setProductStructure('SIMPLE');
+      expect(controller.canSkipCurrentStep, isTrue);
+      expect(await controller.skip(), isTrue);
+      expect(controller.wizardState.currentStep, 3);
+      expect(controller.wizardState.trackInventory, isFalse);
+      expect(repo.saveDraftCallCount, 0);
+    });
+
+    test('Skip on Step 2 VARIANT advances to Step 4', () async {
+      await controller.initWizard();
+      await completeStep1();
+      controller.setProductStructure('VARIANT');
+      expect(await controller.skip(), isTrue);
+      expect(controller.wizardState.currentStep, 4);
+    });
+
+    test('Skip on Step 2 BUNDLE advances to Step 4', () async {
+      await controller.initWizard();
+      await completeStep1();
+      controller.setProductStructure('BUNDLE');
+      expect(await controller.skip(), isTrue);
+      expect(controller.wizardState.currentStep, 4);
+      expect(controller.wizardState.trackInventory, isFalse);
+    });
+
+    test('Skip on Step 4 VARIANT advances to Step 5 without matrix', () async {
+      await controller.initWizard();
+      await completeStep1();
+      controller.setProductStructure('VARIANT');
+      await controller.saveAndContinue();
+      expect(controller.wizardState.currentStep, 4);
+      expect(await controller.skip(), isTrue);
+      expect(controller.wizardState.currentStep, 5);
+      expect(repo.saveDraftCallCount, 0);
+    });
+
+    test('Skip on Steps 3, 5, 6 advances without validation', () async {
+      await controller.initWizard();
+      await completeStep1();
+      controller.setProductStructure('SIMPLE');
+      await controller.saveAndContinue();
+      expect(controller.wizardState.currentStep, 3);
+
+      expect(await controller.skip(), isTrue);
+      expect(controller.wizardState.currentStep, 5);
+
+      expect(await controller.skip(), isTrue);
+      expect(controller.wizardState.currentStep, 6);
+
+      expect(await controller.skip(), isTrue);
+      expect(controller.wizardState.currentStep, 7);
+      expect(controller.canSkipCurrentStep, isFalse);
+      expect(await controller.skip(), isFalse);
       expect(repo.saveDraftCallCount, 0);
     });
   });

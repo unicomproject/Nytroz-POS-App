@@ -59,6 +59,8 @@ class PermissionCatalogPermission {
     required this.sortOrder,
     required this.isActive,
     required this.source,
+    this.assignable = true,
+    this.blockedReason,
     this.description,
     this.action,
   });
@@ -72,4 +74,6 @@ class PermissionCatalogPermission {
   final int sortOrder;
   final bool isActive;
   final String source;
+  final bool assignable;
+  final String? blockedReason;
 }

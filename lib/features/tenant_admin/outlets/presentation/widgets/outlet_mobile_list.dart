@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nytroz_pos/core/network/dio_provider.dart';
+import 'package:nytroz_pos/core/network/media_url_resolver.dart';
 import 'package:nytroz_pos/shared/presentation/app_modal.dart';
 
 import '../../../domain/services/tenant_admin_access_checker.dart';
 import '../../domain/entities/outlet.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_mobile_list_card.dart';
+import '../../../presentation/widgets/tenant_admin_row_action.dart';
 import '../../../presentation/widgets/tenant_admin_status_badge.dart';
 import '../config/outlet_row_action_configs.dart';
+import '../providers/outlet_detail_providers.dart';
 import '../providers/outlet_providers.dart';
 import '../providers/outlet_visibility_provider.dart';
 import '../utils/outlet_list_filters.dart';
@@ -30,35 +34,7 @@ class OutletMobileList extends StatelessWidget {
         for (var index = 0; index < outlets.length; index++) ...[
           Builder(
             builder: (context) {
-              var outlet = outlets[index];
-
-              // ── MOCK DATA ENRICHMENT FOR BACKEND OUTLETS (Matches Image 2) ──
-              final nameLower = outlet.name.toLowerCase();
-              if (nameLower.contains('main outlet')) {
-                outlet = outlet.copyWith(
-                    managerName: 'Kavin Perera',
-                    tillCount: 3,
-                    activeTillCount: 3,
-                    status: 'Active',
-                    imageUrl:
-                        'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300');
-              } else if (nameLower.contains('city center')) {
-                outlet = outlet.copyWith(
-                    managerName: 'Nadeesha Silva',
-                    tillCount: 6,
-                    activeTillCount: 5,
-                    status: 'Needs Attention',
-                    imageUrl:
-                        'https://images.unsplash.com/photo-1519567281027-d15c128f64a4?auto=format&fit=crop&q=80&w=300');
-              } else if (nameLower.contains('central warehouse')) {
-                outlet = outlet.copyWith(
-                    managerName: 'Tharindu Jayasekara',
-                    tillCount: 2,
-                    activeTillCount: 2,
-                    status: 'Active',
-                    imageUrl:
-                        'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=300');
-              }
+              final outlet = outlets[index];
 
               return _OutletMobileCard(
                 outlet: outlet,
@@ -100,6 +76,14 @@ class _OutletMobileCard extends ConsumerWidget {
     }
 
     final statusLabel = displayOutletStatus(outlet.status);
+    final imageUrl = outlet.imageUrl?.trim();
+    final resolvedImageUrl = imageUrl == null || imageUrl.isEmpty
+        ? null
+        : MediaUrlResolver.resolve(
+              imageUrl,
+              apiBaseUrl: ref.watch(appDioProvider).options.baseUrl,
+            ) ??
+            imageUrl;
 
     Widget? trailing;
     if (visibility.showMobileStatusBadge || visibility.showMobileSales) {
@@ -130,17 +114,17 @@ class _OutletMobileCard extends ConsumerWidget {
         child: SizedBox(
           width: 44,
           height: 44,
-          child: (outlet.imageUrl != null && outlet.imageUrl!.isNotEmpty)
+          child: resolvedImageUrl != null
               ? Image.network(
-                  outlet.imageUrl!,
+                  resolvedImageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _outletImagePlaceholder(outlet),
+                  errorBuilder: (_, __, ___) => _outletImagePlaceholder(),
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
-                    return _outletImagePlaceholder(outlet);
+                    return _outletImagePlaceholder();
                   },
                 )
-              : _outletImagePlaceholder(outlet),
+              : _outletImagePlaceholder(),
         ),
       ),
       trailing: trailing,
@@ -148,20 +132,32 @@ class _OutletMobileCard extends ConsumerWidget {
           ? Align(
               alignment: Alignment.centerRight,
               child: PopupMenuButton<OutletRowActionId>(
-                icon: const Icon(Icons.more_vert),
+                icon: const Icon(
+                  Icons.more_vert,
+                  color: TenantAdminColors.mutedText,
+                ),
                 tooltip: 'Actions',
+                position: PopupMenuPosition.under,
+                constraints: const BoxConstraints(minWidth: 172),
+                menuPadding: const EdgeInsets.symmetric(
+                  vertical: TenantAdminSpacing.xs,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+                ),
                 itemBuilder: (context) {
                   return [
                     for (final action in visibility.visibleRowActions)
-                      PopupMenuItem<OutletRowActionId>(
-                        value: action.actionId,
-                        child: ListTile(
-                          leading: Icon(action.icon),
-                          title: Text(action.label),
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
+                      if (action.actionId != OutletRowActionId.viewDetails)
+                        PopupMenuItem<OutletRowActionId>(
+                          value: action.actionId,
+                          child: TenantAdminRowActionMenuItem(
+                            icon: action.icon,
+                            label: action.label,
+                            destructive:
+                                action.actionId == OutletRowActionId.delete,
+                          ),
                         ),
-                      ),
                   ];
                 },
                 onSelected: (actionId) =>
@@ -189,9 +185,64 @@ class _OutletMobileCard extends ConsumerWidget {
       case OutletRowActionId.manageStaff:
         context.go('/tenant-admin/staff');
       case OutletRowActionId.toggleStatus:
-        break;
+        _confirmStatusChange(context, ref, outlet);
       case OutletRowActionId.delete:
         _confirmDelete(context, ref, outlet);
+    }
+  }
+
+  Future<void> _confirmStatusChange(
+    BuildContext context,
+    WidgetRef ref,
+    Outlet outlet,
+  ) async {
+    final isActive = outlet.status.toUpperCase() == 'ACTIVE';
+    final action = isActive ? 'Deactivate' : 'Activate';
+    final confirmed = await showAppDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('$action outlet'),
+        content: Text('$action "${outlet.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: isActive
+                  ? TenantAdminColors.danger
+                  : TenantAdminColors.success,
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(action),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await ref
+          .read(updateOutletStatusProvider)
+          .call(outlet.id, isActive ? 'INACTIVE' : 'ACTIVE');
+      ref.invalidate(outletListProvider);
+      ref.invalidate(outletSummaryDashboardProvider);
+      ref.invalidate(tenantAdminOutletOverviewProvider(outlet.id));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${outlet.name} updated successfully.')),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unable to update outlet: $error'),
+            backgroundColor: TenantAdminColors.danger,
+          ),
+        );
+      }
     }
   }
 
@@ -231,31 +282,17 @@ class _OutletMobileCard extends ConsumerWidget {
   }
 }
 
-Widget _outletImagePlaceholder(Outlet outlet) {
-  String dummyUrl =
-      'https://images.unsplash.com/photo-1555529771-835f59fc5efe?auto=format&fit=crop&q=80&w=300';
-
-  if (outlet.name.toLowerCase().contains('warehouse') ||
-      outlet.outletType?.toUpperCase() == 'WAREHOUSE') {
-    dummyUrl =
-        'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=300';
-  } else if (outlet.name.toLowerCase().contains('city') ||
-      outlet.name.toLowerCase().contains('mall')) {
-    dummyUrl =
-        'https://images.unsplash.com/photo-1519567281027-d15c128f64a4?auto=format&fit=crop&q=80&w=300';
-  } else if (outlet.name.toLowerCase().contains('main')) {
-    dummyUrl =
-        'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300';
-  }
-
-  return Image.network(
-    dummyUrl,
+Widget _outletImagePlaceholder() {
+  return Image.asset(
+    'assets/images/outlet-placeholder.png',
     fit: BoxFit.cover,
     errorBuilder: (context, error, stackTrace) => Container(
-      color: const Color(0xFFF1F5F9), // TenantAdminColors.background
+      color: TenantAdminColors.secondary,
       child: const Center(
-        child: Icon(Icons.image_not_supported,
-            color: Color(0xFF94A3B8)), // TenantAdminColors.mutedText
+        child: Icon(
+          Icons.storefront_rounded,
+          color: TenantAdminColors.primary,
+        ),
       ),
     ),
   );

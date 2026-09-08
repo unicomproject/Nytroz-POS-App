@@ -76,6 +76,33 @@ void main() {
       );
     });
 
+    test('CreateTill_DoesNotRequireTillViewPermission', () {
+      final access = _checker(
+        permissions: [TenantAdminPermissionCodes.tenantTillsCreate],
+        features: [TenantAdminFeatureCodes.tillManagement],
+      );
+
+      expect(access.canCreateTill(), isTrue);
+    });
+
+    test('AssignOutlet_IsIndependentFromTillUpdatePermission', () {
+      final updateOnly = _checker(
+        permissions: [TenantAdminPermissionCodes.tenantTillsUpdate],
+        features: [TenantAdminFeatureCodes.tillManagement],
+      );
+      final updateAndAssign = _checker(
+        permissions: [
+          TenantAdminPermissionCodes.tenantTillsUpdate,
+          TenantAdminPermissionCodes.tenantTillsAssignOutlet,
+        ],
+        features: [TenantAdminFeatureCodes.tillManagement],
+      );
+
+      expect(updateOnly.canUpdateTill(), isTrue);
+      expect(updateOnly.canAssignTillOutlet(), isFalse);
+      expect(updateAndAssign.canAssignTillOutlet(), isTrue);
+    });
+
     test('EditButton_Hidden_WhenTillUpdatePermissionMissing', () {
       final access = _checker(
         permissions: [TenantAdminPermissionCodes.tillView],

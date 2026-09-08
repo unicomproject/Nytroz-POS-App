@@ -2,12 +2,12 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Nytroz POS (API 5151 current)",
+      "name": "Nytroz POS (API 5150 explicit)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
       "toolArgs": [
-        "--dart-define=API_BASE_URL=http://10.0.2.2:5151"
+        "--dart-define=API_BASE_URL=http://10.0.2.2:5150"
       ]
     },
     {

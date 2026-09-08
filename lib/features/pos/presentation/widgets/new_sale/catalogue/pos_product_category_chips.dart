@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
@@ -15,7 +17,12 @@ class PosProductCategoryChips extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authSessionProvider);
+    final permissions = ref.watch(effectivePermissionSetProvider);
     if (!PosPermissionAccess.canViewProductsSession(session)) {
+      return const SizedBox.shrink();
+    }
+    if (!permissions
+        .hasPermission(PosPermissionCodes.catalogSectionsQuickProducts)) {
       return const SizedBox.shrink();
     }
 
@@ -37,62 +44,80 @@ class PosProductCategoryChips extends ConsumerWidget {
       error: (_, __) => const SizedBox.shrink(),
       data: (categories) {
         final allSelected = selectedCategoryId == null;
-        final popularSelected = selectedSegment == 'popular' && allSelected;
+        final tabs = <({
+          String segment,
+          String label,
+          IconData icon,
+          Color color,
+          String permission,
+        })>[
+          if (permissions
+              .hasPermission(PosPermissionCodes.catalogSectionsPopular))
+            (
+              segment: 'popular',
+              label: 'Popular',
+              icon: Icons.star_rounded,
+              color: TenantAdminColors.posNewSaleAccent,
+              permission: PosPermissionCodes.catalogSectionsPopular,
+            ),
+          if (permissions.hasPermission(
+              PosPermissionCodes.catalogSectionsFrequentlySold))
+            (
+              segment: 'frequently-sold',
+              label: 'Frequently Sold',
+              icon: Icons.history_rounded,
+              color: const Color(0xFF2563EB),
+              permission: PosPermissionCodes.catalogSectionsFrequentlySold,
+            ),
+          if (permissions
+              .hasPermission(PosPermissionCodes.catalogSectionsOffers))
+            (
+              segment: 'offers',
+              label: 'Offers',
+              icon: Icons.local_offer_outlined,
+              color: const Color(0xFF16A34A),
+              permission: PosPermissionCodes.catalogSectionsOffers,
+            ),
+        ];
+
+        if (tabs.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        // If selected segment was revoked, fall back to first permitted tab.
+        final selectedStillValid =
+            tabs.any((t) => t.segment == selectedSegment);
+        if (!selectedStillValid && allSelected) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(posNewSaleSelectedSegmentProvider.notifier).state =
+                tabs.first.segment;
+          });
+        }
 
         return SizedBox(
           height: 56,
           child: Row(
             children: [
-              Expanded(
-                child: _QuickFilterButton(
-                  icon: Icons.star_rounded,
-                  label: 'Popular',
-                  selected: popularSelected,
-                  activeColor: TenantAdminColors.posNewSaleAccent,
-                  inactiveColor: TenantAdminColors.posNewSaleAccent,
-                  onPressed: () {
-                    ref.read(posNewSaleSelectedSegmentProvider.notifier).state =
-                        'popular';
-                    ref
-                        .read(posNewSaleSelectedCategoryIdProvider.notifier)
-                        .state = null;
-                  },
+              for (var i = 0; i < tabs.length; i++) ...[
+                if (i > 0) const SizedBox(width: TenantAdminSpacing.md),
+                Expanded(
+                  child: _QuickFilterButton(
+                    icon: tabs[i].icon,
+                    label: tabs[i].label,
+                    selected: selectedSegment == tabs[i].segment && allSelected,
+                    activeColor: tabs[i].color,
+                    inactiveColor: tabs[i].color,
+                    onPressed: () {
+                      ref
+                          .read(posNewSaleSelectedSegmentProvider.notifier)
+                          .state = tabs[i].segment;
+                      ref
+                          .read(posNewSaleSelectedCategoryIdProvider.notifier)
+                          .state = null;
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(width: TenantAdminSpacing.md),
-              Expanded(
-                child: _QuickFilterButton(
-                  icon: Icons.history_rounded,
-                  label: 'Frequently Sold',
-                  selected: selectedSegment == 'frequently-sold' && allSelected,
-                  activeColor: const Color(0xFF2563EB),
-                  inactiveColor: const Color(0xFF2563EB),
-                  onPressed: () {
-                    ref.read(posNewSaleSelectedSegmentProvider.notifier).state =
-                        'frequently-sold';
-                    ref
-                        .read(posNewSaleSelectedCategoryIdProvider.notifier)
-                        .state = null;
-                  },
-                ),
-              ),
-              const SizedBox(width: TenantAdminSpacing.md),
-              Expanded(
-                child: _QuickFilterButton(
-                  icon: Icons.local_offer_outlined,
-                  label: 'Offers',
-                  selected: selectedSegment == 'offers' && allSelected,
-                  activeColor: const Color(0xFF16A34A),
-                  inactiveColor: const Color(0xFF16A34A),
-                  onPressed: () {
-                    ref.read(posNewSaleSelectedSegmentProvider.notifier).state =
-                        'offers';
-                    ref
-                        .read(posNewSaleSelectedCategoryIdProvider.notifier)
-                        .state = null;
-                  },
-                ),
-              ),
+              ],
               if (_showMoreCategoriesAction) ...[
                 const SizedBox(width: TenantAdminSpacing.md),
                 Expanded(

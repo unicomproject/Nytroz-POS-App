@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/core/access/tenant_admin_access_codes.dart';
+import 'package:nytroz_pos/core/network/dio_provider.dart';
 import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
 import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.dart';
 import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
@@ -33,6 +35,9 @@ import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_a
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_context_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/providers/tenant_admin_menu_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/navigation/products_sidebar_provider.dart';
+import 'package:nytroz_pos/features/till/data/datasources/till_session_storage.dart';
+import 'package:nytroz_pos/features/till/domain/entities/open_till.dart';
+import 'package:nytroz_pos/features/till/presentation/providers/till_provider.dart';
 
 const _viewports = <(String, Size)>[
   ('1024x768', Size(1024, 768)),
@@ -366,8 +371,24 @@ class _PresetAuthSessionNotifier extends AuthSessionNotifier {
   }
 }
 
+class _TestTillSessionStorage extends TillSessionStorage {
+  _TestTillSessionStorage()
+      : super(const AppSecureStorage(FlutterSecureStorage()));
+
+  @override
+  Future<TillSession?> read() async => null;
+
+  @override
+  Future<void> save(TillSession session) async {}
+
+  @override
+  Future<void> clear() async {}
+}
+
 List<Override> _shellOverrides(TenantAdminAccessChecker access) {
   return [
+    appDioProvider.overrideWithValue(Dio()),
+    tillSessionStorageProvider.overrideWithValue(_TestTillSessionStorage()),
     authSessionProvider.overrideWith(
       (ref) => _PresetAuthSessionNotifier(
         const AuthSession(

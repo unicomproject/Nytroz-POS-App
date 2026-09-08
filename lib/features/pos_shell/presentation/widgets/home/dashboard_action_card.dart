@@ -74,7 +74,7 @@ class PosHomeActionTile extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        flex: 56,
+                        flex: 52,
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(8, 6, 2, 6),
                           child: Image.asset(
@@ -90,33 +90,34 @@ class PosHomeActionTile extends StatelessWidget {
                         ),
                       ),
                       Expanded(
-                        flex: 44,
+                        flex: 48,
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(8, 16, 14, 14),
+                          padding: const EdgeInsets.fromLTRB(6, 12, 12, 12),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  title,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge
-                                      ?.copyWith(
-                                        color: TenantAdminColors.surface,
-                                        fontWeight: FontWeight.w900,
-                                        height: 1.2,
-                                      ),
-                                ),
+                              Text(
+                                title,
+                                maxLines: 3,
+                                softWrap: true,
+                                overflow: TextOverflow.visible,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color: TenantAdminColors.surface,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1.08,
+                                    ),
                               ),
+                              const Spacer(),
                               LayoutBuilder(
                                 builder: (context, constraints) {
                                   final showDotPattern =
                                       constraints.maxWidth >= 92;
                                   final actionSize =
-                                      constraints.maxWidth < 56 ? 40.0 : 50.0;
+                                      constraints.maxWidth < 56 ? 40.0 : 48.0;
 
                                   return Row(
                                     children: [

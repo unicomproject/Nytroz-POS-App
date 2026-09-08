@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/access/tenant_admin_access_codes.dart';
+import '../../../presentation/providers/tenant_admin_access_provider.dart';
 import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../providers/edit_role_providers.dart';
+import '../providers/role_permissions_providers.dart';
+import '../widgets/role_assignment_editor.dart';
 
 class EditRoleScreen extends ConsumerWidget {
   const EditRoleScreen({
@@ -19,6 +23,23 @@ class EditRoleScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(editRoleControllerProvider(roleId));
+    final access = ref.watch(tenantAdminAccessCheckerProvider).valueOrNull;
+    final canUpdateDetails = access?.canAny([
+          TenantAdminPermissionCodes.tenantRolesUpdate,
+          TenantAdminPermissionCodes.tenantRolesManage,
+        ]) ??
+        false;
+    final canUpdatePermissions = access?.canAny([
+          TenantAdminPermissionCodes.tenantRolesPermissionsUpdate,
+          TenantAdminPermissionCodes.tenantRolesManage,
+        ]) ??
+        false;
+    final canUpdateAssignments = access?.canAny([
+          TenantAdminPermissionCodes.tenantRolesUsersAssign,
+          TenantAdminPermissionCodes.tenantRolesOutletsAssign,
+          TenantAdminPermissionCodes.tenantRolesManage,
+        ]) ??
+        false;
 
     if (!state.isInitialized) {
       return const TenantAdminPageScaffold(
@@ -46,7 +67,12 @@ class EditRoleScreen extends ConsumerWidget {
                 : () async {
                     final success = await ref
                         .read(editRoleControllerProvider(roleId).notifier)
-                        .save(roleId);
+                        .save(
+                          roleId,
+                          canUpdateDetails: canUpdateDetails,
+                          canUpdatePermissions: canUpdatePermissions,
+                          canUpdateAssignments: canUpdateAssignments,
+                        );
                     if (success && context.mounted) {
                       context.pop();
                     }
@@ -66,12 +92,14 @@ class EditRoleScreen extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.error_outline, color: TenantAdminColors.danger, size: 20),
+                    const Icon(Icons.error_outline,
+                        color: TenantAdminColors.danger, size: 20),
                     const SizedBox(width: TenantAdminSpacing.sm),
                     Expanded(
                       child: Text(
                         state.error!,
-                        style: const TextStyle(color: TenantAdminColors.danger, fontSize: 13),
+                        style: const TextStyle(
+                            color: TenantAdminColors.danger, fontSize: 13),
                       ),
                     ),
                   ],
@@ -93,9 +121,20 @@ class EditRoleScreen extends ConsumerWidget {
             Expanded(
               child: TabBarView(
                 children: [
-                  SingleChildScrollView(child: _GeneralDetailsSection(roleId: roleId)),
-                  SingleChildScrollView(child: _PermissionsSection(roleId: roleId)),
-                  SingleChildScrollView(child: _AssignmentsSection(roleId: roleId)),
+                  SingleChildScrollView(
+                    child: _GeneralDetailsSection(
+                      roleId: roleId,
+                      canEdit: canUpdateDetails,
+                    ),
+                  ),
+                  SingleChildScrollView(
+                    child: _PermissionsSection(
+                      roleId: roleId,
+                      canEdit: canUpdatePermissions,
+                    ),
+                  ),
+                  SingleChildScrollView(
+                      child: _AssignmentsSection(roleId: roleId)),
                 ],
               ),
             ),
@@ -107,18 +146,47 @@ class EditRoleScreen extends ConsumerWidget {
 }
 
 class _PermissionsSection extends ConsumerWidget {
-  const _PermissionsSection({required this.roleId});
+  const _PermissionsSection({required this.roleId, required this.canEdit});
 
   final String roleId;
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // A placeholder for the permissions section. In a real implementation, 
-    // we would embed the RolePermissionsScreen body here.
-    return const Padding(
-      padding: EdgeInsets.all(TenantAdminSpacing.xl),
-      child: Center(
-        child: Text('Permissions catalog will be rendered here.'),
+    final data = ref.watch(rolePermissionsDataProvider(roleId));
+    final state = ref.watch(editRoleControllerProvider(roleId));
+    return data.when(
+      loading: () => const TenantAdminLoadingSkeleton(rowCount: 6),
+      error: (error, stackTrace) => const TenantAdminErrorState(
+        title: 'Unable to load permissions',
+        message: 'Please try again.',
+      ),
+      data: (value) => Column(
+        children: [
+          for (final module in value.catalog.modules)
+            Card(
+              child: ExpansionTile(
+                title: Text(module.name),
+                children: [
+                  for (final feature in module.features)
+                    for (final permission in feature.permissions)
+                      CheckboxListTile(
+                        value: state.selectedPermissionCodes
+                            .contains(permission.code),
+                        onChanged: canEdit && permission.assignable
+                            ? (_) => ref
+                                .read(
+                                    editRoleControllerProvider(roleId).notifier)
+                                .togglePermission(permission.code)
+                            : null,
+                        title: Text(permission.name),
+                        subtitle: Text(permission.code),
+                        controlAffinity: ListTileControlAffinity.leading,
+                      ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -131,25 +199,38 @@ class _AssignmentsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const Padding(
-      padding: EdgeInsets.all(TenantAdminSpacing.xl),
-      child: Center(
-        child: Text('User and outlet assignments will be rendered here.'),
+    final options = ref.watch(roleAssignmentOptionsProvider);
+    final state = ref.watch(editRoleControllerProvider(roleId));
+    return options.when(
+      loading: () => const TenantAdminLoadingSkeleton(rowCount: 5),
+      error: (error, stackTrace) => const TenantAdminErrorState(
+        title: 'Unable to load assignment options',
+        message: 'Please try again.',
+      ),
+      data: (value) => RoleAssignmentEditor(
+        options: value,
+        assignments: state.assignments,
+        onChanged: (assignments) => ref
+            .read(editRoleControllerProvider(roleId).notifier)
+            .updateAssignments(assignments),
       ),
     );
   }
 }
 
 class _GeneralDetailsSection extends ConsumerStatefulWidget {
-  const _GeneralDetailsSection({required this.roleId});
+  const _GeneralDetailsSection({required this.roleId, required this.canEdit});
 
   final String roleId;
+  final bool canEdit;
 
   @override
-  ConsumerState<_GeneralDetailsSection> createState() => _GeneralDetailsSectionState();
+  ConsumerState<_GeneralDetailsSection> createState() =>
+      _GeneralDetailsSectionState();
 }
 
-class _GeneralDetailsSectionState extends ConsumerState<_GeneralDetailsSection> {
+class _GeneralDetailsSectionState
+    extends ConsumerState<_GeneralDetailsSection> {
   late final TextEditingController _nameController;
   late final TextEditingController _descController;
   late final TextEditingController _codeController;
@@ -172,7 +253,9 @@ class _GeneralDetailsSectionState extends ConsumerState<_GeneralDetailsSection> 
   }
 
   void _onChanged() {
-    ref.read(editRoleControllerProvider(widget.roleId).notifier).updateGeneralDetails(
+    ref
+        .read(editRoleControllerProvider(widget.roleId).notifier)
+        .updateGeneralDetails(
           name: _nameController.text.trim(),
           description: _descController.text.trim(),
           code: _codeController.text.trim(),
@@ -202,6 +285,7 @@ class _GeneralDetailsSectionState extends ConsumerState<_GeneralDetailsSection> 
           const SizedBox(height: TenantAdminSpacing.xl),
           TextFormField(
             controller: _nameController,
+            readOnly: !widget.canEdit,
             decoration: const InputDecoration(
               labelText: 'Role Name *',
               hintText: 'e.g., Store Manager',
@@ -212,9 +296,10 @@ class _GeneralDetailsSectionState extends ConsumerState<_GeneralDetailsSection> 
           const SizedBox(height: TenantAdminSpacing.lg),
           TextFormField(
             controller: _codeController,
+            readOnly: true,
             decoration: const InputDecoration(
-              labelText: 'Role Code *',
-              hintText: 'e.g., store_manager',
+              labelText: 'Role Code',
+              helperText: 'Role code is immutable after creation.',
               border: OutlineInputBorder(),
             ),
             onChanged: (_) => _onChanged(),
@@ -222,6 +307,7 @@ class _GeneralDetailsSectionState extends ConsumerState<_GeneralDetailsSection> 
           const SizedBox(height: TenantAdminSpacing.lg),
           TextFormField(
             controller: _descController,
+            readOnly: !widget.canEdit,
             maxLines: 3,
             decoration: const InputDecoration(
               labelText: 'Description',

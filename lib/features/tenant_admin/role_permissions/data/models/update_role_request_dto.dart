@@ -16,7 +16,8 @@ class UpdateRoleRequestDto {
       'roleName': roleName,
       'roleCode': roleCode,
       if (roleDescription != null) 'roleDescription': roleDescription,
-      if (expectedUpdatedAt != null) 'expectedUpdatedAt': expectedUpdatedAt!.toIso8601String(),
+      if (expectedUpdatedAt != null)
+        'expectedUpdatedAt': expectedUpdatedAt!.toIso8601String(),
     };
   }
 }

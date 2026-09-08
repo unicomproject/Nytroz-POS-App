@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
+import 'package:nytroz_pos/core/access/pos_sales_permission_visibility.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/discount/domain/entities/pos_cart_discount.dart';
 import 'package:nytroz_pos/features/discount/presentation/providers/pos_discount_provider.dart';
@@ -23,6 +25,17 @@ class PosCartSummary extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    if (!PosSalesPermissionVisibility.canShowCartSummary(permissions)) {
+      return const SizedBox.shrink();
+    }
+
+    final showSubtotal =
+        PosSalesPermissionVisibility.canShowCartSubtotal(permissions);
+    final showDiscount =
+        PosSalesPermissionVisibility.canShowCartDiscount(permissions);
+    final showTax = PosSalesPermissionVisibility.canShowCartTax(permissions);
+
     final conflictDiscount = _conflictDiscount(cart);
     final candidate = pricingAsync.valueOrNull;
     final pricing = !pricingAsync.isLoading &&
@@ -31,25 +44,24 @@ class PosCartSummary extends ConsumerWidget {
             isCurrentAuthoritativePricing(cart: cart, pricing: candidate)
         ? candidate
         : null;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (conflictDiscount != null) ...[
-          DiscountSyncConflictPanel(
-            errorCode: null,
-            onRemoveDiscount: () async {
-              await cancelPosDiscount(ref: ref, discount: conflictDiscount);
-              ref.read(posNewSaleCartProvider.notifier).clearDiscounts();
-            },
-            onReviewSale: () {},
-            isRetryable: conflictDiscount.isSyncFailed,
-            onRetry: conflictDiscount.isSyncFailed
-                ? () => syncPendingPosDiscounts(ref: ref)
-                : null,
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-        ],
+
+    final children = <Widget>[
+      if (conflictDiscount != null) ...[
+        DiscountSyncConflictPanel(
+          errorCode: null,
+          onRemoveDiscount: () async {
+            await cancelPosDiscount(ref: ref, discount: conflictDiscount);
+            ref.read(posNewSaleCartProvider.notifier).clearDiscounts();
+          },
+          onReviewSale: () {},
+          isRetryable: conflictDiscount.isSyncFailed,
+          onRetry: conflictDiscount.isSyncFailed
+              ? () => syncPendingPosDiscounts(ref: ref)
+              : null,
+        ),
+        const SizedBox(height: TenantAdminSpacing.sm),
+      ],
+      if (showSubtotal) ...[
         _CartTotalLine(
           label: 'Subtotal',
           value: pricing == null ? '—' : formatLkr(pricing.subtotal),
@@ -57,6 +69,8 @@ class PosCartSummary extends ConsumerWidget {
           valueColor: Colors.black,
         ),
         const SizedBox(height: TenantAdminSpacing.sm),
+      ],
+      if (showDiscount) ...[
         _CartTotalLine(
           labelWidget: _DiscountSummaryLabel(cart: cart),
           value: pricing == null
@@ -67,13 +81,24 @@ class PosCartSummary extends ConsumerWidget {
           valueColor: TenantAdminColors.danger,
         ),
         const SizedBox(height: TenantAdminSpacing.sm),
+      ],
+      if (showTax)
         _CartTotalLine(
           label: 'Tax',
           value: pricing == null ? '—' : formatLkr(pricing.tax),
           labelColor: Colors.black,
           valueColor: TenantAdminColors.info,
         ),
-      ],
+    ];
+
+    if (children.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: children,
     );
   }
 }
@@ -198,19 +223,21 @@ class _CartTotalLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: labelColor,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
         );
-
-    final valueStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: valueColor,
-          fontWeight: FontWeight.w900,
-        );
-
     return Row(
       children: [
-        Expanded(child: labelWidget ?? Text(label!, style: style)),
-        Text(value, style: valueStyle),
+        Expanded(
+          child: labelWidget ??
+              Text(
+                label!,
+                style: style?.copyWith(color: labelColor),
+              ),
+        ),
+        Text(
+          value,
+          style: style?.copyWith(color: valueColor),
+        ),
       ],
     );
   }

@@ -400,9 +400,14 @@ class OutletManagerOptionDto {
 
   factory OutletManagerOptionDto.fromJson(Map<String, dynamic> json) {
     return OutletManagerOptionDto(
-      id: json['id'] as String? ?? '',
-      displayName:
-          json['displayName'] as String? ?? json['name'] as String? ?? '',
+      id: json['tenantUserId']?.toString() ??
+          json['id']?.toString() ??
+          json['userId']?.toString() ??
+          '',
+      displayName: json['displayName'] as String? ??
+          json['fullName'] as String? ??
+          json['name'] as String? ??
+          '',
     );
   }
 

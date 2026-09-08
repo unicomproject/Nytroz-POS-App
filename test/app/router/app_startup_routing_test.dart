@@ -2,8 +2,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/app/router/app_router.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/post_login_navigation_provider.dart';
 import 'package:nytroz_pos/shared/pos_session/pos_session_bootstrap_provider.dart';
+import 'package:nytroz_pos/features/workspace/domain/workspace_access.dart';
 
 void main() {
+  test('invitation survives authenticated bootstrap and workspace selection', () {
+    for (final ready in [false, true]) {
+      expect(resolveAppRedirect(
+        path: '/tenant-admin/setup/test-invite',
+        authSessionHydrated: true,
+        isAuthenticated: true,
+        bootstrapReady: ready,
+        authenticatedInitialRoute: '/workspace/choose',
+        canAccessTenantAdmin: true,
+        canAccessPos: true,
+      ), isNull);
+    }
+  });
   group('cold-start routing', () {
     test('waits on bootstrap while auth storage is hydrating', () {
       expect(
@@ -107,6 +121,57 @@ void main() {
         isNull,
       );
     });
+
+    test('sends a dual-access user to workspace chooser before modules', () {
+      expect(
+        _redirect(
+          path: '/tenant-admin/dashboard',
+          authenticatedRoute: PostLoginRoute.workspace.path,
+          canAccessTenantAdmin: true,
+          canAccessPos: true,
+        ),
+        PostLoginRoute.workspace.path,
+      );
+    });
+
+    test('blocks cross-workspace deep links after a workspace is selected', () {
+      expect(
+        _redirect(
+          path: '/pos/orders',
+          authenticatedRoute: PostLoginRoute.tenantAdminDashboard.path,
+          canAccessTenantAdmin: true,
+          canAccessPos: true,
+          selectedWorkspace: AppWorkspace.tenantAdmin,
+        ),
+        PostLoginRoute.tenantAdminDashboard.path,
+      );
+    });
+
+    test('routes an account with no workspace permissions to no access', () {
+      expect(
+        _redirect(
+          path: '/pos/home',
+          authenticatedRoute: PostLoginRoute.noAccess.path,
+          canAccessTenantAdmin: false,
+          canAccessPos: false,
+        ),
+        PostLoginRoute.noAccess.path,
+      );
+    });
+
+    test('workspace access defaults to denied when no markers are supplied',
+        () {
+      expect(
+        resolveAppRedirect(
+          path: '/pos/home',
+          authSessionHydrated: true,
+          isAuthenticated: true,
+          bootstrapReady: true,
+          authenticatedInitialRoute: PostLoginRoute.noAccess.path,
+        ),
+        PostLoginRoute.noAccess.path,
+      );
+    });
   });
 }
 
@@ -116,6 +181,9 @@ String? _redirect({
   bool authenticated = true,
   bool bootstrapReady = true,
   String authenticatedRoute = '/pos/home',
+  bool canAccessTenantAdmin = false,
+  bool canAccessPos = true,
+  AppWorkspace? selectedWorkspace,
 }) {
   return resolveAppRedirect(
     path: path,
@@ -123,5 +191,8 @@ String? _redirect({
     isAuthenticated: authenticated,
     bootstrapReady: bootstrapReady,
     authenticatedInitialRoute: authenticatedRoute,
+    canAccessTenantAdmin: canAccessTenantAdmin,
+    canAccessPos: canAccessPos,
+    selectedWorkspace: selectedWorkspace,
   );
 }

@@ -66,10 +66,16 @@ class AuthRemoteDatasource {
 
   Future<void> setPassword(SetPasswordRequestDto request) async {
     try {
-      await _dio.post<void>(
+      final response = await _dio.post<Map<String, dynamic>>(
         '/api/tenant-admin/onboarding/setup-password',
         data: request.toJson(),
       );
+      if (response.data?['success'] != true) {
+        throw const AuthException(
+          errorCode: 'SETUP_PASSWORD_FAILED',
+          message: 'Account activation was not confirmed. Please try again.',
+        );
+      }
     } on DioException catch (error) {
       throw AuthException(
         errorCode: _errorCodeFromDio(error, fallback: 'SETUP_PASSWORD_FAILED'),
@@ -82,6 +88,8 @@ class AuthRemoteDatasource {
   }
 
   String _errorCodeFromDio(DioException error, {required String fallback}) {
+    if (error.response == null) return 'NETWORK_ERROR';
+    if ((error.response?.statusCode ?? 0) >= 500) return 'SERVER_ERROR';
     final data = error.response?.data;
     if (data is Map) {
       final code = data['code'] ?? data['errorCode'];
@@ -93,6 +101,12 @@ class AuthRemoteDatasource {
   }
 
   String _messageFromDio(DioException error, {required String fallback}) {
+    if (error.response == null) {
+      return 'Unable to connect. Check your internet connection and try again.';
+    }
+    if ((error.response?.statusCode ?? 0) >= 500) {
+      return 'The server is temporarily unavailable. Please try again later.';
+    }
     final data = error.response?.data;
     if (data is Map && data['message'] != null) {
       final message = data['message'].toString();

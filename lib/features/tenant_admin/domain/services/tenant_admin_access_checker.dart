@@ -97,18 +97,44 @@ class TenantAdminAccessChecker {
         return canAny([
           TenantAdminPermissionCodes.outletView,
           TenantAdminPermissionCodes.tenantOutletsView,
+          TenantAdminPermissionCodes.tenantOutletsCreate,
+          TenantAdminPermissionCodes.tenantOutletsUpdate,
+          TenantAdminPermissionCodes.tenantOutletsStatusUpdate,
+          TenantAdminPermissionCodes.tenantOutletsManagerAssign,
+          TenantAdminPermissionCodes.tenantOutletsImageUpdate,
+          TenantAdminPermissionCodes.tenantOutletsDelete,
           TenantAdminPermissionCodes.tenantOutletsManage,
         ]);
       case TenantAdminFeatureCodes.staffManagement:
         return canAny([
           TenantAdminPermissionCodes.userView,
+          TenantAdminPermissionCodes.tenantUsersCreate,
+          TenantAdminPermissionCodes.tenantUsersInvite,
+          TenantAdminPermissionCodes.tenantUsersUpdate,
+          TenantAdminPermissionCodes.tenantUsersDelete,
+          TenantAdminPermissionCodes.tenantUsersDisable,
+          TenantAdminPermissionCodes.tenantUsersRolesAssign,
+          TenantAdminPermissionCodes.tenantUsersOutletsAssign,
+          TenantAdminPermissionCodes.tenantUsersTillsAssign,
+          TenantAdminPermissionCodes.tenantUsersInvitesResend,
+          TenantAdminPermissionCodes.tenantUsersInvitesRevoke,
           TenantAdminPermissionCodes.tenantUserManage,
         ]);
       case TenantAdminFeatureCodes.rolePermission:
         return canAny([
-          TenantAdminPermissionCodes.roleView,
-          TenantAdminPermissionCodes.permissionView,
-          TenantAdminPermissionCodes.tenantRoleManage,
+          TenantAdminPermissionCodes.tenantRolesView,
+          TenantAdminPermissionCodes.tenantRolesCreate,
+          TenantAdminPermissionCodes.tenantRolesUpdate,
+          TenantAdminPermissionCodes.tenantRolesDelete,
+          TenantAdminPermissionCodes.tenantRolesPermissionsView,
+          TenantAdminPermissionCodes.tenantRolesPermissionsUpdate,
+          TenantAdminPermissionCodes.tenantRolesAssignmentsView,
+          TenantAdminPermissionCodes.tenantRolesAssignmentsUpdate,
+          TenantAdminPermissionCodes.tenantRolesStatusUpdate,
+          TenantAdminPermissionCodes.tenantRolesUsersAssign,
+          TenantAdminPermissionCodes.tenantRolesOutletsAssign,
+          TenantAdminPermissionCodes.tenantPermissionsView,
+          TenantAdminPermissionCodes.tenantRolesManage,
         ]);
       case TenantAdminFeatureCodes.productManagement:
         return canAny([
@@ -280,9 +306,13 @@ class TenantAdminAccessChecker {
       case 'roles-access':
         return canAccessFeature(menuItem.featureCode) &&
             canAny([
-              TenantAdminPermissionCodes.roleView,
-              TenantAdminPermissionCodes.permissionView,
-              TenantAdminPermissionCodes.tenantRoleManage,
+              TenantAdminPermissionCodes.tenantRolesView,
+              TenantAdminPermissionCodes.tenantRolesPermissionsView,
+              TenantAdminPermissionCodes.tenantRolesAssignmentsView,
+              TenantAdminPermissionCodes.tenantRolesUsersAssign,
+              TenantAdminPermissionCodes.tenantRolesOutletsAssign,
+              TenantAdminPermissionCodes.tenantPermissionsView,
+              TenantAdminPermissionCodes.tenantRolesManage,
             ]);
       case 'billing':
         return canAccessFeature(menuItem.featureCode) &&
@@ -683,9 +713,22 @@ class TenantAdminAccessChecker {
   }
 
   bool canCreateOutlet() {
-    return canShowAction(
+    return canShowActionWithAnyPermission(
       TenantAdminFeatureCodes.outletManagement,
-      TenantAdminPermissionCodes.outletCreate,
+      [
+        TenantAdminPermissionCodes.tenantOutletsCreate,
+        TenantAdminPermissionCodes.tenantOutletsManage,
+      ],
+    );
+  }
+
+  bool canDeleteOutlet() {
+    return canShowActionWithAnyPermission(
+      TenantAdminFeatureCodes.outletManagement,
+      [
+        TenantAdminPermissionCodes.tenantOutletsDelete,
+        TenantAdminPermissionCodes.tenantOutletsManage,
+      ],
     );
   }
 
@@ -727,6 +770,11 @@ class TenantAdminAccessChecker {
           TenantAdminPermissionCodes.tillDelete,
           TenantAdminPermissionCodes.tenantTillsDelete,
         ]);
+  }
+
+  bool canAssignTillOutlet() {
+    return hasTillManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tenantTillsAssignOutlet);
   }
 
   bool canViewTillHardware() {
@@ -784,7 +832,8 @@ class TenantAdminAccessChecker {
         ]);
   }
 
-  bool canAddUser() => canCreateUser() || canInviteUser();
+  bool canAddUser() =>
+      (canCreateUser() || canInviteUser()) && canAssignUserRole();
 
   bool canViewUserDetail() {
     return hasUserManagementEntitlement() &&
@@ -804,6 +853,30 @@ class TenantAdminAccessChecker {
     return hasUserManagementEntitlement() &&
         can(TenantAdminPermissionCodes.tenantUsersUpdate);
   }
+
+  bool canUpdateUserStatus() =>
+      hasUserManagementEntitlement() &&
+      can(TenantAdminPermissionCodes.tenantUsersDisable);
+
+  bool canAssignUserRole() =>
+      hasUserManagementEntitlement() &&
+      can(TenantAdminPermissionCodes.tenantUsersRolesAssign);
+
+  bool canAssignUserOutlets() =>
+      hasUserManagementEntitlement() &&
+      can(TenantAdminPermissionCodes.tenantUsersOutletsAssign);
+
+  bool canAssignUserTills() =>
+      hasUserManagementEntitlement() &&
+      can(TenantAdminPermissionCodes.tenantUsersTillsAssign);
+
+  bool canResendUserInvite() =>
+      hasUserManagementEntitlement() &&
+      can(TenantAdminPermissionCodes.tenantUsersInvitesResend);
+
+  bool canRevokeUserInvite() =>
+      hasUserManagementEntitlement() &&
+      can(TenantAdminPermissionCodes.tenantUsersInvitesRevoke);
 
   bool canDeleteUser() {
     // See canUpdateUser() for why `tenant.user.manage` is intentionally
@@ -916,7 +989,59 @@ class TenantAdminAccessChecker {
   }
 
   bool canViewCategoriesNav() {
-    return can(TenantAdminPermissionCodes.tenantCategoriesView);
+    return hasProductCatalogEntitlement() && canFetchCategoryList();
+  }
+
+  bool hasProductCatalogEntitlement() {
+    final productCatalogEntries = _context.featureEntitlements.where(
+      (feature) => feature.featureCode == 'product_catalog',
+    );
+
+    if (productCatalogEntries.isEmpty) {
+      return true;
+    }
+
+    final enabled = productCatalogEntries.any((feature) => feature.enabled);
+    if (!enabled) {
+      return false;
+    }
+
+    return hasRuntimeFlag('product_catalog');
+  }
+
+  bool canFetchCategoryList() {
+    return canAny([
+      TenantAdminPermissionCodes.tenantCategoriesView,
+      'catalog.categories.view',
+      'catalog.categories.manage',
+    ]);
+  }
+
+  bool canCreateCategory() {
+    return hasProductCatalogEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantCategoriesCreate,
+          'catalog.categories.create',
+          'catalog.categories.manage',
+        ]);
+  }
+
+  bool canUpdateCategory() {
+    return hasProductCatalogEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantCategoriesUpdate,
+          'catalog.categories.update',
+          'catalog.categories.manage',
+        ]);
+  }
+
+  bool canDeleteCategory() {
+    return hasProductCatalogEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantCategoriesDelete,
+          'catalog.categories.delete',
+          'catalog.categories.manage',
+        ]);
   }
 
   bool canViewBrandsNav() {
@@ -1107,7 +1232,31 @@ class TenantAdminAccessChecker {
         ]);
   }
 
-  bool canAccessAddProductPage() => canCreateProduct();
+  /// Page entry matches the Products sidebar and route guard: product create.
+  /// Specialized catalog codes (`barcodes.manage`, `product_pricing.manage`,
+  /// tax lookup) remain capability flags for in-wizard disablement; the backend
+  /// is authoritative. Do not block the whole Add Product page on grants that
+  /// Tenant Admin historically never received.
+  bool canAccessAddProductPage() {
+    return canCreateProduct();
+  }
+
+  List<String> missingProductWizardStartCapabilities() {
+    final missing = <String>[];
+    if (!canCreateProduct()) {
+      missing.add('catalog.products.create');
+    }
+    if (!canManageBarcodes()) {
+      missing.add('catalog.barcodes.manage');
+    }
+    if (!canManagePricing()) {
+      missing.add('catalog.product_pricing.manage');
+    }
+    if (!canLookupTaxClasses()) {
+      missing.add('pricing.tax_classes.view');
+    }
+    return missing;
+  }
 
   bool canViewProductDetail() {
     return hasProductManagementEntitlement() &&
@@ -1130,6 +1279,114 @@ class TenantAdminAccessChecker {
   bool canDeleteProduct() {
     return hasProductManagementEntitlement() &&
         can(TenantAdminPermissionCodes.tenantProductsDelete);
+  }
+
+  bool canPublishProduct() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogProductsPublish);
+  }
+
+  bool canManageProductMedia() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogProductMediaManage);
+  }
+
+  bool canManageProductChannels() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogProductChannelsManage);
+  }
+
+  bool canManageVariants() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogVariantsManage);
+  }
+
+  bool canManageBundleComponents() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogComboComponentsManage);
+  }
+
+  bool canManageBarcodes() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogBarcodesManage);
+  }
+
+  bool canManagePricing() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogProductPricingManage);
+  }
+
+  bool canViewProductCost() {
+    return hasProductManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.catalogProductCostView);
+  }
+
+  bool canLookupTaxClasses() {
+    return canViewTaxSetup();
+  }
+
+  bool canViewTaxSetup() {
+    return canAny([
+      TenantAdminPermissionCodes.pricingTaxClassesView,
+      TenantAdminPermissionCodes.taxClassesView,
+    ]);
+  }
+
+  bool canCreateTaxSetup() {
+    return canAny([
+      TenantAdminPermissionCodes.pricingTaxClassesCreate,
+      'tax.classes.create',
+    ]);
+  }
+
+  bool canUpdateTaxSetup() {
+    return canAny([
+      TenantAdminPermissionCodes.pricingTaxClassesUpdate,
+      'tax.classes.update',
+    ]);
+  }
+
+  bool canManageTaxSetupStatus() {
+    return canAny([
+      TenantAdminPermissionCodes.pricingTaxClassesStatusManage,
+      'tax.classes.delete',
+      'tax.classes.manage',
+    ]);
+  }
+
+  bool canViewTaxSetupProducts() {
+    return canAny([
+      TenantAdminPermissionCodes.pricingTaxClassesProductsView,
+      TenantAdminPermissionCodes.pricingTaxClassesView,
+      TenantAdminPermissionCodes.taxClassesView,
+    ]);
+  }
+
+  bool canViewTaxRates() {
+    return canAny([
+      TenantAdminPermissionCodes.pricingTaxRatesView,
+      'tax.rates.view',
+    ]);
+  }
+
+  bool canScheduleTaxRates() {
+    return canAny([
+      TenantAdminPermissionCodes.pricingTaxRatesScheduleManage,
+      'tax.rates.create',
+      'tax.rates.update',
+      'tax.rates.delete',
+      'tax.rates.manage',
+    ]);
+  }
+
+  bool canViewStockForProductSetup() {
+    return can(TenantAdminPermissionCodes.inventoryView) ||
+        can(TenantAdminPermissionCodes.tenantStockView);
+  }
+
+  bool canUseAdvancedInventoryTracking() {
+    return canAccessFeature('inventory_tracking') ||
+        canAccessFeature(TenantAdminFeatureCodes.inventoryManagement);
   }
 
   bool canViewOutletDetail() {
@@ -1155,6 +1412,21 @@ class TenantAdminAccessChecker {
       ],
     );
   }
+
+  bool canUpdateOutletStatus() => canShowActionWithAnyPermission(
+        TenantAdminFeatureCodes.outletManagement,
+        [TenantAdminPermissionCodes.tenantOutletsStatusUpdate],
+      );
+
+  bool canAssignOutletManager() => canShowActionWithAnyPermission(
+        TenantAdminFeatureCodes.outletManagement,
+        [TenantAdminPermissionCodes.tenantOutletsManagerAssign],
+      );
+
+  bool canUpdateOutletImage() => canShowActionWithAnyPermission(
+        TenantAdminFeatureCodes.outletManagement,
+        [TenantAdminPermissionCodes.tenantOutletsImageUpdate],
+      );
 
   bool canViewOutletSalesSummary() {
     return can(TenantAdminPermissionCodes.outletSalesSummaryView);
@@ -1606,6 +1878,52 @@ class BrandListVisibility {
   }
 }
 
+class CategoryListVisibility {
+  const CategoryListVisibility({
+    required this.showPage,
+    required this.showTitle,
+    required this.showSubtitle,
+    required this.showSearch,
+    required this.showAddCategory,
+    required this.showList,
+    required this.showViewAction,
+    required this.showEditAction,
+    required this.showStatusAction,
+    required this.showDeleteAction,
+  });
+
+  final bool showPage;
+  final bool showTitle;
+  final bool showSubtitle;
+  final bool showSearch;
+  final bool showAddCategory;
+  final bool showList;
+  final bool showViewAction;
+  final bool showEditAction;
+  final bool showStatusAction;
+  final bool showDeleteAction;
+
+  static CategoryListVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage =
+        access.hasProductCatalogEntitlement() && access.canFetchCategoryList();
+
+    return CategoryListVisibility(
+      showPage: showPage,
+      showTitle: showPage,
+      showSubtitle: showPage,
+      showSearch: showPage,
+      showAddCategory: access.canCreateCategory(),
+      showList: showPage,
+      showViewAction: access.canFetchCategoryList(),
+      showEditAction: access.canUpdateCategory(),
+      showStatusAction: access.canUpdateCategory(),
+      showDeleteAction: access.canDeleteCategory(),
+    );
+  }
+}
+
 class CurrentStockVisibility {
   const CurrentStockVisibility({
     required this.showPage,
@@ -1671,6 +1989,54 @@ class StockInVisibility {
       showSubtitle: showPage,
       showForm: showPage,
       showSubmitAction: showPage,
+    );
+  }
+}
+
+class TaxSetupListVisibility {
+  const TaxSetupListVisibility({
+    required this.showPage,
+    required this.showTitle,
+    required this.showSubtitle,
+    required this.showSearch,
+    required this.showCreate,
+    required this.showList,
+    required this.showEdit,
+    required this.showStatusManage,
+    required this.showViewProducts,
+    required this.showViewRates,
+    required this.showScheduleManage,
+  });
+
+  final bool showPage;
+  final bool showTitle;
+  final bool showSubtitle;
+  final bool showSearch;
+  final bool showCreate;
+  final bool showList;
+  final bool showEdit;
+  final bool showStatusManage;
+  final bool showViewProducts;
+  final bool showViewRates;
+  final bool showScheduleManage;
+
+  static TaxSetupListVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage = access.canViewTaxSetup();
+
+    return TaxSetupListVisibility(
+      showPage: showPage,
+      showTitle: showPage,
+      showSubtitle: showPage,
+      showSearch: showPage,
+      showCreate: access.canCreateTaxSetup(),
+      showList: showPage,
+      showEdit: access.canUpdateTaxSetup(),
+      showStatusManage: access.canManageTaxSetupStatus(),
+      showViewProducts: access.canViewTaxSetupProducts(),
+      showViewRates: access.canViewTaxRates(),
+      showScheduleManage: access.canScheduleTaxRates(),
     );
   }
 }

@@ -12,8 +12,9 @@ import 'package:nytroz_pos/features/tenant_admin/users/presentation/providers/te
 import 'package:nytroz_pos/features/tenant_admin/users/presentation/screens/add_user_wizard_screen.dart';
 
 void main() {
-  group('AddUserWizardScreen', () {
-    testWidgets('renders Step 1 canonical fields', (tester) async {
+  group('AddUserWizardScreen five-step workflow', () {
+    testWidgets('Step 1 contains identity fields and no role selector',
+        (tester) async {
       await _pumpWizard(tester);
 
       expect(find.text('Add New User'), findsOneWidget);
@@ -21,243 +22,139 @@ void main() {
       expect(find.text('Full Name *'), findsOneWidget);
       expect(find.text('Email *'), findsOneWidget);
       expect(find.text('Phone'), findsOneWidget);
-      expect(find.text('Employee ID'), findsOneWidget);
+      expect(find.text('Employee ID (Optional)'), findsOneWidget);
       expect(find.text('Staff Code'), findsOneWidget);
-      expect(find.text('Auto-generated when user is created'), findsOneWidget);
       expect(find.text('Profile Photo'), findsOneWidget);
-      expect(find.text('Active'), findsNothing);
-      expect(find.text('ACTIVE'), findsNothing);
+      expect(find.text('Assign Role'), findsNothing);
+      expect(find.text('Select role'), findsNothing);
     });
 
-    testWidgets(
-        'phone is optional and Step 1 validation blocks missing required fields',
-        (tester) async {
+    testWidgets('active status reveals secure password fields', (tester) async {
       await _pumpWizard(tester);
 
-      await tester.tap(find.text('Next'));
+      await tester.tap(find.text('Active'));
       await tester.pump();
 
-      expect(find.text('Full Name is required.'), findsOneWidget);
-      expect(find.text('Email is required.'), findsOneWidget);
-      expect(find.text('Role is required.'), findsOneWidget);
-      expect(find.textContaining('Phone is required'), findsNothing);
+      expect(find.text('Password *'), findsOneWidget);
+      expect(find.text('Confirm Password *'), findsOneWidget);
+      expect(
+        find.text(
+          'Minimum 8 characters with uppercase, lowercase, and a number. Only a secure password hash is stored.',
+        ),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('role options load from create-options', (tester) async {
-      await _pumpWizard(tester);
+    testWidgets('tablet landscape hides the removed five-step indicator',
+        (tester) async {
+      await _pumpWizard(tester, size: const Size(1024, 768));
 
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
-      await tester.pumpAndSettle();
+      expect(find.text('Basic Information'), findsWidgets);
+      for (final label in const [
+        'Assign Role',
+        'Configure Permissions',
+        'Outlet, Till & Access Scope',
+        'Security & Review',
+      ]) {
+        expect(find.text(label), findsNothing);
+      }
+      expect(tester.takeException(), isNull);
+    });
 
+    testWidgets('identity, role and permission steps are separate',
+        (tester) async {
+      await _toRoleStep(tester);
+      expect(find.text('Available roles'), findsOneWidget);
+      expect(find.text('2 active'), findsOneWidget);
       expect(find.text('Store Manager'), findsWidgets);
-      expect(find.text('Cashier'), findsWidgets);
-    });
+      expect(find.text('Cashier'), findsOneWidget);
 
-    testWidgets('Step 2 supports all outlets and specific outlets',
-        (tester) async {
-      await _advanceToAccessSetup(tester);
-
-      expect(find.text('Access Setup'), findsWidgets);
-      expect(
-        find.text("Configure the user's role, outlet access and permissions."),
-        findsOneWidget,
-      );
-      expect(find.text('Assigned Role'), findsOneWidget);
-      expect(find.text('Store Manager'), findsOneWidget);
-      expect(
-        find.text("Role determines the user's base permissions."),
-        findsOneWidget,
-      );
-      expect(find.text('Outlet Access'), findsOneWidget);
-      expect(find.text('All Outlets'), findsOneWidget);
-      expect(find.text('Specific Outlets'), findsOneWidget);
-
-      await tester.tap(find.text('Specific Outlets'));
+      await tester.tap(find.text('Store Manager').first);
+      await tester.pump();
+      expect(find.text('Inherited access'), findsOneWidget);
+      expect(find.text('Included modules'), findsOneWidget);
+      expect(find.text('Outlets'), findsOneWidget);
+      expect(find.text('Sales'), findsOneWidget);
+      await _tapVisible(tester, find.text('Next'));
       await tester.pump();
 
-      expect(find.text('Main Outlet'), findsOneWidget);
-      expect(find.text('City Outlet'), findsOneWidget);
-    });
-
-    testWidgets('Step 2 excludes unresolved access fields', (tester) async {
-      await _advanceToAccessSetup(tester);
-
-      expect(find.text('Default Outlet'), findsNothing);
-      expect(find.text('Default Till'), findsNothing);
-      expect(find.text('Outlet-specific Role Override'), findsNothing);
-      expect(find.text('Access Start Date'), findsNothing);
-      expect(find.text('Access Notes'), findsNothing);
-    });
-
-    testWidgets(
-        'permission override is off by default and expands from backend groups',
-        (tester) async {
-      await _advanceToAccessSetup(tester);
-
-      expect(find.text('Enable permission override'), findsOneWidget);
-      expect(find.text('View Reports'), findsNothing);
-
-      await tester.tap(find.text('Enable permission override'));
-      await tester.pump();
-
-      expect(find.text('Reporting'), findsOneWidget);
+      expect(find.text('Configure Permissions'), findsWidgets);
+      expect(find.text('Reporting'), findsWidgets);
+      expect(find.text('Override'), findsOneWidget);
+      expect(find.text('Search permissions'), findsOneWidget);
       expect(find.text('View Reports'), findsOneWidget);
-      expect(find.text('Manage Products'), findsNothing);
     });
 
-    testWidgets('selected access survives Back and Next', (tester) async {
-      await _advanceToAccessSetup(tester);
-
-      await tester.tap(find.text('Specific Outlets'));
+    testWidgets('Step 4 renders exact outlet and till scope controls',
+        (tester) async {
+      await _toRoleStep(tester);
+      await tester.tap(find.text('Store Manager').first);
       await tester.pump();
-      await tester.tap(find.text('Main Outlet'));
-      await tester.pump();
-      await _tapVisible(tester, find.text('Back'));
+      await _tapVisible(tester, find.text('Next'));
       await tester.pump();
       await _tapVisible(tester, find.text('Next'));
       await tester.pump();
 
-      final chip = tester.widget<FilterChip>(
-        find.widgetWithText(FilterChip, 'Main Outlet'),
-      );
-      expect(chip.selected, isTrue);
+      expect(find.text('Outlet Access'), findsOneWidget);
+      expect(find.text('All Outlets'), findsOneWidget);
+      expect(find.text('Selected Outlets'), findsOneWidget);
+      expect(find.text('No Outlet Access'), findsOneWidget);
+      expect(find.text('Till Access'), findsOneWidget);
+      expect(find.text('All Accessible Tills'), findsOneWidget);
+      expect(find.text('Selected Tills'), findsOneWidget);
+      expect(find.text('No Till Access'), findsOneWidget);
     });
 
-    testWidgets('Step 2 uses connected stepper and desktop action hierarchy',
+    testWidgets('all five steps render at 1024x768 without overflow',
         (tester) async {
-      final semantics = tester.ensureSemantics();
-      try {
-        await _advanceToAccessSetup(tester);
+      await _toRoleStep(tester, size: const Size(1024, 768));
+      expect(tester.takeException(), isNull);
 
-        expect(
-          find.byKey(const ValueKey('addUserWizardStepperConnector0')),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(const ValueKey('addUserWizardStepperConnector1')),
-          findsOneWidget,
-        );
-        expect(
-          find.bySemanticsLabel('Step 1, Basic Information, completed'),
-          findsOneWidget,
-        );
-        expect(
-          find.bySemanticsLabel('Step 2, Access Setup, current'),
-          findsOneWidget,
-        );
+      await tester.tap(find.text('Store Manager').first);
+      await tester.pump();
+      await _tapVisible(tester, find.text('Next'));
+      await tester.pump();
+      expect(find.text('Configure Permissions'), findsWidgets);
+      expect(tester.takeException(), isNull);
 
-        final backLeft = tester.getTopLeft(find.text('Back')).dx;
-        final cancelLeft = tester.getTopLeft(find.text('Cancel')).dx;
-        final nextLeft = tester.getTopLeft(find.text('Next')).dx;
+      await _tapVisible(tester, find.text('Next'));
+      await tester.pump();
+      expect(find.text('Outlet Access'), findsOneWidget);
+      expect(tester.takeException(), isNull);
 
-        expect(backLeft, lessThan(nextLeft));
-        expect(cancelLeft, lessThan(nextLeft));
-      } finally {
-        semantics.dispose();
-      }
-    });
-
-    testWidgets('Step 2 desktop, tablet and mobile layouts have no overflow',
-        (tester) async {
-      for (final size in const [
-        Size(1600, 900),
-        Size(1366, 768),
-        Size(1024, 768),
-        Size(390, 900),
-      ]) {
-        await _advanceToAccessSetup(
-          tester,
-          width: size.width,
-          height: size.height,
-        );
-        expect(tester.takeException(), isNull);
-      }
-    });
-
-    testWidgets('Step 3 review shows invited security message', (tester) async {
-      await _advanceToReview(tester, invited: true);
-
+      await _tapVisible(tester, find.text('Next'));
+      await tester.pump();
       expect(find.text('Security & Review'), findsWidgets);
-      expect(find.text('INVITED'), findsOneWidget);
-      expect(
-        find.text(
-          'The user will receive a secure invitation email to set up their password.',
-        ),
-        findsOneWidget,
-      );
-      expect(find.textContaining('token'), findsNothing);
-      expect(find.textContaining('password:'), findsNothing);
+      expect(find.text('Create User'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
-    testWidgets('Step 3 review shows inactive security message',
-        (tester) async {
-      await _advanceToReview(tester);
-
-      expect(find.text('INACTIVE'), findsOneWidget);
-      expect(
-        find.text(
-          'This account will be created inactive and cannot sign in until activated through the approved lifecycle.',
-        ),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('dirty Cancel shows discard confirmation', (tester) async {
+    testWidgets('dirty cancel shows discard confirmation', (tester) async {
       await _pumpWizard(tester);
-
       await tester.enterText(find.byType(TextFormField).first, 'Kavin Perera');
       await tester.pump();
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
 
       expect(find.text('Discard user setup?'), findsOneWidget);
-      expect(
-          find.text('Your entered information will be lost.'), findsOneWidget);
       expect(find.text('Continue editing'), findsOneWidget);
       expect(find.text('Discard and return to Users'), findsOneWidget);
     });
 
-    testWidgets('desktop layout has no overflow', (tester) async {
-      await _pumpWizard(tester, width: 1600, height: 900);
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('mobile layout has no overflow', (tester) async {
-      await _pumpWizard(tester, width: 390, height: 900);
+    testWidgets('compact layout has no immediate overflow', (tester) async {
+      await _pumpWizard(tester, size: const Size(390, 900));
       expect(tester.takeException(), isNull);
     });
   });
 }
 
-Future<void> _advanceToAccessSetup(
+Future<void> _toRoleStep(
   WidgetTester tester, {
-  double width = 1200,
-  double height = 900,
+  Size size = const Size(1200, 900),
 }) async {
-  await _pumpWizard(tester, width: width, height: height);
+  await _pumpWizard(tester, size: size);
   await tester.enterText(find.byType(TextFormField).at(0), 'Kavin Perera');
   await tester.enterText(find.byType(TextFormField).at(2), 'kavin@oneverz.com');
-  await tester.tap(find.byType(DropdownButtonFormField<String>));
-  await tester.pumpAndSettle();
-  await tester.tap(find.text('Store Manager').last);
-  await tester.pumpAndSettle();
-  await _tapVisible(tester, find.text('Next'));
-  await tester.pump();
-}
-
-Future<void> _advanceToReview(
-  WidgetTester tester, {
-  bool invited = false,
-}) async {
-  await _advanceToAccessSetup(tester);
-  if (invited) {
-    await _tapVisible(tester, find.text('Back'));
-    await tester.pump();
-    await tester.tap(find.text('Invited'));
-    await tester.pump();
-    await _tapVisible(tester, find.text('Next'));
-    await tester.pump();
-  }
   await _tapVisible(tester, find.text('Next'));
   await tester.pump();
 }
@@ -270,37 +167,40 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
 
 Future<void> _pumpWizard(
   WidgetTester tester, {
-  double width = 1200,
-  double height = 900,
+  Size size = const Size(1200, 900),
 }) async {
   await tester.pumpWidget(const SizedBox.shrink());
-  await tester.pump();
-
-  await tester.binding.setSurfaceSize(Size(width, height));
+  await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
-
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         appDioProvider.overrideWithValue(Dio()),
-        tenantAdminAccessCheckerProvider.overrideWith(
-          (ref) async => _checker(),
-        ),
-        userCreateOptionsProvider.overrideWith(
-          (ref) async => _createOptions,
-        ),
+        tenantAdminAccessCheckerProvider
+            .overrideWith((ref) async => _checker()),
+        userCreateOptionsProvider.overrideWith((ref) async => _createOptions),
       ],
-      child: const MaterialApp(home: Scaffold(body: AddUserWizardScreen())),
+      child: const MaterialApp(
+        home: Scaffold(body: AddUserWizardScreen()),
+      ),
     ),
   );
-
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
+  await tester.pumpAndSettle();
 }
 
 const _createOptions = TenantUserCreateOptions(
   roles: [
-    RoleOption(id: 'role-1', name: 'Store Manager', code: 'MGR'),
+    RoleOption(
+      id: 'role-1',
+      name: 'Store Manager',
+      code: 'MGR',
+      roleDescription: 'Manage store operations.',
+      moduleCount: 2,
+      permissionCount: 4,
+      modulePreview: ['Outlets', 'Sales'],
+    ),
     RoleOption(id: 'role-2', name: 'Cashier', code: 'CASHIER'),
   ],
   outlets: [
@@ -310,10 +210,13 @@ const _createOptions = TenantUserCreateOptions(
       code: 'MAIN',
       status: 'ACTIVE',
     ),
-    UserOutletOption(
-      id: 'outlet-2',
-      name: 'City Outlet',
-      code: 'CITY',
+  ],
+  tills: [
+    UserTillOption(
+      id: 'till-1',
+      outletId: 'outlet-1',
+      name: 'Till 01',
+      code: 'T01',
       status: 'ACTIVE',
     ),
   ],
@@ -324,12 +227,35 @@ const _createOptions = TenantUserCreateOptions(
         PermissionItem(
           id: 'perm-1',
           code: 'tenant.reports.view',
-          actionType: 'View',
-          description: 'View Reports',
+          actionType: 'view',
+          name: 'View Reports',
         ),
       ],
     ),
   ],
+  supportedStatuses: ['INVITED', 'ACTIVE', 'INACTIVE'],
+  supportedOutletAccessScopes: [
+    'ALL_OUTLETS',
+    'SELECTED_OUTLETS',
+    'NO_OUTLET_ACCESS',
+  ],
+  supportedTillAccessScopes: [
+    'ALL_ACCESSIBLE_TILLS',
+    'SELECTED_TILLS',
+    'NO_TILL_ACCESS',
+  ],
+  capabilities: TenantUserCreateCapabilities(
+    supportsInvitedUserCreation: true,
+    supportsDirectActiveCreation: true,
+    supportsUserPermissionOverrides: true,
+    supportsAllOutletAccess: true,
+    supportsNoOutletAccess: true,
+    supportsExplicitTillAccess: true,
+    supportsDefaultOutlet: true,
+    supportsDefaultTill: true,
+    supportsTemporaryPassword: true,
+  ),
+  permissionCatalogVersion: 'catalog-v1',
 );
 
 TenantAdminAccessChecker _checker() {
@@ -340,9 +266,7 @@ TenantAdminAccessChecker _checker() {
       userId: 'user-test',
       userDisplayName: 'Sarah Ahmed',
       roleNames: ['Owner'],
-      roles: [
-        TenantAdminRoleScope(roleId: 'role-1', roleName: 'Owner'),
-      ],
+      roles: [TenantAdminRoleScope(roleId: 'role-1', roleName: 'Owner')],
       outletScope: [
         TenantAdminOutletScope(
           outletId: 'outlet-1',
@@ -365,6 +289,18 @@ TenantAdminAccessChecker _checker() {
         TenantAdminPermission(
           permissionCode: TenantAdminPermissionCodes.tenantUsersInvite,
           permissionName: TenantAdminPermissionCodes.tenantUsersInvite,
+        ),
+        TenantAdminPermission(
+          permissionCode: TenantAdminPermissionCodes.tenantUsersRolesAssign,
+          permissionName: TenantAdminPermissionCodes.tenantUsersRolesAssign,
+        ),
+        TenantAdminPermission(
+          permissionCode: TenantAdminPermissionCodes.tenantUsersOutletsAssign,
+          permissionName: TenantAdminPermissionCodes.tenantUsersOutletsAssign,
+        ),
+        TenantAdminPermission(
+          permissionCode: TenantAdminPermissionCodes.tenantUsersTillsAssign,
+          permissionName: TenantAdminPermissionCodes.tenantUsersTillsAssign,
         ),
         TenantAdminPermission(
           permissionCode:

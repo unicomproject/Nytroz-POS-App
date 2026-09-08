@@ -46,13 +46,27 @@ void main() {
       expect(visibility.hasVisibleChildren, isFalse);
     });
 
-    test('shows parent with list view permission but children is empty', () {
+    test('shows parent with list view permission but Tax Setup hidden', () {
       final visibility = ProductsSidebarVisibility.resolve(
         access: _accessFor([TenantAdminPermissionCodes.tenantProductsView]),
       );
 
       expect(visibility.showParent, isTrue);
-      expect(visibility.visibleChildren.map((item) => item.label), ['Tax']);
+      expect(
+        visibility.visibleChildren.map((item) => item.label),
+        isNot(contains('Tax Setup')),
+      );
+    });
+
+    test('shows Tax Setup with pricing.tax_classes.view', () {
+      final visibility = ProductsSidebarVisibility.resolve(
+        access: _accessFor([TenantAdminPermissionCodes.pricingTaxClassesView]),
+      );
+
+      expect(
+        visibility.visibleChildren.map((item) => item.label),
+        ['Tax Setup'],
+      );
     });
 
     test('shows only Add Product with create permission', () {
@@ -71,7 +85,7 @@ void main() {
       );
 
       expect(visibility.visibleChildren.map((item) => item.label), [
-        'Categories & Subcategories',
+        'Category',
       ]);
     });
 
@@ -89,7 +103,7 @@ void main() {
           TenantAdminPermissionCodes.tenantProductsCreate,
           TenantAdminPermissionCodes.tenantCategoriesView,
           TenantAdminPermissionCodes.tenantBrandsView,
-          TenantAdminPermissionCodes.tenantProductsView,
+          TenantAdminPermissionCodes.pricingTaxClassesView,
         ]),
       );
 
@@ -98,9 +112,9 @@ void main() {
         visibility.visibleChildren.map((item) => item.label).toList(),
         [
           'Add Product',
-          'Categories & Subcategories',
+          'Category',
           'Brand',
-          'Tax',
+          'Tax Setup',
         ],
       );
     });

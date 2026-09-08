@@ -8,6 +8,8 @@ import '../../features/auth/domain/entities/auth_session.dart';
 import '../../features/auth/presentation/providers/session_provider.dart';
 import '../../features/device_activation/presentation/providers/device_activation_provider.dart';
 import '../../features/till/presentation/providers/till_provider.dart';
+import '../../features/workspace/domain/workspace_access.dart';
+import '../../features/workspace/presentation/providers/workspace_selection_provider.dart';
 
 const posSessionBootRoute = '/pos/boot';
 
@@ -33,6 +35,7 @@ class PosSessionBootstrapNotifier
       : super(const PosSessionBootstrapState()) {
     if (autoStart) {
       _listenAuth();
+      _listenWorkspace();
     }
   }
 
@@ -46,6 +49,18 @@ class PosSessionBootstrapNotifier
         unawaited(_handleAuthChanged(previous, next));
       },
       fireImmediately: true,
+    );
+  }
+
+  void _listenWorkspace() {
+    _ref.listen<WorkspaceSelectionState>(
+      workspaceSelectionProvider,
+      (previous, next) {
+        if (next.selected == AppWorkspace.pos &&
+            previous?.selected != AppWorkspace.pos) {
+          unawaited(bootstrap(force: true));
+        }
+      },
     );
   }
 
@@ -133,6 +148,18 @@ class PosSessionBootstrapNotifier
           'POS session bootstrap finished. success=true durationMs=${stopwatch.elapsedMilliseconds}',
           name: 'pos.session',
         );
+        return;
+      }
+
+      final workspaceState = _ref.read(workspaceSelectionProvider);
+      if (workspaceState.access.canAccessTenantAdmin &&
+          workspaceState.selected != AppWorkspace.pos) {
+        developer.log(
+          'POS session bootstrap deferred until the POS workspace is selected.',
+          name: 'pos.session',
+        );
+        state = const PosSessionBootstrapState(isReady: true);
+        stopwatch.stop();
         return;
       }
 

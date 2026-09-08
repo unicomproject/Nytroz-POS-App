@@ -52,16 +52,23 @@ class PosParkedSalesPanel extends ConsumerWidget {
                   separatorBuilder: (_, __) => const SizedBox(
                     height: TenantAdminSpacing.md,
                   ),
-                  itemBuilder: (context, index) => ParkedSaleCard(
+                  // Use the panel build context (not the list-item context).
+                  // After a successful recall the card is removed from the
+                  // list and the item context unmounts before navigation.
+                  itemBuilder: (_, index) => ParkedSaleCard(
                     sale: sales[index],
                     canRecall: access.permissions.contains(
-                      PosPermissionCodes.recallBackendParkedSale,
-                    ),
+                          PosPermissionCodes.heldSalesRecall,
+                        ) ||
+                        access.permissions.contains(
+                          PosPermissionCodes.recallBackendParkedSale,
+                        ),
+                    // Chunk 2: cancel is independent — create alone must NOT authorize.
                     canCancel: access.permissions.contains(
-                      PosPermissionCodes.createParkedSale,
+                      PosPermissionCodes.heldSalesCancel,
                     ),
-                    onRecallSuccess: (_, ref, sale) =>
-                        onRecallSuccess(context, ref, sale),
+                    onRecallSuccess: (__, recallRef, sale) =>
+                        onRecallSuccess(context, recallRef, sale),
                   ),
                 ),
         );

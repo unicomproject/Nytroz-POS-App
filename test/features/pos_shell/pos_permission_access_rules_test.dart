@@ -100,7 +100,15 @@ void main() {
   });
 
   group('POS payment permissions', () {
-    test('payment method screen requires sales.checkout', () {
+    test('legacy checkout and payment aliases are not canonical authority', () {
+      expect(PosPermissionAccess.canCheckout({'sales.checkout'}), isFalse);
+      expect(
+        PosPermissionAccess.canAcceptCashPayment({'payments.cash.accept'}),
+        isFalse,
+      );
+    });
+
+    test('payment method screen requires pos.sales.checkout.execute', () {
       expect(
         PosPermissionAccess.canCheckout({PosPermissionCodes.checkoutSale}),
         isTrue,

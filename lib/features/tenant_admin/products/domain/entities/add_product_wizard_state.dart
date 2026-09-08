@@ -1,3 +1,4 @@
+import '../../data/models/step6_pricing_tax_dtos.dart';
 import 'staged_product_image.dart';
 import 'step4_variant_configuration_state.dart';
 import 'step5_barcode_sku_state.dart';
@@ -111,6 +112,17 @@ class AddProductWizardState {
   final num? taxRate;
   final bool taxExclusive;
 
+  /// VARIANT Step 6: keyed selling prices for included sellable variants.
+  /// Identity = productVariantId when set, else clientCombinationKey.
+  final List<VariantPriceDto> variantPrices;
+
+  // Step 2 Initial Tracking Details (provisional, after product type is selected)
+  final String initialBatchNumber;
+  final DateTime? initialExpiryDate;
+  final String initialSerialNumber;
+  final bool confirmClearIncompatibleInitialTracking;
+  final String? initialTrackingAssignedVariantId;
+
   const AddProductWizardState({
     this.currentStep = 1,
     this.targetSetupStep,
@@ -132,7 +144,7 @@ class AddProductWizardState {
     this.serialTracking = false,
     this.desiredPublishActive = true,
     this.posSellable = true,
-    this.trackInventory = true,
+    this.trackInventory = false,
     this.allowOnlineSale = true,
     this.unitModel = 'SINGLE_UNIT',
     this.productUnitId,
@@ -172,11 +184,21 @@ class AddProductWizardState {
     this.taxName,
     this.taxRate,
     this.taxExclusive = true,
+    this.variantPrices = const [],
+    this.initialBatchNumber = '',
+    this.initialExpiryDate,
+    this.initialSerialNumber = '',
+    this.confirmClearIncompatibleInitialTracking = false,
+    this.initialTrackingAssignedVariantId,
   });
 
   bool get isEditMode => productId != null && productId!.isNotEmpty;
   bool get hasImages =>
       productImages.isNotEmpty || stagedMediaAssets.isNotEmpty;
+  bool get hasInitialTrackingValues =>
+      initialBatchNumber.trim().isNotEmpty ||
+      initialExpiryDate != null ||
+      initialSerialNumber.trim().isNotEmpty;
 
   int get totalImageCount {
     if (isEditMode) {
@@ -265,6 +287,14 @@ class AddProductWizardState {
     num? taxRate,
     bool clearTaxRate = false,
     bool? taxExclusive,
+    List<VariantPriceDto>? variantPrices,
+    String? initialBatchNumber,
+    DateTime? initialExpiryDate,
+    bool clearInitialExpiryDate = false,
+    String? initialSerialNumber,
+    bool? confirmClearIncompatibleInitialTracking,
+    String? initialTrackingAssignedVariantId,
+    bool clearInitialTrackingAssignedVariantId = false,
   }) {
     return AddProductWizardState(
       currentStep: currentStep ?? this.currentStep,
@@ -345,6 +375,19 @@ class AddProductWizardState {
       taxName: clearTaxName ? null : (taxName ?? this.taxName),
       taxRate: clearTaxRate ? null : (taxRate ?? this.taxRate),
       taxExclusive: taxExclusive ?? this.taxExclusive,
+      variantPrices: variantPrices ?? this.variantPrices,
+      initialBatchNumber: initialBatchNumber ?? this.initialBatchNumber,
+      initialExpiryDate: clearInitialExpiryDate
+          ? null
+          : (initialExpiryDate ?? this.initialExpiryDate),
+      initialSerialNumber: initialSerialNumber ?? this.initialSerialNumber,
+      confirmClearIncompatibleInitialTracking:
+          confirmClearIncompatibleInitialTracking ??
+              this.confirmClearIncompatibleInitialTracking,
+      initialTrackingAssignedVariantId: clearInitialTrackingAssignedVariantId
+          ? null
+          : (initialTrackingAssignedVariantId ??
+              this.initialTrackingAssignedVariantId),
     );
   }
 }

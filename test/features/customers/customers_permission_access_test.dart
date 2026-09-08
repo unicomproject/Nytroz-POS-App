@@ -64,22 +64,16 @@ void main() {
       );
     });
 
-    test('attach requires view and cart manage only', () {
+    test('attach requires exact attach_sale (view alone insufficient)', () {
       expect(
         PosPermissionAccess.canAttachCustomerToSale({
-          PosPermissionCodes.viewNewSaleCustomers,
-          PosPermissionCodes.manageCart,
+          PosPermissionCodes.customersAttachSale,
         }),
         isTrue,
       );
       expect(
         PosPermissionAccess.canAttachCustomerToSale({
           PosPermissionCodes.viewNewSaleCustomers,
-        }),
-        isFalse,
-      );
-      expect(
-        PosPermissionAccess.canAttachCustomerToSale({
           PosPermissionCodes.manageCart,
         }),
         isFalse,
@@ -87,7 +81,12 @@ void main() {
       expect(
         PosPermissionAccess.canAttachCustomerToSale({
           PosPermissionCodes.viewNewSaleCustomers,
-          PosPermissionCodes.createSale,
+        }),
+        isFalse,
+      );
+      expect(
+        PosPermissionAccess.canAttachCustomerToSale({
+          PosPermissionCodes.manageCart,
         }),
         isFalse,
       );
@@ -163,7 +162,7 @@ void main() {
       expect(customer.spentDisplay, 'LKR 42.50');
     });
 
-    test('spentDisplay handles mixed currency and zero amounts', () {
+    test('spentDisplay handles mixed currency and null amounts', () {
       const mixed = PosCustomer(
         customerId: 'c1',
         fullName: 'Mixed',
@@ -173,19 +172,28 @@ void main() {
       );
       expect(mixed.spentDisplay, '—');
 
-      const zeroWithCurrency = PosCustomer(
+      // Null spend (backend Chunk 7 deny or unavailable) ≠ £0.00.
+      const nullWithCurrency = PosCustomer(
         customerId: 'c2',
-        fullName: 'Zero',
+        fullName: 'Null spend',
         currencyCode: 'USD',
       );
-      expect(zeroWithCurrency.ordersDisplay, '0');
-      expect(zeroWithCurrency.spentDisplay, 'USD 0.00');
+      expect(nullWithCurrency.ordersDisplay, '0');
+      expect(nullWithCurrency.spentDisplay, '—');
 
-      const zeroWithoutCurrency = PosCustomer(
+      const nullWithoutCurrency = PosCustomer(
         customerId: 'c3',
         fullName: 'No Currency',
       );
-      expect(zeroWithoutCurrency.spentDisplay, '0.00');
+      expect(nullWithoutCurrency.spentDisplay, '—');
+
+      const zeroExplicit = PosCustomer(
+        customerId: 'c4',
+        fullName: 'Zero',
+        totalSpentAmount: 0,
+        currencyCode: 'USD',
+      );
+      expect(zeroExplicit.spentDisplay, 'USD 0.00');
     });
 
     test('summary parses backend counts', () {

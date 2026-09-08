@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/network/dio_provider.dart';
+import 'package:nytroz_pos/core/network/media_url_resolver.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/widgets/tenant_admin_row_action.dart';
 import '../../domain/entities/outlet.dart';
 import '../providers/selected_outlet_provider.dart';
 
@@ -11,12 +14,16 @@ class OutletCardList extends ConsumerWidget {
     required this.outlets,
     required this.onEdit,
     required this.onDisable,
+    required this.canEdit,
+    required this.canUpdateStatus,
     this.scrollable = false,
   });
 
   final List<Outlet> outlets;
   final ValueChanged<Outlet> onEdit;
   final ValueChanged<Outlet> onDisable;
+  final bool canEdit;
+  final bool canUpdateStatus;
   final bool scrollable;
 
   @override
@@ -44,6 +51,8 @@ class OutletCardList extends ConsumerWidget {
               ref.read(selectedOutletIdProvider.notifier).state = outlet.id,
           onEdit: () => onEdit(outlet),
           onDisable: () => onDisable(outlet),
+          canEdit: canEdit,
+          canUpdateStatus: canUpdateStatus,
         );
       },
     );
@@ -57,6 +66,8 @@ class _OutletCard extends StatelessWidget {
     required this.onTap,
     required this.onEdit,
     required this.onDisable,
+    required this.canEdit,
+    required this.canUpdateStatus,
   });
 
   final Outlet outlet;
@@ -64,6 +75,8 @@ class _OutletCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDisable;
+  final bool canEdit;
+  final bool canUpdateStatus;
 
   bool get _isActive => outlet.status.toUpperCase() == 'ACTIVE';
 
@@ -71,32 +84,37 @@ class _OutletCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final overflowMenu = TenantAdminOverflowMenu(
+          actions: [
+            if (canEdit)
+              TenantAdminOverflowAction(
+                id: 'edit',
+                icon: Icons.edit_outlined,
+                label: 'Edit',
+                onSelected: onEdit,
+              ),
+            if (canUpdateStatus)
+              TenantAdminOverflowAction(
+                id: 'status',
+                icon: _isActive
+                    ? Icons.block_outlined
+                    : Icons.check_circle_outline,
+                label: _isActive ? 'Deactivate' : 'Activate',
+                onSelected: onDisable,
+                destructive: _isActive,
+                success: !_isActive,
+              ),
+          ],
+        );
         final compact = constraints.maxWidth < 500;
         final content = compact
-            ? Column(
+            ? Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _OutletThumbnail(outlet: outlet, compact: true),
-                      const SizedBox(width: TenantAdminSpacing.lg),
-                      Expanded(child: _OutletMainInfo(outlet: outlet)),
-                    ],
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  const Divider(height: 1, color: TenantAdminColors.border),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: _ActionsColumn(
-                      isActive: _isActive,
-                      onView: onTap,
-                      onEdit: onEdit,
-                      onDisable: onDisable,
-                      horizontal: true,
-                    ),
-                  ),
+                  _OutletThumbnail(outlet: outlet, compact: true),
+                  const SizedBox(width: TenantAdminSpacing.lg),
+                  Expanded(child: _OutletMainInfo(outlet: outlet)),
+                  overflowMenu,
                 ],
               )
             : Row(
@@ -106,13 +124,7 @@ class _OutletCard extends StatelessWidget {
                   const SizedBox(width: TenantAdminSpacing.xl),
                   Expanded(child: _OutletMainInfo(outlet: outlet)),
                   const SizedBox(width: TenantAdminSpacing.xl),
-                  _ActionsColumn(
-                    isActive: _isActive,
-                    onView: onTap,
-                    onEdit: onEdit,
-                    onDisable: onDisable,
-                    horizontal: false,
-                  ),
+                  overflowMenu,
                 ],
               );
 
@@ -410,7 +422,7 @@ class _ManagerCell extends StatelessWidget {
   }
 }
 
-class _OutletThumbnail extends StatelessWidget {
+class _OutletThumbnail extends ConsumerWidget {
   const _OutletThumbnail({
     required this.outlet,
     this.compact = false,
@@ -420,8 +432,17 @@ class _OutletThumbnail extends StatelessWidget {
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
-    final hasImage = outlet.imageUrl != null && outlet.imageUrl!.isNotEmpty;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final imageUrl = outlet.imageUrl?.trim();
+    final hasImage = imageUrl != null && imageUrl.isNotEmpty;
+    final resolvedImageUrl = hasImage
+        ? MediaUrlResolver.resolve(
+              imageUrl,
+              apiBaseUrl: ref.watch(appDioProvider).options.baseUrl,
+              replaceLoopbackHost: true,
+            ) ??
+            imageUrl
+        : null;
     final size = compact ? 64.0 : 80.0;
 
     return Container(
@@ -441,9 +462,9 @@ class _OutletThumbnail extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(15),
-        child: hasImage
+        child: resolvedImageUrl != null
             ? Image.network(
-                outlet.imageUrl!,
+                resolvedImageUrl,
                 fit: BoxFit.cover,
                 loadingBuilder: (context, child, loadingProgress) {
                   return loadingProgress == null ? child : _placeholder();
@@ -456,22 +477,17 @@ class _OutletThumbnail extends StatelessWidget {
   }
 
   Widget _placeholder() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.05),
-            TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.15),
-          ],
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.storefront_rounded,
-          color: TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.5),
-          size: 32,
+    return Image.asset(
+      'assets/images/outlet-placeholder.png',
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => const ColoredBox(
+        color: TenantAdminColors.secondary,
+        child: Center(
+          child: Icon(
+            Icons.storefront_rounded,
+            color: TenantAdminColors.primary,
+            size: 32,
+          ),
         ),
       ),
     );
@@ -560,107 +576,6 @@ class _StatusBadge extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ActionsColumn extends StatelessWidget {
-  const _ActionsColumn({
-    required this.isActive,
-    required this.onView,
-    required this.onEdit,
-    required this.onDisable,
-    this.horizontal = false,
-  });
-
-  final bool isActive;
-  final VoidCallback onView;
-  final VoidCallback onEdit;
-  final VoidCallback onDisable;
-  final bool horizontal;
-
-  @override
-  Widget build(BuildContext context) {
-    final actions = [
-      _ActionTextBtn(
-        icon: Icons.visibility_outlined,
-        label: 'View',
-        color: TenantAdminColors.info,
-        onTap: onView,
-      ),
-      _ActionTextBtn(
-        icon: Icons.edit_outlined,
-        label: 'Edit',
-        color: TenantAdminColors.info,
-        onTap: onEdit,
-      ),
-      _ActionTextBtn(
-        icon: isActive ? Icons.block_outlined : Icons.check_circle_outline,
-        label: isActive ? 'Disable' : 'Activate',
-        color: isActive ? TenantAdminColors.danger : TenantAdminColors.success,
-        onTap: onDisable,
-      ),
-    ];
-
-    if (horizontal) {
-      return Wrap(
-        spacing: 16,
-        runSpacing: 8,
-        alignment: WrapAlignment.end,
-        children: actions,
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        actions[0],
-        const SizedBox(height: 12),
-        actions[1],
-        const SizedBox(height: 12),
-        actions[2],
-      ],
-    );
-  }
-}
-
-class _ActionTextBtn extends StatelessWidget {
-  const _ActionTextBtn({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

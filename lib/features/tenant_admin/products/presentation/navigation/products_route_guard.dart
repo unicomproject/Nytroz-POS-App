@@ -18,10 +18,12 @@ class ProductsRouteGuard {
         return access.canCreateProductNav();
       case ProductsSidebarRoutes.categories:
         return access.canViewCategoriesNav();
+      case ProductsSidebarRoutes.categoriesAdd:
+        return access.canCreateCategory();
       case ProductsSidebarRoutes.brands:
         return access.canViewBrandsNav();
       case ProductsSidebarRoutes.tax:
-        return access.canAccessProductListPage(); // Using same permission as Product List for now
+        return access.canViewTaxSetup();
       case ProductsSidebarRoutes.variantTemplates:
         return access.canViewVariantTemplatesNav();
       case ProductsSidebarRoutes.popular:
@@ -29,6 +31,13 @@ class ProductsRouteGuard {
       case ProductsSidebarRoutes.import:
         return access.canImportProductsNav();
       default:
+        if (path.startsWith('${ProductsSidebarRoutes.categories}/') &&
+            path.endsWith('/edit')) {
+          return access.canUpdateCategory();
+        }
+        if (path.startsWith('${ProductsSidebarRoutes.categories}/')) {
+          return access.canFetchCategoryList();
+        }
         return false;
     }
   }
@@ -57,6 +66,8 @@ class ProductsRouteGuard {
         return 'tenant.categories.view';
       case TenantAdminPermissionCodes.tenantBrandsView:
         return 'tenant.brands.view';
+      case TenantAdminPermissionCodes.pricingTaxClassesView:
+        return 'pricing.tax_classes.view';
       case TenantAdminPermissionCodes.tenantVariantTemplatesView:
         return 'tenant.variant.templates.view';
       case 'catalog.collections.view':

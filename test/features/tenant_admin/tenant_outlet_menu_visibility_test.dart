@@ -37,6 +37,33 @@ void main() {
         isTrue);
     expect(access.can(TenantAdminPermissionCodes.outletView), isTrue);
     expect(access.canCreateOutlet(), isTrue);
+    expect(access.canDeleteOutlet(), isTrue);
     expect(access.canAccessMenuItem(outletsMenu), isTrue);
+  });
+
+  test('granular outlet create permission does not grant delete or manage', () {
+    const context = TenantAdminContext(
+      tenantId: 'tenant-1',
+      tenantName: 'SCS-TIX',
+      userId: 'user-1',
+      userDisplayName: 'Outlet Creator',
+      roles: [],
+      roleNames: ['Outlet Creator'],
+      outletScope: [],
+      featureEntitlements: [],
+      permissions: [
+        TenantAdminPermission(
+          permissionCode: 'tenant.outlets.create',
+          permissionName: 'Create Outlets',
+        ),
+      ],
+      runtimeFlags: [],
+    );
+
+    const access = TenantAdminAccessChecker(context);
+
+    expect(access.canCreateOutlet(), isTrue);
+    expect(access.canDeleteOutlet(), isFalse);
+    expect(access.can(TenantAdminPermissionCodes.tenantOutletsManage), isFalse);
   });
 }

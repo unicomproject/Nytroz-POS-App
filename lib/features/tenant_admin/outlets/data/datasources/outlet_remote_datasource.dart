@@ -131,7 +131,27 @@ class OutletRemoteDatasource {
   }
 
   Future<List<OutletManagerOptionDto>> getManagerOptions() async {
-    return const [];
+    final response = await _dio.get<dynamic>(
+      '$_tenantAdminBase/manager-options',
+    );
+    final root = response.data is Map
+        ? Map<String, dynamic>.from(response.data as Map)
+        : const <String, dynamic>{};
+    final payload = root['data'] ?? root['items'];
+    return _mapList(payload, OutletManagerOptionDto.fromJson)
+        .where((manager) => manager.id.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  Future<void> setOutletManager(String id, String tenantUserId) async {
+    await _dio.put<void>(
+      '$_tenantAdminBase/$id/manager',
+      data: {'tenantUserId': tenantUserId},
+    );
+  }
+
+  Future<void> removeOutletManager(String id) async {
+    await _dio.delete<void>('$_tenantAdminBase/$id/manager');
   }
 
   Map<String, dynamic> _listQueryParameters(OutletListQuery query) {
@@ -215,9 +235,11 @@ class OutletRemoteDatasource {
     void resolve(Map map, String key) {
       if (map[key] != null) {
         map[key] = MediaUrlResolver.resolve(
-          map[key]?.toString(),
-          apiBaseUrl: _dio.options.baseUrl,
-        ) ?? map[key];
+              map[key]?.toString(),
+              apiBaseUrl: _dio.options.baseUrl,
+              replaceLoopbackHost: true,
+            ) ??
+            map[key];
       }
     }
 
@@ -225,6 +247,7 @@ class OutletRemoteDatasource {
       for (final item in payload['items']) {
         if (item is Map) {
           resolve(item, 'imageUrl');
+          _resolveNestedImageUrl(item);
           if (item['manager'] is Map) {
             resolve(item['manager'], 'avatarUrl');
           }
@@ -240,6 +263,28 @@ class OutletRemoteDatasource {
     }
 
     resolve(payload, 'imageUrl');
+    _resolveNestedImageUrl(payload);
+  }
+
+  void _resolveNestedImageUrl(Map payload) {
+    void resolve(Map map, String key) {
+      if (map[key] != null) {
+        map[key] = MediaUrlResolver.resolve(
+              map[key]?.toString(),
+              apiBaseUrl: _dio.options.baseUrl,
+              replaceLoopbackHost: true,
+            ) ??
+            map[key];
+      }
+    }
+
+    for (final key in const ['primaryImage', 'image']) {
+      final image = payload[key];
+      if (image is Map) {
+        resolve(image, 'publicUrl');
+        resolve(image, 'imageUrl');
+      }
+    }
   }
 
   Future<OutletDetailDto> getOutletDetail(String id) async {
@@ -250,20 +295,35 @@ class OutletRemoteDatasource {
   }
 
   Future<OutletRevenueSummaryDto> getOutletRevenueSummary(String id) async {
-    throw UnsupportedError(
-      'Outlet revenue summary is not supported by the current backend contract.',
+    final response =
+        await _dio.get<dynamic>('$_tenantAdminBase/$id/revenue-summary');
+    return OutletRevenueSummaryDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
     );
   }
 
   Future<OutletAssignedUsersDto> getOutletAssignedUsers(String id) async {
-    throw UnsupportedError(
-      'Outlet assigned users are not supported by the current backend contract.',
+    final response = await _dio.get<dynamic>('$_tenantAdminBase/$id/users');
+    return OutletAssignedUsersDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
     );
   }
 
   Future<OutletTillsDetailDto> getOutletTillsDetail(String id) async {
-    throw UnsupportedError(
-      'Outlet tills detail is not supported by the current backend contract.',
+    final response = await _dio.get<dynamic>('$_tenantAdminBase/$id/tills');
+    return OutletTillsDetailDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
     );
+  }
+
+  List<T> _mapList<T>(
+    Object? value,
+    T Function(Map<String, dynamic> json) mapper,
+  ) {
+    if (value is! List) return const [];
+    return value
+        .whereType<Map>()
+        .map((item) => mapper(Map<String, dynamic>.from(item)))
+        .toList(growable: false);
   }
 }

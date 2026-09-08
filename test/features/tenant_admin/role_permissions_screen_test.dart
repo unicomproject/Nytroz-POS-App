@@ -32,7 +32,7 @@ void main() {
             rolePermissionsCanViewProvider.overrideWith((ref) => true),
             rolePermissionsCanUpdateProvider.overrideWith((ref) => false),
             rolePermissionsAvailableRolesProvider.overrideWith(
-              (ref) => const [
+              (ref) async => const [
                 TenantAdminRoleOption(id: 'role-1', name: 'Tenant Admin'),
               ],
             ),
@@ -80,7 +80,7 @@ void main() {
             rolePermissionsCanViewProvider.overrideWith((ref) => true),
             rolePermissionsCanUpdateProvider.overrideWith((ref) => false),
             rolePermissionsAvailableRolesProvider.overrideWith(
-              (ref) => const [
+              (ref) async => const [
                 TenantAdminRoleOption(id: 'role-1', name: 'Tenant Admin'),
               ],
             ),

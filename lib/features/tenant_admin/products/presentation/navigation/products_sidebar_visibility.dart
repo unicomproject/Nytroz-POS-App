@@ -51,7 +51,7 @@ class ProductsSidebarVisibility {
       ),
       ProductsSidebarChildVisibility(
         key: 'categories',
-        label: 'Categories & Subcategories',
+        label: 'Category',
         route: ProductsSidebarRoutes.categories,
         permissionCode: TenantAdminPermissionCodes.tenantCategoriesView,
         isVisible: access.canViewCategoriesNav(),
@@ -65,10 +65,10 @@ class ProductsSidebarVisibility {
       ),
       ProductsSidebarChildVisibility(
         key: 'tax',
-        label: 'Tax',
+        label: 'Tax Setup',
         route: ProductsSidebarRoutes.tax,
-        permissionCode: TenantAdminPermissionCodes.tenantProductsView,
-        isVisible: access.canAccessProductListPage(),
+        permissionCode: TenantAdminPermissionCodes.pricingTaxClassesView,
+        isVisible: access.canViewTaxSetup(),
       ),
     ];
 

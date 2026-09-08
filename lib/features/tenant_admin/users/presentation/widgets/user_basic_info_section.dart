@@ -13,6 +13,7 @@ class UserBasicInfoSection extends StatelessWidget {
     required this.selectedRoleId,
     required this.onRoleChanged,
     required this.enabled,
+    this.roleEnabled,
     this.backendErrors = const {},
   });
 
@@ -23,6 +24,7 @@ class UserBasicInfoSection extends StatelessWidget {
   final String? selectedRoleId;
   final ValueChanged<String?> onRoleChanged;
   final bool enabled;
+  final bool? roleEnabled;
   final Map<String, String> backendErrors;
 
   @override
@@ -68,8 +70,8 @@ class UserBasicInfoSection extends StatelessWidget {
                 if (value == null || value.trim().isEmpty) {
                   return 'Email is required.';
                 }
-                final valid =
-                    RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim());
+                final valid = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                    .hasMatch(value.trim());
                 if (!valid) {
                   return 'Enter a valid email address.';
                 }
@@ -108,7 +110,7 @@ class UserBasicInfoSection extends StatelessWidget {
                     child: Text(role.name),
                   ),
               ],
-              onChanged: enabled ? onRoleChanged : null,
+              onChanged: (roleEnabled ?? enabled) ? onRoleChanged : null,
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Role is required.';

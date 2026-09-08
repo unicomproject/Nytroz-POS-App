@@ -2214,58 +2214,44 @@ class _ProductsDataTableCard extends ConsumerWidget {
                             ),
                           ),
                           DataCell(
-                            showActions
-                                ? Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (canEdit)
-                                        TenantAdminIconButton(
-                                          icon: Icons.edit_outlined,
-                                          tooltip: 'Edit',
-                                          onPressed: () => context.go(
-                                            '/tenant-admin/products/${product.id}/edit',
+                        showActions
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (canEdit || canStatus || canDelete)
+                                    PopupMenuButton<String>(
+                                      tooltip: 'Actions',
+                                      icon: const Icon(
+                                        Icons.more_vert,
+                                        size: 20,
+                                      ),
+                                      itemBuilder: (context) => [
+                                        if (canEdit)
+                                          const PopupMenuItem(
+                                            value: 'edit',
+                                            child: Text('Edit'),
                                           ),
-                                        ),
-                                      if (canView ||
-                                          canStatus ||
-                                          canDelete) ...[
-                                        const SizedBox(
-                                          width: TenantAdminSpacing.sm,
-                                        ),
-                                        PopupMenuButton<String>(
-                                          tooltip: 'More',
-                                          icon: const Icon(
-                                            Icons.more_vert,
-                                            size: 20,
+                                        if (canStatus)
+                                          const PopupMenuItem(
+                                            value: 'status',
+                                            child: Text('Change status'),
                                           ),
-                                          itemBuilder: (context) => [
-                                            if (canView)
-                                              const PopupMenuItem(
-                                                value: 'view',
-                                                child: Text('View details'),
-                                              ),
-                                            if (canStatus)
-                                              const PopupMenuItem(
-                                                value: 'status',
-                                                child: Text('Change status'),
-                                              ),
-                                            if (canDelete)
-                                              const PopupMenuItem(
-                                                value: 'delete',
-                                                child: Text('Delete'),
-                                              ),
-                                          ],
-                                          onSelected: (value) {
-                                            if (value == 'view') {
-                                              context.go(
-                                                '/tenant-admin/products/${product.id}',
-                                              );
-                                            }
-                                          },
-                                        ),
+                                        if (canDelete)
+                                          const PopupMenuItem(
+                                            value: 'delete',
+                                            child: Text('Delete'),
+                                          ),
                                       ],
-                                    ],
-                                  )
+                                      onSelected: (value) {
+                                        if (value == 'edit') {
+                                          context.go(
+                                            '/tenant-admin/products/${product.id}/edit',
+                                          );
+                                        }
+                                      },
+                                    ),
+                                ],
+                              )
                                 : const _EmptyTableText('Hidden'),
                           ),
                         ],
@@ -2408,32 +2394,12 @@ class _ProductsTableCard extends StatelessWidget {
                             ? Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  if (canView)
-                                    const _ActionButton(
-                                      label: 'View',
-                                      icon: Icons.visibility_outlined,
-                                      onPressed: null,
-                                    ),
-                                  if (canEdit) ...[
-                                    const SizedBox(
-                                      width: TenantAdminSpacing.sm,
-                                    ),
-                                    const TenantAdminIconButton(
-                                      icon: Icons.edit_outlined,
-                                      tooltip: 'Edit',
-                                      onPressed: null,
-                                    ),
-                                  ],
-                                  if (canStatus || canDelete) ...[
-                                    const SizedBox(
-                                      width: TenantAdminSpacing.sm,
-                                    ),
+                                  if (canEdit || canStatus || canDelete)
                                     const TenantAdminIconButton(
                                       icon: Icons.more_vert,
-                                      tooltip: 'More',
+                                      tooltip: 'Actions',
                                       onPressed: null,
                                     ),
-                                  ],
                                 ],
                               )
                             : const _EmptyTableText('Hidden'),

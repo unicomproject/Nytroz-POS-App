@@ -1,4 +1,5 @@
 import '../../data/models/step5_barcode_dtos.dart';
+import '../../data/models/step6_pricing_tax_dtos.dart';
 import 'add_product_wizard_state.dart';
 import 'staged_product_image.dart';
 import 'step4_variant_configuration_state.dart';
@@ -68,6 +69,14 @@ class AddProductWizardStateCodec {
       'taxName': state.taxName,
       'taxRate': state.taxRate,
       'taxExclusive': state.taxExclusive,
+      'variantPrices': state.variantPrices.map((e) => e.toSnapshotJson()).toList(),
+      'initialBatchNumber': state.initialBatchNumber,
+      'initialExpiryDate': state.initialExpiryDate?.toIso8601String(),
+      'initialSerialNumber': state.initialSerialNumber,
+      'confirmClearIncompatibleInitialTracking':
+          state.confirmClearIncompatibleInitialTracking,
+      'initialTrackingAssignedVariantId':
+          state.initialTrackingAssignedVariantId,
     };
   }
 
@@ -95,7 +104,7 @@ class AddProductWizardStateCodec {
       serialTracking: json['serialTracking'] as bool? ?? false,
       desiredPublishActive: json['desiredPublishActive'] as bool? ?? true,
       posSellable: json['posSellable'] as bool? ?? true,
-      trackInventory: json['trackInventory'] as bool? ?? true,
+      trackInventory: json['trackInventory'] as bool? ?? false,
       allowOnlineSale: json['allowOnlineSale'] as bool? ?? true,
       unitModel: json['unitModel']?.toString() ?? 'SINGLE_UNIT',
       productUnitId: json['productUnitId']?.toString(),
@@ -142,6 +151,22 @@ class AddProductWizardStateCodec {
       taxName: json['taxName']?.toString(),
       taxRate: json['taxRate'] as num?,
       taxExclusive: json['taxExclusive'] as bool? ?? true,
+      variantPrices: (json['variantPrices'] as List<dynamic>?)
+              ?.whereType<Map>()
+              .map((e) => VariantPriceDto.fromJson(
+                    Map<String, dynamic>.from(e),
+                  ))
+              .toList() ??
+          const [],
+      initialBatchNumber: json['initialBatchNumber']?.toString() ?? '',
+      initialExpiryDate: DateTime.tryParse(
+        json['initialExpiryDate']?.toString() ?? '',
+      ),
+      initialSerialNumber: json['initialSerialNumber']?.toString() ?? '',
+      confirmClearIncompatibleInitialTracking:
+          json['confirmClearIncompatibleInitialTracking'] as bool? ?? false,
+      initialTrackingAssignedVariantId:
+          json['initialTrackingAssignedVariantId']?.toString(),
       isDirty: false,
       isSubmitting: false,
       isSavingDraft: false,
@@ -366,6 +391,7 @@ class AddProductWizardStateCodec {
     return {
       'baseSku': s.baseSku,
       'parentProductBarcode': s.parentProductBarcode,
+      if (s.parentBarcodeType != null) 'parentBarcodeType': s.parentBarcodeType,
       'identifierTargets':
           s.identifierTargets.map((e) => e.toJson()).toList(),
       'assignments': s.assignments.map((e) => e.toJson()).toList(),
@@ -376,6 +402,7 @@ class AddProductWizardStateCodec {
     return Step5BarcodeSkuState(
       baseSku: json['baseSku']?.toString() ?? '',
       parentProductBarcode: json['parentProductBarcode']?.toString() ?? '',
+      parentBarcodeType: json['parentBarcodeType']?.toString(),
       identifierTargets: (json['identifierTargets'] as List<dynamic>?)
               ?.map((e) => Step5IdentifierTargetDto.fromJson(
                   Map<String, dynamic>.from(e as Map)))

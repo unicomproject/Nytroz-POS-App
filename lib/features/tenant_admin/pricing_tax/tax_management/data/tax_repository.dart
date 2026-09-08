@@ -1,16 +1,38 @@
 import '../domain/tax_aggregate.dart';
+import '../domain/tax_status.dart';
 
 abstract class TaxRepository {
-  Future<TaxAggregateListResult> getTaxes({
-    int pageNumber = 1,
-    int pageSize = 100,
+  Future<TaxSetupListResult> listTaxSetups(TaxSetupListQuery query);
+
+  Future<TaxSetup> getTaxSetup(String id);
+
+  Future<String> createTaxSetup(TaxSetupCreateInput input);
+
+  Future<void> updateTaxSetup(String id, TaxSetupUpdateInput input);
+
+  Future<void> scheduleRate(String id, TaxRateScheduleInput input);
+
+  Future<void> updateScheduledRate(
+    String id,
+    String rateId,
+    TaxRateScheduleInput input,
+  );
+
+  Future<void> deleteScheduledRate(String id, String rateId);
+
+  Future<TaxStatusChangeResult> activateTaxSetup(String id);
+
+  Future<TaxStatusChangeResult> deactivateTaxSetup(
+    String id, {
+    String? reason,
   });
 
-  Future<TaxAggregate?> getTax(String id);
+  Future<TaxProductUsingListResult> listProductsUsing(
+    String id,
+    TaxProductsQuery query,
+  );
+}
 
-  Future<String> createTax(TaxAggregateUpsertInput input);
-
-  Future<void> updateTax(String id, TaxAggregateUpsertInput input);
-
-  Future<void> deleteTax(String id);
+extension TaxStatusApi on TaxStatus {
+  String get queryValue => apiValue;
 }

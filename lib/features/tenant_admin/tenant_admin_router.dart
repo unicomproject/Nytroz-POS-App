@@ -13,6 +13,7 @@ import 'outlets/presentation/screens/add_outlet_screen.dart';
 import 'outlets/presentation/screens/edit_outlet_screen.dart';
 import 'outlets/presentation/screens/outlet_details_screen.dart';
 import 'outlets/presentation/screens/outlet_list_screen.dart';
+import 'role_permissions/presentation/screens/create_custom_role_screen.dart';
 import 'role_permissions/presentation/screens/edit_role_screen.dart';
 import 'role_permissions/presentation/screens/role_setup_step1_role_screen.dart';
 import 'role_permissions/presentation/screens/role_setup_step2_modules_screen.dart';
@@ -40,6 +41,10 @@ import 'products/presentation/screens/product_list_screen.dart';
 import 'products/presentation/screens/popular_products_curation_screen.dart';
 import 'brands/presentation/screens/brand_list_screen.dart';
 import 'brands/presentation/screens/brand_form_screen.dart';
+import 'categories/presentation/screens/add_category_screen.dart';
+import 'categories/presentation/screens/category_details_screen.dart';
+import 'categories/presentation/screens/category_list_screen.dart';
+import 'categories/presentation/screens/edit_category_screen.dart';
 import 'pricing_tax/tax_management/presentation/tax_management_page.dart';
 import 'inventory/presentation/navigation/inventory_routes.dart';
 import 'inventory/presentation/dashboard/pages/inventory_dashboard_page.dart';
@@ -129,6 +134,10 @@ List<RouteBase> tenantAdminRoutes(Ref ref) {
         GoRoute(
           path: '/tenant-admin/products/import',
           redirect: (context, state) => '/tenant-admin/products',
+        ),
+        GoRoute(
+          path: ProductsSidebarRoutes.categoriesTree,
+          redirect: (context, state) => ProductsSidebarRoutes.categories,
         ),
         GoRoute(
           path: '/tenant-admin/products/local-draft/:localDraftId',
@@ -232,6 +241,10 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
 
   if (definition.path == '/tenant-admin/roles') {
     return const RolesScreen();
+  }
+
+  if (definition.path == '/tenant-admin/roles/add') {
+    return const CreateCustomRoleScreen();
   }
 
   if (definition.path == '/tenant-admin/roles/:id/edit') {
@@ -393,13 +406,30 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
                 state.uri.pathSegments[2] == 'draft'
             ? state.uri.pathSegments[3]
             : null);
-    return AddProductScreen(resumeProductId: draftId);
+    final duplicateFrom = state.uri.queryParameters['duplicateFrom'];
+    return AddProductScreen(
+      resumeProductId: draftId,
+      duplicateFromProductId: duplicateFrom,
+    );
   }
 
   if (definition.path == ProductsSidebarRoutes.categories) {
-    return ProductsComingSoonScreen(
-      title: definition.title,
-      permissionCode: definition.permissionCode,
+    return const CategoryListScreen();
+  }
+
+  if (definition.path == ProductsSidebarRoutes.categoriesAdd) {
+    return const AddCategoryScreen();
+  }
+
+  if (definition.path == '/tenant-admin/categories/:id') {
+    return CategoryDetailsScreen(
+      categoryId: state.pathParameters['id'] ?? '',
+    );
+  }
+
+  if (definition.path == '/tenant-admin/categories/:id/edit') {
+    return EditCategoryScreen(
+      categoryId: state.pathParameters['id'] ?? '',
     );
   }
 
@@ -570,26 +600,56 @@ bool _canAccessRoute(
   TenantAdminAccessChecker accessChecker,
   TenantAdminRouteDefinition definition,
 ) {
+  if (definition.path == '/tenant-admin/roles/add') {
+    return accessChecker.canShowActionWithAnyPermission(
+      TenantAdminFeatureCodes.rolePermission,
+      [
+        TenantAdminPermissionCodes.tenantRolesCreate,
+        TenantAdminPermissionCodes.tenantRolesManage,
+      ],
+    );
+  }
+
+  if (definition.path == '/tenant-admin/roles/:id/edit') {
+    return accessChecker.canShowActionWithAnyPermission(
+      TenantAdminFeatureCodes.rolePermission,
+      [
+        TenantAdminPermissionCodes.tenantRolesUpdate,
+        TenantAdminPermissionCodes.tenantRolesPermissionsUpdate,
+        TenantAdminPermissionCodes.tenantRolesUsersAssign,
+        TenantAdminPermissionCodes.tenantRolesOutletsAssign,
+        TenantAdminPermissionCodes.tenantRolesManage,
+      ],
+    );
+  }
+
   if (definition.menuKey == 'roles-access') {
     return accessChecker.canShowActionWithAnyPermission(
       TenantAdminFeatureCodes.rolePermission,
       [
-        TenantAdminPermissionCodes.rolesPermissionsView,
-        TenantAdminPermissionCodes.rolesView,
-        TenantAdminPermissionCodes.permissionsView,
-        TenantAdminPermissionCodes.tenantRoleManage,
+        TenantAdminPermissionCodes.tenantRolesPermissionsView,
+        TenantAdminPermissionCodes.tenantRolesPermissionsUpdate,
+        TenantAdminPermissionCodes.tenantRolesAssignmentsView,
+        TenantAdminPermissionCodes.tenantRolesUsersAssign,
+        TenantAdminPermissionCodes.tenantRolesOutletsAssign,
+        TenantAdminPermissionCodes.tenantRolesView,
+        TenantAdminPermissionCodes.tenantPermissionsView,
+        TenantAdminPermissionCodes.tenantRolesManage,
       ],
     );
   }
 
   if (definition.path.startsWith('/tenant-admin/roles-permissions')) {
-    return accessChecker.can(TenantAdminPermissionCodes.rolesPermissionsView) ||
+    return accessChecker.can(
+          TenantAdminPermissionCodes.tenantRolesPermissionsView,
+        ) ||
         accessChecker.canShowActionWithAnyPermission(
           TenantAdminFeatureCodes.rolePermission,
           [
-            TenantAdminPermissionCodes.rolesView,
-            TenantAdminPermissionCodes.permissionsView,
-            TenantAdminPermissionCodes.tenantRoleManage,
+            TenantAdminPermissionCodes.tenantRolesView,
+            TenantAdminPermissionCodes.tenantRolesAssignmentsView,
+            TenantAdminPermissionCodes.tenantPermissionsView,
+            TenantAdminPermissionCodes.tenantRolesManage,
           ],
         );
   }
@@ -640,7 +700,12 @@ bool _canAccessRoute(
   }
 
   if (definition.path == '/tenant-admin/staff/:id/edit') {
-    return accessChecker.canUpdateUser();
+    return accessChecker.canUpdateUser() ||
+        accessChecker.canUpdateUserStatus() ||
+        accessChecker.canAssignUserRole() ||
+        accessChecker.canAssignUserOutlets() ||
+        accessChecker.canAssignUserTills() ||
+        accessChecker.canOverrideUserPermissions();
   }
 
   if (definition.path == '/tenant-admin/staff' ||
@@ -667,13 +732,13 @@ bool _canAccessRoute(
   if (definition.path == ProductsSidebarRoutes.list ||
       definition.path == ProductsSidebarRoutes.add ||
       definition.path == ProductsSidebarRoutes.categories ||
+      definition.path == ProductsSidebarRoutes.categoriesAdd ||
       definition.path == ProductsSidebarRoutes.brands ||
       definition.path == ProductsSidebarRoutes.tax ||
       definition.path == ProductsSidebarRoutes.variantTemplates ||
       definition.path == ProductsSidebarRoutes.popular) {
     return ProductsRouteGuard.canAccessPath(accessChecker, definition.path);
   }
-
 
   if (definition.path == '/tenant-admin/products') {
     return accessChecker.canViewProductListNav();
@@ -690,6 +755,16 @@ bool _canAccessRoute(
 
   if (definition.path == '/tenant-admin/products/:id') {
     return accessChecker.canAccessProductModule();
+  }
+
+  if (definition.path == '/tenant-admin/categories/:id/edit') {
+    return accessChecker.hasProductCatalogEntitlement() &&
+        accessChecker.canUpdateCategory();
+  }
+
+  if (definition.path == '/tenant-admin/categories/:id') {
+    return accessChecker.hasProductCatalogEntitlement() &&
+        accessChecker.canFetchCategoryList();
   }
 
   if (InventoryRoutes.matches(definition.path, InventoryRoutes.dashboard)) {

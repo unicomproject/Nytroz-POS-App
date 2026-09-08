@@ -5,6 +5,13 @@ class ProductsSidebarRoutes {
   static const list = '/tenant-admin/products';
   static const add = '/tenant-admin/products/add';
   static const categories = '/tenant-admin/categories';
+  static const categoriesAdd = '/tenant-admin/categories/add';
+  static const categoriesTree = '/tenant-admin/categories/tree';
+
+  static String categoryDetail(String id) => '/tenant-admin/categories/$id';
+
+  static String categoryEdit(String id) => '/tenant-admin/categories/$id/edit';
+
   static const brands = '/tenant-admin/brands';
   static const addBrand = '/tenant-admin/brands/add';
   static const editBrandPattern = '/tenant-admin/brands/:brandId/edit';
@@ -23,6 +30,9 @@ class ProductsSidebarRoutes {
 
   static bool isProductsArea(String path) {
     if (path == categories ||
+        path == categoriesAdd ||
+        path == categoriesTree ||
+        path.startsWith('$categories/') ||
         path == brands ||
         path == tax ||
         path.startsWith('$brands/') ||

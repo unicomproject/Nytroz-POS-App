@@ -16,9 +16,9 @@ class PaymentMethodEqualGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final count = children.length.clamp(0, 5);
+        final count = children.length.clamp(0, 4);
         if (count == 0) return const SizedBox.shrink();
-        final columns = count <= 2 ? count : (count == 4 ? 2 : 3);
+        final columns = count == 1 ? 1 : 2;
         final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
         final rows = <Widget>[];
         var index = 0;

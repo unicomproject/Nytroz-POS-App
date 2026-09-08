@@ -9,11 +9,13 @@ final rolesListQueryProvider = StateProvider.autoDispose<RoleListQuery>((ref) {
   return const RoleListQuery();
 });
 
-final rolesListProvider = FutureProvider.autoDispose<PaginatedRoleList>((ref) async {
+final rolesListProvider =
+    FutureProvider.autoDispose<PaginatedRoleList>((ref) async {
   ref.watch(authHeaderSyncProvider);
   final query = ref.watch(rolesListQueryProvider);
   final repository = ref.watch(rolePermissionRepositoryProvider);
   return repository.getRoles(query);
 });
 
-final selectedRoleIdProvider = StateProvider.autoDispose<String?>((ref) => null);
+final selectedRoleIdProvider =
+    StateProvider.autoDispose<String?>((ref) => null);

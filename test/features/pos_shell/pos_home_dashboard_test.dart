@@ -1,12 +1,44 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nytroz_pos/core/access/effective_permission_set.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/pos_shell/application/state/pos_home_dashboard_state.dart';
 import 'package:nytroz_pos/features/pos_shell/data/datasources/pos_home_remote_datasource.dart';
 import 'package:nytroz_pos/features/pos_shell/domain/entities/pos_home_action.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/cashier_profile_card.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/pos_home_dashboard.dart';
+
+Widget _wrapWithProfileAccess(Widget child) {
+  return ProviderScope(
+    overrides: [
+      effectivePermissionSetProvider.overrideWithValue(
+        EffectivePermissionSet.fromIterable(const [
+          PosPermissionCodes.homeProfileView,
+          PosPermissionCodes.homeProfileAvatar,
+          PosPermissionCodes.homeProfileName,
+          PosPermissionCodes.homeProfileRole,
+          PosPermissionCodes.homeSessionSummaryView,
+          PosPermissionCodes.homeSessionSummaryTotalSales,
+          PosPermissionCodes.homeSessionSummaryTransactionCount,
+          PosPermissionCodes.homeSessionSummaryReturns,
+          PosPermissionCodes.homeSessionSummaryDiscounts,
+          PosPermissionCodes.homeSessionSummaryNetSales,
+          PosPermissionCodes.salesNewSaleView,
+          PosPermissionCodes.homeActionsReturnsEntry,
+          PosPermissionCodes.cashDrawerPositionView,
+          PosPermissionCodes.homeActionsOnlineOrdersEntry,
+          PosPermissionCodes.heldSalesView,
+          PosPermissionCodes.tillSessionClose,
+        ]),
+      ),
+    ],
+    child: child,
+  );
+}
 
 void main() {
   test('successful payload without summary uses zero current-session values',
@@ -88,7 +120,7 @@ void main() {
   testWidgets('cashier card uses network image with initials fallback',
       (tester) async {
     const imageUrl = 'https://cdn.example.test/cashier.jpg';
-    await tester.pumpWidget(
+    await tester.pumpWidget(_wrapWithProfileAccess(
       MaterialApp(
         home: Scaffold(
           body: SizedBox(
@@ -100,20 +132,19 @@ void main() {
           ),
         ),
       ),
-    );
+    ));
 
-    final avatar = tester.widget<CircleAvatar>(
-      find.byKey(const Key('cashier-profile-avatar')),
+    final image = tester.widget<Image>(
+      find.byKey(const Key('cashier-profile-image')),
     );
-    expect(avatar.foregroundImage, isA<NetworkImage>());
-    expect((avatar.foregroundImage! as NetworkImage).url, imageUrl);
+    expect((image.image as NetworkImage).url, imageUrl);
     expect(find.text('CO'), findsOneWidget);
   });
 
-  testWidgets('cashier image request failure removes image and shows initials',
+  testWidgets('cashier image request failure keeps image request retryable',
       (tester) async {
     const imageUrl = 'https://cdn.example.test/missing-cashier.jpg';
-    await tester.pumpWidget(
+    await tester.pumpWidget(_wrapWithProfileAccess(
       MaterialApp(
         home: Scaffold(
           body: SizedBox(
@@ -125,28 +156,26 @@ void main() {
           ),
         ),
       ),
-    );
+    ));
 
-    var avatar = tester.widget<CircleAvatar>(
-      find.byKey(const Key('cashier-profile-avatar')),
+    final image = tester.widget<Image>(
+      find.byKey(const Key('cashier-profile-image')),
     );
-    avatar.onForegroundImageError!(
+    image.errorBuilder!(
+      tester.element(find.byKey(const Key('cashier-profile-image'))),
       NetworkImageLoadException(statusCode: 404, uri: Uri()),
       StackTrace.empty,
     );
     await tester.pump();
 
-    avatar = tester.widget<CircleAvatar>(
-      find.byKey(const Key('cashier-profile-avatar')),
-    );
-    expect(avatar.foregroundImage, isNull);
+    expect(find.byKey(const Key('cashier-profile-image')), findsOneWidget);
     expect(find.text('CO'), findsOneWidget);
   });
 
-  testWidgets('cashier image retries after intermittent load failure',
+  testWidgets('cashier image remains active after intermittent load failure',
       (tester) async {
     const imageUrl = 'https://cdn.example.test/cashier-retry.jpg';
-    await tester.pumpWidget(
+    await tester.pumpWidget(_wrapWithProfileAccess(
       MaterialApp(
         home: Scaffold(
           body: SizedBox(
@@ -158,40 +187,34 @@ void main() {
           ),
         ),
       ),
-    );
+    ));
 
-    var avatar = tester.widget<CircleAvatar>(
-      find.byKey(const Key('cashier-profile-avatar')),
+    var image = tester.widget<Image>(
+      find.byKey(const Key('cashier-profile-image')),
     );
-    avatar.onForegroundImageError!(
+    image.errorBuilder!(
+      tester.element(find.byKey(const Key('cashier-profile-image'))),
       NetworkImageLoadException(statusCode: 503, uri: Uri.parse(imageUrl)),
       StackTrace.empty,
     );
     await tester.pump();
-    expect(
-      tester
-          .widget<CircleAvatar>(find.byKey(const Key('cashier-profile-avatar')))
-          .foregroundImage,
-      isNull,
-    );
 
-    await tester.pump(const Duration(seconds: 2));
-    avatar = tester.widget<CircleAvatar>(
-      find.byKey(const Key('cashier-profile-avatar')),
+    image = tester.widget<Image>(
+      find.byKey(const Key('cashier-profile-image')),
     );
-    expect(avatar.foregroundImage, isA<NetworkImage>());
-    expect((avatar.foregroundImage! as NetworkImage).url, imageUrl);
+    expect((image.image as NetworkImage).url, imageUrl);
     expect(find.text('CO'), findsOneWidget);
   });
 
-  testWidgets('cashier image retries when dashboard refreshes with same URL',
+  testWidgets(
+      'cashier image remains active when dashboard refreshes with same URL',
       (tester) async {
     const imageUrl = 'https://cdn.example.test/cashier-refresh.jpg';
     final firstDashboard = _dashboard(profileImageUrl: imageUrl);
     final secondDashboard = _dashboard(profileImageUrl: imageUrl);
     expect(identical(firstDashboard, secondDashboard), isFalse);
 
-    await tester.pumpWidget(
+    await tester.pumpWidget(_wrapWithProfileAccess(
       MaterialApp(
         home: Scaffold(
           body: SizedBox(
@@ -201,25 +224,21 @@ void main() {
           ),
         ),
       ),
-    );
+    ));
 
-    final avatar = tester.widget<CircleAvatar>(
-      find.byKey(const Key('cashier-profile-avatar')),
+    final image = tester.widget<Image>(
+      find.byKey(const Key('cashier-profile-image')),
     );
-    avatar.onForegroundImageError!(
+    image.errorBuilder!(
+      tester.element(find.byKey(const Key('cashier-profile-image'))),
       NetworkImageLoadException(statusCode: 503, uri: Uri.parse(imageUrl)),
       StackTrace.empty,
     );
     await tester.pump();
-    expect(
-      tester
-          .widget<CircleAvatar>(find.byKey(const Key('cashier-profile-avatar')))
-          .foregroundImage,
-      isNull,
-    );
+    expect(find.byKey(const Key('cashier-profile-image')), findsOneWidget);
 
     // Update the same card element in place (POS home refresh).
-    await tester.pumpWidget(
+    await tester.pumpWidget(_wrapWithProfileAccess(
       MaterialApp(
         home: Scaffold(
           body: SizedBox(
@@ -229,20 +248,19 @@ void main() {
           ),
         ),
       ),
-    );
+    ));
 
-    final refreshed = tester.widget<CircleAvatar>(
-      find.byKey(const Key('cashier-profile-avatar')),
+    final refreshed = tester.widget<Image>(
+      find.byKey(const Key('cashier-profile-image')),
     );
-    expect(refreshed.foregroundImage, isA<NetworkImage>());
-    expect((refreshed.foregroundImage! as NetworkImage).url, imageUrl);
+    expect((refreshed.image as NetworkImage).url, imageUrl);
   });
 
   testWidgets('unavailable summary shows Retry without zero cards', (
     tester,
   ) async {
     var retries = 0;
-    await tester.pumpWidget(
+    await tester.pumpWidget(_wrapWithProfileAccess(
       MaterialApp(
         home: Scaffold(
           body: PosHomeSummarySection(
@@ -251,7 +269,7 @@ void main() {
           ),
         ),
       ),
-    );
+    ));
 
     expect(
       find.text('Current session summary is unavailable.'),
@@ -272,18 +290,20 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: PosHomeSummarySection(
-            summary: PosHomeSummaryState(
-              scope: 'CURRENT_TILL_SESSION',
-              currencyCode: 'LKR',
-              grossSalesAmount: 0,
-              transactionCount: 0,
-              refundAmount: 0,
-              refundCount: 0,
-              discountAmount: 0,
-              netSalesAmount: 0,
+      _wrapWithProfileAccess(
+        const MaterialApp(
+          home: Scaffold(
+            body: PosHomeSummarySection(
+              summary: PosHomeSummaryState(
+                scope: 'CURRENT_TILL_SESSION',
+                currencyCode: 'LKR',
+                grossSalesAmount: 0,
+                transactionCount: 0,
+                refundAmount: 0,
+                refundCount: 0,
+                discountAmount: 0,
+                netSalesAmount: 0,
+              ),
             ),
           ),
         ),
@@ -314,13 +334,13 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
+    await tester.pumpWidget(_wrapWithProfileAccess(
       MaterialApp(
         home: Scaffold(
           body: PosHomeDashboard(dashboard: _dashboard()),
         ),
       ),
-    );
+    ));
     await tester.pump();
 
     expect(find.byType(PosHomeDashboard), findsOneWidget);
@@ -371,13 +391,13 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(
+      await tester.pumpWidget(_wrapWithProfileAccess(
         MaterialApp(
           home: Scaffold(
             body: PosHomeDashboard(dashboard: _dashboard()),
           ),
         ),
-      );
+      ));
       await tester.pump();
 
       expect(find.byType(PosHomeDashboard), findsOneWidget);

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../tenant_admin/presentation/widgets/tenant_admin_buttons.dart';
 import '../providers/setup_token_provider.dart';
+import '../../domain/entities/auth_exception.dart';
 import '../widgets/auth_error_banner.dart';
 import '../widgets/auth_page_shell.dart';
 
@@ -30,7 +31,10 @@ class SetupLinkValidationScreen extends ConsumerWidget {
           ],
         ),
         error: (error, stackTrace) => _InvalidSetupToken(
-          message: 'Unable to validate setup link.',
+          message: error is AuthException
+              ? error.message
+              : 'Unable to validate setup link.',
+          buttonLabel: 'Retry verification',
           onRetry: () {
             ref
                 .refresh(setupTokenValidationProvider(setupToken))
@@ -40,7 +44,8 @@ class SetupLinkValidationScreen extends ConsumerWidget {
         data: (validation) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted && validation.valid && !validation.expired) {
-              context.go('/tenant-admin/setup/$setupToken/password');
+              context.go(
+                  '/tenant-admin/setup/${Uri.encodeComponent(setupToken)}/password');
             }
           });
 
@@ -65,10 +70,12 @@ class _InvalidSetupToken extends StatelessWidget {
   const _InvalidSetupToken({
     required this.message,
     required this.onRetry,
+    this.buttonLabel = 'Back to login',
   });
 
   final String message;
   final VoidCallback onRetry;
+  final String buttonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +83,7 @@ class _InvalidSetupToken extends StatelessWidget {
       children: [
         AuthErrorBanner(message: message),
         const SizedBox(height: TenantAdminSpacing.xl),
-        TenantAdminSecondaryButton(label: 'Back to login', onPressed: onRetry),
+        TenantAdminSecondaryButton(label: buttonLabel, onPressed: onRetry),
       ],
     );
   }
