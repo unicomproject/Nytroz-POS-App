@@ -1086,14 +1086,12 @@ class _SectionCard extends StatelessWidget {
     required this.title,
     required this.child,
     this.compact = false,
-    this.fillHeight = false,
     this.stretch = false,
   });
 
   final String title;
   final Widget child;
   final bool compact;
-  final bool fillHeight;
   final bool stretch;
 
   @override
@@ -1110,9 +1108,7 @@ class _SectionCard extends StatelessWidget {
           ),
         ),
         SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.lg),
-        if (fillHeight)
-          Expanded(child: child)
-        else if (stretch)
+        if (stretch)
           Expanded(child: child)
         else
           child,
@@ -1120,8 +1116,8 @@ class _SectionCard extends StatelessWidget {
     );
 
     return Container(
-      width: fillHeight || stretch ? double.infinity : null,
-      height: fillHeight || stretch ? double.infinity : null,
+      width: stretch ? double.infinity : null,
+      height: stretch ? double.infinity : null,
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.lg),

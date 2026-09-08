@@ -91,6 +91,7 @@ class _EditVariantDrawerState extends ConsumerState<EditVariantDrawer> {
         );
         if (!ok) {
           if (!mounted) return;
+          // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
           final error = widget.controller.state.pageError;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(error ?? 'Failed to apply variant image.')),
