@@ -54,6 +54,8 @@ const _fullOutletPermissions = [
   TenantAdminPermissionCodes.tenantOutletsUsersView,
   TenantAdminPermissionCodes.tenantOutletsTillsView,
   TenantAdminPermissionCodes.tenantOutletsUpdate,
+  TenantAdminPermissionCodes.tenantOutletsManagerAssign,
+  TenantAdminPermissionCodes.tenantOutletsImageUpdate,
   TenantAdminPermissionCodes.tillView,
   TenantAdminPermissionCodes.userView,
 ];

@@ -4,14 +4,16 @@ import '../../../../../core/access/tenant_admin_access_codes.dart';
 import '../../../../../core/network/dio_provider.dart';
 import '../../../../auth/presentation/providers/session_provider.dart';
 import '../../../presentation/providers/tenant_admin_access_provider.dart';
-import '../../../presentation/providers/tenant_admin_context_provider.dart';
 import '../../application/usecases/get_permission_catalog.dart';
 import '../../application/usecases/get_role_permissions.dart';
 import '../../application/usecases/update_role_permissions.dart';
 import '../../data/datasources/role_permission_remote_datasource.dart';
 import '../../data/repositories/role_permission_repository_impl.dart';
 import '../../domain/entities/permission_catalog.dart';
+import '../../domain/entities/role_assignment.dart';
 import '../../domain/entities/role_permissions.dart';
+import '../../domain/entities/role_list_query.dart';
+import '../../domain/entities/role_list_item.dart';
 import '../../domain/repositories/role_permission_repository.dart';
 
 final rolePermissionRemoteDatasourceProvider =
@@ -24,6 +26,12 @@ final rolePermissionRepositoryProvider =
   return RolePermissionRepositoryImpl(
     ref.watch(rolePermissionRemoteDatasourceProvider),
   );
+});
+
+final roleAssignmentOptionsProvider =
+    FutureProvider.autoDispose<RoleAssignmentOptions>((ref) async {
+  ref.watch(authHeaderSyncProvider);
+  return ref.watch(rolePermissionRepositoryProvider).getAssignmentOptions();
 });
 
 final getPermissionCatalogProvider = Provider<GetPermissionCatalog>((ref) {
@@ -218,20 +226,22 @@ final rolePermissionsSelectedRoleIdProvider =
     StateProvider.autoDispose<String?>((ref) => null);
 
 final rolePermissionsAvailableRolesProvider =
-    Provider.autoDispose<List<TenantAdminRoleOption>>((ref) {
-  final context = ref.watch(tenantAdminContextProvider).valueOrNull;
-  if (context == null) {
-    return const [];
-  }
-
-  return context.roles
-      .where((role) => role.roleId.isNotEmpty)
-      .map(
-        (role) => TenantAdminRoleOption(
-          id: role.roleId,
-          name: role.roleName,
-        ),
-      )
+    FutureProvider.autoDispose<List<TenantAdminRoleOption>>((ref) async {
+  ref.watch(authHeaderSyncProvider);
+  final repository = ref.watch(rolePermissionRepositoryProvider);
+  final roles = <RoleListItem>[];
+  var page = 1;
+  var totalPages = 1;
+  do {
+    final result = await repository.getRoles(
+      RoleListQuery(page: page, pageSize: 100),
+    );
+    roles.addAll(result.items);
+    totalPages = result.totalPages;
+    page++;
+  } while (page <= totalPages);
+  return roles
+      .map((role) => TenantAdminRoleOption(id: role.id, name: role.name))
       .toList(growable: false);
 });
 
@@ -247,11 +257,20 @@ class TenantAdminRoleOption {
 
 final rolePermissionsCanViewProvider = Provider<bool>((ref) {
   final access = ref.watch(tenantAdminAccessCheckerProvider).valueOrNull;
-  return access?.can(TenantAdminPermissionCodes.rolesPermissionsView) ?? false;
+  return access?.canAny([
+        TenantAdminPermissionCodes.tenantRolesPermissionsView,
+        TenantAdminPermissionCodes.tenantRolesPermissionsUpdate,
+        TenantAdminPermissionCodes.tenantPermissionsView,
+        TenantAdminPermissionCodes.tenantRolesManage,
+      ]) ??
+      false;
 });
 
 final rolePermissionsCanUpdateProvider = Provider<bool>((ref) {
   final access = ref.watch(tenantAdminAccessCheckerProvider).valueOrNull;
-  return access?.can(TenantAdminPermissionCodes.rolesPermissionsUpdate) ??
+  return access?.canAny([
+        TenantAdminPermissionCodes.tenantRolesPermissionsUpdate,
+        TenantAdminPermissionCodes.tenantRolesManage,
+      ]) ??
       false;
 });

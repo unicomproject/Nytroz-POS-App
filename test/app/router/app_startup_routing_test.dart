@@ -5,6 +5,19 @@ import 'package:nytroz_pos/shared/pos_session/pos_session_bootstrap_provider.dar
 import 'package:nytroz_pos/features/workspace/domain/workspace_access.dart';
 
 void main() {
+  test('invitation survives authenticated bootstrap and workspace selection', () {
+    for (final ready in [false, true]) {
+      expect(resolveAppRedirect(
+        path: '/tenant-admin/setup/test-invite',
+        authSessionHydrated: true,
+        isAuthenticated: true,
+        bootstrapReady: ready,
+        authenticatedInitialRoute: '/workspace/choose',
+        canAccessTenantAdmin: true,
+        canAccessPos: true,
+      ), isNull);
+    }
+  });
   group('cold-start routing', () {
     test('waits on bootstrap while auth storage is hydrating', () {
       expect(
@@ -141,6 +154,20 @@ void main() {
           authenticatedRoute: PostLoginRoute.noAccess.path,
           canAccessTenantAdmin: false,
           canAccessPos: false,
+        ),
+        PostLoginRoute.noAccess.path,
+      );
+    });
+
+    test('workspace access defaults to denied when no markers are supplied',
+        () {
+      expect(
+        resolveAppRedirect(
+          path: '/pos/home',
+          authSessionHydrated: true,
+          isAuthenticated: true,
+          bootstrapReady: true,
+          authenticatedInitialRoute: PostLoginRoute.noAccess.path,
         ),
         PostLoginRoute.noAccess.path,
       );

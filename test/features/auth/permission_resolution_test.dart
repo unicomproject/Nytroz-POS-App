@@ -71,12 +71,12 @@ void main() {
   });
 
   group('AuthSession dashboard routing', () {
-    test('tenant.dashboard.view enables tenant admin dashboard access', () {
+    test('workspace permission enables tenant admin dashboard access', () {
       const session = AuthSession(
         accessToken: 'token',
         userId: 'tenant-admin-1',
         userDisplayName: 'Tenant Admin',
-        permissionCodes: ['tenant.dashboard.view'],
+        permissionCodes: ['workspace.tenant_admin.access'],
       );
 
       expect(session.canAccessTenantAdminDashboard, isTrue);

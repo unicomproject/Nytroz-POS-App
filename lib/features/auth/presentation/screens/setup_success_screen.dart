@@ -11,8 +11,8 @@ class SetupSuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AuthPageShell(
-      title: 'Setup completed',
-      subtitle: 'Your password has been saved. Continue to login.',
+      title: 'Account Activated Successfully',
+      subtitle: 'Your ONEVERZ Tenant Administrator account is ready.',
       child: Column(
         children: [
           const Icon(Icons.check_circle,

@@ -43,7 +43,7 @@ class _EditTillScreenState extends ConsumerState<EditTillScreen> {
     }
 
     final detailState = ref.watch(tillDetailProvider(widget.tillId));
-    final outletsState = ref.watch(tillOutletOptionsProvider);
+    final canAssignOutlet = ref.watch(tillAssignOutletAccessProvider);
     final canViewHardware = ref.watch(tillHardwareViewAccessProvider);
     final canManageHardware = ref.watch(tillHardwareManageAccessProvider);
 
@@ -73,6 +73,25 @@ class _EditTillScreenState extends ConsumerState<EditTillScreen> {
           );
         }
 
+        if (!canAssignOutlet) {
+          return _buildEditPage(
+            detail: detail,
+            outlets: [
+              OutletOption(
+                id: detail.outletId,
+                name: detail.outletName,
+                code: detail.outletCode,
+                status: 'ACTIVE',
+              ),
+            ],
+            canChangeOutlet: false,
+            canViewHardware: canViewHardware,
+            canManageHardware: canManageHardware,
+          );
+        }
+
+        final outletsState = ref.watch(tillOutletOptionsProvider);
+
         return TenantAdminPageScaffold(
           title: 'Edit till',
           subtitle: 'Update till details.',
@@ -91,20 +110,57 @@ class _EditTillScreenState extends ConsumerState<EditTillScreen> {
                 );
               }
 
-              return TillForm(
+              return _buildTillForm(
+                detail: detail,
                 outlets: outlets,
-                initialValue: detail.toFormData(),
-                submitLabel: 'Save changes',
-                showHardwareSection: canViewHardware,
-                hardwareReadOnly: !canManageHardware,
-                backendErrors: _fieldErrors,
-                submitting: _submitting,
-                onSubmit: (form) => _submit(form),
+                canChangeOutlet: true,
+                canViewHardware: canViewHardware,
+                canManageHardware: canManageHardware,
               );
             },
           ),
         );
       },
+    );
+  }
+
+  Widget _buildEditPage({
+    required TillDetail detail,
+    required List<OutletOption> outlets,
+    required bool canChangeOutlet,
+    required bool canViewHardware,
+    required bool canManageHardware,
+  }) {
+    return TenantAdminPageScaffold(
+      title: 'Edit till',
+      subtitle: 'Update till details.',
+      child: _buildTillForm(
+        detail: detail,
+        outlets: outlets,
+        canChangeOutlet: canChangeOutlet,
+        canViewHardware: canViewHardware,
+        canManageHardware: canManageHardware,
+      ),
+    );
+  }
+
+  Widget _buildTillForm({
+    required TillDetail detail,
+    required List<OutletOption> outlets,
+    required bool canChangeOutlet,
+    required bool canViewHardware,
+    required bool canManageHardware,
+  }) {
+    return TillForm(
+      outlets: outlets,
+      initialValue: detail.toFormData(),
+      submitLabel: 'Save changes',
+      showHardwareSection: canViewHardware,
+      hardwareReadOnly: !canManageHardware,
+      canChangeOutlet: canChangeOutlet,
+      backendErrors: _fieldErrors,
+      submitting: _submitting,
+      onSubmit: (form) => _submit(form),
     );
   }
 

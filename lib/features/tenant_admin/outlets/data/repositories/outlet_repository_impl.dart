@@ -102,6 +102,14 @@ class OutletRepositoryImpl implements OutletRepository {
   }
 
   @override
+  Future<void> setOutletManager(String id, String tenantUserId) =>
+      _remoteDatasource.setOutletManager(id, tenantUserId);
+
+  @override
+  Future<void> removeOutletManager(String id) =>
+      _remoteDatasource.removeOutletManager(id);
+
+  @override
   Future<OutletImageUpload> uploadOutletImage(
     OutletImageUploadInput input, {
     void Function(int sent, int total)? onProgress,

@@ -174,6 +174,7 @@ class TenantAdminOutletOverview {
     this.imageUrl,
     this.addressLine1,
     this.city,
+    this.managerId,
     this.managerName,
     this.managerEmail,
     this.managerPhone,
@@ -208,6 +209,7 @@ class TenantAdminOutletOverview {
   final String? addressLine1;
   final String? city;
 
+  final String? managerId;
   final String? managerName;
   final String? managerEmail;
   final String? managerPhone;

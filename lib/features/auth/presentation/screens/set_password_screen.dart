@@ -28,6 +28,8 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
   final _password = TextEditingController();
   final _confirmPassword = TextEditingController();
   var _submitting = false;
+  var _showPassword = false;
+  var _showConfirmation = false;
   String? _error;
 
   @override
@@ -41,6 +43,39 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
   Widget build(BuildContext context) {
     final setupValidationState =
         ref.watch(setupTokenValidationProvider(widget.setupToken));
+    final validation = setupValidationState.asData?.value;
+    if (setupValidationState.isLoading ||
+        setupValidationState.hasError ||
+        validation == null ||
+        !validation.valid ||
+        validation.expired) {
+      return AuthPageShell(
+        title: 'Verify your invitation',
+        child: setupValidationState.when(
+          skipLoadingOnRefresh: false,
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Column(children: [
+            AuthErrorBanner(
+                message: error is AuthException
+                    ? error.message
+                    : 'Unable to verify your invitation. Please try again.'),
+            TextButton(
+              onPressed: () => ref
+                  .invalidate(setupTokenValidationProvider(widget.setupToken)),
+              child: const Text('Retry verification'),
+            ),
+          ]),
+          data: (value) => Column(children: [
+            AuthErrorBanner(
+                message: value.message ??
+                    'This invitation is invalid or has expired. Ask your administrator for a new invitation.'),
+            TextButton(
+                onPressed: () => context.go('/tenant-login'),
+                child: const Text('Back to login')),
+          ]),
+        ),
+      );
+    }
     final email = setupValidationState.maybeWhen(
       data: (validation) => validation.email,
       orElse: () => null,
@@ -48,7 +83,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
 
     return AuthPageShell(
       title: 'Set your password',
-      subtitle: 'Activate your Nytroz POS account to continue',
+      subtitle: 'Activate your ONEVERZ Tenant Admin account to continue',
       child: Form(
         key: _formKey,
         child: Column(
@@ -92,24 +127,42 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
             const SizedBox(height: TenantAdminSpacing.sm),
             TextFormField(
               controller: _password,
-              obscureText: true,
-              decoration: const InputDecoration(
+              obscureText: !_showPassword,
+              enabled: !_submitting,
+              decoration: InputDecoration(
                 labelText: 'New Password',
                 hintText: 'Enter secure password',
-                prefixIcon: Icon(Icons.lock_outline),
-                suffixIcon: Icon(Icons.visibility_outlined),
+                prefixIcon: const Icon(Icons.lock_outline),
+                suffixIcon: IconButton(
+                  tooltip: _showPassword ? 'Hide password' : 'Show password',
+                  onPressed: () =>
+                      setState(() => _showPassword = !_showPassword),
+                  icon: Icon(_showPassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined),
+                ),
               ),
               validator: _validatePassword,
             ),
             const SizedBox(height: TenantAdminSpacing.sm),
             TextFormField(
               controller: _confirmPassword,
-              obscureText: true,
-              decoration: const InputDecoration(
+              obscureText: !_showConfirmation,
+              enabled: !_submitting,
+              decoration: InputDecoration(
                 labelText: 'Confirm Password',
                 hintText: 'Repeat password',
-                prefixIcon: Icon(Icons.restart_alt),
-                suffixIcon: Icon(Icons.visibility_outlined),
+                prefixIcon: const Icon(Icons.restart_alt),
+                suffixIcon: IconButton(
+                  tooltip: _showConfirmation
+                      ? 'Hide confirmation'
+                      : 'Show confirmation',
+                  onPressed: () =>
+                      setState(() => _showConfirmation = !_showConfirmation),
+                  icon: Icon(_showConfirmation
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined),
+                ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -146,7 +199,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
                 SizedBox(width: TenantAdminSpacing.sm),
                 Expanded(
                   child: Text(
-                    'For security reasons, your password was not sent by email. This activation link will expire in 24 hours.',
+                    'Your password is never sent by email. This invitation can only be used once and is valid until its configured expiry time.',
                     style: TextStyle(
                       color: TenantAdminColors.mutedText,
                       fontStyle: FontStyle.italic,
@@ -182,7 +235,13 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
+    final validation =
+        ref.read(setupTokenValidationProvider(widget.setupToken)).asData?.value;
+    if (_submitting ||
+        validation == null ||
+        !validation.valid ||
+        validation.expired ||
+        !(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
@@ -202,8 +261,19 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen> {
       }
       context.go('/tenant-admin/setup/success');
     } on AuthException catch (error) {
+      if (!mounted) return;
+      if (const [
+        'INVITE_EXPIRED',
+        'INVITE_USED',
+        'INVITE_CANCELLED',
+        'INVITE_INVALID',
+        'TENANT_NOT_OPERATIONAL'
+      ].contains(error.errorCode)) {
+        ref.invalidate(setupTokenValidationProvider(widget.setupToken));
+      }
       setState(() => _error = _mapSetupPasswordError(error));
     } catch (_) {
+      if (!mounted) return;
       setState(() => _error = 'Unable to set password. Please try again.');
     } finally {
       if (mounted) {

@@ -131,7 +131,25 @@ void main() {
           'outletCount': 1,
           'moduleCount': 4,
           'permissionCount': 12,
+          'tillCount': 1,
+          'inheritedPermissionCount': 10,
+          'directPermissionCount': 2,
         },
+        'outletAccessScope': 'SELECTED_OUTLETS',
+        'defaultOutletId': 'outlet-1',
+        'tillAccessScope': 'SELECTED_TILLS',
+        'tills': [
+          {
+            'tillId': 'till-1',
+            'outletId': 'outlet-1',
+            'tillName': 'Front Till',
+            'tillCode': 'FT-01',
+            'status': 'ACTIVE',
+          },
+        ],
+        'defaultTillId': 'till-1',
+        'invitationStatus': 'SENT',
+        'effectivePermissionCodes': ['tenant.pos.sale.create'],
         'permissionOverrideEnabled': true,
         'overriddenPermissionIds': ['perm-1', 'perm-2'],
         'createdAt': '2026-01-05T08:00:00Z',
@@ -145,6 +163,14 @@ void main() {
       expect(dto.roleDescription, 'Leads day-to-day outlet operations');
       expect(dto.outletCount, 1);
       expect(dto.accessSummary?.moduleCount, 4);
+      expect(dto.accessSummary?.tillCount, 1);
+      expect(dto.outletAccessScope, 'SELECTED_OUTLETS');
+      expect(dto.defaultOutletId, 'outlet-1');
+      expect(dto.tillAccessScope, 'SELECTED_TILLS');
+      expect(dto.tills.single.name, 'Front Till');
+      expect(dto.defaultTillId, 'till-1');
+      expect(dto.invitationStatus, 'SENT');
+      expect(dto.effectivePermissionCodes, ['tenant.pos.sale.create']);
     });
   });
 
@@ -193,6 +219,9 @@ void main() {
         },
         'permissionOverrideEnabled': false,
         'overriddenPermissionIds': [],
+        'outletAccessScope': 'NO_OUTLET_ACCESS',
+        'tillAccessScope': 'NO_TILL_ACCESS',
+        'invitationStatus': 'REVOKED',
       });
 
       final detail = TenantUserMapper.toDetailEntity(dto);
@@ -203,6 +232,9 @@ void main() {
       expect(detail.roleDescription, 'Leads day-to-day outlet operations');
       expect(detail.outletCount, 2);
       expect(detail.accessSummary?.permissionCount, 12);
+      expect(detail.outletAccessScope, 'NO_OUTLET_ACCESS');
+      expect(detail.tillAccessScope, 'NO_TILL_ACCESS');
+      expect(detail.invitationStatus, 'REVOKED');
     });
   });
 }

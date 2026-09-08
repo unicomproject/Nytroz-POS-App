@@ -55,6 +55,16 @@ class TenantUserMapper {
     );
   }
 
+  static UserTillOption toTillOption(UserTillOptionDto dto) {
+    return UserTillOption(
+      id: dto.id,
+      outletId: dto.outletId,
+      name: dto.name,
+      code: dto.code,
+      status: dto.status,
+    );
+  }
+
   static PermissionItem toPermissionItem(PermissionItemDto dto) {
     return PermissionItem(
       id: dto.id,
@@ -92,17 +102,7 @@ class TenantUserMapper {
       permissionGroups:
           dto.permissionGroups.map(toPermissionGroup).toList(growable: false),
       supportedStatuses: dto.supportedStatuses,
-      tills: dto.tills
-          .map(
-            (till) => UserTillOption(
-              id: till.id,
-              outletId: till.outletId,
-              name: till.name,
-              code: till.code,
-              status: till.status,
-            ),
-          )
-          .toList(growable: false),
+      tills: dto.tills.map(toTillOption).toList(growable: false),
       supportedOutletAccessScopes: dto.supportedOutletAccessScopes,
       supportedTillAccessScopes: dto.supportedTillAccessScopes,
       capabilities: TenantUserCreateCapabilities(
@@ -147,6 +147,10 @@ class TenantUserMapper {
               outletCount: dto.accessSummary!.outletCount,
               moduleCount: dto.accessSummary!.moduleCount,
               permissionCount: dto.accessSummary!.permissionCount,
+              tillCount: dto.accessSummary!.tillCount,
+              inheritedPermissionCount:
+                  dto.accessSummary!.inheritedPermissionCount,
+              directPermissionCount: dto.accessSummary!.directPermissionCount,
             ),
       status: dto.status,
       permissionOverrideEnabled: dto.permissionOverrideEnabled,
@@ -155,6 +159,13 @@ class TenantUserMapper {
       createdAt: dto.createdAt,
       profileImageUrl: dto.profileImageUrl,
       profileMediaAssetId: dto.profileMediaAssetId,
+      outletAccessScope: dto.outletAccessScope,
+      defaultOutletId: dto.defaultOutletId,
+      tillAccessScope: dto.tillAccessScope,
+      tills: dto.tills.map(toTillOption).toList(growable: false),
+      defaultTillId: dto.defaultTillId,
+      invitationStatus: dto.invitationStatus,
+      effectivePermissionCodes: dto.effectivePermissionCodes,
     );
   }
 }

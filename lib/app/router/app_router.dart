@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/deep_link/tenant_admin_setup_link.dart';
 
 import '../../features/pos_shell/pos_shell_router.dart';
 import '../../features/device_activation/device_activation_router.dart';
@@ -61,7 +62,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     refreshListenable: refresh,
     initialLocation: posSessionBootRoute,
-    overridePlatformDefaultLocation: !kIsWeb,
+    // GoRouter uses the boot route on ordinary launches, but preserves a
+    // platform invitation URI on cold start. Flutter delivers warm VIEW intents.
+    overridePlatformDefaultLocation: false,
     routes: [
       ...authRoutes(),
       ...workspaceRoutes(ref),
@@ -75,6 +78,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ...tenantAdminRoutes(ref),
     ],
     redirect: (context, state) {
+      final invitation = TenantAdminSetupLink.redirect(state.uri);
+      if (invitation != null) return invitation;
       final session = ref.read(authSessionProvider);
       final isAuthenticated = session?.isAuthenticated ?? false;
       final authSessionHydrated = ref.read(authSessionHydratedProvider);
@@ -93,7 +98,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         selectedWorkspace: workspaceState.selected,
       );
 
-      if (kDebugMode && destination != null && destination != path) {
+      if (kDebugMode &&
+          destination != null &&
+          destination != path &&
+          !path.startsWith('/tenant-admin/setup') &&
+          !path.startsWith('/tenant-admin/payment')) {
         debugPrint(
           '[startup] redirect path=$path hydrated=$authSessionHydrated '
           'authenticated=$isAuthenticated bootstrapReady=${bootstrap.isReady} '
@@ -116,11 +125,14 @@ String? resolveAppRedirect({
   required bool bootstrapReady,
   required String authenticatedInitialRoute,
   bool canAccessTenantAdmin = false,
-  bool canAccessPos = true,
+  bool canAccessPos = false,
   AppWorkspace? selectedWorkspace,
 }) {
   final isPublicExternalRoute = path.startsWith('/tenant-admin/payment') ||
       path.startsWith('/tenant-admin/setup');
+  // An invitation is a public, backend-validated flow even when another
+  // account's session is being restored or a workspace has not been selected.
+  if (isPublicExternalRoute) return null;
   final isAuthRoute = path == '/tenant-login' || isPublicExternalRoute;
   final isTenantAdminRoute = path.startsWith('/tenant-admin');
   final isWorkspaceRoute = path == workspaceChooserRoute ||

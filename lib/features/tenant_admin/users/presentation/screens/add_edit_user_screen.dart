@@ -38,9 +38,20 @@ class AddEditUserScreen extends ConsumerWidget {
     final canInvite = ref.watch(userInviteAccessProvider);
     final canOverride = ref.watch(userPermissionOverrideAccessProvider);
     final canUpdate = ref.watch(userUpdateAccessProvider);
+    final canUpdateStatus = ref.watch(userStatusUpdateAccessProvider);
+    final canAssignRole = ref.watch(userRoleAssignAccessProvider);
+    final canAssignOutlets = ref.watch(userOutletAssignAccessProvider);
+    final canAssignTills = ref.watch(userTillAssignAccessProvider);
     final optionsState = ref.watch(userCreateOptionsProvider);
 
-    final hasAccess = isEdit ? canUpdate : (canCreate || canInvite);
+    final hasAccess = isEdit
+        ? canUpdate ||
+            canUpdateStatus ||
+            canAssignRole ||
+            canAssignOutlets ||
+            canAssignTills ||
+            canOverride
+        : (canCreate || canInvite);
     if (!hasAccess) {
       return TenantAdminPageScaffold(
         title: isEdit ? 'Edit User' : 'Add New User',
@@ -72,6 +83,10 @@ class AddEditUserScreen extends ConsumerWidget {
               initialDetail: null,
               canInvite: canInvite,
               canOverride: canOverride,
+              canUpdateStatus: canUpdateStatus,
+              canAssignRole: canAssignRole,
+              canAssignOutlets: canAssignOutlets,
+              canAssignTills: canAssignTills,
             );
           }
 
@@ -88,6 +103,10 @@ class AddEditUserScreen extends ConsumerWidget {
               initialDetail: detail,
               canInvite: canInvite,
               canOverride: canOverride,
+              canUpdateStatus: canUpdateStatus,
+              canAssignRole: canAssignRole,
+              canAssignOutlets: canAssignOutlets,
+              canAssignTills: canAssignTills,
               userId: userId,
             ),
           );
@@ -103,6 +122,10 @@ class _UserForm extends ConsumerStatefulWidget {
     required this.initialDetail,
     required this.canInvite,
     required this.canOverride,
+    required this.canUpdateStatus,
+    required this.canAssignRole,
+    required this.canAssignOutlets,
+    required this.canAssignTills,
     this.userId,
   });
 
@@ -110,6 +133,10 @@ class _UserForm extends ConsumerStatefulWidget {
   final TenantUserDetail? initialDetail;
   final bool canInvite;
   final bool canOverride;
+  final bool canUpdateStatus;
+  final bool canAssignRole;
+  final bool canAssignOutlets;
+  final bool canAssignTills;
   final String? userId;
 
   bool get isEdit => userId != null;
@@ -125,7 +152,12 @@ class _UserFormState extends ConsumerState<_UserForm> {
   late final TextEditingController _phoneController;
 
   String? _selectedRoleId;
+  late String _outletAccessScope;
   late Set<String> _selectedOutletIds;
+  String? _defaultOutletId;
+  late String _tillAccessScope;
+  late Set<String> _selectedTillIds;
+  String? _defaultTillId;
   late bool _permissionOverrideEnabled;
   late Set<String> _overriddenPermissionIds;
   bool _sendInviteEmail = false;
@@ -141,7 +173,12 @@ class _UserFormState extends ConsumerState<_UserForm> {
     _emailController = TextEditingController(text: detail?.email ?? '');
     _phoneController = TextEditingController(text: detail?.phone ?? '');
     _selectedRoleId = detail?.roleId;
+    _outletAccessScope = detail?.outletAccessScope ?? 'ALL_OUTLETS';
     _selectedOutletIds = detail?.outlets.map((o) => o.id).toSet() ?? {};
+    _defaultOutletId = detail?.defaultOutletId;
+    _tillAccessScope = detail?.tillAccessScope ?? 'ALL_ACCESSIBLE_TILLS';
+    _selectedTillIds = detail?.tills.map((till) => till.id).toSet() ?? {};
+    _defaultTillId = detail?.defaultTillId;
     _permissionOverrideEnabled = detail?.permissionOverrideEnabled ?? false;
     _overriddenPermissionIds = detail?.overriddenPermissionIds.toSet() ?? {};
     final rawStatus = detail?.status.trim().toUpperCase();
@@ -204,7 +241,10 @@ class _UserFormState extends ConsumerState<_UserForm> {
               roles: widget.options.roles,
               selectedRoleId: _selectedRoleId,
               onRoleChanged: (value) => setState(() => _selectedRoleId = value),
-              enabled: !_submitting,
+              enabled: !_submitting &&
+                  (!widget.isEdit || ref.read(userUpdateAccessProvider)),
+              roleEnabled:
+                  !_submitting && (!widget.isEdit || widget.canAssignRole),
               backendErrors: _fieldErrors,
             ),
             const SizedBox(height: TenantAdminSpacing.xl),
@@ -212,11 +252,42 @@ class _UserFormState extends ConsumerState<_UserForm> {
             const SizedBox(height: TenantAdminSpacing.xl),
             UserAccessSection(
               outlets: widget.options.outlets,
+              tills: widget.options.tills,
+              outletAccessScope: _outletAccessScope,
               selectedOutletIds: _selectedOutletIds,
-              onOutletsChanged: (value) =>
-                  setState(() => _selectedOutletIds = value),
-              enabled: !_submitting,
-              errorText: _fieldErrors['outletIds'],
+              defaultOutletId: _defaultOutletId,
+              tillAccessScope: _tillAccessScope,
+              selectedTillIds: _selectedTillIds,
+              defaultTillId: _defaultTillId,
+              supportedOutletAccessScopes:
+                  widget.options.supportedOutletAccessScopes,
+              supportedTillAccessScopes:
+                  widget.options.supportedTillAccessScopes,
+              supportsDefaultOutlet:
+                  widget.options.capabilities.supportsDefaultOutlet,
+              supportsDefaultTill:
+                  widget.options.capabilities.supportsDefaultTill,
+              onOutletScopeChanged: _changeOutletScope,
+              onOutletsChanged: _changeOutlets,
+              onDefaultOutletChanged: (value) =>
+                  setState(() => _defaultOutletId = value),
+              onTillScopeChanged: _changeTillScope,
+              onTillsChanged: (value) => setState(() {
+                _selectedTillIds = value;
+                if (!_selectedTillIds.contains(_defaultTillId)) {
+                  _defaultTillId = null;
+                }
+              }),
+              onDefaultTillChanged: (value) =>
+                  setState(() => _defaultTillId = value),
+              enabled: !_submitting &&
+                  (!widget.isEdit || ref.read(userUpdateAccessProvider)),
+              outletEnabled:
+                  !_submitting && (!widget.isEdit || widget.canAssignOutlets),
+              tillEnabled:
+                  !_submitting && (!widget.isEdit || widget.canAssignTills),
+              outletErrorText: _fieldErrors['outletIds'],
+              tillErrorText: _fieldErrors['tillIds'],
             ),
             const SizedBox(height: TenantAdminSpacing.xl),
             if (widget.canOverride) ...[
@@ -260,7 +331,8 @@ class _UserFormState extends ConsumerState<_UserForm> {
               isBusy: profileUploadBusy,
               progress: profileUpload.progress,
               errorText: profileUpload.errorMessage,
-              enabled: !_submitting,
+              enabled: !_submitting &&
+                  (!widget.isEdit || ref.read(userUpdateAccessProvider)),
               onChooseImage: profileUpload.mediaAssetId == null
                   ? profileUploader.chooseImage
                   : profileUploader.replaceImage,
@@ -292,8 +364,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
                   label: widget.isEdit ? 'Save Changes' : 'Save User',
                   icon: Icons.save_outlined,
                   loading: _submitting,
-                  onPressed:
-                      _submitting || profileUploadBusy ? null : _submit,
+                  onPressed: _submitting || profileUploadBusy ? null : _submit,
                 ),
               ],
             ),
@@ -362,7 +433,7 @@ class _UserFormState extends ConsumerState<_UserForm> {
         DropdownMenuItem(value: 'INACTIVE', child: Text('Inactive')),
         DropdownMenuItem(value: 'INVITED', child: Text('Invited')),
       ],
-      onChanged: _submitting
+      onChanged: _submitting || !widget.canUpdateStatus
           ? null
           : (value) => setState(() => _status = value ?? 'ACTIVE'),
     );
@@ -374,13 +445,15 @@ class _UserFormState extends ConsumerState<_UserForm> {
         profileUpload.status == UserProfileImageUploadStatus.uploading ||
         profileUpload.status == UserProfileImageUploadStatus.deleting) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Wait for the profile image upload to finish.')),
+        const SnackBar(
+            content: Text('Wait for the profile image upload to finish.')),
       );
       return;
     }
     if (profileUpload.status == UserProfileImageUploadStatus.failed) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Retry or remove the profile image before saving.')),
+        const SnackBar(
+            content: Text('Retry or remove the profile image before saving.')),
       );
       return;
     }
@@ -390,6 +463,21 @@ class _UserFormState extends ConsumerState<_UserForm> {
 
     if (_selectedRoleId == null) {
       setState(() => _fieldErrors = {'roleId': 'Role is required.'});
+      return;
+    }
+
+    if (_outletAccessScope == 'SELECTED_OUTLETS' &&
+        _selectedOutletIds.isEmpty) {
+      setState(() => _fieldErrors = {
+            'outletIds': 'Select at least one outlet.',
+          });
+      return;
+    }
+
+    if (_tillAccessScope == 'SELECTED_TILLS' && _selectedTillIds.isEmpty) {
+      setState(() => _fieldErrors = {
+            'tillIds': 'Select at least one till.',
+          });
       return;
     }
 
@@ -412,9 +500,14 @@ class _UserFormState extends ConsumerState<_UserForm> {
       status: widget.isEdit ? _status : null,
       profileImageFileName: profileUpload.fileName,
       profileMediaAssetId: profileUpload.mediaAssetId,
-      profileMediaAction: widget.isEdit
-          ? (profileUpload.changeAction ?? 'KEEP')
-          : null,
+      profileMediaAction:
+          widget.isEdit ? (profileUpload.changeAction ?? 'KEEP') : null,
+      outletAccessScope: _outletAccessScope,
+      defaultOutletId: _defaultOutletId,
+      tillAccessScope: _tillAccessScope,
+      tillIds: _selectedTillIds.toList(growable: false),
+      defaultTillId: _defaultTillId,
+      permissionCatalogVersion: widget.options.permissionCatalogVersion,
     );
 
     try {
@@ -467,6 +560,57 @@ class _UserFormState extends ConsumerState<_UserForm> {
       if (mounted) {
         setState(() => _submitting = false);
       }
+    }
+  }
+
+  void _changeOutletScope(String value) {
+    setState(() {
+      _outletAccessScope = value;
+      if (value != 'SELECTED_OUTLETS') {
+        _selectedOutletIds = {};
+      }
+      if (value == 'NO_OUTLET_ACCESS') {
+        _defaultOutletId = null;
+        _tillAccessScope = 'NO_TILL_ACCESS';
+        _selectedTillIds = {};
+        _defaultTillId = null;
+      } else {
+        _pruneTillSelection();
+      }
+    });
+  }
+
+  void _changeOutlets(Set<String> value) {
+    setState(() {
+      _selectedOutletIds = value;
+      if (!_selectedOutletIds.contains(_defaultOutletId)) {
+        _defaultOutletId = null;
+      }
+      _pruneTillSelection();
+    });
+  }
+
+  void _changeTillScope(String value) {
+    setState(() {
+      _tillAccessScope = value;
+      if (value != 'SELECTED_TILLS') {
+        _selectedTillIds = {};
+      }
+      if (value == 'NO_TILL_ACCESS') {
+        _defaultTillId = null;
+      }
+    });
+  }
+
+  void _pruneTillSelection() {
+    if (_outletAccessScope != 'SELECTED_OUTLETS') return;
+    final allowedTillIds = widget.options.tills
+        .where((till) => _selectedOutletIds.contains(till.outletId))
+        .map((till) => till.id)
+        .toSet();
+    _selectedTillIds = _selectedTillIds.intersection(allowedTillIds);
+    if (!allowedTillIds.contains(_defaultTillId)) {
+      _defaultTillId = null;
     }
   }
 

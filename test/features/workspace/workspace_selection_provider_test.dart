@@ -115,12 +115,17 @@ const _dualSession = AuthSession(
   accessToken: 'token',
   userId: 'user-1',
   userDisplayName: 'Multi User',
-  permissionCodes: ['tenant.dashboard.view', 'pos.home.view'],
+  permissionCodes: [
+    'workspace.tenant_admin.access',
+    'workspace.pos.access',
+    'tenant.dashboard.view',
+    'pos.home.view',
+  ],
 );
 
 const _posOnlySession = AuthSession(
   accessToken: 'token',
   userId: 'user-1',
   userDisplayName: 'Cashier',
-  permissionCodes: ['pos.home.view'],
+  permissionCodes: ['workspace.pos.access', 'pos.home.view'],
 );

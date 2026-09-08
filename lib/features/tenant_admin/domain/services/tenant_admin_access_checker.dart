@@ -97,18 +97,44 @@ class TenantAdminAccessChecker {
         return canAny([
           TenantAdminPermissionCodes.outletView,
           TenantAdminPermissionCodes.tenantOutletsView,
+          TenantAdminPermissionCodes.tenantOutletsCreate,
+          TenantAdminPermissionCodes.tenantOutletsUpdate,
+          TenantAdminPermissionCodes.tenantOutletsStatusUpdate,
+          TenantAdminPermissionCodes.tenantOutletsManagerAssign,
+          TenantAdminPermissionCodes.tenantOutletsImageUpdate,
+          TenantAdminPermissionCodes.tenantOutletsDelete,
           TenantAdminPermissionCodes.tenantOutletsManage,
         ]);
       case TenantAdminFeatureCodes.staffManagement:
         return canAny([
           TenantAdminPermissionCodes.userView,
+          TenantAdminPermissionCodes.tenantUsersCreate,
+          TenantAdminPermissionCodes.tenantUsersInvite,
+          TenantAdminPermissionCodes.tenantUsersUpdate,
+          TenantAdminPermissionCodes.tenantUsersDelete,
+          TenantAdminPermissionCodes.tenantUsersDisable,
+          TenantAdminPermissionCodes.tenantUsersRolesAssign,
+          TenantAdminPermissionCodes.tenantUsersOutletsAssign,
+          TenantAdminPermissionCodes.tenantUsersTillsAssign,
+          TenantAdminPermissionCodes.tenantUsersInvitesResend,
+          TenantAdminPermissionCodes.tenantUsersInvitesRevoke,
           TenantAdminPermissionCodes.tenantUserManage,
         ]);
       case TenantAdminFeatureCodes.rolePermission:
         return canAny([
-          TenantAdminPermissionCodes.roleView,
-          TenantAdminPermissionCodes.permissionView,
-          TenantAdminPermissionCodes.tenantRoleManage,
+          TenantAdminPermissionCodes.tenantRolesView,
+          TenantAdminPermissionCodes.tenantRolesCreate,
+          TenantAdminPermissionCodes.tenantRolesUpdate,
+          TenantAdminPermissionCodes.tenantRolesDelete,
+          TenantAdminPermissionCodes.tenantRolesPermissionsView,
+          TenantAdminPermissionCodes.tenantRolesPermissionsUpdate,
+          TenantAdminPermissionCodes.tenantRolesAssignmentsView,
+          TenantAdminPermissionCodes.tenantRolesAssignmentsUpdate,
+          TenantAdminPermissionCodes.tenantRolesStatusUpdate,
+          TenantAdminPermissionCodes.tenantRolesUsersAssign,
+          TenantAdminPermissionCodes.tenantRolesOutletsAssign,
+          TenantAdminPermissionCodes.tenantPermissionsView,
+          TenantAdminPermissionCodes.tenantRolesManage,
         ]);
       case TenantAdminFeatureCodes.productManagement:
         return canAny([
@@ -280,9 +306,13 @@ class TenantAdminAccessChecker {
       case 'roles-access':
         return canAccessFeature(menuItem.featureCode) &&
             canAny([
-              TenantAdminPermissionCodes.roleView,
-              TenantAdminPermissionCodes.permissionView,
-              TenantAdminPermissionCodes.tenantRoleManage,
+              TenantAdminPermissionCodes.tenantRolesView,
+              TenantAdminPermissionCodes.tenantRolesPermissionsView,
+              TenantAdminPermissionCodes.tenantRolesAssignmentsView,
+              TenantAdminPermissionCodes.tenantRolesUsersAssign,
+              TenantAdminPermissionCodes.tenantRolesOutletsAssign,
+              TenantAdminPermissionCodes.tenantPermissionsView,
+              TenantAdminPermissionCodes.tenantRolesManage,
             ]);
       case 'billing':
         return canAccessFeature(menuItem.featureCode) &&
@@ -683,9 +713,22 @@ class TenantAdminAccessChecker {
   }
 
   bool canCreateOutlet() {
-    return canShowAction(
+    return canShowActionWithAnyPermission(
       TenantAdminFeatureCodes.outletManagement,
-      TenantAdminPermissionCodes.outletCreate,
+      [
+        TenantAdminPermissionCodes.tenantOutletsCreate,
+        TenantAdminPermissionCodes.tenantOutletsManage,
+      ],
+    );
+  }
+
+  bool canDeleteOutlet() {
+    return canShowActionWithAnyPermission(
+      TenantAdminFeatureCodes.outletManagement,
+      [
+        TenantAdminPermissionCodes.tenantOutletsDelete,
+        TenantAdminPermissionCodes.tenantOutletsManage,
+      ],
     );
   }
 
@@ -727,6 +770,11 @@ class TenantAdminAccessChecker {
           TenantAdminPermissionCodes.tillDelete,
           TenantAdminPermissionCodes.tenantTillsDelete,
         ]);
+  }
+
+  bool canAssignTillOutlet() {
+    return hasTillManagementEntitlement() &&
+        can(TenantAdminPermissionCodes.tenantTillsAssignOutlet);
   }
 
   bool canViewTillHardware() {
@@ -784,7 +832,8 @@ class TenantAdminAccessChecker {
         ]);
   }
 
-  bool canAddUser() => canCreateUser() || canInviteUser();
+  bool canAddUser() =>
+      (canCreateUser() || canInviteUser()) && canAssignUserRole();
 
   bool canViewUserDetail() {
     return hasUserManagementEntitlement() &&
@@ -804,6 +853,30 @@ class TenantAdminAccessChecker {
     return hasUserManagementEntitlement() &&
         can(TenantAdminPermissionCodes.tenantUsersUpdate);
   }
+
+  bool canUpdateUserStatus() =>
+      hasUserManagementEntitlement() &&
+      can(TenantAdminPermissionCodes.tenantUsersDisable);
+
+  bool canAssignUserRole() =>
+      hasUserManagementEntitlement() &&
+      can(TenantAdminPermissionCodes.tenantUsersRolesAssign);
+
+  bool canAssignUserOutlets() =>
+      hasUserManagementEntitlement() &&
+      can(TenantAdminPermissionCodes.tenantUsersOutletsAssign);
+
+  bool canAssignUserTills() =>
+      hasUserManagementEntitlement() &&
+      can(TenantAdminPermissionCodes.tenantUsersTillsAssign);
+
+  bool canResendUserInvite() =>
+      hasUserManagementEntitlement() &&
+      can(TenantAdminPermissionCodes.tenantUsersInvitesResend);
+
+  bool canRevokeUserInvite() =>
+      hasUserManagementEntitlement() &&
+      can(TenantAdminPermissionCodes.tenantUsersInvitesRevoke);
 
   bool canDeleteUser() {
     // See canUpdateUser() for why `tenant.user.manage` is intentionally
@@ -1288,6 +1361,21 @@ class TenantAdminAccessChecker {
       ],
     );
   }
+
+  bool canUpdateOutletStatus() => canShowActionWithAnyPermission(
+        TenantAdminFeatureCodes.outletManagement,
+        [TenantAdminPermissionCodes.tenantOutletsStatusUpdate],
+      );
+
+  bool canAssignOutletManager() => canShowActionWithAnyPermission(
+        TenantAdminFeatureCodes.outletManagement,
+        [TenantAdminPermissionCodes.tenantOutletsManagerAssign],
+      );
+
+  bool canUpdateOutletImage() => canShowActionWithAnyPermission(
+        TenantAdminFeatureCodes.outletManagement,
+        [TenantAdminPermissionCodes.tenantOutletsImageUpdate],
+      );
 
   bool canViewOutletSalesSummary() {
     return can(TenantAdminPermissionCodes.outletSalesSummaryView);

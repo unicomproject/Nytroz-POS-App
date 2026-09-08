@@ -1,44 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
-import '../../../presentation/widgets/tenant_admin_stepper_header.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Step Progress Indicator – 5 numbered circles with connecting lines
 // ─────────────────────────────────────────────────────────────────────────────
-
-class RoleSetupProgressIndicator extends StatelessWidget {
-  const RoleSetupProgressIndicator({
-    super.key,
-    required this.currentStep,
-    required this.totalSteps,
-  });
-
-  final int currentStep;
-  final int totalSteps;
-
-  static const _stepLabels = [
-    'Select Role',
-    'Select Modules',
-    'Configure\nPermissions',
-    'Assign Users\n& Access',
-    'Review\n& Save',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final labels = List<String>.generate(
-      totalSteps,
-      (index) => index < _stepLabels.length
-          ? _stepLabels[index]
-          : 'Step ${index + 1}',
-    );
-    return TenantAdminStepperHeader(
-      steps: labels,
-      currentStep: (currentStep - 1).clamp(0, totalSteps - 1).toInt(),
-    );
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Step Header – "Step X of 5 – Title"
@@ -434,6 +400,14 @@ class RoleTemplateCard extends StatelessWidget {
           color: isSelected
               ? TenantAdminColors.secondary
               : TenantAdminColors.surface,
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: TenantAdminColors.primary.withValues(alpha: 0.15),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+          ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,

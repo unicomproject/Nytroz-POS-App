@@ -52,6 +52,15 @@ final tillUpdateAccessProvider = Provider<bool>((ref) {
   );
 });
 
+final tillAssignOutletAccessProvider = Provider<bool>((ref) {
+  final accessState = ref.watch(tenantAdminAccessCheckerProvider);
+
+  return accessState.maybeWhen(
+    data: (accessChecker) => accessChecker.canAssignTillOutlet(),
+    orElse: () => false,
+  );
+});
+
 final tillDeleteAccessProvider = Provider<bool>((ref) {
   final accessState = ref.watch(tenantAdminAccessCheckerProvider);
 

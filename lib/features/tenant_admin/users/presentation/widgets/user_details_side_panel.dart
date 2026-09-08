@@ -12,6 +12,7 @@ import '../providers/tenant_user_visibility_provider.dart';
 import '../utils/user_api_errors.dart';
 import 'tenant_user_avatar.dart';
 import 'user_status_badge.dart';
+import 'user_invite_actions.dart';
 
 class UserDetailsSidePanel extends ConsumerWidget {
   const UserDetailsSidePanel({super.key, required this.userId});
@@ -66,7 +67,7 @@ class _UserDetailsContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final canEdit = ref.watch(userUpdateAccessProvider);
+    final canEdit = ref.watch(userMutationAccessProvider);
     final canDeactivate = ref.watch(userDeleteAccessProvider);
     final outletNames = user.outlets
         .map((outlet) => outlet.name)
@@ -112,8 +113,8 @@ class _UserDetailsContent extends ConsumerWidget {
                 children: [
                   Text(user.fullName,
                       style: TenantAdminTextStyles.body(context).copyWith(
-                            fontWeight: FontWeight.w700,
-                          )),
+                        fontWeight: FontWeight.w700,
+                      )),
                   const SizedBox(height: TenantAdminSpacing.xs),
                   UserStatusBadge(status: user.status),
                   const SizedBox(height: TenantAdminSpacing.xs),
@@ -156,6 +157,20 @@ class _UserDetailsContent extends ConsumerWidget {
               ? '$outletCount ${outletCount == 1 ? 'Outlet' : 'Outlets'}'
               : null,
         ),
+        _DetailRow(
+          icon: Icons.point_of_sale_outlined,
+          label: 'Till access',
+          value: _tillAccessLabel(user),
+          secondary: user.tills.isEmpty
+              ? null
+              : user.tills.map((till) => till.name).join(', '),
+        ),
+        if (_hasText(user.invitationStatus))
+          _DetailRow(
+            icon: Icons.mark_email_read_outlined,
+            label: 'Invitation status',
+            value: user.invitationStatus!.replaceAll('_', ' '),
+          ),
         if (user.accessSummary != null) ...[
           const SizedBox(height: TenantAdminSpacing.lg),
           const _SectionTitle('Access summary'),
@@ -182,6 +197,10 @@ class _UserDetailsContent extends ConsumerWidget {
                 ),
             ],
           ),
+        ],
+        if (ref.watch(userInviteAccessProvider)) ...[
+          const SizedBox(height: TenantAdminSpacing.md),
+          UserInviteActions(user: user),
         ],
       ],
     );
@@ -334,3 +353,12 @@ class _SummaryCard extends StatelessWidget {
 
 bool _hasText(String? value) => value?.trim().isNotEmpty == true;
 String _dash(String value) => value.trim().isEmpty ? '—' : value.trim();
+
+String _tillAccessLabel(TenantUserDetail user) =>
+    switch (user.tillAccessScope) {
+      'ALL_ACCESSIBLE_TILLS' => 'All accessible tills',
+      'SELECTED_TILLS' =>
+        '${user.tills.length} selected ${user.tills.length == 1 ? 'till' : 'tills'}',
+      'NO_TILL_ACCESS' => 'No till access',
+      _ => user.tillAccessScope.replaceAll('_', ' '),
+    };

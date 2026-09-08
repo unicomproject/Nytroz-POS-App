@@ -1,5 +1,4 @@
 import '../../../../core/access/pos_access_codes.dart';
-import '../../../../core/access/tenant_admin_access_codes.dart';
 import '../utils/jwt_expiry.dart';
 import '../utils/jwt_permissions.dart';
 
@@ -55,16 +54,7 @@ class AuthSession {
       canOpenPosTill || hasPermission('tenant.till.manage');
 
   bool get canAccessTenantAdminDashboard {
-    const dashboardCodes = [
-      TenantAdminPermissionCodes.tenantContextView,
-      TenantAdminPermissionCodes.dashboardView,
-      TenantAdminPermissionCodes.tenantDashboardView,
-      'tenant.dashboard.view',
-      'dashboard.view',
-      'tenant_admin.dashboard.view',
-    ];
-
-    return dashboardCodes.any(hasPermission);
+    return hasPermission('workspace.tenant_admin.access');
   }
 
   bool get requiresPosDeviceBootstrap => canActivatePosDevice || canOpenPosTill;

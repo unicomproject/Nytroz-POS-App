@@ -596,7 +596,20 @@ bool _canAccessRoute(
       TenantAdminFeatureCodes.rolePermission,
       [
         TenantAdminPermissionCodes.tenantRolesCreate,
-        TenantAdminPermissionCodes.tenantRoleManage,
+        TenantAdminPermissionCodes.tenantRolesManage,
+      ],
+    );
+  }
+
+  if (definition.path == '/tenant-admin/roles/:id/edit') {
+    return accessChecker.canShowActionWithAnyPermission(
+      TenantAdminFeatureCodes.rolePermission,
+      [
+        TenantAdminPermissionCodes.tenantRolesUpdate,
+        TenantAdminPermissionCodes.tenantRolesPermissionsUpdate,
+        TenantAdminPermissionCodes.tenantRolesUsersAssign,
+        TenantAdminPermissionCodes.tenantRolesOutletsAssign,
+        TenantAdminPermissionCodes.tenantRolesManage,
       ],
     );
   }
@@ -605,22 +618,29 @@ bool _canAccessRoute(
     return accessChecker.canShowActionWithAnyPermission(
       TenantAdminFeatureCodes.rolePermission,
       [
-        TenantAdminPermissionCodes.rolesPermissionsView,
-        TenantAdminPermissionCodes.rolesView,
-        TenantAdminPermissionCodes.permissionsView,
-        TenantAdminPermissionCodes.tenantRoleManage,
+        TenantAdminPermissionCodes.tenantRolesPermissionsView,
+        TenantAdminPermissionCodes.tenantRolesPermissionsUpdate,
+        TenantAdminPermissionCodes.tenantRolesAssignmentsView,
+        TenantAdminPermissionCodes.tenantRolesUsersAssign,
+        TenantAdminPermissionCodes.tenantRolesOutletsAssign,
+        TenantAdminPermissionCodes.tenantRolesView,
+        TenantAdminPermissionCodes.tenantPermissionsView,
+        TenantAdminPermissionCodes.tenantRolesManage,
       ],
     );
   }
 
   if (definition.path.startsWith('/tenant-admin/roles-permissions')) {
-    return accessChecker.can(TenantAdminPermissionCodes.rolesPermissionsView) ||
+    return accessChecker.can(
+          TenantAdminPermissionCodes.tenantRolesPermissionsView,
+        ) ||
         accessChecker.canShowActionWithAnyPermission(
           TenantAdminFeatureCodes.rolePermission,
           [
-            TenantAdminPermissionCodes.rolesView,
-            TenantAdminPermissionCodes.permissionsView,
-            TenantAdminPermissionCodes.tenantRoleManage,
+            TenantAdminPermissionCodes.tenantRolesView,
+            TenantAdminPermissionCodes.tenantRolesAssignmentsView,
+            TenantAdminPermissionCodes.tenantPermissionsView,
+            TenantAdminPermissionCodes.tenantRolesManage,
           ],
         );
   }
@@ -671,7 +691,12 @@ bool _canAccessRoute(
   }
 
   if (definition.path == '/tenant-admin/staff/:id/edit') {
-    return accessChecker.canUpdateUser();
+    return accessChecker.canUpdateUser() ||
+        accessChecker.canUpdateUserStatus() ||
+        accessChecker.canAssignUserRole() ||
+        accessChecker.canAssignUserOutlets() ||
+        accessChecker.canAssignUserTills() ||
+        accessChecker.canOverrideUserPermissions();
   }
 
   if (definition.path == '/tenant-admin/staff' ||
@@ -697,7 +722,6 @@ bool _canAccessRoute(
       definition.path == ProductsSidebarRoutes.popular) {
     return ProductsRouteGuard.canAccessPath(accessChecker, definition.path);
   }
-
 
   if (definition.path == '/tenant-admin/products') {
     return accessChecker.canViewProductListNav();

@@ -34,6 +34,10 @@ abstract class OutletRepository {
 
   Future<List<OutletManagerOption>> getManagerOptions();
 
+  Future<void> setOutletManager(String id, String tenantUserId);
+
+  Future<void> removeOutletManager(String id);
+
   Future<OutletImageUpload> uploadOutletImage(
     OutletImageUploadInput input, {
     void Function(int sent, int total)? onProgress,

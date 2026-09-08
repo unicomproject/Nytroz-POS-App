@@ -40,14 +40,21 @@ const outletRowActionConfigs = <OutletRowActionConfig>[
     actionId: OutletRowActionId.edit,
     label: 'Edit outlet',
     icon: Icons.edit,
-    permission: TenantAdminPermissionCodes.outletUpdate,
+    permission: TenantAdminPermissionCodes.tenantOutletsUpdate,
+  ),
+  OutletRowActionConfig(
+    id: 'toggle_status',
+    actionId: OutletRowActionId.toggleStatus,
+    label: 'Activate / Deactivate',
+    icon: Icons.toggle_on_outlined,
+    permission: TenantAdminPermissionCodes.tenantOutletsStatusUpdate,
   ),
   OutletRowActionConfig(
     id: 'delete',
     actionId: OutletRowActionId.delete,
     label: 'Delete outlet',
     icon: Icons.delete_outline,
-    permission: TenantAdminPermissionCodes.outletDelete,
+    permission: TenantAdminPermissionCodes.tenantOutletsDelete,
   ),
   OutletRowActionConfig(
     id: 'manage_tills',

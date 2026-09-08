@@ -25,10 +25,12 @@ class RoleDetailsSidePanel extends ConsumerWidget {
     if (roleId == null) {
       return Container(
         margin: EdgeInsets.zero,
-        decoration: isModal ? null : BoxDecoration(
-          color: TenantAdminColors.surface,
-          borderRadius: BorderRadius.zero,
-        ),
+        decoration: isModal
+            ? null
+            : BoxDecoration(
+                color: TenantAdminColors.surface,
+                borderRadius: BorderRadius.zero,
+              ),
         child: const Center(
           child: TenantAdminEmptyState(
             title: 'No Role Selected',
@@ -45,10 +47,12 @@ class RoleDetailsSidePanel extends ConsumerWidget {
 
     return Container(
       margin: EdgeInsets.zero,
-      decoration: isModal ? null : BoxDecoration(
-        color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.zero,
-      ),
+      decoration: isModal
+          ? null
+          : BoxDecoration(
+              color: TenantAdminColors.surface,
+              borderRadius: BorderRadius.zero,
+            ),
       child: detailsState.when(
         loading: () => const TenantAdminLoadingSkeleton(rowCount: 6),
         error: (error, stackTrace) => TenantAdminErrorState(
@@ -60,6 +64,7 @@ class RoleDetailsSidePanel extends ConsumerWidget {
           final isActive = role.status == 'Active';
           final canEdit = visibility?.showEditRole ?? false;
           final canDelete = visibility?.showDeleteRole ?? false;
+          final canUpdateStatus = visibility?.showUpdateStatus ?? false;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -72,8 +77,10 @@ class RoleDetailsSidePanel extends ConsumerWidget {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: TenantAdminColors.primary.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                        color:
+                            TenantAdminColors.primary.withValues(alpha: 0.10),
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
                       ),
                       child: const Icon(
                         Icons.admin_panel_settings_outlined,
@@ -107,7 +114,8 @@ class RoleDetailsSidePanel extends ConsumerWidget {
                                   color: isActive
                                       ? TenantAdminColors.successSurface
                                       : TenantAdminColors.dangerSurface,
-                                  borderRadius: BorderRadius.circular(TenantAdminRadius.xl),
+                                  borderRadius: BorderRadius.circular(
+                                      TenantAdminRadius.xl),
                                 ),
                                 child: Text(
                                   role.status,
@@ -142,7 +150,8 @@ class RoleDetailsSidePanel extends ConsumerWidget {
                         if (isModal) {
                           Navigator.of(context).pop();
                         } else {
-                          ref.read(selectedRoleIdProvider.notifier).state = null;
+                          ref.read(selectedRoleIdProvider.notifier).state =
+                              null;
                         }
                       },
                     ),
@@ -156,7 +165,8 @@ class RoleDetailsSidePanel extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (role.description != null && role.description!.isNotEmpty) ...[
+                      if (role.description != null &&
+                          role.description!.isNotEmpty) ...[
                         const Text(
                           'Description',
                           style: TextStyle(
@@ -180,17 +190,22 @@ class RoleDetailsSidePanel extends ConsumerWidget {
                           padding: const EdgeInsets.all(TenantAdminSpacing.md),
                           decoration: BoxDecoration(
                             color: TenantAdminColors.dangerSurface,
-                            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-                            border: Border.all(color: TenantAdminColors.dangerBorder),
+                            borderRadius:
+                                BorderRadius.circular(TenantAdminRadius.sm),
+                            border: Border.all(
+                                color: TenantAdminColors.dangerBorder),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.error_outline, color: TenantAdminColors.danger, size: 20),
+                              const Icon(Icons.error_outline,
+                                  color: TenantAdminColors.danger, size: 20),
                               const SizedBox(width: TenantAdminSpacing.sm),
                               Expanded(
                                 child: Text(
                                   mutationState.error!,
-                                  style: const TextStyle(color: TenantAdminColors.danger, fontSize: 13),
+                                  style: const TextStyle(
+                                      color: TenantAdminColors.danger,
+                                      fontSize: 13),
                                 ),
                               ),
                             ],
@@ -198,28 +213,37 @@ class RoleDetailsSidePanel extends ConsumerWidget {
                         ),
                         const SizedBox(height: TenantAdminSpacing.xl),
                       ],
-                      if (canEdit && !role.isSystem) ...[
-                        SizedBox(
-                          width: double.infinity,
-                          child: TenantAdminPrimaryButton(
-                            label: 'Edit Role',
-                            icon: Icons.edit_outlined,
-                            onPressed: mutationState.isLoading
-                                ? null
-                                : () => context.go('/tenant-admin/roles/${role.id}/edit'),
+                      if ((canEdit || canUpdateStatus) && !role.isSystem) ...[
+                        if (canEdit) ...[
+                          SizedBox(
+                            width: double.infinity,
+                            child: TenantAdminPrimaryButton(
+                              label: 'Edit Role',
+                              icon: Icons.edit_outlined,
+                              onPressed: mutationState.isLoading
+                                  ? null
+                                  : () => context.go(
+                                      '/tenant-admin/roles/${role.id}/edit'),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: TenantAdminSpacing.md),
-                        SizedBox(
-                          width: double.infinity,
-                          child: TenantAdminSecondaryButton(
-                            label: isActive ? 'Deactivate Role' : 'Activate Role',
-                            icon: isActive ? Icons.block : Icons.check_circle_outline,
-                            onPressed: mutationState.isLoading
-                                ? null
-                                : () => _confirmStatusChange(context, ref, role.id, !isActive),
+                          const SizedBox(height: TenantAdminSpacing.md),
+                        ],
+                        if (canUpdateStatus)
+                          SizedBox(
+                            width: double.infinity,
+                            child: TenantAdminSecondaryButton(
+                              label: isActive
+                                  ? 'Deactivate Role'
+                                  : 'Activate Role',
+                              icon: isActive
+                                  ? Icons.block
+                                  : Icons.check_circle_outline,
+                              onPressed: mutationState.isLoading
+                                  ? null
+                                  : () => _confirmStatusChange(
+                                      context, ref, role.id, !isActive),
+                            ),
                           ),
-                        ),
                       ],
                       if (canDelete && !role.isSystem) ...[
                         const SizedBox(height: TenantAdminSpacing.md),
@@ -234,7 +258,8 @@ class RoleDetailsSidePanel extends ConsumerWidget {
                                 vertical: TenantAdminSpacing.md,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+                                borderRadius:
+                                    BorderRadius.circular(TenantAdminRadius.sm),
                                 side: BorderSide(
                                   color: TenantAdminColors.dangerBorder,
                                 ),
@@ -257,7 +282,8 @@ class RoleDetailsSidePanel extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmStatusChange(BuildContext context, WidgetRef ref, String roleId, bool newStatus) async {
+  Future<void> _confirmStatusChange(BuildContext context, WidgetRef ref,
+      String roleId, bool newStatus) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -275,7 +301,9 @@ class RoleDetailsSidePanel extends ConsumerWidget {
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: newStatus ? TenantAdminColors.success : TenantAdminColors.danger,
+              backgroundColor: newStatus
+                  ? TenantAdminColors.success
+                  : TenantAdminColors.danger,
             ),
             child: Text(newStatus ? 'Activate' : 'Deactivate'),
           ),
@@ -284,17 +312,20 @@ class RoleDetailsSidePanel extends ConsumerWidget {
     );
 
     if (confirmed == true) {
-      await ref.read(roleMutationControllerProvider.notifier).updateRoleStatus(roleId, newStatus, null);
+      await ref
+          .read(roleMutationControllerProvider.notifier)
+          .updateRoleStatus(roleId, newStatus, null);
     }
   }
 
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref, String roleId) async {
+  Future<void> _confirmDelete(
+      BuildContext context, WidgetRef ref, String roleId) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Role?'),
         content: const Text(
-          'Are you sure you want to delete this role? This action cannot be undone.',
+          'This role will be deactivated and its access will stop. It can be reactivated later if needed.',
         ),
         actions: [
           TextButton(
@@ -303,7 +334,8 @@ class RoleDetailsSidePanel extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: TenantAdminColors.danger),
+            style: FilledButton.styleFrom(
+                backgroundColor: TenantAdminColors.danger),
             child: const Text('Delete'),
           ),
         ],
@@ -311,7 +343,9 @@ class RoleDetailsSidePanel extends ConsumerWidget {
     );
 
     if (confirmed == true) {
-      final success = await ref.read(roleMutationControllerProvider.notifier).deleteRole(roleId, null);
+      final success = await ref
+          .read(roleMutationControllerProvider.notifier)
+          .deleteRole(roleId, null);
       if (success) {
         ref.read(selectedRoleIdProvider.notifier).state = null;
       }

@@ -336,7 +336,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         permissionKey: PosPermissionCodes.viewNewSale,
       ),
       if (onlineOrdersCard != null &&
-          permissions.contains(PosPermissionCodes.manageOnlineOrders))
+          PosPermissionAccess.canViewOnlineOrders(permissions))
         PosHomeAction(
           key: 'manage-online-orders',
           label: 'Manage Online Orders',
@@ -344,10 +344,9 @@ PosHomeDashboardState _mapPayloadToDashboardState({
           iconKey: 'online-orders',
           buttonLabel: 'View Orders',
           isEnabled: onlineOrdersCard.enabled,
-          routeExists: false,
-          onTapActionKey: 'manage-online-orders',
+          targetRoute: '/pos/online-orders',
           featureKey: PosFeatureCodes.onlineOrders,
-          permissionKey: PosPermissionCodes.manageOnlineOrders,
+          permissionKey: PosPermissionCodes.accessOnlineOrders,
         ),
       PosHomeAction(
         key: 'returns-refunds',

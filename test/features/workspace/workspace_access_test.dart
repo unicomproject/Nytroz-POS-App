@@ -5,7 +5,7 @@ void main() {
   group('resolveWorkspaceAccess', () {
     test('grants only Tenant Admin for admin permissions', () {
       final access = resolveWorkspaceAccess(const [
-        'tenant.context.view',
+        'workspace.tenant_admin.access',
         'tenant.users.view',
       ]);
 
@@ -16,6 +16,7 @@ void main() {
 
     test('grants only POS for cashier permissions', () {
       final access = resolveWorkspaceAccess(const [
+        'workspace.pos.access',
         'pos.home.view',
         'pos.till.open',
       ]);
@@ -27,7 +28,9 @@ void main() {
 
     test('does not treat POS till delegation as Tenant Admin access', () {
       final access = resolveWorkspaceAccess(const [
+        'workspace.pos.access',
         'tenant.till.manage',
+        'tenant.tills.manage',
         'pos.till.open',
       ]);
 
@@ -37,8 +40,8 @@ void main() {
 
     test('grants both workspaces when both permission groups exist', () {
       final access = resolveWorkspaceAccess(const [
-        'tenant.dashboard.view',
-        'pos.home.view',
+        'workspace.tenant_admin.access',
+        'workspace.pos.access',
       ]);
 
       expect(access.hasMultiple, isTrue);
@@ -47,6 +50,16 @@ void main() {
 
     test('grants no workspace for unrelated permissions', () {
       final access = resolveWorkspaceAccess(const ['account.profile.edit']);
+
+      expect(access.hasAny, isFalse);
+    });
+
+    test('does not infer workspace access from module permission prefixes', () {
+      final access = resolveWorkspaceAccess(const [
+        'tenant.users.manage',
+        'tenant.tills.manage',
+        'pos.home.view',
+      ]);
 
       expect(access.hasAny, isFalse);
     });

@@ -14,12 +14,16 @@ class OutletCardList extends ConsumerWidget {
     required this.outlets,
     required this.onEdit,
     required this.onDisable,
+    required this.canEdit,
+    required this.canUpdateStatus,
     this.scrollable = false,
   });
 
   final List<Outlet> outlets;
   final ValueChanged<Outlet> onEdit;
   final ValueChanged<Outlet> onDisable;
+  final bool canEdit;
+  final bool canUpdateStatus;
   final bool scrollable;
 
   @override
@@ -47,6 +51,8 @@ class OutletCardList extends ConsumerWidget {
               ref.read(selectedOutletIdProvider.notifier).state = outlet.id,
           onEdit: () => onEdit(outlet),
           onDisable: () => onDisable(outlet),
+          canEdit: canEdit,
+          canUpdateStatus: canUpdateStatus,
         );
       },
     );
@@ -60,6 +66,8 @@ class _OutletCard extends StatelessWidget {
     required this.onTap,
     required this.onEdit,
     required this.onDisable,
+    required this.canEdit,
+    required this.canUpdateStatus,
   });
 
   final Outlet outlet;
@@ -67,6 +75,8 @@ class _OutletCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDisable;
+  final bool canEdit;
+  final bool canUpdateStatus;
 
   bool get _isActive => outlet.status.toUpperCase() == 'ACTIVE';
 
@@ -76,21 +86,24 @@ class _OutletCard extends StatelessWidget {
       builder: (context, constraints) {
         final overflowMenu = TenantAdminOverflowMenu(
           actions: [
-            TenantAdminOverflowAction(
-              id: 'edit',
-              icon: Icons.edit_outlined,
-              label: 'Edit',
-              onSelected: onEdit,
-            ),
-            TenantAdminOverflowAction(
-              id: 'status',
-              icon:
-                  _isActive ? Icons.block_outlined : Icons.check_circle_outline,
-              label: _isActive ? 'Disable' : 'Activate',
-              onSelected: onDisable,
-              destructive: _isActive,
-              success: !_isActive,
-            ),
+            if (canEdit)
+              TenantAdminOverflowAction(
+                id: 'edit',
+                icon: Icons.edit_outlined,
+                label: 'Edit',
+                onSelected: onEdit,
+              ),
+            if (canUpdateStatus)
+              TenantAdminOverflowAction(
+                id: 'status',
+                icon: _isActive
+                    ? Icons.block_outlined
+                    : Icons.check_circle_outline,
+                label: _isActive ? 'Deactivate' : 'Activate',
+                onSelected: onDisable,
+                destructive: _isActive,
+                success: !_isActive,
+              ),
           ],
         );
         final compact = constraints.maxWidth < 500;

@@ -25,12 +25,11 @@ void main() {
       expect(find.text('Employee ID (Optional)'), findsOneWidget);
       expect(find.text('Staff Code'), findsOneWidget);
       expect(find.text('Profile Photo'), findsOneWidget);
-      expect(find.text('Assign Role'), findsOneWidget);
+      expect(find.text('Assign Role'), findsNothing);
       expect(find.text('Select role'), findsNothing);
     });
 
-    testWidgets('active status reveals secure password fields',
-        (tester) async {
+    testWidgets('active status reveals secure password fields', (tester) async {
       await _pumpWizard(tester);
 
       await tester.tap(find.text('Active'));
@@ -46,18 +45,18 @@ void main() {
       );
     });
 
-    testWidgets('tablet landscape shows the full five-step indicator',
+    testWidgets('tablet landscape hides the removed five-step indicator',
         (tester) async {
       await _pumpWizard(tester, size: const Size(1024, 768));
 
+      expect(find.text('Basic Information'), findsWidgets);
       for (final label in const [
-        'Basic Information',
         'Assign Role',
         'Configure Permissions',
         'Outlet, Till & Access Scope',
         'Security & Review',
       ]) {
-        expect(find.text(label), findsWidgets);
+        expect(find.text(label), findsNothing);
       }
       expect(tester.takeException(), isNull);
     });
@@ -65,16 +64,24 @@ void main() {
     testWidgets('identity, role and permission steps are separate',
         (tester) async {
       await _toRoleStep(tester);
+      expect(find.text('Available roles'), findsOneWidget);
+      expect(find.text('2 active'), findsOneWidget);
       expect(find.text('Store Manager'), findsWidgets);
       expect(find.text('Cashier'), findsOneWidget);
 
       await tester.tap(find.text('Store Manager').first);
       await tester.pump();
+      expect(find.text('Inherited access'), findsOneWidget);
+      expect(find.text('Included modules'), findsOneWidget);
+      expect(find.text('Outlets'), findsOneWidget);
+      expect(find.text('Sales'), findsOneWidget);
       await _tapVisible(tester, find.text('Next'));
       await tester.pump();
 
       expect(find.text('Configure Permissions'), findsWidgets);
-      expect(find.text('Reporting'), findsOneWidget);
+      expect(find.text('Reporting'), findsWidgets);
+      expect(find.text('Override'), findsOneWidget);
+      expect(find.text('Search permissions'), findsOneWidget);
       expect(find.text('View Reports'), findsOneWidget);
     });
 
@@ -282,6 +289,18 @@ TenantAdminAccessChecker _checker() {
         TenantAdminPermission(
           permissionCode: TenantAdminPermissionCodes.tenantUsersInvite,
           permissionName: TenantAdminPermissionCodes.tenantUsersInvite,
+        ),
+        TenantAdminPermission(
+          permissionCode: TenantAdminPermissionCodes.tenantUsersRolesAssign,
+          permissionName: TenantAdminPermissionCodes.tenantUsersRolesAssign,
+        ),
+        TenantAdminPermission(
+          permissionCode: TenantAdminPermissionCodes.tenantUsersOutletsAssign,
+          permissionName: TenantAdminPermissionCodes.tenantUsersOutletsAssign,
+        ),
+        TenantAdminPermission(
+          permissionCode: TenantAdminPermissionCodes.tenantUsersTillsAssign,
+          permissionName: TenantAdminPermissionCodes.tenantUsersTillsAssign,
         ),
         TenantAdminPermission(
           permissionCode:

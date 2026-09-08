@@ -74,6 +74,20 @@ class TenantUserRemoteDatasource {
     await _dio.delete<dynamic>('$_usersPath/$id');
   }
 
+  Future<TenantUserDetailDto> resendInvite(String id) async {
+    final response = await _dio.post<dynamic>('$_usersPath/$id/resend-invite');
+    return TenantUserDetailDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<TenantUserDetailDto> revokeInvite(String id) async {
+    final response = await _dio.post<dynamic>('$_usersPath/$id/revoke-invite');
+    return TenantUserDetailDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
   Future<UserProfileImageUploadDto> uploadProfileImage(
     UserProfileImageUploadInput input, {
     void Function(int sent, int total)? onProgress,

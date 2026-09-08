@@ -328,6 +328,7 @@ const _posOperatorSession = AuthSession(
   userId: 'cashier-1',
   userDisplayName: 'Cashier',
   permissionCodes: [
+    'workspace.pos.access',
     'tenant.till.manage',
     'pos.till.open',
     'pos.home.view',
@@ -339,6 +340,7 @@ const _cashierSession = AuthSession(
   userId: 'cashier-1',
   userDisplayName: 'Cashier',
   permissionCodes: [
+    'workspace.pos.access',
     'pos.till.open',
     'pos.home.view',
   ],
@@ -349,6 +351,7 @@ const _tenantAdminSession = AuthSession(
   userId: 'tenant-admin-1',
   userDisplayName: 'Tenant Admin',
   permissionCodes: [
+    'workspace.tenant_admin.access',
     'tenant.context.view',
     'dashboard.view',
     'tills.view',
@@ -360,6 +363,8 @@ const _tenantAdminWithPosSession = AuthSession(
   userId: 'tenant-admin-1',
   userDisplayName: 'Tenant Admin',
   permissionCodes: [
+    'workspace.tenant_admin.access',
+    'workspace.pos.access',
     'tenant.dashboard.view',
     'pos.till.open',
     'pos.home.view',

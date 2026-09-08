@@ -25,6 +25,11 @@ class RolePermissionRemoteDatasource {
     return RoleSetupOptionsDto.fromJson(payload);
   }
 
+  Future<Map<String, dynamic>> getAssignmentOptions() async {
+    final response = await _dio.get<dynamic>('$_rolesPath/assignment-options');
+    return _unwrapApiPayload(response.data, response.requestOptions);
+  }
+
   Future<PermissionCatalogDto> getPermissionCatalog() async {
     final response = await _dio.get<dynamic>(_catalogPath);
     final payload = _unwrapApiPayload(response.data, response.requestOptions);

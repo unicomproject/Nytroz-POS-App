@@ -325,6 +325,7 @@ Future<void> _pumpNewSaleWithVariantCatalog(
 }) async {
   _lastCheckoutLines = const [];
   const permissionCodes = [
+    'workspace.pos.access',
     PosPermissionCodes.viewHome,
     PosPermissionCodes.viewNewSale,
     PosPermissionCodes.viewProducts,

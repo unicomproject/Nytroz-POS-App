@@ -7,6 +7,8 @@ import '../../application/usecases/get_user_create_options.dart';
 import '../../application/usecases/get_user_detail.dart';
 import '../../application/usecases/get_users.dart';
 import '../../application/usecases/update_user.dart';
+import '../../application/usecases/resend_user_invite.dart';
+import '../../application/usecases/revoke_user_invite.dart';
 import '../../data/datasources/tenant_user_remote_datasource.dart';
 import '../../data/repositories/tenant_user_repository_impl.dart';
 import '../../domain/entities/tenant_user.dart';
@@ -47,6 +49,14 @@ final updateUserProvider = Provider<UpdateUser>((ref) {
 
 final deleteUserProvider = Provider<DeleteUser>((ref) {
   return DeleteUser(ref.watch(tenantUserRepositoryProvider));
+});
+
+final resendUserInviteProvider = Provider<ResendUserInvite>((ref) {
+  return ResendUserInvite(ref.watch(tenantUserRepositoryProvider));
+});
+
+final revokeUserInviteProvider = Provider<RevokeUserInvite>((ref) {
+  return RevokeUserInvite(ref.watch(tenantUserRepositoryProvider));
 });
 
 final userCreateOptionsProvider =

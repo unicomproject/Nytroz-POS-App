@@ -23,6 +23,7 @@ class AddTillHardwareSection extends StatelessWidget {
     required this.onPrinterChanged,
     required this.onCashDrawerChanged,
     required this.onCardReaderChanged,
+    this.enabled = true,
     this.quickPairPanel,
     this.hardwareStatusCards,
   });
@@ -46,6 +47,7 @@ class AddTillHardwareSection extends StatelessWidget {
   final ValueChanged<String?> onPrinterChanged;
   final ValueChanged<String?> onCashDrawerChanged;
   final ValueChanged<String?> onCardReaderChanged;
+  final bool enabled;
 
   final Widget? quickPairPanel;
   final Widget? hardwareStatusCards;
@@ -105,8 +107,7 @@ class AddTillHardwareSection extends StatelessWidget {
         ),
         const SizedBox(height: TenantAdminSpacing.xs),
         const Text('A friendly name to identify this till device.',
-            style: TextStyle(
-                fontSize: 12, color: TenantAdminColors.mutedText)),
+            style: TextStyle(fontSize: 12, color: TenantAdminColors.mutedText)),
         const SizedBox(height: TenantAdminSpacing.lg),
         _buildCombo(
           label: 'Scanner',
@@ -171,6 +172,30 @@ class AddTillHardwareSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (!enabled) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(TenantAdminSpacing.md),
+            decoration: BoxDecoration(
+              color: TenantAdminColors.warningSurface,
+              border: Border.all(color: TenantAdminColors.warningBorder),
+              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.lock_outline,
+                    size: 18, color: TenantAdminColors.warning),
+                SizedBox(width: TenantAdminSpacing.sm),
+                Expanded(
+                  child: Text(
+                    'Hardware is view-only. Hardware Manage permission is required to assign devices.',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: TenantAdminSpacing.lg),
+        ],
         Row(
           children: [
             Container(
@@ -290,7 +315,10 @@ class AddTillHardwareSection extends StatelessWidget {
               isExpanded: true,
               decoration: InputDecoration(
                 hintText: hintText ?? 'Select $label',
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14, fontWeight: FontWeight.w400),
+                hintStyle: TextStyle(
+                    color: Colors.grey.shade400,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400),
                 prefixIcon: Icon(icon, color: Colors.grey.shade400, size: 20),
                 filled: true,
                 fillColor: const Color(0xFFF8F9FA),
@@ -308,7 +336,8 @@ class AddTillHardwareSection extends StatelessWidget {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFFF6A00), width: 1.5),
+                  borderSide:
+                      const BorderSide(color: Color(0xFFFF6A00), width: 1.5),
                 ),
               ),
               items: uniqueItems.map((item) {
@@ -317,14 +346,17 @@ class AddTillHardwareSection extends StatelessWidget {
                   child: Text((item as dynamic).name as String),
                 );
               }).toList(),
-              onChanged: (String? selectedId) {
-                if (selectedId != null) {
-                  controller.text = (uniqueItems.firstWhere(
-                          (e) => (e as dynamic).id == selectedId) as dynamic)
-                      .name;
-                  onChanged(selectedId);
-                }
-              },
+              onChanged: enabled
+                  ? (String? selectedId) {
+                      if (selectedId != null) {
+                        controller.text = (uniqueItems.firstWhere(
+                                    (e) => (e as dynamic).id == selectedId)
+                                as dynamic)
+                            .name;
+                        onChanged(selectedId);
+                      }
+                    }
+                  : null,
             ),
           ],
         );

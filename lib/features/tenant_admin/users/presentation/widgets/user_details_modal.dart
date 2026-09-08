@@ -11,6 +11,7 @@ import '../providers/tenant_user_providers.dart';
 import '../providers/tenant_user_visibility_provider.dart';
 import '../utils/user_api_errors.dart';
 import 'user_status_badge.dart';
+import 'user_invite_actions.dart';
 
 Future<void> showUserDetailsModal(BuildContext context, String userId) {
   return showAppDialog<void>(
@@ -27,7 +28,7 @@ class UserDetailsModal extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final detailState = ref.watch(userDetailProvider(userId));
-    final canEdit = ref.watch(userUpdateAccessProvider);
+    final canEdit = ref.watch(userMutationAccessProvider);
     final canDelete = ref.watch(userDeleteAccessProvider);
 
     return Dialog(
@@ -152,6 +153,12 @@ class _UserDetailsContent extends ConsumerWidget {
           _InfoRow(label: 'Phone', value: user.phone ?? '—'),
           _InfoRow(label: 'Role', value: _emptyDash(user.roleName)),
           _InfoRow(label: 'Outlet', value: outletNames),
+          _InfoRow(label: 'Till Access', value: _tillAccessLabel(user)),
+          if ((user.invitationStatus ?? '').trim().isNotEmpty)
+            _InfoRow(
+              label: 'Invitation',
+              value: _titleCase(user.invitationStatus!.replaceAll('_', ' ')),
+            ),
           _InfoRow(label: 'Status', value: _titleCase(user.status)),
           _InfoRow(
             label: 'Last Active',
@@ -183,6 +190,8 @@ class _UserDetailsContent extends ConsumerWidget {
               ],
             ),
           ],
+          const SizedBox(height: TenantAdminSpacing.md),
+          UserInviteActions(user: user),
         ],
       ),
     );
@@ -299,3 +308,12 @@ String _initials(String fullName) {
   return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
       .toUpperCase();
 }
+
+String _tillAccessLabel(TenantUserDetail user) =>
+    switch (user.tillAccessScope) {
+      'ALL_ACCESSIBLE_TILLS' => 'All accessible tills',
+      'SELECTED_TILLS' =>
+        '${user.tills.length} selected ${user.tills.length == 1 ? 'till' : 'tills'}',
+      'NO_TILL_ACCESS' => 'No till access',
+      _ => user.tillAccessScope.replaceAll('_', ' '),
+    };

@@ -10,6 +10,8 @@ import '../../../presentation/widgets/tenant_admin_pagination.dart';
 import '../../../presentation/widgets/tenant_admin_search_field.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/outlet.dart';
+import '../config/outlet_row_action_configs.dart';
+import '../providers/outlet_detail_providers.dart';
 import '../providers/outlet_providers.dart';
 import '../providers/outlet_visibility_provider.dart';
 import '../utils/outlet_list_filters.dart';
@@ -71,7 +73,8 @@ class OutletListPanel extends ConsumerWidget {
                     ? TenantAdminPrimaryButton(
                         label: isMobile ? 'Add' : 'Add Outlet',
                         icon: Icons.add,
-                        onPressed: () => context.go('/tenant-admin/outlets/add'),
+                        onPressed: () =>
+                            context.go('/tenant-admin/outlets/add'),
                       )
                     : null;
 
@@ -229,6 +232,12 @@ class _ListSection extends ConsumerWidget {
     final cardList = OutletCardList(
       outlets: result.items,
       scrollable: scrollable,
+      canEdit: visibility.visibleRowActions.any(
+        (action) => action.actionId == OutletRowActionId.edit,
+      ),
+      canUpdateStatus: visibility.visibleRowActions.any(
+        (action) => action.actionId == OutletRowActionId.toggleStatus,
+      ),
       onEdit: (outlet) => context.go('/tenant-admin/outlets/${outlet.id}/edit'),
       onDisable: (outlet) {
         _confirmDisable(context, ref, outlet);
@@ -262,7 +271,8 @@ class _ListSection extends ConsumerWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('${outlet.status.toUpperCase() == 'ACTIVE' ? 'Disable' : 'Activate'} outlet'),
+          title: Text(
+              '${outlet.status.toUpperCase() == 'ACTIVE' ? 'Disable' : 'Activate'} outlet'),
           content: Text(
             'Are you sure you want to ${outlet.status.toUpperCase() == 'ACTIVE' ? 'disable' : 'activate'} "${outlet.name}"?',
           ),
@@ -273,10 +283,14 @@ class _ListSection extends ConsumerWidget {
             ),
             FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: outlet.status.toUpperCase() == 'ACTIVE' ? TenantAdminColors.danger : TenantAdminColors.success,
+                backgroundColor: outlet.status.toUpperCase() == 'ACTIVE'
+                    ? TenantAdminColors.danger
+                    : TenantAdminColors.success,
               ),
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text(outlet.status.toUpperCase() == 'ACTIVE' ? 'Disable' : 'Activate'),
+              child: Text(outlet.status.toUpperCase() == 'ACTIVE'
+                  ? 'Disable'
+                  : 'Activate'),
             ),
           ],
         );
@@ -288,10 +302,13 @@ class _ListSection extends ConsumerWidget {
     }
 
     try {
-      // Assuming deleteOutletProvider acts as toggle/disable for this MVP
-      await ref.read(deleteOutletProvider).call(outlet.id);
+      final nextStatus =
+          outlet.status.toUpperCase() == 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      await ref.read(updateOutletStatusProvider).call(outlet.id, nextStatus);
       ref.invalidate(outletListProvider);
-      
+      ref.invalidate(outletSummaryDashboardProvider);
+      ref.invalidate(tenantAdminOutletOverviewProvider(outlet.id));
+
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${outlet.name} updated successfully')),

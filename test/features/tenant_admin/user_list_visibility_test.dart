@@ -66,6 +66,7 @@ void main() {
         permissions: [
           TenantAdminPermissionCodes.tenantUsersView,
           TenantAdminPermissionCodes.tenantUsersCreate,
+          TenantAdminPermissionCodes.tenantUsersRolesAssign,
         ],
         features: [TenantAdminFeatureCodes.staffManagement],
       );
@@ -81,6 +82,7 @@ void main() {
         permissions: [
           TenantAdminPermissionCodes.tenantUsersView,
           TenantAdminPermissionCodes.tenantUsersInvite,
+          TenantAdminPermissionCodes.tenantUsersRolesAssign,
         ],
         features: [TenantAdminFeatureCodes.staffManagement],
       );

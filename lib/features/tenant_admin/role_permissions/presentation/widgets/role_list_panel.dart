@@ -54,6 +54,7 @@ class RoleListPanel extends ConsumerWidget {
                 _RoleManagementCard(
                   role: role,
                   canEdit: visibility.showEditRole,
+                  canUpdateStatus: visibility.showUpdateStatus,
                   isLoading: mutationState.isLoading,
                   onView: () => onSelect(role),
                   onEdit: () =>
@@ -248,6 +249,7 @@ class RoleListPanel extends ConsumerWidget {
                     child: _RoleActions(
                       role: role,
                       canEdit: visibility.showEditRole,
+                      canUpdateStatus: visibility.showUpdateStatus,
                       isLoading: mutationState.isLoading,
                       onEdit: () =>
                           context.go('/tenant-admin/roles/${role.id}/edit'),
@@ -338,6 +340,7 @@ class _RoleManagementCard extends StatelessWidget {
   const _RoleManagementCard({
     required this.role,
     required this.canEdit,
+    required this.canUpdateStatus,
     required this.isLoading,
     required this.onView,
     required this.onEdit,
@@ -346,6 +349,7 @@ class _RoleManagementCard extends StatelessWidget {
 
   final RoleListItem role;
   final bool canEdit;
+  final bool canUpdateStatus;
   final bool isLoading;
   final VoidCallback onView;
   final VoidCallback onEdit;
@@ -432,7 +436,7 @@ class _RoleManagementCard extends StatelessWidget {
           ),
         ),
         actions: [
-          if (!role.isSystem && canEdit && !isLoading)
+          if (!role.isSystem && canUpdateStatus && !isLoading)
             TenantAdminManagementCardAction(
               label: 'Edit',
               icon: Icons.edit_outlined,
@@ -458,6 +462,7 @@ class _RoleActions extends StatelessWidget {
   const _RoleActions({
     required this.role,
     required this.canEdit,
+    required this.canUpdateStatus,
     required this.isLoading,
     required this.onEdit,
     required this.onToggleStatus,
@@ -465,13 +470,14 @@ class _RoleActions extends StatelessWidget {
 
   final RoleListItem role;
   final bool canEdit;
+  final bool canUpdateStatus;
   final bool isLoading;
   final VoidCallback onEdit;
   final VoidCallback onToggleStatus;
 
   @override
   Widget build(BuildContext context) {
-    if (role.isSystem || !canEdit) {
+    if (role.isSystem || (!canEdit && !canUpdateStatus)) {
       return const SizedBox.shrink();
     }
 
@@ -479,24 +485,26 @@ class _RoleActions extends StatelessWidget {
       child: TenantAdminOverflowMenu(
         tooltip: 'Actions',
         actions: [
-          TenantAdminOverflowAction(
-            id: 'edit',
-            icon: Icons.edit_outlined,
-            label: 'Edit',
-            onSelected: isLoading ? () {} : onEdit,
-            enabled: !isLoading,
-          ),
-          TenantAdminOverflowAction(
-            id: 'status',
-            icon: role.isActive
-                ? Icons.block_outlined
-                : Icons.check_circle_outline,
-            label: role.isActive ? 'Disable' : 'Enable',
-            onSelected: isLoading ? () {} : onToggleStatus,
-            enabled: !isLoading,
-            destructive: role.isActive,
-            success: !role.isActive,
-          ),
+          if (canEdit)
+            TenantAdminOverflowAction(
+              id: 'edit',
+              icon: Icons.edit_outlined,
+              label: 'Edit',
+              onSelected: isLoading ? () {} : onEdit,
+              enabled: !isLoading,
+            ),
+          if (canUpdateStatus)
+            TenantAdminOverflowAction(
+              id: 'status',
+              icon: role.isActive
+                  ? Icons.block_outlined
+                  : Icons.check_circle_outline,
+              label: role.isActive ? 'Disable' : 'Enable',
+              onSelected: isLoading ? () {} : onToggleStatus,
+              enabled: !isLoading,
+              destructive: role.isActive,
+              success: !role.isActive,
+            ),
         ],
       ),
     );

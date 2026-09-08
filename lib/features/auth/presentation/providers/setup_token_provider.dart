@@ -8,7 +8,15 @@ final validateSetupTokenProvider = Provider<ValidateSetupToken>((ref) {
   return ValidateSetupToken(ref.watch(authRepositoryProvider));
 });
 
-final setupTokenValidationProvider =
-    FutureProvider.family<SetupTokenValidation, String>((ref, setupToken) {
+final setupTokenValidationProvider = FutureProvider.autoDispose
+    .family<SetupTokenValidation, String>((ref, setupToken) {
+  if (setupToken.trim().isEmpty) {
+    return const SetupTokenValidation(
+      setupToken: '',
+      valid: false,
+      expired: false,
+      message: 'Open the invitation link sent by your administrator.',
+    );
+  }
   return ref.watch(validateSetupTokenProvider).call(setupToken);
 });

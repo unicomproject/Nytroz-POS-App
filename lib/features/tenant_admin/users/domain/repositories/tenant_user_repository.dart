@@ -17,6 +17,12 @@ abstract class TenantUserRepository {
 
   Future<void> deleteUser(String id);
 
+  Future<TenantUserDetail> resendInvite(String id) =>
+      throw UnsupportedError('Resend invite is not implemented.');
+
+  Future<TenantUserDetail> revokeInvite(String id) =>
+      throw UnsupportedError('Revoke invite is not implemented.');
+
   Future<UserProfileImageUpload> uploadProfileImage(
     UserProfileImageUploadInput input, {
     void Function(int sent, int total)? onProgress,
