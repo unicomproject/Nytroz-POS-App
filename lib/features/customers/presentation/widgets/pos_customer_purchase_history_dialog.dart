@@ -178,9 +178,12 @@ class _PosCustomerPurchaseHistoryDialogState
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final order = _orders[index];
-        final amount = order.currencyCode.trim().isEmpty
-            ? order.totalAmount.toStringAsFixed(2)
-            : '${order.currencyCode} ${order.totalAmount.toStringAsFixed(2)}';
+        final amount = order.totalAmount;
+        final amountLabel = amount == null
+            ? '—'
+            : (order.currencyCode.trim().isEmpty
+                ? amount.toStringAsFixed(2)
+                : '${order.currencyCode} ${amount.toStringAsFixed(2)}');
         final date = order.orderDate == null
             ? '—'
             : '${order.orderDate!.year}-${order.orderDate!.month.toString().padLeft(2, '0')}-${order.orderDate!.day.toString().padLeft(2, '0')}';
@@ -200,7 +203,7 @@ class _PosCustomerPurchaseHistoryDialogState
             ),
           ),
           trailing: Text(
-            amount,
+            amountLabel,
             style: const TextStyle(fontWeight: FontWeight.w800),
           ),
         );

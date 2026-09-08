@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 
 Map<String, dynamic>? readJwtPayload(String token) {
@@ -32,7 +33,7 @@ List<String> readJwtPermissionCodes(String token) {
     return const [];
   }
 
-  return permissions
+  final parsed = permissions
       .map((item) {
         if (item is Map) {
           return item['permissionCode']?.toString() ??
@@ -45,6 +46,8 @@ List<String> readJwtPermissionCodes(String token) {
         return item.toString();
       })
       .map((item) => item.trim())
-      .where((item) => item.isNotEmpty)
-      .toList(growable: false);
+      .where((item) => item.isNotEmpty);
+
+  // Deduplicate without importing access layer (domain util stays lean).
+  return LinkedHashSet<String>.from(parsed).toList(growable: false);
 }

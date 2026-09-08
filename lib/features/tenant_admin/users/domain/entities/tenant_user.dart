@@ -98,12 +98,22 @@ class RoleOption {
     required this.name,
     required this.code,
     this.roleDescription,
+    this.isActive = true,
+    this.moduleCount = 0,
+    this.permissionCount = 0,
+    this.modulePreview = const [],
+    this.permissionPreview = const [],
   });
 
   final String id;
   final String name;
   final String code;
   final String? roleDescription;
+  final bool isActive;
+  final int moduleCount;
+  final int permissionCount;
+  final List<String> modulePreview;
+  final List<String> permissionPreview;
 }
 
 class UserOutletOption {
@@ -126,22 +136,109 @@ class PermissionItem {
     required this.code,
     required this.actionType,
     this.description,
+    this.name,
+    this.moduleId,
+    this.moduleCode,
+    this.moduleName,
+    this.sortOrder = 0,
+    this.isAssignable = true,
+    this.isLocked = false,
   });
 
   final String id;
   final String code;
   final String actionType;
   final String? description;
+  final String? name;
+  final String? moduleId;
+  final String? moduleCode;
+  final String? moduleName;
+  final int sortOrder;
+  final bool isAssignable;
+  final bool isLocked;
+
+  String get displayName {
+    final value = name?.trim();
+    if (value != null && value.isNotEmpty) return value;
+    if (actionType.trim().isNotEmpty) {
+      return actionType
+          .trim()
+          .split(RegExp(r'[_\s]+'))
+          .where((part) => part.isNotEmpty)
+          .map((part) =>
+              '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}')
+          .join(' ');
+    }
+    return code;
+  }
 }
 
 class PermissionGroup {
   const PermissionGroup({
     required this.groupName,
     required this.permissions,
+    this.moduleId,
+    this.moduleCode,
+    this.description,
+    this.sortOrder = 0,
   });
 
   final String groupName;
   final List<PermissionItem> permissions;
+  final String? moduleId;
+  final String? moduleCode;
+  final String? description;
+  final int sortOrder;
+}
+
+class UserTillOption {
+  const UserTillOption({
+    required this.id,
+    required this.outletId,
+    required this.name,
+    required this.code,
+    required this.status,
+  });
+
+  final String id;
+  final String outletId;
+  final String name;
+  final String code;
+  final String status;
+}
+
+class TenantUserCreateCapabilities {
+  const TenantUserCreateCapabilities({
+    this.supportsInvitedUserCreation = false,
+    this.supportsDirectActiveCreation = false,
+    this.supportsUserPermissionOverrides = false,
+    this.supportsPermissionDenies = false,
+    this.supportsAllOutletAccess = false,
+    this.supportsNoOutletAccess = false,
+    this.supportsExplicitTillAccess = false,
+    this.supportsDefaultOutlet = false,
+    this.supportsDefaultTill = false,
+    this.supportsAccessStartDate = false,
+    this.supportsTemporaryPassword = false,
+    this.supportsForcePasswordChange = false,
+    this.supportsTwoFactorDuringCreation = false,
+    this.supportsSaveDraft = false,
+  });
+
+  final bool supportsInvitedUserCreation;
+  final bool supportsDirectActiveCreation;
+  final bool supportsUserPermissionOverrides;
+  final bool supportsPermissionDenies;
+  final bool supportsAllOutletAccess;
+  final bool supportsNoOutletAccess;
+  final bool supportsExplicitTillAccess;
+  final bool supportsDefaultOutlet;
+  final bool supportsDefaultTill;
+  final bool supportsAccessStartDate;
+  final bool supportsTemporaryPassword;
+  final bool supportsForcePasswordChange;
+  final bool supportsTwoFactorDuringCreation;
+  final bool supportsSaveDraft;
 }
 
 class TenantUserCreateOptions {
@@ -149,11 +246,23 @@ class TenantUserCreateOptions {
     required this.roles,
     required this.outlets,
     required this.permissionGroups,
+    this.supportedStatuses = const [],
+    this.tills = const [],
+    this.supportedOutletAccessScopes = const [],
+    this.supportedTillAccessScopes = const [],
+    this.capabilities = const TenantUserCreateCapabilities(),
+    this.permissionCatalogVersion,
   });
 
   final List<RoleOption> roles;
   final List<UserOutletOption> outlets;
   final List<PermissionGroup> permissionGroups;
+  final List<String> supportedStatuses;
+  final List<UserTillOption> tills;
+  final List<String> supportedOutletAccessScopes;
+  final List<String> supportedTillAccessScopes;
+  final TenantUserCreateCapabilities capabilities;
+  final String? permissionCatalogVersion;
 }
 
 class TenantUserDetail {
@@ -226,6 +335,16 @@ class UserFormData {
     this.status,
     this.profileImageFileName,
     this.profileMediaAssetId,
+    this.profileMediaAction,
+    this.outletAccessScope = 'ALL_OUTLETS',
+    this.defaultOutletId,
+    this.tillAccessScope = 'ALL_ACCESSIBLE_TILLS',
+    this.tillIds = const [],
+    this.defaultTillId,
+    this.permissionCatalogVersion,
+    this.deniedPermissionIds = const [],
+    this.password,
+    this.confirmPassword,
   });
 
   final String fullName;
@@ -240,4 +359,14 @@ class UserFormData {
   final String? status;
   final String? profileImageFileName;
   final String? profileMediaAssetId;
+  final String? profileMediaAction;
+  final String outletAccessScope;
+  final String? defaultOutletId;
+  final String tillAccessScope;
+  final List<String> tillIds;
+  final String? defaultTillId;
+  final String? permissionCatalogVersion;
+  final List<String> deniedPermissionIds;
+  final String? password;
+  final String? confirmPassword;
 }

@@ -15,6 +15,9 @@ import '../../features/till/presentation/providers/till_provider.dart';
 import '../../features/auth/auth_router.dart';
 import '../../shared/pos_session/pos_session_boot_screen.dart';
 import '../../shared/pos_session/pos_session_bootstrap_provider.dart';
+import '../../features/workspace/domain/workspace_access.dart';
+import '../../features/workspace/presentation/providers/workspace_selection_provider.dart';
+import '../../features/workspace/workspace_router.dart';
 
 class RouterRefreshNotifier extends ChangeNotifier {
   bool _isScheduled = false;
@@ -37,6 +40,7 @@ final routerRefreshProvider = Provider<RouterRefreshNotifier>((ref) {
   ref.listen(authSessionHydratedProvider, (_, __) => notifier.refresh());
   ref.listen(posSessionBootstrapProvider, (_, __) => notifier.refresh());
   ref.listen(postLoginRouteProvider, (_, __) => notifier.refresh());
+  ref.listen(workspaceSelectionProvider, (_, __) => notifier.refresh());
   ref.listen(deviceActivationProvider, (previous, next) {
     if (ref.read(posSessionBootstrapProvider).isReady) {
       notifier.refresh();
@@ -60,6 +64,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     overridePlatformDefaultLocation: !kIsWeb,
     routes: [
       ...authRoutes(),
+      ...workspaceRoutes(ref),
       GoRoute(
         path: posSessionBootRoute,
         builder: (context, state) => const PosSessionBootScreen(),
@@ -75,6 +80,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final authSessionHydrated = ref.read(authSessionHydratedProvider);
       final bootstrap = ref.read(posSessionBootstrapProvider);
       final authenticatedInitialRoute = ref.read(postLoginRouteProvider).path;
+      final workspaceState = ref.read(workspaceSelectionProvider);
       final path = state.uri.path;
       final destination = resolveAppRedirect(
         path: path,
@@ -82,6 +88,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         isAuthenticated: isAuthenticated,
         bootstrapReady: bootstrap.isReady,
         authenticatedInitialRoute: authenticatedInitialRoute,
+        canAccessTenantAdmin: workspaceState.access.canAccessTenantAdmin,
+        canAccessPos: workspaceState.access.canAccessPos,
+        selectedWorkspace: workspaceState.selected,
       );
 
       if (kDebugMode && destination != null && destination != path) {
@@ -106,11 +115,17 @@ String? resolveAppRedirect({
   required bool isAuthenticated,
   required bool bootstrapReady,
   required String authenticatedInitialRoute,
+  bool canAccessTenantAdmin = false,
+  bool canAccessPos = true,
+  AppWorkspace? selectedWorkspace,
 }) {
   final isPublicExternalRoute = path.startsWith('/tenant-admin/payment') ||
       path.startsWith('/tenant-admin/setup');
   final isAuthRoute = path == '/tenant-login' || isPublicExternalRoute;
   final isTenantAdminRoute = path.startsWith('/tenant-admin');
+  final isWorkspaceRoute = path == workspaceChooserRoute ||
+      path == workspaceNoAccessRoute ||
+      path == workspaceAccountSettingsRoute;
   final isProtectedPosRoute = path == posSessionBootRoute ||
       path == '/device-activation' ||
       path == '/open-till' ||
@@ -129,6 +144,10 @@ String? resolveAppRedirect({
     return '/tenant-login';
   }
 
+  if (isWorkspaceRoute && !isAuthenticated) {
+    return '/tenant-login';
+  }
+
   if (isAuthenticated && !bootstrapReady) {
     return path == posSessionBootRoute ? null : posSessionBootRoute;
   }
@@ -142,6 +161,38 @@ String? resolveAppRedirect({
   }
 
   if (bootstrapReady && isAuthenticated) {
+    if (!canAccessTenantAdmin && !canAccessPos) {
+      return path == workspaceNoAccessRoute ? null : workspaceNoAccessRoute;
+    }
+
+    if (path == workspaceNoAccessRoute) {
+      return authenticatedInitialRoute;
+    }
+
+    if (canAccessTenantAdmin && canAccessPos && selectedWorkspace == null) {
+      return path == workspaceChooserRoute ||
+              path == workspaceAccountSettingsRoute
+          ? null
+          : workspaceChooserRoute;
+    }
+
+    if (path == workspaceChooserRoute &&
+        !(canAccessTenantAdmin && canAccessPos && selectedWorkspace == null)) {
+      return authenticatedInitialRoute;
+    }
+
+    if (isTenantAdminRoute && !isPublicExternalRoute) {
+      if (!canAccessTenantAdmin || selectedWorkspace == AppWorkspace.pos) {
+        return authenticatedInitialRoute;
+      }
+    }
+
+    if (isProtectedPosRoute) {
+      if (!canAccessPos || selectedWorkspace == AppWorkspace.tenantAdmin) {
+        return authenticatedInitialRoute;
+      }
+    }
+
     if ((path == '/device-activation' || path == '/pos/device-activation') &&
         authenticatedInitialRoute != PostLoginRoute.deviceActivation.path) {
       return authenticatedInitialRoute;

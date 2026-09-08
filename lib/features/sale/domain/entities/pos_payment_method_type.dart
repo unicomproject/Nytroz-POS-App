@@ -14,7 +14,7 @@ extension PosPaymentMethodTypeX on PosPaymentMethodType {
     return switch (this) {
       PosPaymentMethodType.cash => 'Cash',
       PosPaymentMethodType.card => 'Card',
-      PosPaymentMethodType.qrMobile => 'QR Pay',
+      PosPaymentMethodType.qrMobile => 'QR Payment',
       PosPaymentMethodType.split => 'Split Payment',
     };
   }
@@ -24,8 +24,8 @@ extension PosPaymentMethodTypeX on PosPaymentMethodType {
   String get description {
     return switch (this) {
       PosPaymentMethodType.cash => 'Pay with cash',
-      PosPaymentMethodType.card => 'Debit / Credit Card',
-      PosPaymentMethodType.qrMobile => 'Scan & Pay',
+      PosPaymentMethodType.card => 'Debit / Credit card',
+      PosPaymentMethodType.qrMobile => 'Scan to pay',
       PosPaymentMethodType.split => 'Multiple payment methods',
     };
   }
@@ -35,7 +35,7 @@ extension PosPaymentMethodTypeX on PosPaymentMethodType {
       PosPaymentMethodType.cash => Icons.payments_outlined,
       PosPaymentMethodType.card => Icons.credit_card_rounded,
       PosPaymentMethodType.qrMobile => Icons.qr_code_2_rounded,
-      PosPaymentMethodType.split => Icons.call_split_rounded,
+      PosPaymentMethodType.split => Icons.sync_alt_rounded,
     };
   }
 

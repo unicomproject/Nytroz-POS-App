@@ -25,7 +25,7 @@ class CashDropFormCard extends ConsumerWidget {
   final TextEditingController amountController;
   final TextEditingController noteController;
   final TextEditingController managerPinController;
-  final double availableCash;
+  final double? availableCash;
   final String currencyCode;
   final bool expand;
   final bool compact;

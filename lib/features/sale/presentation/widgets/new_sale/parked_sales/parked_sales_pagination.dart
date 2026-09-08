@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_sales_permission_visibility.dart';
 
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
-class ParkedSalesPaginationBar extends StatelessWidget {
+class ParkedSalesPaginationBar extends ConsumerWidget {
   const ParkedSalesPaginationBar({
     super.key,
     required this.page,
@@ -17,7 +20,13 @@ class ParkedSalesPaginationBar extends StatelessWidget {
   final ValueChanged<int> onPage;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    if (!PosSalesPermissionVisibility.canShowHeldPagination(permissions)) {
+      return const SizedBox.shrink();
+    }
+
+    // Previous / Next / page label share one canonical code: list.pagination.
     final pages = totalCount == 0 ? 1 : ((totalCount - 1) ~/ pageSize) + 1;
     return Padding(
       padding: const EdgeInsets.fromLTRB(

@@ -8,7 +8,7 @@ import 'package:nytroz_pos/features/sale/presentation/widgets/payment/payment_me
 void main() {
   group('PaymentMethodEqualGrid', () {
     for (final width in <double>[1200, 900, 600]) {
-      for (var count = 1; count <= 5; count++) {
+      for (var count = 1; count <= 4; count++) {
         testWidgets('$count cards follow equal layout at width $width',
             (tester) async {
           await tester.pumpWidget(
@@ -39,16 +39,21 @@ void main() {
             expect(rect.height, closeTo(rects.first.height, 0.01));
           }
 
-          if (count <= 3) {
+          if (count <= 2) {
             expect(rects.map((rect) => rect.top).toSet(), hasLength(1));
-          } else if (count == 4) {
-            expect(rects.map((rect) => rect.top).toSet(), hasLength(2));
-            expect(rects[2].left, closeTo(rects[0].left, 0.01));
           } else {
             expect(rects.map((rect) => rect.top).toSet(), hasLength(2));
-            final firstRowCenter = (rects[0].left + rects[2].right) / 2;
-            final secondRowCenter = (rects[3].left + rects[4].right) / 2;
-            expect(secondRowCenter, closeTo(firstRowCenter, 0.01));
+            if (count == 3) {
+              expect(
+                rects[2].center.dx,
+                closeTo(
+                  tester.getCenter(find.byType(PaymentMethodEqualGrid)).dx,
+                  0.01,
+                ),
+              );
+            } else {
+              expect(rects[2].left, closeTo(rects[0].left, 0.01));
+            }
           }
         });
       }

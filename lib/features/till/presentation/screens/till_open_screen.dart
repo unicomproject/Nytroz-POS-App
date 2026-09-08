@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/access/effective_permission_set.dart';
+import '../../../../core/access/pos_cash_drawer_till_visibility.dart';
+import '../../../../core/access/pos_permission_access.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../auth/presentation/providers/pos_login_branding_provider.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../pos_shell/presentation/widgets/common/pos_top_bar.dart';
 import '../../../pos_shell/presentation/widgets/home/pos_dashboard_top_bar_content.dart';
 import '../../../pos_shell/presentation/providers/pos_home_dashboard_provider.dart';
@@ -78,10 +82,21 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
     final brandName = loginBranding.brandDisplayName.trim();
     final brandLogoUrl = loginBranding.logoUrl?.trim();
 
+    final granted = authSession?.permissionCodes.toSet() ?? const {};
+    if (!PosPermissionAccess.canOpenTill(granted)) {
+      return const TenantAdminForbiddenScreen();
+    }
+
     if (device != null && !_initializedOpeningFloat) {
       _initializedOpeningFloat = true;
-      final defaultFloat = device.defaultOpeningFloatAmount;
-      _openingFloatController.text = defaultFloat.toStringAsFixed(2);
+      final perms = EffectivePermissionSet.fromIterable(granted);
+      // Seeded default float is protected starting-cash view data.
+      if (PosCashDrawerTillVisibility.canShowStartingCashView(perms)) {
+        final defaultFloat = device.defaultOpeningFloatAmount;
+        _openingFloatController.text = defaultFloat.toStringAsFixed(2);
+      } else if (PosCashDrawerTillVisibility.canShowStartingCashEntry(perms)) {
+        _openingFloatController.text = '0.00';
+      }
     }
 
     if (device == null || !device.isTrusted) {
@@ -215,6 +230,12 @@ class _TillOpenScreenState extends ConsumerState<TillOpenScreen> {
   }
 
   Future<void> _submitOpenTill() async {
+    final granted =
+        ref.read(authSessionProvider)?.permissionCodes.toSet() ?? const {};
+    if (!PosPermissionAccess.canOpenTill(granted)) {
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) {
       setState(() {});
       return;

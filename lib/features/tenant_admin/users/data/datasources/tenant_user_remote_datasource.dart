@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import '../../domain/entities/tenant_user.dart';
 import '../models/tenant_user_dto.dart';
 import '../models/user_write_request_dto.dart';
+import '../models/user_profile_image_upload_dto.dart';
+import '../../domain/entities/user_profile_image_upload.dart';
 
 class TenantUserRemoteDatasource {
   const TenantUserRemoteDatasource(this._dio);
@@ -71,6 +73,29 @@ class TenantUserRemoteDatasource {
   Future<void> deleteUser(String id) async {
     await _dio.delete<dynamic>('$_usersPath/$id');
   }
+
+  Future<UserProfileImageUploadDto> uploadProfileImage(
+    UserProfileImageUploadInput input, {
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    final response = await _dio.post<dynamic>(
+      '$_usersPath/profile-image-uploads',
+      data: FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          input.bytes,
+          filename: input.fileName,
+          contentType: DioMediaType.parse(input.mimeType),
+        ),
+      }),
+      onSendProgress: onProgress,
+    );
+    return UserProfileImageUploadDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
+  Future<void> deleteStagedProfileImage(String mediaAssetId) =>
+      _dio.delete<void>('$_usersPath/profile-image-uploads/$mediaAssetId');
 
   Map<String, dynamic> _listQueryParameters(TenantUserListQuery query) {
     return {

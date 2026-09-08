@@ -194,10 +194,13 @@ final cashInCatalogProvider = StateNotifierProvider.autoDispose<
   return CashInCatalogController(ref.watch(cashDrawerRepositoryProvider));
 });
 
-double cashInNewExpectedCash({
-  required double currentExpectedCash,
+double? cashInNewExpectedCash({
+  required double? currentExpectedCash,
   required CashInFormState form,
 }) {
+  if (currentExpectedCash == null) {
+    return null;
+  }
   final amount = form.parsedAmount ?? 0;
   return currentExpectedCash + amount;
 }

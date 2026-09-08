@@ -52,6 +52,11 @@ class PosPrimaryActionButton extends StatefulWidget {
     this.horizontalPadding = PosPrimaryActionTokens.horizontalPadding,
     this.verticalPadding = PosPrimaryActionTokens.verticalPadding,
     this.borderRadius = PosPrimaryActionTokens.radius,
+    this.iconSize = PosPrimaryActionTokens.iconSize,
+    this.iconGap = TenantAdminSpacing.sm,
+    this.maxLabelLines = 1,
+    this.labelTextAlign = TextAlign.center,
+    this.textStyle,
   }) : assert(label != null || child != null);
 
   final String? label;
@@ -71,6 +76,11 @@ class PosPrimaryActionButton extends StatefulWidget {
   final double horizontalPadding;
   final double verticalPadding;
   final double borderRadius;
+  final double iconSize;
+  final double iconGap;
+  final int maxLabelLines;
+  final TextAlign labelTextAlign;
+  final TextStyle? textStyle;
 
   @override
   State<PosPrimaryActionButton> createState() => _PosPrimaryActionButtonState();
@@ -164,20 +174,22 @@ class _PosPrimaryActionButtonState extends State<PosPrimaryActionButton> {
       mainAxisSize: widget.fullWidth ? MainAxisSize.max : MainAxisSize.min,
       children: [
         if (leading != null) ...[
-          Icon(leading, size: PosPrimaryActionTokens.iconSize),
-          const SizedBox(width: TenantAdminSpacing.sm),
+          Icon(leading, size: widget.iconSize),
+          SizedBox(width: widget.iconGap),
         ],
         Flexible(
           child: Text(
             widget.label!,
-            maxLines: 1,
+            maxLines: widget.maxLabelLines,
+            textAlign: widget.labelTextAlign,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w800),
+            style: const TextStyle(fontWeight: FontWeight.w800)
+                .merge(widget.textStyle),
           ),
         ),
         if (widget.trailingIcon != null) ...[
-          const SizedBox(width: TenantAdminSpacing.sm),
-          Icon(widget.trailingIcon, size: PosPrimaryActionTokens.iconSize),
+          SizedBox(width: widget.iconGap),
+          Icon(widget.trailingIcon, size: widget.iconSize),
         ],
       ],
     );

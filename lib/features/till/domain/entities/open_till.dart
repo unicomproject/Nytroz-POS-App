@@ -22,12 +22,12 @@ class TillSession {
     required this.tillCode,
     required this.tillName,
     required this.openedDeviceId,
-    required this.openingFloat,
+    this.openingFloat,
     required this.status,
     required this.openedAt,
     this.openingNote,
     this.currencyCode = '',
-    this.expectedCash = 0,
+    this.expectedCash,
     this.openedByName,
   });
 
@@ -39,12 +39,12 @@ class TillSession {
   final String tillCode;
   final String tillName;
   final String openedDeviceId;
-  final double openingFloat;
+  final double? openingFloat;
   final String status;
   final DateTime openedAt;
   final String? openingNote;
   final String currencyCode;
-  final double expectedCash;
+  final double? expectedCash;
   final String? openedByName;
 
   Map<String, dynamic> toJson() {
@@ -77,7 +77,7 @@ class TillSession {
       tillCode: json['tillCode'] as String? ?? '',
       tillName: json['tillName'] as String? ?? '',
       openedDeviceId: json['openedDeviceId'] as String? ?? '',
-      openingFloat: (json['openingFloat'] as num?)?.toDouble() ?? 0,
+      openingFloat: (json['openingFloat'] as num?)?.toDouble(),
       status: json['status'] as String? ?? '',
       openedAt: DateTime.tryParse(json['openedAt']?.toString() ?? '') ??
           DateTime.now(),
@@ -89,12 +89,15 @@ class TillSession {
   }
 }
 
-double _optionalDouble(Object? value) {
+double? _optionalDouble(Object? value) {
+  if (value == null) {
+    return null;
+  }
   if (value is num) {
     return value.toDouble();
   }
 
-  return double.tryParse(value?.toString() ?? '') ?? 0;
+  return double.tryParse(value.toString());
 }
 
 class TillException implements Exception {
@@ -135,10 +138,10 @@ class ClosedTillSession {
   final String sessionId;
   final String outletId;
   final String tillId;
-  final double openingFloat;
-  final double expectedCash;
-  final double countedCash;
-  final double cashDifference;
+  final double? openingFloat;
+  final double? expectedCash;
+  final double? countedCash;
+  final double? cashDifference;
   final String status;
   final DateTime openedAt;
   final DateTime closedAt;

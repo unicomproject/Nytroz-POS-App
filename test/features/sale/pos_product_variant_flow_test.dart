@@ -53,7 +53,12 @@ void main() {
       await _pumpNewSaleWithVariantCatalog(tester);
       await _tapProduct(tester, 'General Admission');
 
-      expect(find.text('Qty 1'), findsOneWidget);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(PosNewSaleScreen)),
+      );
+      final cart = container.read(posNewSaleCartProvider);
+      expect(cart.itemList, hasLength(1));
+      expect(cart.itemList.single.quantity, 1);
       expect(find.byType(PosProductVariantSheet), findsNothing);
     });
 
@@ -92,7 +97,7 @@ void main() {
       );
       expect(
         addButton.style?.backgroundColor?.resolve(<WidgetState>{}),
-        const Color(0xFFFF3B0A),
+        const Color(0xFFFF6A00),
       );
       expect(tester.takeException(), isNull);
     });
@@ -192,7 +197,6 @@ void main() {
       await tester.tap(addButton);
       await tester.pumpAndSettle();
 
-      expect(find.text('Qty 1'), findsOneWidget);
       expect(find.text('LKR 12,000.00'), findsWidgets);
 
       final container = ProviderScope.containerOf(
@@ -200,6 +204,7 @@ void main() {
       );
       final cartItems = container.read(posNewSaleCartProvider).itemList;
       expect(cartItems, hasLength(1));
+      expect(cartItems.single.quantity, 1);
       expect(cartItems.single.product.variantId, 'variant-medium-blue');
       expect(cartItems.single.product.price, 12000);
       expect(_lastCheckoutLines, isNotEmpty);
@@ -328,11 +333,45 @@ Future<void> _pumpNewSaleWithVariantCatalog(
     PosPermissionCodes.viewHome,
     PosPermissionCodes.viewNewSale,
     PosPermissionCodes.viewProducts,
+    PosPermissionCodes.salesCatalogView,
+    PosPermissionCodes.catalogProductCardImage,
+    PosPermissionCodes.catalogProductCardName,
+    PosPermissionCodes.catalogProductCardRegularPrice,
+    PosPermissionCodes.catalogProductCardSalePrice,
+    PosPermissionCodes.catalogProductCardDiscountBadge,
+    PosPermissionCodes.catalogProductCardOpenDetails,
+    PosPermissionCodes.catalogProductDetailView,
+    PosPermissionCodes.catalogProductDetailClose,
+    PosPermissionCodes.catalogProductDetailImage,
+    PosPermissionCodes.catalogProductDetailName,
+    PosPermissionCodes.catalogProductDetailPrice,
+    PosPermissionCodes.catalogProductDetailStock,
+    PosPermissionCodes.catalogProductDetailSku,
+    PosPermissionCodes.catalogProductDetailDescription,
+    PosPermissionCodes.catalogProductDetailVariants,
+    PosPermissionCodes.catalogProductDetailVariantSelect,
+    PosPermissionCodes.catalogProductDetailAvailableQty,
+    PosPermissionCodes.catalogProductDetailQuantityDisplay,
+    PosPermissionCodes.catalogProductDetailNoteView,
+    PosPermissionCodes.catalogProductDetailNoteEntry,
+    PosPermissionCodes.catalogProductDetailRecommendations,
+    PosPermissionCodes.catalogProductDetailCancel,
     PosPermissionCodes.addCartItem,
+    PosPermissionCodes.salesCartAddItem,
     PosPermissionCodes.updateCartItem,
+    PosPermissionCodes.salesCartUpdateItem,
     PosPermissionCodes.removeCartItem,
     PosPermissionCodes.viewReturns,
     PosPermissionCodes.viewNewSaleCustomers,
+    PosPermissionCodes.cartLinesList,
+    PosPermissionCodes.cartLinesName,
+    PosPermissionCodes.cartLinesQuantity,
+    PosPermissionCodes.cartLinesUnitPrice,
+    PosPermissionCodes.cartLinesLineTotal,
+    PosPermissionCodes.cartSummaryView,
+    PosPermissionCodes.cartSummaryTotal,
+    PosPermissionCodes.newSaleChromeHeader,
+    PosPermissionCodes.newSaleChromeCheckoutAction,
     PosPermissionCodes.createParkedSale,
     PosPermissionCodes.viewCashDrawer,
   ];

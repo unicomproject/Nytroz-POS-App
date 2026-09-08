@@ -1,0 +1,520 @@
+{
+  "status": "PASS",
+  "apiSummary": {
+    "tenantValid": true,
+    "permissionCount": 99,
+    "featureCount": 4,
+    "overviewOk": true,
+    "readinessOk": true,
+    "existingBannerCount": 0
+  },
+  "screenshots": [
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\01_online_store_overview.png",
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\02_activation_access.png",
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\03_store_identity.png",
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\04_storefront_url_domain.png",
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\05_branding_appearance.png",
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\06_contact_support.png",
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\07_click_collect.png",
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\08_products_policies.png",
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\09_review_publish.png"
+  ],
+  "responsiveScreenshots": [
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\responsive_1024x768.png",
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\responsive_1280x800.png",
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\responsive_1366x768.png",
+    "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\responsive_1600x900.png"
+  ],
+  "routeResults": [
+    {
+      "route": "/tenant-admin/online-store",
+      "title": "ONLINE STORE OVERVIEW",
+      "authenticated": true,
+      "screenshot": "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\01_online_store_overview.png"
+    },
+    {
+      "route": "/tenant-admin/online-store/activation",
+      "title": "ENABLE ONLINE STORE",
+      "authenticated": true,
+      "screenshot": "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\02_activation_access.png"
+    },
+    {
+      "route": "/tenant-admin/online-store/identity",
+      "title": "CONFIGURE STORE IDENTITY",
+      "authenticated": true,
+      "screenshot": "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\03_store_identity.png"
+    },
+    {
+      "route": "/tenant-admin/online-store/domain",
+      "title": "STOREFRONT URL & DOMAIN",
+      "authenticated": true,
+      "screenshot": "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\04_storefront_url_domain.png"
+    },
+    {
+      "route": "/tenant-admin/online-store/branding",
+      "title": "BRANDING & BANNERS",
+      "authenticated": true,
+      "screenshot": "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\05_branding_appearance.png"
+    },
+    {
+      "route": "/tenant-admin/online-store/support",
+      "title": "CONTACT & SUPPORT",
+      "authenticated": true,
+      "screenshot": "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\06_contact_support.png"
+    },
+    {
+      "route": "/tenant-admin/online-store/click-collect",
+      "title": "CONFIGURE CLICK & COLLECT",
+      "authenticated": true,
+      "screenshot": "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\07_click_collect.png"
+    },
+    {
+      "route": "/tenant-admin/online-store/products-policies",
+      "title": "PRODUCTS & POLICIES",
+      "authenticated": true,
+      "screenshot": "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\08_products_policies.png"
+    },
+    {
+      "route": "/tenant-admin/online-store/review",
+      "title": "REVIEW & PUBLISH",
+      "authenticated": true,
+      "screenshot": "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\09_review_publish.png"
+    }
+  ],
+  "responsiveResults": [
+    {
+      "viewport": "1024x768",
+      "authenticated": true,
+      "screenshot": "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\responsive_1024x768.png"
+    },
+    {
+      "viewport": "1280x800",
+      "authenticated": true,
+      "screenshot": "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\responsive_1280x800.png"
+    },
+    {
+      "viewport": "1366x768",
+      "authenticated": true,
+      "screenshot": "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\responsive_1366x768.png"
+    },
+    {
+      "viewport": "1600x900",
+      "authenticated": true,
+      "screenshot": "C:\\Users\\User\\Desktop\\pos final wep\\Tenantadmin\\Nytroz-POS-App\\artifacts\\online_store_e2e_2026-08-27\\responsive_1600x900.png"
+    }
+  ],
+  "navigationOk": true,
+  "navigationUrl": "http://localhost:8080/#/tenant-admin/dashboard",
+  "storageBeforeReload": {
+    "keys": [
+      "nytroz_pos_secure_storage_key.pos.deviceFingerprint",
+      "pos.deviceFingerprint",
+      "pos.web.installationId",
+      "nytroz_pos_secure_storage_key",
+      "nytroz_pos_secure_storage_key.auth.session"
+    ],
+    "sessionKeys": [],
+    "url": "http://localhost:8080/#/tenant-admin/online-store/identity"
+  },
+  "storageAfterReload": {
+    "keys": [
+      "nytroz_pos_secure_storage_key.pos.deviceFingerprint",
+      "pos.deviceFingerprint",
+      "pos.web.installationId",
+      "nytroz_pos_secure_storage_key",
+      "nytroz_pos_secure_storage_key.auth.session"
+    ],
+    "sessionKeys": [],
+    "url": "http://localhost:8080/#/tenant-admin/dashboard"
+  },
+  "apiEvidence": [
+    {
+      "method": "POST",
+      "path": "/api/v1/tenant-auth/login",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/context",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/overview",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/readiness",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/activation",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenant-admin/online-store/activation",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/identity",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenant-admin/online-store/identity",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/identity",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/url-domain",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/domains",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenant-admin/online-store/domains",
+      "status": 422,
+      "result": "online_store.domain_invalid"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/branding",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenant-admin/online-store/media/ONLINE_STORE_LOGO",
+      "status": 422,
+      "result": "online_store.media_invalid"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenant-admin/online-store/branding",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/banners",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenant-admin/online-store/banners",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenant-admin/online-store/banners/86b88106-e80b-4ad3-b6cd-224d5369e532",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/tenant-admin/online-store/banners/86b88106-e80b-4ad3-b6cd-224d5369e532/status",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/tenant-admin/online-store/banners/86b88106-e80b-4ad3-b6cd-224d5369e532",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/support",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenant-admin/online-store/support",
+      "status": 422,
+      "result": "online_store.support_invalid"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/support",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/click-collect",
+      "status": 403,
+      "result": "online_store.entitlement_denied"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tenant-admin/online-store/click-collect",
+      "status": 403,
+      "result": "online_store.entitlement_denied"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/click-collect/outlets",
+      "status": 403,
+      "result": "online_store.entitlement_denied"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/catalog/summary",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/catalog/products?pageNumber=1&pageSize=5",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/policies",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tenant-admin/online-store/publish",
+      "status": 422,
+      "result": "online_store.publish_blocked"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/overview",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/context",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/context",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/online-store/overview",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/overview",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/online-store/activation",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/activation",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/online-store/identity",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/identity",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/online-store/url-domain",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/url-domain",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/online-store/branding",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/branding",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/online-store/support",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/support",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/online-store/click-collect",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/click-collect",
+      "status": 403,
+      "result": "failed"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/online-store/catalog/summary",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/online-store/policies",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/online-store/catalog/products?pageNumber=1&pageSize=12",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/policies",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/catalog/summary",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/catalog/products?pageNumber=1&pageSize=12",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/online-store/readiness",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/readiness",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/online-store/activation",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/activation",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/online-store/identity",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/identity",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/online-store/activation",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/activation",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/online-store/identity",
+      "status": 200,
+      "result": "ok"
+    },
+    {
+      "method": "OPTIONS",
+      "path": "/api/v1/tenant-admin/context",
+      "status": 204,
+      "result": "ok"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tenant-admin/context",
+      "status": 200,
+      "result": "ok"
+    }
+  ],
+  "consoleIssueCount": 0,
+  "pageErrorCount": 0,
+  "consoleIssues": [],
+  "pageErrors": []
+}

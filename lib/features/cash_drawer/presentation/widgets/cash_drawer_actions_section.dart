@@ -7,70 +7,78 @@ class CashDrawerActionsSection extends StatelessWidget {
     super.key,
     required this.canOpenDrawer,
     required this.canCashIn,
-    required this.canCashOut,
+    required this.canCashDrop,
     required this.canCloseTill,
     required this.actionsEnabled,
     required this.openDrawerBusy,
     required this.onOpenDrawer,
     required this.onCashIn,
-    required this.onCashOut,
+    required this.onCashDrop,
     required this.onCloseTill,
     this.compact = false,
   });
 
   final bool canOpenDrawer;
   final bool canCashIn;
-  final bool canCashOut;
+  final bool canCashDrop;
   final bool canCloseTill;
   final bool actionsEnabled;
   final bool openDrawerBusy;
   final VoidCallback onOpenDrawer;
   final VoidCallback onCashIn;
-  final VoidCallback onCashOut;
+  final VoidCallback onCashDrop;
   final VoidCallback onCloseTill;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    final cards = [
-      _DrawerActionCard(
-        icon: Icons.inbox_outlined,
-        iconColor: TenantAdminColors.success,
-        title: 'Open Drawer',
-        description: 'Open the cash drawer.',
-        enabled: actionsEnabled && canOpenDrawer && !openDrawerBusy,
-        busy: openDrawerBusy,
-        onTap: onOpenDrawer,
-        compact: compact,
-      ),
-      _DrawerActionCard(
-        icon: Icons.arrow_downward_rounded,
-        iconColor: TenantAdminColors.success,
-        title: 'Cash In',
-        description: 'Add cash to the drawer.',
-        enabled: actionsEnabled && canCashIn,
-        onTap: onCashIn,
-        compact: compact,
-      ),
-      _DrawerActionCard(
-        icon: Icons.arrow_upward_rounded,
-        iconColor: TenantAdminColors.danger,
-        title: 'Cash Out / Drop',
-        description: 'Remove cash from the drawer.',
-        enabled: actionsEnabled && canCashOut,
-        onTap: onCashOut,
-        compact: compact,
-      ),
-      _DrawerActionCard(
-        icon: Icons.lock_outline_rounded,
-        iconColor: TenantAdminColors.posHomeAccentOrange,
-        title: 'Close Till',
-        description: 'Close the till and finalize cash count.',
-        enabled: actionsEnabled && canCloseTill,
-        onTap: onCloseTill,
-        compact: compact,
-      ),
+    final cards = <Widget>[
+      if (canOpenDrawer)
+        _DrawerActionCard(
+          icon: Icons.inbox_outlined,
+          iconColor: TenantAdminColors.success,
+          title: 'Open Drawer',
+          description: 'Open the cash drawer.',
+          enabled: actionsEnabled && !openDrawerBusy,
+          busy: openDrawerBusy,
+          onTap: onOpenDrawer,
+          compact: compact,
+        ),
+      if (canCashIn)
+        _DrawerActionCard(
+          icon: Icons.arrow_downward_rounded,
+          iconColor: TenantAdminColors.success,
+          title: 'Cash In',
+          description: 'Add cash to the drawer.',
+          enabled: actionsEnabled,
+          onTap: onCashIn,
+          compact: compact,
+        ),
+      if (canCashDrop)
+        _DrawerActionCard(
+          icon: Icons.arrow_upward_rounded,
+          iconColor: TenantAdminColors.danger,
+          title: 'Cash Drop',
+          description: 'Remove cash from the drawer.',
+          enabled: actionsEnabled,
+          onTap: onCashDrop,
+          compact: compact,
+        ),
+      if (canCloseTill)
+        _DrawerActionCard(
+          icon: Icons.lock_outline_rounded,
+          iconColor: TenantAdminColors.posHomeAccentOrange,
+          title: 'Close Till',
+          description: 'Close the till and finalize cash count.',
+          enabled: actionsEnabled,
+          onTap: onCloseTill,
+          compact: compact,
+        ),
     ];
+
+    if (cards.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -87,7 +95,7 @@ class CashDrawerActionsSection extends StatelessWidget {
           height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.lg,
         ),
         if (compact)
-          Expanded(child: _CompactActionGrid(cards: cards))
+          Expanded(child: _FilteredActionGrid(cards: cards))
         else
           LayoutBuilder(
             builder: (context, constraints) {
@@ -118,14 +126,43 @@ class CashDrawerActionsSection extends StatelessWidget {
   }
 }
 
-class _CompactActionGrid extends StatelessWidget {
-  const _CompactActionGrid({required this.cards});
+class _FilteredActionGrid extends StatelessWidget {
+  const _FilteredActionGrid({required this.cards});
 
   final List<Widget> cards;
 
   @override
   Widget build(BuildContext context) {
     const spacing = TenantAdminSpacing.sm;
+    if (cards.length == 1) {
+      return cards.first;
+    }
+    if (cards.length == 2) {
+      return Row(
+        children: [
+          Expanded(child: cards[0]),
+          const SizedBox(width: spacing),
+          Expanded(child: cards[1]),
+        ],
+      );
+    }
+    if (cards.length == 3) {
+      return Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: cards[0]),
+                const SizedBox(width: spacing),
+                Expanded(child: cards[1]),
+              ],
+            ),
+          ),
+          const SizedBox(height: spacing),
+          Expanded(child: cards[2]),
+        ],
+      );
+    }
     return Column(
       children: [
         Expanded(

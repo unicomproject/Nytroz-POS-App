@@ -13,7 +13,6 @@ import 'package:nytroz_pos/features/tenant_admin/categories/domain/repositories/
 import 'package:nytroz_pos/features/tenant_admin/categories/presentation/providers/category_providers.dart';
 import 'package:nytroz_pos/features/tenant_admin/categories/presentation/providers/category_visibility_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/categories/presentation/screens/category_details_screen.dart';
-import 'package:nytroz_pos/features/tenant_admin/categories/presentation/utils/category_form_utils.dart';
 import 'package:nytroz_pos/features/tenant_admin/categories/presentation/widgets/category_archive_dialog.dart';
 import 'package:nytroz_pos/features/tenant_admin/categories/presentation/widgets/category_table.dart';
 import 'package:nytroz_pos/features/tenant_admin/domain/entities/tenant_admin_context.dart';
@@ -234,7 +233,8 @@ void main() {
       await tester.tap(find.text('Archive Category').last);
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('products are still assigned'), findsOneWidget);
+      expect(
+          find.textContaining('products are still assigned'), findsOneWidget);
     });
 
     testWidgets('network error keeps category unchanged', (tester) async {
@@ -276,7 +276,8 @@ void main() {
 
       await tester.pumpWidget(
         _archiveDialogHarness(
-          repository: _TrackingCategoryRepository(listResult: _singleItemList()),
+          repository:
+              _TrackingCategoryRepository(listResult: _singleItemList()),
           child: Builder(
             builder: (context) => ElevatedButton(
               onPressed: () => CategoryArchiveDialog.show(
@@ -535,13 +536,16 @@ List<Override> _accessOverrides({
       (ref) => AsyncData(CategoryListVisibility.resolve(access: access)),
     ),
     categoryDetailPageAccessProvider.overrideWith((ref) => true),
-    categoryUpdateAccessProvider.overrideWith((ref) => access.canUpdateCategory()),
-    categoryDeleteAccessProvider.overrideWith((ref) => access.canDeleteCategory()),
+    categoryUpdateAccessProvider
+        .overrideWith((ref) => access.canUpdateCategory()),
+    categoryDeleteAccessProvider
+        .overrideWith((ref) => access.canDeleteCategory()),
     categoryRepositoryProvider.overrideWith((ref) => repository),
     if (listResult != null)
       categoryListProvider.overrideWith((ref) async => listResult),
     categoryDetailsProvider.overrideWith(
-      (ref, id) async => (repository as _TrackingCategoryRepository).details ??
+      (ref, id) async =>
+          (repository as _TrackingCategoryRepository).details ??
           _sampleCategory(id: id),
     ),
   ];

@@ -240,7 +240,7 @@ class PosParkedSaleNotifier extends AsyncNotifier<List<PosParkedSale>> {
   }
 
   Future<void> delete(String id, {String? reason}) async {
-    _requirePermission(PosPermissionCodes.createParkedSale);
+    _requirePermission(PosPermissionCodes.heldSalesCancel);
     if (!_mutatingHolds.add('cancel:$id')) return;
     final current = await future;
     _setOperation(PosParkedSaleOperation.cancelling);

@@ -6,7 +6,6 @@ import 'package:nytroz_pos/features/tenant_admin/categories/data/models/category
 import 'package:nytroz_pos/features/tenant_admin/categories/domain/entities/category.dart';
 import 'package:nytroz_pos/features/tenant_admin/categories/domain/entities/category_list_query.dart';
 import 'package:nytroz_pos/features/tenant_admin/categories/domain/entities/category_tree_node.dart';
-import 'package:nytroz_pos/features/tenant_admin/categories/presentation/providers/category_providers.dart';
 import 'package:nytroz_pos/features/tenant_admin/categories/presentation/utils/category_form_utils.dart'
     hide deriveCategoryCode, formatCategoryUpdatedOn;
 import 'package:nytroz_pos/features/tenant_admin/categories/presentation/widgets/category_details_side_panel.dart';

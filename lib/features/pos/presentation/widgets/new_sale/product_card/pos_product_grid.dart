@@ -19,9 +19,12 @@ class PosProductGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authSessionProvider);
     final granted = session?.permissionCodes.toSet() ?? const <String>{};
-    final canViewProducts =
-        session?.hasPermission(PosPermissionCodes.viewProducts) == true;
+    final canViewProducts = PosPermissionAccess.canViewProducts(granted);
     final canAddItems = PosPermissionAccess.canAddCartItem(granted);
+    final canOpenDetails = granted.contains(
+          PosPermissionCodes.catalogProductCardOpenDetails,
+        ) ||
+        granted.contains(PosPermissionCodes.catalogProductDetailView);
 
     if (!canViewProducts) {
       return const _ProductsAccessBlocked();
@@ -60,10 +63,23 @@ class PosProductGrid extends ConsumerWidget {
               itemBuilder: (context, index) {
                 final product = products[index];
 
+                final canTapProduct = !product.isOutOfStock &&
+                    ((product.hasVariants &&
+                            product.variantId == null &&
+                            canOpenDetails) ||
+                        (product.variantId != null && canAddItems) ||
+                        (!product.hasVariants && canAddItems));
+
                 return PosProductCard(
                   product: product,
-                  onTap: canAddItems && !product.isOutOfStock
-                      ? () => _handleProductTap(context, ref, product)
+                  onTap: canTapProduct
+                      ? () => _handleProductTap(
+                            context,
+                            ref,
+                            product,
+                            canOpenDetails: canOpenDetails,
+                            canAddItems: canAddItems,
+                          )
                       : null,
                 );
               },
@@ -77,9 +93,12 @@ class PosProductGrid extends ConsumerWidget {
   Future<void> _handleProductTap(
     BuildContext context,
     WidgetRef ref,
-    PosCatalogProductSummary product,
-  ) async {
+    PosCatalogProductSummary product, {
+    required bool canOpenDetails,
+    required bool canAddItems,
+  }) async {
     if (product.variantId case final matchedVariantId?) {
+      if (!canAddItems) return;
       final detail = await ref.read(
         posProductDetailProvider(product.productId).future,
       );
@@ -109,6 +128,7 @@ class PosProductGrid extends ConsumerWidget {
     }
 
     if (product.hasVariants) {
+      if (!canOpenDetails) return;
       await showPosProductVariantSheet(
         context: context,
         ref: ref,
@@ -117,6 +137,7 @@ class PosProductGrid extends ConsumerWidget {
       return;
     }
 
+    if (!canAddItems) return;
     ref.read(posResolvedVariantCartActionProvider).add(
           PosResolvedSaleItem.fromCatalog(summary: product),
           requestedQuantity: 1,

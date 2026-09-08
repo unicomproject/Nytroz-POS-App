@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_customers_orders_returns_visibility.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../sale/domain/entities/pos_customer.dart';
@@ -12,8 +15,10 @@ class CustomerDetailsPanel extends StatelessWidget {
     required this.recentOrders,
     required this.isLoadingDetail,
     required this.canAttach,
+    required this.showAttachAction,
     required this.canViewPurchaseHistory,
     required this.canEdit,
+    required this.canDeactivate,
     required this.isAttaching,
     required this.attachDisabledReason,
     required this.onAttachToSale,
@@ -27,8 +32,10 @@ class CustomerDetailsPanel extends StatelessWidget {
   final List<PosCustomerOrder> recentOrders;
   final bool isLoadingDetail;
   final bool canAttach;
+  final bool showAttachAction;
   final bool canViewPurchaseHistory;
   final bool canEdit;
+  final bool canDeactivate;
   final bool isAttaching;
   final String? attachDisabledReason;
   final String? detailErrorMessage;
@@ -65,8 +72,10 @@ class CustomerDetailsPanel extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: CustomerDetailsActions(
                     canAttach: canAttach,
+                    showAttachAction: showAttachAction,
                     canViewPurchaseHistory: canViewPurchaseHistory,
                     canEdit: canEdit,
+                    canDeactivate: canDeactivate,
                     isAttaching: isAttaching,
                     attachDisabledReason: attachDisabledReason,
                     onAttachToSale: onAttachToSale,
@@ -124,7 +133,7 @@ class _EmptySelection extends StatelessWidget {
   }
 }
 
-class _SelectedCustomerBody extends StatelessWidget {
+class _SelectedCustomerBody extends ConsumerWidget {
   const _SelectedCustomerBody({
     required this.customer,
     required this.recentOrders,
@@ -140,16 +149,30 @@ class _SelectedCustomerBody extends StatelessWidget {
   final VoidCallback? onViewAllPurchases;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = ref.watch(effectivePermissionSetProvider);
     final joined = customer.joinedAt == null
-        ? 'Joined on 14 Jul 2026'
+        ? null
         : 'Joined on ${_formatJoined(customer.joinedAt!)}';
-    final phone = customer.phone?.trim().isNotEmpty == true
-        ? customer.phone!.trim()
-        : '0778963142';
-    final email = customer.email?.trim().isNotEmpty == true
-        ? customer.email!.trim()
-        : 'arjun@gmail.com';
+    final phone = customer.phone?.trim();
+    final email = customer.email?.trim();
+    final hasPhone = phone != null && phone.isNotEmpty;
+    final hasEmail = email != null && email.isNotEmpty;
+    final showPhone =
+        PosCustomersOrdersReturnsVisibility.canShowCustomerPhone(p);
+    final showEmail =
+        PosCustomersOrdersReturnsVisibility.canShowCustomerEmail(p);
+    final showJoined =
+        PosCustomersOrdersReturnsVisibility.canShowCustomerJoinedDate(p);
+    final showSpend =
+        PosCustomersOrdersReturnsVisibility.canShowCustomerTotalSpend(p);
+    final showOrders =
+        PosCustomersOrdersReturnsVisibility.canShowCustomerOrderCount(p);
+    final showAov = PosCustomersOrdersReturnsVisibility.canShowCustomerAov(p);
+    final showRecent =
+        PosCustomersOrdersReturnsVisibility.canShowRecentPurchases(p);
+    final showAmounts =
+        PosCustomersOrdersReturnsVisibility.canShowPurchaseAmounts(p);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,93 +263,107 @@ class _SelectedCustomerBody extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        Wrap(
-          spacing: 16,
-          runSpacing: 8,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.phone_outlined,
-                    size: 16, color: Color(0xFFFF3214)),
-                const SizedBox(width: 6),
-                Text(
-                  phone,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
+        if (showPhone || showEmail)
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            children: [
+              if (showPhone)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.phone_outlined,
+                        size: 16, color: Color(0xFFFF3214)),
+                    const SizedBox(width: 6),
+                    Text(
+                      hasPhone ? phone : '—',
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              if (showEmail)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.mail_outline_rounded,
+                        size: 16, color: Color(0xFFFF3214)),
+                    const SizedBox(width: 6),
+                    Text(
+                      hasEmail ? email : '—',
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        if (showJoined && joined != null) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.calendar_today_outlined,
+                  size: 16, color: Color(0xFFFF3214)),
+              const SizedBox(width: 6),
+              Text(
+                joined,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (showSpend || showOrders || showAov) ...[
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              if (showSpend)
+                Expanded(
+                  child: _MetricCard(
+                    label: 'Total Spend',
+                    value: customer.spentDisplay,
                   ),
                 ),
-              ],
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.mail_outline_rounded,
-                    size: 16, color: Color(0xFFFF3214)),
-                const SizedBox(width: 6),
-                Text(
-                  email,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
+              if (showSpend && (showOrders || showAov))
+                const SizedBox(width: 8),
+              if (showOrders)
+                Expanded(
+                  child: _MetricCard(
+                    label: 'Orders',
+                    value: customer.ordersDisplay,
+                    isPrimaryColor: true,
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            const Icon(Icons.calendar_today_outlined,
-                size: 16, color: Color(0xFFFF3214)),
-            const SizedBox(width: 6),
-            Text(
-              joined,
-              style: const TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: _MetricCard(
-                label: 'Total Spend',
-                value: customer.spentDisplay,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _MetricCard(
-                label: 'Orders',
-                value: customer.ordersDisplay,
-                isPrimaryColor: true,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _MetricCard(
-                label: 'Avg. Order Value',
-                value: customer.averageOrderValueDisplay,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        CustomerRecentOrdersSection(
-          orders: recentOrders,
-          isLoading: isLoadingDetail,
-          errorMessage: detailErrorMessage,
-          onViewAll: onViewAllPurchases,
-        ),
+              if (showOrders && showAov) const SizedBox(width: 8),
+              if (showAov)
+                Expanded(
+                  child: _MetricCard(
+                    label: 'Avg. Order Value',
+                    value: customer.averageOrderValueDisplay,
+                  ),
+                ),
+            ],
+          ),
+        ],
+        if (showRecent) ...[
+          const SizedBox(height: 16),
+          CustomerRecentOrdersSection(
+            orders: recentOrders,
+            showAmounts: showAmounts,
+            isLoading: isLoadingDetail,
+            errorMessage: detailErrorMessage,
+            onViewAll: onViewAllPurchases,
+          ),
+        ],
       ],
     );
   }
@@ -408,8 +445,10 @@ Future<void> showCustomerMobileDetailsSheet({
   required List<PosCustomerOrder> recentOrders,
   required bool isLoadingDetail,
   required bool canAttach,
+  required bool showAttachAction,
   required bool canViewPurchaseHistory,
   required bool canEdit,
+  required bool canDeactivate,
   required bool isAttaching,
   required String? attachDisabledReason,
   required VoidCallback onAttachToSale,
@@ -434,8 +473,10 @@ Future<void> showCustomerMobileDetailsSheet({
             recentOrders: recentOrders,
             isLoadingDetail: isLoadingDetail,
             canAttach: canAttach,
+            showAttachAction: showAttachAction,
             canViewPurchaseHistory: canViewPurchaseHistory,
             canEdit: canEdit,
+            canDeactivate: canDeactivate,
             isAttaching: isAttaching,
             attachDisabledReason: attachDisabledReason,
             detailErrorMessage: detailErrorMessage,

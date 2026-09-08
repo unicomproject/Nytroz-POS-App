@@ -211,8 +211,14 @@ class CashDrawerController extends StateNotifier<CashDrawerState> {
     required double amount,
     String? note,
   }) async {
-    final expected = state.summary?.currentExpectedCash ?? 0;
+    final expected = state.summary?.currentExpectedCash;
     final currency = state.summary?.currencyCode ?? '';
+    if (expected == null) {
+      state = state.copyWith(
+        errorMessage: 'Current expected cash is unavailable for this action.',
+      );
+      return false;
+    }
     if (amount > expected) {
       state = state.copyWith(
         errorMessage:
@@ -259,6 +265,12 @@ class CashDrawerController extends StateNotifier<CashDrawerState> {
 
     final expected = summary.currentExpectedCash;
     final currency = summary.currencyCode;
+    if (expected == null) {
+      state = state.copyWith(
+        errorMessage: 'Available cash is unavailable for this action.',
+      );
+      return false;
+    }
     if (amount > expected) {
       state = state.copyWith(
         errorMessage:
@@ -375,11 +387,13 @@ class CashDrawerController extends StateNotifier<CashDrawerState> {
 
     final difference = closedSession.cashDifference;
     final currency = summary.currencyCode;
-    final differenceLabel = difference == 0
-        ? 'balanced'
-        : difference > 0
-            ? 'over by ${formatCashDrawerAmount(difference.abs(), currencyCode: currency)}'
-            : 'short by ${formatCashDrawerAmount(difference.abs(), currencyCode: currency)}';
+    final differenceLabel = difference == null
+        ? 'unavailable'
+        : difference == 0
+            ? 'balanced'
+            : difference > 0
+                ? 'over by ${formatCashDrawerAmount(difference.abs(), currencyCode: currency)}'
+                : 'short by ${formatCashDrawerAmount(difference.abs(), currencyCode: currency)}';
 
     await refresh();
     state = state.copyWith(
@@ -496,7 +510,10 @@ final cashDrawerProvider =
   return CashDrawerController(ref);
 });
 
-String formatCashDrawerAmount(double value, {String currencyCode = ''}) {
+String formatCashDrawerAmount(double? value, {String currencyCode = ''}) {
+  if (value == null) {
+    return '—';
+  }
   final currency = currencyCode.trim().isEmpty ? '' : currencyCode.trim();
   final isNegative = value < 0;
   final parts = value.abs().toStringAsFixed(2).split('.');

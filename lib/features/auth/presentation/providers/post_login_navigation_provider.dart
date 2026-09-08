@@ -6,12 +6,16 @@ import 'session_provider.dart';
 import '../../../../shared/pos_session/pos_session_bootstrap_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../till/presentation/providers/till_provider.dart';
+import '../../../workspace/domain/workspace_access.dart';
+import '../../../workspace/presentation/providers/workspace_selection_provider.dart';
 
 enum PostLoginRoute {
+  workspace('/workspace'),
+  noAccess('/workspace/no-access'),
   deviceActivation('/pos/device-activation'),
   openTill('/pos/open-till'),
   posHome('/pos/home'),
-  tenantAdminDashboard('/tenant-admin/dashboard');
+  tenantAdminDashboard('/tenant-admin');
 
   const PostLoginRoute(this.path);
 
@@ -19,6 +23,22 @@ enum PostLoginRoute {
 }
 
 final postLoginRouteProvider = Provider<PostLoginRoute>((ref) {
+  final workspaceState = ref.watch(workspaceSelectionProvider);
+  final access = workspaceState.access;
+
+  if (!access.hasAny) {
+    return PostLoginRoute.noAccess;
+  }
+
+  if (access.hasMultiple && workspaceState.selected == null) {
+    return PostLoginRoute.workspace;
+  }
+
+  if (workspaceState.selected == AppWorkspace.tenantAdmin ||
+      access.onlyWorkspace == AppWorkspace.tenantAdmin) {
+    return PostLoginRoute.tenantAdminDashboard;
+  }
+
   final bootstrap = ref.watch(posSessionBootstrapProvider);
   if (!bootstrap.isReady) {
     return PostLoginRoute.posHome;
@@ -29,14 +49,6 @@ final postLoginRouteProvider = Provider<PostLoginRoute>((ref) {
   final authSession = ref.watch(authSessionProvider);
   final device = deviceState.deviceContext;
   final deviceTrusted = device?.isTrusted == true;
-
-  if (authSession?.canAccessTenantAdminDashboard == true) {
-    developer.log(
-      'Post-login navigation: tenant admin dashboard. route=${PostLoginRoute.tenantAdminDashboard.path}',
-      name: 'auth.navigation',
-    );
-    return PostLoginRoute.tenantAdminDashboard;
-  }
 
   final isPosCashier = authSession?.canOpenPosTill == true;
 

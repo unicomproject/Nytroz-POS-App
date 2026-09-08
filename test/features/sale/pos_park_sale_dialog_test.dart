@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nytroz_pos/core/access/effective_permission_set.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/cart/data/models/pos_parked_sale_dtos.dart';
 import 'package:nytroz_pos/features/cart/domain/repositories/pos_parked_sale_repository.dart';
@@ -107,7 +109,7 @@ void main() {
     expect(harness.container.read(posNewSaleCartProvider).hasItems, isTrue);
   });
 
-  testWidgets('success shows exact backend reference and provider-cleared cart',
+  testWidgets('success closes dialog and leaves provider-cleared cart',
       (tester) async {
     final harness = await _pumpHarness(tester);
     addTearDown(harness.dispose);
@@ -120,31 +122,11 @@ void main() {
     expect(harness.repository.created.single.reason, 'returns soon');
     expect(harness.repository.created.single.toJson(),
         isNot(contains('expiresAt')));
-    expect(find.text('Sale parked successfully'), findsOneWidget);
-    expect(find.text('PS-2026-00012'), findsOneWidget);
-    expect(find.text('Print Receipt'), findsNothing);
-    final successIcon = tester.widget<Container>(
-      find.byKey(const Key('park-sale-success-icon')),
-    );
-    expect(
-      (successIcon.decoration! as BoxDecoration).color,
-      TenantAdminColors.posHomeReturnsCard,
-    );
-    final reference = tester.widget<SelectableText>(
-      find.byKey(const Key('park-sale-success-reference')),
-    );
-    expect(reference.style?.color, TenantAdminColors.posNewSaleAccent);
-    final done = tester.widget<FilledButton>(
-      find.byKey(const Key('park-sale-success-done')),
-    );
-    expect(
-      done.style?.backgroundColor?.resolve(<WidgetState>{}),
-      TenantAdminColors.posNewSaleAccent,
-    );
-    expect(harness.container.read(posNewSaleCartProvider).hasItems, isFalse);
-    await tester.tap(find.widgetWithText(FilledButton, 'Done'));
-    await tester.pumpAndSettle();
     expect(find.text('Sale parked successfully'), findsNothing);
+    expect(find.byKey(const Key('park-sale-success-icon')), findsNothing);
+    expect(find.byKey(const Key('park-sale-success-done')), findsNothing);
+    expect(find.byType(Dialog), findsNothing);
+    expect(harness.container.read(posNewSaleCartProvider).hasItems, isFalse);
   });
 
   testWidgets('cancel preserves the active cart and makes no request',
@@ -180,7 +162,8 @@ void main() {
 
     repository.pending!.complete(_hold);
     await tester.pumpAndSettle();
-    expect(find.text('PS-2026-00012'), findsOneWidget);
+    expect(find.byType(Dialog), findsNothing);
+    expect(harness.container.read(posNewSaleCartProvider).hasItems, isFalse);
   });
 
   testWidgets('recoverable failure preserves note and cart', (tester) async {
@@ -249,17 +232,26 @@ Future<_Harness> _pumpHarness(
   _Repository? repository,
 }) async {
   repository ??= _Repository();
+  const parkPermissions = {
+    PosPermissionCodes.createParkedSale,
+    PosPermissionCodes.heldSalesCreate,
+    PosPermissionCodes.heldSalesPopupView,
+    PosPermissionCodes.heldSalesPopupReference,
+    PosPermissionCodes.heldSalesPopupNote,
+    PosPermissionCodes.heldSalesPopupExpiry,
+    PosPermissionCodes.viewBackendParkedSales,
+  };
   final container = ProviderContainer(overrides: [
     posParkedSaleRepositoryProvider.overrideWithValue(repository),
+    effectivePermissionSetProvider.overrideWithValue(
+      EffectivePermissionSet.fromIterable(parkPermissions),
+    ),
     posParkedSaleAccessContextProvider
         .overrideWithValue(const PosParkedSaleAccessContext(
       authenticated: true,
       trustedDevice: true,
       deviceId: '11111111-1111-1111-1111-111111111111',
-      permissions: {
-        PosPermissionCodes.createParkedSale,
-        PosPermissionCodes.viewBackendParkedSales
-      },
+      permissions: parkPermissions,
     )),
   ]);
   container.read(posNewSaleCartProvider.notifier).addToCart(_product);

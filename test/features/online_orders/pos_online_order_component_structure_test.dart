@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/domain/entities/pos_online_order.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/providers/pos_online_orders_provider.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/screens/ready_for_collection_screen.dart';
-import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/online_orders_queue_widgets.dart';
+import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/oo01_online_orders_widgets.dart';
 
 void main() {
   const order = PosOnlineOrder(
@@ -18,7 +18,7 @@ void main() {
     lineCount: 1,
   );
 
-  testWidgets('OO01 uses a table on desktop and cards below desktop width',
+  testWidgets('OO01 uses the canonical order-card result owner',
       (tester) async {
     const state = PosOnlineOrdersState(
       items: [order],
@@ -29,29 +29,21 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     tester.view.devicePixelRatio = 1;
-    Future<void> pumpAt(double width) async {
-      tester.view.physicalSize = Size(width, 600);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ResponsiveOnlineOrderList(
-              state: state,
-              onSelect: (_) {},
-              onPage: (_) {},
-              onRetry: () {},
-            ),
+    tester.view.physicalSize = const Size(1280, 600);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Oo01OrderResults(
+            state: state,
+            onOpen: (_) {},
+            onRetry: () {},
           ),
         ),
-      );
-    }
+      ),
+    );
 
-    await pumpAt(1280);
-    expect(find.byType(OnlineOrdersTable), findsOneWidget);
-    expect(find.byType(OnlineOrderCard), findsNothing);
-
-    await pumpAt(700);
-    expect(find.byType(OnlineOrdersTable), findsNothing);
-    expect(find.byType(OnlineOrderCard), findsOneWidget);
+    expect(find.byType(Oo01OrderCard), findsOneWidget);
+    expect(find.text('CC-0001'), findsOneWidget);
   });
 
   testWidgets('OO06 composes ready hero and authoritative summary',

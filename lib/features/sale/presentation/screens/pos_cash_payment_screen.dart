@@ -84,16 +84,15 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
                 padding.bottom > 12 ? 12 : padding.bottom,
               ),
               child: CashPaymentScreenBody(
-                itemCount: summary.itemCount,
-                subtotal: summary.subtotal,
-                discount: summary.discount,
-                tax: summary.tax,
-                totalDue: total,
-                items: cart.itemList,
+                cart: cart,
+                summary: summary,
                 cashReceived: cashReceived,
                 inputBuffer: cashState.inputBuffer,
                 quickAmounts: generateCashQuickAmounts(total),
                 selectedQuickAmount: cashState.selectedQuickAmount,
+                onCustomerTap: () =>
+                    context.push('/pos/new-sale/payment/customer'),
+                onBackToPaymentMethods: () => context.pop(),
                 onQuickAmountSelected: (amount) => ref
                     .read(posCashPaymentProvider.notifier)
                     .setAmount(amount, selectedQuickAmount: amount),

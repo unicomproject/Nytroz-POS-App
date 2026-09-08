@@ -24,6 +24,7 @@ class CustomersTableSection extends StatelessWidget {
     required this.onSelect,
     required this.onRetry,
     required this.onPageChanged,
+    this.showPagination = true,
   });
 
   final List<PosCustomer> customers;
@@ -38,6 +39,7 @@ class CustomersTableSection extends StatelessWidget {
   final int totalCount;
   final bool useCardLayout;
   final bool showSecondaryColumns;
+  final bool showPagination;
   final ValueChanged<String> onSelect;
   final VoidCallback onRetry;
   final ValueChanged<int> onPageChanged;
@@ -54,16 +56,18 @@ class CustomersTableSection extends StatelessWidget {
       child: Column(
         children: [
           Expanded(child: _buildBody(context)),
-          const Divider(height: 1, color: TenantAdminColors.border),
-          CustomersPagination(
-            page: page,
-            totalPages: totalPages,
-            rangeStart: rangeStart,
-            rangeEnd: rangeEnd,
-            totalCount: totalCount,
-            isLoading: isLoading,
-            onPageChanged: onPageChanged,
-          ),
+          if (showPagination) ...[
+            const Divider(height: 1, color: TenantAdminColors.border),
+            CustomersPagination(
+              page: page,
+              totalPages: totalPages,
+              rangeStart: rangeStart,
+              rangeEnd: rangeEnd,
+              totalCount: totalCount,
+              isLoading: isLoading,
+              onPageChanged: onPageChanged,
+            ),
+          ],
         ],
       ),
     );

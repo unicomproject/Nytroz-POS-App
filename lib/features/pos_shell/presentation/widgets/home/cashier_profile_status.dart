@@ -8,23 +8,28 @@ class CashierProfileStatus extends StatelessWidget {
     required this.label,
     required this.value,
     required this.online,
+    this.showConnectivity = true,
   });
 
   final String label;
   final String value;
   final bool online;
+  final bool showConnectivity;
 
   @override
   Widget build(BuildContext context) => Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            online ? Icons.wifi_rounded : Icons.wifi_off_rounded,
-            color:
-                online ? TenantAdminColors.success : TenantAdminColors.offline,
-            size: 18,
-          ),
-          const SizedBox(width: TenantAdminSpacing.sm),
+          if (showConnectivity) ...[
+            Icon(
+              online ? Icons.wifi_rounded : Icons.wifi_off_rounded,
+              color: online
+                  ? TenantAdminColors.success
+                  : TenantAdminColors.offline,
+              size: 18,
+            ),
+            const SizedBox(width: TenantAdminSpacing.sm),
+          ],
           Flexible(
             child: Text(
               '$label · $value',

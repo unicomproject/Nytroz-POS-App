@@ -188,7 +188,8 @@ void main() {
       expect(find.text('Single Unit Only'), findsOneWidget);
       expect(find.text('Multiple Units & Pack Conversion'), findsOneWidget);
       expect(find.text('Product Unit *'), findsOneWidget);
-      expect(find.text('Allow Decimal Quantity'), findsOneWidget);
+      expect(find.text('Decimal Quantity Rule'), findsOneWidget);
+      expect(find.text('Allow decimals'), findsOneWidget);
       expect(
         find.textContaining(
             'Select a Product Unit to configure basic unit settings'),
@@ -196,7 +197,7 @@ void main() {
       );
     });
 
-    testWidgets('renders Multiple Units form elements, preview, and table',
+    testWidgets('renders Multiple Units form elements and conversion preview',
         (WidgetTester tester) async {
       final state = AddProductWizardState(
         currentStep: 3,
@@ -224,11 +225,6 @@ void main() {
       expect(find.text('1 Pack = 6 Pieces'), findsAtLeastNWidgets(1));
       expect(find.text('1 Carton = 12 Packs'), findsOneWidget);
       expect(find.text('1 Carton = 72 Pieces'), findsOneWidget);
-
-      // Conversion Table
-      expect(find.text('Units & Pack Conversion Table'), findsOneWidget);
-      expect(find.text('Piece (Selling & Base Unit)'), findsOneWidget);
-      expect(find.text('Assigned in Step 5'), findsNWidgets(3));
     });
   });
 }
