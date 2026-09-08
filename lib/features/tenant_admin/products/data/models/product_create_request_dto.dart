@@ -32,6 +32,7 @@ class ProductVariantRequestDto {
 class ProductCreateRequestDto {
   const ProductCreateRequestDto({
     required this.productName,
+    required this.productCode,
     required this.sku,
     required this.categoryId,
     required this.unitType,
@@ -62,6 +63,7 @@ class ProductCreateRequestDto {
   });
 
   final String productName;
+  final String productCode;
   final String sku;
   final String? barcode;
   final String categoryId;
@@ -93,6 +95,7 @@ class ProductCreateRequestDto {
   Map<String, dynamic> toJson() {
     return {
       'productName': productName.trim(),
+      'productCode': productCode.trim(),
       'sku': sku.trim(),
       if (barcode != null && barcode!.trim().isNotEmpty)
         'barcode': barcode!.trim(),

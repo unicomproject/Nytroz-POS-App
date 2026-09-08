@@ -218,9 +218,9 @@ void main() {
         );
       }
       await controller.saveAndContinue();
-      controller.updateCostPrice(10);
-      controller.updateStandardSellingPrice(20);
       controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
+      controller.reconcileVariantPricesWithVariants();
+      controller.applyDefaultSellingPriceToAllVariants(20);
       await controller.saveAndContinue();
 
       final payload = WizardProductCreateMapper.toWizardCreateJson(
@@ -228,6 +228,14 @@ void main() {
       );
       expect(payload['productStructure'], 'VARIANT');
       expect(payload.containsKey('unitModel'), isFalse);
+      final pricing = payload['pricingTax'] as Map;
+      expect(pricing.containsKey('standardSellingPrice'), isFalse);
+      final variantPrices = pricing['variantPrices'] as List;
+      expect(variantPrices.length, 2);
+      for (final p in variantPrices) {
+        expect((p as Map)['sellingPrice'], 20);
+        expect(p['clientCombinationKey'], isNotEmpty);
+      }
       final vc = payload['variantConfiguration'] as Map;
       final variants = vc['variants'] as List;
       expect(variants.length, 2);
@@ -258,6 +266,16 @@ void main() {
       expect(repo.createFromWizardCallCount, 1);
     });
 
+    test('10b. startFreshWizard after create returns to Step 1', () async {
+      await fillSimpleToStep7();
+      expect(await controller.createProductFromWizard(), isTrue);
+      await controller.startFreshWizard();
+      expect(controller.wizardState.currentStep, 1);
+      expect(controller.wizardState.productId, isNull);
+      expect(controller.wizardState.productName, isEmpty);
+      expect(controller.wizardState.status, 'DRAFT');
+    });
+
     test('13/14/15. failed Create preserves draft and wizard state', () async {
       await fillSimpleToStep7();
       await controller.saveDraft();
@@ -266,7 +284,7 @@ void main() {
       repo.failMessage = 'duplicate sku';
 
       expect(await controller.createProductFromWizard(), isFalse);
-      expect(controller.wizardState.currentStep, 7);
+      expect(controller.wizardState.currentStep, 5);
       expect(controller.wizardState.productName, 'Create Simple Product');
       expect(await localStore.getDraft(draftId), isNotNull);
       expect(controller.wizardState.pageError, contains('duplicate sku'));

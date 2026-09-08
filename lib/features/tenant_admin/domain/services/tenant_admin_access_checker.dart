@@ -1322,9 +1322,60 @@ class TenantAdminAccessChecker {
   }
 
   bool canLookupTaxClasses() {
+    return canViewTaxSetup();
+  }
+
+  bool canViewTaxSetup() {
     return canAny([
       TenantAdminPermissionCodes.pricingTaxClassesView,
       TenantAdminPermissionCodes.taxClassesView,
+    ]);
+  }
+
+  bool canCreateTaxSetup() {
+    return canAny([
+      TenantAdminPermissionCodes.pricingTaxClassesCreate,
+      'tax.classes.create',
+    ]);
+  }
+
+  bool canUpdateTaxSetup() {
+    return canAny([
+      TenantAdminPermissionCodes.pricingTaxClassesUpdate,
+      'tax.classes.update',
+    ]);
+  }
+
+  bool canManageTaxSetupStatus() {
+    return canAny([
+      TenantAdminPermissionCodes.pricingTaxClassesStatusManage,
+      'tax.classes.delete',
+      'tax.classes.manage',
+    ]);
+  }
+
+  bool canViewTaxSetupProducts() {
+    return canAny([
+      TenantAdminPermissionCodes.pricingTaxClassesProductsView,
+      TenantAdminPermissionCodes.pricingTaxClassesView,
+      TenantAdminPermissionCodes.taxClassesView,
+    ]);
+  }
+
+  bool canViewTaxRates() {
+    return canAny([
+      TenantAdminPermissionCodes.pricingTaxRatesView,
+      'tax.rates.view',
+    ]);
+  }
+
+  bool canScheduleTaxRates() {
+    return canAny([
+      TenantAdminPermissionCodes.pricingTaxRatesScheduleManage,
+      'tax.rates.create',
+      'tax.rates.update',
+      'tax.rates.delete',
+      'tax.rates.manage',
     ]);
   }
 
@@ -1938,6 +1989,54 @@ class StockInVisibility {
       showSubtitle: showPage,
       showForm: showPage,
       showSubmitAction: showPage,
+    );
+  }
+}
+
+class TaxSetupListVisibility {
+  const TaxSetupListVisibility({
+    required this.showPage,
+    required this.showTitle,
+    required this.showSubtitle,
+    required this.showSearch,
+    required this.showCreate,
+    required this.showList,
+    required this.showEdit,
+    required this.showStatusManage,
+    required this.showViewProducts,
+    required this.showViewRates,
+    required this.showScheduleManage,
+  });
+
+  final bool showPage;
+  final bool showTitle;
+  final bool showSubtitle;
+  final bool showSearch;
+  final bool showCreate;
+  final bool showList;
+  final bool showEdit;
+  final bool showStatusManage;
+  final bool showViewProducts;
+  final bool showViewRates;
+  final bool showScheduleManage;
+
+  static TaxSetupListVisibility resolve({
+    required TenantAdminAccessChecker access,
+  }) {
+    final showPage = access.canViewTaxSetup();
+
+    return TaxSetupListVisibility(
+      showPage: showPage,
+      showTitle: showPage,
+      showSubtitle: showPage,
+      showSearch: showPage,
+      showCreate: access.canCreateTaxSetup(),
+      showList: showPage,
+      showEdit: access.canUpdateTaxSetup(),
+      showStatusManage: access.canManageTaxSetupStatus(),
+      showViewProducts: access.canViewTaxSetupProducts(),
+      showViewRates: access.canViewTaxRates(),
+      showScheduleManage: access.canScheduleTaxRates(),
     );
   }
 }

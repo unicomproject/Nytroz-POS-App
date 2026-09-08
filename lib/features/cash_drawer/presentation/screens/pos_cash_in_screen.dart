@@ -55,12 +55,11 @@ class _PosCashInScreenState extends ConsumerState<PosCashInScreen> {
     final session = ref.watch(authSessionProvider);
     final granted = session?.permissionCodes.toSet() ?? const {};
 
-    if (!PosPermissionAccess.canViewCashDrawer(granted)) {
+    if (!PosPermissionAccess.canCashIn(granted)) {
       return const TenantAdminForbiddenScreen();
     }
 
-    final canCreateMovement =
-        PosPermissionAccess.canCreateCashDrawerMovement(granted);
+    final canCreateMovement = PosPermissionAccess.canCashIn(granted);
 
     ref.listen(tillProvider, (_, __) {
       ref.read(cashDrawerProvider.notifier).refresh();

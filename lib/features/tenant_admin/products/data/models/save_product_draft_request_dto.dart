@@ -60,7 +60,7 @@ class SaveProductDraftRequestDto {
     this.longDescription,
     this.desiredPublishActive = true,
     this.posSellable = true,
-    this.trackInventory = true,
+    this.trackInventory = false,
     this.allowOnlineSale = true,
     this.productStructure,
     this.batchTracking,

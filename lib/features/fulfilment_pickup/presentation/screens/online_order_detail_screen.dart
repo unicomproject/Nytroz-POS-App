@@ -152,6 +152,11 @@ class OnlineOrderDetailScreen extends ConsumerWidget {
       required bool alreadyPicking,
       required bool dense}) {
     if (alreadyPicking) {
+      final canContinuePicking = ref.watch(authSessionProvider)?.hasPermission(
+                PosPermissionCodes.viewOnlineOrderPicking,
+              ) ==
+          true;
+      if (!canContinuePicking) return null;
       return FilledButton.icon(
         onPressed: () =>
             context.go('/pos/online-orders/${detail.order.id}/picking'),

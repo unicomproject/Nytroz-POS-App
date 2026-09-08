@@ -36,15 +36,15 @@ class CloseTillFormState {
   bool get hasValidCountedCash =>
       parsedCountedCash != null && parsedCountedCash! >= 0;
 
-  double? differenceFor(double expectedCash) {
+  double? differenceFor(double? expectedCash) {
     final counted = parsedCountedCash;
-    if (counted == null) {
+    if (counted == null || expectedCash == null) {
       return null;
     }
     return counted - expectedCash;
   }
 
-  CloseTillClosingStatus closingStatusFor(double expectedCash) {
+  CloseTillClosingStatus closingStatusFor(double? expectedCash) {
     final difference = differenceFor(expectedCash);
     if (difference == null) {
       return CloseTillClosingStatus.varianceReasonRequired;
@@ -58,7 +58,7 @@ class CloseTillFormState {
     return CloseTillClosingStatus.over;
   }
 
-  String summaryClosingStatusLabel(double expectedCash) {
+  String summaryClosingStatusLabel(double? expectedCash) {
     final difference = differenceFor(expectedCash);
     if (difference == null || difference == 0) {
       return 'Balanced';
@@ -118,8 +118,11 @@ class CloseTillFormController extends StateNotifier<CloseTillFormState> {
     state = state.copyWith(hasDraft: true);
   }
 
-  void applyDefaultCountedCash(double expectedCash) {
-    if (state.hasDraft || state.hasValidCountedCash || expectedCash < 0) {
+  void applyDefaultCountedCash(double? expectedCash) {
+    if (expectedCash == null ||
+        state.hasDraft ||
+        state.hasValidCountedCash ||
+        expectedCash < 0) {
       return;
     }
 

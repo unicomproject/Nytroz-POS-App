@@ -37,9 +37,11 @@ class _PosParkedSalesDialog extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 920, maxHeight: 720),
           child: PosParkedSalesPanel(
-            onClose: (ctx) => Navigator.of(ctx).pop(),
-            onRecallSuccess: (ctx, ref, sale) {
-              if (ctx.mounted) Navigator.of(ctx).pop(sale);
+            // showAppDialog pushes on the root navigator — pop the same one.
+            onClose: (_) => Navigator.of(context, rootNavigator: true).pop(),
+            onRecallSuccess: (_, __, sale) {
+              if (!context.mounted) return;
+              Navigator.of(context, rootNavigator: true).pop(sale);
             },
           ),
         ),

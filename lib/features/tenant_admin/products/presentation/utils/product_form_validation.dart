@@ -77,6 +77,7 @@ Map<String, String> validateProductForm({
 
 Map<String, String> validateProductUpdateForm({
   required String productName,
+  required String productCode,
   required String sku,
   required String? barcode,
   required String? categoryId,
@@ -95,6 +96,12 @@ Map<String, String> validateProductUpdateForm({
     errors['productName'] = 'Product name is required.';
   } else if (productName.trim().length > 200) {
     errors['productName'] = 'Product name cannot exceed 200 characters.';
+  }
+
+  if (productCode.trim().isEmpty) {
+    errors['productCode'] = 'Product code is required.';
+  } else if (productCode.trim().length > 80) {
+    errors['productCode'] = 'Product code cannot exceed 80 characters.';
   }
 
   if (sku.trim().isEmpty) {

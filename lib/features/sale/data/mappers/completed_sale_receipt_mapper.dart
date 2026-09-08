@@ -29,13 +29,13 @@ class CompletedSaleReceiptMapper {
 
     final receiptId = payment.receiptId?.trim();
     final customerName = _firstNonEmpty(
-          payment.customerName,
-          customerNameOverride,
-        );
+      payment.customerName,
+      customerNameOverride,
+    );
     final customerPhone = _firstNonEmpty(
-          payment.customerPhone,
-          customerPhoneOverride,
-        );
+      payment.customerPhone,
+      customerPhoneOverride,
+    );
     return CompletedSaleReceipt(
       receiptId:
           receiptId?.isNotEmpty == true ? receiptId! : payment.saleId.trim(),

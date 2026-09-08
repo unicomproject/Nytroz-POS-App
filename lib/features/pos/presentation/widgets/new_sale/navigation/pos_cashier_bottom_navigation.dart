@@ -2,55 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../../core/access/pos_permission_access.dart';
-import '../../../../../auth/presentation/providers/session_provider.dart';
+import '../../../../../../core/access/permission_access_providers.dart';
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../../../pos_shell/presentation/widgets/common/pos_shell_bottom_nav_destinations.dart';
 
 class PosCashierBottomNavigation extends ConsumerWidget {
   const PosCashierBottomNavigation({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    if (!shouldShowPosCashierBottomNav(permissions)) {
+      return const SizedBox.shrink();
+    }
+
+    final destinations = filterPosCashierNavDestinations(permissions);
     final currentPath = GoRouterState.of(context).uri.path;
-    final session = ref.watch(authSessionProvider);
-    final permissions = session?.permissionCodes.toSet() ?? const <String>{};
-    final destinations = <_CashierDestination>[
-      _CashierDestination(
-        label: 'Home',
-        icon: Icons.home_outlined,
-        selectedIcon: Icons.home_rounded,
-        route: '/pos/home',
-        enabled: PosPermissionAccess.canViewHome(permissions),
-      ),
-      _CashierDestination(
-        label: 'New Sale',
-        icon: Icons.shopping_cart_outlined,
-        selectedIcon: Icons.shopping_cart_rounded,
-        route: '/pos/new-sale',
-        enabled: PosPermissionAccess.canAccessNewSale(permissions),
-      ),
-      _CashierDestination(
-        label: 'Orders',
-        icon: Icons.receipt_long_outlined,
-        selectedIcon: Icons.receipt_long_rounded,
-        route: '/pos/orders',
-        enabled: permissions.contains('receipts.view'),
-      ),
-      _CashierDestination(
-        label: 'Customers',
-        icon: Icons.people_outline_rounded,
-        selectedIcon: Icons.people_rounded,
-        route: '/pos/customers',
-        enabled: PosPermissionAccess.canViewCustomers(permissions),
-      ),
-      const _CashierDestination(
-        label: 'Settings',
-        icon: Icons.settings_outlined,
-        selectedIcon: Icons.settings_rounded,
-        route: '/pos/settings',
-        enabled: true,
-      ),
-    ];
 
     return Material(
       color: TenantAdminColors.posHomeDarkBackground,
@@ -65,7 +32,7 @@ class PosCashierBottomNavigation extends ConsumerWidget {
                   child: _DestinationButton(
                     destination: destination,
                     selected: destination.matches(currentPath),
-                    onTap: () => _handleTap(context, destination),
+                    onTap: () => context.go(destination.route),
                   ),
                 ),
             ],
@@ -73,15 +40,6 @@ class PosCashierBottomNavigation extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  void _handleTap(
-    BuildContext context,
-    _CashierDestination destination,
-  ) {
-    if (destination.enabled && destination.route != null) {
-      context.go(destination.route!);
-    }
   }
 }
 
@@ -92,26 +50,23 @@ class _DestinationButton extends StatelessWidget {
     required this.onTap,
   });
 
-  final _CashierDestination destination;
+  final PosCashierNavDestination destination;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final enabled = destination.enabled;
     final color = selected
         ? TenantAdminColors.posHomeAccentOrange
-        : enabled
-            ? TenantAdminColors.surface
-            : TenantAdminColors.offline;
+        : TenantAdminColors.surface;
 
     return Semantics(
       button: true,
-      enabled: enabled,
+      enabled: true,
       selected: selected,
       label: destination.label,
       child: InkWell(
-        onTap: enabled ? onTap : null,
+        onTap: onTap,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -167,30 +122,5 @@ class _DestinationButton extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _CashierDestination {
-  const _CashierDestination({
-    required this.label,
-    required this.icon,
-    required this.selectedIcon,
-    this.route,
-    this.enabled = false,
-  });
-
-  final String label;
-  final IconData icon;
-  final IconData selectedIcon;
-  final String? route;
-  final bool enabled;
-
-  bool matches(String currentPath) {
-    final destinationRoute = route;
-    if (destinationRoute == null) {
-      return false;
-    }
-    return currentPath == destinationRoute ||
-        currentPath.startsWith('$destinationRoute/');
   }
 }

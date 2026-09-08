@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/access/pos_access_codes.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
+import '../../../notifications/presentation/providers/notification_provider.dart';
+import '../../../notifications/presentation/widgets/notification_panel.dart';
 import '../../../till/presentation/providers/till_provider.dart';
 import '../providers/tenant_admin_context_provider.dart';
 import '../theme/tenant_admin_theme.dart';
@@ -306,13 +308,13 @@ class _ContextChip extends StatelessWidget {
   }
 }
 
-class _NotificationBell extends StatelessWidget {
+class _NotificationBell extends ConsumerWidget {
   const _NotificationBell({required this.canView});
 
   final bool canView;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (!canView) {
       return IconButton(
         tooltip: 'Notifications',
@@ -324,16 +326,17 @@ class _NotificationBell extends StatelessWidget {
       );
     }
 
-    // Count comes from notification module when available; do not hardcode.
-    const count = 0;
+    final count = ref.watch(
+      notificationInboxProvider.select((state) => state.unreadCount),
+    );
 
     return IconButton(
       tooltip: 'Notifications',
-      onPressed: () {},
-      icon: const Badge(
+      onPressed: () => showNotificationPanel(context),
+      icon: Badge(
         isLabelVisible: count > 0,
         label: Text('$count'),
-        child: Icon(
+        child: const Icon(
           Icons.notifications_none_rounded,
           color: TenantAdminColors.surface,
         ),

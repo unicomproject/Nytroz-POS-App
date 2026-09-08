@@ -106,6 +106,7 @@ class ApiEndpoints {
 
   static const currentTillSession = '/api/v1/tills/current-session';
   static const posHome = '/api/v1/pos/home';
+  static const posNotifications = '/api/v1/pos/notifications';
   static const posHardwareConfigurations =
       '/api/v1/pos/hardware/configurations';
   static const posHardwareTests = '/api/v1/pos/hardware/tests';
@@ -143,6 +144,8 @@ class ApiEndpoints {
       '${posOnlineOrderPicking(orderId)}/lines/${Uri.encodeComponent(lineId)}/pick';
   static String posOnlineOrderPickingIssue(String orderId, String lineId) =>
       '${posOnlineOrderPicking(orderId)}/lines/${Uri.encodeComponent(lineId)}/issues';
+  static String posOnlineOrderPickingNotes(String orderId) =>
+      '${posOnlineOrderPicking(orderId)}/notes';
   static String posOnlineOrderPack(String orderId) =>
       '${posOnlineOrder(orderId)}/pack';
   static String posOnlineOrderReady(String orderId) =>
@@ -234,4 +237,12 @@ class ApiEndpoints {
       '/api/v1/pos/products/$productId/variants';
 
   static const posPopularProducts = '/api/v1/collections/pos-popular/products';
+
+  static const tenantNotifications = '/api/v1/tenant/notifications';
+  static const tenantNotificationsUnreadCount =
+      '$tenantNotifications/unread-count';
+  static const tenantNotificationsReadAll = '$tenantNotifications/read-all';
+  static String tenantNotificationRead(String notificationId) =>
+      '$tenantNotifications/$notificationId/read';
+  static const tenantNotificationsSocketPath = '/ws/notifications';
 }

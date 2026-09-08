@@ -102,25 +102,12 @@ class ProductBasicDetailsForm extends StatelessWidget {
   }
 
   Widget _buildCodeField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ProductFormTextField(
-          label: 'Product Code *',
-          hint: 'AQF-BTL-001',
-          icon: Icons.qr_code_2_outlined,
-          controller: codeController,
-          errorText: fieldErrors['productCode'],
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'SKU will be generated in a later step.',
-          style: TextStyle(
-            color: TenantAdminColors.mutedText,
-            fontSize: 12,
-          ),
-        ),
-      ],
+    return ProductFormTextField(
+      label: 'Product Code *',
+      hint: 'AQF-BTL-001',
+      icon: Icons.qr_code_2_outlined,
+      controller: codeController,
+      errorText: fieldErrors['productCode'],
     );
   }
 

@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/post_login_navigation_provider.dart';
 import '../../../../shared/pos_session/pos_session_bootstrap_provider.dart';
 
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_cash_drawer_till_visibility.dart';
 import '../../../../core/access/pos_permission_access.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
@@ -91,7 +93,11 @@ class _PosCloseTillScreenState extends ConsumerState<PosCloseTillScreen> {
     formNotifier.reset();
     formNotifier.restoreDraftIfAvailable();
 
-    formNotifier.applyDefaultCountedCash(summary.currentExpectedCash);
+    final permissions = ref.read(effectivePermissionSetProvider);
+    // Blind count: never default counted cash from expected when expected denied.
+    if (PosCashDrawerTillVisibility.canShowClosingExpectedCash(permissions)) {
+      formNotifier.applyDefaultCountedCash(summary.currentExpectedCash);
+    }
 
     _syncControllersFromFormState();
     _initializedForm = true;

@@ -25,6 +25,15 @@ class _PosOnlineOrderDetailRouteScreenState
   }
 
   @override
+  void didUpdateWidget(covariant PosOnlineOrderDetailRouteScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.orderId == widget.orderId) return;
+    Future.microtask(
+      () => ref.read(posOnlineOrdersProvider.notifier).select(widget.orderId),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.all(16),
         child: OnlineOrderDetailScreen(

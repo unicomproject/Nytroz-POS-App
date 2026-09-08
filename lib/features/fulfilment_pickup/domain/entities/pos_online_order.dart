@@ -481,6 +481,9 @@ class PosPickingLine {
     this.barcode,
     this.locationCode,
     this.locationName,
+    this.imageUrl,
+    this.altText,
+    this.hasReportedIssue = false,
   });
 
   final String id;
@@ -494,6 +497,9 @@ class PosPickingLine {
   final String status;
   final String? locationCode;
   final String? locationName;
+  final String? imageUrl;
+  final String? altText;
+  final bool hasReportedIssue;
 
   double get remainingQuantity => (requestedQuantity - pickedQuantity)
       .clamp(0, requestedQuantity)
@@ -512,6 +518,33 @@ class PosPickingLine {
         status: _text(json['status']),
         locationCode: _optionalText(json['locationCode']),
         locationName: _optionalText(json['locationName']),
+        imageUrl: _optionalText(json['imageUrl']),
+        altText: _optionalText(json['altText']),
+        hasReportedIssue: json['hasReportedIssue'] == true,
+      );
+}
+
+class PosPickingNote {
+  const PosPickingNote({
+    required this.id,
+    required this.note,
+    required this.createdAt,
+    required this.createdByTenantUserId,
+    required this.createdByDisplayName,
+  });
+
+  final String id;
+  final String note;
+  final DateTime? createdAt;
+  final String createdByTenantUserId;
+  final String createdByDisplayName;
+
+  factory PosPickingNote.fromJson(Map<String, dynamic> json) => PosPickingNote(
+        id: _text(json['id']),
+        note: _text(json['note']),
+        createdAt: _date(json['createdAt']),
+        createdByTenantUserId: _text(json['createdByTenantUserId']),
+        createdByDisplayName: _text(json['createdByDisplayName']),
       );
 }
 
@@ -529,6 +562,13 @@ class PosPickingOrder {
     required this.lines,
     this.collectionAt,
     this.assignedToTenantUserId,
+    this.totalUnits = 0,
+    this.pickedUnits = 0,
+    this.remainingUnits = 0,
+    this.canPack = false,
+    this.fulfillmentVersion = 0,
+    this.serverTime,
+    this.notes = const [],
   });
 
   final String orderId;
@@ -543,17 +583,27 @@ class PosPickingOrder {
   final int totalLines;
   final int pickedLines;
   final List<PosPickingLine> lines;
-
-  double get totalUnits =>
-      lines.fold<double>(0, (total, line) => total + line.requestedQuantity);
-  double get pickedUnits =>
-      lines.fold<double>(0, (total, line) => total + line.pickedQuantity);
-  double get remainingUnits => (totalUnits - pickedUnits).clamp(0, totalUnits);
+  final double totalUnits;
+  final double pickedUnits;
+  final double remainingUnits;
+  final bool canPack;
+  final int fulfillmentVersion;
+  final DateTime? serverTime;
+  final List<PosPickingNote> notes;
   bool get allPicked =>
       lines.isNotEmpty && lines.every((line) => line.isPicked);
 
-  factory PosPickingOrder.fromJson(Map<String, dynamic> json) =>
-      PosPickingOrder(
+  factory PosPickingOrder.fromJson(Map<String, dynamic> json) {
+    final lines = (json['lines'] as List? ?? const [])
+        .whereType<Map>()
+        .map((item) =>
+            PosPickingLine.fromJson(Map<String, dynamic>.from(item)))
+        .toList(growable: false);
+    final derivedTotal = lines.fold<double>(
+        0, (total, line) => total + line.requestedQuantity);
+    final derivedPicked = lines.fold<double>(
+        0, (total, line) => total + line.pickedQuantity);
+    return PosPickingOrder(
         orderId: _text(json['orderId']),
         orderNumber: _text(json['orderNumber']),
         fulfillmentOrderId: _text(json['fulfillmentOrderId']),
@@ -565,12 +615,26 @@ class PosPickingOrder {
         collectionAt: _date(json['collectionAt']),
         totalLines: _integer(json['totalLines']),
         pickedLines: _integer(json['pickedLines']),
-        lines: (json['lines'] as List? ?? const [])
+        totalUnits: json['totalUnits'] == null
+            ? derivedTotal
+            : _decimal(json['totalUnits']),
+        pickedUnits: json['pickedUnits'] == null
+            ? derivedPicked
+            : _decimal(json['pickedUnits']),
+        remainingUnits: json['remainingUnits'] == null
+            ? (derivedTotal - derivedPicked).clamp(0, derivedTotal).toDouble()
+            : _decimal(json['remainingUnits']),
+        canPack: json['canPack'] == true,
+        fulfillmentVersion: _integer(json['fulfillmentVersion']),
+        serverTime: _date(json['serverTime']),
+        notes: (json['notes'] as List? ?? const [])
             .whereType<Map>()
             .map((item) =>
-                PosPickingLine.fromJson(Map<String, dynamic>.from(item)))
+                PosPickingNote.fromJson(Map<String, dynamic>.from(item)))
             .toList(growable: false),
+        lines: lines,
       );
+  }
 }
 
 class PosFulfillmentCommandResult {
@@ -582,6 +646,8 @@ class PosFulfillmentCommandResult {
     this.packageNumber,
     this.fulfillmentOrderId,
     this.updatedAt,
+    this.canPack = false,
+    this.fulfillmentVersion = 0,
   });
   final String orderId;
   final String status;
@@ -590,6 +656,8 @@ class PosFulfillmentCommandResult {
   final String? packageNumber;
   final String? fulfillmentOrderId;
   final DateTime? updatedAt;
+  final bool canPack;
+  final int fulfillmentVersion;
 
   factory PosFulfillmentCommandResult.fromJson(Map<String, dynamic> json) =>
       PosFulfillmentCommandResult(
@@ -600,6 +668,31 @@ class PosFulfillmentCommandResult {
         packageNumber: _optionalText(json['packageNumber']),
         fulfillmentOrderId: _optionalText(json['fulfillmentOrderId']),
         updatedAt: _date(json['updatedAt']),
+        canPack: json['canPack'] == true,
+        fulfillmentVersion: _integer(json['fulfillmentVersion']),
+      );
+}
+
+class PosPickingNoteCommandResult {
+  const PosPickingNoteCommandResult({
+    required this.orderId,
+    required this.fulfillmentOrderId,
+    required this.fulfillmentVersion,
+    required this.note,
+  });
+  final String orderId;
+  final String fulfillmentOrderId;
+  final int fulfillmentVersion;
+  final PosPickingNote note;
+
+  factory PosPickingNoteCommandResult.fromJson(Map<String, dynamic> json) =>
+      PosPickingNoteCommandResult(
+        orderId: _text(json['orderId']),
+        fulfillmentOrderId: _text(json['fulfillmentOrderId']),
+        fulfillmentVersion: _integer(json['fulfillmentVersion']),
+        note: PosPickingNote.fromJson(
+          Map<String, dynamic>.from(json['note'] as Map? ?? const {}),
+        ),
       );
 }
 

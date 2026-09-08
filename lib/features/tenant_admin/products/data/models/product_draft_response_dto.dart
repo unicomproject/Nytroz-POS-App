@@ -191,7 +191,7 @@ class ProductDraftResponseDto {
       shortDescription: json['shortDescription']?.toString(),
       longDescription: json['longDescription']?.toString(),
       posSellable: json['posSellable'] as bool? ?? true,
-      trackInventory: json['trackInventory'] as bool? ?? true,
+      trackInventory: json['trackInventory'] as bool? ?? false,
       allowOnlineSale: json['allowOnlineSale'] as bool? ?? true,
       productStructure: json['productStructure']?.toString() ?? 'SIMPLE',
       batchTracking: json['batchTracking'] as bool? ?? false,
@@ -230,9 +230,12 @@ class ProductDraftResponseDto {
           ? BarcodeSkuConfigurationDto.fromJson(
               json['barcodeSkuConfiguration'] as Map<String, dynamic>)
           : null,
-      pricingTaxConfiguration: json['pricingTaxConfiguration'] != null
+      pricingTaxConfiguration: (json['pricingTaxConfiguration'] ?? json['pricingTax']) != null
           ? PricingTaxConfigurationResponseDto.fromJson(
-              json['pricingTaxConfiguration'] as Map<String, dynamic>)
+              Map<String, dynamic>.from(
+                (json['pricingTaxConfiguration'] ?? json['pricingTax']) as Map,
+              ),
+            )
           : null,
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
 import 'package:nytroz_pos/core/access/pos_permission_access.dart';
+import 'package:nytroz_pos/core/access/pos_sales_permission_visibility.dart';
 import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
@@ -20,6 +22,9 @@ class PosNewSaleCartPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cart = ref.watch(posNewSaleCartProvider);
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    final showLines =
+        PosSalesPermissionVisibility.canShowCartLines(permissions);
     final pricingAsync = cart.hasItems
         ? ref.watch(posCheckoutSummaryProvider)
         : const AsyncValue<PosCheckoutSummaryViewData>.loading();
@@ -39,18 +44,20 @@ class PosNewSaleCartPanel extends ConsumerWidget {
             children: [
               const PosCartHeader(),
               const Divider(height: TenantAdminSpacing.xl),
-              if (cart.hasItems) ...[
+              if (cart.hasItems && showLines) ...[
                 const _CartColumnHeader(),
                 const Divider(height: TenantAdminSpacing.md),
               ],
               Expanded(
                 child: ClipRect(
                   child: cart.hasItems
-                      ? _CartItemList(
-                          items: cart.itemList,
-                          pricingAsync: pricingAsync,
-                          cart: cart,
-                        )
+                      ? (showLines
+                          ? _CartItemList(
+                              items: cart.itemList,
+                              pricingAsync: pricingAsync,
+                              cart: cart,
+                            )
+                          : const SizedBox.shrink())
                       : const PosEmptyCartMessage(),
                 ),
               ),
@@ -168,36 +175,49 @@ class _CartItemList extends ConsumerWidget {
   }
 }
 
-class _CartColumnHeader extends StatelessWidget {
+class _CartColumnHeader extends ConsumerWidget {
   const _CartColumnHeader();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    final showName =
+        PosSalesPermissionVisibility.canShowCartLineName(permissions);
+    final showQty =
+        PosSalesPermissionVisibility.canShowCartLineQuantity(permissions);
+    final showPrice =
+        PosSalesPermissionVisibility.canShowCartLineUnitPrice(permissions);
+    final showTotal =
+        PosSalesPermissionVisibility.canShowCartLineTotal(permissions);
     final style = Theme.of(context).textTheme.labelSmall?.copyWith(
           color: TenantAdminColors.posHomeAccentOrange,
           fontWeight: FontWeight.w800,
         );
     return Row(
       children: [
-        Expanded(
-          flex: 5,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 68),
-            child: Text('Item', style: style),
+        if (showName)
+          Expanded(
+            flex: 5,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 68),
+              child: Text('Item', style: style),
+            ),
           ),
-        ),
-        Expanded(
-          flex: 4,
-          child: Text('Qty', textAlign: TextAlign.center, style: style),
-        ),
-        Expanded(
-          flex: 4,
-          child: Text('Price', textAlign: TextAlign.right, style: style),
-        ),
-        Expanded(
-          flex: 4,
-          child: Text('Total', textAlign: TextAlign.right, style: style),
-        ),
+        if (showQty)
+          Expanded(
+            flex: 4,
+            child: Text('Qty', textAlign: TextAlign.center, style: style),
+          ),
+        if (showPrice)
+          Expanded(
+            flex: 4,
+            child: Text('Price', textAlign: TextAlign.right, style: style),
+          ),
+        if (showTotal)
+          Expanded(
+            flex: 4,
+            child: Text('Total', textAlign: TextAlign.right, style: style),
+          ),
         const SizedBox(width: 36),
       ],
     );

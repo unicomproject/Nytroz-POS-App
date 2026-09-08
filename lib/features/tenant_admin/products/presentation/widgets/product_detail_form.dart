@@ -42,6 +42,7 @@ class ProductDetailForm extends ConsumerStatefulWidget {
 
 class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
   final _nameController = TextEditingController();
+  final _productCodeController = TextEditingController();
   final _skuController = TextEditingController();
   final _barcodeController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -51,15 +52,11 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
   final _discountPriceController = TextEditingController();
   final _openingStockController = TextEditingController();
   final _lowStockController = TextEditingController();
-  final _onHandController = TextEditingController();
-  final _availableStockController = TextEditingController();
   final _variantsController = TextEditingController();
 
   var _trackStock = false;
   var _inStorePos = true;
   var _onlineStore = true;
-  late String _productStatus;
-  late String _stockStatus;
 
   String? _categoryId;
   String? _subCategoryId;
@@ -78,8 +75,6 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
   @override
   void initState() {
     super.initState();
-    _productStatus = widget.detail.status;
-    _stockStatus = _calculateStockStatus(widget.detail);
     _syncFromDetail(widget.detail, widget.options);
   }
 
@@ -88,28 +83,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.detail.productId != widget.detail.productId ||
         oldWidget.options != widget.options) {
-      _productStatus = widget.detail.status;
-      _stockStatus = _calculateStockStatus(widget.detail);
       _syncFromDetail(widget.detail, widget.options);
     }
-  }
-
-  String _calculateStockStatus(TenantProductDetail detail) {
-    if (!detail.trackInventory) {
-      return 'NOT_TRACKED';
-    }
-    if (detail.stock == null) {
-      return 'OUT_OF_STOCK';
-    }
-    final onHand = detail.stock!.onHandQuantity;
-    final minAlert = detail.stock!.minimumStockAlertQuantity;
-
-    if (onHand <= 0) {
-      return 'OUT_OF_STOCK';
-    } else if (minAlert != null && onHand <= minAlert) {
-      return 'LOW_STOCK';
-    }
-    return 'IN_STOCK';
   }
 
   void _syncFromDetail(
@@ -117,6 +92,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
     TenantProductCreateOptions? options,
   ) {
     _nameController.text = detail.productName;
+    _productCodeController.text = detail.productCode;
     _skuController.text = detail.sku;
     _barcodeController.text = detail.barcode ?? '';
     _descriptionController.text = detail.shortDescription ?? '';
@@ -133,11 +109,6 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
     _lowStockController.text = detail.stock?.minimumStockAlertQuantity == null
         ? ''
         : _formatNumber(detail.stock!.minimumStockAlertQuantity!);
-    _onHandController.text =
-        detail.stock == null ? '' : _formatNumber(detail.stock!.onHandQuantity);
-    _availableStockController.text = detail.stock == null
-        ? ''
-        : _formatNumber(detail.stock!.availableQuantity);
     _variantsController.text = detail.variants.length.toString();
 
     _trackStock = detail.trackInventory;
@@ -154,6 +125,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
   @override
   void dispose() {
     _nameController.dispose();
+    _productCodeController.dispose();
     _skuController.dispose();
     _barcodeController.dispose();
     _descriptionController.dispose();
@@ -163,8 +135,6 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
     _discountPriceController.dispose();
     _openingStockController.dispose();
     _lowStockController.dispose();
-    _onHandController.dispose();
-    _availableStockController.dispose();
     _variantsController.dispose();
     super.dispose();
   }
@@ -173,95 +143,118 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final isWide = width >= 900;
-        final isMedium = width >= 640;
+        final isWide = constraints.maxWidth >= TenantAdminBreakpoints.tablet;
+        const gap = TenantAdminSpacing.md;
+        final isDesktop =
+            constraints.maxWidth >= TenantAdminBreakpoints.desktop;
+        final imageWidth = isDesktop ? 240.0 : 200.0;
+
+        if (!isWide) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildProductImageEditCard(compact: true),
+              const SizedBox(height: gap),
+              _buildBasicDetailsEditCard(compact: true),
+              const SizedBox(height: gap),
+              _buildPricingSummaryEditCard(compact: true),
+              const SizedBox(height: gap),
+              _buildVariantSummaryEditCard(compact: true),
+              const SizedBox(height: gap),
+              _buildAuditSummaryEditCard(widget.detail, compact: true),
+              if (widget.canSave) ...[
+                const SizedBox(height: TenantAdminSpacing.xl),
+                _buildSaveActions(),
+              ],
+            ],
+          );
+        }
 
         return Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (isWide)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: width >= 1100 ? 280 : 240,
-                    child: _buildProductImageEditCard(),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                  Expanded(
-                    child: _buildBasicDetailsEditCard(),
-                  ),
-                ],
-              )
-            else ...[
-              _buildProductImageEditCard(),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              _buildBasicDetailsEditCard(),
-            ],
-            const SizedBox(height: TenantAdminSpacing.lg),
-            if (isMedium)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: imageWidth,
+                  child: _buildProductImageEditCard(compact: true),
+                ),
+                const SizedBox(width: gap),
+                Expanded(
+                  child: _buildBasicDetailsEditCard(compact: true),
+                ),
+              ],
+            ),
+            const SizedBox(height: gap),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
-                    flex: 2,
-                    child: _buildInventoryPricingEditCard(),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                  Expanded(
-                    flex: 3,
-                    child: _buildChannelVisibilityEditCard(isWide),
-                  ),
-                ],
-              )
-            else ...[
-              _buildInventoryPricingEditCard(),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              _buildChannelVisibilityEditCard(false),
-            ],
-            const SizedBox(height: TenantAdminSpacing.lg),
-            _buildAuditSummaryEditCard(widget.detail),
-            const SizedBox(height: TenantAdminSpacing.xl),
-            if (widget.canSave)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  OutlinedButton(
-                    onPressed: _submitting
-                        ? null
-                        : () => context.go('/tenant-admin/products'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 16,
-                      ),
-                      side: const BorderSide(color: TenantAdminColors.border),
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(TenantAdminRadius.md),
-                      ),
-                    ),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(
-                        color: TenantAdminColors.bodyText,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    child: _buildPricingSummaryEditCard(
+                      compact: true,
+                      stretch: true,
                     ),
                   ),
-                  const SizedBox(width: TenantAdminSpacing.md),
-                  TenantAdminPrimaryButton(
-                    label: _submitting ? 'Saving...' : 'Save Changes',
-                    loading: _submitting,
-                    backgroundColor: TenantAdminColors.primary,
-                    onPressed: _inputsEnabled ? _saveChanges : null,
+                  const SizedBox(width: gap),
+                  Expanded(
+                    child: _buildVariantSummaryEditCard(
+                      compact: true,
+                      stretch: true,
+                    ),
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: gap),
+            _buildAuditSummaryEditCard(widget.detail, compact: true),
+            if (widget.canSave) ...[
+              const SizedBox(height: TenantAdminSpacing.xl),
+              _buildSaveActions(),
+            ],
           ],
         );
       },
+    );
+  }
+
+  Widget _buildSaveActions() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        OutlinedButton(
+          onPressed: _submitting
+              ? null
+              : () => context.go('/tenant-admin/products'),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 16,
+            ),
+            side: const BorderSide(color: TenantAdminColors.border),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            ),
+          ),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(
+              color: TenantAdminColors.bodyText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(width: TenantAdminSpacing.md),
+        TenantAdminPrimaryButton(
+          label: _submitting ? 'Saving...' : 'Save Changes',
+          loading: _submitting,
+          backgroundColor: TenantAdminColors.primary,
+          onPressed: _inputsEnabled ? _saveChanges : null,
+        ),
+      ],
     );
   }
 
@@ -278,6 +271,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
     final unitCode = unitCodeForId(options, _unitId);
     final errors = validateProductUpdateForm(
       productName: _nameController.text,
+      productCode: _productCodeController.text,
       sku: _skuController.text,
       barcode: _barcodeController.text,
       categoryId: _categoryId,
@@ -308,12 +302,14 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
       _fieldErrors = const {};
     });
 
+    final trimmedBarcode = _barcodeController.text.trim();
+    final trimmedSku = _skuController.text.trim();
+
     final request = ProductFormData(
       productName: _nameController.text.trim(),
-      sku: _skuController.text.trim(),
-      barcode: _barcodeController.text.trim().isEmpty
-          ? null
-          : _barcodeController.text.trim(),
+      productCode: _productCodeController.text.trim(),
+      sku: trimmedSku,
+      barcode: trimmedBarcode.isEmpty ? null : trimmedBarcode,
       categoryId: _categoryId!,
       subCategoryId: _subCategoryId,
       brandId: _brandId,
@@ -342,15 +338,23 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
       hasVariants: hasVariants,
       variants: hasVariants
           ? detail.variants
+              .asMap()
+              .entries
               .map(
-                (variant) => ProductVariantFormData(
-                  variantName: variant.variantName,
-                  sku: variant.sku,
-                  barcode: variant.barcode,
-                  sellingPrice: variant.sellingPrice,
-                  discountPrice: variant.discountPrice,
-                  status: variant.status,
-                ),
+                (entry) {
+                  final variant = entry.value;
+                  final isDefault = entry.key == 0;
+                  return ProductVariantFormData(
+                    variantName: variant.variantName,
+                    sku: isDefault ? trimmedSku : variant.sku,
+                    barcode: isDefault
+                        ? (trimmedBarcode.isEmpty ? null : trimmedBarcode)
+                        : variant.barcode,
+                    sellingPrice: variant.sellingPrice,
+                    discountPrice: variant.discountPrice,
+                    status: variant.status,
+                  );
+                },
               )
               .toList()
           : const [],
@@ -537,7 +541,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
     }
   }
 
-  Widget _buildProductImageEditCard() {
+  Widget _buildProductImageEditCard({bool compact = false}) {
     final rawUrl = _overrideImageUrl ?? widget.detail.imageUrl;
     final displayUrl = (rawUrl != null && rawUrl.trim().isNotEmpty)
         ? _resolveImageUrl(rawUrl)
@@ -545,7 +549,9 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
 
     return _SectionCard(
       title: 'Product Image',
+      compact: compact,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           AspectRatio(
             aspectRatio: 1.1,
@@ -568,23 +574,23 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
                   : _buildPlaceholderImage(),
             ),
           ),
-          const SizedBox(height: TenantAdminSpacing.md),
+          SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: (_inputsEnabled && !_uploadingImage)
                   ? _uploadOrReplaceImage
                   : null,
-              icon: const Icon(Icons.upload_outlined, size: 18),
-              label: const Text(
+              icon: Icon(Icons.upload_outlined, size: compact ? 16 : 18),
+              label: Text(
                 'Upload / Replace Image',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
-                  fontSize: 13,
+                  fontSize: compact ? 12 : 13,
                 ),
               ),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: EdgeInsets.symmetric(vertical: compact ? 10 : 14),
                 foregroundColor: TenantAdminColors.bodyText,
                 side: const BorderSide(color: TenantAdminColors.border),
                 shape: RoundedRectangleBorder(
@@ -633,25 +639,33 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
     );
   }
 
-  Widget _buildBasicDetailsEditCard() {
+  Widget _buildBasicDetailsEditCard({bool compact = false}) {
     final options = widget.options;
 
     final basicFields = <Widget>[
       ProductFormTextField(
-        label: 'Product name *',
-        hint: 'Enter product name',
-        icon: Icons.inventory_2_outlined,
-        controller: _nameController,
+        label: 'Product Code *',
+        hint: 'Enter product code',
+        icon: Icons.qr_code_2_outlined,
+        controller: _productCodeController,
         enabled: _inputsEnabled,
-        errorText: _fieldErrors['productName'],
+        errorText: _fieldErrors['productCode'],
       ),
       ProductFormTextField(
-        label: 'Product code / SKU *',
+        label: 'SKU *',
         hint: 'Enter SKU',
-        icon: Icons.qr_code_2_outlined,
+        icon: Icons.tag_outlined,
         controller: _skuController,
         enabled: _inputsEnabled,
         errorText: _fieldErrors['sku'],
+      ),
+      ProductFormTextField(
+        label: 'Barcode',
+        hint: 'Enter barcode',
+        icon: Icons.barcode_reader,
+        controller: _barcodeController,
+        enabled: _inputsEnabled,
+        errorText: _fieldErrors['barcode'],
       ),
       ProductFormTextField(
         label: 'Short description',
@@ -659,6 +673,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
         icon: Icons.notes_outlined,
         controller: _descriptionController,
         enabled: _inputsEnabled,
+        maxLines: 2,
       ),
       ProductFormTextField(
         label: 'Long description',
@@ -666,6 +681,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
         icon: Icons.description_outlined,
         controller: _longDescriptionController,
         enabled: _inputsEnabled,
+        maxLines: 3,
       ),
       _useDropdowns
           ? ProductOptionDropdown(
@@ -720,21 +736,13 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
               ),
               icon: Icons.sell_outlined,
             ),
-      ProductFormTextField(
-        label: 'Barcode',
-        hint: 'Enter barcode',
-        icon: Icons.barcode_reader,
-        controller: _barcodeController,
-        enabled: _inputsEnabled,
-        errorText: _fieldErrors['barcode'],
-      ),
       _useDropdowns
           ? ProductOptionDropdown(
               label: 'Variants *',
               hint: 'Select variant',
               icon: Icons.published_with_changes_outlined,
               value: _variantsController.text,
-              enabled: _inputsEnabled,
+              enabled: false,
               items: [
                 DropdownMenuItem(
                   value: _variantsController.text,
@@ -776,228 +784,279 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
 
     return _SectionCard(
       title: 'Basic Details',
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final crossAxisCount = constraints.maxWidth >= 720
-              ? 3
-              : constraints.maxWidth >= 420
-                  ? 2
-                  : 1;
-          return _ResponsiveFieldGrid(
-            crossAxisCount: crossAxisCount,
-            children: basicFields,
-          );
-        },
+      compact: compact,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ProductFormTextField(
+            label: 'Product name *',
+            hint: 'Enter product name',
+            icon: Icons.inventory_2_outlined,
+            controller: _nameController,
+            enabled: _inputsEnabled,
+            errorText: _fieldErrors['productName'],
+          ),
+          SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+          _EditFieldGrid(children: basicFields),
+          SizedBox(height: compact ? TenantAdminSpacing.md : TenantAdminSpacing.lg),
+          _buildChannelVisibilitySection(compact: compact),
+        ],
       ),
     );
   }
 
-  Widget _buildInventoryPricingEditCard() {
-    return _SectionCard(
-      title: 'Inventory & Pricing',
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final crossAxisCount = constraints.maxWidth >= 360 ? 2 : 1;
-          return _ResponsiveFieldGrid(
-            crossAxisCount: crossAxisCount,
-            children: [
-              ProductFormTextField(
-                label: 'Price *',
-                hint: 'LKR 2,500.00',
-                icon: Icons.attach_money_outlined,
-                controller: _priceController,
-                enabled: _inputsEnabled,
-                keyboardType: TextInputType.number,
-                errorText: _fieldErrors['sellingPrice'],
+  Widget _buildChannelVisibilitySection({bool compact = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Channel Visibility',
+          style: TextStyle(
+            fontSize: compact ? 12 : 13,
+            fontWeight: FontWeight.w700,
+            color: TenantAdminColors.bodyText,
+          ),
+        ),
+        SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _buildChannelEditItem(
+                icon: Icons.storefront_outlined,
+                title: 'In-Store POS',
+                value: _inStorePos,
+                compact: compact,
+                onChanged: (val) => setState(() => _inStorePos = val),
               ),
-              ProductFormTextField(
-                label: 'Stock *',
-                hint: '0',
-                icon: Icons.inventory_outlined,
-                controller: _onHandController.text.isNotEmpty
-                    ? _onHandController
-                    : _openingStockController,
-                enabled: _inputsEnabled && _trackStock,
-                keyboardType: TextInputType.number,
-                errorText: _fieldErrors['openingStockQuantity'],
-              ),
-              ProductOptionDropdown(
-                label: 'Product Status *',
-                hint: 'Select status',
-                icon: Icons.check_circle_outline,
-                value: _productStatus,
-                enabled: _inputsEnabled,
-                items: const [
-                  DropdownMenuItem(value: 'ACTIVE', child: Text('Active')),
-                  DropdownMenuItem(value: 'INACTIVE', child: Text('Inactive')),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() => _productStatus = val);
-                  }
-                },
-              ),
-              ProductOptionDropdown(
-                label: 'Stock Status *',
-                hint: 'Select stock status',
-                icon: Icons.inventory_2_outlined,
-                value: _stockStatus,
-                enabled: _inputsEnabled,
-                items: const [
-                  DropdownMenuItem(value: 'IN_STOCK', child: Text('In Stock')),
-                  DropdownMenuItem(value: 'LOW_STOCK', child: Text('Low Stock')),
-                  DropdownMenuItem(
-                      value: 'OUT_OF_STOCK', child: Text('Out of Stock')),
-                  DropdownMenuItem(
-                      value: 'NOT_TRACKED', child: Text('Not Tracked')),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() => _stockStatus = val);
-                  }
-                },
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildChannelVisibilityEditCard(bool sideBySide) {
-    return _SectionCard(
-      title: 'Channel Visibility',
-      child: sideBySide
-          ? Row(
-              children: [
-                Expanded(
-                  child: _buildChannelEditItem(
-                    icon: Icons.storefront_outlined,
-                    title: 'In-Store POS',
-                    subtitle: 'This product is available in the in-store POS.',
-                    value: _inStorePos,
-                    onChanged: (val) => setState(() => _inStorePos = val),
-                  ),
-                ),
-                const SizedBox(width: TenantAdminSpacing.md),
-                Expanded(
-                  child: _buildChannelEditItem(
-                    icon: Icons.shopping_cart_outlined,
-                    title: 'Online Store',
-                    subtitle: 'This product is visible on the online store.',
-                    value: _onlineStore,
-                    onChanged: (val) => setState(() => _onlineStore = val),
-                  ),
-                ),
-              ],
-            )
-          : Column(
-              children: [
-                _buildChannelEditItem(
-                  icon: Icons.storefront_outlined,
-                  title: 'In-Store POS',
-                  subtitle: 'This product is available in the in-store POS.',
-                  value: _inStorePos,
-                  onChanged: (val) => setState(() => _inStorePos = val),
-                ),
-                const SizedBox(height: TenantAdminSpacing.md),
-                _buildChannelEditItem(
-                  icon: Icons.shopping_cart_outlined,
-                  title: 'Online Store',
-                  subtitle: 'This product is visible on the online store.',
-                  value: _onlineStore,
-                  onChanged: (val) => setState(() => _onlineStore = val),
-                ),
-              ],
             ),
+            SizedBox(width: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+            Expanded(
+              child: _buildChannelEditItem(
+                icon: Icons.shopping_cart_outlined,
+                title: 'Online Store',
+                value: _onlineStore,
+                compact: compact,
+                onChanged: (val) => setState(() => _onlineStore = val),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPricingSummaryEditCard({
+    bool compact = false,
+    bool stretch = false,
+  }) {
+    final options = widget.options;
+
+    return _SectionCard(
+      title: 'Pricing Summary',
+      compact: compact,
+      stretch: stretch,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: stretch ? MainAxisSize.max : MainAxisSize.min,
+        children: [
+          ProductFormTextField(
+            label: 'Cost Price',
+            hint: 'LKR 0.00',
+            icon: Icons.attach_money_outlined,
+            controller: _costPriceController,
+            enabled: _inputsEnabled,
+            keyboardType: TextInputType.number,
+            errorText: _fieldErrors['costPrice'],
+          ),
+          SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+          ProductFormTextField(
+            label: 'Standard Selling Price *',
+            hint: 'LKR 2,500.00',
+            icon: Icons.sell_outlined,
+            controller: _priceController,
+            enabled: _inputsEnabled,
+            keyboardType: TextInputType.number,
+            errorText: _fieldErrors['sellingPrice'],
+          ),
+          SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+          ProductFormTextField(
+            label: 'Discount Price',
+            hint: 'LKR 0.00',
+            icon: Icons.local_offer_outlined,
+            controller: _discountPriceController,
+            enabled: _inputsEnabled,
+            keyboardType: TextInputType.number,
+            errorText: _fieldErrors['discountPrice'],
+          ),
+          if (_useDropdowns) ...[
+            SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+            ProductOptionDropdown(
+              label: 'Tax',
+              hint: 'Select tax',
+              icon: Icons.receipt_long_outlined,
+              value: _taxId,
+              enabled: _inputsEnabled,
+              items: buildOptionItems(
+                options: options!.taxes
+                    .map((item) => (id: item.id, label: item.name))
+                    .toList(),
+                emptyLabel: 'No taxes available',
+              ),
+              onChanged: (value) => setState(() => _taxId = value),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVariantSummaryEditCard({
+    bool compact = false,
+    bool stretch = false,
+  }) {
+    final total = widget.detail.variants.length;
+    final active = widget.detail.variants
+        .where((v) => v.status.trim().toUpperCase() == 'ACTIVE')
+        .length;
+    final inactive = total - active;
+
+    return _SectionCard(
+      title: 'Variant Summary',
+      compact: compact,
+      stretch: stretch,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: stretch ? MainAxisSize.max : MainAxisSize.min,
+        children: [
+          ProductReadOnlyField(
+            label: 'Total',
+            value: '$total',
+            icon: Icons.published_with_changes_outlined,
+          ),
+          SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+          ProductReadOnlyField(
+            label: 'Active',
+            value: '$active',
+            icon: Icons.check_circle_outline,
+          ),
+          SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+          ProductReadOnlyField(
+            label: 'Inactive',
+            value: '$inactive',
+            icon: Icons.remove_circle_outline,
+          ),
+          if (stretch) const Spacer(),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: null,
+              icon: Icon(Icons.visibility_outlined, size: compact ? 14 : 16),
+              label: Text(
+                'View All Variants',
+                style: TextStyle(fontSize: compact ? 12 : 13),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: TenantAdminColors.mutedText,
+                side: const BorderSide(color: TenantAdminColors.border),
+                padding: EdgeInsets.symmetric(vertical: compact ? 6 : 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildChannelEditItem({
     required IconData icon,
     required String title,
-    required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
+    bool compact = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(TenantAdminSpacing.md),
+      padding: EdgeInsets.all(compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
         border: Border.all(color: TenantAdminColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 20, color: TenantAdminColors.bodyText),
-              const SizedBox(width: TenantAdminSpacing.sm),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    color: TenantAdminColors.bodyText,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+          Icon(icon, size: compact ? 16 : 18, color: TenantAdminColors.bodyText),
+          const SizedBox(width: TenantAdminSpacing.sm),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: TenantAdminColors.bodyText,
+                fontSize: compact ? 12 : 13,
+                fontWeight: FontWeight.w700,
               ),
-              Switch(
-                value: value,
-                activeTrackColor: TenantAdminColors.success,
-                onChanged: _inputsEnabled ? onChanged : null,
-              ),
-            ],
-          ),
-          const SizedBox(height: TenantAdminSpacing.xs),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              color: TenantAdminColors.mutedText,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
+          ),
+          Switch(
+            value: value,
+            activeTrackColor: TenantAdminColors.success,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            onChanged: _inputsEnabled ? onChanged : null,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAuditSummaryEditCard(TenantProductDetail detail) {
+  Widget _buildAuditSummaryEditCard(
+    TenantProductDetail detail, {
+    bool compact = false,
+  }) {
     final dateFormat = DateFormat('MMM dd, yyyy hh:mm a');
     final createdStr = dateFormat.format(detail.createdAt);
     final updatedStr = dateFormat.format(detail.updatedAt);
 
     return _SectionCard(
-      title: 'Product Summary (Audit Info)',
-      child: Row(
-        children: [
-          Expanded(
-            child: _AuditTile(
-              icon: Icons.calendar_today_outlined,
-              label: 'Created date',
-              value: createdStr,
+      title: 'Product Audit Information',
+      compact: compact,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _AuditTile(
+                icon: Icons.person_outline,
+                label: 'Created By',
+                value: 'John Perera',
+                secondaryValue: createdStr,
+                compact: compact,
+              ),
             ),
-          ),
-          const SizedBox(width: TenantAdminSpacing.md),
-          const Expanded(
-            child: _AuditTile(
-              icon: Icons.person_outline,
-              label: 'Added by',
-              value: 'John Perera',
+            const SizedBox(width: TenantAdminSpacing.md),
+            Expanded(
+              child: _AuditTile(
+                icon: Icons.person_outline,
+                label: 'Last Updated By',
+                value: 'John Perera',
+                compact: compact,
+              ),
             ),
-          ),
-          const SizedBox(width: TenantAdminSpacing.md),
-          Expanded(
-            child: _AuditTile(
-              icon: Icons.calendar_month_outlined,
-              label: 'Last updated',
-              value: updatedStr,
+            const SizedBox(width: TenantAdminSpacing.md),
+            Expanded(
+              child: _AuditTile(
+                icon: Icons.calendar_month_outlined,
+                label: 'Last Updated',
+                value: updatedStr,
+                compact: compact,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1026,70 +1085,100 @@ class _SectionCard extends StatelessWidget {
   const _SectionCard({
     required this.title,
     required this.child,
+    this.compact = false,
+    this.stretch = false,
   });
 
   final String title;
   final Widget child;
+  final bool compact;
+  final bool stretch;
 
   @override
   Widget build(BuildContext context) {
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: compact ? 13.5 : 16,
+            fontWeight: FontWeight.w800,
+            color: TenantAdminColors.bodyText,
+          ),
+        ),
+        SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.lg),
+        if (stretch)
+          Expanded(child: child)
+        else
+          child,
+      ],
+    );
+
     return Container(
-      width: double.infinity,
+      width: stretch ? double.infinity : null,
+      height: stretch ? double.infinity : null,
       decoration: BoxDecoration(
         color: TenantAdminColors.surface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
         border: Border.all(color: TenantAdminColors.border),
       ),
-      padding: const EdgeInsets.all(TenantAdminSpacing.xl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: TenantAdminColors.bodyText,
-            ),
-          ),
-          const SizedBox(height: TenantAdminSpacing.lg),
-          child,
-        ],
-      ),
+      padding: EdgeInsets.all(compact ? TenantAdminSpacing.md : TenantAdminSpacing.xl),
+      child: content,
     );
   }
 }
 
-class _ResponsiveFieldGrid extends StatelessWidget {
-  const _ResponsiveFieldGrid({
-    required this.crossAxisCount,
-    required this.children,
-  });
+class _EditFieldGrid extends StatelessWidget {
+  const _EditFieldGrid({required this.children});
 
-  final int crossAxisCount;
   final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const spacing = TenantAdminSpacing.md;
-        final count = crossAxisCount.clamp(1, 3);
-        final itemWidth =
-            (constraints.maxWidth - spacing * (count - 1)) / count;
+    assert(children.length == 9, 'Edit field grid expects 9 fields');
+    const columns = 3;
 
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: [
-            for (final child in children)
-              SizedBox(
-                width: itemWidth,
-                child: child,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        border: Border.all(color: TenantAdminColors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var rowIndex = 0; rowIndex < 3; rowIndex++) ...[
+            if (rowIndex > 0)
+              const Divider(
+                height: 1,
+                thickness: 1,
+                color: TenantAdminColors.border,
               ),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var colIndex = 0; colIndex < columns; colIndex++) ...[
+                    if (colIndex > 0)
+                      const VerticalDivider(
+                        width: 1,
+                        thickness: 1,
+                        color: TenantAdminColors.border,
+                      ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(TenantAdminSpacing.sm),
+                        child: children[rowIndex * columns + colIndex],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ],
-        );
-      },
+        ],
+      ),
     );
   }
 }
@@ -1099,29 +1188,39 @@ class _AuditTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    this.secondaryValue,
+    this.compact = false,
   });
 
   final IconData icon;
   final String label;
   final String value;
+  final String? secondaryValue;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: TenantAdminColors.mutedText),
-        const SizedBox(width: TenantAdminSpacing.md),
+        Icon(
+          icon,
+          size: compact ? 15 : 18,
+          color: TenantAdminColors.mutedText,
+        ),
+        const SizedBox(width: TenantAdminSpacing.sm),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   color: TenantAdminColors.mutedText,
-                  fontSize: 11.5,
+                  fontSize: compact ? 10 : 11,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1130,12 +1229,25 @@ class _AuditTile extends StatelessWidget {
                 value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   color: TenantAdminColors.bodyText,
-                  fontSize: 13,
+                  fontSize: compact ? 11.5 : 12.5,
                   fontWeight: FontWeight.w700,
                 ),
               ),
+              if (secondaryValue != null) ...[
+                const SizedBox(height: 1),
+                Text(
+                  secondaryValue!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: TenantAdminColors.mutedText,
+                    fontSize: compact ? 10 : 10.5,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -1187,7 +1299,7 @@ class ProductReadOnlyField extends StatelessWidget {
               vertical: 10,
             ),
             filled: true,
-            fillColor: TenantAdminColors.background,
+            fillColor: TenantAdminColors.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(TenantAdminRadius.md),
               borderSide: const BorderSide(color: TenantAdminColors.border),

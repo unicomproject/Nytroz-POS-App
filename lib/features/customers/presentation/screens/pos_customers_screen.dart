@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_customers_orders_returns_visibility.dart';
 import '../../../../core/access/pos_permission_access.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../discount/presentation/providers/pos_discount_provider.dart';
@@ -44,6 +46,7 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider);
+    final permissions = ref.watch(effectivePermissionSetProvider);
     final granted = session?.permissionCodes.toSet() ?? const {};
     if (!PosPermissionAccess.canViewCustomers(granted)) {
       return const TenantAdminForbiddenScreen();
@@ -59,6 +62,20 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
     final tillOpen = ref.watch(tillProvider).hasOpenSession;
     final canAttachPermission =
         PosPermissionAccess.canAttachCustomerToSale(granted);
+    final canDeactivate =
+        PosPermissionAccess.canDeactivateCustomer(granted);
+    final canViewPurchaseHistory =
+        PosCustomersOrdersReturnsVisibility.canShowPurchaseHistory(
+      permissions,
+    );
+    final canShowSearch =
+        PosCustomersOrdersReturnsVisibility.canShowCustomerSearch(permissions);
+    final canShowFilters =
+        PosCustomersOrdersReturnsVisibility.canShowCustomerFilters(permissions);
+    final canShowPagination =
+        PosCustomersOrdersReturnsVisibility.canShowCustomerPagination(
+      permissions,
+    );
     final selected = customersState.selectedCustomer;
     final canAttach = selected != null &&
         selected.isActive &&
@@ -138,6 +155,8 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
                                             .clearFilters(),
                                         canAddCustomer: canCreate,
                                         onAddCustomer: _addCustomer,
+                                        canShowSearch: canShowSearch,
+                                        canShowFilters: canShowFilters,
                                       ),
                                       const SizedBox(height: 10),
                                       Expanded(
@@ -158,6 +177,7 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
                                           useCardLayout: false,
                                           showSecondaryColumns:
                                               showSecondaryColumns,
+                                          showPagination: canShowPagination,
                                           onSelect: (id) => ref
                                               .read(customersProvider.notifier)
                                               .toggleCustomerSelection(id),
@@ -184,8 +204,10 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
                                   detailErrorMessage:
                                       customersState.detailErrorMessage,
                                   canAttach: canAttach,
-                                  canViewPurchaseHistory: true,
+                                  showAttachAction: canAttachPermission,
+                                  canViewPurchaseHistory: canViewPurchaseHistory,
                                   canEdit: canEdit,
+                                  canDeactivate: canDeactivate,
                                   isAttaching: customersState.isAttaching,
                                   attachDisabledReason: attachDisabledReason,
                                   onAttachToSale: _attachToSale,
@@ -225,6 +247,8 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
                                       .clearFilters(),
                                   canAddCustomer: canCreate,
                                   onAddCustomer: _addCustomer,
+                                  canShowSearch: canShowSearch,
+                                  canShowFilters: canShowFilters,
                                 ),
                                 const SizedBox(height: 10),
                                 Expanded(
@@ -243,6 +267,7 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
                                     useCardLayout: useCardLayout,
                                     showSecondaryColumns:
                                         splitView && showSecondaryColumns,
+                                    showPagination: canShowPagination,
                                     onSelect: (id) => splitView
                                         ? ref
                                             .read(customersProvider.notifier)
@@ -291,8 +316,13 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
       isLoadingDetail: customersState.isLoadingDetail,
       detailErrorMessage: customersState.detailErrorMessage,
       canAttach: canAttach,
-      canViewPurchaseHistory: true,
+      showAttachAction: canAttachPermission,
+      canViewPurchaseHistory:
+          PosCustomersOrdersReturnsVisibility.canShowPurchaseHistory(
+        ref.read(effectivePermissionSetProvider),
+      ),
       canEdit: PosPermissionAccess.canEditCustomer(granted),
+      canDeactivate: PosPermissionAccess.canDeactivateCustomer(granted),
       isAttaching: customersState.isAttaching,
       attachDisabledReason: !selected.isActive
           ? 'Only active customers can be attached to a sale'
@@ -335,13 +365,12 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
   Future<void> _attachToSale() async {
     final session = ref.read(authSessionProvider);
     final granted = session?.permissionCodes.toSet() ?? const {};
-    if (!ref.read(tillProvider).hasOpenSession) {
-      _showMessage('Open a till session before attaching a customer.');
+    if (!PosPermissionAccess.canAttachCustomerToSale(granted)) {
+      _showMessage('You do not have permission to attach a customer to a sale.');
       return;
     }
-    if (!PosPermissionAccess.canAttachCustomerToSale(granted)) {
-      _showMessage(
-          'You do not have permission to attach a customer to a sale.');
+    if (!ref.read(tillProvider).hasOpenSession) {
+      _showMessage('Open a till session before attaching a customer.');
       return;
     }
 
@@ -386,6 +415,13 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
   }
 
   void _viewPurchaseHistory() {
+    final permissions = ref.read(effectivePermissionSetProvider);
+    if (!PosCustomersOrdersReturnsVisibility.canShowPurchaseHistory(
+      permissions,
+    )) {
+      _showMessage('You do not have permission to view purchase history.');
+      return;
+    }
     final selected = ref.read(customersProvider).selectedCustomer;
     if (selected == null || !mounted) {
       return;
@@ -425,6 +461,12 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
   }
 
   Future<void> _deactivateCustomer() async {
+    final session = ref.read(authSessionProvider);
+    final granted = session?.permissionCodes.toSet() ?? const {};
+    if (!PosPermissionAccess.canDeactivateCustomer(granted)) {
+      _showMessage('You do not have permission to deactivate customers.');
+      return;
+    }
     final selected = ref.read(customersProvider).selectedCustomer;
     if (selected == null || !selected.isActive || !mounted) return;
 

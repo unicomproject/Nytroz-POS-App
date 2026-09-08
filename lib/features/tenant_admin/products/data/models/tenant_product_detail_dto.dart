@@ -2,6 +2,7 @@ class TenantProductDetailDto {
   const TenantProductDetailDto({
     required this.productId,
     required this.productName,
+    required this.productCode,
     required this.sku,
     required this.categoryId,
     required this.categoryName,
@@ -32,6 +33,7 @@ class TenantProductDetailDto {
       productId: json['productId']?.toString() ?? json['id']?.toString() ?? '',
       productName:
           json['productName'] as String? ?? json['name'] as String? ?? '',
+      productCode: json['productCode'] as String? ?? '',
       sku: json['sku'] as String? ?? '',
       barcode: _nullableString(json['barcode']),
       categoryId: json['categoryId']?.toString() ?? '',
@@ -41,7 +43,7 @@ class TenantProductDetailDto {
       unitType: json['unitType'] as String? ?? '',
       shortDescription: _nullableString(json['shortDescription']),
       longDescription: _nullableString(json['longDescription']),
-      imageUrl: _nullableString(json['imageUrl']),
+      imageUrl: _nullableString(json['imageUrl'] ?? json['ImageUrl']),
       costPrice: _doubleValue(json['costPrice']),
       sellingPrice: _doubleValue(json['sellingPrice']) ?? 0,
       discountPrice: _doubleValue(json['discountPrice']),
@@ -76,6 +78,7 @@ class TenantProductDetailDto {
 
   final String productId;
   final String productName;
+  final String productCode;
   final String sku;
   final String? barcode;
   final String categoryId;

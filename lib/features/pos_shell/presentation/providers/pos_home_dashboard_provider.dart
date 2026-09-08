@@ -198,7 +198,7 @@ PosHomeDashboardState buildPosHomeShellState({
         isEnabled: true,
         targetRoute: '/pos/new-sale',
         featureKey: PosFeatureCodes.sales,
-        permissionKey: PosPermissionCodes.viewNewSale,
+        permissionKey: PosPermissionCodes.salesNewSaleView,
       ),
       const PosHomeAction(
         key: 'returns-refunds',
@@ -209,7 +209,7 @@ PosHomeDashboardState buildPosHomeShellState({
         isEnabled: true,
         targetRoute: '/pos/returns-refunds',
         featureKey: PosFeatureCodes.returns,
-        permissionKey: PosPermissionCodes.viewReturns,
+        permissionKey: PosPermissionCodes.homeActionsReturnsEntry,
         metricValue: '--',
         metricLabel: 'Pending today',
       ),
@@ -235,7 +235,7 @@ PosHomeDashboardState buildPosHomeShellState({
         isEnabled: true,
         targetRoute: '/pos/parked-sales',
         featureKey: PosFeatureCodes.sales,
-        permissionKey: PosPermissionCodes.createParkedSale,
+        permissionKey: PosPermissionCodes.heldSalesView,
         metricValue: '--',
         metricLabel: 'Waiting to resume',
       ),
@@ -248,7 +248,7 @@ PosHomeDashboardState buildPosHomeShellState({
         isEnabled: true,
         targetRoute: '/pos/cash-drawer',
         featureKey: PosFeatureCodes.till,
-        permissionKey: PosPermissionCodes.viewCashDrawer,
+        permissionKey: PosPermissionCodes.cashDrawerPositionView,
         metricValue: '--',
         metricLabel: 'Drawer balance',
       ),
@@ -333,10 +333,14 @@ PosHomeDashboardState _mapPayloadToDashboardState({
         isEnabled: cards.startSale.enabled,
         targetRoute: '/pos/new-sale',
         featureKey: PosFeatureCodes.sales,
-        permissionKey: PosPermissionCodes.viewNewSale,
+        permissionKey: PosPermissionCodes.salesNewSaleView,
       ),
       if (onlineOrdersCard != null &&
-          PosPermissionAccess.canViewOnlineOrders(permissions))
+      (PosPermissionAccess.canViewOnlineOrders(permissions) ||
+      permissions.contains(PosPermissionCodes.manageOnlineOrders) ||
+      permissions.contains(
+        PosPermissionCodes.homeActionsOnlineOrdersEntry,
+      )))
         PosHomeAction(
           key: 'manage-online-orders',
           label: 'Manage Online Orders',
@@ -345,8 +349,9 @@ PosHomeDashboardState _mapPayloadToDashboardState({
           buttonLabel: 'View Orders',
           isEnabled: onlineOrdersCard.enabled,
           targetRoute: '/pos/online-orders',
+          onTapActionKey: 'manage-online-orders',
           featureKey: PosFeatureCodes.onlineOrders,
-          permissionKey: PosPermissionCodes.accessOnlineOrders,
+          permissionKey: PosPermissionCodes.homeActionsOnlineOrdersEntry,
         ),
       PosHomeAction(
         key: 'returns-refunds',
@@ -358,7 +363,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
             PosPermissionAccess.canViewReturns(permissions),
         targetRoute: '/pos/returns-refunds',
         featureKey: PosFeatureCodes.returns,
-        permissionKey: PosPermissionCodes.viewReturns,
+        permissionKey: PosPermissionCodes.homeActionsReturnsEntry,
         metricValue: '${cards.returnsRefunds.count ?? 0}',
         metricLabel: 'Pending today',
       ),
@@ -385,7 +390,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
             PosPermissionAccess.canParkOrViewParkedSales(permissions),
         targetRoute: '/pos/parked-sales',
         featureKey: PosFeatureCodes.sales,
-        permissionKey: PosPermissionCodes.createParkedSale,
+        permissionKey: PosPermissionCodes.heldSalesView,
         metricValue: '${cards.parkedSales.count ?? 0}',
         metricLabel: 'Waiting to resume',
       ),
@@ -399,7 +404,7 @@ PosHomeDashboardState _mapPayloadToDashboardState({
             PosPermissionAccess.canViewCashDrawer(permissions),
         targetRoute: '/pos/cash-drawer',
         featureKey: PosFeatureCodes.till,
-        permissionKey: PosPermissionCodes.viewCashDrawer,
+        permissionKey: PosPermissionCodes.cashDrawerPositionView,
         metricValue: _formatCurrency(cards.cashDrawer.balance),
         metricLabel: 'Drawer balance',
       ),

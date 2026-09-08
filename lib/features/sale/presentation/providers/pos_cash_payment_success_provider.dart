@@ -55,6 +55,7 @@ class PosCashPaymentSuccessData {
   final String? customerPhone;
   final String? cashierName;
   final String? receiptDataJson;
+
   /// Backend checkout payload retained for explicit original print mapping.
   final PosCheckoutStartPaymentPayload? authoritativePayment;
 }

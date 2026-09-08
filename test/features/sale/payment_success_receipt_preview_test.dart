@@ -1,11 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nytroz_pos/core/access/cashier_pos/cashier_pos_canonical_permission_codes.dart';
+import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
+import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.dart';
+import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
+import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/sale/domain/entities/pos_receipt_snapshot.dart';
 import 'package:nytroz_pos/features/sale/presentation/providers/pos_cash_payment_success_provider.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/payment_success/payment_success_screen_body.dart';
 import 'package:nytroz_pos/features/sale/presentation/widgets/payment_success/receipt/payment_success_receipt_preview.dart';
 import 'package:nytroz_pos/shared/pos_session/pos_session_context.dart';
+
+class _FakeAuthSessionStorage extends AuthSessionStorage {
+  _FakeAuthSessionStorage()
+      : super(const AppSecureStorage(FlutterSecureStorage()));
+
+  @override
+  Future<AuthSession?> read() async => null;
+
+  @override
+  Future<void> save(AuthSession session) async {}
+
+  @override
+  Future<void> clear() async {}
+}
+
+class _PresetAuthSessionNotifier extends AuthSessionNotifier {
+  _PresetAuthSessionNotifier(AuthSession session)
+      : super(_FakeAuthSessionStorage()) {
+    state = session;
+  }
+}
+
+final _fullAccessSession = AuthSession(
+  accessToken: 'test-token',
+  userId: 'user-1',
+  userDisplayName: 'Cashier',
+  permissionCodes: [
+    ...CashierPosCanonicalPermissionCodes.roleAssignableCodes,
+    ...CashierPosCanonicalPermissionCodes.splitCodes,
+  ],
+);
+
+List<Override> get _sessionOverrides => [
+      authSessionProvider.overrideWith(
+        (ref) => _PresetAuthSessionNotifier(_fullAccessSession),
+      ),
+    ];
 
 void main() {
   testWidgets('receipt preview supports intrinsic measurement', (tester) async {
@@ -55,6 +98,7 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
+          overrides: _sessionOverrides,
           child: MaterialApp(
             home: Scaffold(
               body: PaymentSuccessScreenBody(
@@ -92,6 +136,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(
       ProviderScope(
+        overrides: _sessionOverrides,
         child: MaterialApp(
           home: Scaffold(
             body: PaymentSuccessScreenBody(
@@ -108,8 +153,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(Dialog), findsNothing);
-    // Provider not seeded with authoritative checkout payload in this widget
-    // harness; first-print mapping correctly refuses instead of opening a dialog.
     expect(
       find.text('Completed sale receipt data is unavailable for printing.'),
       findsOneWidget,
@@ -145,6 +188,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
+        overrides: _sessionOverrides,
         child: MaterialApp(
           home: Scaffold(
             body: PaymentSuccessScreenBody(
@@ -165,6 +209,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(
       ProviderScope(
+        overrides: _sessionOverrides,
         child: MaterialApp(
           home: Scaffold(
             body: PaymentSuccessScreenBody(

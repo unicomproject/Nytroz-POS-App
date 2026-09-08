@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_customers_orders_returns_visibility.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
-class CustomerTableHeader extends StatelessWidget {
+class CustomerTableHeader extends ConsumerWidget {
   const CustomerTableHeader({
     super.key,
     this.showSecondaryColumns = true,
@@ -11,7 +14,62 @@ class CustomerTableHeader extends StatelessWidget {
   final bool showSecondaryColumns;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = ref.watch(effectivePermissionSetProvider);
+    final cells = <Widget>[];
+
+    void add(String label, int flex, {bool sortable = false}) {
+      cells.add(_HeaderCell(label, flex: flex, sortable: sortable));
+    }
+
+    if (showSecondaryColumns) {
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerId(p)) {
+        add('Customer ID', 14);
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerName(p)) {
+        add('Customer', 18, sortable: true);
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerPhone(p)) {
+        add('Phone', 12);
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerEmail(p)) {
+        add('Email', 18);
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerSource(p)) {
+        add('Source', 10);
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerStatus(p)) {
+        add('Status', 10);
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerOrderCount(p)) {
+        add('Orders', 10);
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerTotalSpend(p)) {
+        add('Total Spend', 12);
+      }
+    } else {
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerName(p)) {
+        add('Customer', 22, sortable: true);
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerPhone(p)) {
+        add('Phone', 15);
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerEmail(p)) {
+        add('Email', 22);
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowRecentPurchases(p)) {
+        add('Last Purchase', 16);
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerTotalSpend(p)) {
+        add('Total Spend', 15);
+      }
+      cells.add(const SizedBox(width: 48));
+    }
+
+    if (cells.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: const BoxDecoration(
@@ -20,27 +78,7 @@ class CustomerTableHeader extends StatelessWidget {
           bottom: BorderSide(color: Color(0xFFE2E6ED)),
         ),
       ),
-      child: Row(
-        children: showSecondaryColumns
-            ? const [
-                _HeaderCell('Customer ID', flex: 14),
-                _HeaderCell('Customer', flex: 18, sortable: true),
-                _HeaderCell('Phone', flex: 12),
-                _HeaderCell('Email', flex: 18),
-                _HeaderCell('Source', flex: 10),
-                _HeaderCell('Status', flex: 10),
-                _HeaderCell('Orders', flex: 10),
-                _HeaderCell('Total Spend', flex: 12),
-              ]
-            : const [
-                _HeaderCell('Customer', flex: 22, sortable: true),
-                _HeaderCell('Phone', flex: 15),
-                _HeaderCell('Email', flex: 22),
-                _HeaderCell('Last Purchase', flex: 16),
-                _HeaderCell('Total Spend', flex: 15),
-                SizedBox(width: 48),
-              ],
-      ),
+      child: Row(children: cells),
     );
   }
 }
@@ -80,7 +118,7 @@ class _HeaderCell extends StatelessWidget {
             const SizedBox(width: 4),
             const Icon(
               Icons.unfold_more_rounded,
-              size: 16,
+              size: 14,
               color: TenantAdminColors.posHomeAccentOrange,
             ),
           ],

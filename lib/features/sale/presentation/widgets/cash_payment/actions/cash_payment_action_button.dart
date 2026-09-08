@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
 class CashPaymentActionButton extends StatelessWidget {
   const CashPaymentActionButton({
@@ -21,66 +20,80 @@ class CashPaymentActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     if (isPrimary) {
       return SizedBox(
-        height: 48,
+        height: 54,
         child: FilledButton(
+          key: const ValueKey('cash-complete-sale'),
           onPressed: isLoading ? null : onPressed,
           style: FilledButton.styleFrom(
-            backgroundColor: TenantAdminColors.posHomeAccentOrange,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor:
-                TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.45),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            backgroundColor: colors.primary,
+            foregroundColor: colors.onPrimary,
+            disabledBackgroundColor: colors.primary.withValues(alpha: 0.38),
+            disabledForegroundColor: colors.onPrimary.withValues(alpha: 0.7),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
           child: isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
+              ? SizedBox(
+                  width: 24,
+                  height: 24,
                   child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
+                    strokeWidth: 2.5,
+                    color: colors.onPrimary,
                   ),
                 )
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(icon, size: 18),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: colors.onPrimary, width: 2),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.check_rounded,
+                        color: colors.onPrimary,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style:
+                              Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    color: colors.onPrimary,
+                                    fontSize: 15,
+                                    letterSpacing: 0.4,
+                                    height: 1.15,
+                                  ),
+                        ),
+                        if (subtitle != null)
                           Text(
-                            label,
+                            subtitle!,
                             style: Theme.of(context)
                                 .textTheme
-                                .labelLarge
+                                .labelSmall
                                 ?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  height: 1.1,
+                                  color:
+                                      colors.onPrimary.withValues(alpha: 0.85),
+                                  fontSize: 11,
+                                  height: 1.15,
+                                  fontWeight: FontWeight.w400,
                                 ),
                           ),
-                          if (subtitle != null)
-                            Text(
-                              subtitle!,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                    fontSize: 10,
-                                    height: 1.1,
-                                  ),
-                            ),
-                        ],
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -93,11 +106,11 @@ class CashPaymentActionButton extends StatelessWidget {
       child: OutlinedButton.icon(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
-          foregroundColor: TenantAdminColors.primary,
-          side: const BorderSide(color: TenantAdminColors.border),
+          foregroundColor: colors.primary,
+          side: BorderSide(color: colors.outlineVariant),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+            borderRadius: BorderRadius.circular(10),
           ),
         ),
         icon: Icon(icon, size: 16),
@@ -105,7 +118,7 @@ class CashPaymentActionButton extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: TenantAdminColors.primary,
+                color: colors.primary,
                 fontSize: 12,
               ),
         ),

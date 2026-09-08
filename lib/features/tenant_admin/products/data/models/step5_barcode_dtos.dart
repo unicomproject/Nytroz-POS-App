@@ -60,18 +60,22 @@ class Step5VariantIdentifierDto {
   final String? productVariantId;
   final String? sku;
   final String? barcode;
+  final String? barcodeType;
 
   const Step5VariantIdentifierDto({
     this.productVariantId,
     this.sku,
     this.barcode,
+    this.barcodeType,
   });
 
   factory Step5VariantIdentifierDto.fromJson(Map<String, dynamic> json) {
     return Step5VariantIdentifierDto(
       productVariantId: json['productVariantId']?.toString(),
       sku: json['sku']?.toString(),
+      // Never parse barcode as number — preserve leading zeros as string.
       barcode: json['barcode']?.toString(),
+      barcodeType: json['barcodeType']?.toString(),
     );
   }
 
@@ -80,6 +84,7 @@ class Step5VariantIdentifierDto {
       if (productVariantId != null) 'productVariantId': productVariantId,
       if (sku != null) 'sku': sku,
       if (barcode != null) 'barcode': barcode,
+      if (barcodeType != null) 'barcodeType': barcodeType,
     };
   }
 
@@ -87,11 +92,15 @@ class Step5VariantIdentifierDto {
     String? productVariantId,
     String? sku,
     String? barcode,
+    String? barcodeType,
+    bool clearBarcodeType = false,
   }) {
     return Step5VariantIdentifierDto(
       productVariantId: productVariantId ?? this.productVariantId,
       sku: sku ?? this.sku,
       barcode: barcode ?? this.barcode,
+      barcodeType:
+          clearBarcodeType ? null : (barcodeType ?? this.barcodeType),
     );
   }
 }
@@ -157,17 +166,21 @@ class Step5IdentifierTargetDto {
 class BarcodeSkuAssignmentDto {
   final String clientCombinationKey;
   final String? productVariantId;
+  final String? displayName;
   final String? sku;
   final String? barcode;
+  final String? barcodeType;
   final bool isAssigned;
-  // 'COMPLETE', 'DUPLICATE', 'INCOMPLETE' — used for table status chip display only
+  // 'COMPLETE', 'DUPLICATE', 'INCOMPLETE', 'INVALID' — UI display; derived when possible
   final String? status;
 
   const BarcodeSkuAssignmentDto({
     required this.clientCombinationKey,
     this.productVariantId,
+    this.displayName,
     this.sku,
     this.barcode,
+    this.barcodeType,
     this.isAssigned = false,
     this.status,
   });
@@ -176,8 +189,11 @@ class BarcodeSkuAssignmentDto {
     return BarcodeSkuAssignmentDto(
       clientCombinationKey: json['clientCombinationKey']?.toString() ?? '',
       productVariantId: json['productVariantId']?.toString(),
+      displayName: json['displayName']?.toString(),
       sku: json['sku']?.toString(),
+      // Never parse barcode as number — preserve leading zeros as string.
       barcode: json['barcode']?.toString(),
+      barcodeType: json['barcodeType']?.toString(),
       isAssigned: json['isAssigned'] as bool? ?? false,
       status: json['status']?.toString(),
     );
@@ -187,8 +203,10 @@ class BarcodeSkuAssignmentDto {
     return {
       'clientCombinationKey': clientCombinationKey,
       if (productVariantId != null) 'productVariantId': productVariantId,
+      if (displayName != null) 'displayName': displayName,
       if (sku != null) 'sku': sku,
       if (barcode != null) 'barcode': barcode,
+      if (barcodeType != null) 'barcodeType': barcodeType,
       'isAssigned': isAssigned,
       // status is UI-only, not sent to backend
     };
@@ -198,10 +216,13 @@ class BarcodeSkuAssignmentDto {
     String? clientCombinationKey,
     String? productVariantId,
     bool clearProductVariantId = false,
+    String? displayName,
     String? sku,
     bool clearSku = false,
     String? barcode,
     bool clearBarcode = false,
+    String? barcodeType,
+    bool clearBarcodeType = false,
     bool? isAssigned,
     String? status,
     bool clearStatus = false,
@@ -212,19 +233,22 @@ class BarcodeSkuAssignmentDto {
       productVariantId: clearProductVariantId
           ? null
           : (productVariantId ?? this.productVariantId),
+      displayName: displayName ?? this.displayName,
       sku: clearSku ? null : (sku ?? this.sku),
       barcode: clearBarcode ? null : (barcode ?? this.barcode),
+      barcodeType:
+          clearBarcodeType ? null : (barcodeType ?? this.barcodeType),
       isAssigned: isAssigned ?? this.isAssigned,
       status: clearStatus ? null : (status ?? this.status),
     );
   }
 
   /// Derives the effective status for UI display.
-  /// - DUPLICATE: externally set from API conflict response
-  /// - COMPLETE: SKU is filled (barcode is optional for wizard continue)
+  /// - DUPLICATE / INVALID: externally set from API or local format checks
+  /// - COMPLETE: SKU is filled (barcode optional)
   /// - INCOMPLETE: missing SKU
   String get effectiveStatus {
-    if (status == 'DUPLICATE') return 'DUPLICATE';
+    if (status == 'DUPLICATE' || status == 'INVALID') return status!;
     final hasSku = sku != null && sku!.trim().isNotEmpty;
     if (hasSku) return 'COMPLETE';
     return 'INCOMPLETE';

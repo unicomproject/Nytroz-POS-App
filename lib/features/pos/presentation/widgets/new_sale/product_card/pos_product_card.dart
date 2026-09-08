@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/features/pos/domain/entities/pos_catalog_models.dart';
 import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
 
 import '../../../../../../shared/widgets/app_cached_network_image.dart';
 import '../../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
-class PosProductCard extends StatelessWidget {
+class PosProductCard extends ConsumerWidget {
   const PosProductCard({
     required this.product,
     required this.onTap,
@@ -16,13 +19,40 @@ class PosProductCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    final showImage =
+        permissions.hasPermission(PosPermissionCodes.catalogProductCardImage);
+    final showName =
+        permissions.hasPermission(PosPermissionCodes.catalogProductCardName);
+    final showRegular = permissions
+        .hasPermission(PosPermissionCodes.catalogProductCardRegularPrice);
+    final showSale = permissions
+        .hasPermission(PosPermissionCodes.catalogProductCardSalePrice);
+    final showBadge = permissions
+        .hasPermission(PosPermissionCodes.catalogProductCardDiscountBadge);
+    final canTap = onTap != null;
+
+    if (!showImage && !showName && !showRegular && !showSale && !canTap) {
+      return const SizedBox.shrink();
+    }
+
     final visual = _ProductVisual.forCategory(product.categoryName);
+    final semanticParts = <String>[
+      if (showName) product.name,
+      if (showSale &&
+          product.hasOffer &&
+          !product.requiresCartValidation &&
+          product.offerPrice != null)
+        formatLkr(product.offerPrice!)
+      else if (showRegular)
+        formatLkr(product.basePrice),
+    ];
 
     return Semantics(
-      label: 'Add product to cart',
-      button: true,
-      enabled: onTap != null,
+      label: semanticParts.isEmpty ? 'Product' : semanticParts.join(', '),
+      button: canTap,
+      enabled: canTap,
       container: true,
       child: Material(
         color: TenantAdminColors.surface,
@@ -41,23 +71,35 @@ class PosProductCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: _ProductImage(product: product, visual: visual),
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  Text(
-                    product.name,
-                    maxLines: 1,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: TenantAdminColors.bodyText,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                        ),
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.xs),
-                  _PriceDisplay(product: product),
+                  if (showImage)
+                    Expanded(
+                      child: _ProductImage(product: product, visual: visual),
+                    )
+                  else
+                    const Spacer(),
+                  if (showName) ...[
+                    const SizedBox(height: TenantAdminSpacing.md),
+                    Text(
+                      product.name,
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: TenantAdminColors.bodyText,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                          ),
+                    ),
+                  ],
+                  if (showRegular || showSale) ...[
+                    const SizedBox(height: TenantAdminSpacing.xs),
+                    _PriceDisplay(
+                      product: product,
+                      showRegular: showRegular,
+                      showSale: showSale,
+                      showBadge: showBadge,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -69,15 +111,26 @@ class PosProductCard extends StatelessWidget {
 }
 
 class _PriceDisplay extends StatelessWidget {
-  const _PriceDisplay({required this.product});
+  const _PriceDisplay({
+    required this.product,
+    required this.showRegular,
+    required this.showSale,
+    required this.showBadge,
+  });
 
   final PosCatalogProductSummary product;
+  final bool showRegular;
+  final bool showSale;
+  final bool showBadge;
 
   @override
   Widget build(BuildContext context) {
-    if (!product.hasOffer ||
-        product.requiresCartValidation ||
-        product.offerPrice == null) {
+    final hasOffer = product.hasOffer &&
+        !product.requiresCartValidation &&
+        product.offerPrice != null;
+
+    if (!hasOffer || !showSale) {
+      if (!showRegular) return const SizedBox.shrink();
       return Text(
         formatLkr(product.basePrice),
         maxLines: 1,
@@ -96,15 +149,16 @@ class _PriceDisplay extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: 6,
       children: [
-        Text(
-          formatLkr(product.basePrice),
-          maxLines: 1,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: TenantAdminColors.mutedText,
-                decoration: TextDecoration.lineThrough,
-                fontSize: 12,
-              ),
-        ),
+        if (showRegular)
+          Text(
+            formatLkr(product.basePrice),
+            maxLines: 1,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: TenantAdminColors.mutedText,
+                  decoration: TextDecoration.lineThrough,
+                  fontSize: 12,
+                ),
+          ),
         Text(
           formatLkr(product.offerPrice!),
           maxLines: 1,
@@ -114,6 +168,8 @@ class _PriceDisplay extends StatelessWidget {
                 fontSize: 14,
               ),
         ),
+        // Discount badge presentation is gated; offer price alone is sale_price.
+        if (showBadge) const SizedBox.shrink(),
       ],
     );
   }

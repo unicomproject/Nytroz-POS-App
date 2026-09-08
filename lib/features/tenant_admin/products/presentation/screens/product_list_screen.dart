@@ -75,6 +75,8 @@ class ProductListScreen extends ConsumerWidget {
             final isMobile = constraints.maxWidth < 700;
             final productsState = ref.watch(productListProvider);
             final isFirstTimeEmpty = productsState.maybeWhen(
+              skipLoadingOnReload: true,
+              skipLoadingOnRefresh: true,
               data: (result) =>
                   result != null &&
                   result.totalCount == 0 &&
@@ -134,6 +136,9 @@ class _ProductListBody extends ConsumerWidget {
     }
 
     return productsState.when(
+      skipLoadingOnReload: true,
+      skipLoadingOnRefresh: true,
+      skipError: true,
       loading: () => const TenantAdminLoadingSkeleton(rowCount: 6),
       error: (error, stackTrace) => TenantAdminErrorState(
         title: 'Unable to load products',
@@ -148,6 +153,11 @@ class _ProductListBody extends ConsumerWidget {
             icon: Icons.inventory_2_outlined,
           );
         }
+
+        final isRefetching =
+            productsState.isLoading && productsState.hasValue;
+        final refetchFailed =
+            productsState.hasError && productsState.hasValue;
 
         if (result.totalCount == 0 && result.catalogTotalCount == 0) {
           return Center(
@@ -205,9 +215,56 @@ class _ProductListBody extends ConsumerWidget {
           );
         }
 
-        return ProductListPanel(
-          result: result,
-          visibility: visibility,
+        return Stack(
+          children: [
+            ProductListPanel(
+              result: result,
+              visibility: visibility,
+            ),
+            if (isRefetching)
+              const Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: LinearProgressIndicator(
+                  minHeight: 2,
+                  color: TenantAdminColors.posHomeAccentOrange,
+                ),
+              ),
+            if (refetchFailed)
+              Positioned(
+                top: isRefetching ? 2 : 0,
+                left: 0,
+                right: 0,
+                child: Material(
+                  color: TenantAdminColors.danger.withValues(alpha: 0.12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: TenantAdminSpacing.md,
+                      vertical: TenantAdminSpacing.xs,
+                    ),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Could not refresh the product list.',
+                            style: TextStyle(
+                              color: TenantAdminColors.danger,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              ref.invalidate(productListProvider),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );
@@ -242,6 +299,7 @@ class _ProductSearchToolbar extends ConsumerWidget {
     final searchField = TenantAdminSearchField(
       hint: 'Search by product name, code, SKU or barcode',
       value: filterState.search,
+      debounceDuration: const Duration(milliseconds: 200),
       onChanged: filterNotifier.setSearch,
     );
 

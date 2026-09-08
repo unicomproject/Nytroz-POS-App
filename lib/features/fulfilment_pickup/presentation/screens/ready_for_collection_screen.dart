@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/pos_online_order.dart';
 import '../widgets/online_order_ui.dart';
-import '../widgets/picking_widgets.dart';
+import '../widgets/picking/picking_progress_metrics.dart';
 
 class ReadyForCollectionScreen extends StatelessWidget {
   const ReadyForCollectionScreen({

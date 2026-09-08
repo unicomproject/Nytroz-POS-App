@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/access/permission_access_providers.dart';
+import '../../../../../core/access/pos_access_codes.dart';
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../application/state/pos_home_dashboard_state.dart';
 import 'session_summary_card.dart';
 
-class PosHomeSummarySection extends StatelessWidget {
+class PosHomeSummarySection extends ConsumerWidget {
   const PosHomeSummarySection({
     super.key,
     required this.summary,
@@ -15,7 +18,12 @@ class PosHomeSummarySection extends StatelessWidget {
   final VoidCallback? onRetry;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissions = ref.watch(effectivePermissionSetProvider);
+    if (!permissions.hasPermission(PosPermissionCodes.homeSessionSummaryView)) {
+      return const SizedBox.shrink();
+    }
+
     if (summary == null) {
       return Container(
         width: double.infinity,
@@ -42,48 +50,75 @@ class PosHomeSummarySection extends StatelessWidget {
       );
     }
     final data = summary!;
-    final metrics = [
-      (
-        'Total Sales',
-        Icons.shopping_bag_outlined,
-        TenantAdminColors.posHomeOrangeEnd,
-        TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.14),
-        data.grossSalesAmount,
-        null,
-      ),
-      (
-        'Transactions',
-        Icons.receipt_long_outlined,
-        TenantAdminColors.success,
-        TenantAdminColors.success.withValues(alpha: 0.14),
-        null,
-        data.transactionCount,
-      ),
-      (
-        'Returns',
-        Icons.assignment_return_outlined,
-        TenantAdminColors.pending,
-        TenantAdminColors.pending.withValues(alpha: 0.13),
-        data.refundAmount,
-        data.refundCount,
-      ),
-      (
-        'Discounts',
-        Icons.local_offer_outlined,
-        TenantAdminColors.warning,
-        TenantAdminColors.warning.withValues(alpha: 0.15),
-        data.discountAmount,
-        null,
-      ),
-      (
-        'Net Sales',
-        Icons.bar_chart_rounded,
-        TenantAdminColors.posHomeBlueEnd,
-        TenantAdminColors.posHomeBlueStart.withValues(alpha: 0.14),
-        data.netSalesAmount,
-        null,
-      ),
+    final metrics = <({
+      String label,
+      IconData icon,
+      Color iconColor,
+      Color iconBackground,
+      String value,
+      String? supporting,
+    })>[
+      if (permissions
+          .hasPermission(PosPermissionCodes.homeSessionSummaryTotalSales))
+        (
+          label: 'Total Sales',
+          icon: Icons.shopping_bag_outlined,
+          iconColor: TenantAdminColors.posHomeOrangeEnd,
+          iconBackground:
+              TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.14),
+          value:
+              '${data.currencyCode} ${data.grossSalesAmount.toStringAsFixed(2)}',
+          supporting: null,
+        ),
+      if (permissions.hasPermission(
+          PosPermissionCodes.homeSessionSummaryTransactionCount))
+        (
+          label: 'Transactions',
+          icon: Icons.receipt_long_outlined,
+          iconColor: TenantAdminColors.success,
+          iconBackground: TenantAdminColors.success.withValues(alpha: 0.14),
+          value: '${data.transactionCount}',
+          supporting: null,
+        ),
+      if (permissions
+          .hasPermission(PosPermissionCodes.homeSessionSummaryReturns))
+        (
+          label: 'Returns',
+          icon: Icons.assignment_return_outlined,
+          iconColor: TenantAdminColors.pending,
+          iconBackground: TenantAdminColors.pending.withValues(alpha: 0.13),
+          value:
+              '${data.currencyCode} ${data.refundAmount.toStringAsFixed(2)}',
+          supporting: '${data.refundCount} completed',
+        ),
+      if (permissions
+          .hasPermission(PosPermissionCodes.homeSessionSummaryDiscounts))
+        (
+          label: 'Discounts',
+          icon: Icons.local_offer_outlined,
+          iconColor: TenantAdminColors.warning,
+          iconBackground: TenantAdminColors.warning.withValues(alpha: 0.15),
+          value:
+              '${data.currencyCode} ${data.discountAmount.toStringAsFixed(2)}',
+          supporting: null,
+        ),
+      if (permissions
+          .hasPermission(PosPermissionCodes.homeSessionSummaryNetSales))
+        (
+          label: 'Net Sales',
+          icon: Icons.bar_chart_rounded,
+          iconColor: TenantAdminColors.posHomeBlueEnd,
+          iconBackground:
+              TenantAdminColors.posHomeBlueStart.withValues(alpha: 0.14),
+          value: '${data.currencyCode} ${data.netSalesAmount.toStringAsFixed(2)}',
+          supporting: null,
+        ),
     ];
+
+    if (metrics.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(
@@ -114,16 +149,12 @@ class PosHomeSummarySection extends StatelessWidget {
                 Widget metricCard(int index) {
                   final metric = metrics[index];
                   return SessionSummaryCard(
-                    label: metric.$1,
-                    icon: metric.$2,
-                    iconColor: metric.$3,
-                    iconBackgroundColor: metric.$4,
-                    value: metric.$5 == null
-                        ? '${metric.$6}'
-                        : '${data.currencyCode} ${metric.$5!.toStringAsFixed(2)}',
-                    supporting: metric.$5 != null && metric.$6 != null
-                        ? '${metric.$6} completed'
-                        : null,
+                    label: metric.label,
+                    icon: metric.icon,
+                    iconColor: metric.iconColor,
+                    iconBackgroundColor: metric.iconBackground,
+                    value: metric.value,
+                    supporting: metric.supporting,
                   );
                 }
 

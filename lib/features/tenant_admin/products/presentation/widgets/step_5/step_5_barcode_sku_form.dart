@@ -18,8 +18,6 @@ class Step5BarcodeSkuForm extends ConsumerStatefulWidget {
 }
 
 class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
-  String? _selectedClientKey;
-
   final _skuController = TextEditingController();
   final _barcodeController = TextEditingController();
   final _barcodeFocusNode = FocusNode();
@@ -27,6 +25,11 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
 
   String _appliedSku = '';
   String _appliedBarcode = '';
+  bool _suppressSimpleFieldSync = false;
+
+  /// VARIANT: uncommitted per-row edits. Status stays Incomplete until Apply.
+  final Map<String, String> _variantDraftSkus = {};
+  final Map<String, String> _variantDraftBarcodes = {};
 
   @override
   void initState() {
@@ -43,26 +46,12 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
 
   void _onSkuChanged() {
     if (_syncingFromState) return;
-    final structure =
-        ref.read(addProductWizardControllerProvider).productStructure;
-    if (structure == 'SIMPLE' || structure == 'BUNDLE') {
-      ref
-          .read(addProductWizardControllerProvider.notifier)
-          .updateSimpleBaseSku(_skuController.text);
-    }
-    // VARIANT: table updates only on Apply button press (_onAssignVariant)
+    setState(() {});
   }
 
   void _onBarcodeChanged() {
     if (_syncingFromState) return;
-    final structure =
-        ref.read(addProductWizardControllerProvider).productStructure;
-    if (structure == 'SIMPLE' || structure == 'BUNDLE') {
-      ref
-          .read(addProductWizardControllerProvider.notifier)
-          .updateSimpleParentBarcode(_barcodeController.text);
-    }
-    // VARIANT: table updates only on Apply button press (_onAssignVariant)
+    setState(() {});
   }
 
 
@@ -77,6 +66,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
   }
 
   void _syncSimpleControllersFromState() {
+    if (_suppressSimpleFieldSync) return;
     final state = ref.read(addProductWizardControllerProvider);
     _syncingFromState = true;
     if (_skuController.text != state.step5State.baseSku) {
@@ -88,46 +78,91 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
     _syncingFromState = false;
   }
 
-  List<_VariantDropdownItem> _buildDropdownItems({
-    required String productStructure,
-    required String productName,
-    required List<GeneratedVariantRow> generatedVariants,
-  }) {
-    final includedVariants =
-        generatedVariants.where((v) => v.isIncluded).toList();
-    return includedVariants
-        .map((v) => _VariantDropdownItem(
-              clientKey: v.clientCombinationKey,
-              label: v.displayLabel ?? v.combinationLabel,
-              productVariantId: v.productVariantId,
-            ))
-        .toList();
+  void _resetSimpleInputFields() {
+    _suppressSimpleFieldSync = true;
+    _syncingFromState = true;
+    _skuController.clear();
+    _barcodeController.clear();
+    _syncingFromState = false;
   }
 
-  Future<void> _onAssignVariant() async {
-    if (_selectedClientKey == null) return;
-    final controller = ref.read(addProductWizardControllerProvider.notifier);
-
-    final sku = _skuController.text.trim();
-    final barcode = _barcodeController.text.trim();
-
-    final success = await controller.assignBarcodeSkuAndSave(
-      BarcodeSkuAssignmentDto(
-        clientCombinationKey: _selectedClientKey!,
-        productVariantId: null,
-        sku: sku.isEmpty ? null : sku,
-        barcode: barcode.isEmpty ? null : barcode,
-        isAssigned: sku.isNotEmpty || barcode.isNotEmpty,
-      ),
-    );
-
-    if (success) {
-      setState(() {
-        _selectedClientKey = null;
-        _skuController.clear();
-        _barcodeController.clear();
-      });
+  void _applySimpleIdentifiers(AddProductWizardController controller) {
+    _suppressSimpleFieldSync = true;
+    controller.updateSimpleBaseSku(_skuController.text);
+    controller.updateSimpleParentBarcode(_barcodeController.text);
+    if (_skuController.text.trim().isEmpty) {
+      controller.generateSimpleIdentifiers(overwriteSku: false);
     }
+    final next = ref.read(addProductWizardControllerProvider).step5State;
+    if (next.baseSku.trim().isEmpty &&
+        next.parentProductBarcode.trim().isEmpty) {
+      _suppressSimpleFieldSync = false;
+      return;
+    }
+    controller.commitSimpleBarcodeSkuToState();
+    setState(() {
+      _appliedSku = next.baseSku;
+      _appliedBarcode = next.parentProductBarcode;
+    });
+    _resetSimpleInputFields();
+  }
+
+  void _setVariantDraftSku(String clientCombinationKey, String sku) {
+    setState(() => _variantDraftSkus[clientCombinationKey] = sku);
+  }
+
+  void _setVariantDraftBarcode(String clientCombinationKey, String barcode) {
+    setState(() => _variantDraftBarcodes[clientCombinationKey] = barcode);
+  }
+
+  void _applyVariantIdentifierDrafts(
+    AddProductWizardController controller,
+    AddProductWizardState state,
+  ) {
+    final selected = state.step5State.selectedClientKeys;
+    if (selected.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Select at least one variant checkbox, enter SKU/Barcode, then Apply.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    var appliedAny = false;
+    for (final key in selected) {
+      BarcodeSkuAssignmentDto? assignment;
+      for (final a in state.step5State.assignments) {
+        if (a.clientCombinationKey == key) {
+          assignment = a;
+          break;
+        }
+      }
+      if (assignment == null) continue;
+
+      final sku = _variantDraftSkus.containsKey(key)
+          ? _variantDraftSkus[key]!
+          : (assignment.sku ?? '');
+      final barcode = _variantDraftBarcodes.containsKey(key)
+          ? _variantDraftBarcodes[key]!
+          : (assignment.barcode ?? '');
+
+      controller.updateVariantSku(key, sku);
+      controller.updateVariantBarcode(key, barcode);
+      appliedAny = true;
+      _variantDraftSkus.remove(key);
+      _variantDraftBarcodes.remove(key);
+    }
+
+    if (!appliedAny) return;
+
+    controller.clearStep5RowSelection();
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('SKU & barcode applied to selected variants.')),
+    );
   }
 
   void _onEditAssignment(
@@ -147,44 +182,85 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
         ? (variant.displayLabel ?? variant.combinationLabel)
         : (state.productName.isNotEmpty ? state.productName : 'Base Product');
 
+    final siblings = state.step5State.assignments.where(
+      (a) => a.clientCombinationKey != assignment.clientCombinationKey,
+    );
+    final existingBarcodes = siblings
+        .map((a) => a.barcode?.trim() ?? '')
+        .where((b) => b.isNotEmpty)
+        .toSet();
+    final existingSkus = siblings
+        .map((a) => a.sku?.trim() ?? '')
+        .where((s) => s.isNotEmpty)
+        .toSet();
+
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final drawerWidth = screenWidth < 460 ? screenWidth : 440.0;
+
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: 'Close',
+      barrierLabel: 'Close edit variant SKU & barcode',
+      barrierColor: Colors.black54,
       useRootNavigator: false,
-      pageBuilder: (context, animation, secondaryAnimation) {
+      transitionDuration: const Duration(milliseconds: 280),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        final slide = Tween<Offset>(
+          begin: const Offset(1, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        ));
+
         return Align(
           alignment: Alignment.centerRight,
-          child: Material(
-            child: EditVariantIdentifierDrawer(
-              variantDto: Step5VariantIdentifierDto(
-                productVariantId: assignment.productVariantId,
-                sku: assignment.sku,
-                barcode: assignment.barcode,
-              ),
-              displayLabel: label,
-              onUpdate: (updated) {
-                if (state.productStructure == 'SIMPLE' || state.productStructure == 'BUNDLE') {
-                  controller.updateSimpleBaseSku(updated.sku ?? '');
-                  controller.updateSimpleParentBarcode(updated.barcode ?? '');
-                  setState(() {
-                    _appliedSku = updated.sku ?? '';
-                    _appliedBarcode = updated.barcode ?? '';
-                    _skuController.text = _appliedSku;
-                    _barcodeController.text = _appliedBarcode;
-                  });
-                }
-                controller.updateBarcodeSkuAssignment(
-                  BarcodeSkuAssignmentDto(
-                    clientCombinationKey: assignment.clientCombinationKey,
-                    productVariantId: updated.productVariantId,
-                    sku: updated.sku,
-                    barcode: updated.barcode,
-                    isAssigned: (updated.sku?.isNotEmpty ?? false) ||
-                        (updated.barcode?.isNotEmpty ?? false),
+          child: SlideTransition(
+            position: slide,
+            child: Material(
+              color: TenantAdminColors.surface,
+              elevation: 12,
+              child: SizedBox(
+                width: drawerWidth,
+                height: double.infinity,
+                child: EditVariantIdentifierDrawer(
+                  variantDto: Step5VariantIdentifierDto(
+                    productVariantId: assignment.productVariantId,
+                    sku: assignment.sku,
+                    barcode: assignment.barcode,
+                    barcodeType: assignment.barcodeType,
                   ),
-                );
-              },
+                  displayLabel: label,
+                  existingBarcodes: existingBarcodes,
+                  existingSkus: existingSkus,
+                  onUpdate: (updated) {
+                    if (state.productStructure == 'SIMPLE' ||
+                        state.productStructure == 'BUNDLE') {
+                      controller.updateSimpleBaseSku(updated.sku ?? '');
+                      controller.updateSimpleParentBarcode(
+                          updated.barcode ?? '');
+                      setState(() {
+                        _appliedSku = updated.sku ?? '';
+                        _appliedBarcode = updated.barcode ?? '';
+                      });
+                    }
+                    controller.updateBarcodeSkuAssignment(
+                      BarcodeSkuAssignmentDto(
+                        clientCombinationKey: assignment.clientCombinationKey,
+                        productVariantId: updated.productVariantId ??
+                            assignment.productVariantId,
+                        displayName: assignment.displayName,
+                        sku: updated.sku,
+                        barcode: updated.barcode,
+                        barcodeType: updated.barcodeType,
+                        isAssigned: (updated.sku?.isNotEmpty ?? false) ||
+                            (updated.barcode?.isNotEmpty ?? false),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
         );
@@ -538,14 +614,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                       children: [
                         const SizedBox(height: 20),
                         ElevatedButton(
-                          onPressed: () {
-                            controller.generateSimpleIdentifiers(overwriteSku: false);
-                            _syncSimpleControllersFromState();
-                            setState(() {
-                              _appliedSku = ref.read(addProductWizardControllerProvider).step5State.baseSku;
-                              _appliedBarcode = ref.read(addProductWizardControllerProvider).step5State.parentProductBarcode;
-                            });
-                          },
+                          onPressed: () => _applySimpleIdentifiers(controller),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFF6A00),
                             foregroundColor: Colors.white,
@@ -592,8 +661,8 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
               productStructure: state.productStructure,
               onEdit: (assignment, index) =>
                   _onEditAssignment(context, assignment, index),
-              onDelete: (assignment, index) =>
-                  _confirmAndDeleteAssignment(context, assignment, index),
+              onClear: (assignment) =>
+                  _confirmAndDeleteAssignment(context, assignment, 0),
             ),
             const SizedBox(height: 80),
           ] else
@@ -607,261 +676,130 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
     AddProductWizardState state,
     AddProductWizardController controller,
   ) {
-    final productName = state.productName;
-    final dropdownItems = _buildDropdownItems(
-      productStructure: state.productStructure,
-      productName: productName,
-      generatedVariants: state.step4State.generatedVariants,
-    );
+    final includedVariants =
+        state.step4State.generatedVariants.where((v) => v.isIncluded).toList();
+    final totalVariants = includedVariants.length;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (state.step5State.assignments.length !=
-          state.step4State.generatedVariants.where((v) => v.isIncluded).length) {
+      if (state.step5State.assignments.length != totalVariants) {
         controller.ensureVariantStep5Targets();
       }
     });
 
-    void selectVariant(String key) {
-      final existing = state.step5State.assignments.where(
-        (a) => a.clientCombinationKey == key,
-      );
-      setState(() {
-        _selectedClientKey = key;
-        _syncingFromState = true;
-        _skuController.text =
-            existing.isNotEmpty ? (existing.first.sku ?? '') : '';
-        _barcodeController.text =
-            existing.isNotEmpty ? (existing.first.barcode ?? '') : '';
-        _syncingFromState = false;
-      });
-    }
+    final filtered = state.step5State.filteredAssignments;
+    final completeCount = state.step5State.completeCount;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(TenantAdminSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Barcode & SKU',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'SKU & Barcode — Variant Product',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: TenantAdminColors.bodyText,
+            height: 1.2,
           ),
-          const SizedBox(height: 4),
-          const Text(
-            'Assign SKU and barcode identifiers to each generated variant.',
-            style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          'Assign SKU and barcode to each variant.',
+          style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+        ),
+        if (state.fieldErrors['skuDuplicate'] != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            state.fieldErrors['skuDuplicate']!,
+            style: const TextStyle(color: Colors.red, fontSize: 12),
           ),
-          if (state.fieldErrors['skuDuplicate'] != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              state.fieldErrors['skuDuplicate']!,
-              style: const TextStyle(color: Colors.red, fontSize: 12),
-            ),
-          ],
-          if (state.fieldErrors['barcodeDuplicate'] != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              state.fieldErrors['barcodeDuplicate']!,
-              style: const TextStyle(color: Colors.red, fontSize: 12),
-            ),
-          ],
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: Colors.grey.shade200),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Assign Identifier',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const _FieldLabel(label: 'Variant *'),
-                          const SizedBox(height: 6),
-                          DropdownButtonFormField<String>(
-                            initialValue: _selectedClientKey,
-                            isExpanded: true,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding:
-                                  EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                            ),
-                            items: dropdownItems
-                                .map((item) => DropdownMenuItem<String>(
-                                      value: item.clientKey,
-                                      child: Text(
-                                        item.label,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ))
-                                .toList(),
-                            onChanged: (val) {
-                              if (val != null) selectVariant(val);
-                            },
-                            hint: const Text('Select variant'),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const _FieldLabel(label: 'Base SKU *'),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _skuController,
-                            decoration: InputDecoration(
-                              border: const OutlineInputBorder(),
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 12),
-                              hintText: 'Enter SKU',
-                              errorText: state.fieldErrors['sku'],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const _FieldLabel(label: 'Barcode'),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _barcodeController,
-                            focusNode: _barcodeFocusNode,
-                            decoration: InputDecoration(
-                              border: const OutlineInputBorder(),
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 12),
-                              hintText: 'Type or scan barcode',
-                              errorText: state.fieldErrors['barcode'],
-                              suffixIcon: IconButton(
-                                icon: const Icon(
-                                  Icons.qr_code_scanner,
-                                  size: 20,
-                                  color: Color(0xFF1D4ED8),
-                                ),
-                                onPressed: () {
-                                  _barcodeFocusNode.requestFocus();
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 24.0),
-                      child: ElevatedButton(
-                        onPressed:
-                            _selectedClientKey != null ? _onAssignVariant : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF6A00),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 12),
-                          disabledBackgroundColor: Colors.grey.shade200,
-                        ),
-                        child: const Text('Apply'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Builder(builder: (context) {
-            final appliedAssignments = state.step5State.assignments
-                .where((a) => a.isAssigned)
-                .toList();
-            final totalVariants = state.step4State.generatedVariants
-                .where((v) => v.isIncluded)
-                .length;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                  'Variant SKU & Barcode Assignment',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                    ),
-                    if (appliedAssignments.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: appliedAssignments.length == totalVariants
-                              ? const Color(0xFFDCFCE7)
-                              : const Color(0xFFFEF3C7),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '${appliedAssignments.length} / $totalVariants applied',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: appliedAssignments.length == totalVariants
-                                ? const Color(0xFF16A34A)
-                                : const Color(0xFFB45309),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Step5IdentifierTable(
-                  assignments: appliedAssignments,
-                  allVariants: state.step4State.generatedVariants,
-                  productName: productName,
-                  productStructure: state.productStructure,
-                  onEdit: (assignment, index) =>
-                      _onEditAssignment(context, assignment, index),
-                  onDelete: (assignment, index) =>
-                      _confirmAndDeleteAssignment(context, assignment, index),
-                ),
-              ],
-            );
-          }),
-          const SizedBox(height: 80),
         ],
-      ),
+        if (state.fieldErrors['barcodeDuplicate'] != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            state.fieldErrors['barcodeDuplicate']!,
+            style: const TextStyle(color: Colors.red, fontSize: 12),
+          ),
+        ],
+        const SizedBox(height: TenantAdminSpacing.sm),
+        Step5VariantIdentifierToolbar(
+          searchQuery: state.step5State.searchQuery,
+          statusFilter: state.step5State.statusFilter,
+          completeCount: completeCount,
+          totalCount: totalVariants,
+          onSearchChanged: controller.setStep5SearchQuery,
+          onFilterChanged: controller.setStep5StatusFilter,
+        ),
+        const SizedBox(height: TenantAdminSpacing.sm),
+        Expanded(
+          child: Step5IdentifierTable(
+            assignments: filtered,
+            allVariants: state.step4State.generatedVariants,
+            productName: state.productName,
+            productStructure: state.productStructure,
+            selectedClientKeys: state.step5State.selectedClientKeys,
+            inlineEditable: true,
+            editOnlyWhenSelected: true,
+            draftSkus: _variantDraftSkus,
+            draftBarcodes: _variantDraftBarcodes,
+            onToggleSelect: controller.toggleStep5RowSelection,
+            onSkuChanged: (assignment, sku) =>
+                _setVariantDraftSku(assignment.clientCombinationKey, sku),
+            onBarcodeChanged: (assignment, barcode) => _setVariantDraftBarcode(
+              assignment.clientCombinationKey,
+              barcode,
+            ),
+            onScanComplete: (assignment, barcode) => _setVariantDraftBarcode(
+              assignment.clientCombinationKey,
+              barcode,
+            ),
+            onEdit: (assignment, index) =>
+                _onEditAssignment(context, assignment, index),
+            onClear: (assignment) {
+              _variantDraftSkus.remove(assignment.clientCombinationKey);
+              _variantDraftBarcodes.remove(assignment.clientCombinationKey);
+              controller.clearVariantIdentifierDraft(
+                assignment.clientCombinationKey,
+              );
+              setState(() {});
+            },
+          ),
+        ),
+        const SizedBox(height: TenantAdminSpacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                state.step5State.selectedClientKeys.isEmpty
+                    ? 'Select variant checkboxes, enter SKU/Barcode, then Apply.'
+                    : 'Apply commits SKU/Barcode for ${state.step5State.selectedClientKeys.length} selected variant(s). Status updates after Apply.',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+            ),
+            const SizedBox(width: TenantAdminSpacing.sm),
+            ElevatedButton(
+              onPressed: () =>
+                  _applyVariantIdentifierDrafts(controller, state),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6A00),
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+              child: const Text('Apply'),
+            ),
+          ],
+        ),
+      ],
     );
   }
-}
-
-class _VariantDropdownItem {
-  final String clientKey;
-  final String label;
-  final String? productVariantId;
-
-  const _VariantDropdownItem({
-    required this.clientKey,
-    required this.label,
-    this.productVariantId,
-  });
 }
 
 class _FieldLabel extends StatelessWidget {

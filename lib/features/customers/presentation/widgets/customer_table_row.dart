@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/core/access/permission_access_providers.dart';
+import 'package:nytroz_pos/core/access/pos_customers_orders_returns_visibility.dart';
 
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../sale/domain/entities/pos_customer.dart';
 import 'customer_status_badge.dart';
 import 'customers_ui_tokens.dart';
 
-class CustomerTableRow extends StatelessWidget {
+class CustomerTableRow extends ConsumerWidget {
   const CustomerTableRow({
     super.key,
     required this.customer,
@@ -20,13 +23,209 @@ class CustomerTableRow extends StatelessWidget {
   final VoidCallback onSelect;
 
   @override
-  Widget build(BuildContext context) {
-    final avatarColor = _avatarBg(customer.displayName);
-    final avatarTextColor = _avatarFg(customer.displayName);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = ref.watch(effectivePermissionSetProvider);
     final textStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: Colors.black87,
           fontWeight: FontWeight.w600,
         );
+    final avatarColor = _avatarBg(customer.displayName);
+    final avatarTextColor = _avatarFg(customer.displayName);
+
+    final children = <Widget>[];
+
+    if (showSecondaryColumns) {
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerId(p)) {
+        children.add(_Cell(customer.shortCustomerId, flex: 14, style: textStyle));
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerName(p)) {
+        children.add(_Cell(customer.displayName, flex: 18, style: textStyle));
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerPhone(p)) {
+        final phone = customer.phone?.trim();
+        children.add(_Cell(
+          phone != null && phone.isNotEmpty ? phone : '—',
+          flex: 12,
+          style: textStyle,
+        ));
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerEmail(p)) {
+        final email = customer.email?.trim();
+        children.add(_Cell(
+          email != null && email.isNotEmpty ? email : '—',
+          flex: 18,
+          style: textStyle,
+        ));
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerSource(p)) {
+        children.add(
+          Expanded(
+            flex: 10,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: CustomerSourceBadge(customer: customer),
+            ),
+          ),
+        );
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerStatus(p)) {
+        children.add(
+          Expanded(
+            flex: 10,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: CustomerStatusBadge(customer: customer),
+            ),
+          ),
+        );
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerOrderCount(p)) {
+        children.add(_Cell(customer.ordersDisplay, flex: 10, style: textStyle));
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerTotalSpend(p)) {
+        children.add(_Cell(customer.spentDisplay, flex: 12, style: textStyle));
+      }
+    } else {
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerName(p) ||
+          PosCustomersOrdersReturnsVisibility.canShowCustomerId(p)) {
+        children.add(
+          Expanded(
+            flex: 22,
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: avatarColor,
+                  child: Text(
+                    customer.initials,
+                    style: TextStyle(
+                      color: avatarTextColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (PosCustomersOrdersReturnsVisibility.canShowCustomerName(
+                        p,
+                      ))
+                        Text(
+                          customer.displayName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      if (PosCustomersOrdersReturnsVisibility.canShowCustomerId(
+                        p,
+                      )) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          customer.shortCustomerId,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF8E9BAE),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerPhone(p)) {
+        final phone = customer.phone?.trim();
+        children.add(
+          Expanded(
+            flex: 15,
+            child: Text(
+              phone != null && phone.isNotEmpty ? phone : '—',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        );
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerEmail(p)) {
+        final email = customer.email?.trim();
+        children.add(
+          Expanded(
+            flex: 22,
+            child: Text(
+              email != null && email.isNotEmpty ? email : '—',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        );
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowRecentPurchases(p)) {
+        children.add(
+          Expanded(
+            flex: 16,
+            child: Text(
+              _formatLastPurchase(customer.lastPurchaseAt),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        );
+      }
+      if (PosCustomersOrdersReturnsVisibility.canShowCustomerTotalSpend(p)) {
+        children.add(
+          Expanded(
+            flex: 15,
+            child: Text(
+              customer.spentDisplay,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        );
+      }
+      children.add(
+        IconButton(
+          icon: const Icon(Icons.more_vert_rounded,
+              size: 18, color: Color(0xFF8E9BAE)),
+          onPressed: onSelect,
+          splashRadius: 18,
+        ),
+      );
+    }
 
     return Material(
       color: selected ? const Color(0xFFFFF2EC) : Colors.white,
@@ -45,156 +244,7 @@ class CustomerTableRow extends StatelessWidget {
               ),
             ),
           ),
-          child: Row(
-            children: [
-              if (showSecondaryColumns) ...[
-                _Cell(customer.shortCustomerId, flex: 14, style: textStyle),
-                _Cell(customer.displayName, flex: 18, style: textStyle),
-                _Cell(
-                  customer.phone?.trim().isNotEmpty == true
-                      ? customer.phone!.trim()
-                      : '—',
-                  flex: 12,
-                  style: textStyle,
-                ),
-                _Cell(
-                  customer.email?.trim().isNotEmpty == true
-                      ? customer.email!.trim()
-                      : '—',
-                  flex: 18,
-                  style: textStyle,
-                ),
-                Expanded(
-                  flex: 10,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: CustomerSourceBadge(customer: customer),
-                  ),
-                ),
-                Expanded(
-                  flex: 10,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: CustomerStatusBadge(customer: customer),
-                  ),
-                ),
-                _Cell(customer.ordersDisplay, flex: 10, style: textStyle),
-                _Cell(customer.spentDisplay, flex: 12, style: textStyle),
-              ] else ...[
-                Expanded(
-                  flex: 22,
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: avatarColor,
-                        child: Text(
-                          customer.initials,
-                          style: TextStyle(
-                            color: avatarTextColor,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              customer.displayName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              customer.shortCustomerId,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Color(0xFF8E9BAE),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  flex: 15,
-                  child: Text(
-                    customer.phone?.trim().isNotEmpty == true
-                        ? customer.phone!.trim()
-                        : '—',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 22,
-                  child: Text(
-                    customer.email?.trim().isNotEmpty == true
-                        ? customer.email!.trim()
-                        : '—',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 16,
-                  child: Text(
-                    _formatLastPurchase(customer.lastPurchaseAt),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 15,
-                  child: Text(
-                    customer.spentDisplay,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.more_vert_rounded,
-                      size: 18, color: Color(0xFF8E9BAE)),
-                  onPressed: onSelect,
-                  splashRadius: 18,
-                ),
-              ],
-            ],
-          ),
+          child: Row(children: children),
         ),
       ),
     );
@@ -271,7 +321,7 @@ Color _avatarFg(String name) {
   return colors[hash % colors.length];
 }
 
-class CustomerListCard extends StatelessWidget {
+class CustomerListCard extends ConsumerWidget {
   const CustomerListCard({
     super.key,
     required this.customer,
@@ -284,7 +334,8 @@ class CustomerListCard extends StatelessWidget {
   final VoidCallback onSelect;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final p = ref.watch(effectivePermissionSetProvider);
     return Material(
       color: selected ? const Color(0xFFFFF2EC) : Colors.white,
       borderRadius: BorderRadius.circular(8),
@@ -324,32 +375,38 @@ class CustomerListCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          customer.displayName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 14,
+                        if (PosCustomersOrdersReturnsVisibility
+                            .canShowCustomerName(p))
+                          Text(
+                            customer.displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                            ),
                           ),
-                        ),
-                        Text(
-                          customer.shortCustomerId,
-                          style: const TextStyle(
-                            color: Color(0xFF8E9BAE),
-                            fontSize: 11,
+                        if (PosCustomersOrdersReturnsVisibility
+                            .canShowCustomerId(p))
+                          Text(
+                            customer.shortCustomerId,
+                            style: const TextStyle(
+                              color: Color(0xFF8E9BAE),
+                              fontSize: 11,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
-                  Text(
-                    customer.spentDisplay,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
+                  if (PosCustomersOrdersReturnsVisibility
+                      .canShowCustomerTotalSpend(p))
+                    Text(
+                      customer.spentDisplay,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],

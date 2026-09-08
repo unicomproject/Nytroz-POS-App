@@ -1,4 +1,6 @@
+import '../../../../core/access/effective_permission_set.dart';
 import '../../../../core/access/pos_access_codes.dart';
+import '../../../../core/access/tenant_admin_access_codes.dart';
 import '../utils/jwt_expiry.dart';
 import '../utils/jwt_permissions.dart';
 
@@ -18,8 +20,15 @@ class AuthSession {
   final DateTime? refreshTokenExpiresAt;
   final String userId;
   final String userDisplayName;
+
+  /// Backend effective permission codes (Chunk 5). Treat as read-only.
+  /// Prefer [effectivePermissions] / `effectivePermissionSetProvider` for checks.
   final List<String> permissionCodes;
   final DateTime? expiresAt;
+
+  /// Immutable Set-backed membership view of [permissionCodes].
+  EffectivePermissionSet get effectivePermissions =>
+      EffectivePermissionSet.fromIterable(permissionCodes);
 
   DateTime? get effectiveExpiresAt => expiresAt ?? readJwtExpiry(accessToken);
 
@@ -44,9 +53,16 @@ class AuthSession {
   bool get isAuthenticated =>
       accessToken.isNotEmpty && (!isExpired || canRefresh);
 
+  /// Exact effective-code membership. No parent expand / wildcards / role checks.
   bool hasPermission(String permissionCode) {
-    return permissionCodes.contains(permissionCode);
+    return effectivePermissions.hasPermission(permissionCode);
   }
+
+  bool hasAllPermissions(Iterable<String> codes) =>
+      effectivePermissions.hasAllPermissions(codes);
+
+  bool hasAnyPermission(Iterable<String> codes) =>
+      effectivePermissions.hasAnyPermission(codes);
 
   bool get canOpenPosTill => hasPermission(PosPermissionCodes.openTill);
 
@@ -54,7 +70,17 @@ class AuthSession {
       canOpenPosTill || hasPermission('tenant.till.manage');
 
   bool get canAccessTenantAdminDashboard {
-    return hasPermission('workspace.tenant_admin.access');
+    const dashboardCodes = [
+      TenantAdminPermissionCodes.tenantContextView,
+      TenantAdminPermissionCodes.dashboardView,
+      TenantAdminPermissionCodes.tenantDashboardView,
+      'workspace.tenant_admin.access',
+      'tenant.dashboard.view',
+      'dashboard.view',
+      'tenant_admin.dashboard.view',
+    ];
+
+    return hasAnyPermission(dashboardCodes);
   }
 
   bool get requiresPosDeviceBootstrap => canActivatePosDevice || canOpenPosTill;
@@ -80,9 +106,11 @@ class AuthSession {
       ),
       userId: json['userId'] as String? ?? '',
       userDisplayName: json['userDisplayName'] as String? ?? '',
-      permissionCodes: _resolveStoredPermissionCodes(
-        accessToken: json['accessToken'] as String? ?? '',
-        storedCodes: _stringList(json['permissionCodes']),
+      permissionCodes: EffectivePermissionSet.normalizeToList(
+        _resolveStoredPermissionCodes(
+          accessToken: json['accessToken'] as String? ?? '',
+          storedCodes: _stringList(json['permissionCodes']),
+        ),
       ),
       expiresAt: DateTime.tryParse(json['expiresAt']?.toString() ?? ''),
     );

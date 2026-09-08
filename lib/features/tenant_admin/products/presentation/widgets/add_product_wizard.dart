@@ -17,6 +17,7 @@ import 'step_3/units_pack_conversion.dart';
 import 'step_4/step_4_variant_configuration_form.dart';
 import 'step_5/step_5_barcode_sku_form.dart';
 import 'step_6/step_6_pricing_tax_form.dart';
+import 'step_7/product_created_success.dart';
 import 'step_7/step_7_review_create.dart';
 import 'wizard_actions_footer.dart';
 
@@ -52,6 +53,7 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
   late final TextEditingController _batchController;
   late final TextEditingController _serialController;
   final GlobalKey<FormState> _step4FormKey = GlobalKey<FormState>();
+  ProductCreateSuccessSnapshot? _createSuccess;
 
   @override
   void initState() {
@@ -95,6 +97,22 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
       }
     });
 
+    _batchController.addListener(() {
+      final controller = ref.read(addProductWizardControllerProvider.notifier);
+      if (_batchController.text !=
+          ref.read(addProductWizardControllerProvider).initialBatchNumber) {
+        controller.updateInitialBatchNumber(_batchController.text);
+      }
+    });
+
+    _serialController.addListener(() {
+      final controller = ref.read(addProductWizardControllerProvider.notifier);
+      if (_serialController.text !=
+          ref.read(addProductWizardControllerProvider).initialSerialNumber) {
+        controller.updateInitialSerialNumber(_serialController.text);
+      }
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final controller = ref.read(addProductWizardControllerProvider.notifier);
       if (widget.capabilities != null) {
@@ -132,6 +150,12 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
     }
     if (_longDescriptionController.text != state.longDescription) {
       _longDescriptionController.text = state.longDescription;
+    }
+    if (_batchController.text != state.initialBatchNumber) {
+      _batchController.text = state.initialBatchNumber;
+    }
+    if (_serialController.text != state.initialSerialNumber) {
+      _serialController.text = state.initialSerialNumber;
     }
   }
 
@@ -177,16 +201,38 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
     }
   }
 
+  Future<void> _handleAddAnother() async {
+    final controller = ref.read(addProductWizardControllerProvider.notifier);
+    await controller.startFreshWizard();
+    if (!mounted) return;
+    _nameController.clear();
+    _codeController.clear();
+    _shortDescriptionController.clear();
+    _longDescriptionController.clear();
+    _batchController.clear();
+    _serialController.clear();
+    setState(() => _createSuccess = null);
+    final needsCleanRoute = widget.resumeProductId != null ||
+        widget.resumeLocalDraftId != null ||
+        widget.duplicateFromProductId != null;
+    if (needsCleanRoute) {
+      context.go('/tenant-admin/products/add');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(addProductWizardControllerProvider);
     final controller = ref.read(addProductWizardControllerProvider.notifier);
+    final createSuccess = _createSuccess;
 
     ref.listen(addProductWizardControllerProvider, (previous, next) {
       if (previous?.productName != next.productName ||
           previous?.internalCode != next.internalCode ||
           previous?.shortDescription != next.shortDescription ||
-          previous?.longDescription != next.longDescription) {
+          previous?.longDescription != next.longDescription ||
+          previous?.initialBatchNumber != next.initialBatchNumber ||
+          previous?.initialSerialNumber != next.initialSerialNumber) {
         _syncControllersWithState();
       }
       if (next.pageError != null && next.pageError != previous?.pageError) {
@@ -198,6 +244,16 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
         );
       }
     });
+
+    if (createSuccess != null) {
+      return ProductCreatedSuccess(
+        snapshot: createSuccess,
+        onViewProduct: () =>
+            context.go('/tenant-admin/products/${createSuccess.productId}'),
+        onAddAnother: _handleAddAnother,
+        onBackToProducts: () => context.go('/tenant-admin/products'),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -290,12 +346,11 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
                 ref.invalidate(localProductWizardDraftsProvider);
                 ref.invalidate(productListProvider);
                 ref.invalidate(productSummaryProvider);
-                showProductSaveToast(
-                  context,
-                  title: 'Product Created',
-                  message: 'Product created successfully',
-                );
-                context.go('/tenant-admin/products');
+                setState(() {
+                  _createSuccess = ProductCreateSuccessSnapshot.fromWizard(
+                    ref.read(addProductWizardControllerProvider),
+                  );
+                });
               } else {
                 showProductSaveToast(
                   context,
@@ -327,13 +382,18 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           codeController: _codeController,
           shortDescriptionController: _shortDescriptionController,
           longDescriptionController: _longDescriptionController,
-          batchController: _batchController,
-          serialController: _serialController,
         );
       case 2:
         return ProductTypeTracking(
           state: state,
           controller: controller,
+          canManageVariants: widget.capabilities?.canManageVariants ?? true,
+          canManageBundleComponents:
+              widget.capabilities?.canManageBundleComponents ?? false,
+          canUseAdvancedInventoryTracking:
+              widget.capabilities?.canUseAdvancedInventoryTracking ?? true,
+          batchController: _batchController,
+          serialController: _serialController,
         );
       case 3:
         return UnitsPackConversionForm(
@@ -359,7 +419,12 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
       case 6:
         return const Step6PricingTaxForm();
       case 7:
-        return Step7ReviewCreate(state: state);
+        return Step7ReviewCreate(
+          state: state,
+          controller: controller,
+          canViewProductCost:
+              widget.capabilities?.canViewProductCost ?? true,
+        );
       default:
         return Step1BasicDetails(
           state: state,
@@ -368,8 +433,6 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           codeController: _codeController,
           shortDescriptionController: _shortDescriptionController,
           longDescriptionController: _longDescriptionController,
-          batchController: _batchController,
-          serialController: _serialController,
         );
     }
   }
