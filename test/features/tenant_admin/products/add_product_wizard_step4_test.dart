@@ -68,6 +68,18 @@ void main() {
 
       expect(find.byType(Step4VariantConfigurationForm), findsOneWidget);
       expect(find.text('Bundle / Kit Composition'), findsNothing);
+      expect(find.text('Estimated Variant Count'), findsOneWidget);
+    });
+
+    testWidgets(
+        'SIMPLE product Step 4 does not show Estimated Variant Count card',
+        (tester) async {
+      await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
+        currentStep: 4,
+        productStructure: 'SIMPLE',
+      )));
+
+      expect(find.text('Estimated Variant Count'), findsNothing);
     });
 
     testWidgets(
@@ -80,6 +92,7 @@ void main() {
 
       expect(find.text('Bundle / Kit Composition'), findsOneWidget);
       expect(find.byType(Step4VariantConfigurationForm), findsNothing);
+      expect(find.text('Estimated Variant Count'), findsNothing);
     });
 
     testWidgets(
@@ -164,11 +177,21 @@ void main() {
         ),
       )));
 
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('edit-variant-color:red')),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('edit-variant-color:red')));
       await tester.pumpAndSettle();
 
       expect(find.byType(EditVariantDrawer), findsOneWidget);
-      expect(find.text('Edit Variant'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(EditVariantDrawer),
+          matching: find.text('Edit Variant'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Save Changes'), findsOneWidget);
 
       final align = tester.widget<Align>(find

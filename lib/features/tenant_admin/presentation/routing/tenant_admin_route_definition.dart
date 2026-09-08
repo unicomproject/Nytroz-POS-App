@@ -365,9 +365,9 @@ const tenantAdminRouteDefinitions = [
   TenantAdminRouteDefinition(
     path: '/tenant-admin/tax',
     menuKey: 'products',
-    title: 'Taxes',
+    title: 'Tax Setup',
     featureCode: 'catalog.product',
-    permissionCode: 'tenant.products.view',
+    permissionCode: 'pricing.tax_classes.view',
   ),
   TenantAdminRouteDefinition(
     path: '/tenant-admin/variant-templates',

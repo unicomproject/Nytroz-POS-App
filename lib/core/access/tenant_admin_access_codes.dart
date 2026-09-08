@@ -228,6 +228,15 @@ class TenantAdminPermissionCodes {
   static const catalogProductPricingManage = 'catalog.product_pricing.manage';
   static const catalogProductCostView = 'catalog.product_cost.view';
   static const pricingTaxClassesView = 'pricing.tax_classes.view';
+  static const pricingTaxClassesCreate = 'pricing.tax_classes.create';
+  static const pricingTaxClassesUpdate = 'pricing.tax_classes.update';
+  static const pricingTaxClassesStatusManage =
+      'pricing.tax_classes.status.manage';
+  static const pricingTaxClassesProductsView =
+      'pricing.tax_classes.products.view';
+  static const pricingTaxRatesView = 'pricing.tax_rates.view';
+  static const pricingTaxRatesScheduleManage =
+      'pricing.tax_rates.schedule.manage';
   static const taxClassesView = 'tax.classes.view';
   static const tenantBillingView = 'tenant.billing.view';
   static const tenantSettingsManage = 'tenant.settings.manage';

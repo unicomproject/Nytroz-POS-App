@@ -30,12 +30,13 @@ class UserMobileList extends StatelessWidget {
         children: [
           for (final user in users) ...[
             _UserMobileListItem(
-                user: user,
-                visibility: visibility,
-                onView: onView,
-                onEdit: onEdit,
-                onDelete: onDelete,
-                selected: user.id == selectedUserId),
+              user: user,
+              visibility: visibility,
+              onView: onView,
+              onEdit: onEdit,
+              onDelete: onDelete,
+              selected: user.id == selectedUserId,
+            ),
             const SizedBox(height: TenantAdminSpacing.md),
           ],
         ],

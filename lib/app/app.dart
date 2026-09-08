@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../core/theme/pos_theme_provider.dart';
 import '../features/auth/presentation/providers/auth_network_provider.dart';
@@ -55,13 +56,29 @@ class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
       title: 'Nytroz POS',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: posTheme.primary).copyWith(
-          primary: posTheme.primary,
-          secondary: posTheme.secondary,
+        colorScheme: TenantAdminOverlaySurfaces.withoutPeachTint(
+          ColorScheme.fromSeed(seedColor: posTheme.primary).copyWith(
+            primary: posTheme.primary,
+            secondary: posTheme.secondary,
+          ),
         ),
+        canvasColor: TenantAdminOverlaySurfaces.color,
         scaffoldBackgroundColor: TenantAdminColors.background,
         useMaterial3: true,
-        fontFamily: 'Roboto',
+        popupMenuTheme: TenantAdminOverlaySurfaces.popupMenuTheme,
+        dropdownMenuTheme: TenantAdminOverlaySurfaces.dropdownMenuTheme,
+        menuTheme: TenantAdminOverlaySurfaces.menuTheme,
+        textTheme: GoogleFonts.interTextTheme().copyWith(
+          displayLarge: GoogleFonts.poppins(),
+          displayMedium: GoogleFonts.poppins(),
+          displaySmall: GoogleFonts.poppins(),
+          headlineLarge: GoogleFonts.poppins(),
+          headlineMedium: GoogleFonts.poppins(),
+          headlineSmall: GoogleFonts.poppins(),
+          titleLarge: GoogleFonts.poppins(),
+          titleMedium: GoogleFonts.poppins(),
+          titleSmall: GoogleFonts.poppins(),
+        ),
       ),
       scrollBehavior: const NytrozScrollBehavior(),
       routerConfig: router,

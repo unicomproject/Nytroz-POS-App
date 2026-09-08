@@ -10,6 +10,7 @@ class TenantAdminPageScaffold extends StatelessWidget {
     required this.title,
     required this.child,
     this.subtitle,
+    this.description,
     this.actions = const [],
     this.padding,
     this.headerSpacing,
@@ -18,11 +19,15 @@ class TenantAdminPageScaffold extends StatelessWidget {
     this.fillHeight = true,
     this.showBackButton = false,
     this.onBackButtonPressed,
+    this.backLinkLabel,
+    this.onBackLinkPressed,
     this.breadcrumbs,
+    this.emphasizeSubtitle = false,
   });
 
   final String title;
   final String? subtitle;
+  final String? description;
   final List<Widget> actions;
   final Widget child;
   final EdgeInsets? padding;
@@ -32,7 +37,10 @@ class TenantAdminPageScaffold extends StatelessWidget {
   final bool fillHeight;
   final bool showBackButton;
   final VoidCallback? onBackButtonPressed;
+  final String? backLinkLabel;
+  final VoidCallback? onBackLinkPressed;
   final List<TenantAdminBreadcrumbItem>? breadcrumbs;
+  final bool emphasizeSubtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -56,17 +64,25 @@ class TenantAdminPageScaffold extends StatelessWidget {
                   _VerticalHeader(
                     title: title,
                     subtitle: subtitle,
+                    description: description,
                     actions: actions,
                     showBackButton: showBackButton,
                     onBackButtonPressed: onBackButtonPressed,
+                    backLinkLabel: backLinkLabel,
+                    onBackLinkPressed: onBackLinkPressed,
+                    emphasizeSubtitle: emphasizeSubtitle,
                   )
                 else
                   _HorizontalHeader(
                     title: title,
                     subtitle: subtitle,
+                    description: description,
                     actions: actions,
                     showBackButton: showBackButton,
                     onBackButtonPressed: onBackButtonPressed,
+                    backLinkLabel: backLinkLabel,
+                    onBackLinkPressed: onBackLinkPressed,
+                    emphasizeSubtitle: emphasizeSubtitle,
                   ),
                 SizedBox(
                   height: headerSpacing ??
@@ -140,16 +156,24 @@ class _HorizontalHeader extends StatelessWidget {
   const _HorizontalHeader({
     required this.title,
     required this.subtitle,
+    required this.description,
     required this.actions,
     required this.showBackButton,
     this.onBackButtonPressed,
+    this.backLinkLabel,
+    this.onBackLinkPressed,
+    this.emphasizeSubtitle = false,
   });
 
   final String title;
   final String? subtitle;
+  final String? description;
   final List<Widget> actions;
   final bool showBackButton;
   final VoidCallback? onBackButtonPressed;
+  final String? backLinkLabel;
+  final VoidCallback? onBackLinkPressed;
+  final bool emphasizeSubtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -158,16 +182,22 @@ class _HorizontalHeader extends StatelessWidget {
       children: [
         Expanded(
           child: _HeaderText(
-              title: title,
-              subtitle: subtitle,
-              showBackButton: showBackButton,
-              onBackButtonPressed: onBackButtonPressed),
+            title: title,
+            subtitle: subtitle,
+            description: description,
+            showBackButton: showBackButton,
+            onBackButtonPressed: onBackButtonPressed,
+            backLinkLabel: backLinkLabel,
+            onBackLinkPressed: onBackLinkPressed,
+            emphasizeSubtitle: emphasizeSubtitle,
+          ),
         ),
         if (actions.isNotEmpty) ...[
           const SizedBox(width: TenantAdminSpacing.lg),
           Wrap(
             spacing: TenantAdminSpacing.sm,
             runSpacing: TenantAdminSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: actions,
           ),
         ],
@@ -180,16 +210,24 @@ class _VerticalHeader extends StatelessWidget {
   const _VerticalHeader({
     required this.title,
     required this.subtitle,
+    required this.description,
     required this.actions,
     required this.showBackButton,
     this.onBackButtonPressed,
+    this.backLinkLabel,
+    this.onBackLinkPressed,
+    this.emphasizeSubtitle = false,
   });
 
   final String title;
   final String? subtitle;
+  final String? description;
   final List<Widget> actions;
   final bool showBackButton;
   final VoidCallback? onBackButtonPressed;
+  final String? backLinkLabel;
+  final VoidCallback? onBackLinkPressed;
+  final bool emphasizeSubtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -197,10 +235,15 @@ class _VerticalHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _HeaderText(
-            title: title,
-            subtitle: subtitle,
-            showBackButton: showBackButton,
-            onBackButtonPressed: onBackButtonPressed),
+          title: title,
+          subtitle: subtitle,
+          description: description,
+          showBackButton: showBackButton,
+          onBackButtonPressed: onBackButtonPressed,
+          backLinkLabel: backLinkLabel,
+          onBackLinkPressed: onBackLinkPressed,
+          emphasizeSubtitle: emphasizeSubtitle,
+        ),
         if (actions.isNotEmpty) ...[
           const SizedBox(height: TenantAdminSpacing.lg),
           Wrap(
@@ -218,21 +261,29 @@ class _HeaderText extends StatelessWidget {
   const _HeaderText({
     required this.title,
     required this.subtitle,
+    required this.description,
     required this.showBackButton,
     this.onBackButtonPressed,
+    this.backLinkLabel,
+    this.onBackLinkPressed,
+    this.emphasizeSubtitle = false,
   });
 
   final String title;
   final String? subtitle;
+  final String? description;
   final bool showBackButton;
   final VoidCallback? onBackButtonPressed;
+  final String? backLinkLabel;
+  final VoidCallback? onBackLinkPressed;
+  final bool emphasizeSubtitle;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        if (showBackButton) ...[
+    if (showBackButton) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
           IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
@@ -244,21 +295,88 @@ class _HeaderText extends StatelessWidget {
             },
           ),
           const SizedBox(width: TenantAdminSpacing.sm),
+          Expanded(child: _buildHeaderContent(context)),
         ],
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (title.isNotEmpty)
-                Text(title, style: TenantAdminTextStyles.pageTitle(context)),
-              if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(subtitle!, style: TenantAdminTextStyles.muted(context)),
-              ],
-            ],
+      );
+    }
+
+    return _buildHeaderContent(context);
+  }
+
+  Widget _buildHeaderContent(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (backLinkLabel != null && onBackLinkPressed != null) ...[
+          _BackToLink(
+            label: backLinkLabel!,
+            onPressed: onBackLinkPressed!,
           ),
-        ),
+          const SizedBox(height: TenantAdminSpacing.md),
+        ],
+        if (title.isNotEmpty)
+          Text(title, style: TenantAdminTextStyles.pageTitle(context)),
+        if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            subtitle!,
+            style: emphasizeSubtitle
+                ? const TextStyle(
+                    color: TenantAdminColors.bodyText,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  )
+                : TenantAdminTextStyles.pageSubtitle(context),
+          ),
+        ],
+        if (description != null && description!.trim().isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            description!,
+            style: TenantAdminTextStyles.pageSubtitle(context),
+          ),
+        ],
       ],
+    );
+  }
+}
+
+class _BackToLink extends StatelessWidget {
+  const _BackToLink({
+    required this.label,
+    required this.onPressed,
+  });
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.arrow_back,
+              size: 16,
+              color: TenantAdminColors.primary.withValues(alpha: 0.85),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: TenantAdminColors.primary.withValues(alpha: 0.85),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

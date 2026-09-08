@@ -41,7 +41,7 @@ class TenantProductListItemDto {
           ? _intValue(json['stockQuantity'])
           : null,
       stockStatus: _nullableString(json['stockStatus']),
-      imageUrl: _nullableString(json['imageUrl']),
+      imageUrl: _nullableString(json['imageUrl'] ?? json['ImageUrl']),
       rowVersion: _intValue(json['rowVersion'], fallback: 1),
     );
   }

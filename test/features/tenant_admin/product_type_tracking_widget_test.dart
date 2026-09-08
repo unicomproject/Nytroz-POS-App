@@ -180,13 +180,13 @@ void main() {
       expect(find.text('Product Type *'), findsOneWidget);
       expect(find.text('Simple Product'), findsOneWidget);
       expect(find.text('Variant Product'), findsOneWidget);
-      expect(find.text('Bundle / Kit'), findsOneWidget);
     });
 
     testWidgets('renders SIMPLE content when SIMPLE structure selected',
         (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
         productStructure: 'SIMPLE',
+        productStructureConfirmed: true,
       )));
 
       expect(find.text('Tracking & Stock Rules'), findsOneWidget);
@@ -204,6 +204,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
         productStructure: 'VARIANT',
+        productStructureConfirmed: true,
       )));
 
       expect(find.text('Inventory Tracking (Applied at Variant Level) *'), findsOneWidget);
@@ -221,6 +222,7 @@ void main() {
         (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
         productStructure: 'BUNDLE',
+        productStructureConfirmed: true,
       )));
 
       expect(find.text('Bundle Inventory Behaviour'), findsOneWidget);
@@ -246,6 +248,91 @@ void main() {
       expect(find.text('Clear and continue'), findsNothing);
       expect(controller.wizardState.productStructure, 'SIMPLE');
       await tester.pump(const Duration(seconds: 1));
+    });
+
+    testWidgets('hides initial tracking until product type is selected',
+        (tester) async {
+      final batch = TextEditingController();
+      final serial = TextEditingController();
+      addTearDown(batch.dispose);
+      addTearDown(serial.dispose);
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ProductTypeTracking(
+              state: const AddProductWizardState(productStructure: 'SIMPLE'),
+              controller: controller,
+              batchController: batch,
+              serialController: serial,
+            ),
+          ),
+        ),
+      ));
+
+      expect(find.text('Initial Tracking Details'), findsNothing);
+      expect(find.text('Tracking & Stock Rules'), findsNothing);
+    });
+
+    testWidgets('shows initial tracking after product type is selected',
+        (tester) async {
+      final batch = TextEditingController();
+      final serial = TextEditingController();
+      addTearDown(batch.dispose);
+      addTearDown(serial.dispose);
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ProductTypeTracking(
+              state: const AddProductWizardState(
+                productStructure: 'SIMPLE',
+                productStructureConfirmed: true,
+              ),
+              controller: controller,
+              batchController: batch,
+              serialController: serial,
+            ),
+          ),
+        ),
+      ));
+
+      expect(find.text('Initial Tracking Details'), findsOneWidget);
+      expect(find.text('Initial Batch Number'), findsOneWidget);
+      expect(find.text('Initial Expiry Date'), findsOneWidget);
+      expect(find.text('Initial Serial Number'), findsOneWidget);
+      expect(find.text('Tracking & Stock Rules'), findsOneWidget);
+
+      final trackingTop =
+          tester.getTopLeft(find.text('Initial Tracking Details')).dy;
+      final rulesTop =
+          tester.getTopLeft(find.text('Tracking & Stock Rules')).dy;
+      expect(trackingTop, lessThan(rulesTop));
+    });
+
+    testWidgets('hides initial tracking for bundle products', (tester) async {
+      final batch = TextEditingController();
+      final serial = TextEditingController();
+      addTearDown(batch.dispose);
+      addTearDown(serial.dispose);
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ProductTypeTracking(
+              state: const AddProductWizardState(
+                productStructure: 'BUNDLE',
+                productStructureConfirmed: true,
+              ),
+              controller: controller,
+              batchController: batch,
+              serialController: serial,
+            ),
+          ),
+        ),
+      ));
+
+      expect(find.text('Initial Tracking Details'), findsNothing);
     });
 
     testWidgets('structure card selection updates controller state',

@@ -991,6 +991,73 @@ class TenantAdminPermissionAliases {
       'tax.classes.view',
       'pricing.tax_classes.view',
     ],
+    'pricing.tax_classes.create': [
+      'pricing.tax_classes.create',
+      'tax.classes.create',
+    ],
+    'tax.classes.create': [
+      'tax.classes.create',
+      'pricing.tax_classes.create',
+    ],
+    'pricing.tax_classes.update': [
+      'pricing.tax_classes.update',
+      'tax.classes.update',
+    ],
+    'tax.classes.update': [
+      'tax.classes.update',
+      'pricing.tax_classes.update',
+    ],
+    'pricing.tax_classes.status.manage': [
+      'pricing.tax_classes.status.manage',
+      'tax.classes.delete',
+      'tax.classes.manage',
+    ],
+    'tax.classes.delete': [
+      'tax.classes.delete',
+      'pricing.tax_classes.status.manage',
+      'tax.classes.manage',
+    ],
+    'tax.classes.manage': [
+      'tax.classes.manage',
+      'pricing.tax_classes.status.manage',
+      'tax.classes.delete',
+    ],
+    'pricing.tax_classes.products.view': [
+      'pricing.tax_classes.products.view',
+      'pricing.tax_classes.view',
+      'tax.classes.view',
+    ],
+    'pricing.tax_rates.view': [
+      'pricing.tax_rates.view',
+      'tax.rates.view',
+    ],
+    'tax.rates.view': [
+      'tax.rates.view',
+      'pricing.tax_rates.view',
+    ],
+    'pricing.tax_rates.schedule.manage': [
+      'pricing.tax_rates.schedule.manage',
+      'tax.rates.create',
+      'tax.rates.update',
+      'tax.rates.delete',
+      'tax.rates.manage',
+    ],
+    'tax.rates.create': [
+      'tax.rates.create',
+      'pricing.tax_rates.schedule.manage',
+    ],
+    'tax.rates.update': [
+      'tax.rates.update',
+      'pricing.tax_rates.schedule.manage',
+    ],
+    'tax.rates.delete': [
+      'tax.rates.delete',
+      'pricing.tax_rates.schedule.manage',
+    ],
+    'tax.rates.manage': [
+      'tax.rates.manage',
+      'pricing.tax_rates.schedule.manage',
+    ],
   };
 
   static Iterable<String> expand(String permissionCode) {

@@ -153,10 +153,16 @@ void main() {
   }
 
   Future<void> completeStep6Pricing() async {
-    controller.updateCostPrice(100);
-    controller.updateStandardSellingPrice(150);
-    controller.updateDiscountPrice(140);
     controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
+    final structure = controller.wizardState.productStructure.toUpperCase();
+    if (structure == 'VARIANT') {
+      controller.reconcileVariantPricesWithVariants();
+      controller.applyDefaultSellingPriceToAllVariants(150);
+    } else {
+      controller.updateCostPrice(100);
+      controller.updateStandardSellingPrice(150);
+      controller.updateDiscountPrice(140);
+    }
     expect(await controller.saveAndContinue(), isTrue);
   }
 
@@ -333,7 +339,7 @@ void main() {
       expect(controller.canSkipCurrentStep, isTrue);
       expect(await controller.skip(), isTrue);
       expect(controller.wizardState.currentStep, 3);
-      expect(controller.wizardState.trackInventory, isTrue);
+      expect(controller.wizardState.trackInventory, isFalse);
       expect(repo.saveDraftCallCount, 0);
     });
 

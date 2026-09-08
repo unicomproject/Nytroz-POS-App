@@ -23,7 +23,7 @@ class ProductsRouteGuard {
       case ProductsSidebarRoutes.brands:
         return access.canViewBrandsNav();
       case ProductsSidebarRoutes.tax:
-        return access.canAccessProductListPage();
+        return access.canViewTaxSetup();
       case ProductsSidebarRoutes.variantTemplates:
         return access.canViewVariantTemplatesNav();
       case ProductsSidebarRoutes.popular:
@@ -66,6 +66,8 @@ class ProductsRouteGuard {
         return 'tenant.categories.view';
       case TenantAdminPermissionCodes.tenantBrandsView:
         return 'tenant.brands.view';
+      case TenantAdminPermissionCodes.pricingTaxClassesView:
+        return 'pricing.tax_classes.view';
       case TenantAdminPermissionCodes.tenantVariantTemplatesView:
         return 'tenant.variant.templates.view';
       case 'catalog.collections.view':

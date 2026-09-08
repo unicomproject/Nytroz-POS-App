@@ -93,6 +93,7 @@ class TenantProductRepositoryImpl implements TenantProductRepository {
   ProductCreateRequestDto _toRequestDto(ProductFormData request) {
     return ProductCreateRequestDto(
       productName: request.productName,
+      productCode: request.productCode,
       sku: request.sku,
       barcode: request.barcode,
       categoryId: request.categoryId,

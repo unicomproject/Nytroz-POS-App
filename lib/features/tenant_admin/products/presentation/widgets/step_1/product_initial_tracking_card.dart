@@ -54,7 +54,7 @@ class ProductInitialTrackingCard extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               const Text(
-                'Tracking behaviour will be configured in the next step.',
+                'Optional. Turn on matching Batch, Expiry, or Serial tracking below to keep these values.',
                 style: TextStyle(
                   fontSize: 12,
                   color: TenantAdminColors.mutedText,
