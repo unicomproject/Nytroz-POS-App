@@ -1,3 +1,4 @@
+import '../../data/models/step6_pricing_tax_dtos.dart';
 import 'staged_product_image.dart';
 import 'step4_variant_configuration_state.dart';
 import 'step5_barcode_sku_state.dart';
@@ -111,7 +112,11 @@ class AddProductWizardState {
   final num? taxRate;
   final bool taxExclusive;
 
-  // Step 1 Initial Tracking Details (provisional)
+  /// VARIANT Step 6: keyed selling prices for included sellable variants.
+  /// Identity = productVariantId when set, else clientCombinationKey.
+  final List<VariantPriceDto> variantPrices;
+
+  // Step 2 Initial Tracking Details (provisional, after product type is selected)
   final String initialBatchNumber;
   final DateTime? initialExpiryDate;
   final String initialSerialNumber;
@@ -139,7 +144,7 @@ class AddProductWizardState {
     this.serialTracking = false,
     this.desiredPublishActive = true,
     this.posSellable = true,
-    this.trackInventory = true,
+    this.trackInventory = false,
     this.allowOnlineSale = true,
     this.unitModel = 'SINGLE_UNIT',
     this.productUnitId,
@@ -179,6 +184,7 @@ class AddProductWizardState {
     this.taxName,
     this.taxRate,
     this.taxExclusive = true,
+    this.variantPrices = const [],
     this.initialBatchNumber = '',
     this.initialExpiryDate,
     this.initialSerialNumber = '',
@@ -281,6 +287,7 @@ class AddProductWizardState {
     num? taxRate,
     bool clearTaxRate = false,
     bool? taxExclusive,
+    List<VariantPriceDto>? variantPrices,
     String? initialBatchNumber,
     DateTime? initialExpiryDate,
     bool clearInitialExpiryDate = false,
@@ -368,6 +375,7 @@ class AddProductWizardState {
       taxName: clearTaxName ? null : (taxName ?? this.taxName),
       taxRate: clearTaxRate ? null : (taxRate ?? this.taxRate),
       taxExclusive: taxExclusive ?? this.taxExclusive,
+      variantPrices: variantPrices ?? this.variantPrices,
       initialBatchNumber: initialBatchNumber ?? this.initialBatchNumber,
       initialExpiryDate: clearInitialExpiryDate
           ? null

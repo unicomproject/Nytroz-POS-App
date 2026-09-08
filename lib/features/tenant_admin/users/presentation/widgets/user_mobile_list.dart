@@ -35,8 +35,10 @@ class UserMobileList extends StatelessWidget {
               onView: onView,
               onEdit: onEdit,
               onDelete: onDelete,
-              selected: user.id == selectedUserId),
-          const SizedBox(height: TenantAdminSpacing.md),
+              selected: user.id == selectedUserId,
+            ),
+            const SizedBox(height: TenantAdminSpacing.md),
+          ],
         ],
       );
 }

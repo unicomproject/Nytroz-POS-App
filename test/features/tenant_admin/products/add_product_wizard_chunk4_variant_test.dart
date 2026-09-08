@@ -376,10 +376,9 @@ void main() {
       await controller.saveAndContinue();
       await assignAllSkus();
       await controller.saveAndContinue();
-      controller.updateCostPrice(100);
-      controller.updateStandardSellingPrice(150);
-      controller.updateDiscountPrice(140);
       controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
+      controller.reconcileVariantPricesWithVariants();
+      controller.applyDefaultSellingPriceToAllVariants(150);
       expect(await controller.saveAndContinue(), isTrue);
       expect(controller.wizardState.currentStep, 7);
     });
@@ -391,9 +390,9 @@ void main() {
       await controller.saveAndContinue();
       await assignAllSkus();
       await controller.saveAndContinue();
-      controller.updateCostPrice(100);
-      controller.updateStandardSellingPrice(150);
       controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
+      controller.reconcileVariantPricesWithVariants();
+      controller.applyDefaultSellingPriceToAllVariants(150);
       await controller.saveAndContinue();
 
       await tester.pumpWidget(
@@ -405,11 +404,22 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.text('Basic Details'), findsOneWidget);
+      expect(find.text('Product Type & Tracking'), findsOneWidget);
       expect(find.text('Product Configuration'), findsOneWidget);
+      expect(find.text('Units & Pack Conversion'), findsNothing);
       expect(find.text('Barcode & SKU'), findsOneWidget);
       expect(find.text('Attributes'), findsOneWidget);
       expect(find.text('Variants Created'), findsOneWidget);
-      
+      expect(find.text('Variant Product'), findsWidgets);
+      expect(find.text('Simple Product'), findsNothing);
+      // UX-11/12 — Review shows actual variant prices; no bulk helper.
+      expect(find.text('Pricing & Tax'), findsOneWidget);
+      expect(find.text('Variant Prices'), findsOneWidget);
+      expect(find.text('Set Same Price for All Variants'), findsNothing);
+      expect(find.text('Default Selling Price'), findsNothing);
+      expect(find.text('Apply to All'), findsNothing);
+
       await tester.pump(const Duration(seconds: 1));
     });
 
@@ -419,9 +429,9 @@ void main() {
       await controller.saveAndContinue();
       await assignAllSkus();
       await controller.saveAndContinue();
-      controller.updateCostPrice(100);
-      controller.updateStandardSellingPrice(150);
       controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
+      controller.reconcileVariantPricesWithVariants();
+      controller.applyDefaultSellingPriceToAllVariants(150);
       await controller.saveAndContinue();
       expect(repo.saveDraftCallCount, 0);
       expect(repo.updateDraftCallCount, 0);

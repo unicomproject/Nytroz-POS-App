@@ -7,6 +7,7 @@ void main() {
       final dto = TenantProductDetailDto.fromJson({
         'productId': '11111111-1111-1111-1111-111111111111',
         'productName': 'Espresso Beans',
+        'productCode': 'ESP-CODE',
         'sku': 'ESP-001',
         'barcode': '1234567890',
         'categoryId': '22222222-2222-2222-2222-222222222222',
@@ -65,6 +66,7 @@ void main() {
 
       expect(dto.productId, '11111111-1111-1111-1111-111111111111');
       expect(dto.productName, 'Espresso Beans');
+      expect(dto.productCode, 'ESP-CODE');
       expect(dto.sku, 'ESP-001');
       expect(dto.shortDescription, 'Fresh roast');
       expect(dto.longDescription,

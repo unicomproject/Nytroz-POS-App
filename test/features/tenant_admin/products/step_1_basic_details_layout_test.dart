@@ -13,8 +13,6 @@ void main() {
     final code = TextEditingController();
     final shortDesc = TextEditingController();
     final longDesc = TextEditingController();
-    final batch = TextEditingController();
-    final serial = TextEditingController();
     final controller = _FakeController();
 
     return ProviderScope(
@@ -54,8 +52,6 @@ void main() {
                 codeController: code,
                 shortDescriptionController: shortDesc,
                 longDescriptionController: longDesc,
-                batchController: batch,
-                serialController: serial,
               ),
             ),
           ),
@@ -70,9 +66,8 @@ void main() {
 
     await tester.pumpWidget(buildPage(const Size(1024, 768)));
 
-    expect(find.text('Product Information'), findsOneWidget);
     expect(find.text('Product Images'), findsOneWidget);
-    expect(find.text('Initial Tracking Details'), findsOneWidget);
+    expect(find.text('Initial Tracking Details'), findsNothing);
     expect(find.text('Channel Availability'), findsOneWidget);
     expect(find.text('Product Name *'), findsOneWidget);
     expect(find.text('Category *'), findsOneWidget);

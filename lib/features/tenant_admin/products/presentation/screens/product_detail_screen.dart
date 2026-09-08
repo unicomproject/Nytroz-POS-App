@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../presentation/theme/tenant_admin_theme.dart';
+import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/tenant_product_detail.dart';
@@ -39,7 +40,7 @@ class ProductDetailScreen extends ConsumerWidget {
 
     final pageTitle = isEditRoute ? 'Edit product' : 'Product details';
     final pageSubtitle =
-        isEditRoute ? 'Edit product information' : 'View product information.';
+        isEditRoute ? 'Edit product information' : 'Product Overview';
 
     if (!hasViewAccess) {
       return TenantAdminPageScaffold(
@@ -130,23 +131,21 @@ class ProductDetailScreen extends ConsumerWidget {
             ),
             data: (options) => TenantAdminPageScaffold(
               title: resolvedTitle,
-              subtitle: pageSubtitle,
+              subtitle: 'Edit product information',
+              backLinkLabel: 'Back to products',
+              onBackLinkPressed: () => context.go('/tenant-admin/products'),
+              headerSpacing: TenantAdminSpacing.sm,
+              scrollable: true,
               actions: [
-                TextButton.icon(
-                  onPressed: () => context.go('/tenant-admin/products'),
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('Back to products'),
-                ),
+                ProductStatusBadge(status: detail.status),
                 const SizedBox(width: 8),
-                _HeaderBadgeColumn(
-                  label: 'Product Status',
-                  badge: ProductStatusBadge(status: detail.status),
-                ),
+                StockStatusBadge(status: _calculateStockStatus(detail)),
                 const SizedBox(width: 8),
-                _HeaderBadgeColumn(
-                  label: 'Stock Status',
-                  badge:
-                      StockStatusBadge(status: _calculateStockStatus(detail)),
+                ProductStatusActionMenu(
+                  productId: productId,
+                  productName: detail.productName,
+                  currentStatus: detail.status,
+                  compact: true,
                 ),
                 if (canDelete) ...[
                   const SizedBox(width: 8),
@@ -156,7 +155,7 @@ class ProductDetailScreen extends ConsumerWidget {
                     sku: detail.sku,
                     imageUrl: detail.imageUrl,
                     navigateToListOnSuccess: true,
-                    compact: false,
+                    compact: true,
                   ),
                 ],
               ],
@@ -173,23 +172,15 @@ class ProductDetailScreen extends ConsumerWidget {
 
         return TenantAdminPageScaffold(
           title: resolvedTitle,
-          subtitle: pageSubtitle,
+          subtitle: 'View product information',
+          backLinkLabel: 'Back to products',
+          onBackLinkPressed: () => context.go('/tenant-admin/products'),
+          headerSpacing: TenantAdminSpacing.sm,
+          scrollable: true,
           actions: [
-            TextButton.icon(
-              onPressed: () => context.go('/tenant-admin/products'),
-              icon: const Icon(Icons.arrow_back),
-              label: const Text('Back to products'),
-            ),
+            ProductStatusBadge(status: detail.status),
             const SizedBox(width: 8),
-            _HeaderBadgeColumn(
-              label: 'Product Status',
-              badge: ProductStatusBadge(status: detail.status),
-            ),
-            const SizedBox(width: 8),
-            _HeaderBadgeColumn(
-              label: 'Stock Status',
-              badge: StockStatusBadge(status: _calculateStockStatus(detail)),
-            ),
+            StockStatusBadge(status: _calculateStockStatus(detail)),
             if (canDelete) ...[
               const SizedBox(width: 8),
               ProductDeleteAction(
@@ -198,28 +189,29 @@ class ProductDetailScreen extends ConsumerWidget {
                 sku: detail.sku,
                 imageUrl: detail.imageUrl,
                 navigateToListOnSuccess: true,
-                compact: false,
+                compact: true,
               ),
             ],
             if (canCreate && !isEditRoute) ...[
               const SizedBox(width: 8),
               ProductDuplicateAction(
                 productId: productId,
-                compact: false,
+                compact: true,
               ),
             ],
             if (canUpdate) ...[
               const SizedBox(width: 8),
-              ProductStatusActionMenu(
-                productId: productId,
-                productName: detail.productName,
-                currentStatus: detail.status,
-                compact: false,
+              TenantAdminPrimaryButton(
+                label: 'Edit Product',
+                icon: Icons.edit_outlined,
+                onPressed: () =>
+                    context.go('/tenant-admin/products/$productId/edit'),
               ),
             ],
           ],
           child: ProductDetailViewCard(
             detail: detail,
+            canUpdate: canUpdate,
           ),
         );
       },
@@ -258,35 +250,5 @@ class ProductDetailScreen extends ConsumerWidget {
     }
 
     return 'Please try again.';
-  }
-}
-
-class _HeaderBadgeColumn extends StatelessWidget {
-  const _HeaderBadgeColumn({
-    required this.label,
-    required this.badge,
-  });
-
-  final String label;
-  final Widget badge;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        badge,
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(
-            color: TenantAdminColors.mutedText,
-            fontSize: 10.5,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
   }
 }

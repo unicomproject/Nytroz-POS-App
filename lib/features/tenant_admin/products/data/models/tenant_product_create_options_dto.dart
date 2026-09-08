@@ -96,6 +96,8 @@ class ProductTaxOptionDto {
     required this.id,
     required this.code,
     required this.name,
+    this.taxTreatment = 'TAXABLE',
+    this.currentRate,
   });
 
   factory ProductTaxOptionDto.fromJson(Map<String, dynamic> json) {
@@ -103,12 +105,19 @@ class ProductTaxOptionDto {
       id: json['taxId']?.toString() ?? json['id']?.toString() ?? '',
       code: json['taxCode'] as String? ?? json['code'] as String? ?? '',
       name: json['taxName'] as String? ?? json['name'] as String? ?? '',
+      taxTreatment: json['taxTreatment'] as String? ??
+          json['taxType'] as String? ??
+          'TAXABLE',
+      currentRate: (json['currentRate'] as num?)?.toDouble() ??
+          (json['taxPercentage'] as num?)?.toDouble(),
     );
   }
 
   final String id;
   final String code;
   final String name;
+  final String taxTreatment;
+  final double? currentRate;
 }
 
 class ProductOutletOptionDto {
@@ -163,6 +172,7 @@ class TenantProductCreateOptionsDto {
     required this.taxes,
     required this.outlets,
     required this.variantOptionTemplates,
+    this.currencyCode = '',
   });
 
   factory TenantProductCreateOptionsDto.fromJson(Map<String, dynamic> json) {
@@ -179,6 +189,7 @@ class TenantProductCreateOptionsDto {
         json['variantOptionTemplates'],
         ProductVariantOptionTemplateDto.fromJson,
       ),
+      currencyCode: (json['currencyCode']?.toString() ?? '').trim().toUpperCase(),
     );
   }
 
@@ -189,6 +200,7 @@ class TenantProductCreateOptionsDto {
   final List<ProductTaxOptionDto> taxes;
   final List<ProductOutletOptionDto> outlets;
   final List<ProductVariantOptionTemplateDto> variantOptionTemplates;
+  final String currencyCode;
 }
 
 List<T> _mapList<T>(

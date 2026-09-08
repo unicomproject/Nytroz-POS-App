@@ -7,7 +7,6 @@ import 'package:nytroz_pos/features/tenant_admin/products/presentation/controlle
 import 'product_basic_details_form.dart';
 import 'product_image_upload_card.dart';
 import 'product_channel_availability_card.dart';
-import 'product_initial_tracking_card.dart';
 
 class Step1BasicDetails extends StatelessWidget {
   const Step1BasicDetails({
@@ -18,9 +17,6 @@ class Step1BasicDetails extends StatelessWidget {
     required this.codeController,
     required this.shortDescriptionController,
     required this.longDescriptionController,
-    required this.batchController,
-    required this.serialController,
-    this.canUseAdvancedInventoryTracking = true,
   });
 
   final AddProductWizardState state;
@@ -29,9 +25,6 @@ class Step1BasicDetails extends StatelessWidget {
   final TextEditingController codeController;
   final TextEditingController shortDescriptionController;
   final TextEditingController longDescriptionController;
-  final TextEditingController batchController;
-  final TextEditingController serialController;
-  final bool canUseAdvancedInventoryTracking;
 
   Future<void> _pickImage({VoidCallback? onStartUpload}) async {
     try {
@@ -95,16 +88,6 @@ class Step1BasicDetails extends StatelessWidget {
       onAllowOnlineSaleChanged: controller.setAllowOnlineSale,
     );
 
-    final trackingCard = canUseAdvancedInventoryTracking
-        ? ProductInitialTrackingCard(
-            batchController: batchController,
-            serialController: serialController,
-            expiryDate: state.initialExpiryDate,
-            onExpiryChanged: controller.updateInitialExpiryDate,
-            enabled: true,
-          )
-        : null;
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth.isFinite
@@ -115,30 +98,22 @@ class Step1BasicDetails extends StatelessWidget {
 
         Widget body;
         if (splitHalves) {
-          body = Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          body = Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        form,
-                        const SizedBox(height: TenantAdminSpacing.md),
-                        channelCard,
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.md),
-                  Expanded(child: imageCard),
-                ],
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    form,
+                    const SizedBox(height: TenantAdminSpacing.md),
+                    channelCard,
+                  ],
+                ),
               ),
-              if (trackingCard != null) ...[
-                const SizedBox(height: TenantAdminSpacing.md),
-                trackingCard,
-              ],
+              const SizedBox(width: TenantAdminSpacing.md),
+              Expanded(child: imageCard),
             ],
           );
         } else {
@@ -150,10 +125,6 @@ class Step1BasicDetails extends StatelessWidget {
               channelCard,
               const SizedBox(height: TenantAdminSpacing.md),
               imageCard,
-              if (trackingCard != null) ...[
-                const SizedBox(height: TenantAdminSpacing.md),
-                trackingCard,
-              ],
             ],
           );
         }

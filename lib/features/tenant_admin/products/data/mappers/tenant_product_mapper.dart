@@ -43,7 +43,7 @@ class TenantProductMapper {
       priceFrom: dto.priceFrom,
       priceTo: dto.priceTo,
       primaryBarcode: dto.primaryBarcode,
-      currencyCode: dto.currencyCode ?? 'LKR',
+      currencyCode: dto.currencyCode,
       imageUrl: dto.imageUrl,
       rowVersion: dto.rowVersion,
     );
@@ -136,6 +136,8 @@ class TenantProductMapper {
               id: item.id,
               code: item.code,
               name: item.name,
+              taxTreatment: item.taxTreatment,
+              currentRate: item.currentRate,
             ),
           )
           .toList(),
@@ -158,6 +160,7 @@ class TenantProductMapper {
             ),
           )
           .toList(),
+      currencyCode: dto.currencyCode,
     );
   }
 
@@ -174,6 +177,7 @@ class TenantProductMapper {
     return TenantProductDetail(
       productId: dto.productId,
       productName: dto.productName,
+      productCode: dto.productCode,
       sku: dto.sku,
       barcode: dto.barcode,
       categoryId: dto.categoryId,

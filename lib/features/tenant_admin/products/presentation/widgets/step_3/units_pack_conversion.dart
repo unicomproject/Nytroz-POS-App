@@ -751,6 +751,8 @@ class _UnitsPackConversionFormState
     AddProductWizardState state,
     AddProductWizardController controller,
   ) {
+    final showFixedDecimalPlaces = state.unitModel == 'MULTIPLE_UNITS';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -794,15 +796,17 @@ class _UnitsPackConversionFormState
                           onTap: () => controller.setAllowDecimalQuantity(true),
                         ),
                       ),
-                      const SizedBox(width: TenantAdminSpacing.md),
-                      Expanded(
-                        child: _buildDecimalRuleCard(
-                          title: 'Fixed decimal places',
-                          subtitle: 'e.g. 1.00, 2.00, 3.00...',
-                          isSelected: false,
-                          onTap: null,
+                      if (showFixedDecimalPlaces) ...[
+                        const SizedBox(width: TenantAdminSpacing.md),
+                        Expanded(
+                          child: _buildDecimalRuleCard(
+                            title: 'Fixed decimal places',
+                            subtitle: 'e.g. 1.00, 2.00, 3.00...',
+                            isSelected: false,
+                            onTap: null,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   )
                 : Column(
@@ -820,13 +824,15 @@ class _UnitsPackConversionFormState
                         isSelected: state.allowDecimalQuantity,
                         onTap: () => controller.setAllowDecimalQuantity(true),
                       ),
-                      const SizedBox(height: TenantAdminSpacing.sm),
-                      _buildDecimalRuleCard(
-                        title: 'Fixed decimal places',
-                        subtitle: 'e.g. 1.00, 2.00, 3.00...',
-                        isSelected: false,
-                        onTap: null,
-                      ),
+                      if (showFixedDecimalPlaces) ...[
+                        const SizedBox(height: TenantAdminSpacing.sm),
+                        _buildDecimalRuleCard(
+                          title: 'Fixed decimal places',
+                          subtitle: 'e.g. 1.00, 2.00, 3.00...',
+                          isSelected: false,
+                          onTap: null,
+                        ),
+                      ],
                     ],
                   );
           },

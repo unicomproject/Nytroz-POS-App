@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/add_product_wizard_state.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/step_1/product_initial_tracking_card.dart';
 
 /// Semantic presentation component for Product Type & Tracking wizard stage.
 class ProductTypeTracking extends StatelessWidget {
@@ -12,6 +13,8 @@ class ProductTypeTracking extends StatelessWidget {
     this.canManageVariants = true,
     this.canManageBundleComponents = false,
     this.canUseAdvancedInventoryTracking = true,
+    this.batchController,
+    this.serialController,
   });
 
   final AddProductWizardState state;
@@ -19,12 +22,11 @@ class ProductTypeTracking extends StatelessWidget {
   final bool canManageVariants;
   final bool canManageBundleComponents;
   final bool canUseAdvancedInventoryTracking;
+  final TextEditingController? batchController;
+  final TextEditingController? serialController;
 
   @override
   Widget build(BuildContext context) {
-
-
-
     final content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -39,7 +41,7 @@ class ProductTypeTracking extends StatelessWidget {
           ),
           const SizedBox(height: TenantAdminSpacing.sm),
 
-          // 3 Product Structure Cards
+          // Product structure cards
           LayoutBuilder(
             builder: (context, constraints) {
               final isNarrow = constraints.maxWidth < 680;
@@ -63,15 +65,6 @@ class ProductTypeTracking extends StatelessWidget {
                   enabled: canManageVariants,
                   onSelected: () => _selectStructure(context, 'VARIANT'),
                 ),
-                ProductStructureCard(
-                  structure: 'BUNDLE',
-                  title: 'Bundle / Kit',
-                  description: 'Collection of existing items sold together.',
-                  icon: Icons.inventory_outlined,
-                  selected: state.productStructure == 'BUNDLE' && state.productStructureConfirmed,
-                  enabled: canManageBundleComponents,
-                  onSelected: () => _selectStructure(context, 'BUNDLE'),
-                ),
               ];
 
               if (isNarrow) {
@@ -81,8 +74,6 @@ class ProductTypeTracking extends StatelessWidget {
                     cards[0],
                     const SizedBox(height: TenantAdminSpacing.md),
                     cards[1],
-                    const SizedBox(height: TenantAdminSpacing.md),
-                    cards[2],
                   ],
                 );
               }
@@ -94,8 +85,6 @@ class ProductTypeTracking extends StatelessWidget {
                     Expanded(child: cards[0]),
                     const SizedBox(width: TenantAdminSpacing.md),
                     Expanded(child: cards[1]),
-                    const SizedBox(width: TenantAdminSpacing.md),
-                    Expanded(child: cards[2]),
                   ],
                 ),
               );
@@ -103,12 +92,22 @@ class ProductTypeTracking extends StatelessWidget {
           ),
 
           const SizedBox(height: 32),
-          // Dynamic content based on productStructure
           _buildDynamicContent(context),
         ],
       );
 
-    return content;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxHeight.isFinite) {
+          return SingleChildScrollView(
+            primary: false,
+            padding: const EdgeInsets.only(bottom: TenantAdminSpacing.md),
+            child: content,
+          );
+        }
+        return content;
+      },
+    );
   }
 
   Future<void> _selectStructure(BuildContext context, String structure) async {
@@ -125,15 +124,25 @@ class ProductTypeTracking extends StatelessWidget {
   }
 
   Future<void> _setTrackInventory(BuildContext context, bool value) async {
+    // Enabling Track Inventory alone must not clear Initial Tracking values.
+    // User still needs a chance to turn on matching Batch / Expiry / Serial
+    // toggles (see helper copy on the Initial Tracking card). Reconciliation
+    // runs when those toggles change, Track Inventory is turned off, or the
+    // user continues from Step 2.
+    if (value) {
+      controller.setTrackInventory(true);
+      return;
+    }
+
     final confirmed = await _confirmIfNeeded(
       context,
-      trackInventory: value,
-      batchTracking: value ? state.batchTracking : false,
-      expiryTracking: value ? state.expiryTracking : false,
-      serialTracking: value ? state.serialTracking : false,
+      trackInventory: false,
+      batchTracking: false,
+      expiryTracking: false,
+      serialTracking: false,
     );
     if (!confirmed) return;
-    controller.setTrackInventory(value);
+    controller.setTrackInventory(false);
   }
 
   Future<void> _setBatchTracking(BuildContext context, bool value) async {
@@ -201,6 +210,7 @@ class ProductTypeTracking extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        ..._buildInitialTrackingSection(),
         const Text(
           'Tracking & Stock Rules',
           style: TextStyle(
@@ -309,6 +319,7 @@ class ProductTypeTracking extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        ..._buildInitialTrackingSection(),
         const Text(
           'Inventory Tracking (Applied at Variant Level) *',
           style: TextStyle(
@@ -499,6 +510,30 @@ class ProductTypeTracking extends StatelessWidget {
       ],
     );
   }
+
+  List<Widget> _buildInitialTrackingSection() {
+    if (!canUseAdvancedInventoryTracking ||
+        batchController == null ||
+        serialController == null) {
+      return const [];
+    }
+
+    final structure = state.productStructure.toUpperCase();
+    if (structure != 'SIMPLE' && structure != 'VARIANT') {
+      return const [];
+    }
+
+    return [
+      ProductInitialTrackingCard(
+        batchController: batchController!,
+        serialController: serialController!,
+        expiryDate: state.initialExpiryDate,
+        onExpiryChanged: controller.updateInitialExpiryDate,
+      ),
+      const SizedBox(height: TenantAdminSpacing.lg),
+    ];
+  }
+
   Widget _buildInfoBanner(String message, {IconData? icon, Color? color}) {
     final bannerColor = color ?? TenantAdminColors.posHomeAccentOrange;
     final iconData = icon ?? Icons.info_outline;

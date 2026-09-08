@@ -19,6 +19,7 @@ class ProductVariantFormData {
 class ProductFormData {
   const ProductFormData({
     required this.productName,
+    required this.productCode,
     required this.sku,
     required this.categoryId,
     required this.unitType,
@@ -49,6 +50,7 @@ class ProductFormData {
   });
 
   final String productName;
+  final String productCode;
   final String sku;
   final String? barcode;
   final String categoryId;

@@ -507,20 +507,24 @@ class _StockSummaryCell extends StatelessWidget {
 }
 
 String _formatProductPrice(TenantProduct product) {
-  final currency =
-      (product.currencyCode == null || product.currencyCode!.trim().isEmpty)
-          ? 'LKR'
-          : product.currencyCode!.toUpperCase();
+  final currency = (product.currencyCode == null ||
+          product.currencyCode!.trim().isEmpty)
+      ? ''
+      : product.currencyCode!.toUpperCase();
 
   if (product.priceFrom == null && product.priceTo == null) {
     return '—';
   }
 
+  String money(num value) => currency.isEmpty
+      ? value.toStringAsFixed(2)
+      : '$currency ${value.toStringAsFixed(2)}';
+
   if (product.priceFrom == product.priceTo || product.priceTo == null) {
-    return '$currency ${product.priceFrom!.toStringAsFixed(2)}';
+    return money(product.priceFrom!);
   }
 
-  return '$currency ${product.priceFrom!.toStringAsFixed(2)} –\n$currency ${product.priceTo!.toStringAsFixed(2)}';
+  return '${money(product.priceFrom!)} –\n${money(product.priceTo!)}';
 }
 
 class _ProductIdentityCell extends StatelessWidget {

@@ -70,6 +70,7 @@ class TenantProductDetail {
   const TenantProductDetail({
     required this.productId,
     required this.productName,
+    required this.productCode,
     required this.sku,
     required this.categoryId,
     required this.categoryName,
@@ -97,6 +98,7 @@ class TenantProductDetail {
 
   final String productId;
   final String productName;
+  final String productCode;
   final String sku;
   final String? barcode;
   final String categoryId;
