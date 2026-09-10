@@ -562,6 +562,8 @@ class PosPickingOrder {
     required this.lines,
     this.collectionAt,
     this.assignedToTenantUserId,
+    this.outletId,
+    this.outletName,
     this.totalUnits = 0,
     this.pickedUnits = 0,
     this.remainingUnits = 0,
@@ -569,6 +571,11 @@ class PosPickingOrder {
     this.fulfillmentVersion = 0,
     this.serverTime,
     this.notes = const [],
+    this.pickupStatus,
+    this.readyAt,
+    this.collectedAt,
+    this.issueCount = 0,
+    this.readyNotificationStatus,
   });
 
   final String orderId;
@@ -580,6 +587,8 @@ class PosPickingOrder {
   final String? assignedToTenantUserId;
   final String customerName;
   final DateTime? collectionAt;
+  final String? outletId;
+  final String? outletName;
   final int totalLines;
   final int pickedLines;
   final List<PosPickingLine> lines;
@@ -590,8 +599,42 @@ class PosPickingOrder {
   final int fulfillmentVersion;
   final DateTime? serverTime;
   final List<PosPickingNote> notes;
+  final String? pickupStatus;
+  final DateTime? readyAt;
+  final DateTime? collectedAt;
+  final int issueCount;
+  final String? readyNotificationStatus;
   bool get allPicked =>
       lines.isNotEmpty && lines.every((line) => line.isPicked);
+  bool get isPacked => status.toUpperCase() == 'PACKED';
+  bool get isReadyForCollection {
+    final value = status.toUpperCase();
+    return value == 'READY' || value == 'READY_FOR_COLLECTION';
+  }
+  bool get isPickupReady {
+    final value = (pickupStatus ?? '').toUpperCase();
+    return value == 'READY';
+  }
+  bool get isCollected {
+    if (collectedAt != null) return true;
+    final value = status.toUpperCase();
+    final pickup = (pickupStatus ?? '').toUpperCase();
+    return value == 'COLLECTED' ||
+        value == 'COMPLETED' ||
+        value == 'FULFILLED' ||
+        pickup == 'COLLECTED';
+  }
+  bool get hasReadyNotification {
+    final value = (readyNotificationStatus ?? '').toUpperCase();
+    return value.isNotEmpty && value != 'NOT_SENT';
+  }
+  bool get isTerminal {
+    final value = status.toUpperCase();
+    return value == 'FULFILLED' ||
+        value == 'COLLECTED' ||
+        value == 'COMPLETED' ||
+        value == 'CANCELLED';
+  }
 
   factory PosPickingOrder.fromJson(Map<String, dynamic> json) {
     final lines = (json['lines'] as List? ?? const [])
@@ -603,6 +646,8 @@ class PosPickingOrder {
         0, (total, line) => total + line.requestedQuantity);
     final derivedPicked = lines.fold<double>(
         0, (total, line) => total + line.pickedQuantity);
+    final derivedIssues =
+        lines.where((line) => line.hasReportedIssue).length;
     return PosPickingOrder(
         orderId: _text(json['orderId']),
         orderNumber: _text(json['orderNumber']),
@@ -613,6 +658,8 @@ class PosPickingOrder {
         assignedToTenantUserId: _optionalText(json['assignedToTenantUserId']),
         customerName: _text(json['customerName']),
         collectionAt: _date(json['collectionAt']),
+        outletId: _optionalText(json['outletId']),
+        outletName: _optionalText(json['outletName']),
         totalLines: _integer(json['totalLines']),
         pickedLines: _integer(json['pickedLines']),
         totalUnits: json['totalUnits'] == null
@@ -633,6 +680,14 @@ class PosPickingOrder {
                 PosPickingNote.fromJson(Map<String, dynamic>.from(item)))
             .toList(growable: false),
         lines: lines,
+        pickupStatus: _optionalText(json['pickupStatus']),
+        readyAt: _date(json['readyAt']),
+        collectedAt: _date(json['collectedAt']),
+        issueCount: json['issueCount'] == null
+            ? derivedIssues
+            : _integer(json['issueCount']),
+        readyNotificationStatus:
+            _optionalText(json['readyNotificationStatus']),
       );
   }
 }
@@ -693,6 +748,28 @@ class PosPickingNoteCommandResult {
         note: PosPickingNote.fromJson(
           Map<String, dynamic>.from(json['note'] as Map? ?? const {}),
         ),
+      );
+}
+
+class PosNotifyReadyResult {
+  const PosNotifyReadyResult({
+    required this.eventId,
+    required this.eventNumber,
+    required this.alreadyExisted,
+    required this.createdMessageCount,
+  });
+
+  final String eventId;
+  final String eventNumber;
+  final bool alreadyExisted;
+  final int createdMessageCount;
+
+  factory PosNotifyReadyResult.fromJson(Map<String, dynamic> json) =>
+      PosNotifyReadyResult(
+        eventId: _text(json['eventId']),
+        eventNumber: _text(json['eventNumber']),
+        alreadyExisted: json['alreadyExisted'] == true,
+        createdMessageCount: _integer(json['createdMessageCount']),
       );
 }
 

@@ -397,6 +397,10 @@ class PosPermissionCodes {
   static const packOnlineOrder = 'commerce.online_order.packing.pack';
   static const markOnlineOrderReady =
       'commerce.online_order.collection.mark_ready';
+  static const viewOnlineOrderReady =
+      'commerce.online_order.collection.view_ready';
+  static const notifyOnlineOrderCustomer =
+      'commerce.online_order.collection.notify_customer';
   static const viewOnlineOrders = 'commerce.online_order.orders.view';
   static const openTill = 'pos.till.open';
   static const viewTill = 'pos.till.view';

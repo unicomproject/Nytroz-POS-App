@@ -113,16 +113,39 @@ class PosOnlineOrdersRemoteDatasource {
     return PosPickingNoteCommandResult.fromJson(_data(response.data));
   }
 
-  Future<PosFulfillmentCommandResult> pack(
-          {required String outletId,
-          required String orderId,
-          String? packingNote}) =>
-      _command(ApiEndpoints.posOnlineOrderPack(orderId), outletId,
-          {'packingNote': packingNote});
+  Future<PosFulfillmentCommandResult> pack({
+    required String outletId,
+    required String orderId,
+    String? packingNote,
+    required int expectedVersion,
+  }) =>
+      _command(ApiEndpoints.posOnlineOrderPack(orderId), outletId, {
+        'expectedVersion': expectedVersion,
+        if (packingNote != null && packingNote.trim().isNotEmpty)
+          'packingNote': packingNote.trim(),
+      });
 
-  Future<PosFulfillmentCommandResult> markReady(
-          {required String outletId, required String orderId}) =>
-      _command(ApiEndpoints.posOnlineOrderReady(orderId), outletId, const {});
+  Future<PosFulfillmentCommandResult> markReady({
+    required String outletId,
+    required String orderId,
+    required int expectedVersion,
+  }) =>
+      _command(ApiEndpoints.posOnlineOrderReady(orderId), outletId, {
+        'expectedVersion': expectedVersion,
+      });
+
+  Future<PosNotifyReadyResult> notifyReady({
+    required String outletId,
+    required String orderId,
+    CancelToken? cancelToken,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.posOnlineOrderNotifyReady(orderId),
+      queryParameters: {'outletId': outletId},
+      cancelToken: cancelToken,
+    );
+    return PosNotifyReadyResult.fromJson(_data(response.data));
+  }
 
   Future<PosFulfillmentCommandResult> _command(
       String path, String outletId, Map<String, dynamic> body) async {
