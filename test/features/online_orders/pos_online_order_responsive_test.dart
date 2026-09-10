@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'ready_test_scope.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -204,7 +205,10 @@ void main() {
         await _pumpAt(
           tester,
           entry.value,
-          const ReadyForCollectionScreen(order: _readyOrder, onBack: _noop),
+          const ReadyTestScope(
+            order: _readyOrder,
+            child: ReadyForCollectionScreen(order: _readyOrder, onBack: _noop),
+          ),
         );
 
         expect(tester.takeException(), isNull);
