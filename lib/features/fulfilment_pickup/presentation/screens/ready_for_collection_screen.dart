@@ -84,7 +84,7 @@ class _ReadyForCollectionScreenState
     return LayoutBuilder(builder: (context, constraints) {
       final wide =
           constraints.maxWidth >= OnlineOrderUi.tabletLandscapeBreakpoint;
-      final compact = constraints.maxHeight < 720;
+      final compact = !wide || constraints.maxHeight < 720;
       final ultraCompact = constraints.maxHeight < 600;
       final header = _ReadyHeader(
         order: order,
@@ -126,12 +126,16 @@ class _ReadyForCollectionScreenState
                       Expanded(flex: 42, child: right),
                     ],
                   )
-                : ListView(
-                    children: [
-                      SizedBox(height: 360, child: left),
-                      const SizedBox(height: 12),
-                      SizedBox(height: 320, child: right),
-                    ],
+                : SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // Stacked cards need their own content budget, not the
+                        // compressed landscape height. Keep both reachable.
+                        SizedBox(height: 600, child: left),
+                        const SizedBox(height: 12),
+                        SizedBox(height: 600, child: right),
+                      ],
+                    ),
                   ),
           ),
         ],
