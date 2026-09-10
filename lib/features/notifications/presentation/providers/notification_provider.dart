@@ -8,9 +8,12 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/notification_socket_client.dart';
 import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
+import '../../../fulfilment_pickup/presentation/providers/pos_online_orders_provider.dart';
+import '../../../pos_shell/presentation/providers/pos_notifications_provider.dart';
 import '../../data/notifications_api.dart';
 import '../../domain/entities/notification_inbox_item.dart';
 import '../../domain/entities/realtime_notification_event.dart';
+import 'realtime_cashier_refresh_policy.dart';
 
 class NotificationInboxState {
   const NotificationInboxState({
@@ -54,9 +57,14 @@ class NotificationInboxController extends StateNotifier<NotificationInboxState> 
     );
   }
 
+  static const _fanoutDebounce = Duration(milliseconds: 350);
+
   final Ref _ref;
   StreamSubscription<RealtimeNotificationEvent>? _eventSubscription;
   NotificationSocketClient? _socketClient;
+  Timer? _fanoutDebounceTimer;
+  bool _pendingOnlineOrdersRefresh = false;
+  int _fanoutGeneration = 0;
 
   void _handleAuthChanged(AuthSession? session) {
     final canView = session != null &&
@@ -64,13 +72,17 @@ class NotificationInboxController extends StateNotifier<NotificationInboxState> 
         session.hasPermission(PosPermissionCodes.viewNotifications);
 
     if (!canView) {
+      _fanoutDebounceTimer?.cancel();
+      _pendingOnlineOrdersRefresh = false;
       _socketClient?.disconnect();
       state = const NotificationInboxState();
+      // Drop POS bell cache so the next login cannot show prior tenant unread.
+      _ref.invalidate(posNotificationsProvider);
       return;
     }
 
     _ensureSocketClient().connect(session.accessToken);
-    unawaited(refresh());
+    unawaited(refreshAuthoritativeSurfaces(includeOnlineOrders: true));
   }
 
   NotificationSocketClient _ensureSocketClient() {
@@ -78,10 +90,21 @@ class NotificationInboxController extends StateNotifier<NotificationInboxState> 
     if (existing != null) return existing;
 
     final dio = _ref.read(appDioProvider);
-    final client = NotificationSocketClient(httpBaseUrl: dio.options.baseUrl);
+    final client = NotificationSocketClient(
+      httpBaseUrl: dio.options.baseUrl,
+      onConnected: _handleSocketReconnected,
+    );
     _eventSubscription = client.events.listen(_handleRealtimeEvent);
     _socketClient = client;
     return client;
+  }
+
+  void _handleSocketReconnected() {
+    developer.log(
+      'Notification socket reconnected; refreshing authoritative surfaces.',
+      name: 'notifications.socket',
+    );
+    unawaited(refreshAuthoritativeSurfaces(includeOnlineOrders: true));
   }
 
   void _handleRealtimeEvent(RealtimeNotificationEvent event) {
@@ -89,9 +112,43 @@ class NotificationInboxController extends StateNotifier<NotificationInboxState> 
       'Realtime notification received. type=${event.type}',
       name: 'notifications.socket',
     );
-    // The push payload carries no inbox-item id to update in place, so treat it
-    // purely as a "something changed" signal and resync from the source of truth.
-    unawaited(refresh());
+    // Payload is a refresh trigger only — never mutate unread/local lists here.
+    if (RealtimeCashierRefreshPolicy.shouldRefreshOnlineOrders(event)) {
+      _pendingOnlineOrdersRefresh = true;
+    }
+    _scheduleFanout();
+  }
+
+  void _scheduleFanout() {
+    _fanoutDebounceTimer?.cancel();
+    _fanoutDebounceTimer = Timer(_fanoutDebounce, () {
+      final includeOnlineOrders = _pendingOnlineOrdersRefresh;
+      _pendingOnlineOrdersRefresh = false;
+      unawaited(
+        refreshAuthoritativeSurfaces(includeOnlineOrders: includeOnlineOrders),
+      );
+    });
+  }
+
+  /// App-resume / manual recovery entry — authoritative APIs only.
+  Future<void> refreshAuthoritativeSurfaces({
+    bool includeOnlineOrders = false,
+  }) async {
+    final generation = ++_fanoutGeneration;
+    await refresh();
+    if (generation != _fanoutGeneration) return;
+
+    _ref.invalidate(posNotificationsProvider);
+
+    if (!includeOnlineOrders) return;
+    final session = _ref.read(authSessionProvider);
+    final canViewOrders = session != null &&
+        session.isAuthenticated &&
+        (session.hasPermission(PosPermissionCodes.accessOnlineOrders) ||
+            session.hasPermission(PosPermissionCodes.viewOnlineOrders));
+    if (!canViewOrders) return;
+    if (generation != _fanoutGeneration) return;
+    await _ref.read(posOnlineOrdersProvider.notifier).refreshFromRealtime();
   }
 
   Future<void> refresh() async {
@@ -124,6 +181,7 @@ class NotificationInboxController extends StateNotifier<NotificationInboxState> 
         ],
         unreadCount: (state.unreadCount - 1).clamp(0, 1 << 31),
       );
+      _ref.invalidate(posNotificationsProvider);
     } catch (error) {
       developer.log(
         'Marking notification read failed.',
@@ -142,6 +200,7 @@ class NotificationInboxController extends StateNotifier<NotificationInboxState> 
         items: [for (final item in state.items) item.markRead()],
         unreadCount: 0,
       );
+      _ref.invalidate(posNotificationsProvider);
     } catch (error) {
       developer.log(
         'Marking all notifications read failed.',
@@ -153,6 +212,7 @@ class NotificationInboxController extends StateNotifier<NotificationInboxState> 
 
   @override
   void dispose() {
+    _fanoutDebounceTimer?.cancel();
     unawaited(_eventSubscription?.cancel());
     _socketClient?.dispose();
     super.dispose();

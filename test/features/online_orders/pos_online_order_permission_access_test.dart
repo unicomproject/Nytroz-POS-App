@@ -77,6 +77,32 @@ void main() {
         }),
         isTrue,
       );
+      expect(
+        PosPermissionAccess.canPackOnlineOrder({
+          ...queue,
+          PosPermissionCodes.viewOnlineOrderPicking,
+          PosPermissionCodes.viewOnlineOrderPacking,
+        }),
+        isFalse,
+      );
+      expect(
+        PosPermissionAccess.canPackOnlineOrder({
+          ...queue,
+          PosPermissionCodes.viewOnlineOrderPicking,
+          PosPermissionCodes.viewOnlineOrderPacking,
+          PosPermissionCodes.packOnlineOrder,
+        }),
+        isTrue,
+      );
+      expect(
+        PosPermissionAccess.canMarkOnlineOrderReady({
+          ...queue,
+          PosPermissionCodes.viewOnlineOrderPicking,
+          PosPermissionCodes.viewOnlineOrderPacking,
+          PosPermissionCodes.markOnlineOrderReady,
+        }),
+        isTrue,
+      );
     });
   });
 

@@ -150,6 +150,8 @@ class ApiEndpoints {
       '${posOnlineOrder(orderId)}/pack';
   static String posOnlineOrderReady(String orderId) =>
       '${posOnlineOrder(orderId)}/ready';
+  static String posOnlineOrderNotifyReady(String orderId) =>
+      '${posOnlineOrder(orderId)}/notify-ready';
   static String posCustomer(String customerId) =>
       '/api/v1/customers/$customerId';
   static String posCustomerOrders(String customerId) =>

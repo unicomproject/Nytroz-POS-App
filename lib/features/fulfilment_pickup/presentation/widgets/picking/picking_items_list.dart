@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../../core/access/pos_access_codes.dart';
 import '../../../../../shared/presentation/app_modal.dart';
@@ -74,8 +75,8 @@ class PickingItemsList extends ConsumerWidget {
                                       order.lines[index].status.toUpperCase() ==
                                           'PICKING',
                                   onPick: canScan || canManual
-                                      ? () => _showPick(
-                                          context, ref, order.lines[index])
+                                      ? () => context.go(
+                                          '/pos/online-orders/$orderId/picking/lines/${order.lines[index].id}')
                                       : null,
                                   onIssue:
                                       canReport && !order.lines[index].isPicked
@@ -99,8 +100,8 @@ class PickingItemsList extends ConsumerWidget {
                           selected: order.lines[index].status.toUpperCase() ==
                               'PICKING',
                           onPick: canScan || canManual
-                              ? () =>
-                                  _showPick(context, ref, order.lines[index])
+                              ? () => context.go(
+                                  '/pos/online-orders/$orderId/picking/lines/${order.lines[index].id}')
                               : null,
                           onIssue: canReport && !order.lines[index].isPicked
                               ? () =>

@@ -144,6 +144,8 @@ class PosOnlineOrdersController extends Notifier<PosOnlineOrdersState> {
     _listToken?.cancel('superseded');
     _listToken = CancelToken();
     final requestedPage = resetPage ? 1 : state.page;
+    final previousItems = state.items;
+    final previousSummary = state.summary;
     state =
         state.copyWith(isLoading: true, page: requestedPage, clearError: true);
     try {
@@ -171,14 +173,25 @@ class PosOnlineOrdersController extends Notifier<PosOnlineOrdersState> {
       );
     } on DioException catch (error) {
       if (CancelToken.isCancel(error)) return;
-      state = state.copyWith(isLoading: false, errorMessage: _message(error));
+      // Keep last good list on refresh failure (manual or realtime).
+      state = state.copyWith(
+        isLoading: false,
+        items: previousItems,
+        summary: previousSummary,
+        errorMessage: _message(error),
+      );
     } catch (_) {
       state = state.copyWith(
         isLoading: false,
+        items: previousItems,
+        summary: previousSummary,
         errorMessage: 'Unable to load online orders. Try again.',
       );
     }
   }
+
+  /// Soft refresh for realtime/resume — preserves search/filter/page.
+  Future<void> refreshFromRealtime() => load(resetPage: false);
 
   Future<void> select(String orderId) async {
     final outletId = ref.read(posOnlineOrdersOutletIdProvider);
@@ -321,6 +334,10 @@ String onlineOrderErrorMessage(DioException error) {
     'online_orders.invalid_order_id' ||
     'online_orders.invalid_outlet' =>
       'The online-order request is invalid. Refresh and try again.',
+    'online_orders.invalid_barcode' =>
+      'The barcode does not match the selected item.',
+    'online_orders.barcode_snapshot_unavailable' =>
+      'Barcode verification is unavailable for this order item.',
     _ when error.response?.statusCode == 401 =>
       'Your session has expired. Sign in again.',
     _ when error.response?.statusCode == 403 =>
@@ -335,8 +352,7 @@ String onlineOrderErrorMessage(DioException error) {
 
 final posPickingOrderProvider = FutureProvider.autoDispose
     .family<PosPickingOrder, String>((ref, orderId) async {
-  final outletId =
-      ref.watch(deviceActivationProvider).deviceContext?.outletId.trim();
+  final outletId = ref.watch(posOnlineOrdersOutletIdProvider);
   if (outletId == null || outletId.isEmpty) {
     throw StateError('Assigned outlet is unavailable.');
   }
@@ -357,20 +373,21 @@ class PosPickingActions {
   bool _mutationInFlight = false;
 
   String get _outletId =>
-      ref.read(deviceActivationProvider).deviceContext?.outletId.trim() ?? '';
+      ref.read(posOnlineOrdersOutletIdProvider)?.trim() ?? '';
 
   Future<PosFulfillmentCommandResult> pick(
     PosPickingOrder order,
     PosPickingLine line, {
     required bool scanned,
     required String barcode,
+    double? quantity,
   }) async {
     return _runMutation(() async {
       final result = await ref.read(posOnlineOrdersRepositoryProvider).pickLine(
             outletId: _outletId,
             orderId: orderId,
             lineId: line.id,
-            quantity: line.requestedQuantity - line.pickedQuantity,
+            quantity: quantity ?? line.remainingQuantity,
             barcode: barcode.trim(),
             scanned: scanned,
             expectedVersion: order.fulfillmentVersion,
@@ -429,19 +446,171 @@ class PosPickingActions {
       ref.refresh(posPickingOrderProvider(orderId).future);
 
   Future<PosFulfillmentCommandResult> pack(String? note) async {
-    final result = await ref
-        .read(posOnlineOrdersRepositoryProvider)
-        .pack(outletId: _outletId, orderId: orderId, packingNote: note);
-    ref.invalidate(posPickingOrderProvider(orderId));
-    return result;
+    return _runMutation(() async {
+      final order = await _currentPickingOrder();
+      final result = await ref.read(posOnlineOrdersRepositoryProvider).pack(
+            outletId: _outletId,
+            orderId: orderId,
+            packingNote: _normalizePackingNote(note),
+            expectedVersion: order.fulfillmentVersion,
+          );
+      await _refresh();
+      return result;
+    });
   }
 
   Future<PosFulfillmentCommandResult> ready() async {
-    final result = await ref
-        .read(posOnlineOrdersRepositoryProvider)
-        .markReady(outletId: _outletId, orderId: orderId);
-    ref.invalidate(posPickingOrderProvider(orderId));
-    ref.invalidate(posOnlineOrdersProvider);
-    return result;
+    return _runMutation(() async {
+      final order = await _currentPickingOrder();
+      final result =
+          await ref.read(posOnlineOrdersRepositoryProvider).markReady(
+                outletId: _outletId,
+                orderId: orderId,
+                expectedVersion: order.fulfillmentVersion,
+              );
+      await _refresh();
+      ref.invalidate(posOnlineOrdersProvider);
+      return result;
+    });
+  }
+
+  /// Canonical OO-05 primary CTA: Pack (if needed) → refetch → Ready.
+  /// Never Packs twice when already PACKED; never Ready when already Ready.
+  Future<PosFulfillmentCommandResult> markReadyForCollection({
+    String? packingNote,
+  }) async {
+    if (_mutationInFlight) {
+      throw StateError('A packing action is already in progress.');
+    }
+    _mutationInFlight = true;
+    try {
+      return await _markReadyForCollectionOnce(
+        packingNote: packingNote,
+        allowConflictRetry: true,
+      );
+    } finally {
+      _mutationInFlight = false;
+    }
+  }
+
+  Future<PosFulfillmentCommandResult> _markReadyForCollectionOnce({
+    required String? packingNote,
+    required bool allowConflictRetry,
+  }) async {
+    try {
+      var order = await _currentPickingOrder();
+      if (order.isTerminal) {
+        throw StateError('This order can no longer be packed or marked ready.');
+      }
+      if (order.isReadyForCollection) {
+        ref.invalidate(posOnlineOrdersProvider);
+        return _commandFromPicking(order);
+      }
+
+      if (!order.isPacked) {
+        if (!order.canPack) {
+          throw StateError('This order is not eligible to pack yet.');
+        }
+        final packResult =
+            await ref.read(posOnlineOrdersRepositoryProvider).pack(
+                  outletId: _outletId,
+                  orderId: orderId,
+                  packingNote: _normalizePackingNote(packingNote),
+                  expectedVersion: order.fulfillmentVersion,
+                );
+        order = await _refresh();
+        if (order.isReadyForCollection) {
+          ref.invalidate(posOnlineOrdersProvider);
+          return packResult.fulfillmentVersion > 0
+              ? packResult
+              : _commandFromPicking(order);
+        }
+        if (!order.isPacked) {
+          throw StateError('Pack completed but the order is not packed yet.');
+        }
+      }
+
+      final readyVersion = order.fulfillmentVersion;
+      final readyResult =
+          await ref.read(posOnlineOrdersRepositoryProvider).markReady(
+                outletId: _outletId,
+                orderId: orderId,
+                expectedVersion: readyVersion,
+              );
+      await _refresh();
+      ref.invalidate(posOnlineOrdersProvider);
+      return readyResult;
+    } on DioException catch (error) {
+      final shouldRecover = _isConflictOrTimeout(error);
+      await _refresh();
+      if (!shouldRecover || !allowConflictRetry) rethrow;
+
+      final recovered = await _currentPickingOrder();
+      if (recovered.isReadyForCollection) {
+        ref.invalidate(posOnlineOrdersProvider);
+        return _commandFromPicking(recovered);
+      }
+      return _markReadyForCollectionOnce(
+        packingNote: packingNote,
+        allowConflictRetry: false,
+      );
+    }
+  }
+
+  Future<PosPickingOrder> _currentPickingOrder() async {
+    final asyncValue = ref.read(posPickingOrderProvider(orderId));
+    return asyncValue.asData?.value ?? await _refresh();
+  }
+
+  static String? _normalizePackingNote(String? note) {
+    final trimmed = note?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return trimmed;
+  }
+
+  static bool _isConflictOrTimeout(DioException error) {
+    if (error.response?.statusCode == 409) return true;
+    return error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        error.type == DioExceptionType.receiveTimeout;
+  }
+
+  static PosFulfillmentCommandResult _commandFromPicking(PosPickingOrder order) =>
+      PosFulfillmentCommandResult(
+        orderId: order.orderId,
+        fulfillmentOrderId: order.fulfillmentOrderId,
+        status: order.status,
+        totalLines: order.totalLines,
+        completedLines: order.pickedLines,
+        canPack: order.canPack,
+        fulfillmentVersion: order.fulfillmentVersion,
+      );
+
+  Future<PosNotifyReadyResult> notifyCustomerOrderReady() async {
+    if (_mutationInFlight) {
+      throw StateError('A packing action is already in progress.');
+    }
+    _mutationInFlight = true;
+    try {
+      final order = await _currentPickingOrder();
+      if (order.isCollected || order.isTerminal) {
+        throw StateError('This order is no longer ready for notification.');
+      }
+      if (!order.isReadyForCollection) {
+        throw StateError('This order is not ready for collection yet.');
+      }
+      final result =
+          await ref.read(posOnlineOrdersRepositoryProvider).notifyReady(
+                outletId: _outletId,
+                orderId: orderId,
+              );
+      await _refresh();
+      return result;
+    } on DioException {
+      await _refresh();
+      rethrow;
+    } finally {
+      _mutationInFlight = false;
+    }
   }
 }

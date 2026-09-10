@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'ready_test_scope.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/domain/entities/pos_online_order.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/providers/pos_online_orders_provider.dart';
@@ -67,9 +68,12 @@ void main() {
           body: SizedBox(
             width: 1000,
             height: 600,
-            child: ReadyForCollectionScreen(
+            child: ReadyTestScope(
               order: picking,
-              onBack: () {},
+              child: ReadyForCollectionScreen(
+                order: picking,
+                onBack: () {},
+              ),
             ),
           ),
         ),
@@ -78,8 +82,9 @@ void main() {
 
     expect(find.byType(ReadyForCollectionHero), findsOneWidget);
     expect(find.byType(ReadyOrderSummary), findsOneWidget);
-    expect(find.text('CC-0001'), findsOneWidget);
+    expect(find.text('#CC-0001'), findsOneWidget);
     expect(find.text('Nimal'), findsOneWidget);
-    expect(find.textContaining('ready for Nimal'), findsOneWidget);
+    expect(find.text('This order is ready for customer collection.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
