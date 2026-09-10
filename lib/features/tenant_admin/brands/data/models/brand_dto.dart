@@ -11,6 +11,7 @@ class BrandDto {
     this.productCount = 0,
     this.createdAt,
     this.updatedAt,
+    this.rowVersion = 1,
   });
 
   factory BrandDto.fromJson(Map<String, dynamic> json) {
@@ -27,6 +28,7 @@ class BrandDto {
       productCount: _readInt(json['productCount'], fallback: 0),
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
+      rowVersion: _readInt(json['rowVersion'], fallback: 1),
     );
   }
 
@@ -41,6 +43,7 @@ class BrandDto {
   final int productCount;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final int rowVersion;
 
   static DateTime? _parseDate(dynamic value) {
     if (value == null) {
@@ -111,6 +114,7 @@ class BrandUpsertRequestDto {
     this.brandSlug,
     this.logoUrl,
     this.sortOrder = 0,
+    this.expectedRowVersion,
   });
 
   final String brandCode;
@@ -120,6 +124,7 @@ class BrandUpsertRequestDto {
   final String? brandSlug;
   final String? logoUrl;
   final int sortOrder;
+  final int? expectedRowVersion;
 
   Map<String, dynamic> toJson() {
     return {
@@ -127,6 +132,7 @@ class BrandUpsertRequestDto {
       'name': name,
       'status': status,
       'sortOrder': sortOrder,
+      if (expectedRowVersion != null) 'expectedRowVersion': expectedRowVersion,
       if (description != null && description!.trim().isNotEmpty)
         'description': description!.trim(),
       if (brandSlug != null && brandSlug!.trim().isNotEmpty)

@@ -17,6 +17,7 @@ class BrandMapper {
       productCount: dto.productCount,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
+      rowVersion: dto.rowVersion,
     );
   }
 
@@ -36,9 +37,9 @@ class BrandMapper {
       name: input.name.trim(),
       status: input.status.trim().toUpperCase(),
       description: input.description,
-      brandSlug: code.toLowerCase(),
       logoUrl: input.logoUrl,
       sortOrder: input.sortOrder,
+      expectedRowVersion: input.expectedRowVersion,
     );
   }
 }

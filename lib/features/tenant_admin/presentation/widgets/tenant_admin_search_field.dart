@@ -11,6 +11,7 @@ class TenantAdminSearchField extends StatefulWidget {
     required this.onChanged,
     this.value = '',
     this.debounceDuration = const Duration(milliseconds: 300),
+    this.focusedBorderColor = TenantAdminColors.primary,
     this.isDense = false,
   });
 
@@ -18,6 +19,7 @@ class TenantAdminSearchField extends StatefulWidget {
   final String value;
   final ValueChanged<String> onChanged;
   final Duration debounceDuration;
+  final Color focusedBorderColor;
   final bool isDense;
 
   @override
@@ -82,7 +84,7 @@ class _TenantAdminSearchFieldState extends State<TenantAdminSearchField> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-          borderSide: const BorderSide(color: TenantAdminColors.primary),
+          borderSide: BorderSide(color: widget.focusedBorderColor),
         ),
       ),
     );
