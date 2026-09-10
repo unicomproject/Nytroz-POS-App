@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,6 +39,12 @@ class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.read(completedSalePrintProvider.notifier).recoverPendingOperations();
+      // Missed WS events while suspended: authoritative refetch only.
+      unawaited(
+        ref
+            .read(notificationInboxProvider.notifier)
+            .refreshAuthoritativeSurfaces(includeOnlineOrders: true),
+      );
     }
   }
 

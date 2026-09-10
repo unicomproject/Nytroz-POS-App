@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nytroz_pos/core/access/pos_access_codes.dart';
+import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
+import 'package:nytroz_pos/features/auth/data/datasources/auth_session_storage.dart';
+import 'package:nytroz_pos/features/auth/domain/entities/auth_session.dart';
+import 'package:nytroz_pos/features/auth/presentation/providers/session_provider.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/domain/entities/pos_online_order.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/providers/pos_online_orders_provider.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/screens/online_order_detail_screen.dart';
@@ -44,6 +50,47 @@ void main() {
   });
 
   group('OO02 detail responsive contract', () {
+    testWidgets('item list scrolls within the remaining height with an error',
+        (tester) async {
+      final detail = PosOnlineOrderDetail(
+        order: _order,
+        outletName: 'Development Main Store',
+        paymentStatus: 'UNPAID',
+        subtotal: 100,
+        discount: 0,
+        tax: 0,
+        charges: 0,
+        paid: 0,
+        balanceDue: 100,
+        lines: List.filled(20, _detailLine),
+      );
+      await _pumpAt(
+        tester,
+        const Size(1280, 530),
+        OnlineOrderDetailScreen(
+          state: PosOnlineOrdersState(
+            selected: detail,
+            detailErrorMessage:
+                'The latest fulfilment version is unavailable. Refresh and try again.',
+          ),
+          showBackButton: true,
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      final list = find.byKey(const Key('oo02-order-items-scroll'));
+      final scrollable = tester.state<ScrollableState>(find.descendant(
+        of: list,
+        matching: find.byType(Scrollable),
+      ));
+      expect(scrollable.position.maxScrollExtent, greaterThan(0));
+      final headerPosition = tester.getTopLeft(find.text('Order Items (20)'));
+      await tester.drag(list, const Offset(0, -250));
+      await tester.pumpAndSettle();
+      expect(scrollable.position.pixels, greaterThan(0));
+      expect(tester.getTopLeft(find.text('Order Items (20)')), headerPosition);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('target landscape uses a fixed non-scrollable body',
         (tester) async {
       await _pumpAt(
@@ -139,15 +186,13 @@ void main() {
     for (final entry in viewportCases.entries) {
       testWidgets('${entry.key} renders the review workspace without overflow',
           (tester) async {
-        await _pumpAt(
-          tester,
-          entry.value,
-          const ReviewPackScreen(order: _pickedOrder),
-        );
+        await _pumpReviewAt(tester, entry.value, _pickedOrder);
 
         expect(tester.takeException(), isNull);
-        expect(find.byType(PickedItemsReviewList), findsOneWidget);
-        expect(find.byType(PackingReadinessSummary), findsOneWidget);
+        expect(find.byType(ReviewPackScreen), findsOneWidget);
+        expect(find.text('Review & Pack'), findsOneWidget);
+        expect(find.textContaining('Order Summary'), findsOneWidget);
+        expect(find.textContaining('Order Progress'), findsOneWidget);
       });
     }
   });
@@ -181,6 +226,68 @@ Future<void> _pumpAt(WidgetTester tester, Size size, Widget child) async {
     ),
   );
   await tester.pump();
+}
+
+Future<void> _pumpReviewAt(
+  WidgetTester tester,
+  Size size,
+  PosPickingOrder order,
+) async {
+  tester.view.devicePixelRatio = 1;
+  tester.view.physicalSize = size;
+  addTearDown(tester.view.resetDevicePixelRatio);
+  addTearDown(tester.view.resetPhysicalSize);
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        authSessionProvider.overrideWith(
+          (ref) => _PresetAuthSessionNotifier(
+            AuthSession(
+              accessToken: 'test-token',
+              userId: 'user-1',
+              userDisplayName: 'Cashier',
+              permissionCodes: const [
+                PosPermissionCodes.accessOnlineOrders,
+                PosPermissionCodes.viewOnlineOrders,
+                PosPermissionCodes.viewOnlineOrderPicking,
+                PosPermissionCodes.viewOnlineOrderPacking,
+                PosPermissionCodes.packOnlineOrder,
+                PosPermissionCodes.markOnlineOrderReady,
+              ],
+            ),
+          ),
+        ),
+        posPickingOrderProvider(order.orderId).overrideWith(
+          (ref) async => order,
+        ),
+      ],
+      child: MaterialApp(
+        home: Scaffold(
+          body: ReviewPackScreen(order: order, onBackToPickItems: _noop),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+class _PresetAuthSessionNotifier extends AuthSessionNotifier {
+  _PresetAuthSessionNotifier(AuthSession session) : super(_TestStorage()) {
+    state = session;
+  }
+}
+
+class _TestStorage extends AuthSessionStorage {
+  _TestStorage() : super(const AppSecureStorage(FlutterSecureStorage()));
+
+  @override
+  Future<AuthSession?> read() async => null;
+
+  @override
+  Future<void> save(AuthSession session) async {}
+
+  @override
+  Future<void> clear() async {}
 }
 
 Future<void> _pumpDialogLauncher(WidgetTester tester, Size size) async {
@@ -288,12 +395,28 @@ const _pickedOrder = PosPickingOrder(
   orderNumber: 'CLICK-COLLECT-ORDER-2026-000000000001',
   fulfillmentOrderId: 'fulfilment-1',
   fulfillmentNumber: 'FULFILMENT-2026-000000000001',
-  status: 'PICKED',
+  status: 'PICKING',
   assignedToName: 'A cashier with a long display name',
   customerName: _longCustomer,
+  outletName: 'Development Main Store With A Very Long Outlet Display Name',
   totalLines: 1,
   pickedLines: 1,
-  lines: [_pickingLine],
+  canPack: true,
+  fulfillmentVersion: 3,
+  lines: [
+    PosPickingLine(
+      id: 'picking-line-1',
+      lineNumber: 1,
+      productName: _longProduct,
+      variantName: 'Extra Small / Limited Edition / Ocean Blue',
+      sku: 'SKU-WITH-A-VERY-LONG-PRODUCTION-IDENTIFIER-001',
+      requestedQuantity: 1,
+      pickedQuantity: 1,
+      status: 'PICKED',
+      locationCode: 'A-VERY-LONG-LOCATION-CODE',
+      locationName: 'A very long warehouse location display name',
+    ),
+  ],
 );
 
 const _readyOrder = PosPickingOrder(
