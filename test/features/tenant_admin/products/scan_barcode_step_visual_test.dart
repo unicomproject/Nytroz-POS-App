@@ -118,9 +118,8 @@ void main() {
         find.text('Continue with this barcode and create manually'),
         findsOneWidget,
       );
-      expect(find.text('Scan another barcode'), findsOneWidget);
-      expect(find.text('Enter barcode manually'), findsOneWidget);
-      expect(find.text('Create without barcode'), findsOneWidget);
+      expect(find.text('Continue'), findsOneWidget);
+      expect(find.text('Cancel'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 

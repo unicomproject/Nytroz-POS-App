@@ -71,7 +71,13 @@ class NotificationSocketClient {
 
     _teardownChannel();
 
-    final token = await fetchToken();
+    String? token;
+    try {
+      token = await fetchToken();
+    } catch (e) {
+      _handleDisconnected();
+      return;
+    }
     if (token == null || _disposed) return;
 
     final uri =

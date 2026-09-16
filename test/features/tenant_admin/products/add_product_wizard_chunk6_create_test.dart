@@ -1,4 +1,4 @@
-﻿import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/datasources/local/product_wizard_draft_local_datasource.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/mappers/wizard_product_create_mapper.dart';
@@ -169,6 +169,7 @@ void main() {
     controller.skipScanStepForTesting();
     controller.updateProductName('Create Simple Product');
     controller.updateCategory('cat-1');
+    controller.updateInternalCode('CREATE-SIMPLE-001');
     await controller.saveAndContinue();
     controller.setProductStructure('SIMPLE');
     await controller.saveAndContinue();
@@ -226,6 +227,7 @@ void main() {
     controller.skipScanStepForTesting();
       controller.updateProductName('Create Variant Product');
       controller.updateCategory('cat-1');
+      controller.updateInternalCode('VAR-001');
       await controller.saveAndContinue();
       controller.setProductStructure('VARIANT');
       await controller.saveAndContinue();
@@ -324,19 +326,20 @@ void main() {
     test('17. SIMPLE navigation regression still reaches Step 7', () async {
       await fillSimpleToStep7();
       expect(controller.wizardState.currentStep, 7);
-      expect(controller.isStepApplicable(4), isFalse);
+      expect(controller.isStepApplicable(5), isFalse);
     });
 
     test('18. VARIANT navigation regression still reaches Step 7', () async {
       await controller.initWizard();
     controller.skipScanStepForTesting();
-      controller.updateProductName('Variant Nav');
+      controller.updateProductName('Variant Product Nav');
       controller.updateCategory('cat-1');
+      controller.updateInternalCode('VAR-NAV-001');
       await controller.saveAndContinue();
       controller.setProductStructure('VARIANT');
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 4);
-      expect(controller.isStepApplicable(3), isFalse);
+      expect(controller.wizardState.currentStep, 5);
+      expect(controller.isStepApplicable(4), isFalse);
     });
   });
 }

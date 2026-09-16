@@ -849,11 +849,13 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                             const Icon(Icons.error_outline,
                                 color: Color(0xFFFF6B00), size: 28),
                             const SizedBox(width: TenantAdminSpacing.sm),
-                            Text(
-                              'Product not found',
-                              style: TenantAdminTextStyles.sectionTitle(context)
-                                  .copyWith(
-                                fontSize: 20,
+                            Expanded(
+                              child: Text(
+                                'Product data not found',
+                                style: TenantAdminTextStyles.sectionTitle(context)
+                                    .copyWith(
+                                  fontSize: 20,
+                                ),
                               ),
                             ),
                           ],

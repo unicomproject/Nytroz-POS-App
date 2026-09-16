@@ -1626,10 +1626,14 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   bool isStepApplicable(int step) {
     if (step < 1 || step > 7) return false;
     final structure = state.productStructure.toUpperCase();
-    // Scanner-first: BUNDLE skips Unit & Pack (step 4).
+    // Scanner-first: VARIANT and BUNDLE skip Unit & Pack (step 4).
     // Track Inventory OFF also makes Units NOT_APPLICABLE.
     if (step == 4 &&
-        (structure == 'BUNDLE' || !state.trackInventory)) {
+        (structure == 'VARIANT' || structure == 'BUNDLE' || !state.trackInventory)) {
+      return false;
+    }
+    // SIMPLE skips Variant/Bundle configuration (step 5).
+    if (step == 5 && structure == 'SIMPLE') {
       return false;
     }
     return true;

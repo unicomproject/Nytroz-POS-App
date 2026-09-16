@@ -9,6 +9,7 @@ import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/a
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/variant_configuration/edit_variant_drawer.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/variant_configuration/variant_configuration_form.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/variant_configuration_state.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/barcode_sku/barcode_sku_form.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/tenant_product_repository.dart';
 
 void main() {
@@ -62,7 +63,7 @@ void main() {
         'Test 1: Given Product Structure = VARIANT, When Step 4 is opened, Then Variant Configuration is visible',
         (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
-        currentStep: 4,
+        currentStep: 5,
         productStructure: 'VARIANT',
       )));
 
@@ -75,7 +76,7 @@ void main() {
         'SIMPLE product Step 4 does not show Estimated Variant Count card',
         (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
-        currentStep: 4,
+        currentStep: 5,
         productStructure: 'SIMPLE',
       )));
 
@@ -86,7 +87,7 @@ void main() {
         'Test 2: Given Product Structure = BUNDLE, When Step 4 is opened, Then Bundle / Kit Composition is visible',
         (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
-        currentStep: 4,
+        currentStep: 5,
         productStructure: 'BUNDLE',
       )));
 
@@ -99,7 +100,7 @@ void main() {
         'Test 3: Given a saved VARIANT draft When reopened Then Product Structure restores as VARIANT And Step 4 renders Variant Configuration',
         (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
-        currentStep: 4,
+        currentStep: 5,
         productStructure: 'VARIANT',
       )));
 
@@ -110,7 +111,7 @@ void main() {
         'Test 4: Given a saved BUNDLE draft When reopened Then Product Structure restores as BUNDLE And Step 4 renders Bundle / Kit Composition',
         (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
-        currentStep: 4,
+        currentStep: 5,
         productStructure: 'BUNDLE',
       )));
 
@@ -121,7 +122,7 @@ void main() {
         'Test 5: Given VARIANT is changed to BUNDLE When Step 4 is revisited Then stale Variant Configuration is not rendered',
         (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
-        currentStep: 4,
+        currentStep: 5,
         productStructure: 'BUNDLE',
       )));
 
@@ -133,7 +134,7 @@ void main() {
         'Test 6: Given BUNDLE is changed to VARIANT When Step 4 is revisited Then stale Bundle / Kit Composition is not rendered',
         (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
-        currentStep: 4,
+        currentStep: 5,
         productStructure: 'VARIANT',
       )));
 
@@ -145,18 +146,18 @@ void main() {
         'Test 7: Missing/unknown Product Structure must not silently fall back to VARIANT',
         (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
-        currentStep: 4,
+        currentStep: 5,
         productStructure: 'UNKNOWN',
       )));
 
       expect(find.byType(Step4VariantConfigurationForm), findsNothing);
-      expect(find.text('Simple Product Configuration'), findsOneWidget);
+      expect(find.byType(Step5BarcodeSkuForm), findsOneWidget);
     });
 
     testWidgets('Edit Variant opens as a full-height right-side drawer',
         (tester) async {
       await tester.pumpWidget(buildTestWidget(AddProductWizardState(
-        currentStep: 4,
+        currentStep: 5,
         productStructure: 'VARIANT',
         productName: 'shirt',
         step4State: Step4VariantConfigurationState(
