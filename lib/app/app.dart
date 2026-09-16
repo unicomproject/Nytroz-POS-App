@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../core/theme/pos_theme_provider.dart';
+import '../core/network/pos_device_proof_interceptor.dart';
 import '../features/auth/presentation/providers/auth_network_provider.dart';
 import '../features/auth/presentation/providers/session_provider.dart';
 import '../features/notifications/presentation/providers/notification_provider.dart';
@@ -52,6 +53,7 @@ class _NytrozPosAppState extends ConsumerState<NytrozPosApp>
   @override
   Widget build(BuildContext context) {
     ref.watch(authHeaderSyncProvider);
+    ref.watch(posDeviceProofSyncProvider);
     ref.watch(authNetworkGuardProvider);
     ref.watch(tenantAdminSessionSyncProvider);
     ref.watch(posSessionBootstrapProvider);

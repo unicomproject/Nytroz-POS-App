@@ -8,6 +8,11 @@ import '../../../core/storage/platform_local_storage.dart';
 
 const webInstallationIdKey = 'pos.web.installationId';
 
+String createDeviceProofFingerprint() {
+  final random = Random.secure();
+  return 'pos-device-v2-${List.generate(32, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join()}';
+}
+
 String legacyDeviceFingerprint() {
   if (!kIsWeb) {
     return '';
@@ -28,6 +33,7 @@ String currentDevicePlatform() {
   if (Platform.isIOS) {
     return 'ios';
   }
+  if (Platform.isWindows) return 'windows';
 
   return 'web';
 }

@@ -10,6 +10,7 @@ import '../../models/pos_device_printer_config.dart';
 import '../../models/printer_exception.dart';
 import '../../platform/android_receipt_printer_platform.dart';
 import '../../testing/local_print_agent_test_receipt.dart';
+import '../providers/local_print_agent_controller.dart';
 
 class AndroidDirectPrinterState {
   const AndroidDirectPrinterState({
@@ -59,6 +60,32 @@ class AndroidDirectPrinterController
 
   final Ref _ref;
   final _platform = MethodChannelAndroidReceiptPrinter();
+  String? pendingTestId;
+
+  Future<void> confirmPaper(bool printed) async {
+    final id = pendingTestId;
+    if (id == null || state.isBusy) return;
+    state = state.copyWith(isBusy: true);
+    try {
+      await _ref.read(posHardwareRepositoryProvider).submitResult(id, {
+        'status': printed ? 'Passed' : 'Failed',
+        'resultCategory':
+            printed ? 'test_print_submitted' : 'test_print_failed',
+        'physicalConfirmation': printed,
+      });
+      pendingTestId = null;
+      state = state.copyWith(
+          message: printed
+              ? 'Physical print confirmed and recorded.'
+              : 'Print failure recorded.');
+    } catch (_) {
+      state = state.copyWith(
+          message:
+              'Result was not saved. Retry confirmation; do not print again.');
+    } finally {
+      state = state.copyWith(isBusy: false);
+    }
+  }
 
   Future<void> load() async {
     if (!MethodChannelAndroidReceiptPrinter.isAndroidNative) {
@@ -155,8 +182,7 @@ class AndroidDirectPrinterController
       autoCutEnabled: state.config?.autoCutEnabled ?? true,
       feedLinesBeforeCut: state.config?.feedLinesBeforeCut ?? 5,
     );
-    await _ref.read(posDevicePrinterConfigStoreProvider).save(config);
-    state = state.copyWith(config: config, message: 'USB printer saved.');
+    await _saveAuthoritative(config);
   }
 
   Future<void> saveBluetoothSelection(
@@ -181,13 +207,89 @@ class AndroidDirectPrinterController
       autoCutEnabled: state.config?.autoCutEnabled ?? true,
       feedLinesBeforeCut: state.config?.feedLinesBeforeCut ?? 5,
     );
-    await _ref.read(posDevicePrinterConfigStoreProvider).save(config);
-    state = state.copyWith(config: config, message: 'Bluetooth printer saved.');
+    await _saveAuthoritative(config);
+  }
+
+  Future<void> _saveAuthoritative(PosDevicePrinterConfig config) async {
+    state = state.copyWith(isBusy: true, clearMessage: true);
+    try {
+      final context = _ref.read(deviceActivationProvider).deviceContext!;
+      final repository = _ref.read(posHardwareRepositoryProvider);
+      final printers = (await repository.getConfigurations(context.deviceId))
+          .where((device) => device.hardwareType == 'receiptPrinter')
+          .toList();
+      if (printers.length > 1) {
+        state = state.copyWith(
+            message:
+                'Multiple printers are assigned. Resolve assignments before saving.');
+        return;
+      }
+      final saved = await repository.saveConfiguration({
+        'posDeviceId': context.deviceId,
+        'outletId': context.outletId,
+        'tillId': context.tillId.isEmpty ? null : context.tillId,
+        'hardwareType': 'receiptPrinter',
+        'transportType': config.connectionType.name,
+        'displayName': config.displayName,
+        'enabled': config.enabled,
+        'expectedVersion':
+            printers.isEmpty ? 0 : printers.single.configurationVersion,
+        'receiptPrinter': {
+          'agentBaseUrl': '',
+          'printerName': config.displayName,
+          'paperWidth':
+              config.paperWidth == PrinterPaperWidth.mm58 ? '58mm' : '80mm',
+          'autoCut': config.autoCutEnabled,
+          'requestTimeout': config.connectionTimeoutMs,
+          'feedBeforeCut': config.feedLinesBeforeCut,
+          'localApiKeyPresent': false,
+          'usbVendorId': config.usbVendorId,
+          'usbProductId': config.usbProductId,
+          'usbDeviceIdentifier': config.usbDeviceIdentifier,
+          'bluetoothAddress': config.bluetoothAddress,
+        },
+      });
+      final bound = config.copyWith(
+          configurationId: saved.configurationId,
+          configurationVersion: saved.configurationVersion);
+      await _ref.read(posDevicePrinterConfigStoreProvider).save(bound);
+      state = state.copyWith(
+          config: bound,
+          message: 'Printer configuration saved. Run a physical print test.');
+    } catch (_) {
+      state = state.copyWith(
+          message:
+              'Unable to save. Check access and assignments. Finish the active shift before changing hardware.');
+    } finally {
+      state = state.copyWith(isBusy: false);
+    }
+  }
+
+  Future<void> savePrintSettings(
+      {PrinterPaperWidth? paperWidth, bool? autoCut, int? feedLines}) async {
+    final config = state.config;
+    if (config == null ||
+        state.isBusy ||
+        pendingTestId != null ||
+        !{PrinterConnectionType.usb, PrinterConnectionType.bluetooth}
+            .contains(config.connectionType)) {
+      return;
+    }
+    if (feedLines != null && (feedLines < 0 || feedLines > 10)) return;
+    await _saveAuthoritative(config.copyWith(
+        paperWidth: paperWidth,
+        autoCutEnabled: autoCut,
+        feedLinesBeforeCut: feedLines));
   }
 
   Future<void> testPrint() async {
+    if (pendingTestId != null) {
+      state = state.copyWith(
+          message: 'Confirm the previous paper result before printing again.');
+      return;
+    }
     final config = state.config;
-    if (config == null || !config.enabled) {
+    if (config == null || !config.enabled || config.configurationId == null) {
       state = state.copyWith(message: 'Save a USB or Bluetooth printer first.');
       return;
     }
@@ -209,6 +311,18 @@ class AndroidDirectPrinterController
         tillName: 'Till',
         cashierName: 'Cashier',
       );
+      final context = _ref.read(deviceActivationProvider).deviceContext!;
+      final operation =
+          await _ref.read(posHardwareRepositoryProvider).createTest({
+        'requestId': test.requestId,
+        'posDeviceId': context.deviceId,
+        'tillId': context.tillId.isEmpty ? null : context.tillId,
+        'hardwareConfigurationId': config.configurationId,
+        'hardwareType': 'receiptPrinter',
+        'testType': 'testPrint',
+        'configurationVersion': config.configurationVersion,
+      });
+      pendingTestId = operation.testId;
       final bytes = <int>[
         0x1B,
         0x40,
@@ -216,7 +330,8 @@ class AndroidDirectPrinterController
         ...('Transport: ${config.connectionType.name}\n').codeUnits,
         ...('Printer: ${config.displayName}\n').codeUnits,
         ...('Request: ${test.requestId}\n').codeUnits,
-        ...('NOT A SALE\n\n\n').codeUnits,
+        ...('NOT A SALE\n').codeUnits,
+        ...List<int>.filled(config.feedLinesBeforeCut.clamp(0, 10), 0x0A),
         if (config.autoCutEnabled) ...[0x1D, 0x56, 0x00],
       ];
       await adapter.connect(config);
@@ -224,8 +339,7 @@ class AndroidDirectPrinterController
       await adapter.disconnect();
       state = state.copyWith(
         isBusy: false,
-        message:
-            'Test bytes accepted by transport (${bytes.length} bytes). '
+        message: 'Test bytes accepted by transport (${bytes.length} bytes). '
             'Paper completion is not proven by raw write alone.',
       );
     } on PrinterException catch (error) {
@@ -250,8 +364,8 @@ class AndroidDirectPrinterController
   }
 }
 
-final androidDirectPrinterControllerProvider = StateNotifierProvider.autoDispose<
-    AndroidDirectPrinterController, AndroidDirectPrinterState>(
+final androidDirectPrinterControllerProvider = StateNotifierProvider
+    .autoDispose<AndroidDirectPrinterController, AndroidDirectPrinterState>(
   (ref) => AndroidDirectPrinterController(ref),
 );
 
@@ -301,6 +415,46 @@ class _AndroidDirectPrinterTestCardState
               style: TenantAdminTextStyles.muted(context),
             ),
             if (state.config != null) ...[
+              if ({PrinterConnectionType.usb, PrinterConnectionType.bluetooth}
+                  .contains(state.config!.connectionType)) ...[
+                DropdownButtonFormField<PrinterPaperWidth>(
+                    key:
+                        ValueKey('paper-${state.config!.configurationVersion}'),
+                    initialValue: state.config!.paperWidth,
+                    decoration: const InputDecoration(labelText: 'Paper width'),
+                    items: const [
+                      DropdownMenuItem(
+                          value: PrinterPaperWidth.mm58, child: Text('58 mm')),
+                      DropdownMenuItem(
+                          value: PrinterPaperWidth.mm80, child: Text('80 mm'))
+                    ],
+                    onChanged: state.isBusy || notifier.pendingTestId != null
+                        ? null
+                        : (value) =>
+                            notifier.savePrintSettings(paperWidth: value)),
+                SwitchListTile(
+                    title: const Text('Automatic cut'),
+                    subtitle: const Text(
+                        'Enable only if this printer supports a cutter. Changes are saved to this POS configuration.'),
+                    value: state.config!.autoCutEnabled,
+                    onChanged: state.isBusy || notifier.pendingTestId != null
+                        ? null
+                        : (value) =>
+                            notifier.savePrintSettings(autoCut: value)),
+                DropdownButtonFormField<int>(
+                    key: ValueKey('feed-${state.config!.configurationVersion}'),
+                    initialValue: state.config!.feedLinesBeforeCut.clamp(0, 10),
+                    decoration: const InputDecoration(
+                        labelText: 'Feed lines before cut'),
+                    items: [
+                      for (var i = 0; i <= 10; i++)
+                        DropdownMenuItem(value: i, child: Text('$i'))
+                    ],
+                    onChanged: state.isBusy || notifier.pendingTestId != null
+                        ? null
+                        : (value) =>
+                            notifier.savePrintSettings(feedLines: value)),
+              ],
               const SizedBox(height: TenantAdminSpacing.sm),
               Text(
                 'Saved: ${state.config!.connectionType.name} · ${state.config!.displayName}',
@@ -333,6 +487,21 @@ class _AndroidDirectPrinterTestCardState
                 ),
               ],
             ),
+            if (notifier.pendingTestId != null) ...[
+              const Text(
+                  'Did the test receipt print completely and correctly?'),
+              Wrap(spacing: 12, children: [
+                FilledButton(
+                    onPressed:
+                        state.isBusy ? null : () => notifier.confirmPaper(true),
+                    child: const Text('Yes, printed correctly')),
+                OutlinedButton(
+                    onPressed: state.isBusy
+                        ? null
+                        : () => notifier.confirmPaper(false),
+                    child: const Text('No / incomplete')),
+              ]),
+            ],
             if (state.usbDevices.isNotEmpty) ...[
               const SizedBox(height: TenantAdminSpacing.md),
               Text(

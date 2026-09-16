@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
+import '../../../../hardware/device_configuration/hardware_observation_events.dart';
 
 enum PosCameraScanResultType {
   barcode,
@@ -62,6 +63,9 @@ Future<PosCameraScanResult> launchPosCameraScanner(
       instructionText: instructionText,
     ),
   );
+  if (result?.type == PosCameraScanResultType.barcode) {
+    observeHardwareInput('camera');
+  }
   return result ?? const PosCameraScanResult.cancelled();
 }
 

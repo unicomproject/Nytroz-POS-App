@@ -10,6 +10,7 @@ import '../../../presentation/widgets/tenant_admin_responsive_form_grid.dart';
 import 'business_hours_editor.dart';
 import 'outlet_image_upload_card.dart';
 import '../providers/outlet_image_upload_provider.dart';
+import '../providers/outlet_providers.dart';
 
 class OutletForm extends ConsumerStatefulWidget {
   const OutletForm({
@@ -67,7 +68,9 @@ class _OutletFormState extends ConsumerState<OutletForm> {
 
   String _outletType = 'STORE';
   String _status = 'ACTIVE';
+  bool _isCentralOutlet = false;
   bool _isDefaultOutlet = false;
+  String? _managerId;
   late String _initialSignature;
 
   @override
@@ -102,7 +105,9 @@ class _OutletFormState extends ConsumerState<OutletForm> {
         widget.createOptions?.timezones,
       ),
     );
+    _isCentralOutlet = initial?.isCentralOutlet ?? false;
     _isDefaultOutlet = initial?.isDefaultOutlet ?? false;
+    _managerId = initial?.managerId;
     _openingHours = _initialOpeningHours(initial?.openingHours);
 
     if (initial?.imageMediaAssetId != null) {
@@ -194,12 +199,16 @@ class _OutletFormState extends ConsumerState<OutletForm> {
           timezone: _timezone,
           outletTypes: widget.createOptions?.outletTypes ?? const [],
           timezones: widget.createOptions?.timezones ?? const [],
+          isCentralOutlet: _isCentralOutlet,
           isDefaultOutlet: _isDefaultOutlet,
           errors: widget.backendErrors,
           onOutletTypeChanged: (value) => setState(() => _outletType = value),
           onStatusChanged: (value) => setState(() => _status = value),
           statusEnabled: widget.canUpdateStatus,
+          onCentralChanged: (value) => setState(() => _isCentralOutlet = value),
           onDefaultChanged: (value) => setState(() => _isDefaultOutlet = value),
+          managerId: _managerId,
+          onManagerChanged: (value) => setState(() => _managerId = value),
         ),
       1 => Consumer(builder: (context, ref, _) {
           final imageState = ref.watch(outletImageUploadControllerProvider);
@@ -319,9 +328,9 @@ class _OutletFormState extends ConsumerState<OutletForm> {
       if (open == null || close == null) {
         errors['businessHours.${hour.dayOfWeek}'] =
             'Opening and closing times are required when the outlet is open.';
-      } else if (open >= close) {
+      } else if (open >= close && !hour.overnight) {
         errors['businessHours.${hour.dayOfWeek}'] =
-            'Closing time must be later than opening time.';
+            'Closing time must be after opening time, or enable Overnight.';
       }
     }
 
@@ -366,7 +375,9 @@ class _OutletFormState extends ConsumerState<OutletForm> {
       contactEmail: _nullable(_contactEmail.text),
       imageMediaAssetId: currentImageId,
       imageOperation: imageOperation,
+      isCentralOutlet: _isCentralOutlet,
       isDefaultOutlet: _isDefaultOutlet,
+      managerId: _managerId,
       addressLine1: _addressLine1.text.trim(),
       addressLine2: _nullable(_addressLine2.text),
       city: _city.text.trim(),
@@ -381,6 +392,7 @@ class _OutletFormState extends ConsumerState<OutletForm> {
             openTime: hour.openTime.text.trim(),
             closeTime: hour.closeTime.text.trim(),
             closed: hour.closed,
+            overnight: hour.overnight,
           ),
       ],
     );
@@ -434,7 +446,7 @@ class _OutletFormState extends ConsumerState<OutletForm> {
         _isDefaultOutlet.toString(),
         ref.read(outletImageUploadControllerProvider).mediaAssetId ?? '',
         for (final hour in _openingHours)
-          '${hour.dayOfWeek}|${hour.openTime.text}|${hour.closeTime.text}|${hour.closed}',
+          '${hour.dayOfWeek}|${hour.openTime.text}|${hour.closeTime.text}|${hour.closed}|${hour.overnight}',
       ].join('\u001f');
 
   bool _mapsEqual(Map<String, String> a, Map<String, String> b) {
@@ -460,12 +472,16 @@ class _OutletDetailsStep extends StatelessWidget {
     required this.timezone,
     required this.outletTypes,
     required this.timezones,
+    required this.isCentralOutlet,
     required this.isDefaultOutlet,
     required this.errors,
     required this.onOutletTypeChanged,
     required this.onStatusChanged,
+    required this.onCentralChanged,
     required this.onDefaultChanged,
     required this.statusEnabled,
+    required this.managerId,
+    required this.onManagerChanged,
   });
 
   final TextEditingController outletName;
@@ -476,12 +492,16 @@ class _OutletDetailsStep extends StatelessWidget {
   final TextEditingController timezone;
   final List<OutletSelectOption> outletTypes;
   final List<OutletSelectOption> timezones;
+  final bool isCentralOutlet;
   final bool isDefaultOutlet;
   final Map<String, String> errors;
   final ValueChanged<String> onOutletTypeChanged;
   final ValueChanged<String> onStatusChanged;
+  final ValueChanged<bool> onCentralChanged;
   final ValueChanged<bool> onDefaultChanged;
   final bool statusEnabled;
+  final String? managerId;
+  final ValueChanged<String?> onManagerChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -533,8 +553,8 @@ class _OutletDetailsStep extends StatelessWidget {
             title: 'Main / Central Outlet',
             subtitle:
                 'Designate this outlet as the main or central outlet. Only one central outlet is allowed per tenant.',
-            value: false,
-            onChanged: (v) {},
+            value: isCentralOutlet,
+            onChanged: onCentralChanged,
           ),
           _buildSwitchOption(
             title: 'Default for New Tills',
@@ -629,34 +649,52 @@ class _OutletDetailsStep extends StatelessWidget {
                 fontSize: 13,
               ),
             ),
-            Text('*', style: TextStyle(color: TenantAdminColors.danger)),
+            Text('(optional)', style: TextStyle(color: TenantAdminColors.mutedText)),
           ],
         ),
         const SizedBox(height: TenantAdminSpacing.sm),
-        TextFormField(
-          enabled: false,
-          decoration: InputDecoration(
-            hintText: 'Search and select a user',
-            hintStyle: const TextStyle(
-                color: TenantAdminColors.mutedText,
-                fontWeight: FontWeight.normal),
-            prefixIcon:
-                const Icon(Icons.search, color: TenantAdminColors.mutedText),
-            filled: true,
-            fillColor: TenantAdminColors.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-              borderSide: const BorderSide(color: TenantAdminColors.border),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-              borderSide: const BorderSide(color: TenantAdminColors.border),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: TenantAdminSpacing.lg,
-              vertical: TenantAdminSpacing.md,
-            ),
-          ),
+        Consumer(
+          builder: (context, ref, _) {
+            final managersAsync = ref.watch(outletManagersProvider);
+            return managersAsync.when(
+              data: (managers) {
+                return DropdownButtonFormField<String?>(
+                  value: managerId,
+                  decoration: InputDecoration(
+                    hintText: 'Select a user',
+                    hintStyle: const TextStyle(
+                        color: TenantAdminColors.mutedText,
+                        fontWeight: FontWeight.normal),
+                    prefixIcon:
+                        const Icon(Icons.person_outline, color: TenantAdminColors.mutedText),
+                    filled: true,
+                    fillColor: TenantAdminColors.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                      borderSide: const BorderSide(color: TenantAdminColors.border),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: TenantAdminSpacing.lg,
+                      vertical: TenantAdminSpacing.md,
+                    ),
+                  ),
+                  items: [
+                    const DropdownMenuItem(
+                      value: null,
+                      child: Text('None'),
+                    ),
+                    ...managers.map((m) => DropdownMenuItem(
+                          value: m.id,
+                          child: Text(m.displayName),
+                        )),
+                  ],
+                  onChanged: onManagerChanged,
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator.adaptive()),
+              error: (err, stack) => Text('Failed to load managers', style: TextStyle(color: TenantAdminColors.danger)),
+            );
+          },
         ),
         const SizedBox(height: TenantAdminSpacing.xs),
         Container(
@@ -673,10 +711,9 @@ class _OutletDetailsStep extends StatelessWidget {
               Text(
                 'Eligible tenant users only',
                 style: TextStyle(
-                  color: Color(0xFF0284C7),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0369A1)),
               ),
             ],
           ),
@@ -911,7 +948,7 @@ class _OutletDetailsStep extends StatelessWidget {
             ),
             validator: (value) {
               final trimmed = value?.trim() ?? '';
-              if (trimmed.isEmpty) return 'Timezone is required.';
+              if (trimmed.isEmpty) return 'Select the outlet timezone.';
               if (trimmed.length > 80) {
                 return 'Timezone must be 80 characters or less.';
               }
@@ -1808,9 +1845,13 @@ Widget _field(
           validator: (value) {
             final trimmed = value?.trim() ?? '';
             if (isRequired && trimmed.isEmpty) {
-              return '$label is required.';
+              if (key == 'outletName') return 'Enter an outlet name.';
+              if (key == 'addressLine1') return 'Enter Address Line 1.';
+              if (key == 'city') return 'Enter a city.';
+              return 'Enter ${label.toLowerCase().replaceAll(RegExp(r'\(optional\)'), '').trim()}.';
             }
             if (maxLength != null && trimmed.length > maxLength) {
+              if (key == 'outletName') return 'Outlet name must be 200 characters or less.';
               return '$label must be $maxLength characters or less.';
             }
             return validator?.call(value);
@@ -1947,7 +1988,7 @@ String? _outletTypeValidator(
 ) {
   final normalized = _normalizeCanonicalOutletType(value ?? '');
   if (normalized.isEmpty) {
-    return 'Outlet type is required.';
+    return 'Select an outlet type.';
   }
 
   final supportedValues = options
@@ -1966,7 +2007,7 @@ String? _timezoneValidator(
 ) {
   final normalized = value?.trim() ?? '';
   if (normalized.isEmpty) {
-    return 'Timezone is required.';
+    return 'Select the outlet timezone.';
   }
 
   final supportedValues = options.map((option) => option.value.trim()).toSet();
@@ -2006,7 +2047,7 @@ String? _phoneValidator(String? value) {
 String? _countryCodeValidator(String? value, List<String> supportedCountries) {
   final country = value?.trim() ?? '';
   if (country.isEmpty) {
-    return 'Country code is required.';
+    return 'Select a country or region.';
   }
   if (!RegExp(r'^[A-Za-z]{2}$').hasMatch(country)) {
     return 'Country code must be 2 letters.';

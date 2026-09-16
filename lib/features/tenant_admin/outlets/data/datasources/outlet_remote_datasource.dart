@@ -62,6 +62,9 @@ class OutletRemoteDatasource {
     final response = await _dio.post<dynamic>(
       _outletBase,
       data: request.toJson(),
+      options: request.idempotencyKey != null
+          ? Options(headers: {'Idempotency-Key': request.idempotencyKey})
+          : null,
     );
     return OutletDetailsDto.fromJson(
       _unwrapApiPayload(response.data, response.requestOptions),

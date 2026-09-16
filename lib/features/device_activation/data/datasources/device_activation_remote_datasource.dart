@@ -18,8 +18,13 @@ class DeviceActivationRemoteDatasource {
       final response = await _dio.get<Map<String, dynamic>>(
         ApiEndpoints.currentDevice,
         queryParameters: {
-          'deviceFingerprint': form.deviceFingerprint,
+          if (!form.deviceFingerprint.startsWith('pos-device-v2-'))
+            'deviceFingerprint': form.deviceFingerprint,
         },
+        options: Options(headers: {
+          if (form.deviceFingerprint.startsWith('pos-device-v2-'))
+            'X-Pos-Device-Proof': form.deviceFingerprint,
+        }),
       );
       stopwatch.stop();
       developer.log(

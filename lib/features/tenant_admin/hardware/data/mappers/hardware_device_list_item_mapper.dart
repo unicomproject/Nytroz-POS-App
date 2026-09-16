@@ -18,6 +18,8 @@ extension HardwareDeviceListItemMapper on HardwareDeviceListItemDto {
       lastSeenAt: lastSeenAt,
       isAssigned: isAssigned,
       assignedTillId: assignedTillId,
+      assignedTillName: assignedTillName,
+      assignedPosDeviceName: assignedPosDeviceName,
       assignedPosDeviceId: assignedPosDeviceId,
     );
   }

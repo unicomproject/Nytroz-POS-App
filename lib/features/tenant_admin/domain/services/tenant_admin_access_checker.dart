@@ -778,15 +778,26 @@ class TenantAdminAccessChecker {
   }
 
   bool canViewTillHardware() {
-    return canAny([
-      TenantAdminPermissionCodes.tenantHardwareView,
-      TenantAdminPermissionCodes.tenantHardwareManage,
-    ]);
+    return _hasHardwareEntitlement() &&
+        canAny([
+          TenantAdminPermissionCodes.tenantHardwareView,
+          TenantAdminPermissionCodes.tenantHardwareManage,
+        ]);
   }
 
   bool canManageTillHardware() {
-    return can(TenantAdminPermissionCodes.tenantHardwareManage);
+    return _hasHardwareEntitlement() &&
+        can(TenantAdminPermissionCodes.tenantHardwareManage);
   }
+
+  bool _hasHardwareEntitlement() =>
+      hasRuntimeFlag('hardware_device_management') &&
+      _context.featureEntitlements.any((feature) =>
+          feature.featureCode == 'hardware_device_management' &&
+          feature.enabled) &&
+      !_context.featureEntitlements.any((feature) =>
+          feature.featureCode == 'hardware_device_management' &&
+          !feature.enabled);
 
   bool canGenerateTillActivationCode() {
     return hasTillManagementEntitlement() &&

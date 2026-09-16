@@ -8,6 +8,31 @@ import 'package:nytroz_pos/core/network/api_endpoints.dart';
 import 'package:nytroz_pos/features/pos/data/datasources/remote/pos_catalog_remote_datasource.dart';
 
 void main() {
+  for (final segment in ['popular', 'frequently-sold', 'offers']) {
+    test('barcode search ignores $segment and clearing restores it', () async {
+      final adapter = _CapturingCatalogAdapter();
+      final dio = Dio(BaseOptions(baseUrl: 'http://localhost'))
+        ..httpClientAdapter = adapter;
+      final source = PosCatalogRemoteDatasource(dio);
+
+      await source.getProducts(
+        deviceId: 'device-1',
+        search: ' 2000000000114 ',
+        segment: segment,
+      );
+      expect(adapter.lastQuery['search'], '2000000000114');
+      expect(adapter.lastQuery.containsKey('segment'), isFalse);
+      expect(adapter.lastQuery['deviceId'], 'device-1');
+
+      await source.getProducts(
+        deviceId: 'device-1',
+        search: ' ',
+        segment: segment,
+      );
+      expect(adapter.lastQuery['segment'], segment);
+      expect(adapter.lastQuery.containsKey('search'), isFalse);
+    });
+  }
   test('product catalog sends exact SKU as the search query', () async {
     final adapter = _CapturingCatalogAdapter();
     final dio = Dio(BaseOptions(baseUrl: 'http://localhost'))

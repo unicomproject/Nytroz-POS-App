@@ -180,6 +180,7 @@ class OutletFormData {
     this.imageUrl,
     this.imageMediaAssetId,
     this.imageOperation = OutletImageOperation.keep,
+    this.isCentralOutlet = false,
     this.isDefaultOutlet = false,
     this.managerId,
     required this.addressLine1,
@@ -190,6 +191,7 @@ class OutletFormData {
     required this.postalCode,
     required this.openingHours,
     this.timezone = 'Asia/Colombo',
+    this.idempotencyKey,
   });
 
   final String outletName;
@@ -204,6 +206,7 @@ class OutletFormData {
   final String? imageUrl;
   final String? imageMediaAssetId;
   final OutletImageOperation imageOperation;
+  final bool isCentralOutlet;
   final bool isDefaultOutlet;
   final String? managerId;
   final String addressLine1;
@@ -214,6 +217,7 @@ class OutletFormData {
   final String postalCode;
   final List<OutletOpeningHour> openingHours;
   final String timezone;
+  final String? idempotencyKey;
 }
 
 enum OutletImageOperation { keep, replace, remove }
@@ -224,12 +228,14 @@ class OutletOpeningHour {
     required this.openTime,
     required this.closeTime,
     required this.closed,
+    this.overnight = false,
   });
 
   final String day;
   final String openTime;
   final String closeTime;
   final bool closed;
+  final bool overnight;
 }
 
 String _formatMoney(double amount, String? currency) {
