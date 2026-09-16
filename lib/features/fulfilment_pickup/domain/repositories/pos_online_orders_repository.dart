@@ -57,9 +57,27 @@ abstract interface class PosOnlineOrdersRepository {
     required String outletId,
     required String orderId,
     String? packingNote,
+    required int expectedVersion,
   });
 
   Future<PosFulfillmentCommandResult> markReady({
+    required String outletId,
+    required String orderId,
+    required int expectedVersion,
+  });
+
+  Future<PosNotifyReadyResult> notifyReady({
+    required String outletId,
+    required String orderId,
+  });
+
+  Future<PosPickupVerifyResult> verifyPickup({
+    required String outletId,
+    required String orderId,
+    required String pickupCode,
+  });
+
+  Future<PosPickupCollectResult> collectOrder({
     required String outletId,
     required String orderId,
   });

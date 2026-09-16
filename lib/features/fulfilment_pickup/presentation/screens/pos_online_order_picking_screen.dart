@@ -26,16 +26,29 @@ class PosOnlineOrderPickingScreen extends ConsumerStatefulWidget {
 class _PosOnlineOrderPickingScreenState
     extends ConsumerState<PosOnlineOrderPickingScreen> {
   bool showReviewPack = false;
+  bool _leftReviewPack = false;
+  bool _showReviewFromReady = false;
+
+  @override
+  void didUpdateWidget(covariant PosOnlineOrderPickingScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.orderId != widget.orderId) {
+      showReviewPack = false;
+      _leftReviewPack = false;
+      _showReviewFromReady = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final granted = ref.watch(authSessionProvider)?.permissionCodes.toSet() ??
         const <String>{};
-    if (!PosPermissionAccess.canViewOnlineOrderPicking(granted)) {
+    if (!PosPermissionAccess.canViewOnlineOrderPicking(granted) &&
+        !PosPermissionAccess.canViewOnlineOrderReady(granted)) {
       return const ColoredBox(
         color: OnlineOrderUi.canvas,
         child: OnlineOrderScreenState(
-          message: 'You do not have permission to access order picking.',
+          message: 'You do not have permission to access order fulfilment.',
           icon: Icons.lock_outline,
         ),
       );
@@ -57,15 +70,45 @@ class _PosOnlineOrderPickingScreenState
                 ref.invalidate(posPickingOrderProvider(widget.orderId)),
           ),
           data: (value) {
-            final status = value.status.toUpperCase();
-            if (status == 'READY' || status == 'READY_FOR_COLLECTION') {
+            if (value.isReadyForCollection && !_showReviewFromReady) {
+              if (!PosPermissionAccess.canViewOnlineOrderReady(granted)) {
+                return const OnlineOrderScreenState(
+                  message: 'Ready-for-collection permission is required.',
+                  icon: Icons.lock_outline,
+                );
+              }
               return ReadyForCollectionScreen(
+                key: ValueKey('ready-${value.orderId}'),
                 order: value,
                 onBack: () => context.go('/pos/online-orders'),
+                onBackToReviewPack: () {
+                  setState(() => _showReviewFromReady = true);
+                },
               );
             }
 
-            if ((status == 'PICKED' || status == 'PACKED') &&
+            if (_showReviewFromReady && value.isReadyForCollection) {
+              return ReviewPackScreen(
+                key: ValueKey('review-from-ready-${value.orderId}'),
+                order: value,
+                onBackToPickItems: () {
+                  setState(() => _showReviewFromReady = false);
+                },
+              );
+            }
+
+            if (!PosPermissionAccess.canViewOnlineOrderPicking(granted)) {
+              return const OnlineOrderScreenState(
+                message: 'You do not have permission to access order picking.',
+                icon: Icons.lock_outline,
+              );
+            }
+
+            final inReview = value.isPacked ||
+                showReviewPack ||
+                (value.canPack && !_leftReviewPack);
+
+            if (inReview &&
                 !PosPermissionAccess.canViewOnlineOrderPacking(granted)) {
               return const OnlineOrderScreenState(
                 message: 'Packing workspace permission is required.',
@@ -73,9 +116,23 @@ class _PosOnlineOrderPickingScreenState
               );
             }
 
-            if (showReviewPack) {
-              return ReviewPackScreen(order: value);
+            if (inReview) {
+              return ReviewPackScreen(
+                key: ValueKey('review-pack-${value.orderId}'),
+                order: value,
+                onBackToPickItems: () {
+                  if (value.isPacked) {
+                    context.go('/pos/online-orders/${widget.orderId}');
+                    return;
+                  }
+                  setState(() {
+                    showReviewPack = false;
+                    _leftReviewPack = true;
+                  });
+                },
+              );
             }
+
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -86,14 +143,20 @@ class _PosOnlineOrderPickingScreenState
                 ),
                 const SizedBox(height: 10),
                 Expanded(
-                  child: status == 'PICKED' || status == 'PACKED'
-                      ? ReviewPackScreen(order: value)
-                      : PickingWorkspace(
-                          orderId: widget.orderId,
-                          order: value,
-                          onReviewPack: () =>
-                              setState(() => showReviewPack = true),
-                        ),
+                  child: PickingWorkspace(
+                    orderId: widget.orderId,
+                    order: value,
+                    onReviewPack: () {
+                      if (!PosPermissionAccess.canViewOnlineOrderPacking(
+                          granted)) {
+                        return;
+                      }
+                      setState(() {
+                        showReviewPack = true;
+                        _leftReviewPack = false;
+                      });
+                    },
+                  ),
                 ),
               ],
             );

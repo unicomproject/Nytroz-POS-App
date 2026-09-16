@@ -11,12 +11,15 @@ import 'api_endpoints.dart';
 /// reconnect-with-backoff on top of `web_socket_channel` (the official
 /// Dart-team package) rather than depending on a third-party SignalR client.
 class NotificationSocketClient {
-  NotificationSocketClient({required String httpBaseUrl})
-      : _wsBaseUrl = _toWebSocketOrigin(httpBaseUrl);
+  NotificationSocketClient({
+    required String httpBaseUrl,
+    this.onConnected,
+  }) : _wsBaseUrl = _toWebSocketOrigin(httpBaseUrl);
 
   static const _backoffSeconds = [1, 2, 5, 10, 30];
 
   final String _wsBaseUrl;
+  final void Function()? onConnected;
   final _eventController =
       StreamController<RealtimeNotificationEvent>.broadcast();
 
@@ -26,6 +29,7 @@ class NotificationSocketClient {
   String? _currentToken;
   int _reconnectAttempt = 0;
   bool _disposed = false;
+  bool _wasConnected = false;
 
   Stream<RealtimeNotificationEvent> get events => _eventController.stream;
 
@@ -39,6 +43,7 @@ class NotificationSocketClient {
 
   void disconnect() {
     _currentToken = null;
+    _wasConnected = false;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
     _teardownChannel();
@@ -65,10 +70,18 @@ class NotificationSocketClient {
       _channel = channel;
       _subscription = channel.stream.listen(
         _handleMessage,
-        onDone: _scheduleReconnect,
-        onError: (_) => _scheduleReconnect(),
+        onDone: _handleDisconnected,
+        onError: (_) => _handleDisconnected(),
         cancelOnError: true,
       );
+      // web_socket_channel opens asynchronously; treat listen attach as connected
+      // for reconnect recovery (missed events while down).
+      final isReconnect = _wasConnected;
+      _wasConnected = true;
+      _reconnectAttempt = 0;
+      if (isReconnect) {
+        onConnected?.call();
+      }
     } catch (error) {
       developer.log(
         'Notification socket connect failed.',
@@ -77,6 +90,10 @@ class NotificationSocketClient {
       );
       _scheduleReconnect();
     }
+  }
+
+  void _handleDisconnected() {
+    _scheduleReconnect();
   }
 
   void _handleMessage(dynamic raw) {

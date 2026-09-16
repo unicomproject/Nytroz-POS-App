@@ -306,10 +306,22 @@ class OrderItemsSection extends StatelessWidget {
                       .titleLarge
                       ?.copyWith(fontWeight: FontWeight.w800))),
           const Divider(height: 1),
-          for (var i = 0; i < detail.lines.length; i++) ...[
-            OnlineOrderItemRow(line: detail.lines[i], dense: dense),
-            if (i < detail.lines.length - 1) const Divider(height: 1),
-          ],
+          if (dense)
+            Expanded(
+              child: ListView.separated(
+                key: const Key('oo02-order-items-scroll'),
+                padding: EdgeInsets.zero,
+                itemCount: detail.lines.length,
+                itemBuilder: (context, index) =>
+                    OnlineOrderItemRow(line: detail.lines[index], dense: true),
+                separatorBuilder: (context, index) => const Divider(height: 1),
+              ),
+            )
+          else
+            for (var i = 0; i < detail.lines.length; i++) ...[
+              OnlineOrderItemRow(line: detail.lines[i]),
+              if (i < detail.lines.length - 1) const Divider(height: 1),
+            ],
         ]),
       );
 }

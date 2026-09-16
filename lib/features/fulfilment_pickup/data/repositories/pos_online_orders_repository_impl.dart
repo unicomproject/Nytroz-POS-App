@@ -93,15 +93,54 @@ class PosOnlineOrdersRepositoryImpl implements PosOnlineOrdersRepository {
       );
 
   @override
-  Future<PosFulfillmentCommandResult> pack(
-          {required String outletId,
-          required String orderId,
-          String? packingNote}) =>
+  Future<PosFulfillmentCommandResult> pack({
+    required String outletId,
+    required String orderId,
+    String? packingNote,
+    required int expectedVersion,
+  }) =>
       _remote.pack(
-          outletId: outletId, orderId: orderId, packingNote: packingNote);
+        outletId: outletId,
+        orderId: orderId,
+        packingNote: packingNote,
+        expectedVersion: expectedVersion,
+      );
 
   @override
-  Future<PosFulfillmentCommandResult> markReady(
-          {required String outletId, required String orderId}) =>
-      _remote.markReady(outletId: outletId, orderId: orderId);
+  Future<PosFulfillmentCommandResult> markReady({
+    required String outletId,
+    required String orderId,
+    required int expectedVersion,
+  }) =>
+      _remote.markReady(
+        outletId: outletId,
+        orderId: orderId,
+        expectedVersion: expectedVersion,
+      );
+
+  @override
+  Future<PosNotifyReadyResult> notifyReady({
+    required String outletId,
+    required String orderId,
+  }) =>
+      _remote.notifyReady(outletId: outletId, orderId: orderId);
+
+  @override
+  Future<PosPickupVerifyResult> verifyPickup({
+    required String outletId,
+    required String orderId,
+    required String pickupCode,
+  }) =>
+      _remote.verifyPickup(
+        outletId: outletId,
+        orderId: orderId,
+        pickupCode: pickupCode,
+      );
+
+  @override
+  Future<PosPickupCollectResult> collectOrder({
+    required String outletId,
+    required String orderId,
+  }) =>
+      _remote.collectOrder(outletId: outletId, orderId: orderId);
 }

@@ -6,29 +6,35 @@ import '../../utils/picking_formatters.dart';
 import '../online_order_ui.dart';
 
 class PickingItemCard extends StatelessWidget {
-  const PickingItemCard(
-      {required this.line,
-      this.selected = false,
-      this.onPick,
-      this.onIssue,
-      super.key});
+  const PickingItemCard({
+    required this.line,
+    this.selected = false,
+    this.reviewMode = false,
+    this.onPick,
+    this.onIssue,
+    super.key,
+  });
   final PosPickingLine line;
   final bool selected;
+  final bool reviewMode;
   final VoidCallback? onPick;
   final VoidCallback? onIssue;
 
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
+    final success = Colors.green.shade700;
+    final interactive = !reviewMode && onPick != null;
     return Semantics(
-      button: onPick != null,
-      label:
-          'Pick line ${line.lineNumber}, ${line.productName}, ${pickingQuantity(line.pickedQuantity)} of ${pickingQuantity(line.requestedQuantity)} picked',
+      button: interactive,
+      label: reviewMode
+          ? 'Reviewed line ${line.lineNumber}, ${line.productName}, picked ${pickingQuantity(line.pickedQuantity)} of ${pickingQuantity(line.requestedQuantity)}'
+          : 'Pick line ${line.lineNumber}, ${line.productName}, ${pickingQuantity(line.pickedQuantity)} of ${pickingQuantity(line.requestedQuantity)} picked',
       child: InkWell(
-        onTap: onPick,
+        onTap: interactive ? onPick : null,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(reviewMode ? 7 : 8),
           decoration: BoxDecoration(
             color: selected
                 ? Color.alphaBlend(
@@ -42,8 +48,10 @@ class PickingItemCard extends StatelessWidget {
           ),
           child: LayoutBuilder(builder: (context, constraints) {
             final imageSize = constraints.hasBoundedHeight
-                ? (constraints.maxHeight - 16).clamp(56.0, 76.0).toDouble()
-                : 72.0;
+                ? (constraints.maxHeight - 16)
+                    .clamp(reviewMode ? 48.0 : 56.0, reviewMode ? 64.0 : 76.0)
+                    .toDouble()
+                : (reviewMode ? 56.0 : 72.0);
             final product = Row(children: [
               Semantics(
                   image: true,
@@ -71,85 +79,139 @@ class PickingItemCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                     Text('${line.lineNumber}. ${line.productName}',
-                        maxLines: 2,
+                        maxLines: reviewMode ? 1 : 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w800)),
+                        style: TextStyle(
+                            fontSize: reviewMode ? 14 : 15,
+                            fontWeight: FontWeight.w800)),
                     if (line.variantName != null)
                       Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(line.variantName!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                   fontSize: 12, color: OnlineOrderUi.muted))),
                     if (line.sku != null)
                       Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Text('SKU: ${line.sku}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                   fontSize: 12, color: OnlineOrderUi.muted))),
                   ])),
             ]);
             final detail = Row(children: [
-              Expanded(child: _LocationBlock(line: line)),
+              Expanded(
+                child: reviewMode
+                    ? _CompactLocation(line: line)
+                    : _LocationBlock(line: line),
+              ),
               const SizedBox(width: 8),
-              SizedBox(
-                  width: 78,
-                  child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Pick',
-                                style: TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 1),
-                            Text(
-                                '${pickingQuantity(line.pickedQuantity)} / ${pickingQuantity(line.requestedQuantity)}',
-                                style: TextStyle(
-                                    color: primary,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800)),
-                            const Text('picked',
-                                style: TextStyle(fontSize: 12)),
-                          ]))),
-              if (onIssue != null && line.hasReportedIssue)
-                IconButton(
-                    tooltip: 'View reported issue',
-                    onPressed: onIssue,
-                    visualDensity: VisualDensity.compact,
-                    icon: Icon(Icons.report_problem_outlined,
-                        color: Theme.of(context).colorScheme.error)),
-              Icon(Icons.chevron_right,
-                  color: onPick == null ? OnlineOrderUi.muted : null),
+              if (reviewMode)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: success.withValues(alpha: .45)),
+                    borderRadius: BorderRadius.circular(8),
+                    color: success.withValues(alpha: .08),
+                  ),
+                  child: Text(
+                    '✓ Picked ${pickingQuantity(line.pickedQuantity)} of ${pickingQuantity(line.requestedQuantity)}',
+                    style: TextStyle(
+                      color: success,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                )
+              else ...[
+                SizedBox(
+                    width: 78,
+                    child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Pick',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 1),
+                              Text(
+                                  '${pickingQuantity(line.pickedQuantity)} / ${pickingQuantity(line.requestedQuantity)}',
+                                  style: TextStyle(
+                                      color: primary,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800)),
+                              const Text('picked',
+                                  style: TextStyle(fontSize: 12)),
+                            ]))),
+                if (onIssue != null && line.hasReportedIssue)
+                  IconButton(
+                      tooltip: 'View reported issue',
+                      onPressed: onIssue,
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(Icons.report_problem_outlined,
+                          color: Theme.of(context).colorScheme.error)),
+                Icon(Icons.chevron_right,
+                    color: onPick == null ? OnlineOrderUi.muted : null),
+              ],
             ]);
-            if (constraints.maxWidth < 620) {
-              return FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: SizedBox(
-                  width: constraints.maxWidth,
-                  child: Column(
+            final body = constraints.maxWidth < 620
+                ? Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       product,
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       detail,
                     ],
-                  ),
-                ),
-              );
-            }
-            return Row(children: [
-              Expanded(flex: 5, child: product),
-              const SizedBox(width: 10),
-              Expanded(flex: 4, child: detail)
-            ]);
+                  )
+                : Row(children: [
+                    Expanded(flex: 5, child: product),
+                    const SizedBox(width: 10),
+                    Expanded(flex: 4, child: detail)
+                  ]);
+            return reviewMode
+                ? FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(width: constraints.maxWidth, child: body),
+                  )
+                : (constraints.maxWidth < 620
+                    ? FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: SizedBox(
+                          width: constraints.maxWidth,
+                          child: body,
+                        ),
+                      )
+                    : body);
           }),
         ),
       ),
+    );
+  }
+}
+
+class _CompactLocation extends StatelessWidget {
+  const _CompactLocation({required this.line});
+  final PosPickingLine line;
+  @override
+  Widget build(BuildContext context) {
+    final name = line.locationName ?? 'Location unavailable';
+    final code = line.locationCode;
+    return Text(
+      code == null || code.isEmpty ? name : 'Location: $code • $name',
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(fontSize: 11.5, color: OnlineOrderUi.muted),
     );
   }
 }

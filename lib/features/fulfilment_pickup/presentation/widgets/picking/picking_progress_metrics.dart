@@ -6,8 +6,13 @@ import '../../utils/picking_visual_metrics.dart';
 import '../online_order_ui.dart';
 
 class PickingProgressMetrics extends StatelessWidget {
-  const PickingProgressMetrics({required this.order, super.key});
+  const PickingProgressMetrics({
+    required this.order,
+    this.compact = false,
+    super.key,
+  });
   final PosPickingOrder order;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -23,18 +28,26 @@ class PickingProgressMetrics extends StatelessWidget {
       ('Units', pickingQuantity(order.totalUnits), Icons.shopping_bag_outlined),
     ];
     return Container(
-      constraints: const BoxConstraints(minHeight: 68, maxHeight: 76),
+      constraints: BoxConstraints(
+        minHeight: compact ? 50 : 68,
+        maxHeight: compact ? 56 : 76,
+      ),
       decoration: pickingCardDecoration(context),
       child: Row(children: [
         for (var index = 0; index < values.length; index++) ...[
           if (index > 0)
-            const VerticalDivider(width: 1, indent: 8, endIndent: 8),
+            VerticalDivider(
+              width: 1,
+              indent: compact ? 4 : 8,
+              endIndent: compact ? 4 : 8,
+            ),
           Expanded(
               child: _Metric(
                   label: values[index].$1,
                   value: values[index].$2,
                   icon: values[index].$3,
-                  index: index)),
+                  index: index,
+                  compact: compact)),
         ],
       ]),
     );
@@ -42,25 +55,35 @@ class PickingProgressMetrics extends StatelessWidget {
 }
 
 class _Metric extends StatelessWidget {
-  const _Metric(
-      {required this.label,
-      required this.value,
-      required this.icon,
-      required this.index});
+  const _Metric({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.index,
+    this.compact = false,
+  });
   final String label;
   final String value;
   final IconData icon;
   final int index;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 4 : 6,
+          vertical: compact ? 3 : 6,
+        ),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           CircleAvatar(
-              radius: 15,
+              radius: compact ? 12 : 15,
               backgroundColor: _metricColor(context).withValues(alpha: .09),
-              child: Icon(icon, color: _metricColor(context), size: 16)),
-          const SizedBox(width: 6),
+              child: Icon(
+                icon,
+                color: _metricColor(context),
+                size: compact ? 13 : 16,
+              )),
+          SizedBox(width: compact ? 4 : 6),
           Flexible(
               child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -68,12 +91,14 @@ class _Metric extends StatelessWidget {
                   children: [
                 Text(value,
                     maxLines: 1,
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w800)),
+                    style: TextStyle(
+                        fontSize: compact ? 13 : 15,
+                        fontWeight: FontWeight.w800)),
                 Text(label,
                     maxLines: 1,
                     softWrap: false,
-                    style: OnlineOrderUi.subtitle.copyWith(fontSize: 11)),
+                    style: OnlineOrderUi.subtitle
+                        .copyWith(fontSize: compact ? 10 : 11)),
               ])),
         ]),
       );
