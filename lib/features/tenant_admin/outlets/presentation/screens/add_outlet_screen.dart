@@ -9,6 +9,8 @@ import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/outlet_details.dart';
+import 'package:uuid/uuid.dart';
+
 import '../providers/outlet_providers.dart';
 import '../providers/outlet_image_upload_provider.dart';
 import '../providers/outlet_visibility_provider.dart';
@@ -26,6 +28,7 @@ class _AddOutletScreenState extends ConsumerState<AddOutletScreen> {
   var _submitting = false;
   Map<String, String> _fieldErrors = const {};
   OutletDetails? _createdOutlet;
+  String? _idempotencyKey;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +48,7 @@ class _AddOutletScreenState extends ConsumerState<AddOutletScreen> {
             setState(() {
               _createdOutlet = null;
               _fieldErrors = const {};
+              _idempotencyKey = null;
             });
           },
         ),
@@ -99,13 +103,39 @@ class _AddOutletScreenState extends ConsumerState<AddOutletScreen> {
   }
 
   Future<void> _submit(OutletFormData form) async {
+    _idempotencyKey ??= const Uuid().v4();
+    final formWithKey = OutletFormData(
+      outletName: form.outletName,
+      outletType: form.outletType,
+      status: form.status,
+      mainPhoneNumber: form.mainPhoneNumber,
+      emailAddress: form.emailAddress,
+      contactName: form.contactName,
+      contactPhone: form.contactPhone,
+      contactEmail: form.contactEmail,
+      imageMediaAssetId: form.imageMediaAssetId,
+      imageOperation: form.imageOperation,
+      isCentralOutlet: form.isCentralOutlet,
+      isDefaultOutlet: form.isDefaultOutlet,
+      managerId: form.managerId,
+      addressLine1: form.addressLine1,
+      addressLine2: form.addressLine2,
+      city: form.city,
+      state: form.state,
+      country: form.country,
+      postalCode: form.postalCode,
+      openingHours: form.openingHours,
+      timezone: form.timezone,
+      idempotencyKey: _idempotencyKey,
+    );
+
     setState(() {
       _submitting = true;
       _fieldErrors = const {};
     });
 
     try {
-      final outlet = await ref.read(createOutletProvider).call(form);
+      final outlet = await ref.read(createOutletProvider).call(formWithKey);
       ref.refresh(outletListProvider).maybeWhen(orElse: () {});
       if (!mounted) {
         return;
@@ -123,6 +153,56 @@ class _AddOutletScreenState extends ConsumerState<AddOutletScreen> {
           context.go('/tenant-login');
         }
         return;
+      }
+
+      if (error.type == DioExceptionType.connectionTimeout || 
+          error.type == DioExceptionType.connectionError || 
+          error.type == DioExceptionType.receiveTimeout || 
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.unknown) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('We could not create the outlet. Your entered information has been preserved. Please check your connection and try again.'),
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+        return;
+      }
+
+      if (error.response?.statusCode == 422) {
+        final data = error.response?.data;
+        if (data is Map && data['code'] == 'outlet.limit_reached') {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('The subscription outlet limit has been reached. Please upgrade your subscription plan to create more outlets.'),
+                duration: Duration(seconds: 4),
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      if (error.response?.statusCode == 409) {
+        final data = error.response?.data;
+        if (data is Map && (data['code'] == 'outlet.concurrent_central_modification' || data['code'] == 'concurrent_modification' || data['message']?.toString().contains('central') == true)) {
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Configuration Changed'),
+                content: const Text('Another outlet was designated as the central outlet during your setup. Please review the updated configuration before submitting.'),
+                actions: [
+                  TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('OK'))
+                ],
+              )
+            );
+          }
+          return;
+        }
       }
 
       final fieldErrors = outletValidationErrors(error);

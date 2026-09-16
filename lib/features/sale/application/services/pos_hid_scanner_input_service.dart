@@ -36,7 +36,7 @@ class PosHidScannerInputService {
 
   final StringBuffer _buffer = StringBuffer();
   Timer? _timeout;
-  DateTime? _lastCharacterAt;
+  Duration? _lastCharacterAt;
   bool _attached = false;
   bool isConnected = true;
 
@@ -88,9 +88,10 @@ class PosHidScannerInputService {
       return false;
     }
 
-    final now = DateTime.now();
+    // Use the input event's monotonic time, not scheduler delay or wall-clock changes.
+    final now = event.timeStamp;
     if (_lastCharacterAt case final previous?
-        when now.difference(previous) > configuration.interCharacterTimeout) {
+        when now - previous > configuration.interCharacterTimeout) {
       if (_buffer.isNotEmpty) {
         onRejected?.call(PosHidScanRejection.incomplete, _buffer.toString());
       }

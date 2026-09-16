@@ -21,9 +21,11 @@ class HardwareDeviceDto {
     this.activeAssignmentId,
     this.assignedTillId,
     this.assignedPosDeviceId,
+    this.configurationVersion = 1,
   });
 
   final String hardwareDeviceId;
+  final int configurationVersion;
   final String hardwareDeviceCode;
   final String hardwareDeviceName;
   final String hardwareDeviceType;
@@ -48,6 +50,7 @@ class HardwareDeviceDto {
   factory HardwareDeviceDto.fromJson(Map<String, dynamic> json) {
     return HardwareDeviceDto(
       hardwareDeviceId: json['hardwareDeviceId'] as String,
+      configurationVersion: json['configurationVersion'] as int? ?? 1,
       hardwareDeviceCode: json['hardwareDeviceCode'] as String,
       hardwareDeviceName: json['hardwareDeviceName'] as String,
       hardwareDeviceType: json['hardwareDeviceType'] as String,

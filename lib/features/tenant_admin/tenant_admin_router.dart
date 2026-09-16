@@ -671,19 +671,19 @@ bool _canAccessRoute(
   }
 
   if (definition.path == '/tenant-admin/hardware') {
-    return accessChecker.can(TenantAdminPermissionCodes.tenantHardwareView);
+    return accessChecker.canViewTillHardware();
   }
 
   if (definition.path == '/tenant-admin/hardware/add') {
-    return accessChecker.can(TenantAdminPermissionCodes.tenantHardwareManage);
+    return accessChecker.canManageTillHardware();
   }
 
   if (definition.path == '/tenant-admin/hardware/:id/edit') {
-    return accessChecker.can(TenantAdminPermissionCodes.tenantHardwareManage);
+    return accessChecker.canManageTillHardware();
   }
 
   if (definition.path == '/tenant-admin/hardware/:id') {
-    return accessChecker.can(TenantAdminPermissionCodes.tenantHardwareView);
+    return accessChecker.canViewTillHardware();
   }
 
   if (definition.path == '/tenant-admin/staff/add') {

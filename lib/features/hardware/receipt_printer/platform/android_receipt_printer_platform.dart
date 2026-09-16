@@ -124,10 +124,20 @@ class MethodChannelAndroidReceiptPrinter
     implements AndroidReceiptPrinterPlatform {
   MethodChannelAndroidReceiptPrinter({
     MethodChannel? channel,
-  }) : _channel = channel ??
-            const MethodChannel('com.nytroz.pos/receipt_printer');
+  }) : _channel =
+            channel ?? const MethodChannel('com.nytroz.pos/receipt_printer');
 
   final MethodChannel _channel;
+
+  Future<DateTime?> bluetoothLastWriteObservation(String address) async {
+    if (!isAndroidNative) return null;
+    final result = await _channel.invokeMapMethod<String, dynamic>(
+        'bluetoothObservation', {'address': address});
+    final value = result?['observedAt'];
+    return value is num
+        ? DateTime.fromMillisecondsSinceEpoch(value.toInt(), isUtc: true)
+        : null;
+  }
 
   static bool get isAndroidNative =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
@@ -329,7 +339,8 @@ class MethodChannelAndroidReceiptPrinter
       'TIMEOUT' => PrinterTimeoutException(message),
       'PARTIAL_WRITE' => PrinterPartialWriteException(message),
       'WRITE_FAILED' => PrinterSendException(message),
-      'NOT_CONFIGURED' || 'INVALID_ARGUMENT' =>
+      'NOT_CONFIGURED' ||
+      'INVALID_ARGUMENT' =>
         PrinterConfigurationException(message),
       'UNSUPPORTED_PLATFORM' => PrinterUnsupportedException(message),
       _ => PrinterSendException(message),
