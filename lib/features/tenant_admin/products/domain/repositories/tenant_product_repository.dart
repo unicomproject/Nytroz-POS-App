@@ -1,6 +1,8 @@
-import '../../data/models/product_draft_response_dto.dart';
-import '../../data/models/save_product_draft_request_dto.dart';
-import '../../data/models/staged_image_response_dto.dart';
+import '../../data/dtos/product_draft_response_dto.dart';
+import '../../data/dtos/product_create_request_dto.dart';
+import '../../data/dtos/product_setup_scan_dtos.dart';
+import '../../data/dtos/save_product_draft_request_dto.dart';
+import '../../data/dtos/staged_image_response_dto.dart';
 import '../../domain/entities/product_delete_result.dart';
 import '../../domain/entities/product_form_data.dart';
 import '../../domain/entities/product_status_update_result.dart';
@@ -31,6 +33,21 @@ abstract class TenantProductRepository {
   );
   Future<ProductDeleteResult> deleteProduct(String productId);
   Future<TenantProductFilterOptions> getProductFilterOptions();
+
+  Future<ResolveProductBarcodeResponseDto> resolveBarcode(
+    ResolveProductBarcodeRequestDto request,
+  );
+  Future<ExternalLookupProductBarcodeResponseDto> externalLookupBarcode({
+    required String barcode,
+    String? identifierStandard,
+  });
+  Future<SkuCandidateResponseDto> generateSkuCandidate({
+    String purpose = 'NO_BARCODE_PRODUCT',
+    String? productNameHint,
+  });
+
+  /// Creates a NEW DRAFT from an existing product (clears SKU/barcode; no stock).
+  Future<ProductCreateResponseDto> duplicateProduct(String productId);
 
   Future<ProductDraftResponseDto> saveDraft(SaveProductDraftRequestDto request);
   Future<ProductDraftResponseDto> updateDraft(

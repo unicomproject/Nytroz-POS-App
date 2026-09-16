@@ -79,7 +79,8 @@ class LeftPaymentSummaryColumn extends ConsumerWidget {
           if (showCustomer) CustomerCard(cart: cart, onTap: onCustomerTap),
           if (cart.hasDiscount &&
               (surface == PaymentSummaryPermissionSurface.checkout
-                  ? PosPaymentPermissionVisibility.canShowCheckoutSummaryDiscount(
+                  ? PosPaymentPermissionVisibility
+                      .canShowCheckoutSummaryDiscount(
                       permissions,
                     )
                   : PosPaymentPermissionVisibility.canShowCashSummaryDiscount(

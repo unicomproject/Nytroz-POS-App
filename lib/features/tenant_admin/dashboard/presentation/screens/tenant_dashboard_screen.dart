@@ -129,7 +129,8 @@ class _DesktopDashboard extends StatelessWidget {
         if (visibility.showKpiSection) {
           sections.add(
             DashboardMetricGrid(
-              metrics: visibility.visibleMetrics.take(4).toList(growable: false),
+              metrics:
+                  visibility.visibleMetrics.take(4).toList(growable: false),
               compact: false,
               cardHeight: width < 1200 ? 138 : 148,
             ),

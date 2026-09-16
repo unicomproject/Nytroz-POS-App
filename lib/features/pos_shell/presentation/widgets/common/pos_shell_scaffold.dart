@@ -43,8 +43,8 @@ class PosShellScaffold extends ConsumerWidget {
     final permissions = ref.watch(effectivePermissionSetProvider);
     final topBarAllowed =
         showTopBar && PosShellTopBarVisibility.shouldRenderTopBar(permissions);
-    final bottomNavAllowed = showBottomNavigation &&
-        shouldShowPosCashierBottomNav(permissions);
+    final bottomNavAllowed =
+        showBottomNavigation && shouldShowPosCashierBottomNav(permissions);
 
     return LayoutBuilder(
       builder: (context, constraints) {

@@ -1,11 +1,11 @@
-import '../models/save_product_draft_request_dto.dart';
-import '../models/step5_barcode_dtos.dart';
-import '../models/step6_pricing_tax_dtos.dart';
+import '../dtos/save_product_draft_request_dto.dart';
+import '../dtos/barcode_sku_dtos.dart';
+import '../dtos/pricing_tax_dtos.dart';
 import '../../domain/entities/add_product_wizard_state.dart';
 import '../../domain/entities/product_wizard_capabilities.dart';
-import '../../domain/entities/step4_variant_configuration_state.dart';
-import '../../presentation/utils/step_5_barcode_type.dart';
-import '../../presentation/utils/step_6_variant_pricing.dart';
+import '../../domain/entities/variant_configuration_state.dart';
+import '../../presentation/utils/barcode_type.dart';
+import '../../presentation/utils/variant_pricing.dart';
 
 /// Builds the final Step 7 wizard-create payload from [AddProductWizardState].
 class WizardProductCreateMapper {

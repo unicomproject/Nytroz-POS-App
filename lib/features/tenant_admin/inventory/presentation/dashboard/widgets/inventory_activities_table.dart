@@ -72,7 +72,8 @@ class InventoryActivitiesTable extends StatelessWidget {
             Column(
               children: [
                 for (int i = 0; i < activities.length; i++) ...[
-                  if (i > 0) const Divider(height: 1, color: TenantAdminColors.border),
+                  if (i > 0)
+                    const Divider(height: 1, color: TenantAdminColors.border),
                   _ActivityRow(activity: activities[i]),
                 ]
               ],

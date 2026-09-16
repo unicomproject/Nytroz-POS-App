@@ -173,8 +173,7 @@ class _CashDrawerTestCardState extends ConsumerState<CashDrawerTestCard> {
                                 overflow: TextOverflow.ellipsis,
                               )),
                           DropdownMenuItem(
-                              value: 'always',
-                              child: Text('Always (No sale)')),
+                              value: 'always', child: Text('Always (No sale)')),
                           DropdownMenuItem(
                               value: 'approvalRequired',
                               child: Text(

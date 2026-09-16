@@ -125,7 +125,9 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
         final bytes = _pendingRetryImageBytes;
         if (bytes == null) return;
 
-        await ref.read(categorySaveControllerProvider.notifier).retryImageUpload(
+        await ref
+            .read(categorySaveControllerProvider.notifier)
+            .retryImageUpload(
               categoryId: categoryId,
               imageBytes: bytes,
               imageFileName: _pendingRetryImageFileName ?? 'category.jpg',
@@ -152,8 +154,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
   @override
   Widget build(BuildContext context) {
     const pageTitle = 'Edit Category';
-    const pageSubtitle =
-        'Update category information and hierarchy settings.';
+    const pageSubtitle = 'Update category information and hierarchy settings.';
 
     final canUpdate = ref.watch(categoryUpdateAccessProvider);
     final categoryAsync = ref.watch(categoryDetailsProvider(widget.categoryId));

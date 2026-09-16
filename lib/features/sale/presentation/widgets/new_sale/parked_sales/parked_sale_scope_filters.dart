@@ -65,17 +65,15 @@ class ParkedSaleScopeFilters extends ConsumerWidget {
                               ? Icons.schedule_outlined
                               : Icons.layers_outlined,
                       size: 16,
-                      color: isSelected
-                          ? Colors.white
-                          : const Color(0xFF64748B),
+                      color:
+                          isSelected ? Colors.white : const Color(0xFF64748B),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       scope.label,
                       style: TextStyle(
-                        color: isSelected
-                            ? Colors.white
-                            : const Color(0xFF334155),
+                        color:
+                            isSelected ? Colors.white : const Color(0xFF334155),
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
                       ),

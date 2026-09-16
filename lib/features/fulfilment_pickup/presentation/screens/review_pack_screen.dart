@@ -52,13 +52,15 @@ class _ReviewPackScreenState extends ConsumerState<ReviewPackScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final order = ref.watch(posPickingOrderProvider(widget.order.orderId)).maybeWhen(
-          data: (value) => value,
-          orElse: () => widget.order,
-        );
+    final order =
+        ref.watch(posPickingOrderProvider(widget.order.orderId)).maybeWhen(
+              data: (value) => value,
+              orElse: () => widget.order,
+            );
     final granted =
         ref.watch(authSessionProvider)?.permissionCodes.toSet() ?? const {};
-    final canViewPacking = PosPermissionAccess.canViewOnlineOrderPacking(granted);
+    final canViewPacking =
+        PosPermissionAccess.canViewOnlineOrderPacking(granted);
     final canPack = PosPermissionAccess.canPackOnlineOrder(granted);
     final canMarkReady = PosPermissionAccess.canMarkOnlineOrderReady(granted);
 
@@ -94,10 +96,7 @@ class _ReviewPackScreenState extends ConsumerState<ReviewPackScreen> {
     final primaryEnabled = !_busy &&
         !order.isTerminal &&
         ((order.isPacked && canMarkReady) ||
-            (!order.isPacked &&
-                order.canPack &&
-                canPack &&
-                canMarkReady));
+            (!order.isPacked && order.canPack && canPack && canMarkReady));
 
     return LayoutBuilder(builder: (context, constraints) {
       final wide =
@@ -161,7 +160,8 @@ class _ReviewPackScreenState extends ConsumerState<ReviewPackScreen> {
     if (_busy) return;
     final note = _notes.text;
     if (note.characters.length > packingNoteMaxLength) {
-      setState(() => _error = 'Packing note must be $packingNoteMaxLength characters or fewer.');
+      setState(() => _error =
+          'Packing note must be $packingNoteMaxLength characters or fewer.');
       return;
     }
     setState(() {
@@ -177,8 +177,8 @@ class _ReviewPackScreenState extends ConsumerState<ReviewPackScreen> {
       setState(() => _error = _mapError(error));
     } catch (_) {
       if (!mounted) return;
-      setState(() =>
-          _error = 'Unable to mark this order ready for collection.');
+      setState(
+          () => _error = 'Unable to mark this order ready for collection.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -191,14 +191,12 @@ class _ReviewPackScreenState extends ConsumerState<ReviewPackScreen> {
     return switch (code) {
       'online_orders.concurrency_conflict' =>
         'This order changed. Refresh and try again.',
-      'online_orders.not_packable' =>
-        'This order is not eligible to pack yet.',
+      'online_orders.not_packable' => 'This order is not eligible to pack yet.',
       'online_orders.not_readyable' =>
         'This order must be packed before it can be marked ready.',
       'online_orders.permission_denied' =>
         'You do not have permission for this action.',
-      'online_orders.invalid_packing_note' =>
-        'Packing note is invalid.',
+      'online_orders.invalid_packing_note' => 'Packing note is invalid.',
       _ => error.response?.statusCode == 409
           ? 'This order changed. Refresh and try again.'
           : 'Unable to mark this order ready for collection.',
@@ -659,9 +657,8 @@ class _OrderSummaryCard extends StatelessWidget {
           context,
           urgency.isOverdue ? 'Overdue' : 'Remaining',
           remainingLabel,
-          valueColor: urgency.isOverdue
-              ? Theme.of(context).colorScheme.error
-              : null,
+          valueColor:
+              urgency.isOverdue ? Theme.of(context).colorScheme.error : null,
         ),
     ];
     return Container(

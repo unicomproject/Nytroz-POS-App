@@ -33,8 +33,8 @@ class CashInFormCard extends ConsumerWidget {
     final formState = ref.watch(cashInFormProvider);
     final catalog = ref.watch(cashInCatalogProvider);
     final prefix = currencyInputPrefix(currencyCode);
-    final reasonEnabled = catalog.status == CashInCatalogStatus.ready &&
-        catalog.types.isNotEmpty;
+    final reasonEnabled =
+        catalog.status == CashInCatalogStatus.ready && catalog.types.isNotEmpty;
 
     return CashDrawerSectionCard(
       expand: expand,
@@ -65,18 +65,14 @@ class CashInFormCard extends ConsumerWidget {
             if (catalog.isLoading)
               Padding(
                 padding: EdgeInsets.only(
-                  bottom: tight
-                      ? TenantAdminSpacing.xs
-                      : TenantAdminSpacing.md,
+                  bottom: tight ? TenantAdminSpacing.xs : TenantAdminSpacing.md,
                 ),
                 child: const LinearProgressIndicator(minHeight: 2),
               ),
             if (catalog.status == CashInCatalogStatus.empty)
               Padding(
                 padding: EdgeInsets.only(
-                  bottom: tight
-                      ? TenantAdminSpacing.xs
-                      : TenantAdminSpacing.md,
+                  bottom: tight ? TenantAdminSpacing.xs : TenantAdminSpacing.md,
                 ),
                 child: Text(
                   'No Cash In reasons are available. Contact your administrator.',
@@ -89,9 +85,7 @@ class CashInFormCard extends ConsumerWidget {
             if (catalog.status == CashInCatalogStatus.failure)
               Padding(
                 padding: EdgeInsets.only(
-                  bottom: tight
-                      ? TenantAdminSpacing.xs
-                      : TenantAdminSpacing.md,
+                  bottom: tight ? TenantAdminSpacing.xs : TenantAdminSpacing.md,
                 ),
                 child: Text(
                   catalog.errorMessage ??
@@ -144,9 +138,8 @@ class CashInFormCard extends ConsumerWidget {
                       '${catalog.status.name}-${formState.selectedMovementTypeId}',
                     ),
                     isExpanded: true,
-                    initialValue: reasonEnabled
-                        ? formState.selectedMovementTypeId
-                        : null,
+                    initialValue:
+                        reasonEnabled ? formState.selectedMovementTypeId : null,
                     decoration: InputDecoration(
                       labelText: 'Reason *',
                       isDense: compact,

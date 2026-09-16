@@ -3,10 +3,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/add_product_stepper.dart';
 
 void main() {
+  test('scanner-first stepper has exact 7 labels without Barcode & SKU', () {
+    expect(AddProductStepper.steps, [
+      'Scan Barcode',
+      'Basic Details',
+      'Product Type & Tracking',
+      'Unit & Pack Conversion',
+      'Product Configuration',
+      'Pricing & Tax',
+      'Review & Create',
+    ]);
+    expect(AddProductStepper.steps.contains('Barcode & SKU'), isFalse);
+    expect(AddProductStepper.steps.length, 7);
+  });
+
   Future<void> pumpStepper(
     WidgetTester tester, {
     required Size size,
-    int currentStep = 4,
+    int currentStep = 1,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
@@ -28,7 +42,12 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('desktop shows all 7 step labels without overflow', (tester) async {
+  testWidgets('fresh wizard step 1 shows Scan Barcode label', (tester) async {
+    await pumpStepper(tester, size: const Size(1280, 800), currentStep: 1);
+    expect(find.text('Scan Barcode'), findsWidgets);
+  });
+
+  testWidgets('desktop shows all 7 scanner-first step labels', (tester) async {
     await pumpStepper(tester, size: const Size(1280, 800));
 
     for (final label in AddProductStepper.steps) {
@@ -37,39 +56,10 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('tablet layout shows all 7 full step labels',
+  testWidgets('tablet 1024x768 shows scanner-first labels without overflow',
       (tester) async {
-    await pumpStepper(tester, size: const Size(900, 800));
-
-    for (final label in AddProductStepper.steps) {
-      expect(find.text(label), findsOneWidget);
-    }
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('mobile compact layout shows step X of 7 and current label',
-      (tester) async {
-    await pumpStepper(tester, size: const Size(390, 800));
-
-    expect(find.text('Step 4 of 7'), findsOneWidget);
-    expect(find.text('Product Configuration'), findsOneWidget);
-    expect(find.text('Review & Create'), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('tablet stepper stays slim in height while spanning full width',
-      (tester) async {
-    await pumpStepper(tester, size: const Size(1100, 800));
-
-    final cardFinder = find
-        .descendant(
-          of: find.byType(AddProductStepper),
-          matching: find.byType(Container),
-        )
-        .first;
-    final size = tester.getSize(cardFinder);
-    expect(size.width, greaterThan(1000));
-    expect(size.height, lessThanOrEqualTo(80));
+    await pumpStepper(tester, size: const Size(1024, 768));
+    expect(find.text('Scan Barcode'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 }

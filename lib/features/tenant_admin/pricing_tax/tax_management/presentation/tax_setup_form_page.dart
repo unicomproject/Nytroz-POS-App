@@ -232,8 +232,7 @@ class _TaxSetupFormPageState extends ConsumerState<TaxSetupFormPage> {
             child: TenantAdminErrorState(
               title: 'Unable to load tax setup',
               message: taxApiErrorMessage(error),
-              onRetry: () =>
-                  ref.invalidate(taxDetailProvider(widget.taxId!)),
+              onRetry: () => ref.invalidate(taxDetailProvider(widget.taxId!)),
             ),
           ),
           data: (tax) {
@@ -254,9 +253,8 @@ class _TaxSetupFormPageState extends ConsumerState<TaxSetupFormPage> {
       title: 'Add Tax Setup',
       subtitle: 'Create a tax rate configuration for your products.',
       showBackButton: true,
-      onBackButtonPressed: mutation.isSubmitting
-          ? null
-          : () => Navigator.of(context).pop(),
+      onBackButtonPressed:
+          mutation.isSubmitting ? null : () => Navigator.of(context).pop(),
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
@@ -328,9 +326,8 @@ class _TaxSetupFormPageState extends ConsumerState<TaxSetupFormPage> {
       title: 'Edit Tax Setup',
       subtitle: 'Update details and manage the rate schedule.',
       showBackButton: true,
-      onBackButtonPressed: mutation.isSubmitting
-          ? null
-          : () => Navigator.of(context).pop(),
+      onBackButtonPressed:
+          mutation.isSubmitting ? null : () => Navigator.of(context).pop(),
       actions: [
         if (visibility.showStatusManage)
           TenantAdminOverflowMenu(
@@ -473,9 +470,7 @@ class _TaxSetupFormPageState extends ConsumerState<TaxSetupFormPage> {
     }
 
     try {
-      await ref
-          .read(taxMutationControllerProvider.notifier)
-          .deactivate(tax.id);
+      await ref.read(taxMutationControllerProvider.notifier).deactivate(tax.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1344,7 +1339,8 @@ class _RateHistorySection extends StatelessWidget {
                           ? item.notes!
                           : '—')),
                       DataCell(
-                        item.state == TaxRateHistoryState.scheduled && canSchedule
+                        item.state == TaxRateHistoryState.scheduled &&
+                                canSchedule
                             ? Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [

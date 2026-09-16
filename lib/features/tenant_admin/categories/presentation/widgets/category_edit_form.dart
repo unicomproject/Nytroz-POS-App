@@ -82,8 +82,7 @@ class CategoryEditFormState extends ConsumerState<CategoryEditForm> {
     _codeController = TextEditingController(text: category.categoryCode);
     _descriptionController =
         TextEditingController(text: category.description ?? '');
-    _sortOrderController =
-        TextEditingController(text: '${category.sortOrder}');
+    _sortOrderController = TextEditingController(text: '${category.sortOrder}');
 
     _status = category.status.toUpperCase();
     _originalParentCategoryId = category.parentCategoryId;

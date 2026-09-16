@@ -1,8 +1,9 @@
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/datasources/product_wizard_draft_local_datasource.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/product_draft_response_dto.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/save_product_draft_request_dto.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/staged_image_response_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/datasources/local/product_wizard_draft_local_datasource.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_draft_response_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/save_product_draft_request_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/staged_image_response_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_delete_result.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_form_data.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_status_update_result.dart';
@@ -11,10 +12,26 @@ import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_detail.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_filter_options.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/product_wizard_draft_local_repository.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_create_request_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/tenant_product_repository.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 
 class FakeTenantProductRepository implements TenantProductRepository {
+  @override
+  Future<ResolveProductBarcodeResponseDto> resolveBarcode(ResolveProductBarcodeRequestDto request) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ExternalLookupProductBarcodeResponseDto> externalLookupBarcode({required String barcode, String? identifierStandard}) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SkuCandidateResponseDto> generateSkuCandidate({String? productNameHint, String purpose = 'NO_BARCODE_PRODUCT'}) async {
+    throw UnimplementedError();
+  }
+
   SaveProductDraftRequestDto? lastDraftRequest;
   int saveDraftCallCount = 0;
   int updateDraftCallCount = 0;
@@ -230,6 +247,9 @@ class FakeTenantProductRepository implements TenantProductRepository {
   Future<ProductStatusUpdateResult> updateProductStatus(
           String productId, String status) =>
       throw UnimplementedError();
+  @override
+  Future<ProductCreateResponseDto> duplicateProduct(String productId) =>
+      throw UnimplementedError();
 }
 
 void main() {
@@ -249,12 +269,14 @@ void main() {
 
     test('initWizard loads create options', () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       expect(controller.wizardState.createOptions, isNotNull);
       expect(controller.wizardState.createOptions!.categories.length, 1);
     });
 
     test('Save Draft is frontend-local and does not call draft APIs', () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Local Draft');
       final success = await controller.saveDraft();
 
@@ -268,6 +290,7 @@ void main() {
 
     test('Save & Continue rejects missing Product Name or Category', () async {
       await controller.initWizard();
+      controller.skipScanStepForTesting();
       controller.updateProductName('');
       controller.updateCategory(null);
 
@@ -278,7 +301,7 @@ void main() {
           controller.wizardState.fieldErrors.containsKey('productName'), true);
       expect(
           controller.wizardState.fieldErrors.containsKey('categoryId'), true);
-      expect(controller.wizardState.currentStep, 1);
+      expect(controller.wizardState.currentStep, 2);
       expect(repo.saveDraftCallCount, 0);
     });
 
@@ -286,14 +309,16 @@ void main() {
         'Save & Continue succeeds with Product Name and Category (Brand optional)',
         () async {
       await controller.initWizard();
+      controller.skipScanStepForTesting();
       controller.updateProductName('Gaming Mouse');
       controller.updateCategory('cat-1');
+      controller.updateInternalCode('GM-001');
       controller.updateBrand(null); // Optional
 
       final success = await controller.saveAndContinue();
 
       expect(success, true);
-      expect(controller.wizardState.currentStep, 2);
+      expect(controller.wizardState.currentStep, 3);
       expect(repo.saveDraftCallCount, 0);
       expect(repo.updateDraftCallCount, 0);
       expect(repo.lastDraftRequest, isNull);
@@ -302,6 +327,7 @@ void main() {
     test('Staging image enforces 10 count & 5MB limit & format check',
         () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
 
       // Test format validation failure
       final invalidFormatSuccess = await controller.stageOrUploadImage(
@@ -371,14 +397,16 @@ void main() {
     });
 
     test(
-        'Save & Continue on Step 2 VARIANT advances to Step 4 without draft API',
+        'Save & Continue on Step 3 VARIANT advances to Step 4 without draft API',
         () async {
       await controller.initWizard();
+      controller.skipScanStepForTesting();
       controller.updateProductName('Wireless Headphones');
       controller.updateCategory('cat-1');
-      await controller.saveAndContinue(); // Move to Step 2
+      controller.updateInternalCode('WH-001');
+      await controller.saveAndContinue(); // Move to Step 3
 
-      expect(controller.wizardState.currentStep, 2);
+      expect(controller.wizardState.currentStep, 3);
 
       controller.setProductStructure('VARIANT');
       controller.setTrackInventory(true);
@@ -436,6 +464,7 @@ void main() {
 
     test('Save Draft keeps staged media in local wizard state', () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Test Product');
       controller.updateCategory('cat-1');
 

@@ -32,7 +32,8 @@ class PaymentMethodsSection extends ConsumerWidget {
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     if (!PosPaymentPermissionVisibility.canShowMethodsContainer(permissions)) {
-      return const SizedBox.shrink(key: ValueKey('payment-methods-container-denied'));
+      return const SizedBox.shrink(
+          key: ValueKey('payment-methods-container-denied'));
     }
 
     return Container(

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/add_product_wizard_state.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_create_options.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/step_3/units_pack_conversion.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/units_pack_conversion/units_pack_conversion.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/tenant_product_repository.dart';
 
 class FakeTenantProductRepository implements TenantProductRepository {

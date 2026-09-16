@@ -69,11 +69,9 @@ class _ReadyForCollectionScreenState
     final granted =
         ref.watch(authSessionProvider)?.permissionCodes.toSet() ?? const {};
     final canViewReady = PosPermissionAccess.canViewOnlineOrderReady(granted);
-    final canNotify =
-        PosPermissionAccess.canNotifyOnlineOrderCustomer(granted);
+    final canNotify = PosPermissionAccess.canNotifyOnlineOrderCustomer(granted);
     final canVerify = PosPermissionAccess.canVerifyOnlineOrderPickup(granted);
-    final canComplete =
-        PosPermissionAccess.canCompleteOnlineOrderCollection(granted);
+    final canComplete = PosPermissionAccess.canCompleteOnlineOrderCollection(granted);
 
     if (!canViewReady) {
       return const OnlineOrderScreenState(
@@ -126,22 +124,15 @@ class _ReadyForCollectionScreenState
         hasPrefilledCode: _pendingPrefilledCode != null,
         error: _error,
         success: _success,
-        onNotify: canNotify && !_busy
-            ? () => unawaited(_notify(order))
-            : null,
-        onVerify: canVerify && !_busy && !_scannerOpening
-            ? () => unawaited(_verify(order))
-            : null,
-        onComplete: canComplete && !_busy
-            ? () => unawaited(_complete(order))
-            : null,
+        onNotify: canNotify && !_busy ? () => unawaited(_notify(order)) : null,
+        onVerify: canVerify && !_busy ? () => unawaited(_verify(order)) : null,
+        onComplete: canComplete && !_busy ? () => unawaited(_complete(order)) : null,
       );
       final right = _ReadyRightColumn(
         order: order,
         compact: compact || ultraCompact,
         ultraCompact: ultraCompact,
-        onViewDetails: () =>
-            context.go('/pos/online-orders/${order.orderId}'),
+        onViewDetails: () => context.go('/pos/online-orders/${order.orderId}'),
       );
 
       return Column(
@@ -198,8 +189,7 @@ class _ReadyForCollectionScreenState
       setState(() => _error = _mapError(error));
     } catch (_) {
       if (!mounted) return;
-      setState(() =>
-          _error = 'Unable to notify the customer for this order.');
+      setState(() => _error = 'Unable to notify the customer for this order.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -685,7 +675,8 @@ class ReadyForCollectionHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final successTone = Colors.green.shade700;
     return Semantics(
-      label: 'All items picked and packed. This order is ready for customer collection.',
+      label:
+          'All items picked and packed. This order is ready for customer collection.',
       child: Container(
         padding: EdgeInsets.all(compact ? 12 : 18),
         decoration: pickingCardDecoration(context),
@@ -695,7 +686,8 @@ class ReadyForCollectionHero extends StatelessWidget {
             CircleAvatar(
               radius: compact ? 28 : 36,
               backgroundColor: successTone.withValues(alpha: .12),
-              child: Icon(Icons.check, color: successTone, size: compact ? 32 : 42),
+              child: Icon(Icons.check,
+                  color: successTone, size: compact ? 32 : 42),
             ),
             SizedBox(height: compact ? 10 : 14),
             Text(
@@ -712,7 +704,8 @@ class ReadyForCollectionHero extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: OnlineOrderUi.subtitle.copyWith(fontSize: compact ? 12.5 : 14),
+              style: OnlineOrderUi.subtitle
+                  .copyWith(fontSize: compact ? 12.5 : 14),
             ),
           ],
         ),

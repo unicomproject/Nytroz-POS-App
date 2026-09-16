@@ -42,9 +42,8 @@ class PosHomeHeaderContext extends ConsumerWidget {
       children: [
         if (showBell)
           PosHomeNotificationButton(
-            onPressed: canOpenPanel
-                ? () => showPosNotificationsDialog(context)
-                : null,
+            onPressed:
+                canOpenPanel ? () => showPosNotificationsDialog(context) : null,
             notificationCount: canShowUnread ? notificationCount : 0,
             showUnreadBadge: canShowUnread,
           ),

@@ -1,9 +1,10 @@
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/datasources/product_wizard_draft_local_datasource.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/datasources/local/product_wizard_draft_local_datasource.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/mappers/wizard_product_create_mapper.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/product_draft_response_dto.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/save_product_draft_request_dto.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/staged_image_response_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_draft_response_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/save_product_draft_request_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/staged_image_response_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_delete_result.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_form_data.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_status_update_result.dart';
@@ -12,10 +13,26 @@ import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_detail.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_filter_options.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/product_wizard_draft_local_repository.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_create_request_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/tenant_product_repository.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 
 class _CreateTrackingRepo implements TenantProductRepository {
+  @override
+  Future<ResolveProductBarcodeResponseDto> resolveBarcode(ResolveProductBarcodeRequestDto request) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ExternalLookupProductBarcodeResponseDto> externalLookupBarcode({required String barcode, String? identifierStandard}) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SkuCandidateResponseDto> generateSkuCandidate({String? productNameHint, String purpose = 'NO_BARCODE_PRODUCT'}) async {
+    throw UnimplementedError();
+  }
+
   int createProductCallCount = 0;
   int createFromWizardCallCount = 0;
   int saveDraftCallCount = 0;
@@ -129,6 +146,9 @@ class _CreateTrackingRepo implements TenantProductRepository {
   Future<ProductStatusUpdateResult> updateProductStatus(
           String productId, String status) =>
       throw UnimplementedError();
+  @override
+  Future<ProductCreateResponseDto> duplicateProduct(String productId) =>
+      throw UnimplementedError();
 }
 
 void main() {
@@ -146,8 +166,10 @@ void main() {
 
   Future<void> fillSimpleToStep7() async {
     await controller.initWizard();
+    controller.skipScanStepForTesting();
     controller.updateProductName('Create Simple Product');
     controller.updateCategory('cat-1');
+    controller.updateInternalCode('CREATE-SIMPLE-001');
     await controller.saveAndContinue();
     controller.setProductStructure('SIMPLE');
     await controller.saveAndContinue();
@@ -202,8 +224,10 @@ void main() {
     test('7/8/9. VARIANT payload has variants + clientCombinationKeys',
         () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Create Variant Product');
       controller.updateCategory('cat-1');
+      controller.updateInternalCode('VAR-001');
       await controller.saveAndContinue();
       controller.setProductStructure('VARIANT');
       await controller.saveAndContinue();
@@ -307,13 +331,15 @@ void main() {
 
     test('18. VARIANT navigation regression still reaches Step 7', () async {
       await controller.initWizard();
-      controller.updateProductName('Variant Nav');
+    controller.skipScanStepForTesting();
+      controller.updateProductName('Variant Product Nav');
       controller.updateCategory('cat-1');
+      controller.updateInternalCode('VAR-NAV-001');
       await controller.saveAndContinue();
       controller.setProductStructure('VARIANT');
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 4);
-      expect(controller.isStepApplicable(3), isFalse);
+      expect(controller.wizardState.currentStep, 5);
+      expect(controller.isStepApplicable(4), isFalse);
     });
   });
 }

@@ -148,6 +148,7 @@ class CashDrawerRepositoryImpl implements CashDrawerRepository {
     if (value is num) return value.toDouble();
     return double.tryParse(value.toString());
   }
+
   static String _code(CashMovementType type) => switch (type) {
         CashMovementType.cashIn => 'CASH_IN',
         CashMovementType.cashOut => 'CASH_OUT',

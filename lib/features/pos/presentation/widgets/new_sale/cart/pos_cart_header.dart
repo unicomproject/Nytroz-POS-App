@@ -18,8 +18,8 @@ class PosCartHeader extends ConsumerWidget {
         PosSalesPermissionVisibility.canShowCartHeader(permissions);
     final showCounts =
         PosSalesPermissionVisibility.canShowCartItemCount(permissions);
-    final canShowCustomer = permissions
-        .hasPermission(PosPermissionCodes.newSaleChromeCustomerChip);
+    final canShowCustomer =
+        permissions.hasPermission(PosPermissionCodes.newSaleChromeCustomerChip);
     final selectedCustomer = cart.selectedCustomer;
 
     if (!showHeader &&

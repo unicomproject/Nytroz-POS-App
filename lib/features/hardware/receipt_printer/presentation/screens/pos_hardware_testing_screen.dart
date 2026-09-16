@@ -1,4 +1,4 @@
-import '../widgets/remote_hardware_test_card.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,7 +18,7 @@ import '../providers/local_print_agent_controller.dart';
 import '../widgets/hardware_capability_card.dart';
 import '../widgets/cash_drawer_test_card.dart';
 import '../widgets/android_direct_printer_test_card.dart';
-import '../widgets/hardware_test_session_card.dart';
+
 
 class PosHardwareTestingScreen extends ConsumerStatefulWidget {
   const PosHardwareTestingScreen({super.key});
@@ -31,9 +31,6 @@ class PosHardwareTestingScreen extends ConsumerStatefulWidget {
 class _PosHardwareTestingScreenState
     extends ConsumerState<PosHardwareTestingScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _printerTestKey = GlobalKey();
-  final _scannerTestKey = GlobalKey();
-  final _drawerTestKey = GlobalKey();
   final _urlController = TextEditingController();
   final _apiKeyController = TextEditingController();
   final _timeoutController = TextEditingController(text: '5000');
@@ -188,29 +185,6 @@ class _PosHardwareTestingScreenState
                           ),
                         ],
                         const SizedBox(height: TenantAdminSpacing.lg),
-                        RemoteHardwareTestCard(openTest: (type) {
-                          final target = switch (type) {
-                            'barcodescanner' => _scannerTestKey,
-                            'cashdrawer' => _drawerTestKey,
-                            _ => _printerTestKey,
-                          };
-                          if (target.currentContext != null) {
-                            Scrollable.ensureVisible(target.currentContext!,
-                                duration: const Duration(milliseconds: 300));
-                          }
-                        }),
-                        HardwareTestSessionCard(openTest: (type) {
-                          final target = switch (type) {
-                            'barcodescanner' => _scannerTestKey,
-                            'cashdrawer' => _drawerTestKey,
-                            _ => _printerTestKey,
-                          };
-                          if (target.currentContext != null) {
-                            Scrollable.ensureVisible(target.currentContext!,
-                                duration: const Duration(milliseconds: 300));
-                          }
-                        }),
-                        SizedBox(key: _printerTestKey, height: 16),
                         LocalPrintAgentStatusCard(state: state),
                         const SizedBox(height: TenantAdminSpacing.lg),
                         const AndroidDirectPrinterTestCard(),
@@ -657,9 +631,9 @@ class _PosHardwareTestingScreenState
                           ),
                         ],
                         const SizedBox(height: TenantAdminSpacing.md),
-                        BarcodeScannerTestCard(key: _scannerTestKey),
+                        const BarcodeScannerTestCard(),
                         const SizedBox(height: TenantAdminSpacing.sm),
-                        CashDrawerTestCard(key: _drawerTestKey),
+                        const CashDrawerTestCard(),
                         const SizedBox(height: TenantAdminSpacing.sm),
                         const HardwareCapabilityCard(
                           title: 'Card terminal',

@@ -8,7 +8,7 @@ import 'package:nytroz_pos/features/tenant_admin/domain/services/tenant_admin_ac
 
 import 'package:nytroz_pos/features/tenant_admin/products/data/mappers/product_dashboard_mapper.dart';
 
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/product_dashboard_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_dashboard_dto.dart';
 
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/dashboard/product_dashboard_formatters.dart';
 

@@ -74,22 +74,15 @@ class NotificationSocketClient {
     String? token;
     try {
       token = await fetchToken();
-    } catch (error) {
-      developer.log(
-        'Fetching notification socket token failed.',
-        name: 'notifications.socket',
-        error: error,
-      );
-    }
-    // The session may have changed (or the client disposed) while awaiting.
-    if (_disposed || _currentSessionKey != sessionKey) return;
-    if (token == null || token.isEmpty) {
-      _scheduleReconnect();
+    } catch (e) {
+      _handleDisconnected();
       return;
     }
+    if (token == null || _disposed) return;
 
-    final uri = Uri.parse('$_wsBaseUrl${ApiEndpoints.tenantNotificationsSocketPath}')
-        .replace(queryParameters: {'access_token': token});
+    final uri =
+        Uri.parse('$_wsBaseUrl${ApiEndpoints.tenantNotificationsSocketPath}')
+            .replace(queryParameters: {'access_token': token});
 
     try {
       final channel = WebSocketChannel.connect(uri);
@@ -145,8 +138,8 @@ class NotificationSocketClient {
     if (_disposed || _currentSessionKey == null) return;
 
     _reconnectTimer?.cancel();
-    final delaySeconds = _backoffSeconds[
-        _reconnectAttempt.clamp(0, _backoffSeconds.length - 1)];
+    final delaySeconds =
+        _backoffSeconds[_reconnectAttempt.clamp(0, _backoffSeconds.length - 1)];
     _reconnectAttempt =
         (_reconnectAttempt + 1).clamp(0, _backoffSeconds.length - 1);
     _reconnectTimer = Timer(

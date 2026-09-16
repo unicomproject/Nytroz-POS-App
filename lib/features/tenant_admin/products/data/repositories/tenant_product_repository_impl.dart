@@ -6,13 +6,14 @@ import '../../domain/entities/product_delete_result.dart';
 import '../../domain/entities/product_status_update_result.dart';
 import '../../domain/entities/tenant_product_detail.dart';
 import '../../domain/repositories/tenant_product_repository.dart';
-import '../datasources/tenant_product_remote_datasource.dart';
+import '../datasources/remote/tenant_product_remote_datasource.dart';
 import '../mappers/tenant_product_mapper.dart';
-import '../models/product_create_request_dto.dart';
-import '../models/product_draft_response_dto.dart';
-import '../models/product_status_update_dto.dart';
-import '../models/save_product_draft_request_dto.dart';
-import '../models/staged_image_response_dto.dart';
+import '../dtos/product_create_request_dto.dart';
+import '../dtos/product_draft_response_dto.dart';
+import '../dtos/product_setup_scan_dtos.dart';
+import '../dtos/product_status_update_dto.dart';
+import '../dtos/save_product_draft_request_dto.dart';
+import '../dtos/staged_image_response_dto.dart';
 
 class TenantProductRepositoryImpl implements TenantProductRepository {
   const TenantProductRepositoryImpl(this._remoteDatasource);
@@ -150,6 +151,40 @@ class TenantProductRepositoryImpl implements TenantProductRepository {
   Future<TenantProductFilterOptions> getProductFilterOptions() async {
     final dto = await _remoteDatasource.getProductFilterOptions();
     return TenantProductMapper.toFilterOptions(dto);
+  }
+
+  @override
+  Future<ResolveProductBarcodeResponseDto> resolveBarcode(
+    ResolveProductBarcodeRequestDto request,
+  ) {
+    return _remoteDatasource.resolveBarcode(request);
+  }
+
+  @override
+  Future<ExternalLookupProductBarcodeResponseDto> externalLookupBarcode({
+    required String barcode,
+    String? identifierStandard,
+  }) {
+    return _remoteDatasource.externalLookupBarcode(
+      barcode: barcode,
+      identifierStandard: identifierStandard,
+    );
+  }
+
+  @override
+  Future<SkuCandidateResponseDto> generateSkuCandidate({
+    String purpose = 'NO_BARCODE_PRODUCT',
+    String? productNameHint,
+  }) {
+    return _remoteDatasource.generateSkuCandidate(
+      purpose: purpose,
+      productNameHint: productNameHint,
+    );
+  }
+
+  @override
+  Future<ProductCreateResponseDto> duplicateProduct(String productId) {
+    return _remoteDatasource.duplicateProduct(productId);
   }
 
   @override

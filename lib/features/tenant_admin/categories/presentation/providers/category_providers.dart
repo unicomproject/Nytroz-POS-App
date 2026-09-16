@@ -161,11 +161,12 @@ class CategorySaveController extends AutoDisposeAsyncNotifier<void> {
     state = const AsyncLoading();
 
     try {
-      final category = await ref.read(categoryRepositoryProvider).uploadCategoryImage(
-            categoryId,
-            imageBytes,
-            imageFileName,
-          );
+      final category =
+          await ref.read(categoryRepositoryProvider).uploadCategoryImage(
+                categoryId,
+                imageBytes,
+                imageFileName,
+              );
       state = const AsyncData(null);
       ref.invalidate(categoryListProvider);
       ref.invalidate(categoryTreeProvider);
@@ -182,9 +183,8 @@ class CategorySaveController extends AutoDisposeAsyncNotifier<void> {
 
     final listResult = ref.read(categoryListProvider).valueOrNull;
     final currentPage = ref.read(categoryPageProvider);
-    final shouldMoveToPreviousPage = listResult != null &&
-        listResult.items.length == 1 &&
-        currentPage > 1;
+    final shouldMoveToPreviousPage =
+        listResult != null && listResult.items.length == 1 && currentPage > 1;
 
     state = await AsyncValue.guard(() async {
       await ref.read(categoryRepositoryProvider).archiveCategory(categoryId);

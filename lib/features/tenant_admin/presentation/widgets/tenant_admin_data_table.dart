@@ -99,7 +99,8 @@ class _TenantAdminDataTableState extends State<TenantAdminDataTable> {
                     controller: _scrollController,
                     scrollDirection: Axis.horizontal,
                     child: Padding(
-                      padding: const EdgeInsets.only(bottom: TenantAdminSpacing.md),
+                      padding:
+                          const EdgeInsets.only(bottom: TenantAdminSpacing.md),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                           minWidth: widget.minWidth > constraints.maxWidth
@@ -107,8 +108,10 @@ class _TenantAdminDataTableState extends State<TenantAdminDataTable> {
                               : constraints.maxWidth,
                         ),
                         child: DataTable(
-                          headingTextStyle: TenantAdminTextStyles.tableHeader(context),
-                          dataTextStyle: TenantAdminTextStyles.tableRow(context),
+                          headingTextStyle:
+                              TenantAdminTextStyles.tableHeader(context),
+                          dataTextStyle:
+                              TenantAdminTextStyles.tableRow(context),
                           showCheckboxColumn: widget.showCheckboxColumn,
                           columns: widget.columns,
                           rows: widget.rows,

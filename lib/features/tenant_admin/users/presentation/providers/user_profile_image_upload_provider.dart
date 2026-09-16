@@ -67,15 +67,14 @@ class UserProfileImageUploadState {
       status: status ?? this.status,
       mediaAssetId: clearMedia ? null : mediaAssetId ?? this.mediaAssetId,
       previewBytes: clearMedia ? null : previewBytes ?? this.previewBytes,
-      remoteImageUrl:
-          clearMedia ? null : remoteImageUrl ?? this.remoteImageUrl,
+      remoteImageUrl: clearMedia ? null : remoteImageUrl ?? this.remoteImageUrl,
       fileName: clearMedia ? null : fileName ?? this.fileName,
       mimeType: clearMedia ? null : mimeType ?? this.mimeType,
-      fileSizeBytes:
-          clearMedia ? null : fileSizeBytes ?? this.fileSizeBytes,
+      fileSizeBytes: clearMedia ? null : fileSizeBytes ?? this.fileSizeBytes,
       progress: progress ?? this.progress,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
-      pendingInput: clearPendingInput ? null : pendingInput ?? this.pendingInput,
+      pendingInput:
+          clearPendingInput ? null : pendingInput ?? this.pendingInput,
       isPersisted: isPersisted ?? this.isPersisted,
       changeAction:
           clearChangeAction ? null : changeAction ?? this.changeAction,
@@ -97,8 +96,8 @@ class GalleryUserProfileImagePicker implements UserProfileImagePicker {
     final file = await _picker.pickImage(source: ImageSource.gallery);
     if (file == null) return null;
     final extension = file.name.split('.').last.toLowerCase();
-    final mimeType = file.mimeType ??
-        (extension == 'png' ? 'image/png' : 'image/jpeg');
+    final mimeType =
+        file.mimeType ?? (extension == 'png' ? 'image/png' : 'image/jpeg');
     return UserProfileImageUploadInput(
       bytes: await file.readAsBytes(),
       fileName: file.name,
@@ -111,8 +110,8 @@ final userProfileImagePickerProvider = Provider<UserProfileImagePicker>(
   (ref) => GalleryUserProfileImagePicker(ImagePicker()),
 );
 
-final userProfileImageUploadControllerProvider = StateNotifierProvider.autoDispose<
-    UserProfileImageUploadController, UserProfileImageUploadState>(
+final userProfileImageUploadControllerProvider = StateNotifierProvider
+    .autoDispose<UserProfileImageUploadController, UserProfileImageUploadState>(
   (ref) => UserProfileImageUploadController(
     ref.read(userProfileImagePickerProvider),
     ref.read(tenantUserRepositoryProvider),

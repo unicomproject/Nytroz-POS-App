@@ -72,8 +72,10 @@ class CategoryListScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (visibility.showSearch) const CategoryFiltersBar(),
-              if (visibility.showSearch) const SizedBox(height: TenantAdminSpacing.lg),
-              if (visibility.showList) const Expanded(child: _CategoryListBody()),
+              if (visibility.showSearch)
+                const SizedBox(height: TenantAdminSpacing.lg),
+              if (visibility.showList)
+                const Expanded(child: _CategoryListBody()),
             ],
           ),
         );

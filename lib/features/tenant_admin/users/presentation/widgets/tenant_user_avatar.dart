@@ -71,10 +71,8 @@ class TenantUserAvatar extends ConsumerWidget {
   }
 
   String _initials(String name) {
-    final parts = name
-        .split(RegExp(r'\s+'))
-        .where((part) => part.isNotEmpty)
-        .toList();
+    final parts =
+        name.split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
     return parts.take(2).map((part) => part[0].toUpperCase()).join();
   }
 }

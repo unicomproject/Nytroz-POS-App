@@ -2214,44 +2214,44 @@ class _ProductsDataTableCard extends ConsumerWidget {
                             ),
                           ),
                           DataCell(
-                        showActions
-                            ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (canEdit || canStatus || canDelete)
-                                    PopupMenuButton<String>(
-                                      tooltip: 'Actions',
-                                      icon: const Icon(
-                                        Icons.more_vert,
-                                        size: 20,
-                                      ),
-                                      itemBuilder: (context) => [
-                                        if (canEdit)
-                                          const PopupMenuItem(
-                                            value: 'edit',
-                                            child: Text('Edit'),
+                            showActions
+                                ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (canEdit || canStatus || canDelete)
+                                        PopupMenuButton<String>(
+                                          tooltip: 'Actions',
+                                          icon: const Icon(
+                                            Icons.more_vert,
+                                            size: 20,
                                           ),
-                                        if (canStatus)
-                                          const PopupMenuItem(
-                                            value: 'status',
-                                            child: Text('Change status'),
-                                          ),
-                                        if (canDelete)
-                                          const PopupMenuItem(
-                                            value: 'delete',
-                                            child: Text('Delete'),
-                                          ),
-                                      ],
-                                      onSelected: (value) {
-                                        if (value == 'edit') {
-                                          context.go(
-                                            '/tenant-admin/products/${product.id}/edit',
-                                          );
-                                        }
-                                      },
-                                    ),
-                                ],
-                              )
+                                          itemBuilder: (context) => [
+                                            if (canEdit)
+                                              const PopupMenuItem(
+                                                value: 'edit',
+                                                child: Text('Edit'),
+                                              ),
+                                            if (canStatus)
+                                              const PopupMenuItem(
+                                                value: 'status',
+                                                child: Text('Change status'),
+                                              ),
+                                            if (canDelete)
+                                              const PopupMenuItem(
+                                                value: 'delete',
+                                                child: Text('Delete'),
+                                              ),
+                                          ],
+                                          onSelected: (value) {
+                                            if (value == 'edit') {
+                                              context.go(
+                                                '/tenant-admin/products/${product.id}/edit',
+                                              );
+                                            }
+                                          },
+                                        ),
+                                    ],
+                                  )
                                 : const _EmptyTableText('Hidden'),
                           ),
                         ],

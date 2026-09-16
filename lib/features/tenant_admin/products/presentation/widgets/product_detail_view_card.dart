@@ -149,18 +149,21 @@ String _formatCurrency(double value) {
 class _ProductImageCard extends StatelessWidget {
   const _ProductImageCard({
     required this.detail,
-    this.compact = false,  });
+    this.compact = false,
+  });
 
   final TenantProductDetail detail;
-  final bool compact;
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
       title: 'Product Image',
-      compact: compact,      child: AspectRatio(
-              aspectRatio: 1.1,
-              child: _buildImageContent(),
-            ),
+      compact: compact,
+      child: AspectRatio(
+        aspectRatio: 1.1,
+        child: _buildImageContent(),
+      ),
     );
   }
 
@@ -331,7 +334,8 @@ class _ChannelVisibilitySection extends StatelessWidget {
             color: TenantAdminColors.bodyText,
           ),
         ),
-        SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+        SizedBox(
+            height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -343,7 +347,8 @@ class _ChannelVisibilitySection extends StatelessWidget {
                 compact: compact,
               ),
             ),
-            SizedBox(width: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+            SizedBox(
+                width: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
             Expanded(
               child: _ChannelItem(
                 icon: Icons.shopping_cart_outlined,
@@ -424,17 +429,20 @@ class _InfoGrid extends StatelessWidget {
 class _PricingSummaryCard extends StatelessWidget {
   const _PricingSummaryCard({
     required this.detail,
-    this.compact = false,    this.stretch = false,
+    this.compact = false,
+    this.stretch = false,
   });
 
   final TenantProductDetail detail;
-  final bool compact;  final bool stretch;
+  final bool compact;
+  final bool stretch;
 
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
       title: 'Pricing Summary',
-      compact: compact,      stretch: stretch,
+      compact: compact,
+      stretch: stretch,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -475,12 +483,14 @@ class _InventorySummaryCard extends StatelessWidget {
   const _InventorySummaryCard({
     required this.detail,
     required this.stockStatus,
-    this.compact = false,    this.stretch = false,
+    this.compact = false,
+    this.stretch = false,
   });
 
   final TenantProductDetail detail;
   final String stockStatus;
-  final bool compact;  final bool stretch;
+  final bool compact;
+  final bool stretch;
 
   @override
   Widget build(BuildContext context) {
@@ -490,7 +500,8 @@ class _InventorySummaryCard extends StatelessWidget {
 
     return _SectionCard(
       title: 'Inventory Summary',
-      compact: compact,      stretch: stretch,
+      compact: compact,
+      stretch: stretch,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -525,12 +536,14 @@ class _VariantSummaryCard extends StatelessWidget {
   const _VariantSummaryCard({
     required this.detail,
     this.canUpdate = false,
-    this.compact = false,    this.stretch = false,
+    this.compact = false,
+    this.stretch = false,
   });
 
   final TenantProductDetail detail;
   final bool canUpdate;
-  final bool compact;  final bool stretch;
+  final bool compact;
+  final bool stretch;
 
   @override
   Widget build(BuildContext context) {
@@ -542,7 +555,8 @@ class _VariantSummaryCard extends StatelessWidget {
 
     return _SectionCard(
       title: 'Variant Summary',
-      compact: compact,      stretch: stretch,
+      compact: compact,
+      stretch: stretch,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -610,7 +624,8 @@ class _ChannelItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+      padding: EdgeInsets.all(
+          compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
@@ -618,7 +633,8 @@ class _ChannelItem extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: compact ? 16 : 18, color: TenantAdminColors.bodyText),
+          Icon(icon,
+              size: compact ? 16 : 18, color: TenantAdminColors.bodyText),
           const SizedBox(width: TenantAdminSpacing.sm),
           Expanded(
             child: Text(
@@ -730,12 +746,14 @@ class _SectionCard extends StatelessWidget {
   const _SectionCard({
     required this.title,
     required this.child,
-    this.compact = false,    this.stretch = false,
+    this.compact = false,
+    this.stretch = false,
   });
 
   final String title;
   final Widget child;
-  final bool compact;  final bool stretch;
+  final bool compact;
+  final bool stretch;
 
   @override
   Widget build(BuildContext context) {
@@ -750,11 +768,9 @@ class _SectionCard extends StatelessWidget {
             color: TenantAdminColors.bodyText,
           ),
         ),
-        SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.lg),
-        if (stretch)
-          Expanded(child: child)
-        else
-          child,
+        SizedBox(
+            height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.lg),
+        if (stretch) Expanded(child: child) else child,
       ],
     );
 
@@ -766,7 +782,8 @@ class _SectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
         border: Border.all(color: TenantAdminColors.border),
       ),
-      padding: EdgeInsets.all(compact ? TenantAdminSpacing.md : TenantAdminSpacing.xl),
+      padding: EdgeInsets.all(
+          compact ? TenantAdminSpacing.md : TenantAdminSpacing.xl),
       child: content,
     );
   }

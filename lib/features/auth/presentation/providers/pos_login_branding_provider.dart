@@ -46,24 +46,24 @@ class PosLoginBrandingController extends StateNotifier<PosLoginBranding> {
   Future<void> load() async {
     if (_loading || _disposed) return;
     _loading = true;
-    
+
     try {
       final slug = (await _readTenantSlug()).trim().toLowerCase();
       if (_disposed) return;
-      
+
       if (slug.isEmpty) {
         // No tenant identity → keep unloaded shell (no local artwork fallback).
         state = PosLoginBranding.unloaded;
         return;
       }
-      
+
       final cached = await _repository.readCached(slug);
       if (_disposed) return;
-      
+
       if (cached != null) {
         state = cached;
       }
-      
+
       try {
         final refreshed = await _repository.refresh(slug);
         if (_disposed) return;
