@@ -71,6 +71,9 @@ class NotificationSocketClient {
 
     _teardownChannel();
 
+    final token = await fetchToken();
+    if (token == null || _disposed) return;
+
     final uri =
         Uri.parse('$_wsBaseUrl${ApiEndpoints.tenantNotificationsSocketPath}')
             .replace(queryParameters: {'access_token': token});

@@ -54,6 +54,8 @@ class _ReadyForCollectionScreenState
         ref.watch(authSessionProvider)?.permissionCodes.toSet() ?? const {};
     final canViewReady = PosPermissionAccess.canViewOnlineOrderReady(granted);
     final canNotify = PosPermissionAccess.canNotifyOnlineOrderCustomer(granted);
+    final canVerify = PosPermissionAccess.canVerifyOnlineOrderPickup(granted);
+    final canComplete = PosPermissionAccess.canCompleteOnlineOrderCollection(granted);
 
     if (!canViewReady) {
       return const OnlineOrderScreenState(
@@ -106,6 +108,8 @@ class _ReadyForCollectionScreenState
         error: _error,
         success: _success,
         onNotify: canNotify && !_busy ? () => unawaited(_notify(order)) : null,
+        onVerify: canVerify && !_busy ? () => unawaited(_verify(order)) : null,
+        onComplete: canComplete && !_busy ? () => unawaited(_complete(order)) : null,
       );
       final right = _ReadyRightColumn(
         order: order,
