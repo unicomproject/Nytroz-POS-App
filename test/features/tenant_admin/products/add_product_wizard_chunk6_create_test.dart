@@ -326,7 +326,7 @@ void main() {
     test('17. SIMPLE navigation regression still reaches Step 7', () async {
       await fillSimpleToStep7();
       expect(controller.wizardState.currentStep, 7);
-      expect(controller.isStepApplicable(5), isFalse);
+      expect(controller.isStepApplicable(4), isFalse);
     });
 
     test('18. VARIANT navigation regression still reaches Step 7', () async {
