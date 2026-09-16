@@ -41,4 +41,19 @@ class NotificationsApi {
   Future<void> markAllRead() {
     return _dio.put<void>(ApiEndpoints.tenantNotificationsReadAll);
   }
+
+  /// The full session access token carries every granted permission code as a
+  /// claim, which can grow large enough to push the WebSocket handshake's
+  /// request line (the token travels via query string, since browsers cannot
+  /// set custom headers on a WebSocket upgrade) past the server's request-line
+  /// limit -- failing the handshake with HTTP 414 before it ever connects.
+  /// This exchanges the full token for a minimal, short-lived one scoped only
+  /// to opening the notifications socket.
+  Future<String?> fetchSocketToken() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiEndpoints.tenantNotificationsSocketToken,
+    );
+    final token = response.data?['data']?['accessToken'];
+    return token is String && token.isNotEmpty ? token : null;
+  }
 }

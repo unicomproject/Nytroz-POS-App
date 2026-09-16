@@ -12,7 +12,9 @@ class CreateOutletRequestDto {
     this.contactEmail,
     this.imageMediaAssetId,
     this.imageOperation = OutletImageOperation.keep,
+    required this.isCentralOutlet,
     required this.isDefaultOutlet,
+    this.idempotencyKey,
     this.managerId,
     required this.addressLine1,
     this.addressLine2,
@@ -36,7 +38,9 @@ class CreateOutletRequestDto {
       contactEmail: form.contactEmail,
       imageMediaAssetId: form.imageMediaAssetId,
       imageOperation: form.imageOperation,
+      isCentralOutlet: form.isCentralOutlet,
       isDefaultOutlet: form.isDefaultOutlet,
+      idempotencyKey: form.idempotencyKey,
       managerId: form.managerId,
       addressLine1: form.addressLine1.trim(),
       addressLine2: form.addressLine2,
@@ -59,7 +63,9 @@ class CreateOutletRequestDto {
   final String? contactEmail;
   final String? imageMediaAssetId;
   final OutletImageOperation imageOperation;
+  final bool isCentralOutlet;
   final bool isDefaultOutlet;
+  final String? idempotencyKey;
   final String? managerId;
   final String addressLine1;
   final String? addressLine2;
@@ -78,7 +84,9 @@ class CreateOutletRequestDto {
       'timezone': timezone.trim(),
       'status': _mapStatus(status),
       'outletType': _mapOutletType(outletType),
+      'isCentralOutlet': isCentralOutlet,
       'isDefaultOutlet': isDefaultOutlet,
+      if (_nullable(managerId) != null) 'managerTenantUserId': _nullable(managerId),
       if (_nullable(mainPhoneNumber) != null)
         'phone': _nullable(mainPhoneNumber),
       if (_nullable(emailAddress) != null) 'email': _nullable(emailAddress),
@@ -154,6 +162,7 @@ class CreateOutletRequestDto {
           'dayOfWeek': _dayOfWeek(hour.day),
           if (!hour.closed) 'openingTime': _normalizeTime(hour.openTime),
           if (!hour.closed) 'closingTime': _normalizeTime(hour.closeTime),
+          if (!hour.closed && hour.overnight) 'spansNextDay': true,
           'isClosed': hour.closed,
         },
     ];

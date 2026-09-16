@@ -21,9 +21,11 @@ class HardwareDevice {
     this.activeAssignmentId,
     this.assignedTillId,
     this.assignedPosDeviceId,
+    this.configurationVersion = 1,
   });
 
   final String hardwareDeviceId;
+  final int configurationVersion;
   final String hardwareDeviceCode;
   final String hardwareDeviceName;
   final String hardwareDeviceType;

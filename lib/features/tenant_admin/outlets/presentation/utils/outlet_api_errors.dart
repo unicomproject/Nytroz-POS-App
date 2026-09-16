@@ -69,6 +69,18 @@ Map<String, String> outletValidationErrors(DioException error) {
   return mapped;
 }
 
+String _mapCustomErrorMessages(String key, String message) {
+  final lowerMessage = message.toLowerCase();
+  if (key == 'outletCode' && (lowerMessage.contains('already exists') || lowerMessage.contains('duplicate'))) {
+    return 'This outlet code is already used. Generate a new code and try again.';
+  }
+  if ((key.contains('holiday') || key.contains('specialDays') || lowerMessage.contains('holiday')) && 
+      (lowerMessage.contains('already exists') || lowerMessage.contains('duplicate'))) {
+    return 'A special day already exists for this date.';
+  }
+  return message;
+}
+
 void _addFieldErrors(Map<String, String> mapped, Object? source) {
   if (source is List) {
     for (final item in source) {
@@ -83,7 +95,7 @@ void _addFieldErrors(Map<String, String> mapped, Object? source) {
       }
 
       final key = outletBackendFieldAliases[field] ?? field;
-      mapped[key] = message;
+      mapped[key] = _mapCustomErrorMessages(key, message);
     }
     return;
   }
@@ -96,7 +108,7 @@ void _addFieldErrors(Map<String, String> mapped, Object? source) {
           ? value.first.toString()
           : value.toString();
       final key = outletBackendFieldAliases[field] ?? field;
-      mapped[key] = message;
+      mapped[key] = _mapCustomErrorMessages(key, message);
     }
   }
 }

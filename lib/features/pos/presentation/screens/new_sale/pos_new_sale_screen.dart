@@ -187,11 +187,7 @@ class _PosNewSaleScreenState extends ConsumerState<PosNewSaleScreen>
         _openCameraScanner();
       }
     });
-    final hidModes = {'usbHid', 'bluetoothHid', 'hid'};
-    final scannerEnabled = (ModalRoute.of(context)?.isCurrent ?? true) &&
-        scannerConfiguration != null &&
-        scannerConfiguration.enabled &&
-        hidModes.contains(scannerConfiguration.mode);
+    final scannerEnabled = ModalRoute.of(context)?.isCurrent ?? true;
     final suffix = scannerConfiguration?.inputSuffix == 'newline'
         ? PosScannerSuffix.newline
         : PosScannerSuffix.enter;

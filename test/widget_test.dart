@@ -1259,6 +1259,24 @@ Future<void> _pumpPosHome(
       baseUrl: 'https://test.local',
     ),
   );
+  // End Shift loads drawer data after navigation; keep this widget fixture
+  // independent of real HTTP connections and their retry timers.
+  testDio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
+    if (options.path == '/api/v1/pos/cash-drawer/summary') {
+      handler.resolve(Response(requestOptions: options, data: {
+        'status': 'OPEN',
+        'tillSessionId': 'test-session',
+        'tillId': 'test-till',
+        'openingCash': 1000,
+        'currentExpectedCash': 1000,
+        'currencyCode': 'LKR',
+      }));
+    } else if (options.path == '/api/v1/pos/cash-drawer/movements') {
+      handler.resolve(Response(requestOptions: options, data: {'items': []}));
+    } else {
+      handler.next(options);
+    }
+  }));
   final testSession = AuthSession(
     accessToken: 'test-access-token',
     userId: 'test-user',
@@ -1777,10 +1795,10 @@ PosHomeDashboardState _referenceDashboardState(
           description: 'Review incoming online orders from one place.',
           iconKey: 'online-orders',
           buttonLabel: 'View Orders',
-      isEnabled: PosPermissionAccess.canViewOnlineOrders(permissions) ||
-        permissions.contains(PosPermissionCodes.manageOnlineOrders) ||
-        permissions
-          .contains(PosPermissionCodes.homeActionsOnlineOrdersEntry),
+          isEnabled: PosPermissionAccess.canViewOnlineOrders(permissions) ||
+              permissions.contains(PosPermissionCodes.manageOnlineOrders) ||
+              permissions
+                  .contains(PosPermissionCodes.homeActionsOnlineOrdersEntry),
           routeExists: false,
           onTapActionKey: 'manage-online-orders',
           featureKey: PosFeatureCodes.onlineOrders,

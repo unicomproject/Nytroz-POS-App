@@ -23,12 +23,20 @@ class ReadyForCollectionScreen extends ConsumerStatefulWidget {
     required this.order,
     required this.onBack,
     this.onBackToReviewPack,
+    this.prefilledPickupCode,
     super.key,
   });
 
   final PosPickingOrder order;
   final VoidCallback onBack;
   final VoidCallback? onBackToReviewPack;
+
+  /// Already-scanned pickup code, carried over from a blind "Scan to
+  /// Collect" scan (see [PosScanToCollectScreen]) that landed the cashier
+  /// directly here without them re-scanning. Consumed on the first Verify
+  /// tap; a later retry (e.g. after a mismatch) falls back to the normal
+  /// in-screen camera scan.
+  final String? prefilledPickupCode;
 
   @override
   ConsumerState<ReadyForCollectionScreen> createState() =>
@@ -40,6 +48,11 @@ class _ReadyForCollectionScreenState
   bool _busy = false;
   String? _error;
   String? _success;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {

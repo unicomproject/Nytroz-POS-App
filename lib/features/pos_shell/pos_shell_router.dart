@@ -392,6 +392,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
                   _canViewOnlineOrderWorkspace(ref.read(authSessionProvider))
                       ? PosOnlineOrderPickingScreen(
                           orderId: state.pathParameters['orderId']!,
+                          prefilledPickupCode: state.extra as String?,
                         )
                       : const TenantAdminForbiddenScreen(),
             ),
@@ -539,6 +540,12 @@ _PosShellHeader _headerForPath(String path) {
     return const _PosShellHeader(
       title: 'Pick Order',
       subtitle: 'Review the assigned items and inventory locations.',
+    );
+  }
+  if (path == '/pos/online-orders/scan') {
+    return const _PosShellHeader(
+      title: 'Scan to Collect',
+      subtitle: "Scan the customer's QR to find their order.",
     );
   }
   final title = switch (path) {

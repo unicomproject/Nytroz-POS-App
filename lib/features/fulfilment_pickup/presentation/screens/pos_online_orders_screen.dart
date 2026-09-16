@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../sale/presentation/widgets/new_sale/pos_barcode_scanner_listener.dart';
-import '../../../auth/presentation/providers/session_provider.dart';
-import '../../../../core/access/pos_permission_access.dart';
 
+import '../../../../core/access/pos_permission_access.dart';
+import '../../../auth/presentation/providers/session_provider.dart';
+import '../../../sale/presentation/widgets/new_sale/pos_barcode_scanner_listener.dart';
 import '../providers/pos_online_orders_provider.dart';
 import '../widgets/online_order_ui.dart';
 import '../widgets/oo01_online_orders_widgets.dart';

@@ -48,6 +48,8 @@ class ReceiptPrinterPlugin private constructor(
     private val pendingUsbPermission = AtomicReference<MethodChannel.Result?>(null)
     private var bluetoothSocket: BluetoothSocket? = null
     private var connectedBluetoothAddress: String? = null
+    @Volatile private var lastBluetoothWriteAt: Long? = null
+    @Volatile private var lastBluetoothWriteAddress: String? = null
 
     private val usbPermissionReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -100,6 +102,13 @@ class ReceiptPrinterPlugin private constructor(
                 runBg(result) { usbWrite(args) }
             }
             "bluetoothIsEnabled" -> result.success(bluetoothAdapter()?.isEnabled == true)
+            "bluetoothObservation" -> {
+                // Passive snapshot only: never connects, writes, disconnects or requests permission.
+                val address = call.argument<String>("address")?.trim()?.uppercase()
+                val observed = lastBluetoothWriteAt
+                result.success(mapOf("observedAt" to
+                    if (address == lastBluetoothWriteAddress) observed else null))
+            }
             "bluetoothListBonded" -> runBg(result) { bluetoothListBonded() }
             "bluetoothConnect" -> {
                 val address = call.argument<String>("address") ?: ""
@@ -466,11 +475,15 @@ class ReceiptPrinterPlugin private constructor(
                 val output = socket.outputStream
                 output.write(bytes)
                 output.flush()
+                lastBluetoothWriteAddress = address
+                lastBluetoothWriteAt = System.currentTimeMillis()
                 return mapOf(
                     "bytesWritten" to bytes.size,
                     "address" to address,
                 )
             } catch (error: IOException) {
+                lastBluetoothWriteAt = null
+                lastBluetoothWriteAddress = null
                 closeBluetoothQuietly()
                 throw PluginException("WRITE_FAILED", "Bluetooth write failed: ${error.message}")
             }
