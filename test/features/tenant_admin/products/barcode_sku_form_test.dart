@@ -58,7 +58,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify UI components exist
-    expect(find.text('Barcode & SKU'), findsOneWidget);
+    expect(find.text('Sellable Identity'), findsOneWidget);
     expect(find.text('Base SKU *'), findsOneWidget);
     expect(find.text('Apply'), findsOneWidget);
     expect(find.text('Parent Product Barcode'), findsOneWidget);
@@ -102,7 +102,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Barcode & SKU Assignment'), findsOneWidget);
+    expect(find.text('Sellable Identity Assignment'), findsOneWidget);
     expect(find.text('t-shirt'), findsWidgets);
     expect(find.byType(Checkbox), findsNothing);
     expect(find.text('Scan'), findsOneWidget);
@@ -151,7 +151,7 @@ void main() {
     await tester.tap(find.text('Apply'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Barcode & SKU Assignment'), findsOneWidget);
+    expect(find.text('Sellable Identity Assignment'), findsOneWidget);
     expect(find.text('220210'), findsOneWidget);
     expect(find.text('11110001'), findsOneWidget);
 

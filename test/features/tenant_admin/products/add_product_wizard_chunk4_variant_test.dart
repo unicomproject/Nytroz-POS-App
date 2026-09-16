@@ -148,10 +148,11 @@ void main() {
     controller.skipScanStepForTesting();
     controller.updateProductName('Color Tee');
     controller.updateCategory('cat-1');
+    controller.updateInternalCode('ITM-001');
     await controller.saveAndContinue();
     controller.setProductStructure('VARIANT');
     await controller.saveAndContinue();
-    expect(controller.wizardState.currentStep, 4);
+    expect(controller.wizardState.currentStep, 5);
   }
 
   Future<void> generateColorSizeMatrix() async {
@@ -190,16 +191,16 @@ void main() {
   });
 
   group('Chunk 4 VARIANT flow', () {
-    test('1. VARIANT Step 2 → Step 4', () async {
+    test('1. VARIANT Step 2 → Step 5', () async {
       await goToStep4Variant();
-      expect(controller.isStepApplicable(3), isFalse);
+      expect(controller.isStepApplicable(4), isFalse); // step 4 is skipped
     });
 
-    test('2. Step 3 never renders for VARIANT', () async {
+    test('2. Step 4 never renders for VARIANT (trackInventory=false)', () async {
       await goToStep4Variant();
-      expect(controller.getNextApplicableStep(2), 4);
-      expect(controller.getPreviousApplicableStep(4), 2);
-      expect(controller.isStepApplicable(3), isFalse);
+      expect(controller.getNextApplicableStep(3), 5);
+      expect(controller.getPreviousApplicableStep(5), 3);
+      expect(controller.isStepApplicable(4), isFalse);
     });
 
     test('3/4. Generate Variants creates local combinations with zero mutation',
@@ -234,10 +235,9 @@ void main() {
       expect(redSmall.clientCombinationKey, expected);
     });
 
-    test('6. Step 4 → Step 5 transfers generated variants', () async {
+    test('6. Step 5 Variant generation also prepares Barcode/SKU assignments', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
-      expect(await controller.saveAndContinue(), isTrue);
       expect(controller.wizardState.currentStep, 5);
       expect(controller.wizardState.step5State.assignments.length, 4);
       expect(
@@ -250,7 +250,6 @@ void main() {
     test('7. fresh VARIANT Step 5 requires no productVariantId', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
-      await controller.saveAndContinue();
       await assignAllSkus();
       expect(
         controller.wizardState.step5State.assignments
@@ -275,7 +274,6 @@ void main() {
     test('9. duplicate local SKU validation', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
-      await controller.saveAndContinue();
       final keys = controller.wizardState.step5State.assignments
           .map((a) => a.clientCombinationKey)
           .toList();
@@ -294,7 +292,6 @@ void main() {
     test('10. duplicate local barcode validation', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
-      await controller.saveAndContinue();
       final keys = controller.wizardState.step5State.assignments
           .map((a) => a.clientCombinationKey)
           .toList();
@@ -321,7 +318,6 @@ void main() {
     test('11. Step 5 incomplete assignment blocks Continue', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
-      await controller.saveAndContinue();
       expect(await controller.saveAndContinue(), isFalse);
       expect(controller.wizardState.currentStep, 5);
       expect(controller.wizardState.fieldErrors.containsKey('sku'), isTrue);
@@ -330,31 +326,28 @@ void main() {
     test('12. complete Step 5 → Step 6', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
-      await controller.saveAndContinue();
       await assignAllSkus();
       expect(await controller.saveAndContinue(), isTrue);
       expect(controller.wizardState.currentStep, 6);
     });
 
-    test('13. Step 5 Back → Step 4', () async {
+    test('13. Step 5 Back → Step 3', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
-      await controller.saveAndContinue();
       controller.goToPreviousApplicableStep();
-      expect(controller.wizardState.currentStep, 4);
+      expect(controller.wizardState.currentStep, 3);
     });
 
     test('14. identifier values survive Back/Forward', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
-      await controller.saveAndContinue();
       await assignAllSkus();
       final before = {
         for (final a in controller.wizardState.step5State.assignments)
           a.clientCombinationKey: a.sku
       };
-      controller.goToPreviousApplicableStep();
-      expect(await controller.saveAndContinue(), isTrue);
+      controller.goToPreviousApplicableStep(); // Step 4
+      expect(await controller.saveAndContinue(), isTrue); // Back to Step 5
       final after = {
         for (final a in controller.wizardState.step5State.assignments)
           a.clientCombinationKey: a.sku
@@ -362,20 +355,20 @@ void main() {
       expect(after, before);
     });
 
-    test('15. reconciliation after Step 4 changes', () async {
+    test('15. reconciliation after Step 5 changes', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
-      await controller.saveAndContinue();
       await assignAllSkus();
       final redSmall = controller.wizardState.step4State.generatedVariants
           .firstWhere((v) => v.combinationLabel == 'Red / Small');
       final blueSmall = controller.wizardState.step4State.generatedVariants
           .firstWhere((v) => v.combinationLabel == 'Blue / Small');
       final keptSku = controller.wizardState.step5State.assignments
-          .firstWhere((a) => a.clientCombinationKey == redSmall.clientCombinationKey)
+          .firstWhere(
+              (a) => a.clientCombinationKey == redSmall.clientCombinationKey)
           .sku;
 
-      controller.goToPreviousApplicableStep(); // Step 4
+      // Same step
       controller.confirmDeleteVariant(blueSmall.clientCombinationKey);
       expect(
         controller.wizardState.step5State.assignments
@@ -394,7 +387,6 @@ void main() {
     test('16. Step 6 → Step 7', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
-      await controller.saveAndContinue();
       await assignAllSkus();
       await controller.saveAndContinue();
       controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
@@ -408,7 +400,6 @@ void main() {
         (tester) async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
-      await controller.saveAndContinue();
       await assignAllSkus();
       await controller.saveAndContinue();
       controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
@@ -447,7 +438,6 @@ void main() {
     test('19. full flow performs zero Product DB mutation', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
-      await controller.saveAndContinue();
       await assignAllSkus();
       await controller.saveAndContinue();
       controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
@@ -462,22 +452,19 @@ void main() {
 
     test('20. SIMPLE regression flow still passes', () async {
       await controller.initWizard();
-    controller.skipScanStepForTesting();
+      controller.skipScanStepForTesting();
       controller.updateProductName('Simple Still Works');
       controller.updateCategory('cat-1');
+      controller.updateInternalCode('ITM-002');
       await controller.saveAndContinue();
       controller.setProductStructure('SIMPLE');
-      await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 3);
-      controller.selectUnitModel('SINGLE_UNIT');
-      controller.setProductUnit('unit-1');
       await controller.saveAndContinue();
       expect(controller.wizardState.currentStep, 5);
       controller.updateSimpleBaseSku('SIMPLE-SKU');
       await controller.saveAndContinue();
       expect(controller.wizardState.currentStep, 6);
       expect(controller.wizardState.step5State.baseSku, 'SIMPLE-SKU');
-      expect(controller.isStepApplicable(4), isFalse);
+      expect(controller.isStepApplicable(5), isTrue);
     });
   });
 }

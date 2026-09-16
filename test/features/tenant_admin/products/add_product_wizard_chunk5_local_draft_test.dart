@@ -1,4 +1,4 @@
-﻿import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/datasources/local/product_wizard_draft_local_datasource.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_draft_response_dto.dart';
@@ -171,6 +171,7 @@ void main() {
     await controller.initWizard();
     controller.skipScanStepForTesting();
     controller.updateProductName('Local Simple Draft');
+      controller.updateInternalCode('ITM-001');
     controller.updateCategory('cat-1');
     await controller.saveAndContinue();
     controller.setProductStructure('SIMPLE');
@@ -252,7 +253,7 @@ void main() {
 
     test('11. Step 6 pricing/tax restores', () async {
       await fillSimpleThroughStep5();
-      await controller.saveAndContinue(); // â†’ 6
+      await controller.saveAndContinue(); // → 6
       controller.updateCostPrice(100);
       controller.updateStandardSellingPrice(150);
       controller.updateDiscountPrice(140);
@@ -292,11 +293,12 @@ void main() {
       await controller.initWizard();
     controller.skipScanStepForTesting();
       controller.updateProductName('Variant Draft');
+      controller.updateInternalCode('ITM-001');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
       controller.setProductStructure('VARIANT');
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 4);
+      expect(controller.wizardState.currentStep, 5);
 
       controller.addAttributeRow();
       controller.updateAttributeName(0, 'Color');
@@ -328,8 +330,8 @@ void main() {
       final resumed = AddProductWizardController(repo, draftLocal: draftLocal);
       await resumed.initWizard(resumeLocalDraftId: id);
       expect(resumed.wizardState.currentStep, 5);
-      expect(resumed.isStepApplicable(3), isFalse);
-      expect(resumed.wizardState.currentStep, isNot(3));
+      expect(resumed.isStepApplicable(4), isFalse);
+      expect(resumed.wizardState.currentStep, isNot(4));
       expect(resumed.wizardState.step4State.generatedVariants.length, 4);
       final keysAfter = resumed.wizardState.step4State.generatedVariants
           .map((v) => v.clientCombinationKey)
@@ -348,7 +350,7 @@ void main() {
       await controller.saveDraft();
       final id = controller.wizardState.localDraftId!;
       expect(await localStore.getDraft(id), isNotNull);
-      // Cancel only navigates â€” does not call deleteDraft.
+      // Cancel only navigates — does not call deleteDraft.
       expect(await draftLocal.getAllDrafts(), hasLength(1));
     });
 
@@ -389,11 +391,12 @@ void main() {
       await controller.initWizard();
     controller.skipScanStepForTesting();
       controller.updateProductName('Simple Still');
+      controller.updateInternalCode('ITM-001');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
       controller.setProductStructure('SIMPLE');
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 3);
+      expect(controller.wizardState.currentStep, 5);
       controller.selectUnitModel('SINGLE_UNIT');
       controller.setProductUnit('unit-1');
       await controller.saveAndContinue();
@@ -404,12 +407,13 @@ void main() {
       await controller.initWizard();
     controller.skipScanStepForTesting();
       controller.updateProductName('Variant Still');
+      controller.updateInternalCode('ITM-001');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
       controller.setProductStructure('VARIANT');
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 4);
-      expect(controller.isStepApplicable(3), isFalse);
+      expect(controller.wizardState.currentStep, 5);
+      expect(controller.isStepApplicable(4), isFalse);
     });
 
     test('24. Save & Continue remains zero Product persistence', () async {
@@ -429,9 +433,10 @@ void main() {
       await controller.initWizard();
     controller.skipScanStepForTesting();
       controller.updateProductName('Early Draft');
-      // No category â€” Save & Continue would fail; Save Draft must succeed.
+      controller.updateInternalCode('ITM-001');
+      // No category — Save & Continue would fail; Save Draft must succeed.
       expect(await controller.saveDraft(), isTrue);
-      expect(controller.wizardState.currentStep, 1);
+      expect(controller.wizardState.currentStep, 2);
       final draft = await localStore.getDraft(controller.wizardState.localDraftId!);
       expect(draft!.productName, 'Early Draft');
     });
