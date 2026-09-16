@@ -224,8 +224,7 @@ class AndroidDirectPrinterController
       await adapter.disconnect();
       state = state.copyWith(
         isBusy: false,
-        message:
-            'Test bytes accepted by transport (${bytes.length} bytes). '
+        message: 'Test bytes accepted by transport (${bytes.length} bytes). '
             'Paper completion is not proven by raw write alone.',
       );
     } on PrinterException catch (error) {
@@ -250,8 +249,8 @@ class AndroidDirectPrinterController
   }
 }
 
-final androidDirectPrinterControllerProvider = StateNotifierProvider.autoDispose<
-    AndroidDirectPrinterController, AndroidDirectPrinterState>(
+final androidDirectPrinterControllerProvider = StateNotifierProvider
+    .autoDispose<AndroidDirectPrinterController, AndroidDirectPrinterState>(
   (ref) => AndroidDirectPrinterController(ref),
 );
 

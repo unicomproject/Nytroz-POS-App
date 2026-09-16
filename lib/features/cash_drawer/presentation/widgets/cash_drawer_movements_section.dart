@@ -144,8 +144,7 @@ class _MovementsTable extends ConsumerWidget {
         const Expanded(flex: 2, child: _TableHeaderCell('Amount')),
       if (showDate)
         const Expanded(flex: 2, child: _TableHeaderCell('Date & Time')),
-      if (showCashier)
-        const Expanded(flex: 2, child: _TableHeaderCell('User')),
+      if (showCashier) const Expanded(flex: 2, child: _TableHeaderCell('User')),
     ];
 
     if (headers.isEmpty) {

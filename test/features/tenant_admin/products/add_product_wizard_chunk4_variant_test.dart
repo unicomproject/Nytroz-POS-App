@@ -145,6 +145,7 @@ void main() {
 
   Future<void> goToStep4Variant() async {
     await controller.initWizard();
+    controller.skipScanStepForTesting();
     controller.updateProductName('Color Tee');
     controller.updateCategory('cat-1');
     await controller.saveAndContinue();
@@ -461,6 +462,7 @@ void main() {
 
     test('20. SIMPLE regression flow still passes', () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Simple Still Works');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();

@@ -417,9 +417,8 @@ class _HistoryCell extends StatelessWidget {
             : emphasize
                 ? FontWeight.w700
                 : FontWeight.w500,
-        color: isHeader
-            ? TenantAdminColors.mutedText
-            : TenantAdminColors.bodyText,
+        color:
+            isHeader ? TenantAdminColors.mutedText : TenantAdminColors.bodyText,
       ),
     );
   }

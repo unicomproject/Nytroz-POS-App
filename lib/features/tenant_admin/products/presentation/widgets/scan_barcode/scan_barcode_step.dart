@@ -189,8 +189,7 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
           ScanBarcodePanel.noLocalMatch => _buildNoLocalMatch(context, scan),
           ScanBarcodePanel.externalLookup =>
             _buildExternalLookup(context, scan),
-          ScanBarcodePanel.externalFound =>
-            _buildExternalFound(context, scan),
+          ScanBarcodePanel.externalFound => _buildExternalFound(context, scan),
           ScanBarcodePanel.externalNoMatch =>
             _buildExternalNoMatch(context, scan),
           ScanBarcodePanel.manualEntry => _buildManualEntry(context, scan),
@@ -258,7 +257,8 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                       ),
                       decoration: BoxDecoration(
                         color: TenantAdminColors.subtleBackground,
-                        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
                         border: Border.all(color: TenantAdminColors.border),
                       ),
                       child: Column(
@@ -315,7 +315,8 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                           child: _ShortcutCard(
                             onTap: scan.isBusy
                                 ? null
-                                : () => widget.controller.openManualBarcodeEntry(),
+                                : () =>
+                                    widget.controller.openManualBarcodeEntry(),
                             icon: Icons.keyboard_outlined,
                             title: 'Enter barcode manually',
                           ),
@@ -516,7 +517,9 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                   ? null
                   : () => widget.controller.runExternalLookup(),
               child: Text(
-                isTempFailure ? 'Retry Search Product Data' : 'Search Product Data',
+                isTempFailure
+                    ? 'Retry Search Product Data'
+                    : 'Search Product Data',
               ),
             ),
             OutlinedButton(
@@ -528,8 +531,8 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
               child: const Text('Enter details manually'),
             ),
             OutlinedButton(
-              onPressed: () => widget.controller
-                  .backToScan(clearValidatedCandidate: false),
+              onPressed: () =>
+                  widget.controller.backToScan(clearValidatedCandidate: false),
               child: const Text('Back'),
             ),
           ],
@@ -616,8 +619,7 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
 
               final image = (s?.imageCandidate ?? '').isNotEmpty
                   ? ClipRRect(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.md),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                       child: Image.network(
                         s!.imageCandidate!,
                         width: twoCol ? 120 : double.infinity,
@@ -750,13 +752,16 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          scan.inputMode == 'MANUAL' ? 'Manually entered barcode' : 'Scanned barcode',
+                          scan.inputMode == 'MANUAL'
+                              ? 'Manually entered barcode'
+                              : 'Scanned barcode',
                           style: TenantAdminTextStyles.muted(context),
                         ),
                         const SizedBox(height: TenantAdminSpacing.xs),
                         Text(
                           scan.candidateBarcode,
-                          style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+                          style: TenantAdminTextStyles.sectionTitle(context)
+                              .copyWith(
                             fontSize: 32,
                             letterSpacing: 2.0,
                           ),
@@ -765,18 +770,22 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFE8F5EF),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.check_circle_outline, color: TenantAdminColors.primary, size: 16),
+                                  const Icon(Icons.check_circle_outline,
+                                      color: TenantAdminColors.primary,
+                                      size: 16),
                                   const SizedBox(width: 4),
                                   Text(
                                     'Valid barcode',
-                                    style: TenantAdminTextStyles.body(context).copyWith(
+                                    style: TenantAdminTextStyles.body(context)
+                                        .copyWith(
                                       color: TenantAdminColors.primary,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -785,18 +794,25 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                               ),
                             ),
                             const SizedBox(width: TenantAdminSpacing.md),
-                            const Text('|', style: TextStyle(color: TenantAdminColors.border)),
+                            const Text('|',
+                                style:
+                                    TextStyle(color: TenantAdminColors.border)),
                             const SizedBox(width: TenantAdminSpacing.md),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: Colors.transparent,
-                                border: Border.all(color: TenantAdminColors.border),
+                                border:
+                                    Border.all(color: TenantAdminColors.border),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Text(
-                                scan.identifierStandard ?? scan.barcodeType ?? 'GTIN',
-                                style: TenantAdminTextStyles.body(context).copyWith(
+                                scan.identifierStandard ??
+                                    scan.barcodeType ??
+                                    'GTIN',
+                                style: TenantAdminTextStyles.body(context)
+                                    .copyWith(
                                   color: TenantAdminColors.bodyText,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -830,11 +846,13 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.error_outline, color: Color(0xFFFF6B00), size: 28),
+                            const Icon(Icons.error_outline,
+                                color: Color(0xFFFF6B00), size: 28),
                             const SizedBox(width: TenantAdminSpacing.sm),
                             Text(
                               'Product not found',
-                              style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+                              style: TenantAdminTextStyles.sectionTitle(context)
+                                  .copyWith(
                                 fontSize: 20,
                               ),
                             ),
@@ -865,7 +883,8 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                       padding: const EdgeInsets.all(TenantAdminSpacing.xl),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.04),
@@ -885,13 +904,15 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                                   color: Color(0xFFFFF7F2),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.edit_outlined, color: Color(0xFFFF6B00), size: 24),
+                                child: const Icon(Icons.edit_outlined,
+                                    color: Color(0xFFFF6B00), size: 24),
                               ),
                               const SizedBox(width: TenantAdminSpacing.sm),
                               Expanded(
                                 child: Text(
                                   'Continue with this barcode and create manually',
-                                  style: TenantAdminTextStyles.body(context).copyWith(
+                                  style: TenantAdminTextStyles.body(context)
+                                      .copyWith(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -902,7 +923,8 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                           const SizedBox(height: TenantAdminSpacing.sm),
                           Text(
                             'Use this valid barcode and enter the product details yourself.',
-                            style: TenantAdminTextStyles.muted(context).copyWith(
+                            style:
+                                TenantAdminTextStyles.muted(context).copyWith(
                               fontSize: 16,
                             ),
                           ),
@@ -912,19 +934,26 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                               Expanded(
                                 child: FilledButton(
                                   style: FilledButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 20),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 20),
                                     backgroundColor: const Color(0xFFFF6B00),
                                     foregroundColor: Colors.white,
                                   ),
-                                  onPressed: scan.isBusy ? null : () => widget.controller.continueWithBarcode(),
+                                  onPressed: scan.isBusy
+                                      ? null
+                                      : () => widget.controller
+                                          .continueWithBarcode(),
                                   child: scan.isBusy
                                       ? const SizedBox(
                                           width: 18,
                                           height: 18,
-                                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white),
                                         )
                                       : const Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             Text(
                                               'Continue',
@@ -943,13 +972,16 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                               Expanded(
                                 child: OutlinedButton(
                                   style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 20),
-                                    side: const BorderSide(color: TenantAdminColors.border),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 20),
+                                    side: const BorderSide(
+                                        color: TenantAdminColors.border),
                                     foregroundColor: TenantAdminColors.bodyText,
                                   ),
                                   onPressed: () {
                                     if (scan.inputMode == 'MANUAL') {
-                                      widget.controller.openManualBarcodeEntry();
+                                      widget.controller
+                                          .openManualBarcodeEntry();
                                     } else {
                                       widget.controller.backToScan();
                                     }
@@ -975,7 +1007,9 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
             const SizedBox(height: TenantAdminSpacing.lg),
             // Bottom Blue Tip
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.lg, vertical: TenantAdminSpacing.md),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: TenantAdminSpacing.lg,
+                  vertical: TenantAdminSpacing.md),
               decoration: BoxDecoration(
                 color: const Color(0xFFF2F8FF),
                 border: Border.all(color: const Color(0xFFCCE4FF)),
@@ -984,7 +1018,8 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.info_outline, color: Color(0xFF0066CC), size: 20),
+                  const Icon(Icons.info_outline,
+                      color: Color(0xFF0066CC), size: 20),
                   const SizedBox(width: TenantAdminSpacing.sm),
                   Expanded(
                     child: RichText(
@@ -994,8 +1029,12 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                           fontSize: 13,
                         ),
                         children: const [
-                          TextSpan(text: 'Tip: ', style: TextStyle(fontWeight: FontWeight.w600)),
-                          TextSpan(text: "The barcode will be retained when you continue. You'll be taken to the Basic Details step to enter the product information manually."),
+                          TextSpan(
+                              text: 'Tip: ',
+                              style: TextStyle(fontWeight: FontWeight.w600)),
+                          TextSpan(
+                              text:
+                                  "The barcode will be retained when you continue. You'll be taken to the Basic Details step to enter the product information manually."),
                         ],
                       ),
                     ),
@@ -1021,176 +1060,180 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
           Expanded(
             child: _PanelCard(
               child: LayoutBuilder(builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 600;
+                final isWide = constraints.maxWidth >= 600;
 
-            final mainArea = Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextField(
-                  controller: _manualBarcodeController,
-                  keyboardType: TextInputType.number,
-                  style: TenantAdminTextStyles.sectionTitle(context).copyWith(
-                    fontSize: 28,
-                    letterSpacing: 2.0,
-                  ),
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(
-                      Icons.qr_code,
-                      color: TenantAdminColors.bodyText,
-                      size: 28,
+                final mainArea = Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: _manualBarcodeController,
+                      keyboardType: TextInputType.number,
+                      style:
+                          TenantAdminTextStyles.sectionTitle(context).copyWith(
+                        fontSize: 28,
+                        letterSpacing: 2.0,
+                      ),
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(
+                          Icons.qr_code,
+                          color: TenantAdminColors.bodyText,
+                          size: 28,
+                        ),
+                        suffixIcon: _manualBarcodeController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () {
+                                  _manualBarcodeController.clear();
+                                  widget.controller
+                                      .updateManualBarcodeDraft('');
+                                  setState(() {});
+                                },
+                              )
+                            : null,
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(TenantAdminRadius.md),
+                          borderSide: const BorderSide(
+                            color: TenantAdminColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(TenantAdminRadius.md),
+                          borderSide: const BorderSide(
+                            color: TenantAdminColors.primary,
+                            width: 1,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: TenantAdminSpacing.lg,
+                          vertical: TenantAdminSpacing.md,
+                        ),
+                      ),
+                      onChanged: (val) {
+                        widget.controller.updateManualBarcodeDraft(val);
+                        setState(() {});
+                      },
                     ),
-                    suffixIcon: _manualBarcodeController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () {
-                              _manualBarcodeController.clear();
-                              widget.controller.updateManualBarcodeDraft('');
-                              setState(() {});
-                            },
-                          )
-                        : null,
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                      borderSide: const BorderSide(
-                        color: TenantAdminColors.primary,
-                        width: 2,
+                    const SizedBox(height: TenantAdminSpacing.sm),
+                    _BarcodeStatusRow(
+                      feedback: feedback,
+                      digitCount: len,
+                    ),
+                    const SizedBox(height: TenantAdminSpacing.sm),
+                    Expanded(
+                      child: _NumericBarcodeKeypad(
+                        onDigit: (digit) {
+                          if (_manualBarcodeController.text.length < 14) {
+                            _manualBarcodeController.text += digit;
+                            widget.controller.updateManualBarcodeDraft(
+                                _manualBarcodeController.text);
+                            setState(() {});
+                          }
+                        },
+                        onBackspace: () {
+                          if (_manualBarcodeController.text.isNotEmpty) {
+                            _manualBarcodeController.text =
+                                _manualBarcodeController.text.substring(0,
+                                    _manualBarcodeController.text.length - 1);
+                            widget.controller.updateManualBarcodeDraft(
+                                _manualBarcodeController.text);
+                            setState(() {});
+                          }
+                        },
                       ),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                      borderSide: const BorderSide(
-                        color: TenantAdminColors.primary,
-                        width: 1,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: TenantAdminSpacing.lg,
-                      vertical: TenantAdminSpacing.md,
-                    ),
-                  ),
-                  onChanged: (val) {
-                    widget.controller.updateManualBarcodeDraft(val);
+                  ],
+                );
+
+                final quickEntry = _QuickGtinLengthSelector(
+                  selectedLength: len,
+                  onLengthSelected: (l) {
+                    final current = _manualBarcodeController.text;
+                    final padded = current.padLeft(l, '0');
+                    _manualBarcodeController.text = padded;
+                    widget.controller.updateManualBarcodeDraft(padded);
                     setState(() {});
                   },
-                ),
-                const SizedBox(height: TenantAdminSpacing.sm),
-                _BarcodeStatusRow(
-                  feedback: feedback,
-                  digitCount: len,
-                ),
-                const SizedBox(height: TenantAdminSpacing.sm),
-                Expanded(
-                  child: _NumericBarcodeKeypad(
-                  onDigit: (digit) {
-                    if (_manualBarcodeController.text.length < 14) {
-                      _manualBarcodeController.text += digit;
-                      widget.controller.updateManualBarcodeDraft(
-                          _manualBarcodeController.text);
-                      setState(() {});
-                    }
+                  onClearAll: () {
+                    _manualBarcodeController.clear();
+                    widget.controller.updateManualBarcodeDraft('');
+                    setState(() {});
                   },
-                  onBackspace: () {
-                    if (_manualBarcodeController.text.isNotEmpty) {
-                      _manualBarcodeController.text =
-                          _manualBarcodeController.text.substring(
-                              0, _manualBarcodeController.text.length - 1);
-                      widget.controller.updateManualBarcodeDraft(
-                          _manualBarcodeController.text);
-                      setState(() {});
-                    }
-                  },
-                ),
-                ),
-              ],
-            );
+                );
 
-            final quickEntry = _QuickGtinLengthSelector(
-              selectedLength: len,
-              onLengthSelected: (l) {
-                final current = _manualBarcodeController.text;
-                final padded = current.padLeft(l, '0');
-                _manualBarcodeController.text = padded;
-                widget.controller.updateManualBarcodeDraft(padded);
-                setState(() {});
-              },
-              onClearAll: () {
-                _manualBarcodeController.clear();
-                widget.controller.updateManualBarcodeDraft('');
-                setState(() {});
-              },
-            );
-
-            if (isWide) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(flex: 7, child: mainArea),
-                  const SizedBox(width: TenantAdminSpacing.xl),
-                  Expanded(
-                    flex: 4,
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: quickEntry,
-                    ),
-                  ),
-                ],
-              );
-            } else {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(child: mainArea),
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  quickEntry,
-                ],
-              );
-            }
-          }),
+                if (isWide) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(flex: 7, child: mainArea),
+                      const SizedBox(width: TenantAdminSpacing.xl),
+                      Expanded(
+                        flex: 4,
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: quickEntry,
+                        ),
+                      ),
+                    ],
+                  );
+                } else {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: mainArea),
+                      const SizedBox(height: TenantAdminSpacing.lg),
+                      quickEntry,
+                    ],
+                  );
+                }
+              }),
             ),
           ),
           const SizedBox(height: TenantAdminSpacing.lg),
           Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            OutlinedButton.icon(
-              onPressed: () => widget.controller.backToScan(),
-              icon: const Icon(Icons.arrow_back),
-              label: const Text('Back to Scan'),
-            ),
-            TextButton(
-              onPressed: () => widget.controller.openNoBarcodeFlow(),
-              style: TextButton.styleFrom(
-                foregroundColor: TenantAdminColors.primary,
-                textStyle:
-                    const TextStyle(decoration: TextDecoration.underline),
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => widget.controller.backToScan(),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Back to Scan'),
               ),
-              child: const Text('Product has no barcode'),
-            ),
-            FilledButton(
-              onPressed: scan.isBusy || !feedback.isValidLength
-                  ? null
-                  : () => widget.controller.validateManualBarcode(),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: TenantAdminSpacing.xl,
-                  vertical: TenantAdminSpacing.md,
+              TextButton(
+                onPressed: () => widget.controller.openNoBarcodeFlow(),
+                style: TextButton.styleFrom(
+                  foregroundColor: TenantAdminColors.primary,
+                  textStyle:
+                      const TextStyle(decoration: TextDecoration.underline),
+                ),
+                child: const Text('Product has no barcode'),
+              ),
+              FilledButton(
+                onPressed: scan.isBusy || !feedback.isValidLength
+                    ? null
+                    : () => widget.controller.validateManualBarcode(),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: TenantAdminSpacing.xl,
+                    vertical: TenantAdminSpacing.md,
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Validate Barcode'),
+                    SizedBox(width: TenantAdminSpacing.sm),
+                    Icon(Icons.chevron_right),
+                  ],
                 ),
               ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Validate Barcode'),
-                  SizedBox(width: TenantAdminSpacing.sm),
-                  Icon(Icons.chevron_right),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildInvalid(BuildContext context, ScanBarcodeStepState scan) {
     final isManual = scan.inputMode == 'MANUAL';
@@ -1252,20 +1295,26 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isManual ? 'Manually entered barcode' : 'Scanned barcode',
+                          isManual
+                              ? 'Manually entered barcode'
+                              : 'Scanned barcode',
                           style: TenantAdminTextStyles.muted(context),
                         ),
                         const SizedBox(height: TenantAdminSpacing.xs),
                         Text(
-                          scan.candidateBarcode.isEmpty ? 'Unknown' : scan.candidateBarcode,
-                          style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+                          scan.candidateBarcode.isEmpty
+                              ? 'Unknown'
+                              : scan.candidateBarcode,
+                          style: TenantAdminTextStyles.sectionTitle(context)
+                              .copyWith(
                             fontSize: 32,
                             letterSpacing: 2.0,
                           ),
                         ),
                         const SizedBox(height: TenantAdminSpacing.sm),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFEBEB),
                             borderRadius: BorderRadius.circular(16),
@@ -1273,11 +1322,13 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.cancel_outlined, color: Color(0xFFE53935), size: 16),
+                              const Icon(Icons.cancel_outlined,
+                                  color: Color(0xFFE53935), size: 16),
                               const SizedBox(width: 4),
                               Text(
                                 'Invalid barcode',
-                                style: TenantAdminTextStyles.body(context).copyWith(
+                                style: TenantAdminTextStyles.body(context)
+                                    .copyWith(
                                   color: const Color(0xFFE53935),
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -1311,11 +1362,13 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.warning_amber_rounded, color: Color(0xFFFF6B00), size: 28),
+                            const Icon(Icons.warning_amber_rounded,
+                                color: Color(0xFFFF6B00), size: 28),
                             const SizedBox(width: TenantAdminSpacing.sm),
                             Text(
                               'Invalid Barcode',
-                              style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+                              style: TenantAdminTextStyles.sectionTitle(context)
+                                  .copyWith(
                                 fontSize: 20,
                               ),
                             ),
@@ -1347,7 +1400,8 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                       padding: const EdgeInsets.all(TenantAdminSpacing.lg),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                        borderRadius:
+                            BorderRadius.circular(TenantAdminRadius.md),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.04),
@@ -1367,13 +1421,15 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                                   color: Color(0xFFFFF7F2),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.refresh, color: Color(0xFFFF6B00), size: 20),
+                                child: const Icon(Icons.refresh,
+                                    color: Color(0xFFFF6B00), size: 20),
                               ),
                               const SizedBox(width: TenantAdminSpacing.sm),
                               Expanded(
                                 child: Text(
                                   'Recovery Options',
-                                  style: TenantAdminTextStyles.body(context).copyWith(
+                                  style: TenantAdminTextStyles.body(context)
+                                      .copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -1383,7 +1439,8 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                           const SizedBox(height: TenantAdminSpacing.sm),
                           Text(
                             'You can try again, rescan, or proceed without a barcode.',
-                            style: TenantAdminTextStyles.muted(context).copyWith(
+                            style:
+                                TenantAdminTextStyles.muted(context).copyWith(
                               fontSize: 12,
                             ),
                           ),
@@ -1396,7 +1453,8 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                                     backgroundColor: const Color(0xFFFF6B00),
                                     foregroundColor: Colors.white,
                                   ),
-                                  onPressed: () => widget.controller.openManualBarcodeEntry(),
+                                  onPressed: () => widget.controller
+                                      .openManualBarcodeEntry(),
                                   child: const Text('Try Again'),
                                 ),
                               ),
@@ -1404,10 +1462,12 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                               Expanded(
                                 child: OutlinedButton(
                                   style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: TenantAdminColors.border),
+                                    side: const BorderSide(
+                                        color: TenantAdminColors.border),
                                     foregroundColor: TenantAdminColors.bodyText,
                                   ),
-                                  onPressed: () => widget.controller.backToScan(),
+                                  onPressed: () =>
+                                      widget.controller.backToScan(),
                                   child: const Text('Rescan'),
                                 ),
                               ),
@@ -1418,10 +1478,12 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                             width: double.infinity,
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: TenantAdminColors.border),
+                                side: const BorderSide(
+                                    color: TenantAdminColors.border),
                                 foregroundColor: TenantAdminColors.bodyText,
                               ),
-                              onPressed: () => widget.controller.openNoBarcodeFlow(),
+                              onPressed: () =>
+                                  widget.controller.openNoBarcodeFlow(),
                               child: const Text('Create Without Barcode'),
                             ),
                           ),
@@ -1616,9 +1678,9 @@ class _BarcodeStatusRow extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (feedback.isValidLength)
-              const Icon(Icons.check, size: 16, color: TenantAdminColors.success),
-            if (feedback.isValidLength)
-              const SizedBox(width: 4),
+              const Icon(Icons.check,
+                  size: 16, color: TenantAdminColors.success),
+            if (feedback.isValidLength) const SizedBox(width: 4),
             Text(
               '$digitCount digits entered',
               style: TenantAdminTextStyles.muted(context).copyWith(
@@ -1656,11 +1718,14 @@ class _NumericBarcodeKeypad extends StatelessWidget {
         Expanded(
           child: Row(
             children: [
-              Expanded(child: _KeypadButton(label: '1', onTap: () => onDigit('1'))),
+              Expanded(
+                  child: _KeypadButton(label: '1', onTap: () => onDigit('1'))),
               const SizedBox(width: TenantAdminSpacing.sm),
-              Expanded(child: _KeypadButton(label: '2', onTap: () => onDigit('2'))),
+              Expanded(
+                  child: _KeypadButton(label: '2', onTap: () => onDigit('2'))),
               const SizedBox(width: TenantAdminSpacing.sm),
-              Expanded(child: _KeypadButton(label: '3', onTap: () => onDigit('3'))),
+              Expanded(
+                  child: _KeypadButton(label: '3', onTap: () => onDigit('3'))),
             ],
           ),
         ),
@@ -1668,11 +1733,14 @@ class _NumericBarcodeKeypad extends StatelessWidget {
         Expanded(
           child: Row(
             children: [
-              Expanded(child: _KeypadButton(label: '4', onTap: () => onDigit('4'))),
+              Expanded(
+                  child: _KeypadButton(label: '4', onTap: () => onDigit('4'))),
               const SizedBox(width: TenantAdminSpacing.sm),
-              Expanded(child: _KeypadButton(label: '5', onTap: () => onDigit('5'))),
+              Expanded(
+                  child: _KeypadButton(label: '5', onTap: () => onDigit('5'))),
               const SizedBox(width: TenantAdminSpacing.sm),
-              Expanded(child: _KeypadButton(label: '6', onTap: () => onDigit('6'))),
+              Expanded(
+                  child: _KeypadButton(label: '6', onTap: () => onDigit('6'))),
             ],
           ),
         ),
@@ -1680,11 +1748,14 @@ class _NumericBarcodeKeypad extends StatelessWidget {
         Expanded(
           child: Row(
             children: [
-              Expanded(child: _KeypadButton(label: '7', onTap: () => onDigit('7'))),
+              Expanded(
+                  child: _KeypadButton(label: '7', onTap: () => onDigit('7'))),
               const SizedBox(width: TenantAdminSpacing.sm),
-              Expanded(child: _KeypadButton(label: '8', onTap: () => onDigit('8'))),
+              Expanded(
+                  child: _KeypadButton(label: '8', onTap: () => onDigit('8'))),
               const SizedBox(width: TenantAdminSpacing.sm),
-              Expanded(child: _KeypadButton(label: '9', onTap: () => onDigit('9'))),
+              Expanded(
+                  child: _KeypadButton(label: '9', onTap: () => onDigit('9'))),
             ],
           ),
         ),
@@ -1694,7 +1765,8 @@ class _NumericBarcodeKeypad extends StatelessWidget {
             children: [
               const Expanded(child: SizedBox.shrink()),
               const SizedBox(width: TenantAdminSpacing.sm),
-              Expanded(child: _KeypadButton(label: '0', onTap: () => onDigit('0'))),
+              Expanded(
+                  child: _KeypadButton(label: '0', onTap: () => onDigit('0'))),
               const SizedBox(width: TenantAdminSpacing.sm),
               Expanded(
                 child: _KeypadButton(
@@ -1737,7 +1809,8 @@ class _KeypadButton extends StatelessWidget {
           child: label != null
               ? Text(
                   label!,
-                  style: TenantAdminTextStyles.sectionTitle(context).copyWith(fontSize: 20),
+                  style: TenantAdminTextStyles.sectionTitle(context)
+                      .copyWith(fontSize: 20),
                 )
               : Icon(icon, color: TenantAdminColors.bodyText),
         ),
@@ -1769,9 +1842,8 @@ class _QuickGtinLengthSelector extends StatelessWidget {
               ? TenantAdminColors.primary.withValues(alpha: 0.1)
               : null,
           side: BorderSide(
-            color: selected
-                ? TenantAdminColors.primary
-                : TenantAdminColors.border,
+            color:
+                selected ? TenantAdminColors.primary : TenantAdminColors.border,
           ),
         ),
         onPressed: () => onLengthSelected(length),
@@ -1824,7 +1896,6 @@ class _QuickGtinLengthSelector extends StatelessWidget {
     );
   }
 }
-
 
 enum _ChipTone { active, pending, ok, danger }
 
@@ -1990,6 +2061,7 @@ class _LabelValue extends StatelessWidget {
     );
   }
 }
+
 class _ErrorBanner extends StatelessWidget {
   const _ErrorBanner({required this.message});
   final String message;

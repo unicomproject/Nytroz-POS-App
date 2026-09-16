@@ -26,8 +26,7 @@ class PosCheckoutCustomerScreen extends ConsumerWidget {
             const <String>{};
     final canView = PosPermissionAccess.canViewCustomers(permissions);
     final canCreate = PosPermissionAccess.canCreateCustomer(permissions);
-    final canAttach =
-        PosPermissionAccess.canAttachCustomerToSale(permissions);
+    final canAttach = PosPermissionAccess.canAttachCustomerToSale(permissions);
 
     Future<void> advanceToPayment(Future<bool> Function() action) async {
       final success = await action();

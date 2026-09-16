@@ -124,8 +124,8 @@ class MethodChannelAndroidReceiptPrinter
     implements AndroidReceiptPrinterPlatform {
   MethodChannelAndroidReceiptPrinter({
     MethodChannel? channel,
-  }) : _channel = channel ??
-            const MethodChannel('com.nytroz.pos/receipt_printer');
+  }) : _channel =
+            channel ?? const MethodChannel('com.nytroz.pos/receipt_printer');
 
   final MethodChannel _channel;
 
@@ -329,7 +329,8 @@ class MethodChannelAndroidReceiptPrinter
       'TIMEOUT' => PrinterTimeoutException(message),
       'PARTIAL_WRITE' => PrinterPartialWriteException(message),
       'WRITE_FAILED' => PrinterSendException(message),
-      'NOT_CONFIGURED' || 'INVALID_ARGUMENT' =>
+      'NOT_CONFIGURED' ||
+      'INVALID_ARGUMENT' =>
         PrinterConfigurationException(message),
       'UNSUPPORTED_PLATFORM' => PrinterUnsupportedException(message),
       _ => PrinterSendException(message),

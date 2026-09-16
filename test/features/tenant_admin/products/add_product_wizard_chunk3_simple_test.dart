@@ -153,6 +153,7 @@ void main() {
 
   Future<void> goToStep5Simple({bool trackInventory = true}) async {
     await controller.initWizard();
+    controller.skipScanStepForTesting();
     controller.updateProductName('Simple Widget');
     controller.updateCategory('cat-1');
     controller.updateInternalCode('SW-001');
@@ -181,6 +182,7 @@ void main() {
   group('Chunk 3 SIMPLE flow', () {
     test('1. SIMPLE Track ON â†’ Step 3', () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('A');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
@@ -192,6 +194,7 @@ void main() {
 
     test('2. SIMPLE Track OFF â†’ Step 3', () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('A');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
@@ -300,6 +303,7 @@ void main() {
 
     test('15. VARIANT routing regression still passes', () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Variant Item');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
@@ -323,6 +327,7 @@ void main() {
 
     test('SIMPLE multiple units survive Back to Step 3', () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Multi Unit');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();

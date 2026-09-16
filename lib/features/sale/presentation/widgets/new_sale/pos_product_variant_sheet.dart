@@ -474,8 +474,7 @@ class _PosProductVariantSheetState
     final session = ref.watch(authSessionProvider);
     final canAdd = PosPermissionAccess.canAddCartItemSession(session);
     final canUpdate = PosPermissionAccess.canUpdateCartItemSession(session);
-    final canCartAction =
-        widget.existingCartItem == null ? canAdd : canUpdate;
+    final canCartAction = widget.existingCartItem == null ? canAdd : canUpdate;
 
     final children = <Widget>[];
 
@@ -645,8 +644,8 @@ class _PosProductVariantSheetState
         _QuantityStepper(
           quantity: _quantity,
           canDecrease: canMutateQty && _quantity > 1,
-          canIncrease: canMutateQty &&
-              (maxQuantity == null || _quantity < maxQuantity),
+          canIncrease:
+              canMutateQty && (maxQuantity == null || _quantity < maxQuantity),
           showDecrease: canMutateQty,
           showIncrease: canMutateQty,
           onDecrease: () => setState(() => _quantity -= 1),

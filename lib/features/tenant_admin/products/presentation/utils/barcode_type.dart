@@ -22,8 +22,7 @@ final _code128 = RegExp(r'^[\x20-\x7E]*$');
 
 String? normalizeBarcodeType(String? barcodeType) {
   if (barcodeType == null || barcodeType.trim().isEmpty) return null;
-  final normalized =
-      barcodeType.trim().replaceAll('-', '').toUpperCase();
+  final normalized = barcodeType.trim().replaceAll('-', '').toUpperCase();
   return _allowedTypes.contains(normalized) ? normalized : null;
 }
 

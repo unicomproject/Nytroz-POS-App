@@ -250,8 +250,7 @@ class ParkedSaleSummaryPanel extends ConsumerWidget {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.sm),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
                     ),
                     elevation: 0,
                   ),

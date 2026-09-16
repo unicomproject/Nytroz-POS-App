@@ -62,8 +62,9 @@ class NotificationSocketClient {
 
     _teardownChannel();
 
-    final uri = Uri.parse('$_wsBaseUrl${ApiEndpoints.tenantNotificationsSocketPath}')
-        .replace(queryParameters: {'access_token': token});
+    final uri =
+        Uri.parse('$_wsBaseUrl${ApiEndpoints.tenantNotificationsSocketPath}')
+            .replace(queryParameters: {'access_token': token});
 
     try {
       final channel = WebSocketChannel.connect(uri);
@@ -119,8 +120,8 @@ class NotificationSocketClient {
     if (_disposed || _currentToken == null) return;
 
     _reconnectTimer?.cancel();
-    final delaySeconds = _backoffSeconds[
-        _reconnectAttempt.clamp(0, _backoffSeconds.length - 1)];
+    final delaySeconds =
+        _backoffSeconds[_reconnectAttempt.clamp(0, _backoffSeconds.length - 1)];
     _reconnectAttempt =
         (_reconnectAttempt + 1).clamp(0, _backoffSeconds.length - 1);
     _reconnectTimer = Timer(Duration(seconds: delaySeconds), _openConnection);

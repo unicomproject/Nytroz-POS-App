@@ -29,7 +29,8 @@ class CashDrawerRemoteDatasource {
       );
       return _unwrapList(response.data);
     } on DioException catch (error) {
-      throw _mapError(error, fallback: 'Cash movement types could not be loaded.');
+      throw _mapError(error,
+          fallback: 'Cash movement types could not be loaded.');
     }
   }
 
@@ -102,7 +103,8 @@ class CashDrawerRemoteDatasource {
     return const [];
   }
 
-  CashDrawerException _mapError(DioException error, {required String fallback}) {
+  CashDrawerException _mapError(DioException error,
+      {required String fallback}) {
     final data = error.response?.data;
     String? code;
     if (data is Map) {

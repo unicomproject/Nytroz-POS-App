@@ -35,8 +35,7 @@ class _Step4VariantConfigurationFormState
   @override
   void initState() {
     super.initState();
-    _showVariantsView =
-        widget.state.step4State.generatedVariants.isNotEmpty;
+    _showVariantsView = widget.state.step4State.generatedVariants.isNotEmpty;
   }
 
   @override
@@ -147,8 +146,7 @@ class _Step4VariantConfigurationFormState
                       vertical: TenantAdminSpacing.md,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.sm),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
                     ),
                   ),
                 ),
@@ -394,7 +392,8 @@ class _AttributeCardState extends State<_AttributeCard> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.row.templateName ?? '');
+    _nameController =
+        TextEditingController(text: widget.row.templateName ?? '');
     _nameFocusNode = FocusNode();
     _nameFocusNode.addListener(_onNameFocusChange);
     if ((widget.row.templateName ?? '').trim().isEmpty) {
@@ -453,8 +452,7 @@ class _AttributeCardState extends State<_AttributeCard> {
               border: OutlineInputBorder(),
             ),
             textCapitalization: TextCapitalization.words,
-            onSubmitted: (val) =>
-                Navigator.of(dialogContext).pop(val.trim()),
+            onSubmitted: (val) => Navigator.of(dialogContext).pop(val.trim()),
           ),
           actions: [
             TextButton(
@@ -474,9 +472,7 @@ class _AttributeCardState extends State<_AttributeCard> {
     if (value == null || value.isEmpty) return;
     if (widget.row.selectedValues.any((x) => x.valueId == value)) return;
 
-    final newValues = widget.row.selectedValues
-        .map((x) => x.valueId)
-        .toList()
+    final newValues = widget.row.selectedValues.map((x) => x.valueId).toList()
       ..add(value);
     widget.controller.selectValues(widget.index, newValues);
   }

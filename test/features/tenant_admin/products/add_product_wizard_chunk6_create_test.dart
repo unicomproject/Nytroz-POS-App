@@ -166,6 +166,7 @@ void main() {
 
   Future<void> fillSimpleToStep7() async {
     await controller.initWizard();
+    controller.skipScanStepForTesting();
     controller.updateProductName('Create Simple Product');
     controller.updateCategory('cat-1');
     await controller.saveAndContinue();
@@ -222,6 +223,7 @@ void main() {
     test('7/8/9. VARIANT payload has variants + clientCombinationKeys',
         () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Create Variant Product');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
@@ -327,6 +329,7 @@ void main() {
 
     test('18. VARIANT navigation regression still reaches Step 7', () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Variant Nav');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();

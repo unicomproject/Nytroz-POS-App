@@ -114,8 +114,7 @@ class Step7ReviewCreate extends StatelessWidget {
       _Row(
         'Track Inventory',
         state.trackInventory ? 'Yes' : 'No',
-        badge:
-            state.trackInventory ? _BadgeTone.positive : _BadgeTone.negative,
+        badge: state.trackInventory ? _BadgeTone.positive : _BadgeTone.negative,
       ),
     ];
 
@@ -124,8 +123,7 @@ class Step7ReviewCreate extends StatelessWidget {
         _Row(
           'Batch / Lot Tracking',
           state.batchTracking ? 'Yes' : 'No',
-          badge:
-              state.batchTracking ? _BadgeTone.positive : _BadgeTone.neutral,
+          badge: state.batchTracking ? _BadgeTone.positive : _BadgeTone.neutral,
         ),
         _Row(
           'Expiry Date Tracking',
@@ -357,7 +355,8 @@ class Step7ReviewCreate extends StatelessWidget {
       customContent: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _CompletionBar(label: 'Variants with SKU', complete: withSku, total: total),
+          _CompletionBar(
+              label: 'Variants with SKU', complete: withSku, total: total),
           const SizedBox(height: TenantAdminSpacing.sm),
           _CompletionBar(
             label: 'Variants with Barcode',
@@ -583,7 +582,9 @@ class Step7ReviewCreate extends StatelessWidget {
           Expanded(
             flex: 3,
             child: Text(
-              (a.displayName ?? '').trim().isEmpty ? '—' : a.displayName!.trim(),
+              (a.displayName ?? '').trim().isEmpty
+                  ? '—'
+                  : a.displayName!.trim(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 12),
@@ -685,8 +686,9 @@ class Step7ReviewCreate extends StatelessWidget {
         .map((v) => v.productVariantId ?? v.clientCombinationKey)
         .toSet();
     final assignedId = state.initialTrackingAssignedVariantId;
-    final assignedInList =
-        assignedId != null && assignedId.isNotEmpty && keys.contains(assignedId);
+    final assignedInList = assignedId != null &&
+        assignedId.isNotEmpty &&
+        keys.contains(assignedId);
     String? assignedLabel;
     if (assignedInList) {
       for (final v in included) {
@@ -825,7 +827,8 @@ class Step7ReviewCreate extends StatelessWidget {
     final options = state.createOptions;
     if (options == null || state.categoryId == null) return '—';
     try {
-      final cat = options.categories.firstWhere((c) => c.id == state.categoryId);
+      final cat =
+          options.categories.firstWhere((c) => c.id == state.categoryId);
       return cat.name;
     } catch (_) {
       return state.categoryId!;
@@ -952,8 +955,7 @@ class _ReviewCardGrid extends StatelessWidget {
                 ? 2
                 : 1;
         const gap = TenantAdminSpacing.lg;
-        final cardWidth =
-            cols == 1 ? width : (width - gap * (cols - 1)) / cols;
+        final cardWidth = cols == 1 ? width : (width - gap * (cols - 1)) / cols;
         return Wrap(
           spacing: gap,
           runSpacing: gap,

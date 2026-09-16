@@ -68,18 +68,14 @@ class CashDropFormCard extends ConsumerWidget {
             if (catalog.isLoading)
               Padding(
                 padding: EdgeInsets.only(
-                  bottom: tight
-                      ? TenantAdminSpacing.xs
-                      : TenantAdminSpacing.md,
+                  bottom: tight ? TenantAdminSpacing.xs : TenantAdminSpacing.md,
                 ),
                 child: const LinearProgressIndicator(minHeight: 2),
               ),
             if (catalog.status == CashDropCatalogStatus.empty)
               Padding(
                 padding: EdgeInsets.only(
-                  bottom: tight
-                      ? TenantAdminSpacing.xs
-                      : TenantAdminSpacing.md,
+                  bottom: tight ? TenantAdminSpacing.xs : TenantAdminSpacing.md,
                 ),
                 child: Text(
                   'No Cash Drop reasons are available. Contact your administrator.',
@@ -92,9 +88,7 @@ class CashDropFormCard extends ConsumerWidget {
             if (catalog.status == CashDropCatalogStatus.failure)
               Padding(
                 padding: EdgeInsets.only(
-                  bottom: tight
-                      ? TenantAdminSpacing.xs
-                      : TenantAdminSpacing.md,
+                  bottom: tight ? TenantAdminSpacing.xs : TenantAdminSpacing.md,
                 ),
                 child: Text(
                   catalog.errorMessage ??
@@ -135,8 +129,7 @@ class CashDropFormCard extends ConsumerWidget {
                           )
                         : null,
                     border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.md),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                     ),
                   ),
                   validator: (value) => validateCashDropAmount(
@@ -149,9 +142,8 @@ class CashDropFormCard extends ConsumerWidget {
                     '${catalog.status.name}-${formState.selectedMovementTypeId}',
                   ),
                   isExpanded: true,
-                  initialValue: reasonEnabled
-                      ? formState.selectedMovementTypeId
-                      : null,
+                  initialValue:
+                      reasonEnabled ? formState.selectedMovementTypeId : null,
                   decoration: InputDecoration(
                     labelText: 'Reason *',
                     isDense: compact,
@@ -162,8 +154,7 @@ class CashDropFormCard extends ConsumerWidget {
                           )
                         : null,
                     border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.md),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
                     ),
                   ),
                   items: [
@@ -215,9 +206,8 @@ class CashDropFormCard extends ConsumerWidget {
                   children: [
                     amountField,
                     SizedBox(
-                      height: tight
-                          ? TenantAdminSpacing.xs
-                          : TenantAdminSpacing.md,
+                      height:
+                          tight ? TenantAdminSpacing.xs : TenantAdminSpacing.md,
                     ),
                     reasonField,
                   ],

@@ -28,7 +28,8 @@ class GeneratedVariantsSection extends ConsumerWidget {
 
   static String buildSubtitle(Step4VariantConfigurationState step4State) {
     final count = step4State.totalGeneratedCount;
-    final attributes = step4State.attributeRows.where((r) => r.isValid).toList();
+    final attributes =
+        step4State.attributeRows.where((r) => r.isValid).toList();
     final attributeNames = attributes
         .map((r) => (r.templateName ?? 'Attribute').trim())
         .join(' × ');
@@ -72,7 +73,8 @@ class GeneratedVariantsSection extends ConsumerWidget {
               variant: variant,
               attributeRows: step4State.attributeRows,
               imageUrl: variant.effectiveImageUrl ?? fallbackImageUrl,
-              stagedImageBytes: _resolveStagedBytes(state, variant, fallbackImageUrl),
+              stagedImageBytes:
+                  _resolveStagedBytes(state, variant, fallbackImageUrl),
               resolveImageUrl: (raw) => _resolveImageUrl(ref, raw),
               onEdit: () => _openEditVariantDrawer(
                 context,

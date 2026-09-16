@@ -88,7 +88,8 @@ class CloseTillTillInfoBar extends ConsumerWidget {
                         if (c > 0) const SizedBox(width: 10),
                         Expanded(child: rows[r][c]),
                       ],
-                      if (rows[r].length == 1) const Expanded(child: SizedBox()),
+                      if (rows[r].length == 1)
+                        const Expanded(child: SizedBox()),
                     ],
                   ),
                 ],

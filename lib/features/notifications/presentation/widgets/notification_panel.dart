@@ -10,8 +10,7 @@ const double _panelMaxHeight = 480;
 
 void showNotificationPanel(BuildContext context) {
   final button = context.findRenderObject() as RenderBox?;
-  final overlay =
-      Overlay.of(context).context.findRenderObject() as RenderBox?;
+  final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
   if (button == null || overlay == null) return;
 
   final width = _panelWidth < overlay.size.width - 32
@@ -79,8 +78,9 @@ class _NotificationPanel extends ConsumerWidget {
                 ),
                 if (state.unreadCount > 0)
                   TextButton(
-                    onPressed: () =>
-                        ref.read(notificationInboxProvider.notifier).markAllRead(),
+                    onPressed: () => ref
+                        .read(notificationInboxProvider.notifier)
+                        .markAllRead(),
                     child: const Text('Mark all read'),
                   ),
               ],
@@ -122,7 +122,8 @@ class _NotificationTile extends ConsumerWidget {
     return InkWell(
       onTap: item.isRead
           ? null
-          : () => ref.read(notificationInboxProvider.notifier).markRead(item.id),
+          : () =>
+              ref.read(notificationInboxProvider.notifier).markRead(item.id),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: TenantAdminSpacing.lg,

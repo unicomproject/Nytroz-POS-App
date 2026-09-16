@@ -76,7 +76,8 @@ class _EditVariantDrawerState extends ConsumerState<EditVariantDrawer> {
       }
 
       if (_isIncluded != variant.isIncluded) {
-        widget.controller.toggleVariantInclusion(widget.variantKey, _isIncluded);
+        widget.controller
+            .toggleVariantInclusion(widget.variantKey, _isIncluded);
       }
 
       if (_pickedImageBytes != null) {
@@ -196,12 +197,11 @@ class _EditVariantDrawerState extends ConsumerState<EditVariantDrawer> {
           variant.effectiveImageUrl ??
           fallbackProductImage?.imageUrl,
     );
-    final stagedFallbackBytes =
-        (_pickedImageBytes == null &&
-                resolvedNetworkUrl == null &&
-                fallbackProductImage?.bytes != null)
-            ? fallbackProductImage!.bytes
-            : null;
+    final stagedFallbackBytes = (_pickedImageBytes == null &&
+            resolvedNetworkUrl == null &&
+            fallbackProductImage?.bytes != null)
+        ? fallbackProductImage!.bytes
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -281,18 +281,15 @@ class _EditVariantDrawerState extends ConsumerState<EditVariantDrawer> {
                       vertical: TenantAdminSpacing.md,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.sm),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.sm),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
                       borderSide:
                           const BorderSide(color: TenantAdminColors.border),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(TenantAdminRadius.sm),
+                      borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
                       borderSide: BorderSide(color: accentColor, width: 1.5),
                     ),
                   ),
@@ -342,7 +339,8 @@ class _EditVariantDrawerState extends ConsumerState<EditVariantDrawer> {
                         const SizedBox(height: TenantAdminSpacing.md),
                         OutlinedButton.icon(
                           onPressed: _pickImage,
-                          icon: const Icon(Icons.cloud_upload_outlined, size: 18),
+                          icon:
+                              const Icon(Icons.cloud_upload_outlined, size: 18),
                           label: const Text(
                             'Upload / Replace Image',
                             style: TextStyle(fontWeight: FontWeight.w600),
@@ -417,8 +415,7 @@ class _EditVariantDrawerState extends ConsumerState<EditVariantDrawer> {
                   padding: const EdgeInsets.all(TenantAdminSpacing.md),
                   decoration: BoxDecoration(
                     color: TenantAdminColors.surface,
-                    borderRadius:
-                        BorderRadius.circular(TenantAdminRadius.sm),
+                    borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
                     border: Border.all(color: TenantAdminColors.border),
                   ),
                   child: Row(

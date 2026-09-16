@@ -36,7 +36,8 @@ class CashDropFormState {
   bool get hasValidAmount => parsedAmount != null && parsedAmount! > 0;
 
   bool get hasSelectedMovementType =>
-      selectedMovementTypeId != null && selectedMovementTypeId!.trim().isNotEmpty;
+      selectedMovementTypeId != null &&
+      selectedMovementTypeId!.trim().isNotEmpty;
 
   CashDropFormState copyWith({
     String? amountText,
@@ -147,7 +148,8 @@ class CashDropCatalogState {
 }
 
 class CashDropCatalogController extends StateNotifier<CashDropCatalogState> {
-  CashDropCatalogController(this._repository) : super(const CashDropCatalogState());
+  CashDropCatalogController(this._repository)
+      : super(const CashDropCatalogState());
 
   final CashDrawerRepository _repository;
 

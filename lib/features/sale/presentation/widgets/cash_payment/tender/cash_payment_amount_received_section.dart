@@ -78,54 +78,54 @@ class CashPaymentAmountReceivedSection extends StatelessWidget {
           ],
         ),
         if (showAmountView) ...[
-        const SizedBox(height: 8),
-        Container(
-          key: const ValueKey('cash-amount-received-field'),
-          height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: PaymentMethodStyle.border),
-          ),
-          child: Row(
-            children: [
-              Text(
-                currencyLabel,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  _formatAmountOnly(inputBuffer, cashReceived),
+          const SizedBox(height: 8),
+          Container(
+            key: const ValueKey('cash-amount-received-field'),
+            height: 64,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: PaymentMethodStyle.border),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  currencyLabel,
                   style: const TextStyle(
-                    fontSize: 34,
-                    fontWeight: FontWeight.w900,
-                    color: PaymentMethodStyle.navy,
-                    letterSpacing: -0.5,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (onClear != null)
-                IconButton(
-                  key: const ValueKey('cash-amount-reset'),
-                  onPressed: onClear,
-                  tooltip: 'Reset cash amount',
-                  icon: const Icon(
-                    Icons.cancel_outlined,
-                    size: 24,
-                    color: Color(0xFF94A3B8),
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
                   ),
                 ),
-            ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    _formatAmountOnly(inputBuffer, cashReceived),
+                    style: const TextStyle(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w900,
+                      color: PaymentMethodStyle.navy,
+                      letterSpacing: -0.5,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (onClear != null)
+                  IconButton(
+                    key: const ValueKey('cash-amount-reset'),
+                    onPressed: onClear,
+                    tooltip: 'Reset cash amount',
+                    icon: const Icon(
+                      Icons.cancel_outlined,
+                      size: 24,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
         ],
         if (failure != null) ...[
           const SizedBox(height: 6),

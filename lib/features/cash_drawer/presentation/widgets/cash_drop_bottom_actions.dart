@@ -50,9 +50,7 @@ class CashDropBottomActions extends StatelessWidget {
           flex: 3,
           child: Semantics(
             button: true,
-            label: isLoading
-                ? 'Confirming cash drop'
-                : 'Confirm cash drop',
+            label: isLoading ? 'Confirming cash drop' : 'Confirm cash drop',
             child: PosBottomFilledButton(
               label: 'Confirm Cash Drop',
               onPressed: canConfirm && !isLoading ? onConfirm : null,

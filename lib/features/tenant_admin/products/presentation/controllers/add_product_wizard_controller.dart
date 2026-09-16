@@ -50,6 +50,14 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     state = state.copyWith(createOptions: options);
   }
 
+  /// Skips Step 1 (Scan Barcode) and advances to Step 2 (Basic Details).
+  /// Only for use in unit tests that pre-date the scan step.
+  @visibleForTesting
+  void skipScanStepForTesting() {
+    assert(state.currentStep == 1, 'skipScanStepForTesting called from step ${state.currentStep}');
+    state = state.copyWith(currentStep: 2, lastCompletedSetupStep: 1);
+  }
+
   void clearPageError() {
     state = state.copyWith(clearPageError: true);
   }

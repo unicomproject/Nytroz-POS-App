@@ -226,9 +226,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         OutlinedButton(
-          onPressed: _submitting
-              ? null
-              : () => context.go('/tenant-admin/products'),
+          onPressed:
+              _submitting ? null : () => context.go('/tenant-admin/products'),
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(
               horizontal: 24,
@@ -337,26 +336,22 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
           _trackStock ? _selectedOutletIds.toList(growable: false) : const [],
       hasVariants: hasVariants,
       variants: hasVariants
-          ? detail.variants
-              .asMap()
-              .entries
-              .map(
-                (entry) {
-                  final variant = entry.value;
-                  final isDefault = entry.key == 0;
-                  return ProductVariantFormData(
-                    variantName: variant.variantName,
-                    sku: isDefault ? trimmedSku : variant.sku,
-                    barcode: isDefault
-                        ? (trimmedBarcode.isEmpty ? null : trimmedBarcode)
-                        : variant.barcode,
-                    sellingPrice: variant.sellingPrice,
-                    discountPrice: variant.discountPrice,
-                    status: variant.status,
-                  );
-                },
-              )
-              .toList()
+          ? detail.variants.asMap().entries.map(
+              (entry) {
+                final variant = entry.value;
+                final isDefault = entry.key == 0;
+                return ProductVariantFormData(
+                  variantName: variant.variantName,
+                  sku: isDefault ? trimmedSku : variant.sku,
+                  barcode: isDefault
+                      ? (trimmedBarcode.isEmpty ? null : trimmedBarcode)
+                      : variant.barcode,
+                  sellingPrice: variant.sellingPrice,
+                  discountPrice: variant.discountPrice,
+                  status: variant.status,
+                );
+              },
+            ).toList()
           : const [],
       hasExpiryDate: batch != null,
       batchNumber: batch?.batchNumber,
@@ -574,7 +569,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
                   : _buildPlaceholderImage(),
             ),
           ),
-          SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+          SizedBox(
+              height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -797,9 +793,11 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
             enabled: _inputsEnabled,
             errorText: _fieldErrors['productName'],
           ),
-          SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+          SizedBox(
+              height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
           _EditFieldGrid(children: basicFields),
-          SizedBox(height: compact ? TenantAdminSpacing.md : TenantAdminSpacing.lg),
+          SizedBox(
+              height: compact ? TenantAdminSpacing.md : TenantAdminSpacing.lg),
           _buildChannelVisibilitySection(compact: compact),
         ],
       ),
@@ -818,7 +816,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
             color: TenantAdminColors.bodyText,
           ),
         ),
-        SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+        SizedBox(
+            height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -831,7 +830,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
                 onChanged: (val) => setState(() => _inStorePos = val),
               ),
             ),
-            SizedBox(width: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+            SizedBox(
+                width: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
             Expanded(
               child: _buildChannelEditItem(
                 icon: Icons.shopping_cart_outlined,
@@ -870,7 +870,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
             keyboardType: TextInputType.number,
             errorText: _fieldErrors['costPrice'],
           ),
-          SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+          SizedBox(
+              height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
           ProductFormTextField(
             label: 'Standard Selling Price *',
             hint: 'LKR 2,500.00',
@@ -880,7 +881,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
             keyboardType: TextInputType.number,
             errorText: _fieldErrors['sellingPrice'],
           ),
-          SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+          SizedBox(
+              height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
           ProductFormTextField(
             label: 'Discount Price',
             hint: 'LKR 0.00',
@@ -891,7 +893,9 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
             errorText: _fieldErrors['discountPrice'],
           ),
           if (_useDropdowns) ...[
-            SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+            SizedBox(
+                height:
+                    compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
             ProductOptionDropdown(
               label: 'Tax',
               hint: 'Select tax',
@@ -935,13 +939,15 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
             value: '$total',
             icon: Icons.published_with_changes_outlined,
           ),
-          SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+          SizedBox(
+              height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
           ProductReadOnlyField(
             label: 'Active',
             value: '$active',
             icon: Icons.check_circle_outline,
           ),
-          SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+          SizedBox(
+              height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
           ProductReadOnlyField(
             label: 'Inactive',
             value: '$inactive',
@@ -980,7 +986,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
     bool compact = false,
   }) {
     return Container(
-      padding: EdgeInsets.all(compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+      padding: EdgeInsets.all(
+          compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
@@ -988,7 +995,8 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
       ),
       child: Row(
         children: [
-          Icon(icon, size: compact ? 16 : 18, color: TenantAdminColors.bodyText),
+          Icon(icon,
+              size: compact ? 16 : 18, color: TenantAdminColors.bodyText),
           const SizedBox(width: TenantAdminSpacing.sm),
           Expanded(
             child: Text(
@@ -1107,11 +1115,9 @@ class _SectionCard extends StatelessWidget {
             color: TenantAdminColors.bodyText,
           ),
         ),
-        SizedBox(height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.lg),
-        if (stretch)
-          Expanded(child: child)
-        else
-          child,
+        SizedBox(
+            height: compact ? TenantAdminSpacing.sm : TenantAdminSpacing.lg),
+        if (stretch) Expanded(child: child) else child,
       ],
     );
 
@@ -1123,7 +1129,8 @@ class _SectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
         border: Border.all(color: TenantAdminColors.border),
       ),
-      padding: EdgeInsets.all(compact ? TenantAdminSpacing.md : TenantAdminSpacing.xl),
+      padding: EdgeInsets.all(
+          compact ? TenantAdminSpacing.md : TenantAdminSpacing.xl),
       child: content,
     );
   }

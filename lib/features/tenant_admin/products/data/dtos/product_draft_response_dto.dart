@@ -235,13 +235,15 @@ class ProductDraftResponseDto {
           ? BarcodeSkuConfigurationDto.fromJson(
               json['barcodeSkuConfiguration'] as Map<String, dynamic>)
           : null,
-      pricingTaxConfiguration: (json['pricingTaxConfiguration'] ?? json['pricingTax']) != null
-          ? PricingTaxConfigurationResponseDto.fromJson(
-              Map<String, dynamic>.from(
-                (json['pricingTaxConfiguration'] ?? json['pricingTax']) as Map,
-              ),
-            )
-          : null,
+      pricingTaxConfiguration:
+          (json['pricingTaxConfiguration'] ?? json['pricingTax']) != null
+              ? PricingTaxConfigurationResponseDto.fromJson(
+                  Map<String, dynamic>.from(
+                    (json['pricingTaxConfiguration'] ?? json['pricingTax'])
+                        as Map,
+                  ),
+                )
+              : null,
       scanContext: json['scanContext'] is Map<String, dynamic>
           ? ProductSetupScanContextDto.fromJson(
               json['scanContext'] as Map<String, dynamic>,

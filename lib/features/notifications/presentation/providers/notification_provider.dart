@@ -43,13 +43,16 @@ final notificationsApiProvider = Provider<NotificationsApi>((ref) {
   return NotificationsApi(ref.watch(appDioProvider));
 });
 
-final notificationInboxProvider = StateNotifierProvider<
-    NotificationInboxController, NotificationInboxState>((ref) {
+final notificationInboxProvider =
+    StateNotifierProvider<NotificationInboxController, NotificationInboxState>(
+        (ref) {
   return NotificationInboxController(ref);
 });
 
-class NotificationInboxController extends StateNotifier<NotificationInboxState> {
-  NotificationInboxController(this._ref) : super(const NotificationInboxState()) {
+class NotificationInboxController
+    extends StateNotifier<NotificationInboxState> {
+  NotificationInboxController(this._ref)
+      : super(const NotificationInboxState()) {
     _ref.listen<AuthSession?>(
       authSessionProvider,
       (previous, next) => _handleAuthChanged(next),

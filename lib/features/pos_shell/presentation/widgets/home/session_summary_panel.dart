@@ -70,8 +70,8 @@ class PosHomeSummarySection extends ConsumerWidget {
               '${data.currencyCode} ${data.grossSalesAmount.toStringAsFixed(2)}',
           supporting: null,
         ),
-      if (permissions.hasPermission(
-          PosPermissionCodes.homeSessionSummaryTransactionCount))
+      if (permissions
+          .hasPermission(PosPermissionCodes.homeSessionSummaryTransactionCount))
         (
           label: 'Transactions',
           icon: Icons.receipt_long_outlined,
@@ -87,8 +87,7 @@ class PosHomeSummarySection extends ConsumerWidget {
           icon: Icons.assignment_return_outlined,
           iconColor: TenantAdminColors.pending,
           iconBackground: TenantAdminColors.pending.withValues(alpha: 0.13),
-          value:
-              '${data.currencyCode} ${data.refundAmount.toStringAsFixed(2)}',
+          value: '${data.currencyCode} ${data.refundAmount.toStringAsFixed(2)}',
           supporting: '${data.refundCount} completed',
         ),
       if (permissions
@@ -110,7 +109,8 @@ class PosHomeSummarySection extends ConsumerWidget {
           iconColor: TenantAdminColors.posHomeBlueEnd,
           iconBackground:
               TenantAdminColors.posHomeBlueStart.withValues(alpha: 0.14),
-          value: '${data.currencyCode} ${data.netSalesAmount.toStringAsFixed(2)}',
+          value:
+              '${data.currencyCode} ${data.netSalesAmount.toStringAsFixed(2)}',
           supporting: null,
         ),
     ];

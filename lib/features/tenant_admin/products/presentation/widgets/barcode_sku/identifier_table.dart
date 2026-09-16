@@ -249,9 +249,10 @@ class Step5IdentifierTable extends StatelessWidget {
     final hasSku = assignment.sku?.trim().isNotEmpty == true;
     final hasBarcode = assignment.barcode?.trim().isNotEmpty == true;
 
-    final primaryLabel = (!_useCompactSelectedRow && productName.trim().isNotEmpty)
-        ? productName.trim()
-        : variantLabel;
+    final primaryLabel =
+        (!_useCompactSelectedRow && productName.trim().isNotEmpty)
+            ? productName.trim()
+            : variantLabel;
     final secondaryLabel = (!_useCompactSelectedRow &&
             productName.trim().isNotEmpty &&
             (optionLabel ?? variantLabel).trim().isNotEmpty)
@@ -634,11 +635,9 @@ class _InlineFieldState extends State<_InlineField> {
                 color: completeGreen,
               )
             : null,
-        suffixIconConstraints: complete
-            ? const BoxConstraints(minWidth: 32, minHeight: 28)
-            : null,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        suffixIconConstraints:
+            complete ? const BoxConstraints(minWidth: 32, minHeight: 28) : null,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
           borderSide: BorderSide(
@@ -823,8 +822,7 @@ class _Step5VariantIdentifierToolbarState
             PopupMenuItem(
                 value: Step5StatusFilter.complete, child: Text('Complete')),
             PopupMenuItem(
-                value: Step5StatusFilter.incomplete,
-                child: Text('Incomplete')),
+                value: Step5StatusFilter.incomplete, child: Text('Incomplete')),
             PopupMenuItem(value: Step5StatusFilter.error, child: Text('Error')),
           ],
           child: OutlinedButton.icon(

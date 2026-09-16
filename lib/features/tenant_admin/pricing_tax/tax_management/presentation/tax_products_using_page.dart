@@ -72,8 +72,7 @@ class TaxProductsUsingPage extends ConsumerWidget {
                           color: TenantAdminColors.surface,
                           borderRadius:
                               BorderRadius.circular(TenantAdminRadius.lg),
-                          border:
-                              Border.all(color: TenantAdminColors.border),
+                          border: Border.all(color: TenantAdminColors.border),
                         ),
                         child: ClipRRect(
                           borderRadius:
@@ -98,8 +97,7 @@ class TaxProductsUsingPage extends ConsumerWidget {
                                 subtitle: Text(item.productCode),
                                 trailing: Wrap(
                                   spacing: 8,
-                                  crossAxisAlignment:
-                                      WrapCrossAlignment.center,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     Text(
                                       item.taxPriceMode.label,

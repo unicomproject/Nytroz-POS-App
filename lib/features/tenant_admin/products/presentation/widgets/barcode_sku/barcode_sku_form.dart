@@ -54,7 +54,6 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
     setState(() {});
   }
 
-
   @override
   void dispose() {
     _skuController.removeListener(_onSkuChanged);
@@ -161,7 +160,8 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
     controller.clearStep5RowSelection();
     setState(() {});
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('SKU & barcode applied to selected variants.')),
+      const SnackBar(
+          content: Text('SKU & barcode applied to selected variants.')),
     );
   }
 
@@ -238,8 +238,8 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                     if (state.productStructure == 'SIMPLE' ||
                         state.productStructure == 'BUNDLE') {
                       controller.updateSimpleBaseSku(updated.sku ?? '');
-                      controller.updateSimpleParentBarcode(
-                          updated.barcode ?? '');
+                      controller
+                          .updateSimpleParentBarcode(updated.barcode ?? '');
                       setState(() {
                         _appliedSku = updated.sku ?? '';
                         _appliedBarcode = updated.barcode ?? '';
@@ -272,7 +272,8 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
     final controller = ref.read(addProductWizardControllerProvider.notifier);
     final state = ref.read(addProductWizardControllerProvider);
 
-    if (state.productStructure == 'SIMPLE' || state.productStructure == 'BUNDLE') {
+    if (state.productStructure == 'SIMPLE' ||
+        state.productStructure == 'BUNDLE') {
       setState(() {
         _appliedSku = '';
         _appliedBarcode = '';
@@ -294,8 +295,8 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
     );
   }
 
-  Future<void> _confirmAndDeleteAssignment(
-      BuildContext context, BarcodeSkuAssignmentDto assignment, int index) async {
+  Future<void> _confirmAndDeleteAssignment(BuildContext context,
+      BarcodeSkuAssignmentDto assignment, int index) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -305,7 +306,8 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
           ),
           backgroundColor: TenantAdminColors.surface,
           surfaceTintColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 440),
             child: Padding(
@@ -419,7 +421,8 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                             horizontal: 20,
                             vertical: 14,
                           ),
-                          side: const BorderSide(color: TenantAdminColors.border),
+                          side:
+                              const BorderSide(color: TenantAdminColors.border),
                           shape: RoundedRectangleBorder(
                             borderRadius:
                                 BorderRadius.circular(TenantAdminRadius.md),
@@ -547,7 +550,8 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                             ),
                             child: Text(
                               productName,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ),
                         ],
@@ -618,7 +622,8 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFF6A00),
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -781,8 +786,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
             ),
             const SizedBox(width: TenantAdminSpacing.sm),
             ElevatedButton(
-              onPressed: () =>
-                  _applyVariantIdentifierDrafts(controller, state),
+              onPressed: () => _applyVariantIdentifierDrafts(controller, state),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFF6A00),
                 foregroundColor: Colors.white,
@@ -818,4 +822,3 @@ class _FieldLabel extends StatelessWidget {
     );
   }
 }
-

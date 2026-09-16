@@ -134,7 +134,8 @@ class TenantProductRemoteDatasource {
   }
 
   Future<ProductCreateResponseDto> duplicateProduct(String productId) async {
-    final response = await _dio.post<dynamic>('$_productsPath/$productId/duplicate');
+    final response =
+        await _dio.post<dynamic>('$_productsPath/$productId/duplicate');
     return ProductCreateResponseDto.fromJson(
       _unwrapApiPayload(response.data, response.requestOptions),
     );

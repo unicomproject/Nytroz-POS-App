@@ -62,8 +62,7 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
     final tillOpen = ref.watch(tillProvider).hasOpenSession;
     final canAttachPermission =
         PosPermissionAccess.canAttachCustomerToSale(granted);
-    final canDeactivate =
-        PosPermissionAccess.canDeactivateCustomer(granted);
+    final canDeactivate = PosPermissionAccess.canDeactivateCustomer(granted);
     final canViewPurchaseHistory =
         PosCustomersOrdersReturnsVisibility.canShowPurchaseHistory(
       permissions,
@@ -205,7 +204,8 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
                                       customersState.detailErrorMessage,
                                   canAttach: canAttach,
                                   showAttachAction: canAttachPermission,
-                                  canViewPurchaseHistory: canViewPurchaseHistory,
+                                  canViewPurchaseHistory:
+                                      canViewPurchaseHistory,
                                   canEdit: canEdit,
                                   canDeactivate: canDeactivate,
                                   isAttaching: customersState.isAttaching,
@@ -366,7 +366,8 @@ class _PosCustomersScreenState extends ConsumerState<PosCustomersScreen> {
     final session = ref.read(authSessionProvider);
     final granted = session?.permissionCodes.toSet() ?? const {};
     if (!PosPermissionAccess.canAttachCustomerToSale(granted)) {
-      _showMessage('You do not have permission to attach a customer to a sale.');
+      _showMessage(
+          'You do not have permission to attach a customer to a sale.');
       return;
     }
     if (!ref.read(tillProvider).hasOpenSession) {

@@ -56,8 +56,7 @@ class BluetoothReceiptPrinterAdapter implements ReceiptPrinterAdapter {
   @override
   Future<void> checkStatus(PosDevicePrinterConfig config) async {
     if (!_connected ||
-        _connectedAddress !=
-            config.bluetoothAddress?.trim().toUpperCase()) {
+        _connectedAddress != config.bluetoothAddress?.trim().toUpperCase()) {
       await connect(config);
     }
   }

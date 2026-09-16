@@ -29,9 +29,7 @@ List<String> validateLocalPrintAgentConfig(PosDevicePrinterConfig config) {
       errors.add(
         'Production Android requires a trusted HTTPS Print Agent URL.',
       );
-    } else if (kReleaseMode &&
-        uri.scheme == 'http' &&
-        !privateLan) {
+    } else if (kReleaseMode && uri.scheme == 'http' && !privateLan) {
       errors.add(
         'Production HTTP is only allowed for private LAN or loopback agent URLs.',
       );

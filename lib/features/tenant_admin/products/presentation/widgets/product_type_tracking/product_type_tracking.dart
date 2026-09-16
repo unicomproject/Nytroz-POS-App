@@ -28,73 +28,75 @@ class ProductTypeTracking extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Page Header
-          const Text(
-            'Product Type *',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: TenantAdminColors.bodyText,
-            ),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Page Header
+        const Text(
+          'Product Type *',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: TenantAdminColors.bodyText,
           ),
-          const SizedBox(height: TenantAdminSpacing.sm),
+        ),
+        const SizedBox(height: TenantAdminSpacing.sm),
 
-          // Product structure cards
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 680;
-              final cards = [
-                ProductStructureCard(
-                  structure: 'SIMPLE',
-                  title: 'Simple Product',
-                  description:
-                      'Single SKU product with no variants (e.g., T-shirt)',
-                  icon: Icons.inventory_2_outlined,
-                  selected: state.productStructure == 'SIMPLE' && state.productStructureConfirmed,
-                  onSelected: () => _selectStructure(context, 'SIMPLE'),
-                ),
-                ProductStructureCard(
-                  structure: 'VARIANT',
-                  title: 'Variant Product',
-                  description:
-                      'Product with multiple options (e.g., T-shirt with size, color)',
-                  icon: Icons.dashboard_customize_outlined,
-                  selected: state.productStructure == 'VARIANT' && state.productStructureConfirmed,
-                  enabled: canManageVariants,
-                  onSelected: () => _selectStructure(context, 'VARIANT'),
-                ),
-              ];
+        // Product structure cards
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 680;
+            final cards = [
+              ProductStructureCard(
+                structure: 'SIMPLE',
+                title: 'Simple Product',
+                description:
+                    'Single SKU product with no variants (e.g., T-shirt)',
+                icon: Icons.inventory_2_outlined,
+                selected: state.productStructure == 'SIMPLE' &&
+                    state.productStructureConfirmed,
+                onSelected: () => _selectStructure(context, 'SIMPLE'),
+              ),
+              ProductStructureCard(
+                structure: 'VARIANT',
+                title: 'Variant Product',
+                description:
+                    'Product with multiple options (e.g., T-shirt with size, color)',
+                icon: Icons.dashboard_customize_outlined,
+                selected: state.productStructure == 'VARIANT' &&
+                    state.productStructureConfirmed,
+                enabled: canManageVariants,
+                onSelected: () => _selectStructure(context, 'VARIANT'),
+              ),
+            ];
 
-              if (isNarrow) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    cards[0],
-                    const SizedBox(height: TenantAdminSpacing.md),
-                    cards[1],
-                  ],
-                );
-              }
-
-              return IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(child: cards[0]),
-                    const SizedBox(width: TenantAdminSpacing.md),
-                    Expanded(child: cards[1]),
-                  ],
-                ),
+            if (isNarrow) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  cards[0],
+                  const SizedBox(height: TenantAdminSpacing.md),
+                  cards[1],
+                ],
               );
-            },
-          ),
+            }
 
-          const SizedBox(height: 32),
-          _buildDynamicContent(context),
-        ],
-      );
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: cards[0]),
+                  const SizedBox(width: TenantAdminSpacing.md),
+                  Expanded(child: cards[1]),
+                ],
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 32),
+        _buildDynamicContent(context),
+      ],
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -194,6 +196,9 @@ class ProductTypeTracking extends StatelessWidget {
   }
 
   Widget _buildDynamicContent(BuildContext context) {
+    if (!state.productStructureConfirmed) {
+      return const SizedBox.shrink();
+    }
     switch (state.productStructure) {
       case 'VARIANT':
         return _buildVariantTrackingContent(context);
@@ -518,6 +523,10 @@ class ProductTypeTracking extends StatelessWidget {
       return const [];
     }
 
+    if (!state.productStructureConfirmed) {
+      return const [];
+    }
+
     final structure = state.productStructure.toUpperCase();
     if (structure != 'SIMPLE' && structure != 'VARIANT') {
       return const [];
@@ -640,8 +649,9 @@ class ProductStructureCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: selected 
-                      ? TenantAdminColors.posHomeAccentOrange.withValues(alpha: 0.1)
+                  color: selected
+                      ? TenantAdminColors.posHomeAccentOrange
+                          .withValues(alpha: 0.1)
                       : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -742,9 +752,10 @@ class TrackingRuleTile extends StatelessWidget {
                 Icon(
                   icon,
                   size: 20,
-                  color: iconColor ?? (enabled && value
-                      ? activeColor
-                      : TenantAdminColors.mutedText),
+                  color: iconColor ??
+                      (enabled && value
+                          ? activeColor
+                          : TenantAdminColors.mutedText),
                 ),
                 Transform.scale(
                   scale: 0.8,

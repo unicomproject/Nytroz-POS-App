@@ -154,7 +154,8 @@ class PosPermissionAccess {
   }
 
   static bool hasAll(Set<String> granted, List<String> codes) {
-    return EffectivePermissionSet.fromIterable(granted).hasAllPermissions(codes);
+    return EffectivePermissionSet.fromIterable(granted)
+        .hasAllPermissions(codes);
   }
 
   static bool hasExact(Set<String> granted, String code) {

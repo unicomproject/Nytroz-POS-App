@@ -29,9 +29,12 @@ class _TenantAdminPressScaleState extends State<TenantAdminPressScale> {
 
   @override
   Widget build(BuildContext context) => Listener(
-        onPointerDown: widget.enabled ? (_) => setState(() => _pressed = true) : null,
-        onPointerUp: widget.enabled ? (_) => setState(() => _pressed = false) : null,
-        onPointerCancel: widget.enabled ? (_) => setState(() => _pressed = false) : null,
+        onPointerDown:
+            widget.enabled ? (_) => setState(() => _pressed = true) : null,
+        onPointerUp:
+            widget.enabled ? (_) => setState(() => _pressed = false) : null,
+        onPointerCancel:
+            widget.enabled ? (_) => setState(() => _pressed = false) : null,
         child: AnimatedScale(
           scale: _pressed ? 0.985 : 1,
           duration: TenantAdminMotion.fast,

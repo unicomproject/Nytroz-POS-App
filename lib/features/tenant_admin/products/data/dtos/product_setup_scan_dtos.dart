@@ -166,7 +166,8 @@ class ExternalProductSuggestionDto {
         if (longDescription != null) 'longDescription': longDescription,
         if (imageCandidate != null) 'imageCandidate': imageCandidate,
         if (primaryGtin != null) 'primaryGtin': primaryGtin,
-        if (identifierStandard != null) 'identifierStandard': identifierStandard,
+        if (identifierStandard != null)
+          'identifierStandard': identifierStandard,
       };
 }
 
@@ -247,8 +248,10 @@ class ProductSetupScanBootstrapRequestDto {
   Map<String, dynamic> toJson() => {
         'acquisitionMode': acquisitionMode,
         'creationAction': creationAction,
-        if (candidateIdentifier != null) 'candidateIdentifier': candidateIdentifier,
-        if (identifierStandard != null) 'identifierStandard': identifierStandard,
+        if (candidateIdentifier != null)
+          'candidateIdentifier': candidateIdentifier,
+        if (identifierStandard != null)
+          'identifierStandard': identifierStandard,
         if (symbologyHint != null) 'symbologyHint': symbologyHint,
         if (noBarcodeReason != null) 'noBarcodeReason': noBarcodeReason,
         if (externalLookupStatus != null)

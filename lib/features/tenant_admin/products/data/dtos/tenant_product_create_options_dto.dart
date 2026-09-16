@@ -189,7 +189,8 @@ class TenantProductCreateOptionsDto {
         json['variantOptionTemplates'],
         ProductVariantOptionTemplateDto.fromJson,
       ),
-      currencyCode: (json['currencyCode']?.toString() ?? '').trim().toUpperCase(),
+      currencyCode:
+          (json['currencyCode']?.toString() ?? '').trim().toUpperCase(),
     );
   }
 

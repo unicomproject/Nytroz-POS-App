@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../layout/tenant_admin_breadcrumb.dart';
@@ -87,8 +86,8 @@ class TenantAdminPageScaffold extends StatelessWidget {
                 SizedBox(
                   height: headerSpacing ??
                       (constraints.maxHeight < 720
-                          ? TenantAdminSpacing.sm
-                          : TenantAdminSpacing.xl) +
+                              ? TenantAdminSpacing.sm
+                              : TenantAdminSpacing.xl) +
                           20,
                 ),
               ],
@@ -110,7 +109,9 @@ class TenantAdminPageScaffold extends StatelessWidget {
             padding: framePadding,
             child: Container(
               width: double.infinity,
-              constraints: fillHeight && constraints.maxHeight.isFinite && constraints.maxHeight < 10000
+              constraints: fillHeight &&
+                      constraints.maxHeight.isFinite &&
+                      constraints.maxHeight < 10000
                   ? BoxConstraints(
                       minHeight: (constraints.maxHeight - verticalFrameInset)
                           .clamp(0.0, double.infinity),
@@ -121,15 +122,20 @@ class TenantAdminPageScaffold extends StatelessWidget {
                 color: TenantAdminColors.surface,
                 borderRadius: isNarrow
                     ? BorderRadius.circular(24)
-                    : BorderRadius.zero, // Dock perfectly flush against sidebar/header
-                boxShadow: isNarrow ? null : null, // Remove shadows to keep flat contiguous layout
+                    : BorderRadius
+                        .zero, // Dock perfectly flush against sidebar/header
+                boxShadow: isNarrow
+                    ? null
+                    : null, // Remove shadows to keep flat contiguous layout
               ),
               child: scrollable
                   ? SingleChildScrollView(
                       padding: basePadding,
                       physics: const ClampingScrollPhysics(),
                       child: ConstrainedBox(
-                        constraints: fillHeight && constraints.maxHeight.isFinite && constraints.maxHeight < 10000
+                        constraints: fillHeight &&
+                                constraints.maxHeight.isFinite &&
+                                constraints.maxHeight < 10000
                             ? BoxConstraints(
                                 minHeight: (constraints.maxHeight -
                                         verticalFrameInset -

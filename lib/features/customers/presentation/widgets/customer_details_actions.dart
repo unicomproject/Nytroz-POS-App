@@ -20,6 +20,7 @@ class CustomerDetailsActions extends StatelessWidget {
   });
 
   final bool canAttach;
+
   /// Permission present (business state may still disable).
   final bool showAttachAction;
   final bool canViewPurchaseHistory;

@@ -506,10 +506,10 @@ class _StockSummaryCell extends StatelessWidget {
 }
 
 String _formatProductPrice(TenantProduct product) {
-  final currency = (product.currencyCode == null ||
-          product.currencyCode!.trim().isEmpty)
-      ? ''
-      : product.currencyCode!.toUpperCase();
+  final currency =
+      (product.currencyCode == null || product.currencyCode!.trim().isEmpty)
+          ? ''
+          : product.currencyCode!.toUpperCase();
 
   if (product.priceFrom == null && product.priceTo == null) {
     return '—';

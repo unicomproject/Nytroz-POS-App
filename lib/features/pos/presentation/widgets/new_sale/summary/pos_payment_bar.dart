@@ -127,18 +127,17 @@ class PosPaymentBar extends ConsumerWidget {
                 FilledButton.icon(
                   onPressed: canProceed
                       ? () async {
-                          final pending = cart.cartDiscount?.isPendingSync ==
-                                  true ||
-                              cart.items.values.any((item) =>
-                                  item.discount?.isPendingSync == true);
+                          final pending =
+                              cart.cartDiscount?.isPendingSync == true ||
+                                  cart.items.values.any((item) =>
+                                      item.discount?.isPendingSync == true);
                           if (pending) {
                             await syncPendingPosDiscounts(ref: ref);
                             final refreshed = ref.read(posNewSaleCartProvider);
-                            final stillPending = refreshed
-                                        .cartDiscount?.isPendingSync ==
-                                    true ||
-                                refreshed.items.values.any((item) =>
-                                    item.discount?.isPendingSync == true);
+                            final stillPending =
+                                refreshed.cartDiscount?.isPendingSync == true ||
+                                    refreshed.items.values.any((item) =>
+                                        item.discount?.isPendingSync == true);
                             if (stillPending) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(

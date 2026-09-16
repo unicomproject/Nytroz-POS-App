@@ -63,9 +63,7 @@ class UsbReceiptPrinterAdapter implements ReceiptPrinterAdapter {
     final AndroidUsbPrinterDevice selected;
     if (preferredName != null && preferredName.isNotEmpty) {
       selected = matches.firstWhere(
-        (d) =>
-            d.deviceName == preferredName ||
-            d.serialNumber == preferredName,
+        (d) => d.deviceName == preferredName || d.serialNumber == preferredName,
         orElse: () => throw PrinterDeviceNotFoundException(
           'Configured USB identity "$preferredName" was not found.',
         ),
@@ -80,8 +78,7 @@ class UsbReceiptPrinterAdapter implements ReceiptPrinterAdapter {
     }
 
     if (!selected.hasPermission) {
-      final granted =
-          await _platform.usbRequestPermission(selected.deviceName);
+      final granted = await _platform.usbRequestPermission(selected.deviceName);
       if (!granted) {
         throw const PrinterPermissionDeniedException(
           'USB permission was denied for the receipt printer.',

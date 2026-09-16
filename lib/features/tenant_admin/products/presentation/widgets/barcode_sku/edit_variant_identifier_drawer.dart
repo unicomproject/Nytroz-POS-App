@@ -222,7 +222,8 @@ class _EditVariantIdentifierDrawerState
                         style: OutlinedButton.styleFrom(
                           backgroundColor: TenantAdminColors.surface,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: const BorderSide(color: TenantAdminColors.border),
+                          side:
+                              const BorderSide(color: TenantAdminColors.border),
                           shape: RoundedRectangleBorder(
                             borderRadius:
                                 BorderRadius.circular(TenantAdminRadius.sm),

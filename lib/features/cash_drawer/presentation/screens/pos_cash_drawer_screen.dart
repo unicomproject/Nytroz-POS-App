@@ -273,8 +273,7 @@ class _PosCashDrawerScreenState extends ConsumerState<PosCashDrawerScreen> {
 
     String? managerEmail;
     String? managerPassword;
-    final requiresApproval =
-        config.policy.toLowerCase().contains('approval');
+    final requiresApproval = config.policy.toLowerCase().contains('approval');
     if (requiresApproval) {
       final credentials = await _promptManagerApproval(context);
       if (!context.mounted || credentials == null) return;

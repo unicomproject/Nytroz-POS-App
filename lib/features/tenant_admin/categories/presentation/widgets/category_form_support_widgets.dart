@@ -71,9 +71,11 @@ class CategoryHierarchyIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isRoot ? TenantAdminColors.success : TenantAdminColors.primary;
-    final background =
-        isRoot ? TenantAdminColors.success.withValues(alpha: 0.08) : TenantAdminColors.primary.withValues(alpha: 0.08);
+    final color =
+        isRoot ? TenantAdminColors.success : TenantAdminColors.primary;
+    final background = isRoot
+        ? TenantAdminColors.success.withValues(alpha: 0.08)
+        : TenantAdminColors.primary.withValues(alpha: 0.08);
 
     return Container(
       width: double.infinity,
@@ -90,7 +92,9 @@ class CategoryHierarchyIndicator extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            isRoot ? Icons.account_tree_outlined : Icons.subdirectory_arrow_right,
+            isRoot
+                ? Icons.account_tree_outlined
+                : Icons.subdirectory_arrow_right,
             color: color,
           ),
           const SizedBox(width: TenantAdminSpacing.md),

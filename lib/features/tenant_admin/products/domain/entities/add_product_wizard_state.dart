@@ -34,6 +34,7 @@ class AddProductWizardState {
   final int? targetSetupStep;
   final int? lastCompletedSetupStep;
   final String? productId;
+
   /// Frontend-local draft identity (not a backend product id).
   final String? localDraftId;
   final String status;
@@ -377,7 +378,8 @@ class AddProductWizardState {
       standardSellingPrice: clearStandardSellingPrice
           ? null
           : (standardSellingPrice ?? this.standardSellingPrice),
-      discountPrice: clearDiscountPrice ? null : (discountPrice ?? this.discountPrice),
+      discountPrice:
+          clearDiscountPrice ? null : (discountPrice ?? this.discountPrice),
       taxId: clearTaxId ? null : (taxId ?? this.taxId),
       taxName: clearTaxName ? null : (taxName ?? this.taxName),
       taxRate: clearTaxRate ? null : (taxRate ?? this.taxRate),

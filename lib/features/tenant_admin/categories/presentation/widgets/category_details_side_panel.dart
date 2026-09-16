@@ -380,8 +380,8 @@ class _CategoryDetailsSidePanelState
                           const SizedBox(height: TenantAdminSpacing.md),
                           Text(
                             _errorMessage!,
-                            style:
-                                const TextStyle(color: TenantAdminColors.danger),
+                            style: const TextStyle(
+                                color: TenantAdminColors.danger),
                           ),
                         ],
                         if (_showImageRetry) ...[
@@ -460,7 +460,8 @@ class _CategoryDetailsSidePanelState
           label: 'Child Categories',
           value: '${category.childCount}',
         ),
-        _ReadOnlyField(label: 'Product Count', value: '${category.productCount}'),
+        _ReadOnlyField(
+            label: 'Product Count', value: '${category.productCount}'),
         _ReadOnlyField(
           label: 'Created At',
           value: formatCategoryUpdatedOn(category.createdAt),
@@ -732,7 +733,8 @@ class _ParentCategoryField extends StatelessWidget {
     );
   }
 
-  List<({String id, String name, int level, String status})> _buildParentOptions(
+  List<({String id, String name, int level, String status})>
+      _buildParentOptions(
     List<CategoryTreeNode> nodes,
   ) {
     final result = <({String id, String name, int level, String status})>[];
@@ -743,8 +745,7 @@ class _ParentCategoryField extends StatelessWidget {
           continue;
         }
 
-        final isCurrentParent =
-            selectedId != null && node.id == selectedId;
+        final isCurrentParent = selectedId != null && node.id == selectedId;
         final selectable = node.isActive || isCurrentParent;
 
         if (selectable) {

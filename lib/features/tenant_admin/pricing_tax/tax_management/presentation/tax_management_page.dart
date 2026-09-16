@@ -63,8 +63,7 @@ class TaxManagementPage extends ConsumerWidget {
             children: [
               _TaxToolbar(visibility: visibility),
               const SizedBox(height: TenantAdminSpacing.lg),
-              if (visibility.showList)
-                const Expanded(child: _TaxListBody()),
+              if (visibility.showList) const Expanded(child: _TaxListBody()),
             ],
           ),
         );
@@ -180,8 +179,7 @@ class _TaxToolbar extends ConsumerWidget {
 
         return Row(
           children: [
-            if (visibility.showSearch)
-              Expanded(flex: 4, child: search),
+            if (visibility.showSearch) Expanded(flex: 4, child: search),
             if (visibility.showSearch)
               const SizedBox(width: TenantAdminSpacing.sm),
             SizedBox(width: 160, child: statusDropdown),
@@ -266,8 +264,7 @@ class _TaxListBody extends ConsumerWidget {
                 onOpen: (tax) => _openDetails(context, ref, taxId: tax.id),
                 onEdit: (tax) => _openForm(context, ref, taxId: tax.id),
                 onActivate: (tax) => _activate(context, ref, tax),
-                onDeactivate: (tax) =>
-                    _confirmDeactivate(context, ref, tax),
+                onDeactivate: (tax) => _confirmDeactivate(context, ref, tax),
               ),
             ),
             if (result.totalCount > 0)
@@ -373,17 +370,14 @@ Future<void> _confirmDeactivate(
             backgroundColor: TenantAdminColors.danger,
             foregroundColor: Colors.white,
           ),
-          onPressed: () =>
-              Navigator.pop(context, _DeactivateChoice.deactivate),
+          onPressed: () => Navigator.pop(context, _DeactivateChoice.deactivate),
           child: const Text('Deactivate'),
         ),
       ],
     ),
   );
 
-  if (!context.mounted ||
-      action == null ||
-      action == _DeactivateChoice.keep) {
+  if (!context.mounted || action == null || action == _DeactivateChoice.keep) {
     return;
   }
 

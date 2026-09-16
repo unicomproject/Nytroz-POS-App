@@ -384,7 +384,8 @@ class CategoryAddFormState extends ConsumerState<CategoryAddForm> {
                         widget.submitting ? 'Creating...' : 'Create Category',
                     loading: widget.submitting,
                     backgroundColor: TenantAdminColors.posHomeAccentOrange,
-                    onPressed: widget.submitting ? null : widget.onCreatePressed,
+                    onPressed:
+                        widget.submitting ? null : widget.onCreatePressed,
                   ),
                 ),
               ],

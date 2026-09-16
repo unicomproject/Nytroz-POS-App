@@ -13,38 +13,38 @@ class AppSecureStorage {
   final FlutterSecureStorage _storage;
 
   Future<String?> read(String key) => _runSerialized(() async {
-    try {
-      return await _storage.read(key: key);
-    } catch (error, stackTrace) {
-      _logStorageFailure('read', key, error, stackTrace);
-      await _deleteSilently(key);
-      return null;
-    }
-  });
+        try {
+          return await _storage.read(key: key);
+        } catch (error, stackTrace) {
+          _logStorageFailure('read', key, error, stackTrace);
+          await _deleteSilently(key);
+          return null;
+        }
+      });
 
   Future<void> write(String key, String value) => _runSerialized(() async {
-    try {
-      await _storage.write(key: key, value: value);
-    } catch (error, stackTrace) {
-      _logStorageFailure('write', key, error, stackTrace);
-    }
-  });
+        try {
+          await _storage.write(key: key, value: value);
+        } catch (error, stackTrace) {
+          _logStorageFailure('write', key, error, stackTrace);
+        }
+      });
 
   Future<void> delete(String key) => _runSerialized(() async {
-    try {
-      await _storage.delete(key: key);
-    } catch (error, stackTrace) {
-      _logStorageFailure('delete', key, error, stackTrace);
-    }
-  });
+        try {
+          await _storage.delete(key: key);
+        } catch (error, stackTrace) {
+          _logStorageFailure('delete', key, error, stackTrace);
+        }
+      });
 
   Future<void> deleteAll() => _runSerialized(() async {
-    try {
-      await _storage.deleteAll();
-    } catch (error, stackTrace) {
-      _logStorageFailure('deleteAll', '*', error, stackTrace);
-    }
-  });
+        try {
+          await _storage.deleteAll();
+        } catch (error, stackTrace) {
+          _logStorageFailure('deleteAll', '*', error, stackTrace);
+        }
+      });
 
   Future<T> _runSerialized<T>(Future<T> Function() operation) {
     final result = Completer<T>();

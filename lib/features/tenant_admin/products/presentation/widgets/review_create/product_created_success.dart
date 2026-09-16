@@ -63,9 +63,8 @@ class ProductCreateSuccessSnapshot {
   }) {
     final structure = state.productStructure.toUpperCase();
     final isVariant = structure == 'VARIANT';
-    final included = state.step4State.generatedVariants
-        .where((v) => v.isIncluded)
-        .toList();
+    final included =
+        state.step4State.generatedVariants.where((v) => v.isIncluded).toList();
     final skuCount = isVariant
         ? state.step5State.assignments
             .where((a) => (a.sku ?? '').trim().isNotEmpty)
@@ -205,11 +204,16 @@ class _SuccessCheckmark extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Positioned(top: 6, left: 10, child: _spark(const Color(0xFF22C55E), 7)),
-          Positioned(top: 18, right: 8, child: _spark(const Color(0xFFF59E0B), 5)),
-          Positioned(bottom: 14, left: 8, child: _spark(const Color(0xFF3B82F6), 6)),
-          Positioned(bottom: 8, right: 16, child: _spark(const Color(0xFFEC4899), 5)),
-          Positioned(top: 4, right: 28, child: _spark(TenantAdminColors.primary, 4)),
+          Positioned(
+              top: 6, left: 10, child: _spark(const Color(0xFF22C55E), 7)),
+          Positioned(
+              top: 18, right: 8, child: _spark(const Color(0xFFF59E0B), 5)),
+          Positioned(
+              bottom: 14, left: 8, child: _spark(const Color(0xFF3B82F6), 6)),
+          Positioned(
+              bottom: 8, right: 16, child: _spark(const Color(0xFFEC4899), 5)),
+          Positioned(
+              top: 4, right: 28, child: _spark(TenantAdminColors.primary, 4)),
           Container(
             width: 72,
             height: 72,
@@ -217,7 +221,8 @@ class _SuccessCheckmark extends StatelessWidget {
               color: Color(0xFF22C55E),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check_rounded, color: Colors.white, size: 40),
+            child:
+                const Icon(Icons.check_rounded, color: Colors.white, size: 40),
           ),
         ],
       ),

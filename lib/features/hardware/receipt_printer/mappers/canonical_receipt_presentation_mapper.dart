@@ -36,9 +36,7 @@ class CanonicalReceiptPresentationMapper {
       currency: receipt.currency.trim().isEmpty
           ? 'LKR'
           : receipt.currency.trim().toUpperCase(),
-      items: receipt.items
-          .map(_itemFromCompleted)
-          .toList(growable: false),
+      items: receipt.items.map(_itemFromCompleted).toList(growable: false),
       itemCount: itemCount,
       subtotal: receipt.subtotal,
       discountTotal: receipt.discountTotal,
@@ -80,9 +78,8 @@ class CanonicalReceiptPresentationMapper {
 
     final itemCount = success.items.fold<int>(0, (sum, i) => sum + i.quantity);
     return CanonicalReceiptPresentation(
-      merchantName: session.brandName.trim().isEmpty
-          ? 'POS'
-          : session.brandName.trim(),
+      merchantName:
+          session.brandName.trim().isEmpty ? 'POS' : session.brandName.trim(),
       brandSubtitle: session.brandSubtitle.trim(),
       outletName: _cleanPending(session.outletName) ?? '',
       outletLocation: _cleanPending(session.outletLocation) ?? '',
@@ -104,7 +101,8 @@ class CanonicalReceiptPresentationMapper {
               sku: item.variantSummary?.trim() ?? '',
               quantity: item.quantity,
               valueUnitPrice: item.unitPrice,
-              rateUnitPrice: _rate(item.quantity, item.lineTotal, item.unitPrice),
+              rateUnitPrice:
+                  _rate(item.quantity, item.lineTotal, item.unitPrice),
               lineTotal: item.lineTotal,
             ),
           )

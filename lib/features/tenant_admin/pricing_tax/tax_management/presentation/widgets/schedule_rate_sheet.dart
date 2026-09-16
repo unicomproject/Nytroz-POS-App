@@ -216,8 +216,7 @@ class _ScheduleRateSheetState extends State<ScheduleRateSheet> {
     );
     final parsedNew =
         _rateLocked ? 0.0 : double.tryParse(_rateController.text.trim());
-    final previewNew =
-        _isExempt ? 'Exempt' : formatTaxRatePercent(parsedNew);
+    final previewNew = _isExempt ? 'Exempt' : formatTaxRatePercent(parsedNew);
 
     return Material(
       color: Colors.white,
@@ -303,8 +302,7 @@ class _ScheduleRateSheetState extends State<ScheduleRateSheet> {
                           onChanged: (_) => setState(() {}),
                           validator: (value) {
                             if (_rateLocked || _isExempt) return null;
-                            final parsed =
-                                double.tryParse(value?.trim() ?? '');
+                            final parsed = double.tryParse(value?.trim() ?? '');
                             if (parsed == null) {
                               return 'Enter a valid rate';
                             }
@@ -418,13 +416,11 @@ class _ScheduleRateSheetState extends State<ScheduleRateSheet> {
                             child: _PreviewCard(
                               label: 'New Rate',
                               value: previewNew == '—' ? '—' : previewNew,
-                              subtitle:
-                                  'From ${formatTaxDate(_effectiveFrom)}',
+                              subtitle: 'From ${formatTaxDate(_effectiveFrom)}',
                               background: const Color(0xFFFFF1EE),
                               border: const Color(0xFFFFD0C2),
                               labelColor: const Color(0xFFC2410C),
-                              valueColor:
-                                  TenantAdminColors.posHomeAccentOrange,
+                              valueColor: TenantAdminColors.posHomeAccentOrange,
                               subtitleColor: const Color(0xFFEA580C),
                             ),
                           ),
@@ -462,11 +458,9 @@ class _ScheduleRateSheetState extends State<ScheduleRateSheet> {
                     Expanded(
                       flex: 3,
                       child: TenantAdminPrimaryButton(
-                        label:
-                            _isEdit ? 'Save Schedule' : 'Schedule Change',
+                        label: _isEdit ? 'Save Schedule' : 'Schedule Change',
                         loading: _submitting,
-                        backgroundColor:
-                            TenantAdminColors.posHomeAccentOrange,
+                        backgroundColor: TenantAdminColors.posHomeAccentOrange,
                         onPressed: _submit,
                       ),
                     ),

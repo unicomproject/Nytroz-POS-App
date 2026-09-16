@@ -154,10 +154,8 @@ class _ProductListBody extends ConsumerWidget {
           );
         }
 
-        final isRefetching =
-            productsState.isLoading && productsState.hasValue;
-        final refetchFailed =
-            productsState.hasError && productsState.hasValue;
+        final isRefetching = productsState.isLoading && productsState.hasValue;
+        final refetchFailed = productsState.hasError && productsState.hasValue;
 
         if (result.totalCount == 0 && result.catalogTotalCount == 0) {
           return Center(
@@ -255,8 +253,7 @@ class _ProductListBody extends ConsumerWidget {
                           ),
                         ),
                         TextButton(
-                          onPressed: () =>
-                              ref.invalidate(productListProvider),
+                          onPressed: () => ref.invalidate(productListProvider),
                           child: const Text('Retry'),
                         ),
                       ],
@@ -334,8 +331,7 @@ class _ProductSearchToolbar extends ConsumerWidget {
       final dropdownDecoration = InputDecoration(
         filled: true,
         fillColor: TenantAdminColors.surface,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(TenantAdminRadius.md),
           borderSide: const BorderSide(color: TenantAdminColors.border),
@@ -361,7 +357,10 @@ class _ProductSearchToolbar extends ConsumerWidget {
         items: [
           const DropdownMenuItem<String?>(
             value: null,
-            child: Text('Category', style: TextStyle(fontSize: 12.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+            child: Text('Category',
+                style: TextStyle(fontSize: 12.5),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
           ),
           ...categories.map(
             (c) => DropdownMenuItem<String?>(
@@ -384,7 +383,10 @@ class _ProductSearchToolbar extends ConsumerWidget {
         items: [
           const DropdownMenuItem<String?>(
             value: null,
-            child: Text('Brand', style: TextStyle(fontSize: 12.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+            child: Text('Brand',
+                style: TextStyle(fontSize: 12.5),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
           ),
           ...brands.map(
             (b) => DropdownMenuItem<String?>(
@@ -407,7 +409,10 @@ class _ProductSearchToolbar extends ConsumerWidget {
         items: [
           const DropdownMenuItem<String?>(
             value: null,
-            child: Text('Product Status', style: TextStyle(fontSize: 12.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+            child: Text('Product Status',
+                style: TextStyle(fontSize: 12.5),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
           ),
           ...productStatuses.map(
             (s) => DropdownMenuItem<String?>(
@@ -430,7 +435,10 @@ class _ProductSearchToolbar extends ConsumerWidget {
         items: [
           const DropdownMenuItem<String?>(
             value: null,
-            child: Text('Stock Status', style: TextStyle(fontSize: 12.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+            child: Text('Stock Status',
+                style: TextStyle(fontSize: 12.5),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
           ),
           ...stockStatuses.map(
             (s) => DropdownMenuItem<String?>(

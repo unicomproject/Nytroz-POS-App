@@ -30,8 +30,8 @@ class PickingOrderSidebar extends ConsumerWidget {
       final bounded = constraints.hasBoundedHeight &&
           constraints.maxHeight.isFinite &&
           constraints.maxHeight > 0;
-      final metrics = PickingVisualMetrics.forHeight(
-          bounded ? constraints.maxHeight : 600);
+      final metrics =
+          PickingVisualMetrics.forHeight(bounded ? constraints.maxHeight : 600);
       final compact = metrics.compact;
       final gap = metrics.gap;
       final ringSize = metrics.progressRing;
@@ -96,9 +96,7 @@ class PickingOrderSidebar extends ConsumerWidget {
                           _legend('Picked', order.pickedLines,
                               Colors.green.shade700,
                               compact: compact),
-                          _legend(
-                              'Pending',
-                              pending,
+                          _legend('Pending', pending,
                               Theme.of(context).colorScheme.primary,
                               compact: compact),
                           _legend('Issues', issues,

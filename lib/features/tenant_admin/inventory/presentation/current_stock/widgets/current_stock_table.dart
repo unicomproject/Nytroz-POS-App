@@ -163,9 +163,9 @@ class CurrentStockTable extends ConsumerWidget {
               ),
             ),
             DataCell(Text(item.reorderLevel.toStringAsFixed(0),
-                style: (Theme.of(context).textTheme.bodySmall ??
-                        const TextStyle())
-                    .copyWith(fontWeight: FontWeight.w600))),
+                style:
+                    (Theme.of(context).textTheme.bodySmall ?? const TextStyle())
+                        .copyWith(fontWeight: FontWeight.w600))),
             DataCell(
               OutlinedButton(
                 onPressed: () {

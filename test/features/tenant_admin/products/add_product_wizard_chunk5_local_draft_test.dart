@@ -169,6 +169,7 @@ void main() {
 
   Future<void> fillSimpleThroughStep5() async {
     await controller.initWizard();
+    controller.skipScanStepForTesting();
     controller.updateProductName('Local Simple Draft');
     controller.updateCategory('cat-1');
     await controller.saveAndContinue();
@@ -289,6 +290,7 @@ void main() {
         '14/15/16/17/18. VARIANT draft restore + clientCombinationKey stability',
         () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Variant Draft');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
@@ -385,6 +387,7 @@ void main() {
 
     test('22. SIMPLE navigation regression', () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Simple Still');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
@@ -399,6 +402,7 @@ void main() {
 
     test('23. VARIANT navigation regression', () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Variant Still');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
@@ -423,6 +427,7 @@ void main() {
     test('early-step Save Draft does not require full Product validation',
         () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Early Draft');
       // No category â€” Save & Continue would fail; Save Draft must succeed.
       expect(await controller.saveDraft(), isTrue);

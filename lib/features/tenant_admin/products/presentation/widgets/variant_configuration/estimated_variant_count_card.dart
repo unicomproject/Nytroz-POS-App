@@ -27,7 +27,8 @@ class EstimatedVariantCountCard extends StatelessWidget {
 
     final result = step4State.estimatedCountResult;
     final count = result.isComplete ? result.count : 0;
-    final countLabel = VariantEstimatedCountCalculator.formatVariantLabel(count);
+    final countLabel =
+        VariantEstimatedCountCalculator.formatVariantLabel(count);
     final formulaSummary =
         VariantEstimatedCountCalculator.formatFormulaSummary(result);
     const accentColor = TenantAdminColors.posHomeAccentOrange;

@@ -73,14 +73,17 @@ class PosPermissionCodes {
   static const cashPaymentSummarySubtotal = 'pos.cash_payment.summary.subtotal';
   static const cashPaymentSummaryDiscount = 'pos.cash_payment.summary.discount';
   static const cashPaymentSummaryTax = 'pos.cash_payment.summary.tax';
-  static const cashPaymentSummaryTotalDue = 'pos.cash_payment.summary.total_due';
+  static const cashPaymentSummaryTotalDue =
+      'pos.cash_payment.summary.total_due';
   static const cashPaymentTenderAmountReceivedView =
       'pos.cash_payment.tender.amount_received_view';
   static const cashPaymentTenderAmountReceivedEntry =
       'pos.cash_payment.tender.amount_received_entry';
-  static const cashPaymentTenderDueAmount = 'pos.cash_payment.tender.due_amount';
+  static const cashPaymentTenderDueAmount =
+      'pos.cash_payment.tender.due_amount';
   static const cashPaymentTenderExact = 'pos.cash_payment.tender.exact';
-  static const cashPaymentTenderChangeDue = 'pos.cash_payment.tender.change_due';
+  static const cashPaymentTenderChangeDue =
+      'pos.cash_payment.tender.change_due';
   static const cashPaymentQuickAmountsContainer =
       'pos.cash_payment.quick_amounts.container';
   static const cashPaymentQuickAmountsSlot1 =
@@ -288,8 +291,7 @@ class PosPermissionCodes {
       'pos.catalog.product_detail.note_entry';
   static const catalogProductDetailRecommendations =
       'pos.catalog.product_detail.recommendations';
-  static const catalogProductDetailCancel =
-      'pos.catalog.product_detail.cancel';
+  static const catalogProductDetailCancel = 'pos.catalog.product_detail.cancel';
 
   static const salesCartManage = 'pos.sales.cart.manage';
   static const salesCartAddItem = 'pos.sales.cart.add_item';
@@ -415,7 +417,8 @@ class PosPermissionCodes {
   static const cashDrawerSummaryStatus = 'pos.cash_drawer.summary.status';
   static const cashDrawerSummaryOpeningCash =
       'pos.cash_drawer.summary.opening_cash';
-  static const cashDrawerSummaryCashSales = 'pos.cash_drawer.summary.cash_sales';
+  static const cashDrawerSummaryCashSales =
+      'pos.cash_drawer.summary.cash_sales';
   static const cashDrawerSummaryExpectedCash =
       'pos.cash_drawer.summary.expected_cash';
   static const cashDrawerMovementsList = 'pos.cash_drawer.movements.list';
@@ -450,12 +453,14 @@ class PosPermissionCodes {
   static const cashMovementsCashInNote = 'pos.cash_movements.cash_in.note';
   static const cashMovementsCashInManagerPin =
       'pos.cash_movements.cash_in.manager_pin';
-  static const cashMovementsCashInSummary = 'pos.cash_movements.cash_in.summary';
+  static const cashMovementsCashInSummary =
+      'pos.cash_movements.cash_in.summary';
   static const cashMovementsCashInResultingBalance =
       'pos.cash_movements.cash_in.resulting_balance';
   static const cashMovementsCashInValidationMessage =
       'pos.cash_movements.cash_in.validation_message';
-  static const cashMovementsCashInConfirm = 'pos.cash_movements.cash_in.confirm';
+  static const cashMovementsCashInConfirm =
+      'pos.cash_movements.cash_in.confirm';
   static const cashMovementsCashInCancel = 'pos.cash_movements.cash_in.cancel';
 
   static const cashMovementsCashOutTill = 'pos.cash_movements.cash_out.till';
@@ -465,7 +470,8 @@ class PosPermissionCodes {
       'pos.cash_movements.cash_out.available_cash';
   static const cashMovementsCashOutAmountEntry =
       'pos.cash_movements.cash_out.amount_entry';
-  static const cashMovementsCashOutReason = 'pos.cash_movements.cash_out.reason';
+  static const cashMovementsCashOutReason =
+      'pos.cash_movements.cash_out.reason';
   static const cashMovementsCashOutNote = 'pos.cash_movements.cash_out.note';
   static const cashMovementsCashOutManagerPin =
       'pos.cash_movements.cash_out.manager_pin';
@@ -475,7 +481,8 @@ class PosPermissionCodes {
       'pos.cash_movements.cash_out.resulting_balance';
   static const cashMovementsCashOutConfirm =
       'pos.cash_movements.cash_out.confirm';
-  static const cashMovementsCashOutCancel = 'pos.cash_movements.cash_out.cancel';
+  static const cashMovementsCashOutCancel =
+      'pos.cash_movements.cash_out.cancel';
 
   static const cashMovementsCashDropTill = 'pos.cash_movements.cash_drop.till';
   static const cashMovementsCashDropExpectedCash =

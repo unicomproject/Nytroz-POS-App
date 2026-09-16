@@ -39,7 +39,8 @@ class ProductWizardCapabilities {
       canManagePricing &&
       canLookupTaxClasses;
 
-  factory ProductWizardCapabilities.fromAccess(TenantAdminAccessChecker access) {
+  factory ProductWizardCapabilities.fromAccess(
+      TenantAdminAccessChecker access) {
     return ProductWizardCapabilities(
       canViewProduct:
           access.canViewProductDetail() || access.canAccessProductModule(),

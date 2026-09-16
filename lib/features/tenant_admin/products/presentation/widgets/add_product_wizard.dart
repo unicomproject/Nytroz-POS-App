@@ -272,8 +272,7 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final showSummary =
-                  (widget.resumeProductId != null ||
+              final showSummary = (widget.resumeProductId != null ||
                       widget.resumeLocalDraftId != null) &&
                   state.status.toUpperCase() == 'DRAFT' &&
                   constraints.maxWidth >= 1000;
@@ -315,66 +314,67 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           WizardActionsFooter(
             onBack: () => controller.goToPreviousApplicableStep(),
             onCancel: _handleCancel,
-          onSaveDraft: state.currentStep == 1
-              ? null
-              : () async {
-            final success = await controller.saveDraft();
-            if (success && context.mounted) {
-              ref.invalidate(localProductWizardDraftsProvider);
-              ref.invalidate(productListProvider);
-              showProductSaveToast(
-                context,
-                title: 'Draft Saved',
-                message: 'Draft saved locally on this device',
-              );
-              context.go('/tenant-admin/products');
-            }
-          },
-          onSkip: controller.canSkipCurrentStep
-              ? () async {
-                  final success = await controller.skip();
-                  if (success && context.mounted) {
-                    showProductSaveToast(
-                      context,
-                      title: 'Step Skipped',
-                      message: 'Moved to the next step.',
-                    );
+            onSaveDraft: state.currentStep == 1
+                ? null
+                : () async {
+                    final success = await controller.saveDraft();
+                    if (success && context.mounted) {
+                      ref.invalidate(localProductWizardDraftsProvider);
+                      ref.invalidate(productListProvider);
+                      showProductSaveToast(
+                        context,
+                        title: 'Draft Saved',
+                        message: 'Draft saved locally on this device',
+                      );
+                      context.go('/tenant-admin/products');
+                    }
+                  },
+            onSkip: controller.canSkipCurrentStep
+                ? () async {
+                    final success = await controller.skip();
+                    if (success && context.mounted) {
+                      showProductSaveToast(
+                        context,
+                        title: 'Step Skipped',
+                        message: 'Moved to the next step.',
+                      );
+                    }
                   }
-                }
-              : null,
-          showSkip: state.currentStep >= 3 && state.currentStep <= 5,
-          onSaveAndContinue: state.currentStep == 1
-              ? null
-              : () async {
-            final isStep7 = state.currentStep == 7;
-            if (isStep7 && state.isSubmitting) {
-              return;
-            }
-            final success = await controller.saveAndContinue();
-            if (success && context.mounted) {
-              if (isStep7) {
-                ref.invalidate(localProductWizardDraftsProvider);
-                ref.invalidate(productListProvider);
-                ref.invalidate(productSummaryProvider);
-                setState(() {
-                  _createSuccess = ProductCreateSuccessSnapshot.fromWizard(
-                    ref.read(addProductWizardControllerProvider),
-                  );
-                });
-              } else {
-                showProductSaveToast(
-                  context,
-                  title: 'Step Saved',
-                  message: 'Progress saved. Continue to the next step.',
-                );
-              }
-            }
-          },
-          isSavingDraft: state.isSavingDraft,
-          isSubmitting: state.isSubmitting,
-          saveAndContinueLabel:
-              state.currentStep == 7 ? 'Create Product' : 'Save & Continue',
-        ),
+                : null,
+            showSkip: state.currentStep >= 3 && state.currentStep <= 5,
+            onSaveAndContinue: state.currentStep == 1
+                ? null
+                : () async {
+                    final isStep7 = state.currentStep == 7;
+                    if (isStep7 && state.isSubmitting) {
+                      return;
+                    }
+                    final success = await controller.saveAndContinue();
+                    if (success && context.mounted) {
+                      if (isStep7) {
+                        ref.invalidate(localProductWizardDraftsProvider);
+                        ref.invalidate(productListProvider);
+                        ref.invalidate(productSummaryProvider);
+                        setState(() {
+                          _createSuccess =
+                              ProductCreateSuccessSnapshot.fromWizard(
+                            ref.read(addProductWizardControllerProvider),
+                          );
+                        });
+                      } else {
+                        showProductSaveToast(
+                          context,
+                          title: 'Step Saved',
+                          message: 'Progress saved. Continue to the next step.',
+                        );
+                      }
+                    }
+                  },
+            isSavingDraft: state.isSavingDraft,
+            isSubmitting: state.isSubmitting,
+            saveAndContinueLabel:
+                state.currentStep == 7 ? 'Create Product' : 'Save & Continue',
+          ),
       ],
     );
   }
@@ -460,8 +460,7 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
         return Step7ReviewCreate(
           state: state,
           controller: controller,
-          canViewProductCost:
-              widget.capabilities?.canViewProductCost ?? true,
+          canViewProductCost: widget.capabilities?.canViewProductCost ?? true,
         );
       default:
         return ScanBarcodeStep(

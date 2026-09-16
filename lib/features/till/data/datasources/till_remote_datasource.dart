@@ -159,7 +159,8 @@ class TillRemoteDatasource {
         session['openedDeviceId'],
         fallback: device.deviceId,
       ),
-      openingFloat: _optionalDouble(session['openingFloat']) ?? form.openingFloat,
+      openingFloat:
+          _optionalDouble(session['openingFloat']) ?? form.openingFloat,
       status: _string(session['status'], fallback: 'open'),
       openedAt:
           DateTime.tryParse(_string(session['openedAt'])) ?? DateTime.now(),

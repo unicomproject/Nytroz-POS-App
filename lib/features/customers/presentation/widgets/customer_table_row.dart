@@ -36,7 +36,8 @@ class CustomerTableRow extends ConsumerWidget {
 
     if (showSecondaryColumns) {
       if (PosCustomersOrdersReturnsVisibility.canShowCustomerId(p)) {
-        children.add(_Cell(customer.shortCustomerId, flex: 14, style: textStyle));
+        children
+            .add(_Cell(customer.shortCustomerId, flex: 14, style: textStyle));
       }
       if (PosCustomersOrdersReturnsVisibility.canShowCustomerName(p)) {
         children.add(_Cell(customer.displayName, flex: 18, style: textStyle));
@@ -111,7 +112,8 @@ class CustomerTableRow extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (PosCustomersOrdersReturnsVisibility.canShowCustomerName(
+                      if (PosCustomersOrdersReturnsVisibility
+                          .canShowCustomerName(
                         p,
                       ))
                         Text(

@@ -99,8 +99,7 @@ class Step5VariantIdentifierDto {
       productVariantId: productVariantId ?? this.productVariantId,
       sku: sku ?? this.sku,
       barcode: barcode ?? this.barcode,
-      barcodeType:
-          clearBarcodeType ? null : (barcodeType ?? this.barcodeType),
+      barcodeType: clearBarcodeType ? null : (barcodeType ?? this.barcodeType),
     );
   }
 }
@@ -117,10 +116,12 @@ class BarcodeSkuConfigurationDto {
   factory BarcodeSkuConfigurationDto.fromJson(Map<String, dynamic> json) {
     return BarcodeSkuConfigurationDto(
       identifierTargets: (json['identifierTargets'] as List<dynamic>?)
-          ?.map((e) => Step5IdentifierTargetDto.fromJson(e as Map<String, dynamic>))
+          ?.map((e) =>
+              Step5IdentifierTargetDto.fromJson(e as Map<String, dynamic>))
           .toList(),
       assignments: (json['assignments'] as List<dynamic>?)
-          ?.map((e) => BarcodeSkuAssignmentDto.fromJson(e as Map<String, dynamic>))
+          ?.map((e) =>
+              BarcodeSkuAssignmentDto.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -228,16 +229,14 @@ class BarcodeSkuAssignmentDto {
     bool clearStatus = false,
   }) {
     return BarcodeSkuAssignmentDto(
-      clientCombinationKey:
-          clientCombinationKey ?? this.clientCombinationKey,
+      clientCombinationKey: clientCombinationKey ?? this.clientCombinationKey,
       productVariantId: clearProductVariantId
           ? null
           : (productVariantId ?? this.productVariantId),
       displayName: displayName ?? this.displayName,
       sku: clearSku ? null : (sku ?? this.sku),
       barcode: clearBarcode ? null : (barcode ?? this.barcode),
-      barcodeType:
-          clearBarcodeType ? null : (barcodeType ?? this.barcodeType),
+      barcodeType: clearBarcodeType ? null : (barcodeType ?? this.barcodeType),
       isAssigned: isAssigned ?? this.isAssigned,
       status: clearStatus ? null : (status ?? this.status),
     );

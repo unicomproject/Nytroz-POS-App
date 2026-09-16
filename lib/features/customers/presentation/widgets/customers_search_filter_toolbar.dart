@@ -75,11 +75,13 @@ class CustomersSearchFilterToolbar extends StatelessWidget {
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFE2E6ED)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFE2E6ED)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFE2E6ED)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFE2E6ED)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),

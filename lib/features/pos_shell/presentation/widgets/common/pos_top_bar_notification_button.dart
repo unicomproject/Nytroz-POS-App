@@ -23,7 +23,8 @@ class PosTopBarNotificationButton extends ConsumerWidget {
         PosShellTopBarVisibility.canShowNotificationPanel(permissions);
     final canShowUnread =
         PosShellTopBarVisibility.canShowUnreadCount(permissions);
-    final count = ref.watch(posNotificationsProvider).asData?.value.unreadCount ?? 0;
+    final count =
+        ref.watch(posNotificationsProvider).asData?.value.unreadCount ?? 0;
     final showBadge = canShowUnread && count > 0;
 
     return Padding(

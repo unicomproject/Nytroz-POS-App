@@ -276,7 +276,9 @@ class AddTillDetailsSection extends StatelessWidget {
                       controller: floatController,
                       decoration: InputDecoration(
                         hintText: 'Enter opening float amount',
-                        prefixText: options.currencyCode == 'LKR' ? 'Rs. ' : '${options.currencyCode} ',
+                        prefixText: options.currencyCode == 'LKR'
+                            ? 'Rs. '
+                            : '${options.currencyCode} ',
                         errorText: backendErrors['defaultOpeningFloatAmount'],
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 16),
@@ -311,7 +313,8 @@ class AddTillDetailsSection extends StatelessWidget {
                         if (double.tryParse(value) == null) {
                           return 'Please enter a valid amount';
                         }
-                        if (backendErrors['defaultOpeningFloatAmount'] != null) {
+                        if (backendErrors['defaultOpeningFloatAmount'] !=
+                            null) {
                           return backendErrors['defaultOpeningFloatAmount'];
                         }
                         return null;
@@ -382,7 +385,10 @@ class AddTillDetailsSection extends StatelessWidget {
       String? errorText}) {
     return InputDecoration(
       hintText: hintText,
-      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14, fontWeight: FontWeight.w400),
+      hintStyle: TextStyle(
+          color: Colors.grey.shade400,
+          fontSize: 14,
+          fontWeight: FontWeight.w400),
       prefixIcon: Icon(icon,
           color: iconColor ?? Colors.grey.shade400, size: iconSize ?? 20),
       errorText: errorText,

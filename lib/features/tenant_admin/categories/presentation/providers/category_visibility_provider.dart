@@ -29,8 +29,7 @@ final categoryDetailPageAccessProvider = Provider<bool>((ref) {
     return false;
   }
 
-  return access.hasProductCatalogEntitlement() &&
-      access.canFetchCategoryList();
+  return access.hasProductCatalogEntitlement() && access.canFetchCategoryList();
 });
 
 final categoryUpdateAccessProvider = Provider<bool>((ref) {

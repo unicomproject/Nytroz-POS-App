@@ -77,13 +77,12 @@ class PosDashboardTopBarContent extends ConsumerWidget {
           );
         }
 
-        final leading = PosShellTopBarVisibility.canShowSessionStatus(
-                permissions)
-            ? items.first
-            : null;
-        final trailing = items
-            .where((w) => w != leading)
-            .toList(growable: false);
+        final leading =
+            PosShellTopBarVisibility.canShowSessionStatus(permissions)
+                ? items.first
+                : null;
+        final trailing =
+            items.where((w) => w != leading).toList(growable: false);
 
         return Row(
           children: [

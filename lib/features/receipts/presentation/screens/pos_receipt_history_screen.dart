@@ -304,8 +304,7 @@ class _ReceiptDetailDialog extends ConsumerWidget {
                                 ? () => ref
                                     .read(historicalReprintProvider.notifier)
                                     .retryAuditOnly()
-                                : () =>
-                                    _requestReprint(context, ref, receipt),
+                                : () => _requestReprint(context, ref, receipt),
                         icon: const Icon(Icons.print),
                         label: Text(historicalReprint.status ==
                                 HistoricalReprintStatus.auditPending

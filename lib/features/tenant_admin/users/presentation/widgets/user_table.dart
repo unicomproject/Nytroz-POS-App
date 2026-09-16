@@ -221,8 +221,8 @@ class _TwoLineCell extends StatelessWidget {
                 secondary!,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TenantAdminTextStyles.muted(context)
-                    .copyWith(fontSize: 12),
+                style:
+                    TenantAdminTextStyles.muted(context).copyWith(fontSize: 12),
               ),
           ],
         ),

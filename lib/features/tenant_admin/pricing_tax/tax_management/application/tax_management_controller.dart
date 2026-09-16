@@ -102,8 +102,7 @@ class TaxMutationController extends StateNotifier<TaxMutationState> {
 
   Future<TaxStatusChangeResult> deactivate(String id, {String? reason}) {
     return _guard(() async {
-      final result =
-          await _repository.deactivateTaxSetup(id, reason: reason);
+      final result = await _repository.deactivateTaxSetup(id, reason: reason);
       _invalidateDetail(id);
       _invalidateLists();
       return result;

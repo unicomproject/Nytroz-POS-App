@@ -105,7 +105,8 @@ class _NewDashboardMetricCard extends StatelessWidget {
                     color: color,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: Colors.white, size: compact ? 18 : 22),
+                  child:
+                      Icon(icon, color: Colors.white, size: compact ? 18 : 22),
                 ),
                 SizedBox(width: compact ? 10 : 14),
                 Expanded(
@@ -141,8 +142,12 @@ class _NewDashboardMetricCard extends StatelessWidget {
                         if (metric.trend != null)
                           Row(
                             children: [
-                              Icon(isUp ? Icons.arrow_upward : Icons.arrow_downward,
-                                  color: trendColor, size: 14),
+                              Icon(
+                                  isUp
+                                      ? Icons.arrow_upward
+                                      : Icons.arrow_downward,
+                                  color: trendColor,
+                                  size: 14),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
@@ -158,7 +163,8 @@ class _NewDashboardMetricCard extends StatelessWidget {
                               ),
                             ],
                           )
-                        else if (metric.status != null || metric.subtitle != null)
+                        else if (metric.status != null ||
+                            metric.subtitle != null)
                           Row(
                             children: [
                               if (metric.status != null) ...[

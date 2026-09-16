@@ -611,7 +611,8 @@ class CashierPosCanonicalPermissionCodes {
     'pos.customers.list.total_spend': 'pos.customers.management.view',
     'pos.customers.list.pagination': 'pos.customers.management.view',
     'pos.customers.details.joined_date': 'pos.customers.management.view',
-    'pos.customers.details.average_order_value': 'pos.customers.management.view',
+    'pos.customers.details.average_order_value':
+        'pos.customers.management.view',
     'pos.customers.history.recent_purchases': 'pos.customers.management.view',
     'pos.customers.history.purchase_amounts': 'pos.customers.management.view',
     'pos.customers.history.purchase_history': 'pos.customers.management.view',
@@ -675,50 +676,75 @@ class CashierPosCanonicalPermissionCodes {
     'pos.cash_drawer.movements.cash_in': 'pos.cash_drawer.movements.create',
     'pos.cash_drawer.movements.cash_out': 'pos.cash_drawer.movements.create',
     'pos.cash_drawer.movements.cash_drop': 'pos.cash_drawer.movements.create',
-    'pos.cash_drawer.open_reason.provide_change': 'pos.cash_drawer.physical.manage',
+    'pos.cash_drawer.open_reason.provide_change':
+        'pos.cash_drawer.physical.manage',
     'pos.cash_drawer.open_reason.till_check': 'pos.cash_drawer.physical.manage',
     'pos.cash_drawer.open_reason.cash_count': 'pos.cash_drawer.physical.manage',
-    'pos.cash_drawer.open_reason.manager_operation': 'pos.cash_drawer.physical.manage',
+    'pos.cash_drawer.open_reason.manager_operation':
+        'pos.cash_drawer.physical.manage',
     'pos.cash_drawer.open_reason.other': 'pos.cash_drawer.physical.manage',
     'pos.shell.navigation.offline_banner': 'pos.sales.dashboard.view',
-    'pos.home.actions.online_orders_entry': 'commerce.online_order.orders.access',
+    'pos.home.actions.online_orders_entry':
+        'commerce.online_order.orders.access',
     'pos.home.actions.returns_entry': 'pos.returns.search_sale.view',
     'pos.cash_movements.cash_in.till': 'pos.cash_drawer.movements.cash_in',
-    'pos.cash_movements.cash_in.expected_cash': 'pos.cash_drawer.movements.cash_in',
-    'pos.cash_movements.cash_in.available_cash': 'pos.cash_drawer.movements.cash_in',
-    'pos.cash_movements.cash_in.amount_entry': 'pos.cash_drawer.movements.cash_in',
+    'pos.cash_movements.cash_in.expected_cash':
+        'pos.cash_drawer.movements.cash_in',
+    'pos.cash_movements.cash_in.available_cash':
+        'pos.cash_drawer.movements.cash_in',
+    'pos.cash_movements.cash_in.amount_entry':
+        'pos.cash_drawer.movements.cash_in',
     'pos.cash_movements.cash_in.reason': 'pos.cash_drawer.movements.cash_in',
     'pos.cash_movements.cash_in.note': 'pos.cash_drawer.movements.cash_in',
-    'pos.cash_movements.cash_in.manager_pin': 'pos.cash_drawer.movements.cash_in',
+    'pos.cash_movements.cash_in.manager_pin':
+        'pos.cash_drawer.movements.cash_in',
     'pos.cash_movements.cash_in.summary': 'pos.cash_drawer.movements.cash_in',
-    'pos.cash_movements.cash_in.resulting_balance': 'pos.cash_drawer.movements.cash_in',
-    'pos.cash_movements.cash_in.validation_message': 'pos.cash_drawer.movements.cash_in',
+    'pos.cash_movements.cash_in.resulting_balance':
+        'pos.cash_drawer.movements.cash_in',
+    'pos.cash_movements.cash_in.validation_message':
+        'pos.cash_drawer.movements.cash_in',
     'pos.cash_movements.cash_in.confirm': 'pos.cash_drawer.movements.cash_in',
     'pos.cash_movements.cash_in.cancel': 'pos.cash_drawer.movements.cash_in',
     'pos.cash_movements.cash_out.till': 'pos.cash_drawer.movements.cash_out',
-    'pos.cash_movements.cash_out.expected_cash': 'pos.cash_drawer.movements.cash_out',
-    'pos.cash_movements.cash_out.available_cash': 'pos.cash_drawer.movements.cash_out',
-    'pos.cash_movements.cash_out.amount_entry': 'pos.cash_drawer.movements.cash_out',
+    'pos.cash_movements.cash_out.expected_cash':
+        'pos.cash_drawer.movements.cash_out',
+    'pos.cash_movements.cash_out.available_cash':
+        'pos.cash_drawer.movements.cash_out',
+    'pos.cash_movements.cash_out.amount_entry':
+        'pos.cash_drawer.movements.cash_out',
     'pos.cash_movements.cash_out.reason': 'pos.cash_drawer.movements.cash_out',
     'pos.cash_movements.cash_out.note': 'pos.cash_drawer.movements.cash_out',
-    'pos.cash_movements.cash_out.manager_pin': 'pos.cash_drawer.movements.cash_out',
+    'pos.cash_movements.cash_out.manager_pin':
+        'pos.cash_drawer.movements.cash_out',
     'pos.cash_movements.cash_out.summary': 'pos.cash_drawer.movements.cash_out',
-    'pos.cash_movements.cash_out.resulting_balance': 'pos.cash_drawer.movements.cash_out',
-    'pos.cash_movements.cash_out.validation_message': 'pos.cash_drawer.movements.cash_out',
+    'pos.cash_movements.cash_out.resulting_balance':
+        'pos.cash_drawer.movements.cash_out',
+    'pos.cash_movements.cash_out.validation_message':
+        'pos.cash_drawer.movements.cash_out',
     'pos.cash_movements.cash_out.confirm': 'pos.cash_drawer.movements.cash_out',
     'pos.cash_movements.cash_out.cancel': 'pos.cash_drawer.movements.cash_out',
     'pos.cash_movements.cash_drop.till': 'pos.cash_drawer.movements.cash_drop',
-    'pos.cash_movements.cash_drop.expected_cash': 'pos.cash_drawer.movements.cash_drop',
-    'pos.cash_movements.cash_drop.available_cash': 'pos.cash_drawer.movements.cash_drop',
-    'pos.cash_movements.cash_drop.amount_entry': 'pos.cash_drawer.movements.cash_drop',
-    'pos.cash_movements.cash_drop.reason': 'pos.cash_drawer.movements.cash_drop',
+    'pos.cash_movements.cash_drop.expected_cash':
+        'pos.cash_drawer.movements.cash_drop',
+    'pos.cash_movements.cash_drop.available_cash':
+        'pos.cash_drawer.movements.cash_drop',
+    'pos.cash_movements.cash_drop.amount_entry':
+        'pos.cash_drawer.movements.cash_drop',
+    'pos.cash_movements.cash_drop.reason':
+        'pos.cash_drawer.movements.cash_drop',
     'pos.cash_movements.cash_drop.note': 'pos.cash_drawer.movements.cash_drop',
-    'pos.cash_movements.cash_drop.manager_pin': 'pos.cash_drawer.movements.cash_drop',
-    'pos.cash_movements.cash_drop.summary': 'pos.cash_drawer.movements.cash_drop',
-    'pos.cash_movements.cash_drop.resulting_balance': 'pos.cash_drawer.movements.cash_drop',
-    'pos.cash_movements.cash_drop.validation_message': 'pos.cash_drawer.movements.cash_drop',
-    'pos.cash_movements.cash_drop.confirm': 'pos.cash_drawer.movements.cash_drop',
-    'pos.cash_movements.cash_drop.cancel': 'pos.cash_drawer.movements.cash_drop',
+    'pos.cash_movements.cash_drop.manager_pin':
+        'pos.cash_drawer.movements.cash_drop',
+    'pos.cash_movements.cash_drop.summary':
+        'pos.cash_drawer.movements.cash_drop',
+    'pos.cash_movements.cash_drop.resulting_balance':
+        'pos.cash_drawer.movements.cash_drop',
+    'pos.cash_movements.cash_drop.validation_message':
+        'pos.cash_drawer.movements.cash_drop',
+    'pos.cash_movements.cash_drop.confirm':
+        'pos.cash_drawer.movements.cash_drop',
+    'pos.cash_movements.cash_drop.cancel':
+        'pos.cash_drawer.movements.cash_drop',
   };
 
   static const newCodes = <String>[

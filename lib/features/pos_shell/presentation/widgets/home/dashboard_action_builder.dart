@@ -135,8 +135,7 @@ PosHomeAction? _findAction(PosHomeDashboardState dashboard, String key) {
 
 PosHomeActionAccess _endShiftAccess(PosHomeDashboardState dashboard) {
   final permissions = dashboard.grantedPermissionKeys;
-  if (permissions != null &&
-      !PosPermissionAccess.canCloseTill(permissions)) {
+  if (permissions != null && !PosPermissionAccess.canCloseTill(permissions)) {
     return const PosHomeActionAccess(isVisible: false, isEnabled: false);
   }
   if (dashboard.hasOpenTillSession == false) {

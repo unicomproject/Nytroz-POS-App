@@ -23,7 +23,8 @@ class AddProductScreen extends ConsumerWidget {
   final String? duplicateFromProductId;
 
   bool get _isDuplicate =>
-      duplicateFromProductId != null && duplicateFromProductId!.trim().isNotEmpty;
+      duplicateFromProductId != null &&
+      duplicateFromProductId!.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,7 +37,8 @@ class AddProductScreen extends ConsumerWidget {
 
     if (!hasAccess) {
       final access = ref.watch(tenantAdminAccessCheckerProvider).asData?.value;
-      final missing = access?.missingProductWizardStartCapabilities() ?? const [];
+      final missing =
+          access?.missingProductWizardStartCapabilities() ?? const [];
       return TenantAdminPageScaffold(
         title: pageTitle,
         subtitle: pageSubtitle,
@@ -71,7 +73,8 @@ class AddProductScreen extends ConsumerWidget {
             );
           }
 
-          final access = ref.watch(tenantAdminAccessCheckerProvider).asData?.value;
+          final access =
+              ref.watch(tenantAdminAccessCheckerProvider).asData?.value;
           return AddProductWizard(
             options: options,
             dropdownsEnabled: true,

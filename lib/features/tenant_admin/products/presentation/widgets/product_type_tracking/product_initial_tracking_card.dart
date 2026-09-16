@@ -29,7 +29,8 @@ class ProductInitialTrackingCard extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= TenantAdminBreakpoints.smallTablet;
+          final isWide =
+              constraints.maxWidth >= TenantAdminBreakpoints.smallTablet;
           return Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,

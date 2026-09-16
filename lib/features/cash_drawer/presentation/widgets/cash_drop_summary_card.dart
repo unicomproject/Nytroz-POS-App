@@ -166,7 +166,8 @@ class _CashDropInfoBanner extends StatelessWidget {
             color: TenantAdminColors.posHomeAccentOrange,
             size: compact ? 16 : 20,
           ),
-          SizedBox(width: compact ? TenantAdminSpacing.xs : TenantAdminSpacing.sm),
+          SizedBox(
+              width: compact ? TenantAdminSpacing.xs : TenantAdminSpacing.sm),
           Expanded(
             child: Text(
               compact
@@ -265,7 +266,8 @@ class _SummaryRow extends StatelessWidget {
     }
 
     return Container(
-      padding: EdgeInsets.all(compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
+      padding: EdgeInsets.all(
+          compact ? TenantAdminSpacing.sm : TenantAdminSpacing.md),
       decoration: BoxDecoration(
         color: TenantAdminColors.expectedCashSurface,
         borderRadius: BorderRadius.circular(TenantAdminRadius.md),
