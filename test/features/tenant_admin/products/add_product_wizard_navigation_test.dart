@@ -1,3 +1,4 @@
+﻿import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_draft_response_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/save_product_draft_request_dto.dart';
@@ -14,6 +15,21 @@ import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/te
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 
 class _TrackingRepo implements TenantProductRepository {
+  @override
+  Future<ResolveProductBarcodeResponseDto> resolveBarcode(ResolveProductBarcodeRequestDto request) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ExternalLookupProductBarcodeResponseDto> externalLookupBarcode({required String barcode, String? identifierStandard}) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SkuCandidateResponseDto> generateSkuCandidate({String? productNameHint, String purpose = 'NO_BARCODE_PRODUCT'}) async {
+    throw UnimplementedError();
+  }
+
   int saveDraftCallCount = 0;
   int updateDraftCallCount = 0;
   int createProductCallCount = 0;
@@ -176,7 +192,7 @@ void main() {
   });
 
   group('Applicable-step navigation', () {
-    test('SIMPLE forward: 1 → 2 → 3 → 5 → 6 → 7', () async {
+    test('SIMPLE forward: 1 â†’ 2 â†’ 3 â†’ 5 â†’ 6 â†’ 7', () async {
       await controller.initWizard();
       expect(controller.wizardState.currentStep, 1);
 
@@ -201,14 +217,14 @@ void main() {
       expect(repo.createProductCallCount, 0);
     });
 
-    test('SIMPLE backward: 7 → 6 → 5 → 3 → 2 → 1', () async {
+    test('SIMPLE backward: 7 â†’ 6 â†’ 5 â†’ 3 â†’ 2 â†’ 1', () async {
       await controller.initWizard();
       await completeStep1();
       controller.setProductStructure('SIMPLE');
       await controller.saveAndContinue();
       await completeStep3Units();
       await completeStep5SimpleSku();
-      await completeStep6Pricing(); // 6 → 7
+      await completeStep6Pricing(); // 6 â†’ 7
       expect(controller.wizardState.currentStep, 7);
 
       controller.goToPreviousApplicableStep();
@@ -226,7 +242,7 @@ void main() {
       expect(repo.updateDraftCallCount, 0);
     });
 
-    test('VARIANT forward: 1 → 2 → 4 → 5 → 6 → 7 (never lands on 3)', () async {
+    test('VARIANT forward: 1 â†’ 2 â†’ 4 â†’ 5 â†’ 6 â†’ 7 (never lands on 3)', () async {
       await controller.initWizard();
       await completeStep1();
       controller.setProductStructure('VARIANT');
@@ -255,23 +271,23 @@ void main() {
       expect(repo.createProductCallCount, 0);
     });
 
-    test('VARIANT backward: 7 → 6 → 5 → 4 → 2 → 1', () async {
+    test('VARIANT backward: 7 â†’ 6 â†’ 5 â†’ 4 â†’ 2 â†’ 1', () async {
       await controller.initWizard();
       await completeStep1();
       controller.setProductStructure('VARIANT');
-      await controller.saveAndContinue(); // → 4
+      await controller.saveAndContinue(); // â†’ 4
       controller.addAttributeRow();
       controller.updateAttributeName(0, 'Color');
       controller.selectValues(0, ['Red']);
       await controller.generateVariants();
-      await controller.saveAndContinue(); // → 5
+      await controller.saveAndContinue(); // â†’ 5
       for (final assignment in controller.wizardState.step5State.assignments) {
         await controller.assignBarcodeSkuAndSave(
           assignment.copyWith(sku: 'SKU-${assignment.clientCombinationKey}'),
         );
       }
-      await controller.saveAndContinue(); // → 6
-      await completeStep6Pricing(); // → 7
+      await controller.saveAndContinue(); // â†’ 6
+      await completeStep6Pricing(); // â†’ 7
 
       controller.goToPreviousApplicableStep();
       expect(controller.wizardState.currentStep, 6);

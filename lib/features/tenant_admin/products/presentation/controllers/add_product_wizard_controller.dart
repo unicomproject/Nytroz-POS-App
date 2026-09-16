@@ -7,7 +7,6 @@ import 'dart:math';
 import '../../data/dtos/product_draft_response_dto.dart';
 import '../../data/dtos/product_setup_scan_dtos.dart';
 import '../../data/dtos/barcode_sku_dtos.dart';
-import '../../data/dtos/save_product_draft_request_dto.dart';
 import '../../data/mappers/wizard_product_create_mapper.dart';
 import '../../domain/entities/add_product_wizard_state.dart';
 import '../../domain/entities/product_wizard_capabilities.dart';

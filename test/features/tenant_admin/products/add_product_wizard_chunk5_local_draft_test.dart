@@ -1,3 +1,4 @@
+﻿import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/datasources/local/product_wizard_draft_local_datasource.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_draft_response_dto.dart';
@@ -17,6 +18,21 @@ import 'package:nytroz_pos/features/tenant_admin/products/domain/services/produc
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 
 class _TrackingRepo implements TenantProductRepository {
+  @override
+  Future<ResolveProductBarcodeResponseDto> resolveBarcode(ResolveProductBarcodeRequestDto request) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ExternalLookupProductBarcodeResponseDto> externalLookupBarcode({required String barcode, String? identifierStandard}) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SkuCandidateResponseDto> generateSkuCandidate({String? productNameHint, String purpose = 'NO_BARCODE_PRODUCT'}) async {
+    throw UnimplementedError();
+  }
+
   int saveDraftCallCount = 0;
   int updateDraftCallCount = 0;
   int createProductCallCount = 0;
@@ -235,7 +251,7 @@ void main() {
 
     test('11. Step 6 pricing/tax restores', () async {
       await fillSimpleThroughStep5();
-      await controller.saveAndContinue(); // → 6
+      await controller.saveAndContinue(); // â†’ 6
       controller.updateCostPrice(100);
       controller.updateStandardSellingPrice(150);
       controller.updateDiscountPrice(140);
@@ -330,7 +346,7 @@ void main() {
       await controller.saveDraft();
       final id = controller.wizardState.localDraftId!;
       expect(await localStore.getDraft(id), isNotNull);
-      // Cancel only navigates — does not call deleteDraft.
+      // Cancel only navigates â€” does not call deleteDraft.
       expect(await draftLocal.getAllDrafts(), hasLength(1));
     });
 
@@ -408,7 +424,7 @@ void main() {
         () async {
       await controller.initWizard();
       controller.updateProductName('Early Draft');
-      // No category — Save & Continue would fail; Save Draft must succeed.
+      // No category â€” Save & Continue would fail; Save Draft must succeed.
       expect(await controller.saveDraft(), isTrue);
       expect(controller.wizardState.currentStep, 1);
       final draft = await localStore.getDraft(controller.wizardState.localDraftId!);

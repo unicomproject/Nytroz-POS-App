@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_draft_response_dto.dart';
@@ -18,6 +19,21 @@ import 'package:nytroz_pos/features/tenant_admin/products/presentation/controlle
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/review_create/review_create.dart';
 
 class _TrackingRepo implements TenantProductRepository {
+  @override
+  Future<ResolveProductBarcodeResponseDto> resolveBarcode(ResolveProductBarcodeRequestDto request) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ExternalLookupProductBarcodeResponseDto> externalLookupBarcode({required String barcode, String? identifierStandard}) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SkuCandidateResponseDto> generateSkuCandidate({String? productNameHint, String purpose = 'NO_BARCODE_PRODUCT'}) async {
+    throw UnimplementedError();
+  }
+
   int saveDraftCallCount = 0;
   int updateDraftCallCount = 0;
   int createProductCallCount = 0;

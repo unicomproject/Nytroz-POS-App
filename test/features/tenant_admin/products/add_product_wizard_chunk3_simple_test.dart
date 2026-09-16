@@ -1,3 +1,4 @@
+﻿import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,6 +20,21 @@ import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/b
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/review_create/review_create.dart';
 
 class _TrackingRepo implements TenantProductRepository {
+  @override
+  Future<ResolveProductBarcodeResponseDto> resolveBarcode(ResolveProductBarcodeRequestDto request) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ExternalLookupProductBarcodeResponseDto> externalLookupBarcode({required String barcode, String? identifierStandard}) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SkuCandidateResponseDto> generateSkuCandidate({String? productNameHint, String purpose = 'NO_BARCODE_PRODUCT'}) async {
+    throw UnimplementedError();
+  }
+
   int saveDraftCallCount = 0;
   int updateDraftCallCount = 0;
   int createProductCallCount = 0;
@@ -163,7 +179,7 @@ void main() {
   });
 
   group('Chunk 3 SIMPLE flow', () {
-    test('1. SIMPLE Track ON → Step 3', () async {
+    test('1. SIMPLE Track ON â†’ Step 3', () async {
       await controller.initWizard();
       controller.updateProductName('A');
       controller.updateCategory('cat-1');
@@ -174,7 +190,7 @@ void main() {
       expect(controller.wizardState.currentStep, 3);
     });
 
-    test('2. SIMPLE Track OFF → Step 3', () async {
+    test('2. SIMPLE Track OFF â†’ Step 3', () async {
       await controller.initWizard();
       controller.updateProductName('A');
       controller.updateCategory('cat-1');
@@ -185,7 +201,7 @@ void main() {
       expect(controller.wizardState.currentStep, 3);
     });
 
-    test('3. Step 3 → Step 5 (skips Step 4)', () async {
+    test('3. Step 3 â†’ Step 5 (skips Step 4)', () async {
       await goToStep5Simple();
       expect(controller.isStepApplicable(4), isFalse);
       expect(controller.wizardState.currentStep, 5);
@@ -202,14 +218,14 @@ void main() {
       expect(controller.wizardState.productId, isNull);
     });
 
-    test('6. Step 5 Save & Continue → Step 6', () async {
+    test('6. Step 5 Save & Continue â†’ Step 6', () async {
       await goToStep5Simple();
       controller.updateSimpleBaseSku('TEST-SIMPLE-001');
       expect(await controller.saveAndContinue(), isTrue);
       expect(controller.wizardState.currentStep, 6);
     });
 
-    test('7. Step 5 Back → Step 3', () async {
+    test('7. Step 5 Back â†’ Step 3', () async {
       await goToStep5Simple();
       controller.goToPreviousApplicableStep();
       expect(controller.wizardState.currentStep, 3);
@@ -219,9 +235,9 @@ void main() {
       await goToStep5Simple();
       controller.updateSimpleBaseSku('TEST-SIMPLE-001');
       controller.updateSimpleParentBarcode('8901234567890');
-      controller.goToPreviousApplicableStep(); // → 3
+      controller.goToPreviousApplicableStep(); // â†’ 3
       expect(controller.wizardState.productUnitId, 'unit-1');
-      expect(await controller.saveAndContinue(), isTrue); // → 5
+      expect(await controller.saveAndContinue(), isTrue); // â†’ 5
       expect(controller.wizardState.step5State.baseSku, 'TEST-SIMPLE-001');
       expect(
           controller.wizardState.step5State.parentProductBarcode, '8901234567890');
@@ -237,7 +253,7 @@ void main() {
       expect(controller.wizardState.taxName, 'VAT 15%');
     });
 
-    test('11. Step 6 Save & Continue → Step 7', () async {
+    test('11. Step 6 Save & Continue â†’ Step 7', () async {
       await goToStep5Simple();
       controller.updateSimpleBaseSku('TEST-SIMPLE-001');
       await controller.saveAndContinue();
@@ -257,8 +273,8 @@ void main() {
       controller.updateStandardSellingPrice(150);
       controller.updateDiscountPrice(140);
       controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
-      controller.goToPreviousApplicableStep(); // → 5
-      expect(await controller.saveAndContinue(), isTrue); // → 6
+      controller.goToPreviousApplicableStep(); // â†’ 5
+      expect(await controller.saveAndContinue(), isTrue); // â†’ 6
       expect(controller.wizardState.costPrice, 100);
       expect(controller.wizardState.standardSellingPrice, 150);
       expect(controller.wizardState.discountPrice, 140);
