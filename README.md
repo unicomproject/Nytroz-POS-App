@@ -15,3 +15,8 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+
+## Implementation documentation
+
+Full implementation reports are maintained in the Obsidian Second Brain vault **Pos-system-Knowledge**, under **15_IMPLEMENTATION_TRACKING/Source_Reports/Flutter**. Start with **15_IMPLEMENTATION_TRACKING/Source_Reports/README.md**. Store implementation details there instead of duplicating reports in this project.

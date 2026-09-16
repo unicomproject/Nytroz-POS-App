@@ -1,13 +1,28 @@
 import 'package:dio/dio.dart';
 import 'dart:async';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
+import '../../../sale/presentation/widgets/new_sale/pos_camera_barcode_scanner.dart';
 import '../../data/datasources/pos_online_orders_remote_datasource.dart';
 import '../../data/repositories/pos_online_orders_repository_impl.dart';
 import '../../domain/entities/pos_online_order.dart';
 import '../../domain/repositories/pos_online_orders_repository.dart';
+
+/// Indirection so widget tests can override how the pickup QR scanner is
+/// launched, mirroring `posCameraScannerLauncherProvider` on the sale side.
+typedef PosPickupScannerLauncher = Future<PosCameraScanResult> Function(
+  BuildContext context, {
+  List<BarcodeFormat>? formats,
+  String? instructionText,
+});
+
+final posPickupScannerLauncherProvider = Provider<PosPickupScannerLauncher>(
+  (ref) => launchPosCameraScanner,
+);
 
 final posOnlineOrdersRemoteDatasourceProvider =
     Provider<PosOnlineOrdersRemoteDatasource>(
@@ -606,6 +621,57 @@ class PosPickingActions {
                 orderId: orderId,
               );
       await _refresh();
+      return result;
+    } on DioException {
+      await _refresh();
+      rethrow;
+    } finally {
+      _mutationInFlight = false;
+    }
+  }
+
+  Future<PosPickupVerifyResult> verifyPickupCode(String pickupCode) async {
+    if (_mutationInFlight) {
+      throw StateError('A packing action is already in progress.');
+    }
+    _mutationInFlight = true;
+    try {
+      final order = await _currentPickingOrder();
+      if (order.isCollected || order.isTerminal) {
+        throw StateError('This order is no longer awaiting collection.');
+      }
+      if (!order.isReadyForCollection) {
+        throw StateError('This order is not ready for collection yet.');
+      }
+      final result =
+          await ref.read(posOnlineOrdersRepositoryProvider).verifyPickup(
+                outletId: _outletId,
+                orderId: orderId,
+                pickupCode: pickupCode,
+              );
+      await _refresh();
+      return result;
+    } on DioException {
+      await _refresh();
+      rethrow;
+    } finally {
+      _mutationInFlight = false;
+    }
+  }
+
+  Future<PosPickupCollectResult> completeCollection() async {
+    if (_mutationInFlight) {
+      throw StateError('A packing action is already in progress.');
+    }
+    _mutationInFlight = true;
+    try {
+      final result =
+          await ref.read(posOnlineOrdersRepositoryProvider).collectOrder(
+                outletId: _outletId,
+                orderId: orderId,
+              );
+      await _refresh();
+      ref.invalidate(posOnlineOrdersProvider);
       return result;
     } on DioException {
       await _refresh();

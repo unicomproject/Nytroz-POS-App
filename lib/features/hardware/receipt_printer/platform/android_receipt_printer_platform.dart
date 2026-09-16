@@ -129,6 +129,16 @@ class MethodChannelAndroidReceiptPrinter
 
   final MethodChannel _channel;
 
+  Future<DateTime?> bluetoothLastWriteObservation(String address) async {
+    if (!isAndroidNative) return null;
+    final result = await _channel.invokeMapMethod<String, dynamic>(
+        'bluetoothObservation', {'address': address});
+    final value = result?['observedAt'];
+    return value is num
+        ? DateTime.fromMillisecondsSinceEpoch(value.toInt(), isUtc: true)
+        : null;
+  }
+
   static bool get isAndroidNative =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 

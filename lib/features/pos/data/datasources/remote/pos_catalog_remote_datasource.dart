@@ -23,7 +23,11 @@ class PosCatalogRemoteDatasource {
         if (categoryId != null && categoryId.isNotEmpty)
           'categoryId': categoryId,
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-        if (segment != null && segment.isNotEmpty) 'segment': segment,
+        // Quick-product tabs apply only while browsing, not during search.
+        if ((search == null || search.trim().isEmpty) &&
+            segment != null &&
+            segment.isNotEmpty)
+          'segment': segment,
       },
     );
 

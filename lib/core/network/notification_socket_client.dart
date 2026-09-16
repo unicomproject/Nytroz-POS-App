@@ -26,23 +26,31 @@ class NotificationSocketClient {
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
   Timer? _reconnectTimer;
-  String? _currentToken;
+  // Identifies the logged-in session a connection belongs to (e.g. the full
+  // session access token) -- used only to detect "same session, skip
+  // reconnect", never sent over the wire. The actual handshake credential is
+  // always fetched fresh via [_fetchToken] just before connecting, since it
+  // is short-lived and a stale copy would fail auth on any real reconnect.
+  String? _currentSessionKey;
+  Future<String?> Function()? _fetchToken;
   int _reconnectAttempt = 0;
   bool _disposed = false;
   bool _wasConnected = false;
 
   Stream<RealtimeNotificationEvent> get events => _eventController.stream;
 
-  void connect(String accessToken) {
-    if (_disposed || accessToken.isEmpty) return;
-    if (_currentToken == accessToken && _channel != null) return;
-    _currentToken = accessToken;
+  void connect(String sessionKey, Future<String?> Function() fetchToken) {
+    if (_disposed || sessionKey.isEmpty) return;
+    if (_currentSessionKey == sessionKey && _channel != null) return;
+    _currentSessionKey = sessionKey;
+    _fetchToken = fetchToken;
     _reconnectAttempt = 0;
-    _openConnection();
+    unawaited(_openConnection());
   }
 
   void disconnect() {
-    _currentToken = null;
+    _currentSessionKey = null;
+    _fetchToken = null;
     _wasConnected = false;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
@@ -55,10 +63,11 @@ class NotificationSocketClient {
     unawaited(_eventController.close());
   }
 
-  void _openConnection() {
+  Future<void> _openConnection() async {
     if (_disposed) return;
-    final token = _currentToken;
-    if (token == null) return;
+    final sessionKey = _currentSessionKey;
+    final fetchToken = _fetchToken;
+    if (sessionKey == null || fetchToken == null) return;
 
     _teardownChannel();
 
@@ -117,14 +126,17 @@ class NotificationSocketClient {
 
   void _scheduleReconnect() {
     _teardownChannel();
-    if (_disposed || _currentToken == null) return;
+    if (_disposed || _currentSessionKey == null) return;
 
     _reconnectTimer?.cancel();
     final delaySeconds =
         _backoffSeconds[_reconnectAttempt.clamp(0, _backoffSeconds.length - 1)];
     _reconnectAttempt =
         (_reconnectAttempt + 1).clamp(0, _backoffSeconds.length - 1);
-    _reconnectTimer = Timer(Duration(seconds: delaySeconds), _openConnection);
+    _reconnectTimer = Timer(
+      Duration(seconds: delaySeconds),
+      () => unawaited(_openConnection()),
+    );
   }
 
   void _teardownChannel() {

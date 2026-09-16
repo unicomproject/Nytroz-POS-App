@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../application/services/pos_hid_scanner_input_service.dart';
+import '../../../../hardware/device_configuration/hardware_observation_events.dart';
 
 class PosBarcodeScannerListener extends StatefulWidget {
   const PosBarcodeScannerListener({
@@ -75,6 +76,7 @@ class _PosBarcodeScannerListenerState extends State<PosBarcodeScannerListener> {
           widget.onRejectedBarcode?.call(barcode);
           return;
         }
+        observeHardwareInput('hid');
         widget.onBarcodeScanned(barcode);
       },
       onRejected: (reason, value) {

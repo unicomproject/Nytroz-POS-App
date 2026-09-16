@@ -152,6 +152,10 @@ class ApiEndpoints {
       '${posOnlineOrder(orderId)}/ready';
   static String posOnlineOrderNotifyReady(String orderId) =>
       '${posOnlineOrder(orderId)}/notify-ready';
+  static String posOnlineOrderPickupVerify(String orderId) =>
+      '${posOnlineOrder(orderId)}/pickup/verify';
+  static String posOnlineOrderPickupCollect(String orderId) =>
+      '${posOnlineOrder(orderId)}/pickup/collect';
   static String posCustomer(String customerId) =>
       '/api/v1/customers/$customerId';
   static String posCustomerOrders(String customerId) =>
@@ -244,6 +248,8 @@ class ApiEndpoints {
   static const tenantNotificationsUnreadCount =
       '$tenantNotifications/unread-count';
   static const tenantNotificationsReadAll = '$tenantNotifications/read-all';
+  static const tenantNotificationsSocketToken =
+      '$tenantNotifications/socket-token';
   static String tenantNotificationRead(String notificationId) =>
       '$tenantNotifications/$notificationId/read';
   static const tenantNotificationsSocketPath = '/ws/notifications';

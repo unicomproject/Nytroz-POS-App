@@ -40,7 +40,7 @@ void main() {
           TenantAdminPermissionCodes.tillView,
           TenantAdminPermissionCodes.tenantHardwareView,
         ],
-        features: [TenantAdminFeatureCodes.tillManagement],
+        features: [TenantAdminFeatureCodes.tillManagement, 'hardware_device_management'],
         width: 1200,
       );
 
@@ -69,7 +69,7 @@ void main() {
           TenantAdminPermissionCodes.tillView,
           TenantAdminPermissionCodes.tenantHardwareView,
         ],
-        features: [TenantAdminFeatureCodes.tillManagement],
+        features: [TenantAdminFeatureCodes.tillManagement, 'hardware_device_management'],
         width: 1280,
       );
 
@@ -86,7 +86,7 @@ void main() {
       await _pumpTillList(
         tester,
         permissions: [TenantAdminPermissionCodes.tillView],
-        features: [TenantAdminFeatureCodes.tillManagement],
+        features: [TenantAdminFeatureCodes.tillManagement, 'hardware_device_management'],
         width: 1200,
         includeHardwareReadiness: false,
       );
@@ -109,7 +109,7 @@ void main() {
           TenantAdminPermissionCodes.tillView,
           TenantAdminPermissionCodes.tenantHardwareView,
         ],
-        features: [TenantAdminFeatureCodes.tillManagement],
+        features: [TenantAdminFeatureCodes.tillManagement, 'hardware_device_management'],
         width: 1200,
         readiness: const TillHardwareReadiness(
           tillId: 'till-1',
@@ -167,7 +167,7 @@ void main() {
           TenantAdminPermissionCodes.tillCreate,
           TenantAdminPermissionCodes.tenantHardwareView,
         ],
-        features: [TenantAdminFeatureCodes.tillManagement],
+        features: [TenantAdminFeatureCodes.tillManagement, 'hardware_device_management'],
         width: 1200,
       );
 
@@ -182,7 +182,7 @@ void main() {
           TenantAdminPermissionCodes.tillView,
           TenantAdminPermissionCodes.tenantHardwareView,
         ],
-        features: [TenantAdminFeatureCodes.tillManagement],
+        features: [TenantAdminFeatureCodes.tillManagement, 'hardware_device_management'],
         width: 1200,
       );
 
@@ -196,7 +196,7 @@ void main() {
           TenantAdminPermissionCodes.tillView,
           TenantAdminPermissionCodes.tenantHardwareView,
         ],
-        features: [TenantAdminFeatureCodes.tillManagement],
+        features: [TenantAdminFeatureCodes.tillManagement, 'hardware_device_management'],
         width: 390,
       );
 
@@ -208,7 +208,7 @@ void main() {
         (tester) async {
       final access = _checker(
         permissions: [TenantAdminPermissionCodes.tillView],
-        features: [TenantAdminFeatureCodes.tillManagement],
+        features: [TenantAdminFeatureCodes.tillManagement, 'hardware_device_management'],
       );
       const menuItem = TenantAdminMenuItem(
         key: 'tills',
@@ -235,7 +235,7 @@ void main() {
             tenantAdminAccessCheckerProvider.overrideWith(
               (ref) async => _checker(
                 permissions: [TenantAdminPermissionCodes.tillView],
-                features: [TenantAdminFeatureCodes.tillManagement],
+                features: [TenantAdminFeatureCodes.tillManagement, 'hardware_device_management'],
               ),
             ),
             tillOutletOptionsProvider.overrideWith(

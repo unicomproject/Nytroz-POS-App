@@ -403,6 +403,10 @@ class PosPermissionCodes {
       'commerce.online_order.collection.view_ready';
   static const notifyOnlineOrderCustomer =
       'commerce.online_order.collection.notify_customer';
+  static const verifyOnlineOrderPickup =
+      'commerce.online_order.collection.verify';
+  static const completeOnlineOrderCollection =
+      'commerce.online_order.collection.complete';
   static const viewOnlineOrders = 'commerce.online_order.orders.view';
   static const openTill = 'pos.till.open';
   static const viewTill = 'pos.till.view';

@@ -423,6 +423,16 @@ class PosPermissionAccess {
         granted.contains(PosPermissionCodes.notifyOnlineOrderCustomer);
   }
 
+  static bool canVerifyOnlineOrderPickup(Set<String> granted) {
+    return canViewOnlineOrderReady(granted) &&
+        granted.contains(PosPermissionCodes.verifyOnlineOrderPickup);
+  }
+
+  static bool canCompleteOnlineOrderCollection(Set<String> granted) {
+    return canViewOnlineOrderReady(granted) &&
+        granted.contains(PosPermissionCodes.completeOnlineOrderCollection);
+  }
+
   /// Legacy broad movement.create — prefer [canCashIn]/[canCashOut]/[canCashDrop].
   static bool canCreateCashDrawerMovement(Set<String> granted) {
     return canCashIn(granted) || canCashOut(granted) || canCashDrop(granted);

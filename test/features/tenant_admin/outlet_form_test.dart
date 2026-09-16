@@ -42,7 +42,7 @@ void main() {
       await _tapText(tester, 'Next');
       await tester.pumpAndSettle();
 
-      expect(find.text('Outlet Name is required.'), findsOneWidget);
+      expect(find.text('Enter an outlet name.'), findsOneWidget);
       expect(find.text('Address Line 1'), findsNothing);
     });
 
@@ -56,8 +56,8 @@ void main() {
       await _tapText(tester, 'Next');
       await tester.pumpAndSettle();
 
-      expect(find.text('Address Line 1 is required.'), findsOneWidget);
-      expect(find.text('City is required.'), findsOneWidget);
+      expect(find.text('Enter Address Line 1.'), findsOneWidget);
+      expect(find.text('Enter a city.'), findsOneWidget);
     });
 
     testWidgets('blocks malformed country codes before submit', (tester) async {
@@ -148,8 +148,9 @@ void main() {
       await _tapText(tester, 'Next');
       await tester.pumpAndSettle();
 
-      expect(find.text('Outlet type is required.'), findsOneWidget);
+      expect(find.text('Select an outlet type.'), findsOneWidget);
       expect(find.text('{value: STORE, label: Store}'), findsNothing);
+      expect(find.text('Address Line 1'), findsNothing);
     });
 
     testWidgets('edit form preserves warehouse canonical value',
@@ -190,9 +191,10 @@ void main() {
       await _tapText(tester, 'Next');
       await tester.pumpAndSettle();
 
-      expect(find.text('Timezone is required.'), findsOneWidget);
+      expect(find.text('Select the outlet timezone.'), findsOneWidget);
       expect(find.text('{value: Europe/London, label: Europe/London}'),
           findsNothing);
+      expect(find.text('Address Line 1'), findsNothing);
     });
 
     testWidgets('preserves form state when navigating back and forward',
