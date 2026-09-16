@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/product_draft_response_dto.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/save_product_draft_request_dto.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/staged_image_response_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_draft_response_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/save_product_draft_request_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/staged_image_response_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_delete_result.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_form_data.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_status_update_result.dart';
@@ -11,11 +11,12 @@ import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_create_options.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_detail.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_filter_options.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_create_request_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/tenant_product_repository.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/providers/tenant_product_providers.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/step_5/step_5_barcode_sku_form.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/step_7/step_7_review_create.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/barcode_sku/barcode_sku_form.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/review_create/review_create.dart';
 
 class _TrackingRepo implements TenantProductRepository {
   int saveDraftCallCount = 0;
@@ -124,6 +125,9 @@ class _TrackingRepo implements TenantProductRepository {
   @override
   Future<ProductStatusUpdateResult> updateProductStatus(
           String productId, String status) =>
+      throw UnimplementedError();
+  @override
+  Future<ProductCreateResponseDto> duplicateProduct(String productId) =>
       throw UnimplementedError();
 }
 

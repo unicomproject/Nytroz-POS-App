@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/datasources/product_wizard_draft_local_datasource.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/product_draft_response_dto.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/save_product_draft_request_dto.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/staged_image_response_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/datasources/local/product_wizard_draft_local_datasource.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_draft_response_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/save_product_draft_request_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/staged_image_response_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_delete_result.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_form_data.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_status_update_result.dart';
@@ -11,6 +11,7 @@ import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_detail.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_filter_options.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/product_wizard_draft_local_repository.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_create_request_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/tenant_product_repository.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 
@@ -229,6 +230,9 @@ class FakeTenantProductRepository implements TenantProductRepository {
   @override
   Future<ProductStatusUpdateResult> updateProductStatus(
           String productId, String status) =>
+      throw UnimplementedError();
+  @override
+  Future<ProductCreateResponseDto> duplicateProduct(String productId) =>
       throw UnimplementedError();
 }
 

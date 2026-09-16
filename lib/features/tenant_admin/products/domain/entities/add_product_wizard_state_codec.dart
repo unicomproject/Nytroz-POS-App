@@ -1,9 +1,9 @@
-import '../../data/models/step5_barcode_dtos.dart';
-import '../../data/models/step6_pricing_tax_dtos.dart';
+import '../../data/dtos/barcode_sku_dtos.dart';
+import '../../data/dtos/pricing_tax_dtos.dart';
 import 'add_product_wizard_state.dart';
 import 'staged_product_image.dart';
-import 'step4_variant_configuration_state.dart';
-import 'step5_barcode_sku_state.dart';
+import 'variant_configuration_state.dart';
+import 'barcode_sku_state.dart';
 
 /// JSON codec for persisting [AddProductWizardState] in a local draft snapshot.
 ///

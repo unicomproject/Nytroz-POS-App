@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/step4_variant_configuration_state.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/variant_configuration_state.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/utils/variant_estimated_count_calculator.dart';
 
 void main() {

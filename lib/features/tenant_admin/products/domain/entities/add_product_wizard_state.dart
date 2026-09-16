@@ -1,7 +1,8 @@
-import '../../data/models/step6_pricing_tax_dtos.dart';
+import '../../data/dtos/pricing_tax_dtos.dart';
 import 'staged_product_image.dart';
-import 'step4_variant_configuration_state.dart';
-import 'step5_barcode_sku_state.dart';
+import 'variant_configuration_state.dart';
+import 'barcode_sku_state.dart';
+import 'scan_barcode_step_state.dart';
 import 'tenant_product_create_options.dart';
 
 class ProductUnitConversionItem {
@@ -38,7 +39,10 @@ class AddProductWizardState {
   final String status;
   final int rowVersion;
 
-  // Step 1 Form Fields
+  // Step 1 — Scan Barcode (scanner-first)
+  final ScanBarcodeStepState scanStepState;
+
+  // Basic Details Form Fields (scanner-first Step 2)
   final String productName;
   final String internalCode;
   final String? categoryId;
@@ -131,6 +135,7 @@ class AddProductWizardState {
     this.localDraftId,
     this.status = 'DRAFT',
     this.rowVersion = 0,
+    this.scanStepState = const ScanBarcodeStepState(),
     this.productName = '',
     this.internalCode = '',
     this.categoryId,
@@ -217,6 +222,7 @@ class AddProductWizardState {
     bool clearLocalDraftId = false,
     String? status,
     int? rowVersion,
+    ScanBarcodeStepState? scanStepState,
     String? productName,
     String? internalCode,
     String? categoryId,
@@ -308,6 +314,7 @@ class AddProductWizardState {
           clearLocalDraftId ? null : (localDraftId ?? this.localDraftId),
       status: status ?? this.status,
       rowVersion: rowVersion ?? this.rowVersion,
+      scanStepState: scanStepState ?? this.scanStepState,
       productName: productName ?? this.productName,
       internalCode: internalCode ?? this.internalCode,
       categoryId: categoryId ?? this.categoryId,

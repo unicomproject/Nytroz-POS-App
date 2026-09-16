@@ -1,6 +1,6 @@
 import '../../domain/entities/product_dashboard.dart';
 import '../../domain/repositories/product_dashboard_repository.dart';
-import '../datasources/product_dashboard_remote_datasource.dart';
+import '../datasources/remote/product_dashboard_remote_datasource.dart';
 import '../mappers/product_dashboard_mapper.dart';
 
 class ProductDashboardRepositoryImpl implements ProductDashboardRepository {

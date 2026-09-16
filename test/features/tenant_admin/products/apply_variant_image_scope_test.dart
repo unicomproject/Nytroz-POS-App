@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/step4_variant_configuration_state.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/variant_configuration_state.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/tenant_product_repository.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/staged_image_response_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/staged_image_response_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 
 void main() {

@@ -4,25 +4,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
 import 'dart:math';
 
-import '../../data/models/product_draft_response_dto.dart';
-import '../../data/models/step5_barcode_dtos.dart';
+import '../../data/dtos/product_draft_response_dto.dart';
+import '../../data/dtos/product_setup_scan_dtos.dart';
+import '../../data/dtos/barcode_sku_dtos.dart';
+import '../../data/dtos/save_product_draft_request_dto.dart';
 import '../../data/mappers/wizard_product_create_mapper.dart';
 import '../../domain/entities/add_product_wizard_state.dart';
 import '../../domain/entities/product_wizard_capabilities.dart';
 import '../../domain/entities/product_wizard_draft.dart';
+import '../../domain/entities/scan_barcode_step_state.dart';
 import '../../domain/entities/staged_product_image.dart';
-import '../../domain/entities/step5_barcode_sku_state.dart';
+import '../../domain/entities/barcode_sku_state.dart';
 import '../../domain/entities/tenant_product_create_options.dart';
 import '../../domain/entities/tenant_product_detail.dart';
-import '../../domain/entities/step4_variant_configuration_state.dart';
+import '../../domain/entities/variant_configuration_state.dart';
 import '../utils/product_duplicate_helper.dart';
 import '../utils/product_form_validation.dart';
-import '../utils/step_5_barcode_type.dart';
-import '../utils/step_6_variant_pricing.dart';
+import '../utils/barcode_type.dart';
+import '../utils/variant_pricing.dart';
 import '../../domain/utils/variant_estimated_count_calculator.dart';
 import '../../domain/utils/variant_combination_generator.dart';
 import '../../domain/repositories/product_wizard_draft_local_repository.dart';
 import '../../domain/repositories/tenant_product_repository.dart';
+import '../../domain/usecases/get_product_setup.dart';
 
 class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   AddProductWizardController(
@@ -156,8 +160,11 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
             return;
           }
         }
-        // Fresh Add Product always starts at Step 1 (Basic Details)
-        state = state.copyWith(currentStep: 1);
+        // Fresh Add Product always starts at Step 1 (Scan Barcode)
+        state = state.copyWith(
+          currentStep: 1,
+          scanStepState: const ScanBarcodeStepState(),
+        );
       }
     } catch (e) {
       state = state.copyWith(
@@ -166,6 +173,550 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       );
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Scanner-first Step 1 actions
+  // ---------------------------------------------------------------------------
+
+  void backToScan({bool clearValidatedCandidate = true}) {
+    if (clearValidatedCandidate) {
+      state = state.copyWith(
+        currentStep: 1,
+        scanStepState: const ScanBarcodeStepState(),
+        clearPageError: true,
+      );
+      return;
+    }
+
+    // S1-D Back: return to scan listening but retain validated candidate metadata.
+    state = state.copyWith(
+      currentStep: 1,
+      scanStepState: state.scanStepState.copyWith(
+        panel: ScanBarcodePanel.scanReady,
+        isBusy: false,
+        clearLocalMatch: true,
+        clearExternalSuggestion: true,
+        clearExternalStatus: true,
+        clearLastError: true,
+        clearInvalidReason: true,
+      ),
+      clearPageError: true,
+    );
+  }
+
+  void backToNoLocalMatch() {
+    state = state.copyWith(
+      scanStepState: state.scanStepState.copyWith(
+        panel: ScanBarcodePanel.noLocalMatch,
+        clearExternalSuggestion: true,
+        clearExternalStatus: true,
+        clearLastError: true,
+        isBusy: false,
+      ),
+    );
+  }
+
+  void openManualBarcodeEntry() {
+    state = state.copyWith(
+      scanStepState: state.scanStepState.copyWith(
+        panel: ScanBarcodePanel.manualEntry,
+        inputMode: 'MANUAL',
+        clearInvalidReason: true,
+        clearLastError: true,
+        isBusy: false,
+      ),
+    );
+  }
+
+  void updateManualBarcodeDraft(String value) {
+    state = state.copyWith(
+      scanStepState: state.scanStepState.copyWith(candidateBarcode: value),
+    );
+  }
+
+  Future<void> validateManualBarcode() async {
+    await submitScanCandidate(
+      state.scanStepState.candidateBarcode,
+      inputMode: 'MANUAL',
+    );
+  }
+
+  void openNoBarcodeFlow() {
+    state = state.copyWith(
+      scanStepState: state.scanStepState.copyWith(
+        panel: ScanBarcodePanel.noBarcode,
+        clearLastError: true,
+        isBusy: false,
+      ),
+    );
+    if (state.scanStepState.autoGenerateSku) {
+      // Fire-and-forget preview when opening S1-R3 with auto-SKU on.
+      unawaited(requestNoBarcodeSkuCandidate());
+    }
+  }
+
+  void setNoBarcodeCategoryId(String? categoryId) {
+    state = state.copyWith(
+      scanStepState: state.scanStepState.copyWith(
+        noBarcodeCategoryId: categoryId,
+        clearNoBarcodeCategoryId: categoryId == null || categoryId.isEmpty,
+      ),
+      categoryId: categoryId,
+      isDirty: true,
+    );
+  }
+
+  void setNoBarcodeReason(String reason) {
+    state = state.copyWith(
+      scanStepState: state.scanStepState.copyWith(noBarcodeReason: reason),
+    );
+  }
+
+  void updateNoBarcodeProductName(String name) {
+    state = state.copyWith(
+      scanStepState: state.scanStepState.copyWith(noBarcodeProductName: name),
+      productName: name,
+      isDirty: true,
+    );
+  }
+
+  Future<void> setAutoGenerateSku(bool enabled) async {
+    state = state.copyWith(
+      scanStepState: state.scanStepState.copyWith(autoGenerateSku: enabled),
+    );
+    if (enabled) {
+      await requestNoBarcodeSkuCandidate();
+    }
+  }
+
+  Future<void> requestNoBarcodeSkuCandidate() async {
+    try {
+      final result = await _repository.generateSkuCandidate(
+        productNameHint: state.scanStepState.noBarcodeProductName,
+      );
+      state = state.copyWith(
+        scanStepState: state.scanStepState.copyWith(
+          generatedSkuCandidate: result.candidate,
+          clearLastError: true,
+        ),
+      );
+    } on DioException catch (e) {
+      state = state.copyWith(
+        scanStepState: state.scanStepState.copyWith(
+          lastError: _dioMessage(e) ?? 'Failed to generate SKU candidate.',
+        ),
+      );
+    } catch (e) {
+      state = state.copyWith(
+        scanStepState: state.scanStepState.copyWith(
+          lastError: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> submitScanCandidate(
+    String barcode, {
+    String inputMode = 'SCAN',
+  }) async {
+    final candidate = barcode; // preserve leading zeros as raw string
+    if (candidate.trim().isEmpty) {
+      state = state.copyWith(
+        scanStepState: state.scanStepState.copyWith(
+          panel: ScanBarcodePanel.invalid,
+          candidateBarcode: candidate,
+          invalidReason: 'Barcode is required.',
+        ),
+      );
+      return;
+    }
+
+    state = state.copyWith(
+      scanStepState: state.scanStepState.copyWith(
+        panel: ScanBarcodePanel.validating,
+        candidateBarcode: candidate,
+        inputMode: inputMode,
+        isBusy: true,
+        clearLastError: true,
+        clearInvalidReason: true,
+        clearLocalMatch: true,
+      ),
+    );
+
+    try {
+      final response = await _repository.resolveBarcode(
+        ResolveProductBarcodeRequestDto(
+          barcode: candidate,
+          inputMode: inputMode,
+        ),
+      );
+
+      if (response.isInvalid) {
+        // The user explicitly requested to treat invalid barcodes (e.g., checksum failures) 
+        // as "Product not found" so they can continue and use them anyway.
+        state = state.copyWith(
+          scanStepState: state.scanStepState.copyWith(
+            panel: ScanBarcodePanel.noLocalMatch,
+            candidateBarcode: response.normalizedBarcode ?? candidate,
+            identifierStandard: response.identifierStandard,
+            barcodeType: response.barcodeType,
+            isBusy: false,
+          ),
+        );
+        runExternalLookup();
+        return;
+      }
+
+      final normalized = response.normalizedBarcode ?? candidate;
+      if (response.isValidLocalMatch) {
+        state = state.copyWith(
+          scanStepState: state.scanStepState.copyWith(
+            panel: ScanBarcodePanel.localMatch,
+            candidateBarcode: normalized,
+            identifierStandard: response.identifierStandard,
+            barcodeType: response.barcodeType,
+            localMatch: response.localMatch,
+            isBusy: false,
+          ),
+        );
+        return;
+      }
+
+      state = state.copyWith(
+        scanStepState: state.scanStepState.copyWith(
+          panel: ScanBarcodePanel.noLocalMatch,
+          candidateBarcode: normalized,
+          identifierStandard: response.identifierStandard,
+          barcodeType: response.barcodeType,
+          isBusy: false,
+        ),
+      );
+
+      runExternalLookup();
+    } on DioException catch (e) {
+      final msg = _dioMessage(e) ?? 'Barcode resolve failed. Try again.';
+      if (msg.toLowerCase().contains('invalid') || msg.toLowerCase().contains('identifier') || msg.toLowerCase().contains('format')) {
+        state = state.copyWith(
+          scanStepState: state.scanStepState.copyWith(
+            panel: ScanBarcodePanel.externalNoMatch,
+            candidateBarcode: candidate,
+            clearExternalSuggestion: true,
+            isBusy: false,
+            clearLastError: true,
+          ),
+        );
+      } else {
+        state = state.copyWith(
+          scanStepState: state.scanStepState.copyWith(
+            panel: ScanBarcodePanel.noLocalMatch,
+            lastError: msg,
+            isBusy: false,
+          ),
+        );
+      }
+    } catch (e) {
+      final msg = e.toString();
+      if (msg.toLowerCase().contains('invalid') || msg.toLowerCase().contains('identifier') || msg.toLowerCase().contains('format')) {
+        state = state.copyWith(
+          scanStepState: state.scanStepState.copyWith(
+            panel: ScanBarcodePanel.externalNoMatch,
+            candidateBarcode: candidate,
+            clearExternalSuggestion: true,
+            isBusy: false,
+            clearLastError: true,
+          ),
+        );
+      } else {
+        state = state.copyWith(
+          scanStepState: state.scanStepState.copyWith(
+            panel: ScanBarcodePanel.noLocalMatch,
+            lastError: msg,
+            isBusy: false,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> runExternalLookup() async {
+    final barcode = state.scanStepState.candidateBarcode;
+    state = state.copyWith(
+      scanStepState: state.scanStepState.copyWith(
+        panel: ScanBarcodePanel.externalLookup,
+        isBusy: true,
+        clearLastError: true,
+      ),
+    );
+
+    try {
+      final response = await _repository.externalLookupBarcode(
+        barcode: barcode,
+        identifierStandard: state.scanStepState.identifierStandard,
+      );
+
+      if (response.isFound) {
+        state = state.copyWith(
+          scanStepState: state.scanStepState.copyWith(
+            panel: ScanBarcodePanel.externalFound,
+            externalStatus: response.status,
+            externalSuggestion: response.suggestion,
+            externalSourceReference: response.sourceReference,
+            externalRetryAllowed: response.retryAllowed,
+            isBusy: false,
+          ),
+        );
+        return;
+      }
+
+      if (response.isTemporaryFailure) {
+        state = state.copyWith(
+          scanStepState: state.scanStepState.copyWith(
+            panel: ScanBarcodePanel.noLocalMatch,
+            externalStatus: response.status,
+            externalRetryAllowed: response.retryAllowed,
+            lastError: 'External lookup temporarily unavailable. You can retry or continue manually.',
+            isBusy: false,
+          ),
+        );
+        return;
+      }
+
+      state = state.copyWith(
+        scanStepState: state.scanStepState.copyWith(
+          panel: ScanBarcodePanel.externalNoMatch,
+          externalStatus: response.status,
+          externalRetryAllowed: response.retryAllowed,
+          clearExternalSuggestion: true,
+          isBusy: false,
+        ),
+      );
+    } on DioException catch (e) {
+      final msg = _dioMessage(e) ?? 'External lookup failed.';
+      if (msg.toLowerCase().contains('invalid') || msg.toLowerCase().contains('identifier') || msg.toLowerCase().contains('format')) {
+        state = state.copyWith(
+          scanStepState: state.scanStepState.copyWith(
+            panel: ScanBarcodePanel.externalNoMatch,
+            clearExternalSuggestion: true,
+            isBusy: false,
+            clearLastError: true,
+          ),
+        );
+      } else {
+        state = state.copyWith(
+          scanStepState: state.scanStepState.copyWith(
+            panel: ScanBarcodePanel.noLocalMatch,
+            lastError: msg,
+            isBusy: false,
+          ),
+        );
+      }
+    } catch (e) {
+      final msg = e.toString();
+      if (msg.toLowerCase().contains('invalid') || msg.toLowerCase().contains('identifier') || msg.toLowerCase().contains('format')) {
+        state = state.copyWith(
+          scanStepState: state.scanStepState.copyWith(
+            panel: ScanBarcodePanel.externalNoMatch,
+            clearExternalSuggestion: true,
+            isBusy: false,
+            clearLastError: true,
+          ),
+        );
+      } else {
+        state = state.copyWith(
+          scanStepState: state.scanStepState.copyWith(
+            panel: ScanBarcodePanel.noLocalMatch,
+            lastError: msg,
+            isBusy: false,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> continueUseThisProduct() async {
+    await _bootstrapDraft(
+      acquisitionMode: state.scanStepState.inputMode == 'MANUAL' ? 'MANUAL' : 'SCAN',
+      creationAction: 'USE_THIS_PRODUCT',
+      applyExternalPrefill: true,
+      externalLookupStatus: 'FOUND',
+      normalizedPrefill: state.scanStepState.externalSuggestion,
+      externalSourceReference: state.scanStepState.externalSourceReference,
+    );
+  }
+
+  Future<void> continueCreateManually({required bool applyExternalPrefill}) async {
+    await _bootstrapDraft(
+      acquisitionMode: state.scanStepState.inputMode == 'MANUAL' ? 'MANUAL' : 'SCAN',
+      creationAction: 'CREATE_MANUALLY',
+      applyExternalPrefill: false,
+      externalLookupStatus: state.scanStepState.externalStatus,
+      normalizedPrefill: null,
+      externalSourceReference: state.scanStepState.externalSourceReference,
+      // No product found externally — Step 2 must be blank; never carry state name.
+      suppressStateProductName: true,
+    );
+  }
+
+  Future<void> continueWithBarcode() async {
+    await _bootstrapDraft(
+      acquisitionMode: state.scanStepState.inputMode == 'MANUAL' ? 'MANUAL' : 'SCAN',
+      creationAction: 'CONTINUE_WITH_BARCODE',
+      applyExternalPrefill: false,
+      externalLookupStatus: state.scanStepState.externalStatus ?? 'NO_MATCH',
+      // No product found externally — Step 2 must be blank; never carry state name.
+      suppressStateProductName: true,
+    );
+  }
+
+  Future<void> continueNoBarcodeBootstrap() async {
+    final reason = state.scanStepState.noBarcodeReason;
+    final name = state.scanStepState.noBarcodeProductName.trim();
+    if (reason == null || reason.isEmpty) {
+      state = state.copyWith(
+        scanStepState: state.scanStepState.copyWith(
+          lastError: 'Select a no-barcode reason.',
+        ),
+      );
+      return;
+    }
+    if (name.isEmpty) {
+      state = state.copyWith(
+        scanStepState: state.scanStepState.copyWith(
+          lastError: 'Product Name is required.',
+        ),
+      );
+      return;
+    }
+    if (state.scanStepState.autoGenerateSku &&
+        (state.scanStepState.generatedSkuCandidate ?? '').isEmpty) {
+      await requestNoBarcodeSkuCandidate();
+    }
+
+    await _bootstrapDraft(
+      acquisitionMode: 'NO_BARCODE',
+      creationAction: 'CONTINUE_TO_BASIC_DETAILS',
+      applyExternalPrefill: false,
+      noBarcodeReason: reason,
+      productNameOverride: name,
+      generatedSkuCandidate: state.scanStepState.generatedSkuCandidate,
+      includeCandidate: false,
+    );
+  }
+
+  Future<void> _bootstrapDraft({
+    required String acquisitionMode,
+    required String creationAction,
+    required bool applyExternalPrefill,
+    String? externalLookupStatus,
+    ExternalProductSuggestionDto? normalizedPrefill,
+    String? externalSourceReference,
+    String? noBarcodeReason,
+    String? productNameOverride,
+    String? generatedSkuCandidate,
+    bool includeCandidate = true,
+    bool suppressStateProductName = false,
+  }) async {
+    if (state.scanStepState.isBusy) return;
+
+    state = state.copyWith(
+      scanStepState: state.scanStepState.copyWith(isBusy: true, clearLastError: true),
+      isSavingDraft: true,
+    );
+
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    try {
+      final scan = state.scanStepState;
+      final prefill = applyExternalPrefill ? normalizedPrefill : null;
+      
+      final productName = productNameOverride ??
+            prefill?.productName ??
+            (suppressStateProductName || state.productName.isEmpty
+                ? null
+                : state.productName);
+
+      _applyLocalBootstrap(
+        productName: productName,
+        prefill: prefill,
+        generatedSkuCandidate: generatedSkuCandidate,
+        candidateBarcode: includeCandidate ? scan.candidateBarcode : null,
+        barcodeType: includeCandidate ? scan.barcodeType : null,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isSavingDraft: false,
+        scanStepState: state.scanStepState.copyWith(
+          isBusy: false,
+          lastError: e.toString(),
+        ),
+      );
+    }
+  }
+
+  void _applyLocalBootstrap({
+    String? productName,
+    ExternalProductSuggestionDto? prefill,
+    String? generatedSkuCandidate,
+    String? candidateBarcode,
+    String? barcodeType,
+  }) {
+    var next = state.copyWith(
+      currentStep: 2,
+      targetSetupStep: 2,
+      lastCompletedSetupStep: 1,
+      productName: productName ?? '',
+      shortDescription: prefill?.shortDescription ?? state.shortDescription,
+      longDescription: prefill?.longDescription ?? state.longDescription,
+      internalCode: state.internalCode,
+      isDirty: true,
+      isSavingDraft: false,
+      scanStepState: state.scanStepState.copyWith(
+        isBusy: false,
+      ),
+    );
+
+    if (prefill != null) {
+      next = next.copyWith(
+        productImages: [],
+        primaryImageId: null,
+        clearPrimaryImageId: true,
+      );
+    }
+
+    if ((generatedSkuCandidate ?? '').isNotEmpty) {
+      next = next.copyWith(
+        step5State: next.step5State.copyWith(baseSku: generatedSkuCandidate),
+      );
+    }
+
+    // Seed Step 5 optional barcode from Step 1 candidate (not auto-final until Step 5 save).
+    if ((candidateBarcode ?? '').trim().isNotEmpty &&
+        next.step5State.parentProductBarcode.trim().isEmpty) {
+      next = next.copyWith(
+        step5State: next.step5State.copyWith(
+          parentProductBarcode: candidateBarcode!,
+          parentBarcodeType: barcodeType,
+        ),
+      );
+    }
+
+    state = next;
+  }
+
+  String? _dioMessage(DioException e) {
+    final data = e.response?.data;
+    if (data is Map && data['message'] != null) {
+      return data['message'].toString();
+    }
+    if (data is Map && data['error'] is Map && data['error']['message'] != null) {
+      return data['error']['message'].toString();
+    }
+    return e.message;
+  }
+
+  // ---------------------------------------------------------------------------
+  // End scanner-first Step 1
+  // ---------------------------------------------------------------------------
 
   /// Hydrates wizard from device-local draft storage (never GET /setup).
   Future<void> loadLocalDraft(String localDraftId) async {
@@ -231,7 +782,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     state = state.copyWith(isSubmitting: true, clearPageError: true);
 
     try {
-      final draft = await _repository.getSetup(productId);
+      final draft = await GetProductSetup(_repository)(productId);
       _hydrateFromDraftResponse(draft, forceStep: draft.currentSetupStep);
       state = state.copyWith(isSubmitting: false, isDirty: false);
     } catch (e) {
@@ -242,24 +793,104 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     }
   }
 
+  /// Reloads only the images from the backend draft to preserve unsaved local state
+  Future<void> _reloadImagesForEditMode(String productId) async {
+    try {
+      final draft = await GetProductSetup(_repository)(productId);
+      _hydrateImagesFromDraftResponse(draft);
+    } catch (e) {
+      state = state.copyWith(
+        pageError: 'Failed to refresh images: ${_extractErrorMessage(e)}',
+      );
+    }
+  }
+
+  /// Hydrates only image-related state from a draft response
+  void _hydrateImagesFromDraftResponse(ProductDraftResponseDto draft) {
+    final images = draft.images.map((img) {
+      return ProductWizardImageItem(
+        id: img.productImageId,
+        mediaAssetId: img.mediaAssetId,
+        imageUrl: img.imageUrl,
+        fileName: 'Image ${img.sortOrder}',
+        isPrimary: img.isPrimaryImage,
+        sortOrder: img.sortOrder,
+        isStaged: false,
+      );
+    }).toList();
+
+    final primaryImg = draft.images.firstWhere((e) => e.isPrimaryImage,
+        orElse: () => draft.images.isNotEmpty
+            ? draft.images.first
+            : const ProductImageResponseDto(
+                productImageId: '',
+                imageUrl: '',
+                imagePurpose: '',
+                sortOrder: 0,
+                isPrimaryImage: false));
+
+    state = state.copyWith(
+      productImages: images,
+      primaryImageId: primaryImg.productImageId.isNotEmpty ? primaryImg.productImageId : null,
+      clearPrimaryImageId: primaryImg.productImageId.isEmpty,
+      isDirty: true,
+    );
+  }
+
   /// Loads an existing product's setup data into a fresh wizard for duplication.
   Future<void> loadDuplicateFromProduct(String sourceProductId) async {
     state = state.copyWith(isSubmitting: true, clearPageError: true);
 
     try {
-      final draft = await _repository.getSetup(sourceProductId);
-      _hydrateFromDraftResponse(draft, forceStep: 1);
-      _applyDuplicateIdentityReset(sourceProductName: draft.productName);
-      state = state.copyWith(isSubmitting: false, isDirty: true);
+      // Prefer server NEW DRAFT (cleared SKU/barcode; no stock copy).
+      final created = await _repository.duplicateProduct(sourceProductId);
+      await loadExistingDraft(created.id);
+      state = state.copyWith(
+        currentStep: 2,
+        isSubmitting: false,
+        isDirty: true,
+      );
     } catch (_) {
       try {
-        final detail = await _repository.getProductById(sourceProductId);
-        _seedFromProductDetail(detail);
+        final draft = await GetProductSetup(_repository)(sourceProductId);
+        _hydrateFromDraftResponse(draft, forceStep: 2);
+        _applyDuplicateIdentityReset(sourceProductName: draft.productName);
         state = state.copyWith(isSubmitting: false, isDirty: true);
-      } catch (e) {
+      } catch (_) {
+        try {
+          final detail = await _repository.getProductById(sourceProductId);
+          _seedFromProductDetail(detail);
+          state = state.copyWith(
+            currentStep: 2,
+            isSubmitting: false,
+            isDirty: true,
+          );
+        } catch (e) {
+          state = state.copyWith(
+            isSubmitting: false,
+            pageError: 'Failed to duplicate product: ${_extractErrorMessage(e)}',
+          );
+        }
+      }
+    }
+  }
+
+  /// S1-C Create Duplicate — new DRAFT then resume at Step 2.
+  Future<void> createDuplicateFromLocalMatch() async {
+    final match = state.scanStepState.localMatch;
+    if (match == null) return;
+    final candidateBarcode = state.scanStepState.candidateBarcode;
+
+    await loadDuplicateFromProduct(match.productId);
+
+    if (candidateBarcode.isNotEmpty) {
+      if (state.productStructure.toUpperCase() == 'SIMPLE' || 
+          state.productStructure.toUpperCase() == 'BUNDLE') {
         state = state.copyWith(
-          isSubmitting: false,
-          pageError: 'Failed to duplicate product: ${_extractErrorMessage(e)}',
+          step5State: state.step5State.copyWith(
+            parentProductBarcode: candidateBarcode,
+          ),
+          isDirty: true,
         );
       }
     }
@@ -370,9 +1001,11 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     final unitId =
         options == null ? null : unitIdForCode(options, detail.unitType);
     final structure = inferProductStructureFromDetail(detail);
+    final prevScanState = state.scanStepState;
 
     state = AddProductWizardState(
       createOptions: options,
+      scanStepState: prevScanState,
       currentStep: 1,
       status: 'DRAFT',
       productName: buildDuplicatedProductName(detail.productName),
@@ -393,6 +1026,11 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       taxName: detail.taxName,
       posSellable: true,
       allowOnlineSale: true,
+      step5State: Step5BarcodeSkuState(
+        parentProductBarcode: (structure == 'SIMPLE' || structure == 'BUNDLE')
+            ? prevScanState.candidateBarcode
+            : '',
+      ),
       isDirty: true,
     );
   }
@@ -705,8 +1343,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           fileName,
           mimeType,
         );
-        // Refresh setup details
-        await loadExistingDraft(state.productId!);
+        // Refresh only the images to avoid wiping unsaved form data
+        await _reloadImagesForEditMode(state.productId!);
       } else {
         // Stage image for unsaved product
         final stagedDto =
@@ -782,7 +1420,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           targetId,
           items,
         );
-        _hydrateFromDraftResponse(draft);
+        _hydrateImagesFromDraftResponse(draft);
         state = state.copyWith(isSubmitting: false);
       } catch (e) {
         state = state.copyWith(
@@ -816,7 +1454,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       try {
         final draft =
             await _repository.deleteProductImage(state.productId!, targetId);
-        _hydrateFromDraftResponse(draft);
+        _hydrateImagesFromDraftResponse(draft);
         state = state.copyWith(isSubmitting: false);
       } catch (e) {
         state = state.copyWith(
@@ -892,11 +1530,11 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           state.primaryImageId,
           payloadItems,
         );
-        _hydrateFromDraftResponse(draft);
+        _hydrateImagesFromDraftResponse(draft);
         state = state.copyWith(isSubmitting: false);
       } catch (e) {
         // Rollback optimistic state
-        await loadExistingDraft(state.productId!);
+        await _reloadImagesForEditMode(state.productId!);
         state = state.copyWith(
           isSubmitting: false,
           pageError: 'Failed to reorder images: ${_extractErrorMessage(e)}',
@@ -917,7 +1555,9 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     );
   }
 
-  /// SIMPLE: 1→2→3→5→6→7 ; VARIANT/BUNDLE: 1→2→4→5→6→7
+  /// Scanner-first:
+  /// SIMPLE/VARIANT: 1→2→3→4→5→6→7
+  /// BUNDLE: 1→2→3→5→6→7 (skip Unit & Pack)
   @visibleForTesting
   int getNextApplicableStep([int? fromStep]) {
     final step = fromStep ?? state.currentStep;
@@ -926,12 +1566,16 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       case 1:
         return 2;
       case 2:
-        if (structure == 'VARIANT' || structure == 'BUNDLE') {
-          return 4;
-        }
         return 3;
       case 3:
-        return 5;
+        if (structure == 'BUNDLE') {
+          return 5;
+        }
+        // Units NOT_APPLICABLE when Track Inventory OFF.
+        if (!state.trackInventory) {
+          return 5;
+        }
+        return 4;
       case 4:
         return 5;
       case 5:
@@ -953,12 +1597,15 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       case 6:
         return 5;
       case 5:
-        if (structure == 'VARIANT' || structure == 'BUNDLE') {
-          return 4;
+        if (structure == 'BUNDLE') {
+          return 3;
         }
-        return 3;
+        if (!state.trackInventory) {
+          return 3;
+        }
+        return 4;
       case 4:
-        return 2;
+        return 3;
       case 3:
         return 2;
       case 2:
@@ -972,10 +1619,10 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   bool isStepApplicable(int step) {
     if (step < 1 || step > 7) return false;
     final structure = state.productStructure.toUpperCase();
-    if (step == 3 && (structure == 'VARIANT' || structure == 'BUNDLE')) {
-      return false;
-    }
-    if (step == 4 && structure == 'SIMPLE') {
+    // Scanner-first: BUNDLE skips Unit & Pack (step 4).
+    // Track Inventory OFF also makes Units NOT_APPLICABLE.
+    if (step == 4 &&
+        (structure == 'BUNDLE' || !state.trackInventory)) {
       return false;
     }
     return true;
@@ -1355,21 +2002,27 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         );
       }
       final message = _extractErrorMessage(e);
+      
+      int? targetStep;
+      if (_isBarcodeOrSkuCreateError(message, mapped)) {
+        targetStep = 5;
+      } else if (_isProductCodeError(message, mapped)) {
+        targetStep = 2;
+      }
+
       state = state.copyWith(
         isSubmitting: false,
         pageError: 'Failed to create product: $message',
         fieldErrors: mapped,
-        currentStep: _isBarcodeOrSkuCreateError(message, mapped)
-            ? 5
-            : state.currentStep,
+        currentStep: targetStep ?? state.currentStep,
       );
       return false;
     }
   }
 
   /// Validate current step, commit to wizard state, navigate locally.
-  /// Steps 1–6 never call product create/update/draft APIs.
-  /// Step 7 performs the sole backend Product Create (wizard-create).
+  /// Step 1 uses dedicated bootstrap actions (not Save & Continue).
+  /// Step 7 performs the sole backend Product Create (wizard-create) / publish path.
   Future<bool> saveAndContinue() async {
     if (state.currentStep == 7) {
       return createProductFromWizard();
@@ -1378,10 +2031,27 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     final errors = <String, String>{};
     final trimmedName = state.productName.trim();
 
+    // Step 1 — Scan: Save & Continue disabled in UI; no name/category gate here.
     if (state.currentStep == 1) {
+      state = state.copyWith(
+        pageError:
+            'Use Step 1 actions (Use This Product / Create Manually / Continue) to create a draft.',
+      );
+      return false;
+    }
+
+    // Step 2 — Basic Details
+    if (state.currentStep == 2) {
       if (trimmedName.isEmpty ||
           trimmedName.toLowerCase() == 'untitled product') {
         errors['productName'] = 'Product name is required.';
+      }
+
+      final trimmedCode = state.internalCode.trim();
+      if (trimmedCode.isEmpty) {
+        errors['productCode'] = 'Product code is required.';
+      } else if (trimmedCode.length > 80) {
+        errors['productCode'] = 'Product code cannot exceed 80 characters.';
       }
 
       if (state.categoryId == null || state.categoryId!.isEmpty) {
@@ -1389,7 +2059,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       }
     }
 
-    if (state.currentStep == 2) {
+    // Step 3 — Product Type & Tracking
+    if (state.currentStep == 3) {
       if (!state.productStructureConfirmed) {
         state = state.copyWith(
           pageError:
@@ -1404,25 +2075,26 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       }
     }
 
-    if (state.currentStep == 3) {
-      final step3Errors = validateStep3Continue();
-      if (step3Errors.isNotEmpty) {
-        errors.addAll(step3Errors);
-      }
-    }
-
+    // Step 4 — Unit & Pack
     if (state.currentStep == 4) {
-      final step4Errors = validateStep4Continue();
+      final step4Errors = validateStep3Continue(); // units validators (legacy name)
       if (step4Errors.isNotEmpty) {
         errors.addAll(step4Errors);
-      } else {
-        reconcileStep5AssignmentsWithVariants();
-        reconcileVariantPricesWithVariants();
       }
     }
 
+    // Step 5 — Product Configuration + identifiers
     if (state.currentStep == 5) {
       final structure = state.productStructure.toUpperCase();
+      if (structure == 'VARIANT') {
+        final configErrors = validateStep4Continue(); // variant matrix validators
+        if (configErrors.isNotEmpty) {
+          errors.addAll(configErrors);
+        } else {
+          reconcileStep5AssignmentsWithVariants();
+          reconcileVariantPricesWithVariants();
+        }
+      }
       if (structure == 'SIMPLE' || structure == 'BUNDLE') {
         commitSimpleBarcodeSkuToState();
       } else if (structure == 'VARIANT') {
@@ -1507,7 +2179,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       state.currentStep >= 2 && state.currentStep <= 6;
 
   /// Skip advances without Save & Continue validation.
-  /// Step 2 still requires an explicit Product Type (SIMPLE / VARIANT / BUNDLE).
+  /// Step 3 still requires an explicit Product Type (SIMPLE / VARIANT / BUNDLE).
   Future<bool> skip() async {
     if (!canSkipCurrentStep) {
       state = state.copyWith(
@@ -1516,7 +2188,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       return false;
     }
 
-    if (state.currentStep == 2 && !state.productStructureConfirmed) {
+    if (state.currentStep == 3 && !state.productStructureConfirmed) {
       state = state.copyWith(
         pageError:
             'Please select a Product Type before skipping tracking configuration.',
@@ -1526,7 +2198,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
 
     _logBlockedProductMutation('skip(step${state.currentStep})');
 
-    if (state.currentStep == 2) {
+    if (state.currentStep == 3) {
       state = state.copyWith(
         trackInventory: false,
         batchTracking: false,
@@ -2151,6 +2823,41 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       variantPrices: draft.pricingTaxConfiguration?.variantPrices ?? const [],
       isDirty: keepDirtyStatus ? state.isDirty : false,
     );
+
+    // Resume ScanContext (B9) into Step 1 state + seed Step 5 candidate barcode.
+    final ctx = draft.scanContext;
+    if (ctx != null) {
+      var seeded = state.copyWith(
+        scanStepState: state.scanStepState.copyWith(
+          candidateBarcode: ctx.candidateIdentifier ?? '',
+          identifierStandard: ctx.identifierStandard,
+          barcodeType: ctx.symbologyHint,
+          noBarcodeReason: ctx.noBarcodeReason,
+          generatedSkuCandidate: ctx.generatedSkuCandidate,
+          externalStatus: ctx.externalLookupStatus,
+          externalSourceReference: ctx.externalSourceReference,
+          externalSuggestion: ctx.normalizedPrefill,
+        ),
+      );
+      final ctxBarcode = ctx.candidateIdentifier;
+      if ((ctxBarcode ?? '').trim().isNotEmpty &&
+          seeded.step5State.parentProductBarcode.trim().isEmpty) {
+        seeded = seeded.copyWith(
+          step5State: seeded.step5State.copyWith(
+            parentProductBarcode: ctxBarcode,
+            parentBarcodeType: ctx.symbologyHint,
+          ),
+        );
+      }
+      if ((ctx.generatedSkuCandidate ?? '').isNotEmpty &&
+          seeded.step5State.baseSku.trim().isEmpty) {
+        seeded = seeded.copyWith(
+          step5State:
+              seeded.step5State.copyWith(baseSku: ctx.generatedSkuCandidate),
+        );
+      }
+      state = seeded;
+    }
   }
 
   bool _isBarcodeOrSkuCreateError(
@@ -2165,6 +2872,20 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     }
     final lower = message.toLowerCase();
     return lower.contains('barcode') || lower.contains('sku');
+  }
+
+  bool _isProductCodeError(
+    String message,
+    Map<String, String> mapped,
+  ) {
+    if (mapped.keys.any((k) {
+      final key = k.toLowerCase();
+      return key.contains('productcode') || key.contains('internalcode');
+    })) {
+      return true;
+    }
+    final lower = message.toLowerCase();
+    return lower.contains('product code');
   }
 
   String _extractErrorMessage(dynamic e) {

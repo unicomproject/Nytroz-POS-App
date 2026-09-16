@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/step5_barcode_dtos.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/step_5/edit_variant_identifier_drawer.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/barcode_sku_dtos.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/barcode_sku/edit_variant_identifier_drawer.dart';
 
 void main() {
   const variant = Step5VariantIdentifierDto(

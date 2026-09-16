@@ -1,5 +1,5 @@
 import '../entities/product_wizard_draft.dart';
-import '../../data/datasources/product_wizard_draft_local_datasource.dart';
+import '../../data/datasources/local/product_wizard_draft_local_datasource.dart';
 
 abstract class ProductWizardDraftLocalRepository {
   Future<void> saveDraft(ProductWizardDraft draft);

@@ -149,15 +149,18 @@ String _formatCurrency(double value) {
 class _ProductImageCard extends StatelessWidget {
   const _ProductImageCard({
     required this.detail,
-    this.compact = false,  });
+    this.compact = false,
+  });
 
   final TenantProductDetail detail;
-  final bool compact;
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
       title: 'Product Image',
-      compact: compact,      child: AspectRatio(
+      compact: compact,
+      child: AspectRatio(
               aspectRatio: 1.1,
               child: _buildImageContent(),
             ),
@@ -424,17 +427,20 @@ class _InfoGrid extends StatelessWidget {
 class _PricingSummaryCard extends StatelessWidget {
   const _PricingSummaryCard({
     required this.detail,
-    this.compact = false,    this.stretch = false,
+    this.compact = false,
+    this.stretch = false,
   });
 
   final TenantProductDetail detail;
-  final bool compact;  final bool stretch;
+  final bool compact;
+  final bool stretch;
 
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
       title: 'Pricing Summary',
-      compact: compact,      stretch: stretch,
+      compact: compact,
+      stretch: stretch,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -475,12 +481,14 @@ class _InventorySummaryCard extends StatelessWidget {
   const _InventorySummaryCard({
     required this.detail,
     required this.stockStatus,
-    this.compact = false,    this.stretch = false,
+    this.compact = false,
+    this.stretch = false,
   });
 
   final TenantProductDetail detail;
   final String stockStatus;
-  final bool compact;  final bool stretch;
+  final bool compact;
+  final bool stretch;
 
   @override
   Widget build(BuildContext context) {
@@ -490,7 +498,8 @@ class _InventorySummaryCard extends StatelessWidget {
 
     return _SectionCard(
       title: 'Inventory Summary',
-      compact: compact,      stretch: stretch,
+      compact: compact,
+      stretch: stretch,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -525,12 +534,14 @@ class _VariantSummaryCard extends StatelessWidget {
   const _VariantSummaryCard({
     required this.detail,
     this.canUpdate = false,
-    this.compact = false,    this.stretch = false,
+    this.compact = false,
+    this.stretch = false,
   });
 
   final TenantProductDetail detail;
   final bool canUpdate;
-  final bool compact;  final bool stretch;
+  final bool compact;
+  final bool stretch;
 
   @override
   Widget build(BuildContext context) {
@@ -542,7 +553,8 @@ class _VariantSummaryCard extends StatelessWidget {
 
     return _SectionCard(
       title: 'Variant Summary',
-      compact: compact,      stretch: stretch,
+      compact: compact,
+      stretch: stretch,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -730,12 +742,14 @@ class _SectionCard extends StatelessWidget {
   const _SectionCard({
     required this.title,
     required this.child,
-    this.compact = false,    this.stretch = false,
+    this.compact = false,
+    this.stretch = false,
   });
 
   final String title;
   final Widget child;
-  final bool compact;  final bool stretch;
+  final bool compact;
+  final bool stretch;
 
   @override
   Widget build(BuildContext context) {

@@ -1,6 +1,6 @@
 // ignore_for_file: prefer_const_constructors
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/product_create_request_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_create_request_dto.dart';
 
 void main() {
   group('ProductCreateRequestDto', () {
