@@ -58,11 +58,18 @@ class NotificationInboxController extends StateNotifier<NotificationInboxState> 
   }
 
   static const _fanoutDebounce = Duration(milliseconds: 350);
+  // Safety net for a silently-dead socket: a half-open WebSocket connection
+  // (app backgrounded, network switch, idle proxy timeout) fires neither
+  // onDone nor onError, so the client can believe it's still live while the
+  // server-side send is failing and being swallowed. Without this, the bell
+  // sticks at whatever count the last successfully-delivered push left it at.
+  static const _fallbackPollInterval = Duration(seconds: 45);
 
   final Ref _ref;
   StreamSubscription<RealtimeNotificationEvent>? _eventSubscription;
   NotificationSocketClient? _socketClient;
   Timer? _fanoutDebounceTimer;
+  Timer? _fallbackPollTimer;
   bool _pendingOnlineOrdersRefresh = false;
   int _fanoutGeneration = 0;
 
@@ -73,6 +80,8 @@ class NotificationInboxController extends StateNotifier<NotificationInboxState> 
 
     if (!canView) {
       _fanoutDebounceTimer?.cancel();
+      _fallbackPollTimer?.cancel();
+      _fallbackPollTimer = null;
       _pendingOnlineOrdersRefresh = false;
       _socketClient?.disconnect();
       state = const NotificationInboxState();
@@ -83,6 +92,11 @@ class NotificationInboxController extends StateNotifier<NotificationInboxState> 
 
     _ensureSocketClient().connect(session.accessToken);
     unawaited(refreshAuthoritativeSurfaces(includeOnlineOrders: true));
+    _fallbackPollTimer?.cancel();
+    _fallbackPollTimer = Timer.periodic(
+      _fallbackPollInterval,
+      (_) => unawaited(refreshAuthoritativeSurfaces(includeOnlineOrders: true)),
+    );
   }
 
   NotificationSocketClient _ensureSocketClient() {
@@ -213,6 +227,7 @@ class NotificationInboxController extends StateNotifier<NotificationInboxState> 
   @override
   void dispose() {
     _fanoutDebounceTimer?.cancel();
+    _fallbackPollTimer?.cancel();
     unawaited(_eventSubscription?.cancel());
     _socketClient?.dispose();
     super.dispose();
