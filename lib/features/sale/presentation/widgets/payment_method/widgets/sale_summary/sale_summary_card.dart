@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -218,7 +219,7 @@ class PaymentProductRow extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF64748B),
+                              color: TenantAdminColors.mutedText,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -231,7 +232,7 @@ class PaymentProductRow extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF94A3B8),
+                              color: TenantAdminColors.offline,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -290,7 +291,7 @@ class _Header extends StatelessWidget {
                 ? TextAlign.center
                 : TextAlign.left,
         style: const TextStyle(
-          color: Color(0xFF64748B),
+          color: TenantAdminColors.mutedText,
           fontSize: 13,
           fontWeight: FontWeight.w700,
         ),
@@ -302,10 +303,10 @@ class _ImageFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        color: const Color(0xFFF1F5F9),
+        color: TenantAdminColors.subtleBackground,
         child: const Icon(
           Icons.shopping_bag_outlined,
-          color: Color(0xFF94A3B8),
+          color: TenantAdminColors.offline,
           size: 24,
         ),
       );

@@ -14,12 +14,14 @@ class NotificationSocketClient {
   NotificationSocketClient({
     required String httpBaseUrl,
     this.onConnected,
+    this.ticketProvider,
   }) : _wsBaseUrl = _toWebSocketOrigin(httpBaseUrl);
 
-  static const _backoffSeconds = [1, 2, 5, 10, 30];
+  static const _backoffSeconds = [2, 5, 10, 30, 60];
 
   final String _wsBaseUrl;
   final void Function()? onConnected;
+  final Future<String?> Function()? ticketProvider;
   final _eventController =
       StreamController<RealtimeNotificationEvent>.broadcast();
 
@@ -55,27 +57,58 @@ class NotificationSocketClient {
     unawaited(_eventController.close());
   }
 
-  void _openConnection() {
+  Future<void> _openConnection() async {
     if (_disposed) return;
     final token = _currentToken;
     if (token == null) return;
 
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
     _teardownChannel();
 
+    Map<String, String> queryParams;
+    if (ticketProvider != null) {
+      try {
+        final ticket = await ticketProvider!();
+        if (ticket != null && ticket.isNotEmpty) {
+          queryParams = {'ticket': ticket};
+        } else {
+          // Ticket retrieval failed; wait and retry with backoff rather than sending large JWT.
+          _scheduleReconnect();
+          return;
+        }
+      } catch (_) {
+        _scheduleReconnect();
+        return;
+      }
+    } else {
+      queryParams = {'access_token': token};
+    }
+
     final uri = Uri.parse('$_wsBaseUrl${ApiEndpoints.tenantNotificationsSocketPath}')
-        .replace(queryParameters: {'access_token': token});
+        .replace(queryParameters: queryParams);
 
     try {
       final channel = WebSocketChannel.connect(uri);
       _channel = channel;
+      void disconnected() {
+        if (identical(_channel, channel)) _handleDisconnected();
+      }
       _subscription = channel.stream.listen(
         _handleMessage,
-        onDone: _handleDisconnected,
-        onError: (_) => _handleDisconnected(),
+        onDone: disconnected,
+        onError: (_) => disconnected(),
         cancelOnError: true,
       );
-      // web_socket_channel opens asynchronously; treat listen attach as connected
-      // for reconnect recovery (missed events while down).
+      // A stream listener is not evidence of a successful handshake.
+      // Ignore completion from disconnected or superseded connections.
+      try {
+        await channel.ready;
+      } catch (_) {
+        disconnected();
+        return;
+      }
+      if (_disposed || !identical(_channel, channel)) return;
       final isReconnect = _wasConnected;
       _wasConnected = true;
       _reconnectAttempt = 0;

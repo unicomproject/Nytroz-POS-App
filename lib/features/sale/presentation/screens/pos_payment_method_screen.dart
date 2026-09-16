@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import '../../../fulfilment_pickup/presentation/providers/pos_online_order_collection_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../../core/access/permission_access_providers.dart';
@@ -27,23 +29,80 @@ class _PosPaymentMethodScreenState
   PosPaymentMethodType? _selectedMethod;
   bool _isNavigating = false;
 
+  PosCheckoutSummaryViewData _collectionSummary(
+    CollectionPaymentContext collection,
+    AuthSession? session,
+  ) {
+    return PosCheckoutSummaryViewData(
+      itemCount: 0,
+      subtotal: collection.amountDue,
+      discount: 0,
+      tax: 0,
+      totalPayable: collection.amountDue,
+      saleType: 'Click & Collect',
+      itemsInCart: 0,
+      saleDate: DateTime.now(),
+      cashierName: session?.userDisplayName.trim().isNotEmpty == true
+          ? session!.userDisplayName.trim()
+          : 'Cashier',
+      paymentMethods: const [PosPaymentMethodType.cash],
+      usedFallback: false,
+      currency: collection.currency,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cart = ref.watch(posNewSaleCartProvider);
     final session = ref.watch(authSessionProvider);
     final permissions = ref.watch(effectivePermissionSetProvider);
+    final collection = ref.watch(collectionPaymentContextProvider);
     final summaryAsync = ref.watch(posCheckoutSummaryProvider);
 
     if (!PosPermissionAccess.canAccessPaymentMethodScreenSession(session)) {
       return const TenantAdminForbiddenScreen();
     }
-    if (!cart.hasItems) {
+    if (!cart.hasItems && collection == null) {
       return _MessageState(
         icon: Icons.shopping_cart_outlined,
         title: 'No items in cart',
         message: 'Add products before proceeding to payment.',
         actionLabel: 'Back to Cart',
         onAction: context.pop,
+      );
+    }
+
+    if (collection != null) {
+      final summary = _collectionSummary(collection, session);
+      final methods = summary.paymentMethods
+          .where(
+            (m) => PosPaymentPermissionVisibility.canShowMethod(
+              permissions,
+              m,
+            ),
+          )
+          .toSet();
+      return PaymentMethodPage(
+        summary: summary,
+        cart: cart,
+        allowedMethods: methods,
+        selectedMethod:
+            methods.contains(_selectedMethod) ? _selectedMethod : null,
+        isNavigating: _isNavigating,
+        onSelectMethod: (method) {
+          setState(() => _selectedMethod = method);
+        },
+        onContinue: _selectedMethod != null && methods.contains(_selectedMethod)
+            ? () => _continueToPayment(
+                  session?.permissionCodes.toSet() ?? const {},
+                  summary,
+                )
+            : null,
+        onCustomerTap: null,
+        onBackToSale: () {
+          ref.read(collectionPaymentContextProvider.notifier).state = null;
+          context.go('/pos/online-orders/collection/verification');
+        },
       );
     }
 

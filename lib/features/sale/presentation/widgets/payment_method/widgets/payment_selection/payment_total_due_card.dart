@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,7 +47,7 @@ class PaymentTotalDueCard extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF64748B),
+                  color: TenantAdminColors.mutedText,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -65,7 +66,7 @@ class PaymentTotalDueCard extends ConsumerWidget {
           const Icon(
             Icons.account_balance_wallet_outlined,
             size: 52,
-            color: Color(0xFFE2E8F0),
+            color: TenantAdminColors.border,
           ),
         ],
       ),

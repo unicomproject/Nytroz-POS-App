@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:flutter/material.dart';
 
 import 'cash_payment_due_change_section.dart';
@@ -37,7 +38,7 @@ class CashPaymentInfoCard extends StatelessWidget {
             const Icon(
               Icons.info_outline_rounded,
               size: 20,
-              color: Color(0xFF1976D2),
+              color: TenantAdminColors.info,
             ),
             const SizedBox(width: 10),
             Expanded(

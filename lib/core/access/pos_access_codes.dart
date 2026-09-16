@@ -401,6 +401,17 @@ class PosPermissionCodes {
       'commerce.online_order.collection.view_ready';
   static const notifyOnlineOrderCustomer =
       'commerce.online_order.collection.notify_customer';
+  static const scanOnlineOrderCollectionQr =
+      'commerce.online_order.collection.scan_qr';
+  static const validateOnlineOrderCollectionQr =
+      'commerce.online_order.collection.validate_qr';
+  static const manualOnlineOrderCollectionLookup =
+      'commerce.online_order.collection.manual_lookup';
+  static const verifyOnlineOrderCollectionItems =
+      'commerce.online_order.collection.verify_items';
+  static const handoverOnlineOrderCollection =
+      'commerce.online_order.collection.handover';
+  static const collectOnlineOrder = 'commerce.online_order.collection.collect';
   static const verifyOnlineOrderPickup =
       'commerce.online_order.collection.verify';
   static const completeOnlineOrderCollection =

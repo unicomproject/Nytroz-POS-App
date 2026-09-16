@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:flutter/material.dart';
 
 import '../../payment_method_style.dart';
@@ -49,7 +50,7 @@ class PaymentMethodHeader extends StatelessWidget {
                 'Choose how you would like to receive payment.',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF64748B),
+                  color: TenantAdminColors.mutedText,
                   fontWeight: FontWeight.w500,
                 ),
               ),

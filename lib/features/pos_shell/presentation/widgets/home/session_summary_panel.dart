@@ -59,7 +59,8 @@ class PosHomeSummarySection extends ConsumerWidget {
       String? supporting,
     })>[
       if (permissions
-          .hasPermission(PosPermissionCodes.homeSessionSummaryTotalSales))
+              .hasPermission(PosPermissionCodes.homeSessionSummaryTotalSales) &&
+          data.grossSalesAmount != null)
         (
           label: 'Total Sales',
           icon: Icons.shopping_bag_outlined,
@@ -67,50 +68,58 @@ class PosHomeSummarySection extends ConsumerWidget {
           iconBackground:
               TenantAdminColors.posHomeOrangeEnd.withValues(alpha: 0.14),
           value:
-              '${data.currencyCode} ${data.grossSalesAmount.toStringAsFixed(2)}',
+              '${data.currencyCode} ${data.grossSalesAmount!.toStringAsFixed(2)}',
           supporting: null,
         ),
       if (permissions.hasPermission(
-          PosPermissionCodes.homeSessionSummaryTransactionCount))
+              PosPermissionCodes.homeSessionSummaryTransactionCount) &&
+          data.transactionCount != null)
         (
           label: 'Transactions',
           icon: Icons.receipt_long_outlined,
           iconColor: TenantAdminColors.success,
           iconBackground: TenantAdminColors.success.withValues(alpha: 0.14),
-          value: '${data.transactionCount}',
+          value: '${data.transactionCount!}',
           supporting: null,
         ),
       if (permissions
-          .hasPermission(PosPermissionCodes.homeSessionSummaryReturns))
+              .hasPermission(PosPermissionCodes.homeSessionSummaryReturns) &&
+          data.returnsApplicable &&
+          data.refundAmount != null &&
+          data.refundCount != null)
         (
           label: 'Returns',
           icon: Icons.assignment_return_outlined,
           iconColor: TenantAdminColors.pending,
           iconBackground: TenantAdminColors.pending.withValues(alpha: 0.13),
           value:
-              '${data.currencyCode} ${data.refundAmount.toStringAsFixed(2)}',
-          supporting: '${data.refundCount} completed',
+              '${data.currencyCode} ${data.refundAmount!.toStringAsFixed(2)}',
+          supporting: '${data.refundCount!} completed',
         ),
       if (permissions
-          .hasPermission(PosPermissionCodes.homeSessionSummaryDiscounts))
+              .hasPermission(PosPermissionCodes.homeSessionSummaryDiscounts) &&
+          data.discountsApplicable &&
+          data.discountAmount != null)
         (
           label: 'Discounts',
           icon: Icons.local_offer_outlined,
           iconColor: TenantAdminColors.warning,
           iconBackground: TenantAdminColors.warning.withValues(alpha: 0.15),
           value:
-              '${data.currencyCode} ${data.discountAmount.toStringAsFixed(2)}',
+              '${data.currencyCode} ${data.discountAmount!.toStringAsFixed(2)}',
           supporting: null,
         ),
       if (permissions
-          .hasPermission(PosPermissionCodes.homeSessionSummaryNetSales))
+              .hasPermission(PosPermissionCodes.homeSessionSummaryNetSales) &&
+          data.netSalesAmount != null)
         (
           label: 'Net Sales',
           icon: Icons.bar_chart_rounded,
           iconColor: TenantAdminColors.posHomeBlueEnd,
           iconBackground:
               TenantAdminColors.posHomeBlueStart.withValues(alpha: 0.14),
-          value: '${data.currencyCode} ${data.netSalesAmount.toStringAsFixed(2)}',
+          value:
+              '${data.currencyCode} ${data.netSalesAmount!.toStringAsFixed(2)}',
           supporting: null,
         ),
     ];

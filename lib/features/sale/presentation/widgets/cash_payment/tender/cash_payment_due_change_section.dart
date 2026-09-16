@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:flutter/material.dart';
 
 import '../../../providers/pos_checkout_summary_provider.dart';
@@ -30,13 +31,13 @@ class CashPaymentDueChangeSection extends StatelessWidget {
           label: 'EXACT CASH RECEIVED',
           detail: 'NO CHANGE REQUIRED',
           icon: Icons.check_rounded,
-          accent: const Color(0xFF2E7D32),
+          accent: TenantAdminColors.success,
         ),
       CashTenderStatus.over => (
           label: 'CHANGE DUE',
           detail: 'RETURN TO CUSTOMER',
           icon: Icons.payments_outlined,
-          accent: const Color(0xFF2E7D32),
+          accent: TenantAdminColors.success,
         ),
     };
 

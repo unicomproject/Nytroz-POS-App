@@ -1,7 +1,84 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/features/cart/presentation/providers/pos_new_sale_cart_provider.dart';
+import 'package:nytroz_pos/features/sale/presentation/providers/pos_checkout_summary_provider.dart';
 import 'package:nytroz_pos/features/sale/presentation/providers/pos_cash_payment_intent_provider.dart';
 
 void main() {
+  test('Click & Collect collection paths bypass Cash Payment safety redirect',
+      () {
+    for (final path in [
+      '/pos/online-orders/collection',
+      '/pos/online-orders/collection/handover',
+    ]) {
+      for (final phase in [
+        CashPaymentIntentPhase.inFlight,
+        CashPaymentIntentPhase.unknown,
+        CashPaymentIntentPhase.succeeded,
+        null,
+      ]) {
+        for (final cartCompleted in [false, true]) {
+          expect(
+            cashPaymentSafetyRedirect(path, phase,
+                cartCompleted: cartCompleted),
+            isNull,
+            reason: '$path, phase=$phase, cartCompleted=$cartCompleted',
+          );
+        }
+      }
+    }
+  });
+
+  test('pending and completed routes cannot expose another checkout', () {
+    for (final phase in [
+      CashPaymentIntentPhase.inFlight,
+      CashPaymentIntentPhase.unknown
+    ]) {
+      expect(cashPaymentSafetyRedirect('/pos/new-sale', phase),
+          '/pos/new-sale/payment/cash');
+      expect(cashPaymentSafetyRedirect('/pos/new-sale/payment/cash', phase),
+          isNull);
+    }
+    expect(
+        cashPaymentSafetyRedirect(
+            '/pos/new-sale/payment/cash', CashPaymentIntentPhase.succeeded),
+        '/pos/new-sale/payment/cash/success');
+    expect(
+        cashPaymentSafetyRedirect('/pos/new-sale', null, cartCompleted: true),
+        '/pos/new-sale/payment/cash/success');
+    expect(
+        cashPaymentSafetyRedirect(
+            '/pos/new-sale/payment/cash/success/print-receipt',
+            CashPaymentIntentPhase.succeeded),
+        isNull);
+  });
+
+  test(
+      'completed cart cannot be serialized or cleared until explicit next sale',
+      () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final cart = container.read(posNewSaleCartProvider.notifier);
+    cart.completeSale('confirmed-sale');
+    cart.clear();
+    expect(container.read(posNewSaleCartProvider).completedSaleId,
+        'confirmed-sale');
+    expect(() => checkoutLinesFromCart(container.read(posNewSaleCartProvider)),
+        throwsStateError);
+    cart.restore(const PosNewSaleCartState());
+    expect(container.read(posNewSaleCartProvider).completedSaleId,
+        'confirmed-sale');
+    cart.startNextSale();
+    container.invalidate(posCashPaymentIntentProvider);
+    expect(container.read(posNewSaleCartProvider).completedSaleId, isNull);
+    expect(container.read(posNewSaleCartProvider).hasItems, isFalse);
+    expect(
+        container
+            .read(posCashPaymentIntentProvider.notifier)
+            .open('new-sale')
+            .phase,
+        CashPaymentIntentPhase.draft);
+  });
   late int sequence;
   late CashPaymentIntentNotifier notifier;
 
@@ -57,7 +134,7 @@ void main() {
     expect(next.key, isNot(first.key));
   });
 
-  test('completed sale opens a fresh payment intent', () {
+  test('completed sale retains key and blocks all new submissions', () {
     final first = notifier.open('cart-a');
     notifier.beginSubmission(
       saleIdentity: 'cart-a',
@@ -65,6 +142,12 @@ void main() {
     );
     notifier.markSucceeded();
     final next = notifier.open('cart-a');
-    expect(next.key, isNot(first.key));
+    expect(next.key, first.key);
+    expect(notifier.open('changed-cart').key, first.key);
+    expect(() => notifier.startNew('cart-a'), throwsStateError);
+    expect(
+        () => notifier.beginSubmission(
+            saleIdentity: 'cart-a', requestFingerprint: 'request-a'),
+        throwsStateError);
   });
 }

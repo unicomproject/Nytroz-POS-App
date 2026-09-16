@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nytroz_pos/features/sale/presentation/screens/pos_cash_payment_screen.dart';
+import 'package:nytroz_pos/features/sale/presentation/providers/pos_cash_payment_provider.dart';
+import 'package:nytroz_pos/features/sale/presentation/providers/pos_cash_payment_intent_provider.dart';
 import 'package:nytroz_pos/core/access/pos_access_codes.dart';
 import 'package:nytroz_pos/core/network/dio_provider.dart';
 import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
@@ -50,6 +53,7 @@ const _authSession = AuthSession(
     PosPermissionCodes.createSale,
     PosPermissionCodes.checkoutSale,
     PosPermissionCodes.acceptCashPayment,
+    PosPermissionCodes.cashPaymentCompletionExecute,
     PosPermissionCodes.viewNewSaleCustomers,
     PosPermissionCodes.createNewSaleCustomer,
     // Chunk 14: attach is independent — create/view must not parent-infer.
@@ -188,6 +192,96 @@ Dio _mockCustomerDio(
 }
 
 void main() {
+  for (final timeout in [true, false]) {
+    testWidgets('cash submission preserves cart on timeout=$timeout',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1400, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      var submissions = 0;
+      final dio = _mockCheckoutDio([]);
+      dio.interceptors.insert(0,
+          InterceptorsWrapper(onRequest: (request, handler) {
+        if (!request.path.endsWith('/start-payment')) {
+          handler.next(request);
+          return;
+        }
+        submissions++;
+        handler.reject(DioException(
+          requestOptions: request,
+          type: timeout
+              ? DioExceptionType.receiveTimeout
+              : DioExceptionType.badResponse,
+          response: timeout
+              ? null
+              : Response(
+                  requestOptions: request,
+                  statusCode: 400,
+                  data: {
+                    'code': 'pos_checkout.invalid_request',
+                    'message': 'Rejected'
+                  },
+                ),
+        ));
+      }));
+      final container = ProviderContainer(overrides: [
+        appDioProvider.overrideWithValue(dio),
+        authSessionProvider.overrideWith((ref) => _PresetAuthSessionNotifier()),
+        deviceActivationProvider
+            .overrideWith((ref) => _PresetDeviceActivationController()),
+        posCheckoutRemoteDatasourceProvider
+            .overrideWithValue(PosCheckoutRemoteDatasource(dio)),
+        posCheckoutSummaryProvider
+            .overrideWith((ref) async => PosCheckoutSummaryViewData(
+                  itemCount: 1,
+                  subtotal: 2800,
+                  discount: 0,
+                  tax: 0,
+                  totalPayable: 2800,
+                  saleType: 'Walk-in',
+                  itemsInCart: 1,
+                  saleDate: DateTime.utc(2026, 9, 12),
+                  cashierName: 'Cashier One',
+                  paymentMethods: const [],
+                  usedFallback: false,
+                  currency: 'LKR',
+                )),
+      ]);
+      addTearDown(container.dispose);
+      container
+          .read(posNewSaleCartProvider.notifier)
+          .addToCart(const PosNewSaleProduct(
+            id: 'test-product',
+            productId: 'test-product',
+            variantId: 'test-variant',
+            name: 'Test item',
+            category: 'Test',
+            price: 2800,
+            stockStatus: 'InStock',
+          ));
+      container.read(posCashPaymentProvider.notifier).setAmount(3000);
+      await tester.pumpWidget(UncontrolledProviderScope(
+          container: container,
+          child:
+              const MaterialApp(home: Scaffold(body: PosCashPaymentScreen()))));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('COMPLETE SALE'));
+      await tester.pumpAndSettle();
+      expect(submissions, 1);
+      expect(container.read(posNewSaleCartProvider).hasItems, isTrue);
+      expect(container.read(posNewSaleCartProvider).completedSaleId, isNull);
+      expect(
+          container.read(posCashPaymentIntentProvider)!.phase,
+          timeout
+              ? CashPaymentIntentPhase.unknown
+              : CashPaymentIntentPhase.knownRejected);
+      expect(
+          find.byKey(ValueKey(timeout
+              ? 'cash-check-payment-status'
+              : 'cash-start-new-attempt')),
+          findsOneWidget);
+      expect(find.text('COMPLETE SALE'), findsNothing);
+    });
+  }
   const sampleProduct = PosNewSaleProduct(
     id: 'prod-1',
     productId: 'prod-1',

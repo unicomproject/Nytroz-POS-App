@@ -60,4 +60,19 @@ class PosNotificationsRemoteDatasource {
       unreadCount: (data['unreadCount'] as num?)?.toInt() ?? 0,
     );
   }
+
+  Future<String?> getWebSocketTicket() async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        ApiEndpoints.posNotificationsTicket,
+      );
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data['ticket']?.toString();
+      }
+    } catch (_) {
+      // Handled upstream by caller fallback / backoff
+    }
+    return null;
+  }
 }

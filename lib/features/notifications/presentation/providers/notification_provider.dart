@@ -85,8 +85,6 @@ class NotificationInboxController extends StateNotifier<NotificationInboxState> 
       _pendingOnlineOrdersRefresh = false;
       _socketClient?.disconnect();
       state = const NotificationInboxState();
-      // Drop POS bell cache so the next login cannot show prior tenant unread.
-      _ref.invalidate(posNotificationsProvider);
       return;
     }
 
@@ -107,6 +105,9 @@ class NotificationInboxController extends StateNotifier<NotificationInboxState> 
     final client = NotificationSocketClient(
       httpBaseUrl: dio.options.baseUrl,
       onConnected: _handleSocketReconnected,
+      ticketProvider: () => _ref
+          .read(posNotificationsRemoteDatasourceProvider)
+          .getWebSocketTicket(),
     );
     _eventSubscription = client.events.listen(_handleRealtimeEvent);
     _socketClient = client;

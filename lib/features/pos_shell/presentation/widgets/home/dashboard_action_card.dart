@@ -71,90 +71,110 @@ class PosHomeActionTile extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 52,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(8, 6, 2, 6),
-                          child: Image.asset(
-                            assetPath,
-                            fit: BoxFit.contain,
-                            filterQuality: FilterQuality.high,
-                            errorBuilder: (_, __, ___) => Icon(
-                              fallbackIcon,
-                              size: 104,
-                              color: TenantAdminColors.surface,
+                  LayoutBuilder(
+                    builder: (context, cardConstraints) {
+                      final isTight = cardConstraints.maxHeight < 135 ||
+                          cardConstraints.maxWidth < 220;
+                      final titleFontSize = isTight ? 16.0 : 20.0;
+                      final verticalPadding = isTight ? 8.0 : 12.0;
+
+                      return Row(
+                        children: [
+                          Expanded(
+                            flex: 52,
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(8, 6, 2, 6),
+                              child: Image.asset(
+                                assetPath,
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.high,
+                                errorBuilder: (_, __, ___) => Icon(
+                                  fallbackIcon,
+                                  size: isTight ? 72 : 104,
+                                  color: TenantAdminColors.surface,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 48,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(6, 12, 12, 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                title,
-                                maxLines: 3,
-                                softWrap: true,
-                                overflow: TextOverflow.visible,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
-                                      color: TenantAdminColors.surface,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w900,
-                                      height: 1.08,
-                                    ),
+                          Expanded(
+                            flex: 48,
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                6,
+                                verticalPadding,
+                                12,
+                                verticalPadding,
                               ),
-                              const Spacer(),
-                              LayoutBuilder(
-                                builder: (context, constraints) {
-                                  final showDotPattern =
-                                      constraints.maxWidth >= 92;
-                                  final actionSize =
-                                      constraints.maxWidth < 56 ? 40.0 : 48.0;
-
-                                  return Row(
-                                    children: [
-                                      SizedBox.square(
-                                        dimension: actionSize,
-                                        child: DecoratedBox(
-                                          decoration: BoxDecoration(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      title,
+                                      maxLines: 2,
+                                      softWrap: true,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
                                             color: TenantAdminColors.surface,
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: enabled
-                                                  ? accent
-                                                  : TenantAdminColors.offline,
-                                              width: 1.5,
+                                            fontSize: titleFontSize,
+                                            fontWeight: FontWeight.w900,
+                                            height: 1.1,
+                                          ),
+                                    ),
+                                  ),
+                                  LayoutBuilder(
+                                    builder: (context, actionConstraints) {
+                                      final showDotPattern =
+                                          actionConstraints.maxWidth >= 104 &&
+                                              cardConstraints.maxHeight >= 120;
+                                      final actionSize = isTight ||
+                                              actionConstraints.maxWidth < 64
+                                          ? 38.0
+                                          : 46.0;
+
+                                      return Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          SizedBox.square(
+                                            dimension: actionSize,
+                                            child: DecoratedBox(
+                                              decoration: BoxDecoration(
+                                                color: TenantAdminColors.surface,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: enabled
+                                                      ? accent
+                                                      : TenantAdminColors.offline,
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              child: Icon(
+                                                Icons.arrow_forward_rounded,
+                                                size: actionSize * 0.5,
+                                                color: enabled
+                                                    ? accent
+                                                    : TenantAdminColors.offline,
+                                              ),
                                             ),
                                           ),
-                                          child: Icon(
-                                            Icons.arrow_forward_rounded,
-                                            color: enabled
-                                                ? accent
-                                                : TenantAdminColors.offline,
-                                          ),
-                                        ),
-                                      ),
-                                      if (showDotPattern) ...[
-                                        const Spacer(),
-                                        const DashboardDotPattern(),
-                                      ],
-                                    ],
-                                  );
-                                },
+                                          if (showDotPattern)
+                                            const DashboardDotPattern(),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
+                        ],
+                      );
+                    },
                   ),
                   if (!enabled)
                     Positioned.fill(

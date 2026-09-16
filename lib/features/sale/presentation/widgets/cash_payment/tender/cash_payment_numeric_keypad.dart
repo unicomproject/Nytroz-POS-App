@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:flutter/material.dart';
 
 import 'package:nytroz_pos/core/access/effective_permission_set.dart';
@@ -181,7 +182,7 @@ class CashPaymentNumericKeypad extends StatelessWidget {
             child: Icon(
               Icons.backspace_outlined,
               size: 22,
-              color: Color(0xFF475569),
+              color: TenantAdminColors.mutedText,
             ),
           ),
         ),
@@ -209,7 +210,7 @@ class CashPaymentNumericKeypad extends StatelessWidget {
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFFDC2626),
+                color: TenantAdminColors.danger,
               ),
             ),
           ),

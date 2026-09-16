@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/access/pos_access_codes.dart';
+import '../utils/order_detail_next_action.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../../shared/widgets/pos_action_buttons.dart';
 import '../../domain/entities/pos_online_order.dart';
@@ -11,14 +11,25 @@ import '../widgets/online_order_detail_widgets.dart';
 import '../widgets/online_order_ui.dart';
 import '../widgets/start_fulfilment_dialog.dart';
 
-class OnlineOrderDetailScreen extends ConsumerWidget {
+class OnlineOrderDetailScreen extends ConsumerStatefulWidget {
   const OnlineOrderDetailScreen(
       {required this.state, this.showBackButton = false, super.key});
   final PosOnlineOrdersState state;
   final bool showBackButton;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OnlineOrderDetailScreen> createState() =>
+      _OnlineOrderDetailScreenState();
+}
+
+class _OnlineOrderDetailScreenState
+    extends ConsumerState<OnlineOrderDetailScreen> {
+  bool _navigating = false;
+  PosOnlineOrdersState get state => widget.state;
+  bool get showBackButton => widget.showBackButton;
+
+  @override
+  Widget build(BuildContext context) {
     if (state.isLoadingDetail && state.selected == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -34,16 +45,11 @@ class OnlineOrderDetailScreen extends ConsumerWidget {
         },
       );
     }
-    final canStart = ref.watch(authSessionProvider)?.hasPermission(
-              PosPermissionCodes.startOnlineOrderFulfillment,
-            ) ==
-        true;
-    final lifecycle =
-        (detail.fulfillmentStatus ?? detail.order.status).trim().toUpperCase();
-    final startEligible =
-        const {'PENDING', 'ALLOCATED', 'ACCEPTED'}.contains(lifecycle);
-    final alreadyPicking = lifecycle == 'PICKING';
-
+    final permissions =
+        ref.watch(authSessionProvider)?.permissionCodes.toSet() ??
+            const <String>{};
+    final next = orderDetailNextAction(detail, permissions);
+    final action = _action(context, ref, detail, next);
     return LayoutBuilder(builder: (context, constraints) {
       final compact = constraints.maxWidth < OnlineOrderUi.phoneBreakpoint;
       final stackedHeader = constraints.maxWidth < 1100;
@@ -98,11 +104,6 @@ class OnlineOrderDetailScreen extends ConsumerWidget {
             detail: detail,
             compact: stackedHeader,
             dense: fixedLandscape,
-            action: _action(context, ref, detail,
-                canStart: canStart,
-                startEligible: startEligible,
-                alreadyPicking: alreadyPicking,
-                dense: fixedLandscape),
           ),
           if (state.detailErrorMessage != null) ...[
             const SizedBox(height: 12),
@@ -131,6 +132,10 @@ class OnlineOrderDetailScreen extends ConsumerWidget {
             )
           else
             OrderItemsSection(detail: detail),
+          if (action != null) ...[
+            const SizedBox(height: 8),
+            action,
+          ],
         ]),
       );
       return ColoredBox(
@@ -145,63 +150,71 @@ class OnlineOrderDetailScreen extends ConsumerWidget {
     });
   }
 
-  Widget? _action(
-      BuildContext context, WidgetRef ref, PosOnlineOrderDetail detail,
-      {required bool canStart,
-      required bool startEligible,
-      required bool alreadyPicking,
-      required bool dense}) {
-    if (alreadyPicking) {
-      final canContinuePicking = ref.watch(authSessionProvider)?.hasPermission(
-                PosPermissionCodes.viewOnlineOrderPicking,
-              ) ==
-          true;
-      if (!canContinuePicking) return null;
-      return FilledButton.icon(
-        onPressed: () =>
-            context.go('/pos/online-orders/${detail.order.id}/picking'),
-        icon: const Icon(Icons.inventory_2_outlined),
-        label: const Text('Continue Picking'),
+  Widget? _action(BuildContext context, WidgetRef ref,
+      PosOnlineOrderDetail detail, OrderDetailNextAction next) {
+    if (next == OrderDetailNextAction.hidden ||
+        next == OrderDetailNextAction.readOnly) {
+      return null;
+    }
+    if (next == OrderDetailNextAction.unavailable) {
+      return Semantics(
+        liveRegion: true,
+        child: Row(key: const Key('oo02-unavailable'), children: [
+          const Icon(Icons.info_outline),
+          const SizedBox(width: 8),
+          const Expanded(
+              child: Text(
+                  'Fulfilment details are incomplete or inconsistent. Refresh to check again. If this continues, contact your administrator.')),
+          TextButton(
+              onPressed: state.isLoadingDetail
+                  ? null
+                  : () => ref
+                      .read(posOnlineOrdersProvider.notifier)
+                      .select(detail.order.id),
+              child: const Text('Refresh')),
+        ]),
       );
     }
-    if (!canStart || !startEligible) return null;
-    return Semantics(
-      button: true,
-      label: 'Start Fulfilment',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          PosPrimaryActionButton(
-            key: const Key('oo02-start-fulfilment'),
-            label: 'START\nFULFILMENT',
-            semanticLabel: 'Start Fulfilment',
-            onPressed: () => _start(context, ref, detail),
-            isLoading: state.isStartingFulfillment,
-            fullWidth: true,
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            minimumHeight: dense ? 64 : 92,
-            horizontalPadding: dense ? 22 : 26,
-            verticalPadding: dense ? 10 : 18,
-            borderRadius: 14,
-            leadingIcon: Icons.inventory_2_outlined,
-            iconSize: dense ? 26 : 34,
-            maxLabelLines: 2,
-            labelTextAlign: TextAlign.left,
-            textStyle: TextStyle(
-              fontSize: dense ? 15 : 18,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          SizedBox(height: dense ? 5 : 10),
-          Text(
-            'Accept and start picking this order',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-          ),
-        ],
-      ),
+    final label = switch (next) {
+      OrderDetailNextAction.start => 'Start Fulfilment',
+      OrderDetailNextAction.pick => 'Continue Picking',
+      OrderDetailNextAction.pack => 'Review & Pack',
+      OrderDetailNextAction.ready => 'View Ready for Collection',
+      _ => throw StateError('Unsupported detail action'),
+    };
+    return PosPrimaryActionButton(
+      key: Key(next == OrderDetailNextAction.start
+          ? 'oo02-start-fulfilment'
+          : 'oo02-next-action'),
+      label: label,
+      semanticLabel: label,
+      fullWidth: true,
+      isLoading:
+          state.isLoadingDetail || state.isStartingFulfillment || _navigating,
+      onPressed: state.isLoadingDetail ||
+              state.detailErrorMessage != null ||
+              _navigating
+          ? null
+          : () async {
+              if (_navigating) return;
+              setState(() => _navigating = true);
+              try {
+                if (next == OrderDetailNextAction.start) {
+                  await _start(context, ref, detail);
+                } else {
+                  ref.invalidate(posPickingOrderProvider(detail.order.id));
+                  await context
+                      .push('/pos/online-orders/${detail.order.id}/picking');
+                  if (context.mounted) {
+                    await ref
+                        .read(posOnlineOrdersProvider.notifier)
+                        .select(detail.order.id);
+                  }
+                }
+              } finally {
+                if (mounted) setState(() => _navigating = false);
+              }
+            },
     );
   }
 

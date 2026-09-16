@@ -37,11 +37,15 @@ class HardwareTelemetryNotifier extends StateNotifier<void> {
     final posDeviceId = deviceContext.deviceId;
     if (posDeviceId.isEmpty) return;
 
+    final hardware = <Map<String, dynamic>>[];
+    // In browser POS or environments without physical hardware attached,
+    // avoid sending empty telemetry network requests.
+    if (hardware.isEmpty) return;
+
     try {
       final payload = {
         'observedAt': DateTime.now().toIso8601String(),
-        'hardware':
-            [], // Empty for now, wait until hardware sync is implemented
+        'hardware': hardware,
       };
 
       await ref
