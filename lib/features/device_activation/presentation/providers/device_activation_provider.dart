@@ -69,7 +69,7 @@ class DeviceActivationController extends StateNotifier<DeviceActivationState> {
 
       for (final fingerprint in candidates) {
         developer.log(
-          'Checking current device for fingerprint=$fingerprint',
+          'Checking current device registration.',
           name: 'pos.session',
         );
 
@@ -156,7 +156,7 @@ class DeviceActivationController extends StateNotifier<DeviceActivationState> {
     state = state.copyWith(isSubmitting: true, clearError: true);
 
     try {
-      final fingerprint = await _storage.readOrCreateDeviceFingerprint();
+      final fingerprint = await _storage.fingerprintForActivation();
       final device = await _activateDevice(
         DeviceActivationForm(
           activationCode: activationCode,

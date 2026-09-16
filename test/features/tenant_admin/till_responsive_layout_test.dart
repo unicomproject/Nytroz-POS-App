@@ -133,7 +133,7 @@ Future<void> _pumpTillScreen(
       TenantAdminPermissionCodes.tillCreate,
       TenantAdminPermissionCodes.tenantHardwareView,
     ],
-    features: [TenantAdminFeatureCodes.tillManagement],
+    features: [TenantAdminFeatureCodes.tillManagement, 'hardware_device_management'],
   );
 
   await tester.pumpWidget(

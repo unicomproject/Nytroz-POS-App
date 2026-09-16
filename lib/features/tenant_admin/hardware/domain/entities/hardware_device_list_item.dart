@@ -14,6 +14,8 @@ class HardwareDeviceListItem {
     this.lastSeenAt,
     required this.isAssigned,
     this.assignedTillId,
+    this.assignedTillName,
+    this.assignedPosDeviceName,
     this.assignedPosDeviceId,
   });
 
@@ -31,5 +33,6 @@ class HardwareDeviceListItem {
   final DateTime? lastSeenAt;
   final bool isAssigned;
   final String? assignedTillId;
+  final String? assignedTillName, assignedPosDeviceName;
   final String? assignedPosDeviceId;
 }

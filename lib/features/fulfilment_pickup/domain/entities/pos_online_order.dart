@@ -774,6 +774,56 @@ class PosNotifyReadyResult {
       );
 }
 
+class PosPickupVerifyResult {
+  const PosPickupVerifyResult({
+    required this.orderId,
+    required this.pickupOrderId,
+    required this.pickupStatus,
+    required this.verifiedAt,
+    this.remainingAttempts = 0,
+  });
+
+  final String orderId;
+  final String pickupOrderId;
+  final String pickupStatus;
+  final DateTime? verifiedAt;
+  final int remainingAttempts;
+
+  factory PosPickupVerifyResult.fromJson(Map<String, dynamic> json) =>
+      PosPickupVerifyResult(
+        orderId: _text(json['orderId']),
+        pickupOrderId: _text(json['pickupOrderId']),
+        pickupStatus: _text(json['pickupStatus']),
+        verifiedAt: _date(json['verifiedAt']),
+        remainingAttempts: _integer(json['remainingAttempts']),
+      );
+}
+
+class PosPickupCollectResult {
+  const PosPickupCollectResult({
+    required this.orderId,
+    required this.pickupOrderId,
+    required this.pickupStatus,
+    required this.orderStatus,
+    required this.collectedAt,
+  });
+
+  final String orderId;
+  final String pickupOrderId;
+  final String pickupStatus;
+  final String orderStatus;
+  final DateTime? collectedAt;
+
+  factory PosPickupCollectResult.fromJson(Map<String, dynamic> json) =>
+      PosPickupCollectResult(
+        orderId: _text(json['orderId']),
+        pickupOrderId: _text(json['pickupOrderId']),
+        pickupStatus: _text(json['pickupStatus']),
+        orderStatus: _text(json['orderStatus']),
+        collectedAt: _date(json['collectedAt']),
+      );
+}
+
 String _text(Object? value, {String fallback = ''}) {
   final result = value?.toString().trim() ?? '';
   return result.isEmpty ? fallback : result;

@@ -1,3 +1,4 @@
+import '../widgets/remote_hardware_test_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,6 +18,7 @@ import '../providers/local_print_agent_controller.dart';
 import '../widgets/hardware_capability_card.dart';
 import '../widgets/cash_drawer_test_card.dart';
 import '../widgets/android_direct_printer_test_card.dart';
+import '../widgets/hardware_test_session_card.dart';
 
 class PosHardwareTestingScreen extends ConsumerStatefulWidget {
   const PosHardwareTestingScreen({super.key});
@@ -29,6 +31,9 @@ class PosHardwareTestingScreen extends ConsumerStatefulWidget {
 class _PosHardwareTestingScreenState
     extends ConsumerState<PosHardwareTestingScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _printerTestKey = GlobalKey();
+  final _scannerTestKey = GlobalKey();
+  final _drawerTestKey = GlobalKey();
   final _urlController = TextEditingController();
   final _apiKeyController = TextEditingController();
   final _timeoutController = TextEditingController(text: '5000');

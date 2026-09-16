@@ -16,6 +16,22 @@ class DeviceContextStorage {
 
   final AppSecureStorage _storage;
 
+  Future<String> fingerprintForActivation() async {
+    if (kIsWeb) return readOrCreateDeviceFingerprint();
+    final stored = await _readFingerprintFromSecureStorage();
+    if (stored != null &&
+        RegExp(r'^pos-device-v2-[0-9a-f]{64}$').hasMatch(stored)) {
+      return stored;
+    }
+    final proof = createDeviceProofFingerprint();
+    await _persistFingerprint(proof);
+    if (await _readFingerprintFromSecureStorage() != proof) {
+      throw StateError(
+          'Secure device storage is unavailable. Device activation was not attempted.');
+    }
+    return proof;
+  }
+
   Future<String?> readStoredDeviceFingerprint() async {
     final secure = await _readFingerprintFromSecureStorage();
     if (secure != null) {
@@ -41,7 +57,7 @@ class DeviceContextStorage {
     final stored = await readStoredDeviceFingerprint();
     if (stored != null) {
       developer.log(
-        'Device fingerprint retrieved. source=storage value=$stored',
+        'Device fingerprint retrieved from storage.',
         name: 'pos.session',
       );
       await _persistFingerprint(stored);
@@ -52,7 +68,7 @@ class DeviceContextStorage {
 
     await _persistFingerprint(fingerprint);
     developer.log(
-      'Device fingerprint created. source=stable value=$fingerprint',
+      'Device fingerprint created.',
       name: 'pos.session',
     );
     return fingerprint;

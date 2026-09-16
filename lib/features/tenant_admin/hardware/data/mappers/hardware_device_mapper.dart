@@ -5,6 +5,7 @@ extension HardwareDeviceMapper on HardwareDeviceDto {
   HardwareDevice toEntity() {
     return HardwareDevice(
       hardwareDeviceId: hardwareDeviceId,
+      configurationVersion: configurationVersion,
       hardwareDeviceCode: hardwareDeviceCode,
       hardwareDeviceName: hardwareDeviceName,
       hardwareDeviceType: hardwareDeviceType,

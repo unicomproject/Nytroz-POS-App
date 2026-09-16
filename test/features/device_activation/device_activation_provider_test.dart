@@ -140,6 +140,9 @@ class _MemoryDeviceContextStorage extends DeviceContextStorage {
   Future<String> readOrCreateDeviceFingerprint() async => 'fingerprint-test';
 
   @override
+  Future<String> fingerprintForActivation() async => 'fingerprint-test';
+
+  @override
   Future<List<String>> readDeviceFingerprintCandidates() async =>
       const ['fingerprint-test'];
 
