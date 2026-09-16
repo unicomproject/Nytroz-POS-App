@@ -590,8 +590,7 @@ class PosPickingActions {
         error.type == DioExceptionType.receiveTimeout;
   }
 
-  static PosFulfillmentCommandResult _commandFromPicking(
-          PosPickingOrder order) =>
+  static PosFulfillmentCommandResult _commandFromPicking(PosPickingOrder order) =>
       PosFulfillmentCommandResult(
         orderId: order.orderId,
         fulfillmentOrderId: order.fulfillmentOrderId,
@@ -621,57 +620,6 @@ class PosPickingActions {
                 orderId: orderId,
               );
       await _refresh();
-      return result;
-    } on DioException {
-      await _refresh();
-      rethrow;
-    } finally {
-      _mutationInFlight = false;
-    }
-  }
-
-  Future<PosPickupVerifyResult> verifyPickupCode(String pickupCode) async {
-    if (_mutationInFlight) {
-      throw StateError('A packing action is already in progress.');
-    }
-    _mutationInFlight = true;
-    try {
-      final order = await _currentPickingOrder();
-      if (order.isCollected || order.isTerminal) {
-        throw StateError('This order is no longer awaiting collection.');
-      }
-      if (!order.isReadyForCollection) {
-        throw StateError('This order is not ready for collection yet.');
-      }
-      final result =
-          await ref.read(posOnlineOrdersRepositoryProvider).verifyPickup(
-                outletId: _outletId,
-                orderId: orderId,
-                pickupCode: pickupCode,
-              );
-      await _refresh();
-      return result;
-    } on DioException {
-      await _refresh();
-      rethrow;
-    } finally {
-      _mutationInFlight = false;
-    }
-  }
-
-  Future<PosPickupCollectResult> completeCollection() async {
-    if (_mutationInFlight) {
-      throw StateError('A packing action is already in progress.');
-    }
-    _mutationInFlight = true;
-    try {
-      final result =
-          await ref.read(posOnlineOrdersRepositoryProvider).collectOrder(
-                outletId: _outletId,
-                orderId: orderId,
-              );
-      await _refresh();
-      ref.invalidate(posOnlineOrdersProvider);
       return result;
     } on DioException {
       await _refresh();

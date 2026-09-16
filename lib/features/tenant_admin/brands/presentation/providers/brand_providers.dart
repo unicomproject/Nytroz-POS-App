@@ -18,14 +18,15 @@ final brandRepositoryProvider = Provider<BrandRepository>((ref) {
 });
 
 final brandSearchProvider = StateProvider<String>((ref) => '');
-
 final brandPageProvider = StateProvider<int>((ref) => 1);
+final brandPageSizeProvider = StateProvider<int>((ref) => 5);
+final selectedBrandIdProvider = StateProvider<String?>((ref) => null);
 
 final brandListQueryProvider = Provider<BrandListQuery>((ref) {
   return BrandListQuery(
     search: ref.watch(brandSearchProvider),
     pageNumber: ref.watch(brandPageProvider),
-    pageSize: TenantAdminContentTokens.defaultListPageSize,
+    pageSize: ref.watch(brandPageSizeProvider),
   );
 });
 
@@ -33,6 +34,11 @@ final brandListProvider =
     FutureProvider.autoDispose<BrandListResult?>((ref) async {
   final query = ref.watch(brandListQueryProvider);
   return ref.watch(brandRepositoryProvider).listBrands(query: query);
+});
+
+final brandDetailProvider =
+    FutureProvider.autoDispose.family<Brand, String>((ref, id) {
+  return ref.watch(brandRepositoryProvider).getBrandById(id);
 });
 
 final brandSaveControllerProvider =
@@ -85,6 +91,10 @@ class BrandSaveController extends AutoDisposeAsyncNotifier<void> {
 
     state = await AsyncValue.guard(() async {
       await ref.read(brandRepositoryProvider).deleteBrand(brandId);
+      if (ref.read(selectedBrandIdProvider) == brandId) {
+        ref.read(selectedBrandIdProvider.notifier).state = null;
+      }
+      ref.invalidate(brandDetailProvider(brandId));
       ref.invalidate(brandListProvider);
     });
 

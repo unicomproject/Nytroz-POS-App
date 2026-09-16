@@ -70,15 +70,4 @@ abstract interface class PosOnlineOrdersRepository {
     required String outletId,
     required String orderId,
   });
-
-  Future<PosPickupVerifyResult> verifyPickup({
-    required String outletId,
-    required String orderId,
-    required String pickupCode,
-  });
-
-  Future<PosPickupCollectResult> collectOrder({
-    required String outletId,
-    required String orderId,
-  });
 }

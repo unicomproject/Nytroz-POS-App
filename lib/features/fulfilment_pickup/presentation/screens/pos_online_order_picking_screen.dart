@@ -92,7 +92,6 @@ class _PosOnlineOrderPickingScreenState
                 onBackToReviewPack: () {
                   setState(() => _showReviewFromReady = true);
                 },
-                prefilledPickupCode: widget.prefilledPickupCode,
               );
             }
 

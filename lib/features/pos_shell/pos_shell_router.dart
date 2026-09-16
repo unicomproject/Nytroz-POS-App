@@ -41,7 +41,6 @@ import '../fulfilment_pickup/presentation/screens/pos_online_orders_screen.dart'
 import '../fulfilment_pickup/presentation/screens/pos_online_order_detail_route_screen.dart';
 import '../fulfilment_pickup/presentation/screens/pos_online_order_picking_screen.dart';
 import '../fulfilment_pickup/presentation/screens/pos_pick_item_screen.dart';
-import '../fulfilment_pickup/presentation/screens/pos_scan_to_collect_screen.dart';
 import 'presentation/widgets/common/pos_shell_scaffold.dart';
 
 List<RouteBase> posShellRoutes(Ref ref) {
@@ -338,6 +337,16 @@ List<RouteBase> posShellRoutes(Ref ref) {
                       ? PosOnlineOrderPickingScreen(
                           orderId: state.pathParameters['orderId']!,
                           prefilledPickupCode: state.extra as String?,
+                        )
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: ':orderId/picking/lines/:lineId',
+              builder: (context, state) =>
+                  _canViewOnlineOrderPicking(ref.read(authSessionProvider))
+                      ? PosPickItemScreen(
+                          orderId: state.pathParameters['orderId']!,
+                          lineId: state.pathParameters['lineId']!,
                         )
                       : const TenantAdminForbiddenScreen(),
             ),

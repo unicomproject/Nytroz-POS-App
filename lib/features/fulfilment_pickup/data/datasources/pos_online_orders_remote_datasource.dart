@@ -147,30 +147,6 @@ class PosOnlineOrdersRemoteDatasource {
     return PosNotifyReadyResult.fromJson(_data(response.data));
   }
 
-  Future<PosPickupVerifyResult> verifyPickup({
-    required String outletId,
-    required String orderId,
-    required String pickupCode,
-  }) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      ApiEndpoints.posOnlineOrderPickupVerify(orderId),
-      queryParameters: {'outletId': outletId},
-      data: {'pickupCode': pickupCode},
-    );
-    return PosPickupVerifyResult.fromJson(_data(response.data));
-  }
-
-  Future<PosPickupCollectResult> collectOrder({
-    required String outletId,
-    required String orderId,
-  }) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      ApiEndpoints.posOnlineOrderPickupCollect(orderId),
-      queryParameters: {'outletId': outletId},
-    );
-    return PosPickupCollectResult.fromJson(_data(response.data));
-  }
-
   Future<PosFulfillmentCommandResult> _command(
       String path, String outletId, Map<String, dynamic> body) async {
     final response = await _dio.post<Map<String, dynamic>>(path,

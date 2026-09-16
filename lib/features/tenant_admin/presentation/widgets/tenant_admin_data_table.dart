@@ -16,6 +16,7 @@ class TenantAdminDataTable extends StatefulWidget {
     this.showCheckboxColumn = false,
     this.footer,
     this.minWidth = 850.0,
+    this.fillAvailableWidth = false,
   });
 
   final List<DataColumn> columns;

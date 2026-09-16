@@ -124,23 +124,4 @@ class PosOnlineOrdersRepositoryImpl implements PosOnlineOrdersRepository {
     required String orderId,
   }) =>
       _remote.notifyReady(outletId: outletId, orderId: orderId);
-
-  @override
-  Future<PosPickupVerifyResult> verifyPickup({
-    required String outletId,
-    required String orderId,
-    required String pickupCode,
-  }) =>
-      _remote.verifyPickup(
-        outletId: outletId,
-        orderId: orderId,
-        pickupCode: pickupCode,
-      );
-
-  @override
-  Future<PosPickupCollectResult> collectOrder({
-    required String outletId,
-    required String orderId,
-  }) =>
-      _remote.collectOrder(outletId: outletId, orderId: orderId);
 }

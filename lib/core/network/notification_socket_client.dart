@@ -49,8 +49,7 @@ class NotificationSocketClient {
   }
 
   void disconnect() {
-    _currentSessionKey = null;
-    _fetchToken = null;
+    _currentToken = null;
     _wasConnected = false;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
