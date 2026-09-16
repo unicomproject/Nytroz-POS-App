@@ -90,7 +90,10 @@ class NotificationInboxController extends StateNotifier<NotificationInboxState> 
       return;
     }
 
-    _ensureSocketClient().connect(session.accessToken);
+    _ensureSocketClient().connect(
+      session.accessToken,
+      () => _ref.read(notificationsApiProvider).fetchSocketToken(),
+    );
     unawaited(refreshAuthoritativeSurfaces(includeOnlineOrders: true));
     _fallbackPollTimer?.cancel();
     _fallbackPollTimer = Timer.periodic(

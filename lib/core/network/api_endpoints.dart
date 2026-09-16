@@ -248,6 +248,8 @@ class ApiEndpoints {
   static const tenantNotificationsUnreadCount =
       '$tenantNotifications/unread-count';
   static const tenantNotificationsReadAll = '$tenantNotifications/read-all';
+  static const tenantNotificationsSocketToken =
+      '$tenantNotifications/socket-token';
   static String tenantNotificationRead(String notificationId) =>
       '$tenantNotifications/$notificationId/read';
   static const tenantNotificationsSocketPath = '/ws/notifications';
