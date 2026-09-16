@@ -1,4 +1,6 @@
 import 'hardware_master_wizard_test.dart' show hardwareTestAccess;
+import 'package:nytroz_pos/features/tenant_admin/tills/domain/entities/till_monitoring.dart';
+import 'package:nytroz_pos/features/tenant_admin/hardware/presentation/widgets/hardware_overview_components.dart';
 import 'package:nytroz_pos/features/tenant_admin/hardware/presentation/providers/hardware_scope_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/hardware/presentation/providers/hardware_setup_controller.dart';
 import 'package:dio/dio.dart';
@@ -91,6 +93,20 @@ void main() {
                 supportLevel: 'UNVERIFIED',
                 notes: 'Physical verification required'),
           ]),
+      hardwareAssignableTillsProvider.overrideWith((ref) async => [
+            const TillMonitoringItem(
+              id: 't',
+              outletId: 'o',
+              outletName: 'Store',
+              name: 'Front Till',
+              code: 'FRONT',
+              lifecycleStatus: TillLifecycleStatus.active,
+              operationalStatus: TillOperationalStatus.online,
+              displayStatus: TillDisplayStatus.online,
+              needsAttention: false,
+              attentionReasonCount: 0,
+            ),
+          ]),
       hardwareListProvider.overrideWith((ref) async => []),
       tillOutletOptionsProvider.overrideWith((ref) async => [
             const OutletOption(
@@ -101,6 +117,7 @@ void main() {
     final container = ProviderScope.containerOf(
         tester.element(find.byType(AddHardwareScreen)));
     container.read(hardwareSetupControllerProvider.notifier).outlet('o');
+    container.read(hardwareSetupControllerProvider.notifier).till('t');
     await tester.pumpAndSettle();
     expect(find.text('Unavailable'), findsNWidgets(5));
     await tester.tap(find.text('Select Device').first);
@@ -233,7 +250,8 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Printer 6');
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(DataTable, 'Printer 6'), findsOneWidget);
+    expect(find.widgetWithText(HardwareOverviewDeviceTable, 'Printer 6'),
+        findsOneWidget);
     expect(find.text('Printer 0'), findsNothing);
     expect(tester.takeException(), isNull);
   });
