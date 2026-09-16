@@ -49,17 +49,33 @@ class PosCameraDetectionGate {
   void lock() => _locked = true;
 }
 
-Future<PosCameraScanResult> launchPosCameraScanner(BuildContext context) async {
+Future<PosCameraScanResult> launchPosCameraScanner(
+  BuildContext context, {
+  List<BarcodeFormat>? formats,
+  String? instructionText,
+}) async {
   final result = await showDialog<PosCameraScanResult>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => const PosCameraBarcodeScannerDialog(),
+    builder: (_) => PosCameraBarcodeScannerDialog(
+      formats: formats,
+      instructionText: instructionText,
+    ),
   );
   return result ?? const PosCameraScanResult.cancelled();
 }
 
 class PosCameraBarcodeScannerDialog extends StatefulWidget {
-  const PosCameraBarcodeScannerDialog({super.key});
+  const PosCameraBarcodeScannerDialog(
+      {super.key, this.formats, this.instructionText});
+
+  /// Barcode symbologies to detect. Defaults to product-barcode formats
+  /// (EAN/UPC/Code128/Code39) used when ringing up a sale; pass
+  /// `[BarcodeFormat.qrCode]` to scan a QR payload instead (e.g. a
+  /// customer's click & collect pickup code).
+  final List<BarcodeFormat>? formats;
+  final String? instructionText;
+
   @override
   State<PosCameraBarcodeScannerDialog> createState() =>
       _PosCameraBarcodeScannerDialogState();
@@ -77,13 +93,14 @@ class _PosCameraBarcodeScannerDialogState
     _controller = MobileScannerController(
       facing: CameraFacing.back,
       detectionSpeed: DetectionSpeed.noDuplicates,
-      formats: const [
-        BarcodeFormat.ean13,
-        BarcodeFormat.ean8,
-        BarcodeFormat.upcA,
-        BarcodeFormat.code128,
-        BarcodeFormat.code39
-      ],
+      formats: widget.formats ??
+          const [
+            BarcodeFormat.ean13,
+            BarcodeFormat.ean8,
+            BarcodeFormat.upcA,
+            BarcodeFormat.code128,
+            BarcodeFormat.code39
+          ],
     );
   }
 
@@ -200,14 +217,15 @@ class _PosCameraBarcodeScannerDialogState
                             )),
                   ],
                 )),
-            const Positioned(
+            Positioned(
                 left: TenantAdminSpacing.md,
                 right: TenantAdminSpacing.md,
                 bottom: TenantAdminSpacing.lg,
                 child: Text(
-                  'Place the product barcode inside the frame',
+                  widget.instructionText ??
+                      'Place the product barcode inside the frame',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
