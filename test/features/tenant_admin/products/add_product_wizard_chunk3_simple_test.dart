@@ -1,4 +1,4 @@
-﻿import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -161,10 +161,12 @@ void main() {
     controller.setProductStructure('SIMPLE');
     controller.setTrackInventory(trackInventory);
     await controller.saveAndContinue();
-    expect(controller.wizardState.currentStep, 3);
-    controller.selectUnitModel('SINGLE_UNIT');
-    controller.setProductUnit('unit-1');
-    await controller.saveAndContinue();
+    if (trackInventory) {
+      expect(controller.wizardState.currentStep, 4);
+      controller.selectUnitModel('SINGLE_UNIT');
+      controller.setProductUnit('unit-1');
+      await controller.saveAndContinue();
+    }
     expect(controller.wizardState.currentStep, 5);
   }
 
@@ -180,32 +182,34 @@ void main() {
   });
 
   group('Chunk 3 SIMPLE flow', () {
-    test('1. SIMPLE Track ON â†’ Step 3', () async {
+    test('1. SIMPLE Track ON → Step 4', () async {
       await controller.initWizard();
     controller.skipScanStepForTesting();
       controller.updateProductName('A');
       controller.updateCategory('cat-1');
+      controller.updateInternalCode('code-1');
       await controller.saveAndContinue();
       controller.setProductStructure('SIMPLE');
       controller.setTrackInventory(true);
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 3);
+      expect(controller.wizardState.currentStep, 4);
     });
 
-    test('2. SIMPLE Track OFF â†’ Step 3', () async {
+    test('2. SIMPLE Track OFF → Step 5', () async {
       await controller.initWizard();
     controller.skipScanStepForTesting();
       controller.updateProductName('A');
       controller.updateCategory('cat-1');
+      controller.updateInternalCode('code-2');
       await controller.saveAndContinue();
       controller.setProductStructure('SIMPLE');
       controller.setTrackInventory(false);
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 3);
+      expect(controller.wizardState.currentStep, 5);
     });
 
-    test('3. Step 3 â†’ Step 5 (skips Step 4)', () async {
-      await goToStep5Simple();
+    test('3. Step 3 → Step 5 (skips Step 4)', () async {
+      await goToStep5Simple(trackInventory: false);
       expect(controller.isStepApplicable(4), isFalse);
       expect(controller.wizardState.currentStep, 5);
     });
@@ -228,17 +232,17 @@ void main() {
       expect(controller.wizardState.currentStep, 6);
     });
 
-    test('7. Step 5 Back â†’ Step 3', () async {
+    test('7. Step 5 Back → Step 4', () async {
       await goToStep5Simple();
       controller.goToPreviousApplicableStep();
-      expect(controller.wizardState.currentStep, 3);
+      expect(controller.wizardState.currentStep, 4);
     });
 
     test('8. Step 5 values survive Back/Forward', () async {
       await goToStep5Simple();
       controller.updateSimpleBaseSku('TEST-SIMPLE-001');
       controller.updateSimpleParentBarcode('8901234567890');
-      controller.goToPreviousApplicableStep(); // â†’ 3
+      controller.goToPreviousApplicableStep(); // → 4
       expect(controller.wizardState.productUnitId, 'unit-1');
       expect(await controller.saveAndContinue(), isTrue); // â†’ 5
       expect(controller.wizardState.step5State.baseSku, 'TEST-SIMPLE-001');
@@ -306,16 +310,15 @@ void main() {
     controller.skipScanStepForTesting();
       controller.updateProductName('Variant Item');
       controller.updateCategory('cat-1');
+      controller.updateInternalCode('V-001');
       await controller.saveAndContinue();
       controller.setProductStructure('VARIANT');
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 4);
+      expect(controller.wizardState.currentStep, 5);
       controller.addAttributeRow();
       controller.updateAttributeName(0, 'Color');
       controller.selectValues(0, ['Red']);
       await controller.generateVariants();
-      await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 5);
       for (final assignment in controller.wizardState.step5State.assignments) {
         await controller.assignBarcodeSkuAndSave(
           assignment.copyWith(sku: 'SKU-${assignment.clientCombinationKey}'),
@@ -325,13 +328,15 @@ void main() {
       expect(controller.wizardState.currentStep, 6);
     });
 
-    test('SIMPLE multiple units survive Back to Step 3', () async {
+    test('SIMPLE multiple units survive Back to Step 4', () async {
       await controller.initWizard();
     controller.skipScanStepForTesting();
       controller.updateProductName('Multi Unit');
       controller.updateCategory('cat-1');
+      controller.updateInternalCode('MU-001');
       await controller.saveAndContinue();
       controller.setProductStructure('SIMPLE');
+      controller.setTrackInventory(true);
       await controller.saveAndContinue();
       controller.selectUnitModel('MULTIPLE_UNITS');
       controller.setBaseUnit('unit-1');
@@ -341,7 +346,7 @@ void main() {
       await controller.saveAndContinue();
       expect(controller.wizardState.currentStep, 5);
       controller.goToPreviousApplicableStep();
-      expect(controller.wizardState.currentStep, 3);
+      expect(controller.wizardState.currentStep, 4);
       expect(controller.wizardState.unitModel, 'MULTIPLE_UNITS');
       expect(controller.wizardState.baseUnitId, 'unit-1');
       expect(controller.wizardState.purchaseUnitId, 'unit-2');
