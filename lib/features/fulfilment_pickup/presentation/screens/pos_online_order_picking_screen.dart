@@ -14,9 +14,17 @@ import 'ready_for_collection_screen.dart';
 import 'review_pack_screen.dart';
 
 class PosOnlineOrderPickingScreen extends ConsumerStatefulWidget {
-  const PosOnlineOrderPickingScreen({required this.orderId, super.key});
+  const PosOnlineOrderPickingScreen({
+    required this.orderId,
+    this.prefilledPickupCode,
+    super.key,
+  });
 
   final String orderId;
+
+  /// Set when this screen was reached via a blind "Scan to Collect" scan
+  /// that already resolved the order and captured its pickup code.
+  final String? prefilledPickupCode;
 
   @override
   ConsumerState<PosOnlineOrderPickingScreen> createState() =>
@@ -84,6 +92,7 @@ class _PosOnlineOrderPickingScreenState
                 onBackToReviewPack: () {
                   setState(() => _showReviewFromReady = true);
                 },
+                prefilledPickupCode: widget.prefilledPickupCode,
               );
             }
 

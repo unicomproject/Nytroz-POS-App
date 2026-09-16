@@ -10,10 +10,15 @@ class Oo01Header extends StatelessWidget {
   const Oo01Header({
     required this.searchController,
     required this.onSearch,
+    this.onScanToCollect,
     super.key,
   });
   final TextEditingController searchController;
   final ValueChanged<String> onSearch;
+
+  /// Opens the blind "scan first, find the order after" pickup flow. Null
+  /// hides the button for cashiers without pickup-verify permission.
+  final VoidCallback? onScanToCollect;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -45,16 +50,36 @@ class Oo01Header extends StatelessWidget {
               ),
             ),
           );
+          final scanButton = onScanToCollect == null
+              ? null
+              : FilledButton.icon(
+                  key: const Key('scan-to-collect-entry'),
+                  onPressed: onScanToCollect,
+                  icon: const Icon(Icons.qr_code_scanner_outlined),
+                  label: const Text('Scan to Collect'),
+                );
           if (constraints.maxWidth < 760) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [heading, const SizedBox(height: 12), search],
+              children: [
+                heading,
+                const SizedBox(height: 12),
+                search,
+                if (scanButton != null) ...[
+                  const SizedBox(height: 10),
+                  scanButton,
+                ],
+              ],
             );
           }
           return Row(children: [
             const Expanded(child: heading),
             const SizedBox(width: 20),
-            SizedBox(width: constraints.maxWidth * .42, child: search),
+            SizedBox(width: constraints.maxWidth * .32, child: search),
+            if (scanButton != null) ...[
+              const SizedBox(width: 12),
+              scanButton,
+            ],
           ]);
         },
       );

@@ -41,6 +41,7 @@ import '../fulfilment_pickup/presentation/screens/pos_online_orders_screen.dart'
 import '../fulfilment_pickup/presentation/screens/pos_online_order_detail_route_screen.dart';
 import '../fulfilment_pickup/presentation/screens/pos_online_order_picking_screen.dart';
 import '../fulfilment_pickup/presentation/screens/pos_pick_item_screen.dart';
+import '../fulfilment_pickup/presentation/screens/pos_scan_to_collect_screen.dart';
 import 'presentation/widgets/common/pos_shell_scaffold.dart';
 
 List<RouteBase> posShellRoutes(Ref ref) {
@@ -315,6 +316,13 @@ List<RouteBase> posShellRoutes(Ref ref) {
                   : const TenantAdminForbiddenScreen(),
           routes: [
             GoRoute(
+              path: 'scan',
+              builder: (context, state) =>
+                  _canVerifyOnlineOrderPickup(ref.read(authSessionProvider))
+                      ? const PosScanToCollectScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
               path: ':orderId',
               builder: (context, state) =>
                   _canViewOnlineOrders(ref.read(authSessionProvider))
@@ -329,6 +337,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
                   _canViewOnlineOrderPicking(ref.read(authSessionProvider))
                       ? PosOnlineOrderPickingScreen(
                           orderId: state.pathParameters['orderId']!,
+                          prefilledPickupCode: state.extra as String?,
                         )
                       : const TenantAdminForbiddenScreen(),
             ),
@@ -466,6 +475,12 @@ _PosShellHeader _headerForPath(String path) {
     return const _PosShellHeader(
       title: 'Pick Order',
       subtitle: 'Review the assigned items and inventory locations.',
+    );
+  }
+  if (path == '/pos/online-orders/scan') {
+    return const _PosShellHeader(
+      title: 'Scan to Collect',
+      subtitle: "Scan the customer's QR to find their order.",
     );
   }
   final title = switch (path) {
@@ -630,6 +645,13 @@ bool _canViewOnlineOrders(AuthSession? session) {
 bool _canViewOnlineOrderPicking(AuthSession? session) {
   if (!_isAuthenticated(session)) return false;
   return PosPermissionAccess.canViewOnlineOrderPicking(
+    session!.permissionCodes.toSet(),
+  );
+}
+
+bool _canVerifyOnlineOrderPickup(AuthSession? session) {
+  if (!_isAuthenticated(session)) return false;
+  return PosPermissionAccess.canVerifyOnlineOrderPickup(
     session!.permissionCodes.toSet(),
   );
 }
