@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/access/pos_permission_access.dart';
+import '../../../auth/presentation/providers/session_provider.dart';
 import '../providers/pos_online_orders_provider.dart';
 import '../widgets/online_order_ui.dart';
 import '../widgets/oo01_online_orders_widgets.dart';
@@ -33,6 +35,10 @@ class _PosOnlineOrdersScreenState extends ConsumerState<PosOnlineOrdersScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(posOnlineOrdersProvider);
     final controller = ref.read(posOnlineOrdersProvider.notifier);
+    final granted =
+        ref.watch(authSessionProvider)?.permissionCodes.toSet() ?? const {};
+    final canScanToCollect =
+        PosPermissionAccess.canVerifyOnlineOrderPickup(granted);
     return ColoredBox(
       color: OnlineOrderUi.canvas,
       child: Padding(
@@ -52,6 +58,9 @@ class _PosOnlineOrdersScreenState extends ConsumerState<PosOnlineOrdersScreen> {
                     Oo01Header(
                       searchController: _searchController,
                       onSearch: controller.setQuery,
+                      onScanToCollect: canScanToCollect
+                          ? () => context.push('/pos/online-orders/scan')
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     Oo01SummaryRow(summary: state.summary),

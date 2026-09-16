@@ -14,6 +14,7 @@ import '../../../sale/presentation/widgets/new_sale/pos_camera_barcode_scanner.d
     show PosCameraScanResultType;
 import '../../domain/entities/pos_online_order.dart';
 import '../providers/pos_online_orders_provider.dart';
+import '../utils/click_collect_qr.dart';
 import '../utils/picking_formatters.dart';
 import '../utils/picking_visual_metrics.dart';
 import '../widgets/online_order_ui.dart';
@@ -24,12 +25,20 @@ class ReadyForCollectionScreen extends ConsumerStatefulWidget {
     required this.order,
     required this.onBack,
     this.onBackToReviewPack,
+    this.prefilledPickupCode,
     super.key,
   });
 
   final PosPickingOrder order;
   final VoidCallback onBack;
   final VoidCallback? onBackToReviewPack;
+
+  /// Already-scanned pickup code, carried over from a blind "Scan to
+  /// Collect" scan (see [PosScanToCollectScreen]) that landed the cashier
+  /// directly here without them re-scanning. Consumed on the first Verify
+  /// tap; a later retry (e.g. after a mismatch) falls back to the normal
+  /// in-screen camera scan.
+  final String? prefilledPickupCode;
 
   @override
   ConsumerState<ReadyForCollectionScreen> createState() =>
@@ -42,6 +51,13 @@ class _ReadyForCollectionScreenState
   bool _scannerOpening = false;
   String? _error;
   String? _success;
+  String? _pendingPrefilledCode;
+
+  @override
+  void initState() {
+    super.initState();
+    _pendingPrefilledCode = widget.prefilledPickupCode?.trim();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +123,7 @@ class _ReadyForCollectionScreenState
         canComplete: canComplete,
         busy: _busy,
         scanning: _scannerOpening,
+        hasPrefilledCode: _pendingPrefilledCode != null,
         error: _error,
         success: _success,
         onNotify: canNotify && !_busy
@@ -211,6 +228,18 @@ class _ReadyForCollectionScreenState
 
   Future<void> _verify(PosPickingOrder order) async {
     if (_busy || _scannerOpening) return;
+
+    // A "Scan to Collect" blind scan already captured a code for this exact
+    // order before landing here -- use it once instead of asking the cashier
+    // to scan the same QR a second time. Any later retry (e.g. after a
+    // mismatch) falls through to a normal in-screen scan.
+    final prefilled = _pendingPrefilledCode;
+    if (prefilled != null) {
+      _pendingPrefilledCode = null;
+      await _submitVerify(order, prefilled);
+      return;
+    }
+
     setState(() => _scannerOpening = true);
     try {
       final launch = ref.read(posPickupScannerLauncherProvider);
@@ -239,7 +268,7 @@ class _ReadyForCollectionScreenState
         }
         return;
       }
-      final pickupCode = _extractPickupCode(result.barcode);
+      final pickupCode = ClickCollectQrPayload.tryParse(result.barcode)?.code;
       if (pickupCode == null) {
         setState(() =>
             _error = 'This QR code is not a valid pickup code.');
@@ -249,17 +278,6 @@ class _ReadyForCollectionScreenState
     } finally {
       if (mounted) setState(() => _scannerOpening = false);
     }
-  }
-
-  /// The customer's QR encodes `CLICK_COLLECT:{tenantId}:{orderId}:{code}` —
-  /// only the trailing secret code is sent for verification.
-  static String? _extractPickupCode(String? scanned) {
-    final value = scanned?.trim();
-    if (value == null || value.isEmpty) return null;
-    final parts = value.split(':');
-    if (parts.length != 4 || parts[0] != 'CLICK_COLLECT') return null;
-    final code = parts[3].trim();
-    return code.isEmpty ? null : code;
   }
 
   Future<void> _submitVerify(PosPickingOrder order, String pickupCode) async {
@@ -454,6 +472,7 @@ class _ReadyLeftColumn extends StatelessWidget {
     required this.canComplete,
     required this.busy,
     required this.scanning,
+    this.hasPrefilledCode = false,
     this.error,
     this.success,
     this.onNotify,
@@ -469,6 +488,10 @@ class _ReadyLeftColumn extends StatelessWidget {
   final bool canComplete;
   final bool busy;
   final bool scanning;
+  /// True when this screen was reached via a blind "Scan to Collect" scan
+  /// that already captured a pickup code -- the Verify action consumes that
+  /// code directly instead of opening the camera again.
+  final bool hasPrefilledCode;
   final String? error;
   final String? success;
   final VoidCallback? onNotify;
@@ -578,7 +601,9 @@ class _ReadyLeftColumn extends StatelessWidget {
               height: ultraCompact ? 36 : (compact ? 40 : 44),
               child: PosPrimaryActionButton(
                 key: const Key('scan-verify-pickup-code'),
-                label: 'Scan to Verify Collection',
+                label: hasPrefilledCode
+                    ? 'Verify Scanned Pickup Code'
+                    : 'Scan to Verify Collection',
                 fullWidth: true,
                 compact: true,
                 isLoading: scanning || busy,
@@ -586,9 +611,13 @@ class _ReadyLeftColumn extends StatelessWidget {
                 verticalPadding: 0,
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 gradient: null,
-                semanticLabel: 'Scan to Verify Collection',
+                semanticLabel: hasPrefilledCode
+                    ? 'Verify Scanned Pickup Code'
+                    : 'Scan to Verify Collection',
                 onPressed: onVerify,
-                leadingIcon: Icons.qr_code_scanner_outlined,
+                leadingIcon: hasPrefilledCode
+                    ? Icons.verified_outlined
+                    : Icons.qr_code_scanner_outlined,
               ),
             ),
           ),
