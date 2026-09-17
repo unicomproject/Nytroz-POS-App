@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../entities/pos_online_order.dart';
+import '../entities/pos_online_order_collection.dart';
 
 abstract interface class PosOnlineOrdersRepository {
   Future<PosOnlineOrderPage> list(
@@ -69,5 +70,18 @@ abstract interface class PosOnlineOrdersRepository {
   Future<PosNotifyReadyResult> notifyReady({
     required String outletId,
     required String orderId,
+  });
+
+  Future<PosCollectionValidationResult> validateCollectionQr({
+    required String outletId,
+    required String token,
+    CancelToken? cancelToken,
+  });
+
+  Future<PosCollectionCompleteResult> completeCollection({
+    required String outletId,
+    required String orderId,
+    required int expectedVersion,
+    CancelToken? cancelToken,
   });
 }

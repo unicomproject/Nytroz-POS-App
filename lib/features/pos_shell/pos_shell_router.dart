@@ -5,6 +5,8 @@ import '../../core/access/pos_access_codes.dart';
 import '../../core/access/pos_permission_access.dart';
 import '../auth/domain/entities/auth_session.dart';
 import '../auth/presentation/providers/session_provider.dart';
+import '../sale/presentation/providers/pos_cash_payment_intent_provider.dart';
+import '../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../cash_drawer/presentation/screens/pos_cash_drawer_screen.dart';
 import '../cash_drawer/presentation/screens/pos_cash_drop_screen.dart';
 import '../cash_drawer/presentation/screens/pos_cash_in_screen.dart';
@@ -41,12 +43,23 @@ import '../fulfilment_pickup/presentation/screens/pos_online_orders_screen.dart'
 import '../fulfilment_pickup/presentation/screens/pos_online_order_detail_route_screen.dart';
 import '../fulfilment_pickup/presentation/screens/pos_online_order_picking_screen.dart';
 import '../fulfilment_pickup/presentation/screens/pos_pick_item_screen.dart';
-import '../fulfilment_pickup/presentation/screens/pos_scan_to_collect_screen.dart';
+import '../fulfilment_pickup/presentation/screens/collection_qr_scan_screen.dart';
+import '../fulfilment_pickup/presentation/screens/collection_verification_screen.dart';
+import '../fulfilment_pickup/presentation/screens/collection_qr_rejected_screen.dart';
+import '../fulfilment_pickup/presentation/screens/collection_handover_screen.dart';
+import '../fulfilment_pickup/presentation/screens/collection_complete_screen.dart';
+import '../fulfilment_pickup/presentation/screens/collection_payment_bridge_screen.dart';
+import '../fulfilment_pickup/presentation/screens/collection_payment_success_screen.dart';
 import 'presentation/widgets/common/pos_shell_scaffold.dart';
 
 List<RouteBase> posShellRoutes(Ref ref) {
   return [
     ShellRoute(
+      redirect: (context, state) => cashPaymentSafetyRedirect(
+        state.uri.path,
+        ref.read(posCashPaymentIntentProvider)?.phase,
+        cartCompleted: ref.read(posNewSaleCartProvider).completedSaleId != null,
+      ),
       builder: (context, state, child) {
         final header = _headerForPath(state.uri.path);
         return PosShellScaffold(
@@ -316,10 +329,52 @@ List<RouteBase> posShellRoutes(Ref ref) {
                   : const TenantAdminForbiddenScreen(),
           routes: [
             GoRoute(
-              path: 'scan',
+              path: 'collection/scan',
               builder: (context, state) =>
-                  _canVerifyOnlineOrderPickup(ref.read(authSessionProvider))
-                      ? const PosScanToCollectScreen()
+                  _canScanCollectionQr(ref.read(authSessionProvider))
+                      ? const CollectionQrScanScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'collection/verification',
+              builder: (context, state) =>
+                  _canValidateCollectionQr(ref.read(authSessionProvider))
+                      ? const CollectionVerificationScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'collection/rejected',
+              builder: (context, state) =>
+                  _canScanCollectionQr(ref.read(authSessionProvider))
+                      ? const CollectionQrRejectedScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'collection/handover',
+              builder: (context, state) =>
+                  _canHandoverCollection(ref.read(authSessionProvider))
+                      ? const CollectionHandoverScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'collection/complete',
+              builder: (context, state) =>
+                  _canHandoverCollection(ref.read(authSessionProvider))
+                      ? const CollectionCompleteScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'collection/payment',
+              builder: (context, state) =>
+                  _canValidateCollectionQr(ref.read(authSessionProvider))
+                      ? const CollectionPaymentBridgeScreen()
+                      : const TenantAdminForbiddenScreen(),
+            ),
+            GoRoute(
+              path: 'collection/payment-success',
+              builder: (context, state) =>
+                  _canHandoverCollection(ref.read(authSessionProvider))
+                      ? const CollectionPaymentSuccessScreen()
                       : const TenantAdminForbiddenScreen(),
             ),
             GoRoute(
@@ -334,7 +389,7 @@ List<RouteBase> posShellRoutes(Ref ref) {
             GoRoute(
               path: ':orderId/picking',
               builder: (context, state) =>
-                  _canViewOnlineOrderPicking(ref.read(authSessionProvider))
+                  _canViewOnlineOrderWorkspace(ref.read(authSessionProvider))
                       ? PosOnlineOrderPickingScreen(
                           orderId: state.pathParameters['orderId']!,
                           prefilledPickupCode: state.extra as String?,
@@ -370,7 +425,9 @@ List<RouteBase> posShellRoutes(Ref ref) {
                             PosPermissionCodes.viewReceipts,
                           ) ==
                       true
-                  ? const PosReceiptHistoryScreen()
+                  ? PosReceiptHistoryScreen(
+                      initialQuery: state.uri.queryParameters['query'] ?? '',
+                    )
                   : const TenantAdminForbiddenScreen(),
         ),
         GoRoute(
@@ -462,8 +519,16 @@ bool shouldShowPosCashierBottomNavigation(
     return _canViewCashDrawer(session);
   }
 
+  if (path.startsWith('/pos/online-orders/collection')) {
+    return _canScanCollectionQr(session) || _canViewOnlineOrders(session);
+  }
+
   if (path.startsWith('/pos/online-orders/')) {
-    return _canViewOnlineOrderPicking(session);
+    if (path.contains('/picking/lines/')) {
+      return _canViewOnlineOrderPicking(session);
+    }
+    if (path.endsWith('/picking')) return _canViewOnlineOrderWorkspace(session);
+    return _canViewOnlineOrders(session);
   }
 
   return switch (path) {
@@ -659,9 +724,30 @@ bool _canViewOnlineOrderPicking(AuthSession? session) {
   );
 }
 
-bool _canVerifyOnlineOrderPickup(AuthSession? session) {
+bool _canViewOnlineOrderWorkspace(AuthSession? session) {
   if (!_isAuthenticated(session)) return false;
-  return PosPermissionAccess.canVerifyOnlineOrderPickup(
+  final permissions = session!.permissionCodes.toSet();
+  return PosPermissionAccess.canViewOnlineOrderPicking(permissions) ||
+      PosPermissionAccess.canViewOnlineOrderReady(permissions);
+}
+
+bool _canScanCollectionQr(AuthSession? session) {
+  if (!_isAuthenticated(session)) return false;
+  return PosPermissionAccess.canScanCollectionQr(
+    session!.permissionCodes.toSet(),
+  );
+}
+
+bool _canValidateCollectionQr(AuthSession? session) {
+  if (!_isAuthenticated(session)) return false;
+  return PosPermissionAccess.canValidateCollectionQr(
+    session!.permissionCodes.toSet(),
+  );
+}
+
+bool _canHandoverCollection(AuthSession? session) {
+  if (!_isAuthenticated(session)) return false;
+  return PosPermissionAccess.canHandoverCollection(
     session!.permissionCodes.toSet(),
   );
 }

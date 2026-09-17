@@ -107,6 +107,7 @@ class ApiEndpoints {
   static const currentTillSession = '/api/v1/tills/current-session';
   static const posHome = '/api/v1/pos/home';
   static const posNotifications = '/api/v1/pos/notifications';
+  static const posNotificationsTicket = '/api/v1/pos/notifications/ticket';
   static const posHardwareConfigurations =
       '/api/v1/pos/hardware/configurations';
   static const posHardwareTests = '/api/v1/pos/hardware/tests';
@@ -126,6 +127,7 @@ class ApiEndpoints {
   static const posCatalogCategories = '/api/v1/pos/catalog/categories';
   static const posCheckoutSummary = '/api/v1/pos/checkout/summary';
   static const posCheckoutStartPayment = '/api/v1/pos/checkout/start-payment';
+  static const posCheckoutPaymentStatus = '/api/v1/pos/checkout/payment-status';
   static const posHolds = '/api/v1/pos/holds';
   static String posHoldRecall(String holdId) =>
       '/api/v1/pos/holds/$holdId/recall';
@@ -152,6 +154,10 @@ class ApiEndpoints {
       '${posOnlineOrder(orderId)}/ready';
   static String posOnlineOrderNotifyReady(String orderId) =>
       '${posOnlineOrder(orderId)}/notify-ready';
+  static const posOnlineOrderCollectionQrValidate =
+      '/api/v1/tenant/ecommerce/click-collect/collection/qr/validate';
+  static String posOnlineOrderCollectionComplete(String orderId) =>
+      '${posOnlineOrder(orderId)}/collection/complete';
   static String posCustomer(String customerId) =>
       '/api/v1/customers/$customerId';
   static String posCustomerOrders(String customerId) =>

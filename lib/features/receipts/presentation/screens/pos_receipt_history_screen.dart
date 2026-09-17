@@ -7,13 +7,16 @@ import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
 import '../../../hardware/receipt_printer/models/completed_sale_receipt.dart';
+import '../../../hardware/receipt_printer/recovery/print_operation.dart';
 import '../../../sale/presentation/providers/completed_sale_print_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../domain/receipt_history_models.dart';
 import '../providers/receipt_history_provider.dart';
 
 class PosReceiptHistoryScreen extends ConsumerStatefulWidget {
-  const PosReceiptHistoryScreen({super.key});
+  const PosReceiptHistoryScreen({super.key, this.initialQuery = ''});
+
+  final String initialQuery;
 
   @override
   ConsumerState<PosReceiptHistoryScreen> createState() =>
@@ -24,6 +27,13 @@ class _PosReceiptHistoryScreenState
     extends ConsumerState<PosReceiptHistoryScreen> {
   final _search = TextEditingController();
   String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _query = widget.initialQuery;
+    _search.text = _query;
+  }
 
   @override
   void dispose() {
@@ -42,6 +52,10 @@ class _PosReceiptHistoryScreenState
 
     final result = ref.watch(receiptSearchProvider(_query));
     final audit = ref.watch(receiptReprintAuditProvider);
+    final printState = ref.watch(completedSalePrintProvider);
+    final canPrintPending = PosPermissionAccess.canPrintReceiptsSession(
+      ref.watch(authSessionProvider),
+    );
     return ColoredBox(
       color: const Color(0xFFF4F6FA),
       child: Padding(
@@ -66,6 +80,20 @@ class _PosReceiptHistoryScreenState
                             .read(receiptReprintAuditProvider.notifier)
                             .retryAuditOnly(),
                     child: const Text('Retry audit'),
+                  ),
+                ],
+              ),
+            if (printState.pendingReceipts.isNotEmpty)
+              MaterialBanner(
+                key: const Key('pending-receipt-print-banner'),
+                leading: const Icon(Icons.print_outlined),
+                content: Text(
+                  '${printState.pendingReceipts.length} receipt${printState.pendingReceipts.length == 1 ? '' : 's'} waiting for confirmation. Nothing will print automatically.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: canPrintPending ? _showPendingReceipts : null,
+                    child: const Text('Review pending'),
                   ),
                 ],
               ),
@@ -166,6 +194,143 @@ class _PosReceiptHistoryScreenState
       context: context,
       builder: (_) => _ReceiptDetailDialog(receiptId: receiptId),
     );
+  }
+
+  Future<void> _showPendingReceipts() async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => const _PendingReceiptPrintsDialog(),
+    );
+  }
+}
+
+class _PendingReceiptPrintsDialog extends ConsumerWidget {
+  const _PendingReceiptPrintsDialog();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(completedSalePrintProvider);
+    final canPrint = PosPermissionAccess.canPrintReceiptsSession(
+      ref.watch(authSessionProvider),
+    );
+    return AlertDialog(
+      title: const Text('Pending receipt prints'),
+      content: SizedBox(
+        width: 680,
+        child: state.pendingReceipts.isEmpty
+            ? const Text('No receipts are waiting to print.')
+            : ListView.separated(
+                shrinkWrap: true,
+                itemCount: state.pendingReceipts.length,
+                separatorBuilder: (_, __) => const Divider(),
+                itemBuilder: (context, index) {
+                  final operation = state.pendingReceipts[index];
+                  final busy = state.pendingActionId == operation.operationId;
+                  return ListTile(
+                    key: Key('pending-receipt-${operation.operationId}'),
+                    leading: const Icon(Icons.receipt_long),
+                    title: Text(operation.receipt.receiptNumber),
+                    subtitle: Text(
+                      '${operation.receipt.currency} ${operation.receipt.total.toStringAsFixed(2)} • ${operation.receipt.outletName}',
+                    ),
+                    trailing: Wrap(
+                      spacing: 8,
+                      children: [
+                        TextButton(
+                          onPressed: !canPrint || busy
+                              ? null
+                              : () => _confirmRemove(context, ref, operation),
+                          child: const Text('Remove'),
+                        ),
+                        FilledButton.icon(
+                          onPressed: !canPrint || busy
+                              ? null
+                              : () => _confirmPrint(context, ref, operation),
+                          icon: busy
+                              ? const SizedBox.square(
+                                  dimension: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.print),
+                          label: const Text('Print Now'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _confirmPrint(
+    BuildContext context,
+    WidgetRef ref,
+    PrintOperation operation,
+  ) async {
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Print receipt now?'),
+            content: Text(
+              'Print ${operation.receipt.receiptNumber} now? This sends one physical print request.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Confirm Print'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed) return;
+    await ref
+        .read(completedSalePrintProvider.notifier)
+        .printPendingReceipt(operation);
+  }
+
+  Future<void> _confirmRemove(
+    BuildContext context,
+    WidgetRef ref,
+    PrintOperation operation,
+  ) async {
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Remove pending receipt?'),
+            content: Text(
+              '${operation.receipt.receiptNumber} will not print automatically or remain in the pending list.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Keep'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Remove'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed) return;
+    await ref
+        .read(completedSalePrintProvider.notifier)
+        .removePendingReceipt(operation);
   }
 }
 

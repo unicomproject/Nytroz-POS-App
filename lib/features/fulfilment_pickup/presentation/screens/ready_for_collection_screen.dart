@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +10,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/access/pos_permission_access.dart';
 import '../../../../shared/widgets/pos_action_buttons.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
+import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/pos_online_order.dart';
 import '../providers/pos_online_orders_provider.dart';
 import '../utils/picking_formatters.dart';
@@ -40,6 +42,11 @@ class _ReadyForCollectionScreenState
   String? _success;
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final order =
         ref.watch(posPickingOrderProvider(widget.order.orderId)).maybeWhen(
@@ -49,8 +56,9 @@ class _ReadyForCollectionScreenState
     final granted =
         ref.watch(authSessionProvider)?.permissionCodes.toSet() ?? const {};
     final canViewReady = PosPermissionAccess.canViewOnlineOrderReady(granted);
-    final canNotify =
-        PosPermissionAccess.canNotifyOnlineOrderCustomer(granted);
+    final canNotify = PosPermissionAccess.canNotifyOnlineOrderCustomer(granted);
+    final collectionQrToken =
+        ref.watch(issuedCollectionQrTokenProvider(order.orderId));
 
     if (!canViewReady) {
       return const OnlineOrderScreenState(
@@ -99,9 +107,11 @@ class _ReadyForCollectionScreenState
         busy: _busy,
         error: _error,
         success: _success,
-        onNotify: canNotify && !_busy
-            ? () => unawaited(_notify(order))
-            : null,
+        onNotify: canNotify && !_busy ? () => unawaited(_notify(order)) : null,
+        onCopyCollectionCode: collectionQrToken == null
+            ? null
+            : () => unawaited(
+                _copyCollectionCode(order.orderId, collectionQrToken)),
       );
       final right = _ReadyRightColumn(
         order: order,
@@ -170,6 +180,15 @@ class _ReadyForCollectionScreenState
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _copyCollectionCode(String orderId, String token) async {
+    await Clipboard.setData(ClipboardData(text: token));
+    ref.read(issuedCollectionQrTokenProvider(orderId).notifier).state = null;
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Collection code copied for the customer.')),
+    );
   }
 
   String _mapError(DioException error) {
@@ -311,6 +330,7 @@ class _ReadyLeftColumn extends StatelessWidget {
     this.error,
     this.success,
     this.onNotify,
+    this.onCopyCollectionCode,
   });
 
   final PosPickingOrder order;
@@ -321,10 +341,11 @@ class _ReadyLeftColumn extends StatelessWidget {
   final String? error;
   final String? success;
   final VoidCallback? onNotify;
+  final VoidCallback? onCopyCollectionCode;
 
   @override
   Widget build(BuildContext context) {
-    final successTone = Colors.green.shade700;
+    const successTone = TenantAdminColors.success;
     final gap = ultraCompact ? 6.0 : (compact ? 8.0 : 10.0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -390,6 +411,18 @@ class _ReadyLeftColumn extends StatelessWidget {
               leadingIcon: Icons.notifications_active_outlined,
             ),
           ),
+        if (onCopyCollectionCode != null) ...[
+          SizedBox(height: gap),
+          SizedBox(
+            height: ultraCompact ? 36 : (compact ? 40 : 44),
+            child: OutlinedButton.icon(
+              key: const Key('copy-collection-code'),
+              onPressed: onCopyCollectionCode,
+              icon: const Icon(Icons.content_copy_outlined),
+              label: const Text('Copy Collection Code'),
+            ),
+          ),
+        ],
         if (!ultraCompact) ...[
           SizedBox(height: gap),
           Text(
@@ -418,7 +451,7 @@ class ReadyForCollectionHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final successTone = Colors.green.shade700;
+    const successTone = TenantAdminColors.success;
     return Semantics(
       label: 'All items picked and packed. This order is ready for customer collection.',
       child: Container(
@@ -745,7 +778,7 @@ class _ReadyProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final successTone = Colors.green.shade700;
+    const successTone = TenantAdminColors.success;
     return Container(
       padding: EdgeInsets.all(compact ? 8 : 10),
       decoration: pickingCardDecoration(context),

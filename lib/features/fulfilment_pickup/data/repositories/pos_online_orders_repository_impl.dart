@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../domain/entities/pos_online_order.dart';
+import '../../domain/entities/pos_online_order_collection.dart';
 import '../../domain/repositories/pos_online_orders_repository.dart';
 import '../datasources/pos_online_orders_remote_datasource.dart';
 
@@ -124,4 +125,30 @@ class PosOnlineOrdersRepositoryImpl implements PosOnlineOrdersRepository {
     required String orderId,
   }) =>
       _remote.notifyReady(outletId: outletId, orderId: orderId);
+
+  @override
+  Future<PosCollectionValidationResult> validateCollectionQr({
+    required String outletId,
+    required String token,
+    CancelToken? cancelToken,
+  }) =>
+      _remote.validateCollectionQr(
+        outletId: outletId,
+        token: token,
+        cancelToken: cancelToken,
+      );
+
+  @override
+  Future<PosCollectionCompleteResult> completeCollection({
+    required String outletId,
+    required String orderId,
+    required int expectedVersion,
+    CancelToken? cancelToken,
+  }) =>
+      _remote.completeCollection(
+        outletId: outletId,
+        orderId: orderId,
+        expectedVersion: expectedVersion,
+        cancelToken: cancelToken,
+      );
 }

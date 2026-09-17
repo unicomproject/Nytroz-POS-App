@@ -101,7 +101,7 @@ class PaymentSuccessActions extends ConsumerWidget {
   }
 
   void _startNewSale(BuildContext context, WidgetRef ref) {
-    ref.read(posNewSaleCartProvider.notifier).clear();
+    ref.read(posNewSaleCartProvider.notifier).startNextSale();
     ref.invalidate(posCashPaymentIntentProvider);
     ref.read(posCashPaymentProvider.notifier).clearAmount();
     context.go('/pos/new-sale');

@@ -49,20 +49,21 @@ void main() {
       expect(result.phase, CashPaymentIntentPhase.inFlight);
     });
 
-    test('duplicate beginSubmission with same fingerprint returns same key',
-        () {
+    test('duplicate beginSubmission with same fingerprint is blocked', () {
       final first = intent.beginSubmission(
         saleIdentity: 'cart-a',
         requestFingerprint: 'fp-1',
       );
-      final second = intent.beginSubmission(
-        saleIdentity: 'cart-a',
-        requestFingerprint: 'fp-1',
-      );
-      expect(second.key, first.key);
+      expect(
+          () => intent.beginSubmission(
+                saleIdentity: 'cart-a',
+                requestFingerprint: 'fp-1',
+              ),
+          throwsStateError);
+      expect(intent.state!.key, first.key);
     });
 
-    test('markSucceeded prevents resubmission and opens fresh intent', () {
+    test('markSucceeded prevents resubmission and preserves intent', () {
       final first = intent.beginSubmission(
         saleIdentity: 'cart-a',
         requestFingerprint: 'fp-1',
@@ -71,7 +72,7 @@ void main() {
       expect(intent.state!.phase, CashPaymentIntentPhase.succeeded);
 
       final next = intent.open('cart-a');
-      expect(next.key, isNot(first.key));
+      expect(next.key, first.key);
     });
 
     test('markKnownRejected blocks resubmission until startNew', () {

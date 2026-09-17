@@ -101,9 +101,10 @@ double? _optionalDouble(Object? value) {
 }
 
 class TillException implements Exception {
-  const TillException(this.message);
+  const TillException(this.message, {this.code});
 
   final String message;
+  final String? code;
 }
 
 class CloseTillForm {

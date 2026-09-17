@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:flutter/material.dart';
 
 import '../../payment_method_style.dart';
@@ -47,7 +48,7 @@ class PaymentChangeCustomerButton extends StatelessWidget {
               Icon(
                 Icons.chevron_right_rounded,
                 size: 20,
-                color: Color(0xFF64748B),
+                color: TenantAdminColors.mutedText,
               ),
             ],
           ),

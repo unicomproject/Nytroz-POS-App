@@ -1,14 +1,19 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:nytroz_pos/core/storage/app_secure_storage.dart';
 import 'package:nytroz_pos/features/hardware/receipt_printer/adapters/receipt_printer_adapter.dart';
 import 'package:nytroz_pos/features/hardware/receipt_printer/models/completed_sale_receipt.dart';
 import 'package:nytroz_pos/features/hardware/receipt_printer/models/local_print_agent_models.dart';
 import 'package:nytroz_pos/features/hardware/receipt_printer/models/pos_device_printer_config.dart';
 import 'package:nytroz_pos/features/hardware/receipt_printer/pos_receipt_printer_service.dart';
 import 'package:nytroz_pos/features/hardware/receipt_printer/recovery/print_operation.dart';
+import 'package:nytroz_pos/features/hardware/receipt_printer/recovery/print_operation_store.dart';
 import 'package:nytroz_pos/features/sale/presentation/providers/completed_sale_print_provider.dart';
 
 void main() {
   group('completed-sale Local Print Agent', () {
+    setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+
     test('routes authoritative receipt through structured HTTP adapter',
         () async {
       final adapter = _StructuredAgentAdapter();
@@ -102,6 +107,102 @@ void main() {
       expect(audits.single['agentResult'], 'operator_confirmed_printed');
     });
 
+    test('startup holds legacy pending print until operator confirms',
+        () async {
+      final store = PrintOperationStore(
+        const AppSecureStorage(FlutterSecureStorage()),
+      );
+      final operation = _pendingOperation();
+      await store.upsert(operation);
+      final adapter = _StructuredAgentAdapter();
+      final controller = CompletedSalePrintController(
+        _service(adapter),
+        (_, __) async {},
+        store,
+      );
+
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(adapter.structuredPrintCalls, 0);
+      expect(controller.state.pendingReceipts, hasLength(1));
+      expect(
+        (await store.load()).single.state,
+        PrintOperationState.awaitingConfirmation,
+      );
+    });
+
+    test('operator confirmation prints once and removes pending item',
+        () async {
+      final store = PrintOperationStore(
+        const AppSecureStorage(FlutterSecureStorage()),
+      );
+      final operation = _pendingOperation();
+      await store.upsert(operation);
+      final adapter = _StructuredAgentAdapter();
+      final controller = CompletedSalePrintController(
+        _service(adapter),
+        (_, __) async {},
+        store,
+      );
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      await controller.printPendingReceipt(
+        controller.state.pendingReceipts.single,
+      );
+
+      expect(adapter.structuredPrintCalls, 1);
+      expect(controller.state.pendingReceipts, isEmpty);
+    });
+
+    test('operator removal clears pending item without physical print',
+        () async {
+      final store = PrintOperationStore(
+        const AppSecureStorage(FlutterSecureStorage()),
+      );
+      await store.upsert(_pendingOperation());
+      final adapter = _StructuredAgentAdapter();
+      final controller = CompletedSalePrintController(
+        _service(adapter),
+        (_, __) async {},
+        store,
+      );
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      await controller.removePendingReceipt(
+        controller.state.pendingReceipts.single,
+      );
+
+      expect(adapter.structuredPrintCalls, 0);
+      expect(controller.state.pendingReceipts, isEmpty);
+      expect(await store.load(), isEmpty);
+    });
+
+    test('printer unavailable moves receipt to manual confirmation queue',
+        () async {
+      final store = PrintOperationStore(
+        const AppSecureStorage(FlutterSecureStorage()),
+      );
+      final adapter = _StructuredAgentAdapter(printerUnavailable: true);
+      final controller = CompletedSalePrintController(
+        _service(adapter),
+        (_, __) async {},
+        store,
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      await controller.printAutomatically(_receipt());
+
+      expect(adapter.structuredPrintCalls, 1);
+      expect(controller.state.pendingReceipts, hasLength(1));
+      expect(
+        controller.state.pendingReceipts.single.state,
+        PrintOperationState.awaitingConfirmation,
+      );
+    });
+
     test(
         'customer and merchant copies use independent stable print and audit identities',
         () async {
@@ -134,6 +235,20 @@ void main() {
       expect(audits.map((x) => x['copyIndex']), [1, 1]);
     });
   });
+}
+
+PrintOperation _pendingOperation() {
+  final now = DateTime.utc(2026, 9, 15);
+  return PrintOperation(
+    operationId: 'pending-operation',
+    receipt: _receipt(),
+    printRequestId: 'eeeeeeee-eeee-4eee-aeee-eeeeeeeeeeee',
+    operatorUserId: _receipt().cashierId,
+    deviceId: _receipt().deviceId,
+    createdAt: now,
+    updatedAt: now,
+    state: PrintOperationState.pendingPrint,
+  );
 }
 
 PosReceiptPrinterService _service(_StructuredAgentAdapter adapter) {
@@ -188,6 +303,9 @@ CompletedSaleReceipt _receipt() => CompletedSaleReceipt(
 
 class _StructuredAgentAdapter
     implements ReceiptPrinterAdapter, StructuredReceiptPrinterAdapter {
+  _StructuredAgentAdapter({this.printerUnavailable = false});
+
+  final bool printerUnavailable;
   int structuredPrintCalls = 0;
   int bytePrintCalls = 0;
   LocalPrintAgentReceiptRequest? lastRequest;
@@ -220,6 +338,12 @@ class _StructuredAgentAdapter
     LocalPrintAgentReceiptRequest request,
   ) async {
     structuredPrintCalls++;
+    if (printerUnavailable) {
+      throw const LocalPrintAgentException(
+        LocalPrintAgentFailureType.printerUnavailable,
+        'Printer unavailable',
+      );
+    }
     lastRequest = request;
     requests.add(request);
     return LocalPrintAgentPrintResult(

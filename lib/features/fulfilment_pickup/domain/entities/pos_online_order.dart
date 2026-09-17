@@ -292,6 +292,12 @@ class PosOnlineOrderDetail {
     this.serverTime,
     this.backendItemCount,
     this.backendUnitCount,
+    this.canPack = false,
+    this.isReadyForCollection = false,
+    this.readyAt,
+    this.collectedAt,
+    this.completedAt,
+    this.cancelledAt,
   });
 
   final PosOnlineOrder order;
@@ -323,6 +329,12 @@ class PosOnlineOrderDetail {
   final DateTime? serverTime;
   final int? backendItemCount;
   final double? backendUnitCount;
+  final bool canPack;
+  final bool isReadyForCollection;
+  final DateTime? readyAt;
+  final DateTime? collectedAt;
+  final DateTime? completedAt;
+  final DateTime? cancelledAt;
   final List<PosOnlineOrderLine> lines;
 
   int get itemCount => backendItemCount ?? lines.length;
@@ -390,6 +402,12 @@ class PosOnlineOrderDetail {
           json['itemCount'] == null ? null : _integer(json['itemCount']),
       backendUnitCount:
           json['unitCount'] == null ? null : _decimal(json['unitCount']),
+      canPack: json['canPack'] == true,
+      isReadyForCollection: json['isReadyForCollection'] == true,
+      readyAt: _date(json['readyAt']),
+      collectedAt: _date(json['collectedAt']),
+      completedAt: _date(json['completedAt']),
+      cancelledAt: _date(json['cancelledAt']),
       lines: lines,
     );
   }
@@ -699,6 +717,7 @@ class PosFulfillmentCommandResult {
     required this.completedLines,
     this.packageNumber,
     this.fulfillmentOrderId,
+    this.collectionQrToken,
     this.updatedAt,
     this.canPack = false,
     this.fulfillmentVersion = 0,
@@ -709,6 +728,9 @@ class PosFulfillmentCommandResult {
   final int completedLines;
   final String? packageNumber;
   final String? fulfillmentOrderId;
+
+  /// Returned only when an order is first marked ready. It must remain transient.
+  final String? collectionQrToken;
   final DateTime? updatedAt;
   final bool canPack;
   final int fulfillmentVersion;
@@ -721,6 +743,7 @@ class PosFulfillmentCommandResult {
         completedLines: _integer(json['completedLines']),
         packageNumber: _optionalText(json['packageNumber']),
         fulfillmentOrderId: _optionalText(json['fulfillmentOrderId']),
+        collectionQrToken: _optionalText(json['collectionQrToken']),
         updatedAt: _date(json['updatedAt']),
         canPack: json['canPack'] == true,
         fulfillmentVersion: _integer(json['fulfillmentVersion']),

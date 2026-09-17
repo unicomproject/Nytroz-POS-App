@@ -1,3 +1,10 @@
+class PosCheckoutPaymentStatusPayload {
+  const PosCheckoutPaymentStatusPayload(this.status, [this.payment]);
+
+  final String status;
+  final PosCheckoutStartPaymentPayload? payment;
+}
+
 class PosCheckoutSummaryPayload {
   const PosCheckoutSummaryPayload({
     required this.billingSummary,

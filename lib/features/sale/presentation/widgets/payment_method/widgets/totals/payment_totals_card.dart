@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../providers/pos_checkout_summary_provider.dart';
@@ -12,7 +13,7 @@ class PaymentTotalsCard extends StatelessWidget {
         key: const ValueKey('payment-totals-card'),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
+          color: TenantAdminColors.subtleBackground,
           border: Border.all(color: PaymentMethodStyle.border),
           borderRadius: BorderRadius.circular(10),
         ),
@@ -22,7 +23,7 @@ class PaymentTotalsCard extends StatelessWidget {
             PaymentTotalRow(
                 label: 'Discount',
                 value: -summary.discount,
-                colour: const Color(0xFF079529)),
+                colour: TenantAdminColors.success),
           PaymentTotalRow(
               label: 'Tax',
               value: summary.tax,
@@ -32,7 +33,7 @@ class PaymentTotalsCard extends StatelessWidget {
               label: 'Total Amount',
               value: summary.totalPayable,
               strong: true,
-              colour: PaymentMethodStyle.orange),
+              colour: Theme.of(context).colorScheme.primary),
         ]),
       );
 }

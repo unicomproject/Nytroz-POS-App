@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_endpoints.dart';
 import '../../domain/entities/pos_online_order.dart';
+import '../../domain/entities/pos_online_order_collection.dart';
 
 class PosOnlineOrdersRemoteDatasource {
   const PosOnlineOrdersRemoteDatasource(this._dio);
@@ -147,6 +148,34 @@ class PosOnlineOrdersRemoteDatasource {
     return PosNotifyReadyResult.fromJson(_data(response.data));
   }
 
+  Future<PosCollectionValidationResult> validateCollectionQr({
+    required String outletId,
+    required String token,
+    CancelToken? cancelToken,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.posOnlineOrderCollectionQrValidate,
+      queryParameters: {'outletId': outletId},
+      data: {'token': token},
+      cancelToken: cancelToken,
+    );
+    return PosCollectionValidationResult.fromJson(_data(response.data));
+  }
+
+  Future<PosCollectionCompleteResult> completeCollection({
+    required String outletId,
+    required String orderId,
+    required int expectedVersion,
+    CancelToken? cancelToken,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.posOnlineOrderCollectionComplete(orderId),
+      queryParameters: {'outletId': outletId},
+      data: {'expectedVersion': expectedVersion},
+      cancelToken: cancelToken,
+    );
+    return PosCollectionCompleteResult.fromJson(_data(response.data));
+  }
   Future<PosFulfillmentCommandResult> _command(
       String path, String outletId, Map<String, dynamic> body) async {
     final response = await _dio.post<Map<String, dynamic>>(path,

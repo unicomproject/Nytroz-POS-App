@@ -238,6 +238,7 @@ void main() {
       'completedLines': 2,
       'packageNumber': 'PKG-CC-0001-01',
       'fulfillmentOrderId': 'fulfilment-1',
+      'collectionQrToken': 'opaque-one-time-collection-code',
       'updatedAt': '2026-08-25T10:30:00Z',
     });
 
@@ -246,6 +247,7 @@ void main() {
     expect(result.completedLines, 2);
     expect(result.packageNumber, 'PKG-CC-0001-01');
     expect(result.fulfillmentOrderId, 'fulfilment-1');
+    expect(result.collectionQrToken, 'opaque-one-time-collection-code');
     expect(result.updatedAt, isNotNull);
   });
 
