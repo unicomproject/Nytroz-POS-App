@@ -418,6 +418,11 @@ class PosPermissionAccess {
         granted.contains(PosPermissionCodes.viewOnlineOrderReady);
   }
 
+  static bool canVerifyOnlineOrderPickup(Set<String> granted) {
+    return canViewOnlineOrderReady(granted) &&
+        granted.contains(PosPermissionCodes.verifyOnlineOrderPickup);
+  }
+
   static bool canNotifyOnlineOrderCustomer(Set<String> granted) {
     return canViewOnlineOrderReady(granted) &&
         granted.contains(PosPermissionCodes.notifyOnlineOrderCustomer);

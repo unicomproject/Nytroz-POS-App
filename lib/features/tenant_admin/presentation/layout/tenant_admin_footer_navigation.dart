@@ -11,7 +11,6 @@ import '../theme/tenant_admin_theme.dart';
 /// starts with `/tenant-admin/` and matches one of these segments.
 const List<String> tenantAdminSettingsAreaSegments = [
   'settings',
-  'brands',
   'categories',
   'stock',
   'staff',

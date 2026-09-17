@@ -636,8 +636,7 @@ class PosPickingActions {
         error.type == DioExceptionType.receiveTimeout;
   }
 
-  static PosFulfillmentCommandResult _commandFromPicking(
-          PosPickingOrder order) =>
+  static PosFulfillmentCommandResult _commandFromPicking(PosPickingOrder order) =>
       PosFulfillmentCommandResult(
         orderId: order.orderId,
         fulfillmentOrderId: order.fulfillmentOrderId,

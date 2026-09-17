@@ -16,6 +16,7 @@ class TenantAdminDataTable extends StatefulWidget {
     this.showCheckboxColumn = false,
     this.footer,
     this.minWidth = 850.0,
+    this.fillAvailableWidth = false,
   });
 
   final List<DataColumn> columns;
@@ -28,6 +29,7 @@ class TenantAdminDataTable extends StatefulWidget {
   final bool showCheckboxColumn;
   final Widget? footer;
   final double minWidth;
+  final bool fillAvailableWidth;
 
   @override
   State<TenantAdminDataTable> createState() => _TenantAdminDataTableState();

@@ -406,6 +406,16 @@ List<RouteBase> posShellRoutes(Ref ref) {
                         )
                       : const TenantAdminForbiddenScreen(),
             ),
+            GoRoute(
+              path: ':orderId/picking/lines/:lineId',
+              builder: (context, state) =>
+                  _canViewOnlineOrderPicking(ref.read(authSessionProvider))
+                      ? PosPickItemScreen(
+                          orderId: state.pathParameters['orderId']!,
+                          lineId: state.pathParameters['lineId']!,
+                        )
+                      : const TenantAdminForbiddenScreen(),
+            ),
           ],
         ),
         GoRoute(

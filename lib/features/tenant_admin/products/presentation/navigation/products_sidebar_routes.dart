@@ -13,6 +13,11 @@ class ProductsSidebarRoutes {
   static String categoryEdit(String id) => '/tenant-admin/categories/$id/edit';
 
   static const brands = '/tenant-admin/brands';
+  static const addBrand = '/tenant-admin/brands/add';
+  static const editBrandPattern = '/tenant-admin/brands/:brandId/edit';
+
+  static String editBrand(String brandId) =>
+      '/tenant-admin/brands/$brandId/edit';
   static const variantTemplates = '/tenant-admin/variant-templates';
   static const popular = '/tenant-admin/products/popular';
   static const import = '/tenant-admin/products/import';
@@ -30,6 +35,7 @@ class ProductsSidebarRoutes {
         path.startsWith('$categories/') ||
         path == brands ||
         path == tax ||
+        path.startsWith('$brands/') ||
         path == variantTemplates ||
         path == popular ||
         path == import) {

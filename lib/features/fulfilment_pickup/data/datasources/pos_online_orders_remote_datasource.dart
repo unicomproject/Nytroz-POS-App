@@ -176,7 +176,6 @@ class PosOnlineOrdersRemoteDatasource {
     );
     return PosCollectionCompleteResult.fromJson(_data(response.data));
   }
-
   Future<PosFulfillmentCommandResult> _command(
       String path, String outletId, Map<String, dynamic> body) async {
     final response = await _dio.post<Map<String, dynamic>>(path,
