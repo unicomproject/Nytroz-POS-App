@@ -113,38 +113,25 @@ class ProductTypeTracking extends StatelessWidget {
   }
 
   Future<void> _selectStructure(BuildContext context, String structure) async {
-    final confirmed = await _confirmIfNeeded(
-      context,
-      productStructure: structure,
-      trackInventory: structure == 'BUNDLE' ? false : state.trackInventory,
-      batchTracking: structure == 'BUNDLE' ? false : state.batchTracking,
-      expiryTracking: structure == 'BUNDLE' ? false : state.expiryTracking,
-      serialTracking: structure == 'BUNDLE' ? false : state.serialTracking,
-    );
-    if (!confirmed) return;
+    // Only BUNDLE makes Initial Tracking incompatible (component-based inventory).
+    // Selecting SIMPLE/VARIANT must not wipe fill-first Batch/Expiry/Serial values.
+    if (structure == 'BUNDLE') {
+      final confirmed = await _confirmIfNeeded(
+        context,
+        productStructure: structure,
+        trackInventory: false,
+        batchTracking: false,
+        expiryTracking: false,
+        serialTracking: false,
+      );
+      if (!confirmed) return;
+    }
     controller.setProductStructure(structure);
   }
 
   Future<void> _setTrackInventory(BuildContext context, bool value) async {
-    // Enabling Track Inventory alone must not clear Initial Tracking values.
-    // User still needs a chance to turn on matching Batch / Expiry / Serial
-    // toggles (see helper copy on the Initial Tracking card). Reconciliation
-    // runs when those toggles change, Track Inventory is turned off, or the
-    // user continues from Step 2.
-    if (value) {
-      controller.setTrackInventory(true);
-      return;
-    }
-
-    final confirmed = await _confirmIfNeeded(
-      context,
-      trackInventory: false,
-      batchTracking: false,
-      expiryTracking: false,
-      serialTracking: false,
-    );
-    if (!confirmed) return;
-    controller.setTrackInventory(false);
+    // Never clear Initial Tracking values when toggling Track Inventory.
+    controller.setTrackInventory(value);
   }
 
   Future<void> _setBatchTracking(BuildContext context, bool value) async {
@@ -152,6 +139,7 @@ class ProductTypeTracking extends StatelessWidget {
       context,
       batchTracking: value,
       expiryTracking: value ? state.expiryTracking : false,
+      serialTracking: value ? false : state.serialTracking,
     );
     if (!confirmed) return;
     controller.setBatchTracking(value);
@@ -189,16 +177,42 @@ class ProductTypeTracking extends StatelessWidget {
       expiryTracking: expiryTracking,
       serialTracking: serialTracking,
     );
-    if (plan.requiresConfirmation) {
-      controller.applyInitialTrackingPlan(plan, confirmed: true);
+    if (!plan.requiresConfirmation) {
+      return true;
     }
+
+    // BR-TRACK-008 / FR-IT-006: never silently discard Initial Tracking values.
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Clear incompatible tracking details?'),
+            content: const Text(
+              'Tracking is disabled for the entered Batch/Expiry/Serial values. '
+              'These values will be cleared if you continue.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Clear & Continue'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmed) {
+      return false;
+    }
+
+    controller.applyInitialTrackingPlan(plan, confirmed: true);
     return true;
   }
 
   Widget _buildDynamicContent(BuildContext context) {
-    if (!state.productStructureConfirmed) {
-      return const SizedBox.shrink();
-    }
     switch (state.productStructure) {
       case 'VARIANT':
         return _buildVariantTrackingContent(context);
@@ -523,12 +537,11 @@ class ProductTypeTracking extends StatelessWidget {
       return const [];
     }
 
-    if (!state.productStructureConfirmed) {
-      return const [];
-    }
-
     final structure = state.productStructure.toUpperCase();
-    if (structure != 'SIMPLE' && structure != 'VARIANT') {
+    // BUNDLE never shows Initial Tracking. SIMPLE / VARIANT (and unconfirmed
+    // default SIMPLE layout) keep the card visible so users can enter values
+    // before or while selecting product type.
+    if (structure == 'BUNDLE') {
       return const [];
     }
 

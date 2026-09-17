@@ -58,6 +58,24 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     state = state.copyWith(currentStep: 2, lastCompletedSetupStep: 1);
   }
 
+  /// Seeds S1-F external found state for Use This Product image carry-over tests.
+  @visibleForTesting
+  void seedExternalFoundForTesting({
+    required ExternalProductSuggestionDto suggestion,
+    String barcode = '5000168003887',
+  }) {
+    state = state.copyWith(
+      scanStepState: state.scanStepState.copyWith(
+        panel: ScanBarcodePanel.externalFound,
+        candidateBarcode: barcode,
+        barcodeType: 'UNKNOWN',
+        identifierStandard: 'GTIN13',
+        externalStatus: 'FOUND',
+        externalSuggestion: suggestion,
+      ),
+    );
+  }
+
   void clearPageError() {
     state = state.copyWith(clearPageError: true);
   }
@@ -649,6 +667,12 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         candidateBarcode: includeCandidate ? scan.candidateBarcode : null,
         barcodeType: includeCandidate ? scan.barcodeType : null,
       );
+
+      // Spec §24: external imageCandidate → server-side fetch/stage (non-fatal).
+      final imageCandidate = prefill?.imageCandidate?.trim();
+      if (imageCandidate != null && imageCandidate.isNotEmpty) {
+        await _stageExternalImageCandidate(imageCandidate);
+      }
     } catch (e) {
       state = state.copyWith(
         isSavingDraft: false,
@@ -657,6 +681,51 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           lastError: e.toString(),
         ),
       );
+    }
+  }
+
+  /// Stages an external suggestion image via backend fetch. Failures are ignored
+  /// so Product Setup continues without an image (PS1-T22).
+  Future<void> _stageExternalImageCandidate(String imageUrl) async {
+    try {
+      final stagedDto = await _repository.stageImageFromUrl(imageUrl);
+      final isFirst = state.stagedMediaAssets.isEmpty;
+      final newStaged = StagedProductImage(
+        mediaAssetId: stagedDto.mediaAssetId,
+        publicUrl: stagedDto.publicUrl,
+        fileName: stagedDto.fileName,
+        mimeType: stagedDto.mimeType,
+        fileSizeBytes: stagedDto.fileSizeBytes,
+        createdAt: stagedDto.createdAt,
+        status: stagedDto.status,
+        isPrimary: isFirst,
+        sortOrder: state.stagedMediaAssets.length + 1,
+      );
+
+      final updatedList =
+          List<StagedProductImage>.from(state.stagedMediaAssets)..add(newStaged);
+
+      final wizardImages = updatedList.map((e) {
+        return ProductWizardImageItem(
+          id: e.mediaAssetId,
+          mediaAssetId: e.mediaAssetId,
+          imageUrl: e.publicUrl ?? '',
+          fileName: e.fileName,
+          isPrimary: e.isPrimary,
+          sortOrder: e.sortOrder,
+          isStaged: true,
+          bytes: e.bytes,
+        );
+      }).toList();
+
+      state = state.copyWith(
+        stagedMediaAssets: updatedList,
+        productImages: wizardImages,
+        primaryImageId: isFirst ? stagedDto.mediaAssetId : state.primaryImageId,
+        isDirty: true,
+      );
+    } catch (_) {
+      // Non-fatal: continue to Basic Details without the external image.
     }
   }
 
@@ -683,8 +752,10 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     );
 
     if (prefill != null) {
+      // Clear prior images; external candidate is staged separately (non-fatal).
       next = next.copyWith(
         productImages: [],
+        stagedMediaAssets: [],
         primaryImageId: null,
         clearPrimaryImageId: true,
       );
@@ -1157,6 +1228,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     bool? batchTracking,
     bool? expiryTracking,
     bool? serialTracking,
+    bool forContinue = false,
   }) {
     return InitialTrackingCompatibility.evaluate(
       productStructure: productStructure ?? state.productStructure,
@@ -1167,6 +1239,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       batch: state.initialBatchNumber,
       expiry: state.initialExpiryDate,
       serial: state.initialSerialNumber,
+      forContinue: forContinue,
     );
   }
 
@@ -2076,8 +2149,10 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         return false;
       }
 
-      final plan = previewTrackingClear();
-      if (plan.requiresConfirmation) {
+      final plan = previewTrackingClear(forContinue: true);
+      // Keep Initial Tracking values on continue — do not wipe on this step.
+      if (plan.requiresConfirmation &&
+          state.confirmClearIncompatibleInitialTracking) {
         applyInitialTrackingPlan(plan, confirmed: true);
       }
     }
@@ -2212,10 +2287,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         expiryTracking: false,
         serialTracking: false,
       );
-      final plan = previewTrackingClear();
-      if (plan.requiresConfirmation) {
-        applyInitialTrackingPlan(plan, confirmed: true);
-      }
+      // Keep Initial Tracking field values when skipping tracking configuration.
     }
 
     final nextStep = getNextApplicableStep();

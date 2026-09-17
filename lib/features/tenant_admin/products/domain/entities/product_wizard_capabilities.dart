@@ -83,6 +83,10 @@ class InitialTrackingCompatibility {
     String? batch,
     DateTime? expiry,
     String? serial,
+    /// When false (toggle edits), keep provisional values so the user can turn
+    /// on matching Batch/Expiry/Serial rules. When true (Save & Continue),
+    /// incompatible values require an explicit clear confirmation.
+    bool forContinue = false,
   }) {
     final structure = productStructure.trim().toUpperCase();
     final keepBatch = _trimOrNull(batch);
@@ -91,11 +95,9 @@ class InitialTrackingCompatibility {
     final quantityOnly = !trackInventory || isBundle;
 
     if (quantityOnly) {
-      if (!hasAnyValues(batch: keepBatch, expiry: expiry, serial: keepSerial)) {
-        return InitialTrackingClearPlan.unchanged(
-            keepBatch, expiry, keepSerial);
-      }
-      return InitialTrackingClearPlan.requiresConfirmation(null, null, null);
+      // Keep provisional Initial Tracking values even when Track Inventory is
+      // off or structure is BUNDLE — never prompt to wipe them on toggle/continue.
+      return InitialTrackingClearPlan.unchanged(keepBatch, expiry, keepSerial);
     }
 
     if (serialTracking) {
@@ -115,17 +117,17 @@ class InitialTrackingCompatibility {
     }
 
     if (batchTracking) {
-      if (expiry != null || keepSerial != null) {
+      if (keepSerial != null) {
         return InitialTrackingClearPlan.requiresConfirmation(
-            keepBatch, null, null);
+          keepBatch,
+          expiry,
+          null,
+        );
       }
-      return InitialTrackingClearPlan.unchanged(keepBatch, null, null);
+      return InitialTrackingClearPlan.unchanged(keepBatch, expiry, null);
     }
 
-    if (hasAnyValues(batch: keepBatch, expiry: expiry, serial: keepSerial)) {
-      return InitialTrackingClearPlan.requiresConfirmation(null, null, null);
-    }
-
+    // Track Inventory on, specialized toggles off — keep all provisional values.
     return InitialTrackingClearPlan.unchanged(keepBatch, expiry, keepSerial);
   }
 
