@@ -59,27 +59,16 @@ class Oo01Header extends StatelessWidget {
                 suffixIcon: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (onCollectionQr != null)
-                      Semantics(
-                        container: true,
-                        button: true,
-                        label: 'Scan customer collection QR',
-                        child: IconButton(
-                          key: const Key('oo01-collection-qr'),
-                          tooltip: 'Scan customer collection QR',
-                          onPressed: onCollectionQr,
-                          icon: const Icon(Icons.qr_code_2),
-                        ),
-                      ),
                     const SizedBox(height: 24, child: VerticalDivider()),
                     Semantics(
                       container: true,
                       button: true,
-                      label: 'Scan order',
+                      label: 'Scan customer collection QR',
                       child: IconButton(
-                        tooltip: 'Scan order',
-                        onPressed: onScan,
-                        icon: const Icon(Icons.qr_code_scanner),
+                        key: const Key('oo01-collection-qr'),
+                        tooltip: 'Scan customer collection QR',
+                        onPressed: onCollectionQr,
+                        icon: const Icon(Icons.qr_code_2),
                       ),
                     ),
                   ],
