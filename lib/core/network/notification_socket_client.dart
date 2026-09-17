@@ -49,7 +49,7 @@ class NotificationSocketClient {
   }
 
   void disconnect() {
-    _currentToken = null;
+    _currentSessionKey = null;
     _wasConnected = false;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;

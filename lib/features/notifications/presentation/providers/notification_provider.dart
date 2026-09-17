@@ -84,7 +84,10 @@ class NotificationInboxController
       return;
     }
 
-    _ensureSocketClient().connect(session.accessToken);
+    _ensureSocketClient().connect(
+      session.accessToken,
+      () async => _ref.read(authSessionProvider)?.accessToken,
+    );
     unawaited(refreshAuthoritativeSurfaces(includeOnlineOrders: true));
   }
 

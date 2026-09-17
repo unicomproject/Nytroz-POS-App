@@ -29,6 +29,7 @@ class TenantAdminDataTable extends StatefulWidget {
   final bool showCheckboxColumn;
   final Widget? footer;
   final double minWidth;
+  final bool fillAvailableWidth;
 
   @override
   State<TenantAdminDataTable> createState() => _TenantAdminDataTableState();
