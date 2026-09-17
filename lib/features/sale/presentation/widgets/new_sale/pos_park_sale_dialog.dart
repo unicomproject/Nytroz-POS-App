@@ -210,7 +210,6 @@ class _PosParkSaleDialogState extends ConsumerState<_PosParkSaleDialog> {
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed;
   }
-
 }
 
 class _ParkDialogHeader extends StatelessWidget {

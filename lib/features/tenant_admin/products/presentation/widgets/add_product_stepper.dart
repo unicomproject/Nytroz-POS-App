@@ -12,11 +12,11 @@ class AddProductStepper extends StatelessWidget {
   final ValueChanged<int>? onStepTapped;
 
   static const steps = [
+    'Scan Barcode',
     'Basic Details',
     'Product Type & Tracking',
-    'Units & Pack Conversion',
+    'Unit & Pack Conversion',
     'Product Configuration',
-    'Barcode & SKU',
     'Pricing & Tax',
     'Review & Create',
   ];

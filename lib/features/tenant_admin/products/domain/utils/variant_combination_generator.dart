@@ -1,4 +1,4 @@
-import '../entities/step4_variant_configuration_state.dart';
+import '../entities/variant_configuration_state.dart';
 
 class VariantCombinationGenerator {
   /// Generates the deterministic clientCombinationKey.

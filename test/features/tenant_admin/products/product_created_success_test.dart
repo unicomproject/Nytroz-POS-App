@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/step5_barcode_dtos.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/barcode_sku_dtos.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/add_product_wizard_state.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/step4_variant_configuration_state.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/step5_barcode_sku_state.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/step_7/product_created_success.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/variant_configuration_state.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/barcode_sku_state.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/review_create/product_created_success.dart';
 
 void main() {
   testWidgets('success screen shows create summary and actions', (tester) async {

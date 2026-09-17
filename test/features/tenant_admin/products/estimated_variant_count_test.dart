@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/product_draft_response_dto.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/step4_variant_configuration_state.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_draft_response_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/variant_configuration_state.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_create_options.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/tenant_product_repository.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/utils/variant_estimated_count_calculator.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/step_4/estimated_variant_count_card.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/variant_configuration/estimated_variant_count_card.dart';
 
 void main() {
   Step4VariantConfigurationState buildColourCapacityState({

@@ -60,8 +60,8 @@ class PosProductCategoryChips extends ConsumerWidget {
               color: TenantAdminColors.posNewSaleAccent,
               permission: PosPermissionCodes.catalogSectionsPopular,
             ),
-          if (permissions.hasPermission(
-              PosPermissionCodes.catalogSectionsFrequentlySold))
+          if (permissions
+              .hasPermission(PosPermissionCodes.catalogSectionsFrequentlySold))
             (
               segment: 'frequently-sold',
               label: 'Frequently Sold',

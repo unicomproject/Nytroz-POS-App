@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/tenant_product_filter_options_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/tenant_product_filter_options_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/mappers/tenant_product_mapper.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/providers/tenant_product_providers.dart';
 

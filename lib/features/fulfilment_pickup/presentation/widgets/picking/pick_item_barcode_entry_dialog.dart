@@ -47,7 +47,8 @@ class _PickItemBarcodeEntryDialogState
         widget.scanned ? 'Scan Item Barcode' : 'Enter Barcode Manually',
       ),
       content: TextField(
-        key: Key(widget.scanned ? 'scan-barcode-input' : 'manual-barcode-input'),
+        key:
+            Key(widget.scanned ? 'scan-barcode-input' : 'manual-barcode-input'),
         controller: _controller,
         autofocus: true,
         textInputAction: TextInputAction.done,

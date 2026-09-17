@@ -16,7 +16,6 @@ final effectivePermissionSetProvider = Provider<EffectivePermissionSet>((ref) {
 });
 
 /// Convenience: exact membership against the current session set.
-final permissionMembershipProvider =
-    Provider.family<bool, String>((ref, code) {
+final permissionMembershipProvider = Provider.family<bool, String>((ref, code) {
   return ref.watch(effectivePermissionSetProvider).hasPermission(code);
 });

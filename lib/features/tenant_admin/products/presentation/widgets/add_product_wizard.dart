@@ -4,21 +4,23 @@ import 'package:go_router/go_router.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/add_product_wizard_state.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_wizard_capabilities.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/scan_barcode_step_state.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_create_options.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/providers/tenant_product_providers.dart';
 
 import 'package:nytroz_pos/features/tenant_admin/presentation/widgets/tenant_admin_toast.dart';
 import 'add_product_stepper.dart';
-import 'product_type_tracking.dart';
+import 'product_type_tracking/product_type_tracking.dart';
 import 'product_wizard_summary.dart';
-import 'step_1/step_1_basic_details.dart';
-import 'step_3/units_pack_conversion.dart';
-import 'step_4/step_4_variant_configuration_form.dart';
-import 'step_5/step_5_barcode_sku_form.dart';
-import 'step_6/step_6_pricing_tax_form.dart';
-import 'step_7/product_created_success.dart';
-import 'step_7/step_7_review_create.dart';
+import 'basic_details/basic_details.dart';
+import 'units_pack_conversion/units_pack_conversion.dart';
+import 'variant_configuration/variant_configuration_form.dart';
+import 'barcode_sku/barcode_sku_form.dart';
+import 'scan_barcode/scan_barcode_step.dart';
+import 'pricing_tax/pricing_tax_form.dart';
+import 'review_create/product_created_success.dart';
+import 'review_create/review_create.dart';
 import 'wizard_actions_footer.dart';
 
 class AddProductWizard extends ConsumerStatefulWidget {
@@ -270,11 +272,13 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final showSummary =
-                  (widget.resumeProductId != null ||
+              final showSummary = (widget.resumeProductId != null ||
                       widget.resumeLocalDraftId != null) &&
                   state.status.toUpperCase() == 'DRAFT' &&
                   constraints.maxWidth >= 1000;
+              // Tip rail only when wide enough so 1024×768 main form is not crushed.
+              final showScanTips =
+                  state.currentStep == 1 && constraints.maxWidth >= 1180;
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -291,7 +295,10 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
                       child: _buildStepContent(state, controller),
                     ),
                   ),
-                  if (showSummary) ...[
+                  if (showScanTips) ...[
+                    const SizedBox(width: TenantAdminSpacing.lg),
+                    _ScanStepHelpCard(panel: state.scanStepState.panel),
+                  ] else if (showSummary) ...[
                     const SizedBox(width: TenantAdminSpacing.lg),
                     ProductWizardSummary(state: state),
                   ],
@@ -303,68 +310,71 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
 
         const SizedBox(height: TenantAdminSpacing.lg),
 
-        // Wizard Bottom Actions Footer (authoritative shared CTAs)
-        WizardActionsFooter(
-          onBack: state.currentStep > 1
-              ? () => controller.goToPreviousApplicableStep()
-              : null,
-          onCancel: _handleCancel,
-          onSaveDraft: () async {
-            final success = await controller.saveDraft();
-            if (success && context.mounted) {
-              ref.invalidate(localProductWizardDraftsProvider);
-              ref.invalidate(productListProvider);
-              showProductSaveToast(
-                context,
-                title: 'Draft Saved',
-                message: 'Draft saved locally on this device',
-              );
-              context.go('/tenant-admin/products');
-            }
-          },
-          onSkip: controller.canSkipCurrentStep
-              ? () async {
-                  final success = await controller.skip();
-                  if (success && context.mounted) {
-                    showProductSaveToast(
-                      context,
-                      title: 'Step Skipped',
-                      message: 'Moved to the next step.',
-                    );
+        if (state.currentStep > 1)
+          WizardActionsFooter(
+            onBack: () => controller.goToPreviousApplicableStep(),
+            onCancel: _handleCancel,
+            onSaveDraft: state.currentStep == 1
+                ? null
+                : () async {
+                    final success = await controller.saveDraft();
+                    if (success && context.mounted) {
+                      ref.invalidate(localProductWizardDraftsProvider);
+                      ref.invalidate(productListProvider);
+                      showProductSaveToast(
+                        context,
+                        title: 'Draft Saved',
+                        message: 'Draft saved locally on this device',
+                      );
+                      context.go('/tenant-admin/products');
+                    }
+                  },
+            onSkip: controller.canSkipCurrentStep
+                ? () async {
+                    final success = await controller.skip();
+                    if (success && context.mounted) {
+                      showProductSaveToast(
+                        context,
+                        title: 'Step Skipped',
+                        message: 'Moved to the next step.',
+                      );
+                    }
                   }
-                }
-              : null,
-          showSkip: state.currentStep >= 2 && state.currentStep <= 5,
-          onSaveAndContinue: () async {
-            final isStep7 = state.currentStep == 7;
-            if (isStep7 && state.isSubmitting) {
-              return;
-            }
-            final success = await controller.saveAndContinue();
-            if (success && context.mounted) {
-              if (isStep7) {
-                ref.invalidate(localProductWizardDraftsProvider);
-                ref.invalidate(productListProvider);
-                ref.invalidate(productSummaryProvider);
-                setState(() {
-                  _createSuccess = ProductCreateSuccessSnapshot.fromWizard(
-                    ref.read(addProductWizardControllerProvider),
-                  );
-                });
-              } else {
-                showProductSaveToast(
-                  context,
-                  title: 'Step Saved',
-                  message: 'Progress saved. Continue to the next step.',
-                );
-              }
-            }
-          },
-          isSavingDraft: state.isSavingDraft,
-          isSubmitting: state.isSubmitting,
-          saveAndContinueLabel:
-              state.currentStep == 7 ? 'Create Product' : 'Save & Continue',
-        ),
+                : null,
+            showSkip: state.currentStep >= 3 && state.currentStep <= 5,
+            onSaveAndContinue: state.currentStep == 1
+                ? null
+                : () async {
+                    final isStep7 = state.currentStep == 7;
+                    if (isStep7 && state.isSubmitting) {
+                      return;
+                    }
+                    final success = await controller.saveAndContinue();
+                    if (success && context.mounted) {
+                      if (isStep7) {
+                        ref.invalidate(localProductWizardDraftsProvider);
+                        ref.invalidate(productListProvider);
+                        ref.invalidate(productSummaryProvider);
+                        setState(() {
+                          _createSuccess =
+                              ProductCreateSuccessSnapshot.fromWizard(
+                            ref.read(addProductWizardControllerProvider),
+                          );
+                        });
+                      } else {
+                        showProductSaveToast(
+                          context,
+                          title: 'Step Saved',
+                          message: 'Progress saved. Continue to the next step.',
+                        );
+                      }
+                    }
+                  },
+            isSavingDraft: state.isSavingDraft,
+            isSubmitting: state.isSubmitting,
+            saveAndContinueLabel:
+                state.currentStep == 7 ? 'Create Product' : 'Save & Continue',
+          ),
       ],
     );
   }
@@ -375,6 +385,11 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
   ) {
     switch (state.currentStep) {
       case 1:
+        return ScanBarcodeStep(
+          state: state,
+          controller: controller,
+        );
+      case 2:
         return Step1BasicDetails(
           state: state,
           controller: controller,
@@ -383,7 +398,7 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           shortDescriptionController: _shortDescriptionController,
           longDescriptionController: _longDescriptionController,
         );
-      case 2:
+      case 3:
         return ProductTypeTracking(
           state: state,
           controller: controller,
@@ -395,44 +410,62 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           batchController: _batchController,
           serialController: _serialController,
         );
-      case 3:
+      case 4:
         return UnitsPackConversionForm(
           state: state,
           controller: controller,
         );
-      case 4:
+      case 5:
         switch (state.productStructure.toUpperCase()) {
           case 'VARIANT':
-            return Step4VariantConfigurationForm(
-              state: state,
-              controller: controller,
-              formKey: _step4FormKey,
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Step4VariantConfigurationForm(
+                    state: state,
+                    controller: controller,
+                    formKey: _step4FormKey,
+                  ),
+                ),
+                const SizedBox(height: TenantAdminSpacing.lg),
+                const Expanded(
+                  flex: 4,
+                  child: Step5BarcodeSkuForm(),
+                ),
+              ],
             );
           case 'BUNDLE':
-            return _buildStepPlaceholder('Bundle / Kit Composition');
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _buildStepPlaceholder('Bundle / Kit Composition'),
+                ),
+                const SizedBox(height: TenantAdminSpacing.lg),
+                const Expanded(
+                  child: Step5BarcodeSkuForm(),
+                ),
+              ],
+            );
           case 'SIMPLE':
           default:
-            return _buildStepPlaceholder('Simple Product Configuration');
+            // SIMPLE: sellable identity only (Barcode/SKU visual reused here).
+            return const Step5BarcodeSkuForm();
         }
-      case 5:
-        return const Step5BarcodeSkuForm();
       case 6:
         return const Step6PricingTaxForm();
       case 7:
         return Step7ReviewCreate(
           state: state,
           controller: controller,
-          canViewProductCost:
-              widget.capabilities?.canViewProductCost ?? true,
+          canViewProductCost: widget.capabilities?.canViewProductCost ?? true,
         );
       default:
-        return Step1BasicDetails(
+        return ScanBarcodeStep(
           state: state,
           controller: controller,
-          nameController: _nameController,
-          codeController: _codeController,
-          shortDescriptionController: _shortDescriptionController,
-          longDescriptionController: _longDescriptionController,
         );
     }
   }
@@ -459,14 +492,114 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
             ),
             const SizedBox(height: TenantAdminSpacing.sm),
             const Text(
-              'Review & Create will finalize the product in a later release.',
+              'Bundle composition graph enhancement is out of scope for this release.',
               style: TextStyle(
                 fontSize: 14,
                 color: TenantAdminColors.mutedText,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Right-rail help card for Step 1 (screenshot family). Shown only when wide.
+class _ScanStepHelpCard extends StatelessWidget {
+  const _ScanStepHelpCard({required this.panel});
+
+  final ScanBarcodePanel panel;
+
+  @override
+  Widget build(BuildContext context) {
+    final tip = switch (panel) {
+      ScanBarcodePanel.scanReady =>
+        'Use a HID barcode scanner, or enter the barcode manually if scanning is unavailable.',
+      ScanBarcodePanel.validating =>
+        'Format and catalogue checks run automatically after each scan.',
+      ScanBarcodePanel.localMatch =>
+        'View the existing product, create a duplicate draft, or cancel and rescan.',
+      ScanBarcodePanel.noLocalMatch =>
+        'Search product data, or continue and enter details yourself.',
+      ScanBarcodePanel.externalLookup =>
+        'Stay on Step 1 while product data is searched.',
+      ScanBarcodePanel.externalFound =>
+        'Use this product to prefill Basic Details, or create manually.',
+      ScanBarcodePanel.externalNoMatch =>
+        'Choose exactly one of the four continuation paths.',
+      ScanBarcodePanel.manualEntry =>
+        'Use length chips 8 / 12 / 13 / 14 to pad leading zeros when needed.',
+      ScanBarcodePanel.invalid =>
+        'Invalid barcode is a domain validation result — not a network failure.',
+      ScanBarcodePanel.noBarcode =>
+        'Own-made, service/fee, and unlabelled products can continue without a GTIN.',
+    };
+
+    return Container(
+      width: 260,
+      padding: const EdgeInsets.all(TenantAdminSpacing.lg),
+      decoration: BoxDecoration(
+        color: TenantAdminColors.surface,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.lg),
+        border: Border.all(color: TenantAdminColors.border),
+        boxShadow: TenantAdminShadows.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Scan Tips',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: TenantAdminColors.bodyText,
+            ),
+          ),
+          const SizedBox(height: TenantAdminSpacing.md),
+          const Divider(height: 1, color: TenantAdminColors.border),
+          const SizedBox(height: TenantAdminSpacing.md),
+          Text(
+            tip,
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.35,
+              color: TenantAdminColors.mutedText,
+            ),
+          ),
+          const SizedBox(height: TenantAdminSpacing.lg),
+          Container(
+            padding: const EdgeInsets.all(TenantAdminSpacing.md),
+            decoration: BoxDecoration(
+              color: TenantAdminColors.secondary.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              border: Border.all(color: TenantAdminColors.border),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: TenantAdminColors.posHomeAccentOrange,
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Step 1 stays on Scan Barcode until a draft is created.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      height: 1.3,
+                      color: TenantAdminColors.bodyText,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

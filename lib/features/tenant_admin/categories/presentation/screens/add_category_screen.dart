@@ -47,7 +47,8 @@ class _AddCategoryScreenState extends ConsumerState<AddCategoryScreen> {
     }
   }
 
-  void _handlePartialSuccess(CategorySaveResult result, CategoryAddFormState form) {
+  void _handlePartialSuccess(
+      CategorySaveResult result, CategoryAddFormState form) {
     setState(() {
       _createdCategoryId = result.category.id;
       _showImageRetry = true;

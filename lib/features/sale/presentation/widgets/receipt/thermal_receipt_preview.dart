@@ -412,7 +412,8 @@ class _SummarySection extends StatelessWidget {
           ),
         if (p.taxTotal > 0)
           _TotalLine(label: 'Tax', value: p.formatMoney(p.taxTotal)),
-        if (PosPaymentPermissionVisibility.canShowReceiptTotal(permissions)) ...[
+        if (PosPaymentPermissionVisibility.canShowReceiptTotal(
+            permissions)) ...[
           const SizedBox(height: TenantAdminSpacing.xs),
           _TotalLine(
             label: 'Total',

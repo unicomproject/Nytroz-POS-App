@@ -26,8 +26,9 @@ Future<void> toggleCategoryStatus(
   Category category,
 ) async {
   try {
-    final updated =
-        await ref.read(categorySaveControllerProvider.notifier).toggleStatus(category);
+    final updated = await ref
+        .read(categorySaveControllerProvider.notifier)
+        .toggleStatus(category);
     ref.invalidate(categoryDetailsProvider(category.id));
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

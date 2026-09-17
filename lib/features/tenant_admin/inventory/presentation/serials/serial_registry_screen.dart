@@ -30,8 +30,9 @@ class SerialRegistryScreen extends ConsumerWidget {
     const pageSize = TenantAdminPaginationDefaults.pageSize;
     final start = ((page - 1) * pageSize).clamp(0, filtered.length);
     final end = (start + pageSize).clamp(0, filtered.length);
-    final inStock =
-        InventoryFrontendMock.serials.where((s) => s.status == 'IN_STOCK').length;
+    final inStock = InventoryFrontendMock.serials
+        .where((s) => s.status == 'IN_STOCK')
+        .length;
     final reserved = InventoryFrontendMock.serials
         .where((s) => s.status == 'RESERVED')
         .length;
@@ -108,8 +109,8 @@ class SerialRegistryScreen extends ConsumerWidget {
                           'Serial is required.';
                       return;
                     }
-                    final exists = InventoryFrontendMock.serials.any((s) =>
-                        s.serial.toLowerCase() == value.toLowerCase());
+                    final exists = InventoryFrontendMock.serials.any(
+                        (s) => s.serial.toLowerCase() == value.toLowerCase());
                     ref.read(serialMessageProvider.notifier).state = exists
                         ? 'Duplicate serial: $value already exists for this product.'
                         : 'Serial $value is available to register. On-hand is unchanged.';
@@ -151,9 +152,8 @@ class SerialRegistryScreen extends ConsumerWidget {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: InventoryStatusBadge(
-                          label: s.status == 'RESERVED'
-                              ? 'Reserved'
-                              : 'In Stock',
+                          label:
+                              s.status == 'RESERVED' ? 'Reserved' : 'In Stock',
                         ),
                       ),
                       TextButton(

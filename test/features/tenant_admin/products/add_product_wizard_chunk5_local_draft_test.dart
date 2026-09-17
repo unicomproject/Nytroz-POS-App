@@ -1,8 +1,9 @@
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/datasources/product_wizard_draft_local_datasource.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/product_draft_response_dto.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/save_product_draft_request_dto.dart';
-import 'package:nytroz_pos/features/tenant_admin/products/data/models/staged_image_response_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/datasources/local/product_wizard_draft_local_datasource.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_draft_response_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/save_product_draft_request_dto.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/staged_image_response_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_delete_result.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_form_data.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/product_status_update_result.dart';
@@ -11,11 +12,27 @@ import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_detail.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/tenant_product_filter_options.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/product_wizard_draft_local_repository.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_create_request_dto.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/tenant_product_repository.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/services/product_list_local_draft_merger.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 
 class _TrackingRepo implements TenantProductRepository {
+  @override
+  Future<ResolveProductBarcodeResponseDto> resolveBarcode(ResolveProductBarcodeRequestDto request) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ExternalLookupProductBarcodeResponseDto> externalLookupBarcode({required String barcode, String? identifierStandard}) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<SkuCandidateResponseDto> generateSkuCandidate({String? productNameHint, String purpose = 'NO_BARCODE_PRODUCT'}) async {
+    throw UnimplementedError();
+  }
+
   int saveDraftCallCount = 0;
   int updateDraftCallCount = 0;
   int createProductCallCount = 0;
@@ -132,6 +149,9 @@ class _TrackingRepo implements TenantProductRepository {
   Future<ProductStatusUpdateResult> updateProductStatus(
           String productId, String status) =>
       throw UnimplementedError();
+  @override
+  Future<ProductCreateResponseDto> duplicateProduct(String productId) =>
+      throw UnimplementedError();
 }
 
 void main() {
@@ -149,7 +169,9 @@ void main() {
 
   Future<void> fillSimpleThroughStep5() async {
     await controller.initWizard();
+    controller.skipScanStepForTesting();
     controller.updateProductName('Local Simple Draft');
+      controller.updateInternalCode('ITM-001');
     controller.updateCategory('cat-1');
     await controller.saveAndContinue();
     controller.setProductStructure('SIMPLE');
@@ -269,12 +291,14 @@ void main() {
         '14/15/16/17/18. VARIANT draft restore + clientCombinationKey stability',
         () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Variant Draft');
+      controller.updateInternalCode('ITM-001');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
       controller.setProductStructure('VARIANT');
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 4);
+      expect(controller.wizardState.currentStep, 5);
 
       controller.addAttributeRow();
       controller.updateAttributeName(0, 'Color');
@@ -306,8 +330,8 @@ void main() {
       final resumed = AddProductWizardController(repo, draftLocal: draftLocal);
       await resumed.initWizard(resumeLocalDraftId: id);
       expect(resumed.wizardState.currentStep, 5);
-      expect(resumed.isStepApplicable(3), isFalse);
-      expect(resumed.wizardState.currentStep, isNot(3));
+      expect(resumed.isStepApplicable(4), isFalse);
+      expect(resumed.wizardState.currentStep, isNot(4));
       expect(resumed.wizardState.step4State.generatedVariants.length, 4);
       final keysAfter = resumed.wizardState.step4State.generatedVariants
           .map((v) => v.clientCombinationKey)
@@ -365,12 +389,14 @@ void main() {
 
     test('22. SIMPLE navigation regression', () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Simple Still');
+      controller.updateInternalCode('ITM-001');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
       controller.setProductStructure('SIMPLE');
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 3);
+      expect(controller.wizardState.currentStep, 5);
       controller.selectUnitModel('SINGLE_UNIT');
       controller.setProductUnit('unit-1');
       await controller.saveAndContinue();
@@ -379,13 +405,15 @@ void main() {
 
     test('23. VARIANT navigation regression', () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Variant Still');
+      controller.updateInternalCode('ITM-001');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
       controller.setProductStructure('VARIANT');
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 4);
-      expect(controller.isStepApplicable(3), isFalse);
+      expect(controller.wizardState.currentStep, 5);
+      expect(controller.isStepApplicable(4), isFalse);
     });
 
     test('24. Save & Continue remains zero Product persistence', () async {
@@ -403,10 +431,12 @@ void main() {
     test('early-step Save Draft does not require full Product validation',
         () async {
       await controller.initWizard();
+    controller.skipScanStepForTesting();
       controller.updateProductName('Early Draft');
+      controller.updateInternalCode('ITM-001');
       // No category — Save & Continue would fail; Save Draft must succeed.
       expect(await controller.saveDraft(), isTrue);
-      expect(controller.wizardState.currentStep, 1);
+      expect(controller.wizardState.currentStep, 2);
       final draft = await localStore.getDraft(controller.wizardState.localDraftId!);
       expect(draft!.productName, 'Early Draft');
     });

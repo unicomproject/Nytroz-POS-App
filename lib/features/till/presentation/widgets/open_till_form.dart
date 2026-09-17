@@ -259,22 +259,22 @@ class _OpenTillFormState extends ConsumerState<OpenTillForm> {
           final wide = constraints.maxWidth >= 900;
           final showNumpad =
               PosCashDrawerTillVisibility.canShowOpenTillNumpad(permissions);
-          final showQuick = PosCashDrawerTillVisibility
-              .filterOpenTillQuickAmounts(permissions)
-              .isNotEmpty;
+          final showQuick =
+              PosCashDrawerTillVisibility.filterOpenTillQuickAmounts(
+                      permissions)
+                  .isNotEmpty;
           final showBackspaceChrome =
               PosCashDrawerTillVisibility.canShowOpenTillBackspace(permissions);
           final showClearChrome =
               PosCashDrawerTillVisibility.canShowOpenTillClear(permissions);
-          final showKeypadSurface = showNumpad ||
-              showQuick ||
-              showBackspaceChrome ||
-              showClearChrome;
+          final showKeypadSurface =
+              showNumpad || showQuick || showBackspaceChrome || showClearChrome;
           final content = wide
               ? Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(flex: 3, child: _detailsCard(context, permissions)),
+                    Expanded(
+                        flex: 3, child: _detailsCard(context, permissions)),
                     if (showKeypadSurface) ...[
                       const SizedBox(width: 20),
                       Expanded(
@@ -452,9 +452,7 @@ class _OpenTillFormState extends ConsumerState<OpenTillForm> {
                 minLines: 2,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  hintText: showNoteEntry
-                      ? 'Enter note (optional)...'
-                      : null,
+                  hintText: showNoteEntry ? 'Enter note (optional)...' : null,
                   alignLabelWithHint: true,
                   enabledBorder: _border(TenantAdminColors.border, 1),
                   focusedBorder:
@@ -655,8 +653,7 @@ class _OpenTillFormState extends ConsumerState<OpenTillForm> {
                 if (showConfirmMessage)
                   const Text(
                     'The till will be opened and ready for transactions.',
-                    style:
-                        TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
                   ),
               ],
             ),

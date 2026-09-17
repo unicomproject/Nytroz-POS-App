@@ -5,13 +5,13 @@ import '../../domain/entities/tenant_product.dart';
 import '../../domain/entities/tenant_product_create_options.dart';
 import '../../domain/entities/tenant_product_filter_options.dart';
 import '../../domain/entities/tenant_product_detail.dart';
-import '../models/product_create_request_dto.dart';
-import '../models/product_delete_response_dto.dart';
-import '../models/product_status_update_dto.dart';
-import '../models/tenant_product_create_options_dto.dart';
-import '../models/tenant_product_filter_options_dto.dart';
-import '../models/tenant_product_detail_dto.dart';
-import '../models/tenant_product_dto.dart';
+import '../dtos/product_create_request_dto.dart';
+import '../dtos/product_delete_response_dto.dart';
+import '../dtos/product_status_update_dto.dart';
+import '../dtos/tenant_product_create_options_dto.dart';
+import '../dtos/tenant_product_filter_options_dto.dart';
+import '../dtos/tenant_product_detail_dto.dart';
+import '../dtos/tenant_product_dto.dart';
 
 class TenantProductMapper {
   const TenantProductMapper._();

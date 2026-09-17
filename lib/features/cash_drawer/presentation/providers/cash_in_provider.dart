@@ -36,7 +36,8 @@ class CashInFormState {
   bool get hasValidAmount => parsedAmount != null && parsedAmount! > 0;
 
   bool get hasSelectedMovementType =>
-      selectedMovementTypeId != null && selectedMovementTypeId!.trim().isNotEmpty;
+      selectedMovementTypeId != null &&
+      selectedMovementTypeId!.trim().isNotEmpty;
 
   CashInFormState copyWith({
     String? amountText,

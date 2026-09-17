@@ -104,8 +104,9 @@ class _CategoryArchiveDialogState extends ConsumerState<CategoryArchiveDialog> {
                     ),
                   ),
                   IconButton(
-                    onPressed:
-                        _submitting ? null : () => Navigator.of(context).pop(false),
+                    onPressed: _submitting
+                        ? null
+                        : () => Navigator.of(context).pop(false),
                     tooltip: 'Close',
                     icon: const Icon(
                       Icons.close,

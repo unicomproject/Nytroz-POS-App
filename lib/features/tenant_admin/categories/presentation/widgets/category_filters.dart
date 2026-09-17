@@ -20,7 +20,8 @@ class CategoryFiltersBar extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compact = constraints.maxWidth < TenantAdminBreakpoints.smallTablet;
+        final compact =
+            constraints.maxWidth < TenantAdminBreakpoints.smallTablet;
 
         final search = SizedBox(
           height: _controlHeight,

@@ -1,5 +1,5 @@
 import '../../domain/entities/product_dashboard.dart';
-import '../models/product_dashboard_dto.dart';
+import '../dtos/product_dashboard_dto.dart';
 
 class ProductDashboardMapper {
   const ProductDashboardMapper._();

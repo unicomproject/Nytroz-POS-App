@@ -90,17 +90,17 @@ bool notificationRowHasVisibleContent(
   PosNotificationItem item,
   EffectivePermissionSet permissions,
 ) {
-    final canTitle = permissions.hasPermission(
-      PosPermissionCodes.notificationsMessagesTitle,
-    );
-    final canBody = permissions.hasPermission(
-      PosPermissionCodes.notificationsMessagesBody,
-    );
-    // Timestamp / open / mark-read / dismiss / mark-all-read: no dedicated
-    // presentation or action widgets in current panel (no API). Not invented.
-    return (canTitle && item.title.trim().isNotEmpty) ||
-        (canBody && item.body.trim().isNotEmpty);
-  }
+  final canTitle = permissions.hasPermission(
+    PosPermissionCodes.notificationsMessagesTitle,
+  );
+  final canBody = permissions.hasPermission(
+    PosPermissionCodes.notificationsMessagesBody,
+  );
+  // Timestamp / open / mark-read / dismiss / mark-all-read: no dedicated
+  // presentation or action widgets in current panel (no API). Not invented.
+  return (canTitle && item.title.trim().isNotEmpty) ||
+      (canBody && item.body.trim().isNotEmpty);
+}
 
 class _NotificationTile extends ConsumerWidget {
   const _NotificationTile({required this.item});
@@ -118,8 +118,7 @@ class _NotificationTile extends ConsumerWidget {
 
     final titleText =
         canTitle && item.title.trim().isNotEmpty ? item.title : null;
-    final bodyText =
-        canBody && item.body.trim().isNotEmpty ? item.body : null;
+    final bodyText = canBody && item.body.trim().isNotEmpty ? item.body : null;
 
     final semanticParts = <String>[
       if (titleText != null) titleText,

@@ -63,7 +63,8 @@ final currentStockListProvider =
     );
     if (stockStatus != null && stockStatus.isNotEmpty) {
       final filtered = pageData.items
-          .where((e) => e.stockStatus.toLowerCase() == stockStatus.toLowerCase())
+          .where(
+              (e) => e.stockStatus.toLowerCase() == stockStatus.toLowerCase())
           .toList();
       pageData = CurrentStockPage(
         items: filtered,
@@ -73,9 +74,8 @@ final currentStockListProvider =
       );
     }
     if (outletId != null && outletId.isNotEmpty) {
-      final filtered = pageData.items
-          .where((e) => e.outletId == outletId)
-          .toList();
+      final filtered =
+          pageData.items.where((e) => e.outletId == outletId).toList();
       pageData = CurrentStockPage(
         items: filtered,
         page: page,

@@ -22,8 +22,7 @@ class CloseTillSummaryCard extends ConsumerWidget {
     final formState = ref.watch(closeTillFormProvider);
     final counted = formState.parsedCountedCash;
 
-    final showSummary =
-        PosCashDrawerTillVisibility.canShowClosingSummary(p);
+    final showSummary = PosCashDrawerTillVisibility.canShowClosingSummary(p);
     final showExpectedSummary =
         PosCashDrawerTillVisibility.canShowClosingExpectedCashSummary(p) &&
             PosCashDrawerTillVisibility.canShowClosingExpectedCash(p);
@@ -45,9 +44,8 @@ class CloseTillSummaryCard extends ConsumerWidget {
     }
 
     final safeExpected = showExpectedSummary ? expectedCash : null;
-    final difference = showDifferenceSummary
-        ? formState.differenceFor(safeExpected)
-        : null;
+    final difference =
+        showDifferenceSummary ? formState.differenceFor(safeExpected) : null;
     final closingStatus = showStatusSummary
         ? formState.summaryClosingStatusLabel(safeExpected)
         : null;

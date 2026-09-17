@@ -3,17 +3,19 @@ import 'package:nytroz_pos/core/storage/secure_storage_provider.dart';
 
 import '../../../../../core/network/dio_provider.dart';
 import '../../../presentation/providers/tenant_admin_access_provider.dart';
-import '../../application/usecases/create_product.dart';
-import '../../application/usecases/delete_product.dart';
-import '../../application/usecases/get_product_by_id.dart';
-import '../../application/usecases/get_product_create_options.dart';
-import '../../application/usecases/get_product_filter_options.dart';
-import '../../application/usecases/get_product_summary.dart';
-import '../../application/usecases/get_products.dart';
-import '../../application/usecases/update_product.dart';
-import '../../application/usecases/update_product_status.dart';
-import '../../data/datasources/product_wizard_draft_local_datasource.dart';
-import '../../data/datasources/tenant_product_remote_datasource.dart';
+import '../../domain/usecases/create_product.dart';
+import '../../domain/usecases/delete_product.dart';
+import '../../domain/usecases/get_product_by_id.dart';
+import '../../domain/usecases/get_product_create_options.dart';
+import '../../domain/usecases/get_product_setup.dart';
+import '../../domain/usecases/save_product_draft.dart';
+import '../../domain/usecases/get_product_filter_options.dart';
+import '../../domain/usecases/get_product_summary.dart';
+import '../../domain/usecases/get_products.dart';
+import '../../domain/usecases/update_product.dart';
+import '../../domain/usecases/update_product_status.dart';
+import '../../data/datasources/local/product_wizard_draft_local_datasource.dart';
+import '../../data/datasources/remote/tenant_product_remote_datasource.dart';
 import '../../data/repositories/tenant_product_repository_impl.dart';
 import '../../domain/entities/add_product_wizard_state.dart';
 import '../../domain/entities/product_wizard_draft.dart';
@@ -81,6 +83,14 @@ final createProductProvider = Provider<CreateProduct>((ref) {
 
 final getProductByIdProvider = Provider<GetProductById>((ref) {
   return GetProductById(ref.watch(tenantProductRepositoryProvider));
+});
+
+final getProductSetupProvider = Provider<GetProductSetup>((ref) {
+  return GetProductSetup(ref.watch(tenantProductRepositoryProvider));
+});
+
+final saveProductDraftProvider = Provider<SaveProductDraft>((ref) {
+  return SaveProductDraft(ref.watch(tenantProductRepositoryProvider));
 });
 
 final updateProductProvider = Provider<UpdateProduct>((ref) {

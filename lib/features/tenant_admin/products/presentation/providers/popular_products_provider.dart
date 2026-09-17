@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/access/tenant_admin_access_codes.dart';
 import '../../../../../core/network/dio_provider.dart';
 import '../../../presentation/providers/tenant_admin_access_provider.dart';
+import '../../data/datasources/remote/popular_products_remote_datasource.dart';
 import '../../domain/entities/curated_popular_product.dart';
 import '../../domain/entities/tenant_product.dart';
 import 'tenant_product_providers.dart';
@@ -18,20 +19,9 @@ class PopularProductsCurationNotifier
       return const [];
     }
 
-    final dio = ref.watch(appDioProvider);
-    final response =
-        await dio.get<dynamic>('/api/v1/collections/pos-popular/products');
-    final data = response.data;
-    List<dynamic> list = [];
-    if (data is Map && data['data'] is List) {
-      list = data['data'] as List;
-    } else if (data is List) {
-      list = data;
-    }
-    return list
-        .map((item) => CuratedPopularProduct.fromJson(
-            Map<String, dynamic>.from(item as Map)))
-        .toList();
+    final datasource =
+        PopularProductsRemoteDatasource(ref.watch(appDioProvider));
+    return datasource.list();
   }
 
   void reorder(int oldIndex, int newIndex) {
@@ -96,23 +86,10 @@ class PopularProductsCurationNotifier
 
     state = const AsyncLoading();
     try {
-      final dio = ref.read(appDioProvider);
-      final productIds = currentList.map((p) => p.productId).toList();
-      final response = await dio.put<dynamic>(
-        '/api/v1/collections/pos-popular/products',
-        data: productIds,
-      );
-      final data = response.data;
-      List<dynamic> list = [];
-      if (data is Map && data['data'] is List) {
-        list = data['data'] as List;
-      } else if (data is List) {
-        list = data;
-      }
-      final updated = list
-          .map((item) => CuratedPopularProduct.fromJson(
-              Map<String, dynamic>.from(item as Map)))
-          .toList();
+      final datasource =
+          PopularProductsRemoteDatasource(ref.read(appDioProvider));
+      final updated = await datasource
+          .replace(currentList.map((p) => p.productId).toList());
       state = AsyncData(updated);
     } catch (e, stack) {
       state = AsyncError(e, stack);

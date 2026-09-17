@@ -90,7 +90,8 @@ class ProductDeleteAction extends ConsumerWidget {
                         ? const SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: color),
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: color),
                           )
                         : const Icon(
                             Icons.delete_outline,
@@ -221,7 +222,8 @@ class ProductDeleteAction extends ConsumerWidget {
     }
   }
 
-  static String _successMessage(ProductDeleteResult result, String productName) {
+  static String _successMessage(
+      ProductDeleteResult result, String productName) {
     final name = productName.trim().isEmpty ? 'Product' : productName;
     if (result.wasArchived) {
       return '$name was archived because it has sales or stock history.';

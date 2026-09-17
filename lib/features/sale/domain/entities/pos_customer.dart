@@ -188,7 +188,8 @@ class PosCustomerOrder {
           json['OrderNumber']?.toString() ??
           '',
       orderDate: _readDate(json['orderDate'] ?? json['OrderDate']),
-      totalAmount: _readOptionalDouble(json['totalAmount'] ?? json['TotalAmount']),
+      totalAmount:
+          _readOptionalDouble(json['totalAmount'] ?? json['TotalAmount']),
       currencyCode: json['currencyCode']?.toString() ??
           json['CurrencyCode']?.toString() ??
           '',

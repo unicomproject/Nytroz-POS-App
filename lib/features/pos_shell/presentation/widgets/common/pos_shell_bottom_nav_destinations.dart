@@ -46,8 +46,7 @@ List<PosCashierNavDestination> posCashierNavAllDestinations() {
       icon: Icons.home_outlined,
       selectedIcon: Icons.home_rounded,
       route: '/pos/home',
-      isPermitted: (set) =>
-          PosPermissionAccess.canViewHome(set.codes.toSet()),
+      isPermitted: (set) => PosPermissionAccess.canViewHome(set.codes.toSet()),
     ),
     PosCashierNavDestination(
       id: PosCashierNavDestinationId.newSale,
