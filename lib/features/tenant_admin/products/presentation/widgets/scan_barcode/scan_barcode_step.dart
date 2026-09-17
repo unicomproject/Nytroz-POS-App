@@ -384,100 +384,115 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
     if (match == null) {
       return const Text('Local match data missing.');
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _PanelCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if ((match.imageUrl ?? '').isNotEmpty)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                      child: Image.network(
-                        match.imageUrl!,
-                        width: 96,
-                        height: 96,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: SingleChildScrollView(
+                child: _PanelCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if ((match.imageUrl ?? '').isNotEmpty)
+                            ClipRRect(
+                              borderRadius:
+                                  BorderRadius.circular(TenantAdminRadius.md),
+                              child: Image.network(
+                                match.imageUrl!,
+                                width: 96,
+                                height: 96,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    const SizedBox.shrink(),
+                              ),
+                            ),
+                          const Spacer(),
+                          if (match.canViewProduct || match.canEditProduct)
+                            Wrap(
+                              spacing: TenantAdminSpacing.sm,
+                              children: [
+                                if (match.canViewProduct)
+                                  FilledButton(
+                                    onPressed: () => context.go(
+                                      '/tenant-admin/products/${match.productId}',
+                                    ),
+                                    child: const Text('View Product'),
+                                  ),
+                                if (match.canEditProduct)
+                                  OutlinedButton(
+                                    onPressed: () => context.go(
+                                      '/tenant-admin/products/draft/${match.productId}',
+                                    ),
+                                    child: const Text('Edit Existing Product'),
+                                  ),
+                              ],
+                            ),
+                        ],
                       ),
-                    ),
-                  const Spacer(),
-                  if (match.canViewProduct || match.canEditProduct)
-                    Wrap(
-                      spacing: TenantAdminSpacing.sm,
-                      children: [
-                        if (match.canViewProduct)
-                          FilledButton(
-                            onPressed: () => context.go(
-                              '/tenant-admin/products/${match.productId}',
-                            ),
-                            child: const Text('View Product'),
-                          ),
-                        if (match.canEditProduct)
-                          OutlinedButton(
-                            onPressed: () => context.go(
-                              '/tenant-admin/products/draft/${match.productId}',
-                            ),
-                            child: const Text('Edit Existing Product'),
-                          ),
-                      ],
-                    ),
-                ],
-              ),
-              const SizedBox(height: TenantAdminSpacing.md),
-              _LabelValue('Product Name', match.productName),
-              if ((match.variantLabel ?? '').isNotEmpty)
-                _LabelValue('Variant', match.variantLabel!),
-              if ((match.brand ?? '').isNotEmpty)
-                _LabelValue('Brand', match.brand!),
-              if ((match.category ?? '').isNotEmpty)
-                _LabelValue('Category', match.category!),
-              if (match.sellingPrice != null)
-                _LabelValue(
-                  'Selling Price',
-                  '${match.currency ?? ''} ${match.sellingPrice}'.trim(),
+                      const SizedBox(height: TenantAdminSpacing.md),
+                      _LabelValue('Product Name', match.productName),
+                      if ((match.variantLabel ?? '').isNotEmpty)
+                        _LabelValue('Variant', match.variantLabel!),
+                      if ((match.brand ?? '').isNotEmpty)
+                        _LabelValue('Brand', match.brand!),
+                      if ((match.category ?? '').isNotEmpty)
+                        _LabelValue('Category', match.category!),
+                      if (match.sellingPrice != null)
+                        _LabelValue(
+                          'Selling Price',
+                          '${match.currency ?? ''} ${match.sellingPrice}'.trim(),
+                        ),
+                      _LabelValue(
+                        'Primary GTIN / Barcode',
+                        scan.candidateBarcode,
+                      ),
+                      if (scan.barcodeType != null)
+                        _LabelValue('Barcode Type', scan.barcodeType!),
+                      if ((match.sku ?? '').isNotEmpty)
+                        _LabelValue('SKU', match.sku!),
+                      _LabelValue('Status', match.status),
+                    ],
+                  ),
                 ),
-              _LabelValue('Primary GTIN / Barcode', scan.candidateBarcode),
-              if (scan.barcodeType != null)
-                _LabelValue('Barcode Type', scan.barcodeType!),
-              if ((match.sku ?? '').isNotEmpty) _LabelValue('SKU', match.sku!),
-              _LabelValue('Status', match.status),
+              ),
+            ),
+          ),
+          const SizedBox(height: TenantAdminSpacing.lg),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              OutlinedButton(
+                onPressed: () {
+                  if (scan.inputMode == 'MANUAL') {
+                    widget.controller.openManualBarcodeEntry();
+                  } else {
+                    widget.controller.backToScan();
+                  }
+                },
+                child: const Text('Back'),
+              ),
+              FilledButton.tonal(
+                onPressed: scan.isBusy
+                    ? null
+                    : () => widget.controller.createDuplicateFromLocalMatch(),
+                child: scan.isBusy
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Create Duplicate'),
+              ),
             ],
           ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.lg),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            OutlinedButton(
-              onPressed: () {
-                if (scan.inputMode == 'MANUAL') {
-                  widget.controller.openManualBarcodeEntry();
-                } else {
-                  widget.controller.backToScan();
-                }
-              },
-              child: const Text('Back'),
-            ),
-            FilledButton.tonal(
-              onPressed: scan.isBusy
-                  ? null
-                  : () => widget.controller.createDuplicateFromLocalMatch(),
-              child: scan.isBusy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Create Duplicate'),
-            ),
-          ],
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -585,108 +600,128 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
 
   Widget _buildExternalFound(BuildContext context, ScanBarcodeStepState scan) {
     final s = scan.externalSuggestion;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _PanelCard(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final twoCol = constraints.maxWidth >= 560;
-              final rows = <Widget>[
-                if (s?.productName != null)
-                  _LabelValue('Product Name', s!.productName!),
-                if (s?.brandText != null) _LabelValue('Brand', s!.brandText!),
-                if (s?.categoryText != null)
-                  _LabelValue('Category', s!.categoryText!),
-                if (s?.unitText != null)
-                  _LabelValue('Unit / Size', s!.unitText!),
-                if (s?.countryCode != null)
-                  _LabelValue('Country', s!.countryCode!),
-                if (s?.shortDescription != null)
-                  _LabelValue('Short Description', s!.shortDescription!),
-                if (s?.longDescription != null)
-                  _LabelValue('Long Description', s!.longDescription!),
-                if (s?.primaryGtin != null)
-                  _LabelValue('Primary GTIN', s!.primaryGtin!),
-                if (scan.barcodeType != null)
-                  _LabelValue('Barcode Type', scan.barcodeType!),
-                if (scan.identifierStandard != null)
-                  _LabelValue(
-                    'Identifier Standard',
-                    scan.identifierStandard!,
+    // Card height follows content; scroll when the viewport is shorter so
+    // actions stay pinned and visible (avoids bottom overflow on dense matches).
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: SingleChildScrollView(
+                child: _PanelCard(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final twoCol = constraints.maxWidth >= 560;
+                      final rows = <Widget>[
+                        if (s?.productName != null)
+                          _LabelValue('Product Name', s!.productName!),
+                        if (s?.brandText != null)
+                          _LabelValue('Brand', s!.brandText!),
+                        if (s?.categoryText != null)
+                          _LabelValue('Category', s!.categoryText!),
+                        if (s?.unitText != null)
+                          _LabelValue('Unit / Size', s!.unitText!),
+                        if (s?.countryCode != null)
+                          _LabelValue('Country', s!.countryCode!),
+                        if (s?.shortDescription != null)
+                          _LabelValue(
+                            'Short Description',
+                            s!.shortDescription!,
+                          ),
+                        if (s?.longDescription != null)
+                          _LabelValue(
+                            'Long Description',
+                            s!.longDescription!,
+                          ),
+                        if (s?.primaryGtin != null)
+                          _LabelValue('Primary GTIN', s!.primaryGtin!),
+                        if (scan.barcodeType != null)
+                          _LabelValue('Barcode Type', scan.barcodeType!),
+                        if (scan.identifierStandard != null)
+                          _LabelValue(
+                            'Identifier Standard',
+                            scan.identifierStandard!,
+                          ),
+                      ];
+
+                      final image = (s?.imageCandidate ?? '').isNotEmpty
+                          ? ClipRRect(
+                              borderRadius:
+                                  BorderRadius.circular(TenantAdminRadius.md),
+                              child: Image.network(
+                                s!.imageCandidate!,
+                                width: twoCol ? 120 : double.infinity,
+                                height: 120,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    const SizedBox.shrink(),
+                              ),
+                            )
+                          : null;
+
+                      if (!twoCol) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (image != null) ...[
+                              image,
+                              const SizedBox(height: TenantAdminSpacing.md),
+                            ],
+                            ...rows,
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: rows,
+                            ),
+                          ),
+                          if (image != null) ...[
+                            const SizedBox(width: TenantAdminSpacing.lg),
+                            image,
+                          ],
+                        ],
+                      );
+                    },
                   ),
-              ];
-
-              final image = (s?.imageCandidate ?? '').isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                      child: Image.network(
-                        s!.imageCandidate!,
-                        width: twoCol ? 120 : double.infinity,
-                        height: 120,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                      ),
-                    )
-                  : null;
-
-              if (!twoCol) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (image != null) ...[
-                      image,
-                      const SizedBox(height: TenantAdminSpacing.md),
-                    ],
-                    ..._interleave(rows, TenantAdminSpacing.sm),
-                  ],
-                );
-              }
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: _interleave(rows, TenantAdminSpacing.sm),
-                    ),
-                  ),
-                  if (image != null) ...[
-                    const SizedBox(width: TenantAdminSpacing.lg),
-                    image,
-                  ],
-                ],
-              );
-            },
+                ),
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.lg),
-        Wrap(
-          spacing: TenantAdminSpacing.md,
-          runSpacing: TenantAdminSpacing.sm,
-          children: [
-            FilledButton(
-              onPressed: scan.isBusy
-                  ? null
-                  : () => widget.controller.continueUseThisProduct(),
-              child: const Text('Use This Product'),
-            ),
-            OutlinedButton(
-              onPressed: scan.isBusy
-                  ? null
-                  : () => widget.controller.continueCreateManually(
-                        applyExternalPrefill: false,
-                      ),
-              child: const Text('Create Manually'),
-            ),
-            OutlinedButton(
-              onPressed: () => widget.controller.backToNoLocalMatch(),
-              child: const Text('Back'),
-            ),
-          ],
-        ),
-      ],
+          const SizedBox(height: TenantAdminSpacing.lg),
+          Wrap(
+            spacing: TenantAdminSpacing.md,
+            runSpacing: TenantAdminSpacing.sm,
+            children: [
+              FilledButton(
+                onPressed: scan.isBusy
+                    ? null
+                    : () => widget.controller.continueUseThisProduct(),
+                child: const Text('Use This Product'),
+              ),
+              OutlinedButton(
+                onPressed: scan.isBusy
+                    ? null
+                    : () => widget.controller.continueCreateManually(
+                          applyExternalPrefill: false,
+                        ),
+                child: const Text('Create Manually'),
+              ),
+              OutlinedButton(
+                onPressed: () => widget.controller.backToNoLocalMatch(),
+                child: const Text('Back'),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1643,16 +1678,6 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
       ],
     );
   }
-
-  List<Widget> _interleave(List<Widget> children, double gap) {
-    if (children.isEmpty) return children;
-    final out = <Widget>[children.first];
-    for (var i = 1; i < children.length; i++) {
-      out.add(SizedBox(height: gap));
-      out.add(children[i]);
-    }
-    return out;
-  }
 }
 
 class _BarcodeStatusRow extends StatelessWidget {
@@ -2052,11 +2077,18 @@ class _LabelValue extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 160,
-            child: Text(label, style: TenantAdminTextStyles.muted(context)),
+            width: 168,
+            child: Text(
+              label,
+              style: TenantAdminTextStyles.muted(context),
+            ),
           ),
+          const SizedBox(width: TenantAdminSpacing.md),
           Expanded(
-            child: Text(value, style: TenantAdminTextStyles.body(context)),
+            child: Text(
+              value,
+              style: TenantAdminTextStyles.body(context),
+            ),
           ),
         ],
       ),

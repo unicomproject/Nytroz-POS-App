@@ -248,6 +248,17 @@ class TenantProductRemoteDatasource {
     );
   }
 
+  Future<StagedImageResponseDto> stageImageFromUrl(String imageUrl) async {
+    final response = await _dio.post<dynamic>(
+      '$_productsPath/images/stage-from-url',
+      data: {'imageUrl': imageUrl},
+    );
+
+    return StagedImageResponseDto.fromJson(
+      _unwrapApiPayload(response.data, response.requestOptions),
+    );
+  }
+
   Future<ProductImageResponseDto> uploadProductImage(
     String productId,
     List<int> bytes,

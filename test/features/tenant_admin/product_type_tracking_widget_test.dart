@@ -1,4 +1,4 @@
-﻿import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_draft_response_dto.dart';
@@ -110,6 +110,9 @@ class WidgetTestFakeRepository implements TenantProductRepository {
   @override
   Future<StagedImageResponseDto> stageImage(
           List<int> bytes, String fileName, String mimeType) =>
+      throw UnimplementedError();
+  @override
+  Future<StagedImageResponseDto> stageImageFromUrl(String imageUrl) =>
       throw UnimplementedError();
   @override
   Future<ProductImageResponseDto> uploadProductImage(String productId,
@@ -264,13 +267,13 @@ void main() {
       await tester.tap(find.text('Simple Product'));
       await tester.pump();
 
-      expect(find.text('Clear incompatible tracking values?'), findsNothing);
-      expect(find.text('Clear and continue'), findsNothing);
+      expect(find.text('Clear incompatible tracking details?'), findsNothing);
+      expect(find.text('Clear & Continue'), findsNothing);
       expect(controller.wizardState.productStructure, 'SIMPLE');
       await tester.pump(const Duration(seconds: 1));
     });
 
-    testWidgets('hides initial tracking until product type is selected',
+    testWidgets('shows initial tracking and stock rules before product type is selected',
         (tester) async {
       final batch = TextEditingController();
       final serial = TextEditingController();
@@ -290,8 +293,8 @@ void main() {
         ),
       ));
 
-      expect(find.text('Initial Tracking Details'), findsNothing);
-      expect(find.text('Tracking & Stock Rules'), findsNothing);
+      expect(find.text('Initial Tracking Details'), findsOneWidget);
+      expect(find.text('Tracking & Stock Rules'), findsOneWidget);
     });
 
     testWidgets('shows initial tracking after product type is selected',

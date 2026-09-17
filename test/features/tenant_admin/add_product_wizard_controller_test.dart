@@ -37,6 +37,9 @@ class FakeTenantProductRepository implements TenantProductRepository {
   int updateDraftCallCount = 0;
   int createProductCallCount = 0;
   int updateProductCallCount = 0;
+  int stageImageFromUrlCallCount = 0;
+  String? lastStageImageFromUrl;
+  bool stageImageFromUrlShouldFail = false;
 
   ProductDraftResponseDto storedDraft = const ProductDraftResponseDto(
     productId: 'prod-123',
@@ -140,6 +143,24 @@ class FakeTenantProductRepository implements TenantProductRepository {
       fileName: fileName,
       mimeType: mimeType,
       fileSizeBytes: bytes.length,
+      createdAt: DateTime.now(),
+      status: 'STAGED',
+    );
+  }
+
+  @override
+  Future<StagedImageResponseDto> stageImageFromUrl(String imageUrl) async {
+    stageImageFromUrlCallCount++;
+    lastStageImageFromUrl = imageUrl;
+    if (stageImageFromUrlShouldFail) {
+      throw Exception('stage failed');
+    }
+    return StagedImageResponseDto(
+      mediaAssetId: 'asset-url-1',
+      publicUrl: 'https://cdn.example.com/staged-external.jpg',
+      fileName: 'external-product.jpg',
+      mimeType: 'image/jpeg',
+      fileSizeBytes: 1024,
       createdAt: DateTime.now(),
       status: 'STAGED',
     );
@@ -475,6 +496,54 @@ void main() {
       expect(success, true);
       expect(controller.wizardState.stagedMediaAssets.length, 1);
       expect(repo.saveDraftCallCount, 0);
+    });
+
+    test(
+        'Use This Product stages external imageCandidate into Product Images',
+        () async {
+      await controller.initWizard();
+      controller.seedExternalFoundForTesting(
+        suggestion: const ExternalProductSuggestionDto(
+          productName: 'Signature Caramel Chocolate Rounds',
+          shortDescription: 'Signature Caramel Chocolate Rounds',
+          imageCandidate: 'https://cdn.example.com/mcvities.jpg',
+          primaryGtin: '5000168003887',
+        ),
+      );
+
+      await controller.continueUseThisProduct();
+
+      expect(controller.wizardState.currentStep, 2);
+      expect(controller.wizardState.productName,
+          'Signature Caramel Chocolate Rounds');
+      expect(repo.stageImageFromUrlCallCount, 1);
+      expect(repo.lastStageImageFromUrl,
+          'https://cdn.example.com/mcvities.jpg');
+      expect(controller.wizardState.productImages, hasLength(1));
+      expect(controller.wizardState.productImages.first.imageUrl,
+          'https://cdn.example.com/staged-external.jpg');
+      expect(controller.wizardState.productImages.first.isPrimary, isTrue);
+      expect(controller.wizardState.stagedMediaAssets, hasLength(1));
+    });
+
+    test(
+        'Use This Product continues when external image stage fails',
+        () async {
+      await controller.initWizard();
+      repo.stageImageFromUrlShouldFail = true;
+      controller.seedExternalFoundForTesting(
+        suggestion: const ExternalProductSuggestionDto(
+          productName: 'No Image Product',
+          imageCandidate: 'https://cdn.example.com/missing.jpg',
+        ),
+      );
+
+      await controller.continueUseThisProduct();
+
+      expect(controller.wizardState.currentStep, 2);
+      expect(controller.wizardState.productName, 'No Image Product');
+      expect(repo.stageImageFromUrlCallCount, 1);
+      expect(controller.wizardState.productImages, isEmpty);
     });
   });
 }
