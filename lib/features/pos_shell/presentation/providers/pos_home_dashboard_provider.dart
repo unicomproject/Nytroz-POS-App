@@ -21,7 +21,33 @@ final posHomeRemoteDatasourceProvider =
 });
 
 final posHomeDashboardProvider =
-    FutureProvider<PosHomeDashboardState>((ref) async {
+    FutureProvider<PosHomeDashboardState>(_loadPosHomeDashboard);
+
+final posHomeSessionSummaryProvider = AsyncNotifierProvider<
+    PosHomeSessionSummaryController,
+    PosHomeSummaryState?>(PosHomeSessionSummaryController.new);
+
+class PosHomeSessionSummaryController
+    extends AsyncNotifier<PosHomeSummaryState?> {
+  @override
+  Future<PosHomeSummaryState?> build() async {
+    return (await ref.watch(posHomeDashboardProvider.future)).summary;
+  }
+
+  Future<void> refresh() async {
+    final previous = state.valueOrNull;
+    try {
+      final dashboard = await _loadPosHomeDashboard(ref);
+      state = AsyncData(dashboard.summary);
+    } on Object catch (error, stackTrace) {
+      state = previous == null
+          ? AsyncError(error, stackTrace)
+          : AsyncData(previous);
+    }
+  }
+}
+
+Future<PosHomeDashboardState> _loadPosHomeDashboard(Ref ref) async {
   final session = ref.watch(authSessionProvider);
   if (session == null || !session.isAuthenticated) {
     throw const PosHomeException(
@@ -79,7 +105,7 @@ final posHomeDashboardProvider =
     hasOpenTillSession: payload.isTillOpen,
     sessionPermissions: sessionPermissions,
   );
-});
+}
 
 const posHomeTillSessionBlockingReasonCodes = {
   'NO_OPEN_TILL_SESSION',
@@ -293,7 +319,9 @@ PosHomeDashboardState _mapPayloadToDashboardState({
             transactionCount: payload.summary!.transactionCount,
             refundAmount: payload.summary!.refundAmount,
             refundCount: payload.summary!.refundCount,
+            returnsApplicable: payload.summary!.returnsApplicable,
             discountAmount: payload.summary!.discountAmount,
+            discountsApplicable: payload.summary!.discountsApplicable,
             netSalesAmount: payload.summary!.netSalesAmount,
           ),
     tillLabel: payload.tillName,

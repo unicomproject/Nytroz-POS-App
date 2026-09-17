@@ -10,6 +10,24 @@ enum CashPaymentIntentPhase {
   succeeded
 }
 
+String? cashPaymentSafetyRedirect(String path, CashPaymentIntentPhase? phase,
+    {bool cartCompleted = false}) {
+  const cash = '/pos/new-sale/payment/cash';
+  const success = '$cash/success';
+  // Click & Collect balance settle navigates back to collection handover.
+  if (path.startsWith('/pos/online-orders/collection')) {
+    return null;
+  }
+  if (cartCompleted || phase == CashPaymentIntentPhase.succeeded) {
+    return path == success || path.startsWith('$success/') ? null : success;
+  }
+  if (phase == CashPaymentIntentPhase.inFlight ||
+      phase == CashPaymentIntentPhase.unknown) {
+    return path == cash ? null : cash;
+  }
+  return null;
+}
+
 class CashPaymentIntent {
   const CashPaymentIntent({
     required this.key,
@@ -48,9 +66,7 @@ class CashPaymentIntentNotifier extends StateNotifier<CashPaymentIntent?> {
     final current = state;
     if (current == null ||
         (current.saleIdentity != saleIdentity &&
-            current.phase != CashPaymentIntentPhase.inFlight &&
-            current.phase != CashPaymentIntentPhase.unknown) ||
-        current.phase == CashPaymentIntentPhase.succeeded) {
+            current.phase == CashPaymentIntentPhase.draft)) {
       return startNew(saleIdentity);
     }
     return current;
@@ -59,7 +75,8 @@ class CashPaymentIntentNotifier extends StateNotifier<CashPaymentIntent?> {
   CashPaymentIntent startNew(String saleIdentity) {
     final current = state;
     if (current?.phase == CashPaymentIntentPhase.inFlight ||
-        current?.phase == CashPaymentIntentPhase.unknown) {
+        current?.phase == CashPaymentIntentPhase.unknown ||
+        current?.phase == CashPaymentIntentPhase.succeeded) {
       throw StateError('Unresolved Cash payment intent must be reconciled.');
     }
     final next = CashPaymentIntent(
@@ -76,6 +93,9 @@ class CashPaymentIntentNotifier extends StateNotifier<CashPaymentIntent?> {
     required String requestFingerprint,
   }) {
     var current = open(saleIdentity);
+    if (current.phase == CashPaymentIntentPhase.succeeded) {
+      throw StateError('This sale is already completed. Start New Sale first.');
+    }
     if (current.phase == CashPaymentIntentPhase.knownRejected) {
       throw StateError('Start a new Cash payment attempt before submitting.');
     }
@@ -86,7 +106,7 @@ class CashPaymentIntentNotifier extends StateNotifier<CashPaymentIntent?> {
       if (current.dispatchedFingerprint != requestFingerprint) {
         throw StateError('Cash payment request changed while in flight.');
       }
-      return current;
+      throw StateError('Cash payment is already being submitted.');
     }
     current = current.copyWith(
       phase: CashPaymentIntentPhase.inFlight,
@@ -99,6 +119,9 @@ class CashPaymentIntentNotifier extends StateNotifier<CashPaymentIntent?> {
   void markKnownRejected() => _transition(CashPaymentIntentPhase.knownRejected);
   void markUnknown() => _transition(CashPaymentIntentPhase.unknown);
   void markSucceeded() => _transition(CashPaymentIntentPhase.succeeded);
+
+  /// Clears intent without New Sale reconciliation (e.g. Click & Collect settle).
+  void clear() => state = null;
 
   void _transition(CashPaymentIntentPhase phase) {
     final current = state;

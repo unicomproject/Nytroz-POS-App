@@ -13,6 +13,41 @@ class PosCheckoutRemoteDatasource {
 
   final Dio _dio;
 
+  /// Reconciles or fences the original key; never executes another payment.
+  Future<PosCheckoutPaymentStatusPayload> getPaymentStatus(String key) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        ApiEndpoints.posCheckoutPaymentStatus,
+        data: {'idempotencyKey': key},
+        options: Options(extra: const {
+          AuthUnauthorizedInterceptor.disableAutomaticRetry: true,
+        }),
+      );
+      final data = _unwrapApiData(response.data ?? const {});
+      if (data['status'] == 'not_completed') {
+        return const PosCheckoutPaymentStatusPayload('not_completed');
+      }
+      if (data['status'] != 'succeeded') {
+        return const PosCheckoutPaymentStatusPayload('unknown');
+      }
+      final payment = data['payment'];
+      if (payment is! Map) {
+        throw const FormatException('Missing completed payment.');
+      }
+      final payload = PosCheckoutStartPaymentPayload.fromJson(
+        Map<String, dynamic>.from(payment),
+      );
+      if (payload.saleId.isEmpty ||
+          payload.receiptNumber.isEmpty ||
+          payload.completedAt == null) {
+        throw const FormatException('Incomplete completed payment.');
+      }
+      return PosCheckoutPaymentStatusPayload('succeeded', payload);
+    } on DioException catch (error) {
+      throw checkoutApiExceptionFromDio(error);
+    }
+  }
+
   Future<PosCheckoutSummaryPayload> getCheckoutSummary({
     required String deviceId,
     required List<PosCheckoutLineRequest> lines,
@@ -60,6 +95,7 @@ class PosCheckoutRemoteDatasource {
     String saleType = 'NewSale',
     String? customerId,
     String? discountApplicationId,
+    String? existingSalesOrderId,
     required String idempotencyKey,
   }) async {
     final correlation = cashPaymentCorrelation(idempotencyKey);
@@ -82,6 +118,7 @@ class PosCheckoutRemoteDatasource {
             lines: lines,
             customerId: customerId,
             discountApplicationId: discountApplicationId,
+            existingSalesOrderId: existingSalesOrderId,
           ),
           'paymentMethod': paymentMethod,
           'idempotencyKey': idempotencyKey,
@@ -160,7 +197,10 @@ class PosCheckoutRemoteDatasource {
     required List<PosCheckoutLineRequest> lines,
     String? customerId,
     String? discountApplicationId,
+    String? existingSalesOrderId,
   }) {
+    final hasExisting = existingSalesOrderId != null &&
+        existingSalesOrderId.trim().isNotEmpty;
     return {
       'deviceId': deviceId,
       'saleType': saleType,
@@ -168,6 +208,7 @@ class PosCheckoutRemoteDatasource {
       if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
       if (discountApplicationId != null && discountApplicationId.isNotEmpty)
         'discountApplicationId': discountApplicationId,
+      if (hasExisting) 'existingSalesOrderId': existingSalesOrderId.trim(),
     };
   }
 

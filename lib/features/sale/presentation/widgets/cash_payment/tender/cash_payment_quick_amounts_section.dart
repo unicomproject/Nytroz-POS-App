@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:flutter/material.dart';
 import '../../../providers/pos_checkout_summary_provider.dart';
 import '../../payment_method/payment_method_style.dart';
@@ -32,7 +33,7 @@ class CashPaymentQuickAmountsSection extends StatelessWidget {
           'QUICK CASH',
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            color: Color(0xFF64748B),
+            color: TenantAdminColors.mutedText,
             fontSize: 12,
             letterSpacing: 0.3,
           ),
@@ -110,7 +111,7 @@ class _ExactCashCard extends StatelessWidget {
               Icon(
                 Icons.payments_outlined,
                 size: 24,
-                color: isSelected ? primaryColor : const Color(0xFF64748B),
+                color: isSelected ? primaryColor : TenantAdminColors.mutedText,
               ),
               const SizedBox(width: 10),
               Column(
@@ -122,8 +123,9 @@ class _ExactCashCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color:
-                          isSelected ? primaryColor : const Color(0xFF64748B),
+                      color: isSelected
+                          ? primaryColor
+                          : TenantAdminColors.mutedText,
                       letterSpacing: 0.3,
                     ),
                   ),

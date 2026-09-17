@@ -2,6 +2,7 @@ import '../models/completed_sale_receipt.dart';
 
 enum PrintOperationState {
   pendingPrint,
+  awaitingConfirmation,
   printing,
   printSucceeded,
   printFailedConfirmed,

@@ -11,29 +11,34 @@ import 'package:nytroz_pos/features/pos_shell/data/datasources/pos_home_remote_d
 import 'package:nytroz_pos/features/pos_shell/domain/entities/pos_home_action.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/cashier_profile_card.dart';
 import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/pos_home_dashboard.dart';
+import 'package:nytroz_pos/features/pos_shell/presentation/widgets/home/session_summary_card.dart';
 
 Widget _wrapWithProfileAccess(Widget child) {
+  return _wrapWithPermissions(child, const [
+    PosPermissionCodes.homeProfileView,
+    PosPermissionCodes.homeProfileAvatar,
+    PosPermissionCodes.homeProfileName,
+    PosPermissionCodes.homeProfileRole,
+    PosPermissionCodes.homeSessionSummaryView,
+    PosPermissionCodes.homeSessionSummaryTotalSales,
+    PosPermissionCodes.homeSessionSummaryTransactionCount,
+    PosPermissionCodes.homeSessionSummaryReturns,
+    PosPermissionCodes.homeSessionSummaryDiscounts,
+    PosPermissionCodes.homeSessionSummaryNetSales,
+    PosPermissionCodes.salesNewSaleView,
+    PosPermissionCodes.homeActionsReturnsEntry,
+    PosPermissionCodes.cashDrawerPositionView,
+    PosPermissionCodes.homeActionsOnlineOrdersEntry,
+    PosPermissionCodes.heldSalesView,
+    PosPermissionCodes.tillSessionClose,
+  ]);
+}
+
+Widget _wrapWithPermissions(Widget child, List<String> permissions) {
   return ProviderScope(
     overrides: [
       effectivePermissionSetProvider.overrideWithValue(
-        EffectivePermissionSet.fromIterable(const [
-          PosPermissionCodes.homeProfileView,
-          PosPermissionCodes.homeProfileAvatar,
-          PosPermissionCodes.homeProfileName,
-          PosPermissionCodes.homeProfileRole,
-          PosPermissionCodes.homeSessionSummaryView,
-          PosPermissionCodes.homeSessionSummaryTotalSales,
-          PosPermissionCodes.homeSessionSummaryTransactionCount,
-          PosPermissionCodes.homeSessionSummaryReturns,
-          PosPermissionCodes.homeSessionSummaryDiscounts,
-          PosPermissionCodes.homeSessionSummaryNetSales,
-          PosPermissionCodes.salesNewSaleView,
-          PosPermissionCodes.homeActionsReturnsEntry,
-          PosPermissionCodes.cashDrawerPositionView,
-          PosPermissionCodes.homeActionsOnlineOrdersEntry,
-          PosPermissionCodes.heldSalesView,
-          PosPermissionCodes.tillSessionClose,
-        ]),
+        EffectivePermissionSet.fromIterable(permissions),
       ),
     ],
     child: child,
@@ -41,21 +46,12 @@ Widget _wrapWithProfileAccess(Widget child) {
 }
 
 void main() {
-  test('successful payload without summary uses zero current-session values',
-      () {
+  test('successful payload without summary preserves unavailable state', () {
     final payload = PosHomeDashboardPayload.fromJson(
       _successfulPayload(),
     );
 
-    expect(payload.summary, isNotNull);
-    expect(payload.summary!.scope, 'CURRENT_TILL_SESSION');
-    expect(payload.summary!.currencyCode, 'LKR');
-    expect(payload.summary!.grossSalesAmount, 0);
-    expect(payload.summary!.transactionCount, 0);
-    expect(payload.summary!.refundAmount, 0);
-    expect(payload.summary!.refundCount, 0);
-    expect(payload.summary!.discountAmount, 0);
-    expect(payload.summary!.netSalesAmount, 0);
+    expect(payload.summary, isNull);
   });
 
   test('successful payload preserves backend summary values', () {
@@ -68,7 +64,9 @@ void main() {
           'transactionCount': 18,
           'refundAmount': 3250,
           'refundCount': 2,
+          'returnsApplicable': true,
           'discountAmount': 2150,
+          'discountsApplicable': true,
           'netSalesAmount': 120050,
         },
       ),
@@ -281,7 +279,8 @@ void main() {
     expect(retries, 1);
   });
 
-  testWidgets('empty successful summary renders all five zero-value cards', (
+  testWidgets('real zero base metrics remain while optional metrics are hidden',
+      (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1200, 300);
@@ -301,7 +300,9 @@ void main() {
                 transactionCount: 0,
                 refundAmount: 0,
                 refundCount: 0,
+                returnsApplicable: false,
                 discountAmount: 0,
+                discountsApplicable: false,
                 netSalesAmount: 0,
               ),
             ),
@@ -313,13 +314,13 @@ void main() {
     for (final label in const [
       'Total Sales',
       'Transactions',
-      'Returns',
-      'Discounts',
       'Net Sales',
     ]) {
       expect(find.text(label), findsOneWidget);
     }
-    expect(find.text('LKR 0.00'), findsNWidgets(4));
+    expect(find.text('Returns'), findsNothing);
+    expect(find.text('Discounts'), findsNothing);
+    expect(find.text('LKR 0.00'), findsNWidgets(2));
     expect(find.text('0'), findsOneWidget);
     expect(
       find.text('Current session summary is unavailable.'),
@@ -349,6 +350,59 @@ void main() {
     expect(find.byIcon(Icons.arrow_drop_down), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('section permission denial removes the complete summary',
+      (tester) async {
+    await tester.pumpWidget(_wrapWithPermissions(
+      const MaterialApp(
+        home: Scaffold(body: PosHomeSummarySection(summary: _summaryFixture)),
+      ),
+      const [PosPermissionCodes.homeSessionSummaryTotalSales],
+    ));
+
+    expect(find.text('CURRENT SESSION SUMMARY'), findsNothing);
+    expect(find.text('Total Sales'), findsNothing);
+  });
+
+  for (final width in const [1280.0, 1180.0, 1100.0]) {
+    for (final metricCount in const [1, 2, 3, 4, 5]) {
+      testWidgets('$metricCount summary cards reflow at ${width.toInt()} width',
+          (tester) async {
+        tester.view.physicalSize = Size(width, 300);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        const metricPermissions = [
+          PosPermissionCodes.homeSessionSummaryTotalSales,
+          PosPermissionCodes.homeSessionSummaryTransactionCount,
+          PosPermissionCodes.homeSessionSummaryReturns,
+          PosPermissionCodes.homeSessionSummaryDiscounts,
+          PosPermissionCodes.homeSessionSummaryNetSales,
+        ];
+
+        await tester.pumpWidget(_wrapWithPermissions(
+          const MaterialApp(
+            home:
+                Scaffold(body: PosHomeSummarySection(summary: _summaryFixture)),
+          ),
+          [
+            PosPermissionCodes.homeSessionSummaryView,
+            ...metricPermissions.take(metricCount),
+          ],
+        ));
+
+        expect(find.byType(SessionSummaryCard), findsNWidgets(metricCount));
+        expect(tester.takeException(), isNull);
+        final widths = find
+            .byType(SessionSummaryCard)
+            .evaluate()
+            .map((element) =>
+                tester.getSize(find.byWidget(element.widget)).width)
+            .toSet();
+        expect(widths, hasLength(1));
+      });
+    }
+  }
 
   testWidgets('disabled action exposes its reason and cannot be invoked',
       (tester) async {
@@ -427,6 +481,19 @@ Map<String, dynamic> _successfulPayload({
   };
 }
 
+const _summaryFixture = PosHomeSummaryState(
+  scope: 'CURRENT_TILL_SESSION',
+  currencyCode: 'LONG-CURRENCY-CODE',
+  grossSalesAmount: 999999999.99,
+  transactionCount: 999999,
+  refundAmount: 1250,
+  refundCount: 2,
+  returnsApplicable: true,
+  discountAmount: 500,
+  discountsApplicable: true,
+  netSalesAmount: 999998249.99,
+);
+
 PosHomeDashboardState _dashboard({String? profileImageUrl}) {
   return PosHomeDashboardState(
     actions: const [
@@ -482,7 +549,9 @@ PosHomeDashboardState _dashboard({String? profileImageUrl}) {
       transactionCount: 4,
       refundAmount: 50,
       refundCount: 1,
+      returnsApplicable: true,
       discountAmount: 20,
+      discountsApplicable: true,
       netSalesAmount: 1180,
     ),
   );

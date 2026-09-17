@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -66,7 +67,7 @@ class PaymentFinancialSummary extends ConsumerWidget {
             _FinancialRow(
               label: 'Discount',
               value: '- ${paymentMoney(summary.discount, currency)}',
-              valueColor: const Color(0xFF16A34A),
+              valueColor: TenantAdminColors.success,
             ),
           if (showTax)
             _FinancialRow(
@@ -144,7 +145,7 @@ class _FinancialRow extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF64748B),
+                      color: TenantAdminColors.mutedText,
                     ),
                   ),
                 ),

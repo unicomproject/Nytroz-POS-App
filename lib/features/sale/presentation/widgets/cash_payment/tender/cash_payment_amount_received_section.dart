@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:flutter/material.dart';
 import '../../../../domain/entities/pos_cash_payment_observability.dart';
 import '../../../providers/pos_checkout_summary_provider.dart';
@@ -47,7 +48,7 @@ class CashPaymentAmountReceivedSection extends StatelessWidget {
                 'AMOUNT RECEIVED',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF64748B),
+                  color: TenantAdminColors.mutedText,
                   fontSize: 12,
                   letterSpacing: 0.3,
                 ),
@@ -59,7 +60,7 @@ class CashPaymentAmountReceivedSection extends StatelessWidget {
                 TextSpan(
                   text: 'Due: ',
                   style: const TextStyle(
-                    color: Color(0xFF64748B),
+                    color: TenantAdminColors.mutedText,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -95,7 +96,7 @@ class CashPaymentAmountReceivedSection extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
+                    color: TenantAdminColors.mutedText,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -120,7 +121,7 @@ class CashPaymentAmountReceivedSection extends StatelessWidget {
                     icon: const Icon(
                       Icons.cancel_outlined,
                       size: 24,
-                      color: Color(0xFF94A3B8),
+                      color: TenantAdminColors.offline,
                     ),
                   ),
               ],

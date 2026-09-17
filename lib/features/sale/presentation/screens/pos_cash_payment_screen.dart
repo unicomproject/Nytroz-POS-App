@@ -8,6 +8,7 @@ import 'package:nytroz_pos/core/access/pos_permission_access.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
 import '../../../device_activation/presentation/providers/device_activation_provider.dart';
+import '../../../fulfilment_pickup/presentation/providers/pos_online_order_collection_provider.dart';
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../domain/entities/pos_checkout_api_exception.dart';
@@ -17,6 +18,7 @@ import '../providers/pos_cash_payment_provider.dart';
 import '../providers/pos_cash_payment_success_provider.dart';
 import '../providers/pos_checkout_summary_provider.dart';
 import '../../../hardware/receipt_printer/presentation/providers/cash_drawer_controller.dart';
+import '../../../pos_shell/presentation/providers/pos_home_dashboard_provider.dart';
 import '../widgets/cash_payment/cash_payment_screen_body.dart';
 import '../widgets/print_receipt/print_receipt_actions.dart';
 import 'dart:developer' as developer;
@@ -36,85 +38,198 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(authSessionProvider);
     final cart = ref.watch(posNewSaleCartProvider);
-    final summaryAsync = ref.watch(posCheckoutSummaryProvider);
     final cashState = ref.watch(posCashPaymentProvider);
+    final intent = ref.watch(posCashPaymentIntentProvider);
+    final collection = ref.watch(collectionPaymentContextProvider);
 
     if (!PosPermissionAccess.canAccessCashPaymentScreenSession(session)) {
       return const TenantAdminForbiddenScreen();
     }
 
-    if (!cart.hasItems) {
+    // Recovery must remain reachable even if the cart summary cannot load.
+    if (cart.completedSaleId != null ||
+        (intent != null && intent.phase != CashPaymentIntentPhase.draft)) {
+      final unknown = intent?.phase == CashPaymentIntentPhase.unknown;
+      final completed = cart.completedSaleId != null ||
+          intent?.phase == CashPaymentIntentPhase.succeeded;
+      final busy =
+          _isSubmitting || intent?.phase == CashPaymentIntentPhase.inFlight;
+      return Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(completed
+              ? 'This sale is completed.'
+              : unknown
+                  ? 'Payment outcome is not yet confirmed. Do not take payment again.'
+                  : busy
+                      ? 'Confirming payment…'
+                      : 'Payment was rejected. Your cart is retained.'),
+          const SizedBox(height: 16),
+          if (!busy)
+            ElevatedButton(
+              key: ValueKey(completed
+                  ? 'cash-view-receipt'
+                  : unknown
+                      ? 'cash-check-payment-status'
+                      : 'cash-start-new-attempt'),
+              onPressed: completed
+                  ? () {
+                      if (collection != null ||
+                          ref
+                                  .read(posOnlineOrderCollectionProvider)
+                                  .validation !=
+                              null) {
+                        context.go(
+                          '/pos/online-orders/collection/payment-success',
+                        );
+                      } else {
+                        context.go('/pos/new-sale/payment/cash/success');
+                      }
+                    }
+                  : unknown
+                      ? _reconcilePayment
+                      : () => ref
+                          .read(posCashPaymentIntentProvider.notifier)
+                          .startNew(intent!.saleIdentity),
+              child: Text(completed
+                  ? 'View Receipt'
+                  : unknown
+                      ? 'Check Payment Status'
+                      : 'Start New Attempt'),
+            ),
+          if (busy) const CircularProgressIndicator(),
+        ]),
+      );
+    }
+
+    if (!cart.hasItems && collection == null) {
       return _EmptyCartFallback(onBack: () => context.pop());
     }
 
-    return summaryAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _CheckoutErrorFallback(
-        message: error is PosCheckoutApiException
-            ? error.message
-            : 'Unable to load checkout summary.',
-        onBack: () => context.pop(),
-        onRetry: () => ref.invalidate(posCheckoutSummaryProvider),
-      ),
-      data: (summary) {
-        if (summary.usedFallback) {
-          return _CheckoutErrorFallback(
-            message:
-                summary.fallbackMessage ?? checkoutFallbackUnavailableMessage,
+    if (collection != null) {
+      final summary = PosCheckoutSummaryViewData(
+        itemCount: 0,
+        subtotal: collection.amountDue,
+        discount: 0,
+        tax: 0,
+        totalPayable: collection.amountDue,
+        saleType: 'Click & Collect',
+        itemsInCart: 0,
+        saleDate: DateTime.now(),
+        cashierName: session?.userDisplayName.trim().isNotEmpty == true
+            ? session!.userDisplayName.trim()
+            : 'Cashier',
+        paymentMethods: const [PosPaymentMethodType.cash],
+        usedFallback: false,
+        currency: collection.currency,
+      );
+      final total = summary.totalPayable;
+      final cashReceived = cashState.cashReceived;
+      final canConfirm = canConfirmCashPayment(cashReceived, total);
+      final onKeyTap = ref.read(posCashPaymentProvider.notifier).appendKey;
+
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final padding = TenantAdminInsets.pageForWidth(constraints.maxWidth);
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+              padding.left > 16 ? 16 : padding.left,
+              padding.top > 12 ? 12 : padding.top,
+              padding.right > 16 ? 16 : padding.right,
+              padding.bottom > 12 ? 12 : padding.bottom,
+            ),
+            child: CashPaymentScreenBody(
+              cart: cart,
+              summary: summary,
+              cashReceived: cashReceived,
+              inputBuffer: cashState.inputBuffer,
+              quickAmounts: generateCashQuickAmounts(total),
+              selectedQuickAmount: cashState.selectedQuickAmount,
+              onCustomerTap: () {},
+              onBackToPaymentMethods: () => context.pop(),
+              onQuickAmountSelected: (amount) => ref
+                  .read(posCashPaymentProvider.notifier)
+                  .setAmount(amount, selectedQuickAmount: amount),
+              onDigitPressed: onKeyTap,
+              onDoubleZeroPressed: () => onKeyTap('00'),
+              onBackspacePressed: () => onKeyTap('backspace'),
+              onClearPressed: () =>
+                  ref.read(posCashPaymentProvider.notifier).clearAmount(),
+              isSubmitting: _isSubmitting,
+              canCompleteSale: canConfirm,
+              onCompleteSalePressed: () => _confirmCashPayment(summary),
+            ),
+          );
+        },
+      );
+    }
+
+    return ref.watch(posCheckoutSummaryProvider).when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => _CheckoutErrorFallback(
+            message: error is PosCheckoutApiException
+                ? error.message
+                : 'Unable to load checkout summary.',
             onBack: () => context.pop(),
             onRetry: () => ref.invalidate(posCheckoutSummaryProvider),
-          );
-        }
+          ),
+          data: (summary) {
+            if (summary.usedFallback) {
+              return _CheckoutErrorFallback(
+                message: summary.fallbackMessage ??
+                    checkoutFallbackUnavailableMessage,
+                onBack: () => context.pop(),
+                onRetry: () => ref.invalidate(posCheckoutSummaryProvider),
+              );
+            }
 
-        final total = summary.totalPayable;
-        final cashReceived = cashState.cashReceived;
-        final canConfirm = canConfirmCashPayment(cashReceived, total);
-        final onKeyTap = ref.read(posCashPaymentProvider.notifier).appendKey;
+            final total = summary.totalPayable;
+            final cashReceived = cashState.cashReceived;
+            final canConfirm = canConfirmCashPayment(cashReceived, total);
+            final onKeyTap =
+                ref.read(posCashPaymentProvider.notifier).appendKey;
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final padding =
-                TenantAdminInsets.pageForWidth(constraints.maxWidth);
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final padding =
+                    TenantAdminInsets.pageForWidth(constraints.maxWidth);
 
-            return Padding(
-              padding: EdgeInsets.fromLTRB(
-                padding.left > 16 ? 16 : padding.left,
-                padding.top > 12 ? 12 : padding.top,
-                padding.right > 16 ? 16 : padding.right,
-                padding.bottom > 12 ? 12 : padding.bottom,
-              ),
-              child: CashPaymentScreenBody(
-                cart: cart,
-                summary: summary,
-                cashReceived: cashReceived,
-                inputBuffer: cashState.inputBuffer,
-                quickAmounts: generateCashQuickAmounts(total),
-                selectedQuickAmount: cashState.selectedQuickAmount,
-                onCustomerTap: () =>
-                    context.push('/pos/new-sale/payment/customer'),
-                onBackToPaymentMethods: () => context.pop(),
-                onQuickAmountSelected: (amount) => ref
-                    .read(posCashPaymentProvider.notifier)
-                    .setAmount(amount, selectedQuickAmount: amount),
-                onDigitPressed: onKeyTap,
-                onDoubleZeroPressed: () => onKeyTap('00'),
-                onBackspacePressed: () => onKeyTap('backspace'),
-                onClearPressed: () =>
-                    ref.read(posCashPaymentProvider.notifier).clearAmount(),
-                isSubmitting: _isSubmitting,
-                canCompleteSale: canConfirm,
-                onCompleteSalePressed: () =>
-                    _confirmCashPayment(context, summary),
-              ),
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    padding.left > 16 ? 16 : padding.left,
+                    padding.top > 12 ? 12 : padding.top,
+                    padding.right > 16 ? 16 : padding.right,
+                    padding.bottom > 12 ? 12 : padding.bottom,
+                  ),
+                  child: CashPaymentScreenBody(
+                    cart: cart,
+                    summary: summary,
+                    cashReceived: cashReceived,
+                    inputBuffer: cashState.inputBuffer,
+                    quickAmounts: generateCashQuickAmounts(total),
+                    selectedQuickAmount: cashState.selectedQuickAmount,
+                    onCustomerTap: () =>
+                        context.push('/pos/new-sale/payment/customer'),
+                    onBackToPaymentMethods: () => context.pop(),
+                    onQuickAmountSelected: (amount) => ref
+                        .read(posCashPaymentProvider.notifier)
+                        .setAmount(amount, selectedQuickAmount: amount),
+                    onDigitPressed: onKeyTap,
+                    onDoubleZeroPressed: () => onKeyTap('00'),
+                    onBackspacePressed: () => onKeyTap('backspace'),
+                    onClearPressed: () =>
+                        ref.read(posCashPaymentProvider.notifier).clearAmount(),
+                    isSubmitting: _isSubmitting,
+                    canCompleteSale: canConfirm,
+                    onCompleteSalePressed: () => _confirmCashPayment(summary),
+                  ),
+                );
+              },
             );
           },
         );
-      },
-    );
   }
 
   Future<void> _confirmCashPayment(
-    BuildContext context,
     PosCheckoutSummaryViewData summary,
   ) async {
     // Double-tap guard: block if already submitting.
@@ -140,7 +255,9 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
     }
 
     final cart = ref.read(posNewSaleCartProvider);
-    if (cart.itemList.isEmpty) {
+    final collection = ref.read(collectionPaymentContextProvider);
+    if (cart.completedSaleId != null) return;
+    if (cart.itemList.isEmpty && collection == null) {
       _showSnackBar(context, 'Checkout requires valid cart items.');
       return;
     }
@@ -155,14 +272,15 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
     setState(() => _isSubmitting = true);
 
     // Build a stable cart fingerprint for idempotency tracking.
-    final saleIdentity = cart.itemList
-        .map((i) => '${i.product.variantId}:${i.quantity}')
-        .join('|');
+    final saleIdentity = collection != null
+        ? 'collection:${collection.salesOrderId}'
+        : cart.itemList
+            .map((i) => '${i.product.variantId}:${i.quantity}')
+            .join('|');
     final requestFingerprint = '$saleIdentity|cash=$cashReceived';
 
     // Obtain the stable idempotency key from the intent state machine.
-    // beginSubmission returns the same intent if already in-flight with
-    // the same fingerprint (prevents duplicate network requests).
+    // beginSubmission rejects every concurrent/unknown/completed submission.
     final CashPaymentIntent intent;
     try {
       intent = ref.read(posCashPaymentIntentProvider.notifier).beginSubmission(
@@ -178,28 +296,47 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
     }
 
     try {
-      final payload =
-          await ref.read(posCheckoutRemoteDatasourceProvider).startPayment(
-                deviceId: deviceContext.deviceId,
-                paymentMethod:
-                    checkoutApiPaymentMethodCode(PosPaymentMethodType.cash),
-                lines: checkoutLinesFromCart(cart),
-                cashReceived: cashReceived,
-                customerId: cart.selectedCustomer?.customerId,
-                discountApplicationId: cart.discountApplicationId,
-                idempotencyKey: intent.key,
-              );
+      final payload = await ref
+          .read(posCheckoutRemoteDatasourceProvider)
+          .startPayment(
+            deviceId: deviceContext.deviceId,
+            paymentMethod:
+                checkoutApiPaymentMethodCode(PosPaymentMethodType.cash),
+            lines: collection != null ? const [] : checkoutLinesFromCart(cart),
+            cashReceived: cashReceived,
+            customerId:
+                collection != null ? null : cart.selectedCustomer?.customerId,
+            discountApplicationId:
+                collection != null ? null : cart.discountApplicationId,
+            existingSalesOrderId: collection?.salesOrderId,
+            idempotencyKey: intent.key,
+          );
 
+      if (collection == null) {
+        ref.read(posNewSaleCartProvider.notifier).completeSale(payload.saleId);
+      }
       // Mark the intent succeeded — prevents resubmission.
       ref.read(posCashPaymentIntentProvider.notifier).markSucceeded();
 
       // Store authoritative backend values (not local preview).
       ref.read(posCashPaymentSuccessProvider.notifier).recordCheckoutPayment(
             payload,
-            customerName: cart.selectedCustomer?.fullName,
-            customerPhone: cart.selectedCustomer?.phone,
-            customerId: cart.selectedCustomer?.customerId,
           );
+      unawaited(
+        ref.read(posHomeSessionSummaryProvider.notifier).refresh(),
+      );
+
+      if (collection != null) {
+        ref
+            .read(posOnlineOrderCollectionProvider.notifier)
+            .markPaymentSettled(saleId: payload.saleId);
+        ref.read(collectionPaymentContextProvider.notifier).state = null;
+        ref.read(posCashPaymentIntentProvider.notifier).clear();
+        if (!mounted) return;
+        context.go('/pos/online-orders/collection/payment-success');
+        return;
+      }
+
       // Trigger receipt auto-print + drawer async — never blocks payment success.
       unawaited(
         triggerCheckoutReceiptAutoPrint(
@@ -250,27 +387,85 @@ class _PosCashPaymentScreenState extends ConsumerState<PosCashPaymentScreen> {
         );
       }
 
-      if (!context.mounted) return;
+      if (!mounted) return;
 
       // Navigate to success only after confirmed backend success.
-      context.push('/pos/new-sale/payment/cash/success');
+      context.go('/pos/new-sale/payment/cash/success');
     } on PosCheckoutApiException catch (error) {
       // Distinguish timeout/unknown outcome from confirmed rejections.
       // - Unknown: preserve the same intent key for safe retry.
       // - KnownRejected: require explicit new attempt.
-      if (error.isNetworkUnavailable) {
+      if (!error.isConfirmedPaymentRejection) {
         ref.read(posCashPaymentIntentProvider.notifier).markUnknown();
       } else {
         ref.read(posCashPaymentIntentProvider.notifier).markKnownRejected();
       }
 
-      if (!context.mounted) return;
+      if (!mounted) return;
       _showSnackBar(context, error.message);
       // Cart, entered amount, customer and discount are intentionally preserved.
+    } on Object {
+      // Parsing/cancellation/post-commit uncertainty is not a confirmed rejection.
+      if (ref.read(posCashPaymentIntentProvider)?.phase !=
+          CashPaymentIntentPhase.succeeded) {
+        ref.read(posCashPaymentIntentProvider.notifier).markUnknown();
+      }
+      if (mounted) {
+        _showSnackBar(context, 'Check payment status before trying again.');
+      }
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
       }
+    }
+  }
+
+  Future<void> _reconcilePayment() async {
+    if (_isSubmitting) return;
+    final intent = ref.read(posCashPaymentIntentProvider);
+    if (intent?.phase != CashPaymentIntentPhase.unknown) return;
+    setState(() => _isSubmitting = true);
+    try {
+      final result = await ref
+          .read(posCheckoutRemoteDatasourceProvider)
+          .getPaymentStatus(intent!.key);
+      if (!mounted) return;
+      if (result.status == 'not_completed') {
+        ref.read(posCashPaymentIntentProvider.notifier).markKnownRejected();
+        return;
+      }
+      final payload = result.payment;
+      if (payload == null) {
+        _showSnackBar(context,
+            'Status is still unknown. Your cart is retained. Check again; do not take payment again.');
+        return;
+      }
+      ref
+          .read(posCashPaymentSuccessProvider.notifier)
+          .recordCheckoutPayment(payload);
+      unawaited(
+        ref.read(posHomeSessionSummaryProvider.notifier).refresh(),
+      );
+      ref.read(posCashPaymentIntentProvider.notifier).markSucceeded();
+      if (ref.read(collectionPaymentContextProvider) != null) {
+        ref.read(posOnlineOrderCollectionProvider.notifier)
+            .markPaymentSettled(saleId: payload.saleId);
+        ref.read(collectionPaymentContextProvider.notifier).state = null;
+        ref.read(posCashPaymentIntentProvider.notifier).clear();
+        context.go('/pos/online-orders/collection/payment-success');
+        return;
+      }
+      ref.read(posNewSaleCartProvider.notifier).completeSale(payload.saleId);
+      // No automatic drawer pulse/print during reconciliation: physical delivery
+      // may already have happened. The authoritative receipt remains available.
+      context.go('/pos/new-sale/payment/cash/success');
+    } on Object {
+      if (mounted) {
+        _showSnackBar(context,
+            'Unable to confirm payment status. Check again when connected.');
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 

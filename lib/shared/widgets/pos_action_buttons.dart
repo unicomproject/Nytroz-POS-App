@@ -101,6 +101,8 @@ class _PosPrimaryActionButtonState extends State<PosPrimaryActionButton> {
             : PosPrimaryActionTokens.height);
     final radius = BorderRadius.circular(widget.borderRadius);
     final opacity = _pressed ? 0.86 : (_hovered ? 0.94 : 1.0);
+    final themePrimary = Theme.of(context).colorScheme.primary;
+    final activeGradient = widget.gradient;
 
     final button = AnimatedOpacity(
       opacity: showActiveTheme ? opacity : 1,
@@ -109,11 +111,12 @@ class _PosPrimaryActionButtonState extends State<PosPrimaryActionButton> {
         duration: PosPrimaryActionTokens.animationDuration,
         decoration: BoxDecoration(
           color: showActiveTheme
-              ? widget.backgroundColor
+              ? widget.backgroundColor ??
+                  (activeGradient == null ? themePrimary : null)
               : widget.disabledBackgroundColor ??
                   PosPrimaryActionTokens.disabledBackground,
           gradient: showActiveTheme && widget.backgroundColor == null
-              ? widget.gradient ?? PosPrimaryActionTokens.gradient
+              ? activeGradient
               : null,
           borderRadius: radius,
           border: _focused ? Border.all(color: Colors.white, width: 2) : null,

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../pos/presentation/widgets/new_sale/navigation/pos_cashier_bottom_navigation.dart';
 import '../../../../../core/access/permission_access_providers.dart';
 import 'pos_desktop_top_bar.dart';
-import 'pos_mobile_top_bar.dart';
 import 'pos_shell_bottom_nav_destinations.dart';
 import 'pos_shell_top_bar_visibility.dart';
 import 'pos_top_bar.dart';
@@ -79,17 +78,18 @@ class PosShellScaffold extends ConsumerWidget {
         }
 
         return Scaffold(
-          appBar: topBarAllowed ? const PosMobileTopBar() : null,
-          body: _PosShellContent(
-            title: title,
-            subtitle: subtitle,
-            showTopBar: false,
-            showTopBarSearch: showTopBarSearch,
-            showBottomNavigation: bottomNavAllowed,
-            isNewSale: isNewSale,
-            isDashboard: isDashboard,
-            applyTopSafeArea: !topBarAllowed,
-            child: child,
+          body: SafeArea(
+            bottom: false,
+            child: _PosShellContent(
+              title: title,
+              subtitle: subtitle,
+              showTopBar: topBarAllowed,
+              showTopBarSearch: showTopBarSearch,
+              showBottomNavigation: bottomNavAllowed,
+              isNewSale: isNewSale,
+              isDashboard: isDashboard,
+              child: child,
+            ),
           ),
         );
       },
@@ -107,7 +107,6 @@ class _PosShellContent extends StatelessWidget {
     required this.isNewSale,
     required this.isDashboard,
     required this.child,
-    this.applyTopSafeArea = false,
   });
 
   final String title;
@@ -118,7 +117,6 @@ class _PosShellContent extends StatelessWidget {
   final bool isNewSale;
   final bool isDashboard;
   final Widget child;
-  final bool applyTopSafeArea;
 
   @override
   Widget build(BuildContext context) {
@@ -141,7 +139,7 @@ class _PosShellContent extends StatelessWidget {
                     ),
         Expanded(
           child: SafeArea(
-            top: applyTopSafeArea,
+            top: false,
             bottom: false,
             child: child,
           ),

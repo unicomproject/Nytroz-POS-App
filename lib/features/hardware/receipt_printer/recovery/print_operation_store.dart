@@ -53,6 +53,20 @@ class PrintOperationStore {
     _writeTail = completer.catchError((_) {});
     return completer;
   }
+
+  Future<void> remove(String operationId) {
+    final completer = _writeTail.then((_) async {
+      final operations = (await load())
+          .where((operation) => operation.operationId != operationId)
+          .toList(growable: false);
+      await _storage.write(
+        _key,
+        jsonEncode(operations.map((item) => item.toJson()).toList()),
+      );
+    });
+    _writeTail = completer.catchError((_) {});
+    return completer;
+  }
 }
 
 final printOperationStoreProvider = Provider<PrintOperationStore>(

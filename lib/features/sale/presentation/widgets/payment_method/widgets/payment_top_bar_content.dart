@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -68,8 +69,8 @@ class _PaymentTopBarContentState extends ConsumerState<PaymentTopBarContent> {
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.credit_card_rounded,
-                  color: PaymentMethodStyle.orange, size: 32),
+              Icon(Icons.credit_card_rounded,
+                  color: Theme.of(context).colorScheme.primary, size: 32),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -108,17 +109,22 @@ class _PaymentTopBarContentState extends ConsumerState<PaymentTopBarContent> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                  color: online ? const Color(0xFF00B52D) : Colors.orange),
+                  color: online
+                      ? TenantAdminColors.success
+                      : TenantAdminColors.warning),
             ),
             child: Row(children: [
               CircleAvatar(
                   radius: 5,
-                  backgroundColor:
-                      online ? const Color(0xFF00C832) : Colors.orange),
+                  backgroundColor: online
+                      ? TenantAdminColors.success
+                      : TenantAdminColors.warning),
               const SizedBox(width: 9),
               Text(online ? 'ONLINE' : 'OFFLINE',
                   style: TextStyle(
-                      color: online ? const Color(0xFF00D438) : Colors.orange,
+                      color: online
+                          ? TenantAdminColors.success
+                          : TenantAdminColors.warning,
                       fontWeight: FontWeight.w900)),
             ]),
           ),

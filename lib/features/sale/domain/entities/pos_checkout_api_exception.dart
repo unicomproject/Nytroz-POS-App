@@ -13,6 +13,16 @@ class PosCheckoutApiException implements Exception {
   final int? statusCode;
   final bool isNetworkUnavailable;
 
+  /// Only a structured pre-commit backend rejection permits a fresh attempt.
+  /// A proxy timeout, cancellation, 5xx, or conflicting key may hide a commit.
+  bool get isConfirmedPaymentRejection =>
+      statusCode != null && statusCode! >= 400 && statusCode! < 500 &&
+      statusCode != 408 &&
+      (code?.startsWith('pos_checkout.') == true ||
+          code?.startsWith('till_session.') == true) &&
+      code != 'pos_checkout.idempotency_conflict' &&
+      code != 'pos_checkout.persistence_failed';
+
   @override
   String toString() => message;
 }

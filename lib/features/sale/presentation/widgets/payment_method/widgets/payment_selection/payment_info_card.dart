@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:flutter/material.dart';
 
 import '../../payment_method_style.dart';
@@ -11,7 +12,7 @@ class PaymentInfoCardNotice extends StatelessWidget {
       key: const ValueKey('payment-info-card-notice'),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: TenantAdminColors.subtleBackground,
         border: Border.all(color: PaymentMethodStyle.border),
         borderRadius: BorderRadius.circular(10),
       ),
@@ -20,7 +21,7 @@ class PaymentInfoCardNotice extends StatelessWidget {
           Icon(
             Icons.info_outline_rounded,
             size: 20,
-            color: Color(0xFF64748B),
+            color: TenantAdminColors.mutedText,
           ),
           SizedBox(width: 12),
           Expanded(
@@ -28,7 +29,7 @@ class PaymentInfoCardNotice extends StatelessWidget {
               'Select a payment method to continue. You will be able to review and complete the payment on the next screen.',
               style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF475569),
+                color: TenantAdminColors.mutedText,
                 fontWeight: FontWeight.w500,
               ),
             ),

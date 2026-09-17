@@ -36,19 +36,22 @@ class PosPaymentSuccessScreen extends ConsumerWidget {
       sessionDisplayName: session?.userDisplayName,
     );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final padding = TenantAdminInsets.pageForWidth(constraints.maxWidth);
+    return PopScope(
+      canPop: false,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final padding = TenantAdminInsets.pageForWidth(constraints.maxWidth);
 
-        return Padding(
-          padding: padding,
-          child: PaymentSuccessScreenBody(
-            successData: successData,
-            cashierName: cashierName,
-            sessionContext: sessionContext,
-          ),
-        );
-      },
+          return Padding(
+            padding: padding,
+            child: PaymentSuccessScreenBody(
+              successData: successData,
+              cashierName: cashierName,
+              sessionContext: sessionContext,
+            ),
+          );
+        },
+      ),
     );
   }
 }

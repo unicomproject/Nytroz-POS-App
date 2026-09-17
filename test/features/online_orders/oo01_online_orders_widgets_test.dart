@@ -5,6 +5,34 @@ import 'package:nytroz_pos/features/fulfilment_pickup/presentation/providers/pos
 import 'package:nytroz_pos/features/fulfilment_pickup/presentation/widgets/oo01_online_orders_widgets.dart';
 
 void main() {
+  testWidgets('refresh preserves list position and scroll offset', (tester) async {
+    final items = List.generate(20, (index) => PosOnlineOrder.fromJson({
+      'id': 'order-$index',
+      'orderNumber': 'ORDER-$index',
+    }));
+    Future<void> render(bool loading) => tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: Oo01OrderResults(
+        state: PosOnlineOrdersState(items: items, isLoading: loading),
+        onOpen: (_) {},
+        onRetry: () {},
+      )),
+    ));
+    await render(false);
+    await tester.drag(find.byType(ListView), const Offset(0, -200));
+    await tester.pumpAndSettle();
+    final origin = tester.getTopLeft(find.byType(ListView));
+    final scroll = tester.state<ScrollableState>(find.byType(Scrollable));
+    final offset = scroll.position.pixels;
+    await render(true);
+    expect(tester.getTopLeft(find.byType(ListView)), origin);
+    expect(scroll.position.pixels, offset);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    await render(false);
+    expect(tester.getTopLeft(find.byType(ListView)), origin);
+    expect(scroll.position.pixels, offset);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('OO01 header and exactly six summary labels are visible',
       (tester) async {
     await tester.pumpWidget(
@@ -71,5 +99,68 @@ void main() {
     expect(find.text('No orders match your search.'), findsOneWidget);
     expect(find.textContaining('Showing'), findsNothing);
     expect(find.textContaining('Page '), findsNothing);
+  });
+
+  testWidgets('summary card tap selects and toggles status filter',
+      (tester) async {
+    String? selected;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) {
+              return SizedBox(
+                width: 1200,
+                child: Oo01SummaryRow(
+                  summary: const PosOnlineOrderSummary(
+                    total: 0,
+                    pending: 0,
+                    preparing: 0,
+                    ready: 6,
+                    overdue: 7,
+                    newOrders: 0,
+                    collected: 2,
+                    cancelled: 0,
+                  ),
+                  selectedStatus: selected,
+                  onStatusSelected: (value) {
+                    setState(() => selected = value);
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Ready'));
+    await tester.pump();
+    expect(selected, Oo01SummaryRow.statusReady);
+
+    await tester.tap(find.text('Delayed'));
+    await tester.pump();
+    expect(selected, Oo01SummaryRow.statusDelayed);
+
+    await tester.tap(find.text('Delayed'));
+    await tester.pump();
+    expect(selected, isNull);
+  });
+
+  testWidgets('empty status filter state names the selected bucket',
+      (tester) async {
+    const state = PosOnlineOrdersState(status: 'READY');
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Oo01OrderResults(
+            state: state,
+            onOpen: (_) {},
+            onRetry: () {},
+          ),
+        ),
+      ),
+    );
+    expect(find.text('No Ready orders right now.'), findsOneWidget);
   });
 }

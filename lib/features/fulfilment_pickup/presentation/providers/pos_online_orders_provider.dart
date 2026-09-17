@@ -10,6 +10,7 @@ import '../../../sale/presentation/widgets/new_sale/pos_camera_barcode_scanner.d
 import '../../data/datasources/pos_online_orders_remote_datasource.dart';
 import '../../data/repositories/pos_online_orders_repository_impl.dart';
 import '../../domain/entities/pos_online_order.dart';
+import '../../domain/entities/pos_online_order_collection.dart';
 import '../../domain/repositories/pos_online_orders_repository.dart';
 
 /// Indirection so widget tests can override how the pickup QR scanner is
@@ -37,6 +38,11 @@ final posOnlineOrdersRepositoryProvider = Provider<PosOnlineOrdersRepository>(
 
 final posOnlineOrdersOutletIdProvider = Provider<String?>((ref) =>
     ref.watch(deviceActivationProvider).deviceContext?.outletId.trim());
+
+/// One-time collection code issued by the authoritative Ready command.
+/// Keep it in memory only; the API deliberately never returns it on later reads.
+final issuedCollectionQrTokenProvider =
+    StateProvider.family<String?, String>((ref, orderId) => null);
 
 class PosOnlineOrdersState {
   const PosOnlineOrdersState({
@@ -142,6 +148,15 @@ class PosOnlineOrdersController extends Notifier<PosOnlineOrdersState> {
 
   @override
   PosOnlineOrdersState build() {
+    ref.listen(posOnlineOrdersOutletIdProvider, (previous, next) {
+      if (previous == next) return;
+      _listToken?.cancel('outlet changed');
+      _detailToken?.cancel('outlet changed');
+      _searchDebounce?.cancel();
+      state = PosOnlineOrdersState(
+          query: state.query, status: state.status, sort: state.sort);
+      unawaited(load(resetPage: true));
+    });
     ref.onDispose(() {
       _listToken?.cancel();
       _detailToken?.cancel();
@@ -158,6 +173,11 @@ class PosOnlineOrdersController extends Notifier<PosOnlineOrdersState> {
     }
     _listToken?.cancel('superseded');
     _listToken = CancelToken();
+    final requestToken = _listToken!;
+    bool isCurrent() =>
+        !requestToken.isCancelled &&
+        identical(_listToken, requestToken) &&
+        ref.read(posOnlineOrdersOutletIdProvider) == outletId;
     final requestedPage = resetPage ? 1 : state.page;
     final previousItems = state.items;
     final previousSummary = state.summary;
@@ -173,8 +193,9 @@ class PosOnlineOrdersController extends Notifier<PosOnlineOrdersState> {
               page: requestedPage,
               pageSize: state.pageSize,
             ),
-            cancelToken: _listToken,
+            cancelToken: requestToken,
           );
+      if (!isCurrent()) return;
       state = state.copyWith(
         isLoading: false,
         items: result.items,
@@ -187,7 +208,7 @@ class PosOnlineOrdersController extends Notifier<PosOnlineOrdersState> {
         clearError: true,
       );
     } on DioException catch (error) {
-      if (CancelToken.isCancel(error)) return;
+      if (CancelToken.isCancel(error) || !isCurrent()) return;
       // Keep last good list on refresh failure (manual or realtime).
       state = state.copyWith(
         isLoading: false,
@@ -196,6 +217,7 @@ class PosOnlineOrdersController extends Notifier<PosOnlineOrdersState> {
         errorMessage: _message(error),
       );
     } catch (_) {
+      if (!isCurrent()) return;
       state = state.copyWith(
         isLoading: false,
         items: previousItems,
@@ -297,6 +319,8 @@ class PosOnlineOrdersController extends Notifier<PosOnlineOrdersState> {
   }
 
   void setQuery(String value) {
+    // Invalidate the old response immediately, including the debounce window.
+    _listToken?.cancel('search changed');
     state = state.copyWith(query: value.trim(), page: 1);
     _searchDebounce?.cancel();
     _searchDebounce = Timer(
@@ -353,6 +377,20 @@ String onlineOrderErrorMessage(DioException error) {
       'The barcode does not match the selected item.',
     'online_orders.barcode_snapshot_unavailable' =>
       'Barcode verification is unavailable for this order item.',
+    'online_orders.collection.qr_invalid' => 'This collection QR is not valid.',
+    'online_orders.collection.qr_expired' =>
+      'This collection QR has expired. Ask the customer for a new code.',
+    'online_orders.collection.wrong_outlet' =>
+      'This order belongs to a different outlet.',
+    'online_orders.collection.not_ready' =>
+      'This order is not ready for collection yet.',
+    'online_orders.collection.cancelled' => 'This order has been cancelled.',
+    'online_orders.collection.already_collected' =>
+      'This order has already been collected.',
+    'online_orders.collection.missing_graph' =>
+      'Collection data is incomplete for this order.',
+    'online_orders.collection.payment_required' =>
+      'Outstanding balance must be settled before collection.',
     _ when error.response?.statusCode == 401 =>
       'Your session has expired. Sign in again.',
     _ when error.response?.statusCode == 403 =>
@@ -483,6 +521,7 @@ class PosPickingActions {
                 orderId: orderId,
                 expectedVersion: order.fulfillmentVersion,
               );
+      _retainIssuedCollectionQrToken(result);
       await _refresh();
       ref.invalidate(posOnlineOrdersProvider);
       return result;
@@ -552,6 +591,7 @@ class PosPickingActions {
                 orderId: orderId,
                 expectedVersion: readyVersion,
               );
+      _retainIssuedCollectionQrToken(readyResult);
       await _refresh();
       ref.invalidate(posOnlineOrdersProvider);
       return readyResult;
@@ -575,6 +615,12 @@ class PosPickingActions {
   Future<PosPickingOrder> _currentPickingOrder() async {
     final asyncValue = ref.read(posPickingOrderProvider(orderId));
     return asyncValue.asData?.value ?? await _refresh();
+  }
+
+  void _retainIssuedCollectionQrToken(PosFulfillmentCommandResult result) {
+    final token = result.collectionQrToken;
+    if (token == null || token.isEmpty) return;
+    ref.read(issuedCollectionQrTokenProvider(orderId).notifier).state = token;
   }
 
   static String? _normalizePackingNote(String? note) {
@@ -630,7 +676,7 @@ class PosPickingActions {
     }
   }
 
-  Future<PosPickupVerifyResult> verifyPickupCode(String pickupCode) async {
+  Future<PosCollectionValidationResult> verifyPickupCode(String pickupCode) async {
     if (_mutationInFlight) {
       throw StateError('A packing action is already in progress.');
     }
@@ -644,10 +690,9 @@ class PosPickingActions {
         throw StateError('This order is not ready for collection yet.');
       }
       final result =
-          await ref.read(posOnlineOrdersRepositoryProvider).verifyPickup(
+          await ref.read(posOnlineOrdersRepositoryProvider).validateCollectionQr(
                 outletId: _outletId,
-                orderId: orderId,
-                pickupCode: pickupCode,
+                token: pickupCode,
               );
       await _refresh();
       return result;
@@ -659,16 +704,17 @@ class PosPickingActions {
     }
   }
 
-  Future<PosPickupCollectResult> completeCollection() async {
+  Future<PosCollectionCompleteResult> completeCollection() async {
     if (_mutationInFlight) {
       throw StateError('A packing action is already in progress.');
     }
     _mutationInFlight = true;
     try {
       final result =
-          await ref.read(posOnlineOrdersRepositoryProvider).collectOrder(
+          await ref.read(posOnlineOrdersRepositoryProvider).completeCollection(
                 outletId: _outletId,
                 orderId: orderId,
+                expectedVersion: 0,
               );
       await _refresh();
       ref.invalidate(posOnlineOrdersProvider);

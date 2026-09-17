@@ -10,11 +10,17 @@ class Oo01Header extends StatelessWidget {
   const Oo01Header({
     required this.searchController,
     required this.onSearch,
+    this.searchFocusNode,
+    this.onScan,
+    this.onCollectionQr,
     this.onScanToCollect,
     super.key,
   });
   final TextEditingController searchController;
   final ValueChanged<String> onSearch;
+  final FocusNode? searchFocusNode;
+  final VoidCallback? onScan;
+  final VoidCallback? onCollectionQr;
 
   /// Opens the blind "scan first, find the order after" pickup flow. Null
   /// hides the button for cashiers without pickup-verify permission.
@@ -37,15 +43,48 @@ class Oo01Header extends StatelessWidget {
           );
           final search = Semantics(
             textField: true,
-            label: 'Search online orders',
+            label: 'Search or scan online orders',
             child: TextField(
               controller: searchController,
+              focusNode: searchFocusNode,
               onChanged: onSearch,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText:
-                    'Search by order number, customer, phone or collection code',
-                border: OutlineInputBorder(),
+              onSubmitted: (_) {
+                // Leave the query visible and let the next wedge scan replace it.
+                searchController.selection = TextSelection(
+                    baseOffset: 0, extentOffset: searchController.text.length);
+              },
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: 'Search by order number, customer, phone or scan...',
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (onCollectionQr != null)
+                      Semantics(
+                        container: true,
+                        button: true,
+                        label: 'Scan customer collection QR',
+                        child: IconButton(
+                          key: const Key('oo01-collection-qr'),
+                          tooltip: 'Scan customer collection QR',
+                          onPressed: onCollectionQr,
+                          icon: const Icon(Icons.qr_code_2),
+                        ),
+                      ),
+                    const SizedBox(height: 24, child: VerticalDivider()),
+                    Semantics(
+                      container: true,
+                      button: true,
+                      label: 'Scan order',
+                      child: IconButton(
+                        tooltip: 'Scan order',
+                        onPressed: onScan,
+                        icon: const Icon(Icons.qr_code_scanner),
+                      ),
+                    ),
+                  ],
+                ),
+                border: const OutlineInputBorder(),
                 isDense: true,
               ),
             ),
@@ -86,49 +125,71 @@ class Oo01Header extends StatelessWidget {
 }
 
 class Oo01SummaryRow extends StatelessWidget {
-  const Oo01SummaryRow({required this.summary, super.key});
+  const Oo01SummaryRow({
+    required this.summary,
+    this.selectedStatus,
+    this.onStatusSelected,
+    super.key,
+  });
+
   final PosOnlineOrderSummary summary;
+  final String? selectedStatus;
+  final ValueChanged<String?>? onStatusSelected;
+
+  static const statusNew = 'NEW';
+  static const statusPreparing = 'PREPARING';
+  static const statusReady = 'READY';
+  static const statusDelayed = 'DELAYED';
+  static const statusCollected = 'COLLECTED';
+  static const statusCancelled = 'CANCELLED';
 
   @override
   Widget build(BuildContext context) {
     final cards = [
       (
         'New',
+        statusNew,
         summary.newOrders,
         Icons.shopping_bag_outlined,
         OnlineOrderSummarySemantic.newOrder
       ),
       (
         'Preparing',
+        statusPreparing,
         summary.preparing,
         Icons.inventory_2_outlined,
         OnlineOrderSummarySemantic.preparing
       ),
       (
         'Ready',
+        statusReady,
         summary.ready,
         Icons.shopping_bag_outlined,
         OnlineOrderSummarySemantic.ready
       ),
       (
         'Delayed',
+        statusDelayed,
         summary.overdue,
         Icons.schedule,
         OnlineOrderSummarySemantic.delayed
       ),
       (
         'Collected',
+        statusCollected,
         summary.collected,
         Icons.check_circle_outline,
         OnlineOrderSummarySemantic.collected
       ),
       (
         'Cancelled',
+        statusCancelled,
         summary.cancelled,
         Icons.cancel_outlined,
         OnlineOrderSummarySemantic.cancelled
       ),
     ];
+    final selected = selectedStatus?.trim().toUpperCase();
     return LayoutBuilder(builder: (context, constraints) {
       final columns = constraints.maxWidth >= 1000
           ? 6
@@ -145,9 +206,15 @@ class Oo01SummaryRow extends StatelessWidget {
               width: width,
               child: OnlineOrderSummaryCard(
                 title: card.$1,
-                count: card.$2,
-                icon: card.$3,
-                semantic: card.$4,
+                count: card.$3,
+                icon: card.$4,
+                semantic: card.$5,
+                selected: selected == card.$2,
+                onTap: onStatusSelected == null
+                    ? null
+                    : () => onStatusSelected!(
+                          selected == card.$2 ? null : card.$2,
+                        ),
               ),
             ),
         ],
@@ -181,14 +248,24 @@ class Oo01OrderResults extends StatelessWidget {
     }
     if (state.items.isEmpty) {
       return OnlineOrderScreenState(
-        message: state.query.isEmpty
+        message: state.query.isEmpty &&
+                (state.status == null || state.status!.isEmpty)
             ? 'No online orders are available.'
-            : 'No orders match your search.',
+            : state.status != null &&
+                    state.status!.isNotEmpty &&
+                    state.query.isEmpty
+                ? 'No ${_statusLabel(state.status)} orders right now.'
+                : 'No orders match your search.',
         icon: state.query.isEmpty ? Icons.inbox_outlined : Icons.search_off,
       );
     }
     return Column(children: [
-      if (state.isLoading) const LinearProgressIndicator(minHeight: 2),
+      SizedBox(
+        height: 2,
+        child: state.isLoading
+            ? const LinearProgressIndicator(minHeight: 2)
+            : null,
+      ),
       Expanded(
         child: ListView.separated(
           itemCount: state.items.length,
@@ -378,4 +455,16 @@ class Oo01OrderCard extends StatelessWidget {
             ),
         ],
       );
+}
+
+String _statusLabel(String? status) {
+  return switch (status?.trim().toUpperCase()) {
+    'NEW' => 'New',
+    'PREPARING' => 'Preparing',
+    'READY' || 'READY_FOR_COLLECTION' => 'Ready',
+    'DELAYED' || 'OVERDUE' => 'Delayed',
+    'COLLECTED' || 'COMPLETED' => 'Collected',
+    'CANCELLED' => 'Cancelled',
+    _ => status?.trim().isNotEmpty == true ? status!.trim() : 'matching',
+  };
 }

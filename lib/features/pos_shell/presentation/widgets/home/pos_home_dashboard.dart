@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../../../application/state/pos_home_dashboard_state.dart';
+import '../../providers/pos_home_dashboard_provider.dart';
 import 'cashier_profile_card.dart';
 import 'dashboard_action_builder.dart';
 import 'dashboard_action_grid.dart';
@@ -87,9 +89,15 @@ class PosHomeDashboard extends StatelessWidget {
           ),
         ),
       const SizedBox(height: TenantAdminSpacing.md),
-      PosHomeSummarySection(
-        summary: dashboard.summary,
-        onRetry: onSummaryRetry,
+      Consumer(
+        builder: (context, ref, _) {
+          final refreshedSummary =
+              ref.watch(posHomeSessionSummaryProvider).valueOrNull;
+          return PosHomeSummarySection(
+            summary: refreshedSummary ?? dashboard.summary,
+            onRetry: onSummaryRetry,
+          );
+        },
       ),
     ];
   }
