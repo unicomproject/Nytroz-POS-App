@@ -72,6 +72,7 @@ class Step1BasicDetails extends StatelessWidget {
       fieldErrors: state.fieldErrors,
       onCategoryChanged: controller.updateCategory,
       onBrandChanged: controller.updateBrand,
+      categoryResolution: state.scanStepState.categoryResolution,
     );
 
     final imageCard = ProductImageUploadCard(

@@ -18,19 +18,31 @@ import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/te
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 
 class _CreateTrackingRepo implements TenantProductRepository {
+  ExternalLookupProductBarcodeResponseDto? nextExternalLookupResponse;
+
   @override
   Future<ResolveProductBarcodeResponseDto> resolveBarcode(ResolveProductBarcodeRequestDto request) async {
-    throw UnimplementedError();
+    return const ResolveProductBarcodeResponseDto(
+      outcome: 'VALID_NO_LOCAL_MATCH',
+      normalizedBarcode: '5449000000996',
+      barcodeType: 'EAN-13',
+    );
   }
 
   @override
   Future<ExternalLookupProductBarcodeResponseDto> externalLookupBarcode({required String barcode, String? identifierStandard}) async {
-    throw UnimplementedError();
+    if (nextExternalLookupResponse != null) {
+      return nextExternalLookupResponse!;
+    }
+    return const ExternalLookupProductBarcodeResponseDto(
+      status: 'NO_MATCH',
+      retryAllowed: false,
+    );
   }
 
   @override
   Future<SkuCandidateResponseDto> generateSkuCandidate({String? productNameHint, String purpose = 'NO_BARCODE_PRODUCT'}) async {
-    throw UnimplementedError();
+    return const SkuCandidateResponseDto(candidate: 'SKU-GEN-001', reserved: false);
   }
 
   int createProductCallCount = 0;
@@ -343,6 +355,177 @@ void main() {
       await controller.saveAndContinue();
       expect(controller.wizardState.currentStep, 5);
       expect(controller.isStepApplicable(4), isFalse);
+    });
+
+    test('19. mapped category preselected and kept sends mapped categoryId and mapping context', () async {
+      await controller.initWizard();
+      repo.nextExternalLookupResponse = const ExternalLookupProductBarcodeResponseDto(
+        status: 'FOUND',
+        retryAllowed: false,
+        suggestion: ExternalProductSuggestionDto(
+          productName: 'Cola 500ml',
+          brandText: 'Coca Cola',
+          categoryText: 'Beverages, Soft drinks',
+          externalCategoryKey: 'en:colas',
+          externalCategoryName: 'Colas',
+        ),
+        categoryResolution: TenantCategoryResolutionDto(
+          provider: 'openfoodfacts',
+          externalCategoryKey: 'en:colas',
+          externalCategoryName: 'Colas',
+          mappedCategory: TenantCategoryCandidateDto(
+            id: 'cat-1',
+            name: 'Apparel',
+            code: 'CAT1',
+            matchType: 'SAVED_MAPPING',
+          ),
+          suggestions: [],
+        ),
+      );
+
+      await controller.submitScanCandidate('5449000000996');
+      await controller.runExternalLookup();
+      await controller.continueUseThisProduct();
+
+      // Category is automatically preselected to 'cat-1'
+      expect(controller.wizardState.categoryId, 'cat-1');
+
+      // Complete wizard to step 7
+      controller.updateInternalCode('COLA-001');
+      await controller.saveAndContinue();
+      controller.setProductStructure('SIMPLE');
+      await controller.saveAndContinue();
+      controller.selectUnitModel('SINGLE_UNIT');
+      controller.setProductUnit('unit-1');
+      await controller.saveAndContinue();
+      controller.updateSimpleBaseSku('COLA-001');
+      await controller.saveAndContinue();
+      controller.updateStandardSellingPrice(2.50);
+      controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
+      await controller.saveAndContinue();
+
+      expect(await controller.createProductFromWizard(), isTrue);
+      expect(repo.createFromWizardCallCount, 1);
+      final payload = repo.lastWizardPayload!;
+      expect(payload['categoryId'], 'cat-1');
+      expect(payload.containsKey('tenantId'), isFalse);
+      expect(payload['externalCategoryMappingContext'], isNotNull);
+      final mapping = payload['externalCategoryMappingContext'] as Map;
+      expect(mapping['provider'], 'openfoodfacts');
+      expect(mapping['externalCategoryKey'], 'en:colas');
+      expect(mapping['externalCategoryName'], 'Colas');
+    });
+
+    test('20. mapped category preselected and user overrides sends user categoryId and original mapping context', () async {
+      await controller.initWizard();
+      repo.nextExternalLookupResponse = const ExternalLookupProductBarcodeResponseDto(
+        status: 'FOUND',
+        retryAllowed: false,
+        suggestion: ExternalProductSuggestionDto(
+          productName: 'Cola 500ml',
+          brandText: 'Coca Cola',
+          categoryText: 'Beverages, Soft drinks',
+          externalCategoryKey: 'en:colas',
+          externalCategoryName: 'Colas',
+        ),
+        categoryResolution: TenantCategoryResolutionDto(
+          provider: 'openfoodfacts',
+          externalCategoryKey: 'en:colas',
+          externalCategoryName: 'Colas',
+          mappedCategory: TenantCategoryCandidateDto(
+            id: 'cat-1',
+            name: 'Apparel',
+            code: 'CAT1',
+            matchType: 'SAVED_MAPPING',
+          ),
+          suggestions: [],
+        ),
+      );
+
+      await controller.submitScanCandidate('5449000000996');
+      await controller.runExternalLookup();
+      await controller.continueUseThisProduct();
+
+      // User changes dropdown to an override category
+      controller.updateCategory('cat-override-2');
+      expect(controller.wizardState.categoryId, 'cat-override-2');
+
+      // Complete wizard to step 7
+      controller.updateInternalCode('COLA-001');
+      await controller.saveAndContinue();
+      controller.setProductStructure('SIMPLE');
+      await controller.saveAndContinue();
+      controller.selectUnitModel('SINGLE_UNIT');
+      controller.setProductUnit('unit-1');
+      await controller.saveAndContinue();
+      controller.updateSimpleBaseSku('COLA-001');
+      await controller.saveAndContinue();
+      controller.updateStandardSellingPrice(2.50);
+      controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
+      await controller.saveAndContinue();
+
+      expect(await controller.createProductFromWizard(), isTrue);
+      final payload = repo.lastWizardPayload!;
+      // Crucial: CategoryId must be the overridden categoryId!
+      expect(payload['categoryId'], 'cat-override-2');
+      expect(payload.containsKey('tenantId'), isFalse);
+      final mapping = payload['externalCategoryMappingContext'] as Map;
+      expect(mapping['provider'], 'openfoodfacts');
+      expect(mapping['externalCategoryKey'], 'en:colas');
+    });
+
+    test('21. startFreshWizard clears externalCategoryMappingContext for next product', () async {
+      await controller.initWizard();
+      repo.nextExternalLookupResponse = const ExternalLookupProductBarcodeResponseDto(
+        status: 'FOUND',
+        retryAllowed: false,
+        suggestion: ExternalProductSuggestionDto(
+          productName: 'Cola 500ml',
+          externalCategoryKey: 'en:colas',
+          externalCategoryName: 'Colas',
+        ),
+        categoryResolution: TenantCategoryResolutionDto(
+          provider: 'openfoodfacts',
+          externalCategoryKey: 'en:colas',
+          externalCategoryName: 'Colas',
+          mappedCategory: TenantCategoryCandidateDto(
+            id: 'cat-1',
+            name: 'Apparel',
+            code: 'CAT1',
+            matchType: 'SAVED_MAPPING',
+          ),
+          suggestions: [],
+        ),
+      );
+
+      await controller.submitScanCandidate('5449000000996');
+      await controller.runExternalLookup();
+      await controller.continueUseThisProduct();
+
+      controller.updateInternalCode('COLA-001');
+      await controller.saveAndContinue();
+      controller.setProductStructure('SIMPLE');
+      await controller.saveAndContinue();
+      controller.selectUnitModel('SINGLE_UNIT');
+      controller.setProductUnit('unit-1');
+      await controller.saveAndContinue();
+      controller.updateSimpleBaseSku('COLA-001');
+      await controller.saveAndContinue();
+      controller.updateStandardSellingPrice(2.50);
+      controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
+      await controller.saveAndContinue();
+
+      expect(await controller.createProductFromWizard(), isTrue);
+
+      // Start fresh wizard for next product
+      await controller.startFreshWizard();
+      expect(controller.wizardState.scanStepState.categoryResolution, isNull);
+
+      // Fill and create non-external product
+      await fillSimpleToStep7();
+      expect(await controller.createProductFromWizard(), isTrue);
+      final nextPayload = repo.lastWizardPayload!;
+      expect(nextPayload.containsKey('externalCategoryMappingContext'), isFalse);
     });
   });
 }
