@@ -60,6 +60,7 @@ class ProductCreateRequestDto {
     this.expiryDate,
     this.expiryAlertDays,
     this.saveAsDraft = false,
+    this.externalCategoryMappingContext,
   });
 
   final String productName;
@@ -91,6 +92,7 @@ class ProductCreateRequestDto {
   final int? expiryAlertDays;
   final String status;
   final bool saveAsDraft;
+  final ExternalCategoryMappingContextDto? externalCategoryMappingContext;
 
   Map<String, dynamic> toJson() {
     return {
@@ -137,6 +139,38 @@ class ProductCreateRequestDto {
         'expiryAlertDays': expiryAlertDays,
       'status': status,
       'saveAsDraft': saveAsDraft,
+      if (externalCategoryMappingContext != null)
+        'externalCategoryMappingContext':
+            externalCategoryMappingContext!.toJson(),
+    };
+  }
+}
+
+class ExternalCategoryMappingContextDto {
+  final String provider;
+  final String externalCategoryKey;
+  final String? externalCategoryName;
+
+  const ExternalCategoryMappingContextDto({
+    required this.provider,
+    required this.externalCategoryKey,
+    this.externalCategoryName,
+  });
+
+  factory ExternalCategoryMappingContextDto.fromJson(Map<String, dynamic> json) {
+    return ExternalCategoryMappingContextDto(
+      provider: json['provider']?.toString() ?? '',
+      externalCategoryKey: json['externalCategoryKey']?.toString() ?? '',
+      externalCategoryName: json['externalCategoryName']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'provider': provider,
+      'externalCategoryKey': externalCategoryKey,
+      if (externalCategoryName != null && externalCategoryName!.trim().isNotEmpty)
+        'externalCategoryName': externalCategoryName!.trim(),
     };
   }
 }

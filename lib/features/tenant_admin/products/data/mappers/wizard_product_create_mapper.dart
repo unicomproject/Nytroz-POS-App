@@ -73,6 +73,19 @@ class WizardProductCreateMapper {
             state.initialTrackingAssignedVariantId,
       if (idempotencyKey != null && idempotencyKey.isNotEmpty)
         'idempotencyKey': idempotencyKey,
+      if (state.scanStepState.categoryResolution != null &&
+          state.scanStepState.categoryResolution!.provider.trim().isNotEmpty &&
+          state.scanStepState.categoryResolution!.externalCategoryKey != null &&
+          state.scanStepState.categoryResolution!.externalCategoryKey!.trim().isNotEmpty)
+        'externalCategoryMappingContext': {
+          'provider': state.scanStepState.categoryResolution!.provider.trim(),
+          'externalCategoryKey':
+              state.scanStepState.categoryResolution!.externalCategoryKey!.trim(),
+          if (state.scanStepState.categoryResolution!.externalCategoryName != null &&
+              state.scanStepState.categoryResolution!.externalCategoryName!.trim().isNotEmpty)
+            'externalCategoryName':
+                state.scanStepState.categoryResolution!.externalCategoryName!.trim(),
+        },
     };
   }
 

@@ -63,6 +63,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   void seedExternalFoundForTesting({
     required ExternalProductSuggestionDto suggestion,
     String barcode = '5000168003887',
+    TenantCategoryResolutionDto? categoryResolution,
   }) {
     state = state.copyWith(
       scanStepState: state.scanStepState.copyWith(
@@ -72,6 +73,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         identifierStandard: 'GTIN13',
         externalStatus: 'FOUND',
         externalSuggestion: suggestion,
+        categoryResolution: categoryResolution,
       ),
     );
   }
@@ -222,6 +224,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         clearLocalMatch: true,
         clearExternalSuggestion: true,
         clearExternalStatus: true,
+        clearCategoryResolution: true,
         clearLastError: true,
         clearInvalidReason: true,
       ),
@@ -235,6 +238,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         panel: ScanBarcodePanel.noLocalMatch,
         clearExternalSuggestion: true,
         clearExternalStatus: true,
+        clearCategoryResolution: true,
         clearLastError: true,
         isBusy: false,
       ),
@@ -365,6 +369,9 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         clearLastError: true,
         clearInvalidReason: true,
         clearLocalMatch: true,
+        clearExternalSuggestion: true,
+        clearExternalStatus: true,
+        clearCategoryResolution: true,
       ),
     );
 
@@ -487,6 +494,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
             externalSuggestion: response.suggestion,
             externalSourceReference: response.sourceReference,
             externalRetryAllowed: response.retryAllowed,
+            categoryResolution: response.categoryResolution,
             isBusy: false,
           ),
         );
@@ -499,6 +507,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
             panel: ScanBarcodePanel.noLocalMatch,
             externalStatus: response.status,
             externalRetryAllowed: response.retryAllowed,
+            clearCategoryResolution: true,
             lastError: 'External lookup temporarily unavailable. You can retry or continue manually.',
             isBusy: false,
           ),
@@ -512,6 +521,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           externalStatus: response.status,
           externalRetryAllowed: response.retryAllowed,
           clearExternalSuggestion: true,
+          clearCategoryResolution: true,
           isBusy: false,
         ),
       );
@@ -522,6 +532,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           scanStepState: state.scanStepState.copyWith(
             panel: ScanBarcodePanel.externalNoMatch,
             clearExternalSuggestion: true,
+            clearCategoryResolution: true,
             isBusy: false,
             clearLastError: true,
           ),
@@ -530,6 +541,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         state = state.copyWith(
           scanStepState: state.scanStepState.copyWith(
             panel: ScanBarcodePanel.noLocalMatch,
+            clearCategoryResolution: true,
             lastError: msg,
             isBusy: false,
           ),
@@ -542,6 +554,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           scanStepState: state.scanStepState.copyWith(
             panel: ScanBarcodePanel.externalNoMatch,
             clearExternalSuggestion: true,
+            clearCategoryResolution: true,
             isBusy: false,
             clearLastError: true,
           ),
@@ -550,6 +563,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         state = state.copyWith(
           scanStepState: state.scanStepState.copyWith(
             panel: ScanBarcodePanel.noLocalMatch,
+            clearCategoryResolution: true,
             lastError: msg,
             isBusy: false,
           ),
@@ -776,6 +790,21 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           parentBarcodeType: barcodeType,
         ),
       );
+    }
+
+    // Category resolution preselect: If backend returned mappedCategory,
+    // preselect categoryId ONLY if present in current tenant createOptions categories.
+    final mappedCat = state.scanStepState.categoryResolution?.mappedCategory;
+    if (mappedCat != null && mappedCat.id.isNotEmpty) {
+      final categoryExists = next.createOptions?.categories.any((c) => c.id == mappedCat.id) ?? false;
+      if (categoryExists) {
+        final updatedErrors = Map<String, String>.from(next.fieldErrors)
+          ..remove('categoryId');
+        next = next.copyWith(
+          categoryId: mappedCat.id,
+          fieldErrors: updatedErrors,
+        );
+      }
     }
 
     state = next;

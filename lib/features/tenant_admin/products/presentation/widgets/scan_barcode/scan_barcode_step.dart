@@ -619,8 +619,28 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                           _LabelValue('Product Name', s!.productName!),
                         if (s?.brandText != null)
                           _LabelValue('Brand', s!.brandText!),
-                        if (s?.categoryText != null)
-                          _LabelValue('Category', s!.categoryText!),
+                        if ((s?.externalCategoryName ?? s?.categoryText) != null)
+                          _LabelValue(
+                            'External Category',
+                            s!.externalCategoryName ?? s.categoryText!,
+                          ),
+                        if (s?.externalCategoryHierarchy != null &&
+                            s!.externalCategoryHierarchy!.isNotEmpty)
+                          _LabelValue(
+                            'Category Hierarchy',
+                            _formatHierarchy(s.externalCategoryHierarchy!),
+                          ),
+                        if (scan.categoryResolution?.mappedCategory != null)
+                          _LabelValue(
+                            'Tenant Category',
+                            '${scan.categoryResolution!.mappedCategory!.name} (Mapped)',
+                          )
+                        else if (scan.categoryResolution != null &&
+                            scan.categoryResolution!.suggestions.isNotEmpty)
+                          _LabelValue(
+                            'Tenant Category',
+                            'Suggested: ${scan.categoryResolution!.suggestions.map((c) => c.name).join(', ')}',
+                          ),
                         if (s?.unitText != null)
                           _LabelValue('Unit / Size', s!.unitText!),
                         if (s?.countryCode != null)
@@ -2061,6 +2081,21 @@ class _PanelCard extends StatelessWidget {
       child: child,
     );
   }
+}
+
+String _formatHierarchy(List<String> hierarchy) {
+  return hierarchy.map((item) {
+    var text = item.trim();
+    if (text.contains(':')) {
+      text = text.split(':').last;
+    }
+    text = text.replaceAll('-', ' ').replaceAll('_', ' ');
+    if (text.isEmpty) return '';
+    return text.split(' ').map((word) {
+      if (word.isEmpty) return '';
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
+  }).where((segment) => segment.isNotEmpty).join(' > ');
 }
 
 class _LabelValue extends StatelessWidget {
