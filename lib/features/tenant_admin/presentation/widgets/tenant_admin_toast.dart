@@ -25,6 +25,14 @@ enum AppToastType {
 /// ```dart
 /// showAppToast(context, message: 'Draft saved successfully', title: 'Draft Saved');
 /// ```
+///
+/// [overlayState] lets a caller with no BuildContext of its own (e.g. a
+/// Riverpod controller reacting to a realtime event) supply the Overlay
+/// directly — via `someNavigatorKey.currentState?.overlay` — instead of
+/// via [Overlay.maybeOf]. That lookup walks up from [context] looking for
+/// an Overlay *ancestor*, which fails for a bare `navigatorKey.currentContext`:
+/// that context is the Navigator widget's own element, and the Overlay a
+/// Navigator provides is built as a *descendant* of it, not an ancestor.
 void showAppToast(
   BuildContext context, {
   required String message,
@@ -34,9 +42,10 @@ void showAppToast(
   Duration duration = const Duration(seconds: 4),
   Color? backgroundColor,
   VoidCallback? onTap,
+  OverlayState? overlayState,
 }) {
-  final overlayState = Overlay.maybeOf(context);
-  if (overlayState == null) return;
+  final resolvedOverlay = overlayState ?? Overlay.maybeOf(context);
+  if (resolvedOverlay == null) return;
 
   final toastStyle = _getToastStyle(type, backgroundColor, icon);
 
@@ -64,7 +73,7 @@ void showAppToast(
     ),
   );
 
-  overlayState.insert(overlayEntry);
+  resolvedOverlay.insert(overlayEntry);
 
   Future.delayed(duration, () {
     if (overlayEntry.mounted) {

@@ -152,10 +152,17 @@ class NotificationInboxController
 
     final context = rootNavigatorKey.currentContext;
     if (context == null || !context.mounted) return;
+    // Overlay.maybeOf(context) would fail here: this context is the
+    // Navigator's own element, and the Overlay a Navigator provides is a
+    // descendant of it, not an ancestor — so the toast must be given the
+    // OverlayState directly rather than relying on the usual lookup.
+    final overlay = rootNavigatorKey.currentState?.overlay;
+    if (overlay == null) return;
 
     final orderId = event.sourceReferenceId;
     showAppToast(
       context,
+      overlayState: overlay,
       title: event.title.trim().isNotEmpty ? event.title : 'New order placed',
       message: event.body,
       type: AppToastType.info,
