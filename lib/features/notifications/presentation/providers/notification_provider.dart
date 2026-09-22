@@ -127,7 +127,12 @@ class NotificationInboxController
     if (RealtimeCashierRefreshPolicy.shouldRefreshOnlineOrders(event)) {
       _pendingOnlineOrdersRefresh = true;
     }
-    if (RealtimeCashierRefreshPolicy.shouldShowNewOrderToast(event)) {
+    final showToast = RealtimeCashierRefreshPolicy.shouldShowNewOrderToast(event);
+    developer.log(
+      'shouldShowNewOrderToast=$showToast for type=${event.type}',
+      name: 'notifications.toast',
+    );
+    if (showToast) {
       _showNewOrderToast(event);
     }
     _scheduleFanout();
@@ -148,17 +153,31 @@ class NotificationInboxController
         session.isAuthenticated &&
         (session.hasPermission(PosPermissionCodes.accessOnlineOrders) ||
             session.hasPermission(PosPermissionCodes.viewOnlineOrders));
+    developer.log(
+      'toast permission check: session=${session != null} '
+      'authenticated=${session?.isAuthenticated} canViewOrders=$canViewOrders',
+      name: 'notifications.toast',
+    );
     if (!canViewOrders) return;
 
     final context = rootNavigatorKey.currentContext;
+    developer.log(
+      'toast context: hasContext=${context != null} mounted=${context?.mounted}',
+      name: 'notifications.toast',
+    );
     if (context == null || !context.mounted) return;
     // Overlay.maybeOf(context) would fail here: this context is the
     // Navigator's own element, and the Overlay a Navigator provides is a
     // descendant of it, not an ancestor — so the toast must be given the
     // OverlayState directly rather than relying on the usual lookup.
     final overlay = rootNavigatorKey.currentState?.overlay;
+    developer.log(
+      'toast overlay: hasOverlay=${overlay != null}',
+      name: 'notifications.toast',
+    );
     if (overlay == null) return;
 
+    developer.log('showing toast now', name: 'notifications.toast');
     final orderId = event.sourceReferenceId;
     showAppToast(
       context,
