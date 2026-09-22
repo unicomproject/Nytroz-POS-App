@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/root_navigator_key.dart';
 import '../../../../core/access/pos_access_codes.dart';
 import '../../../../core/network/dio_provider.dart';
 import '../../../../core/network/notification_socket_client.dart';
@@ -10,6 +13,7 @@ import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/providers/session_provider.dart';
 import '../../../fulfilment_pickup/presentation/providers/pos_online_orders_provider.dart';
 import '../../../pos_shell/presentation/providers/pos_notifications_provider.dart';
+import '../../../tenant_admin/presentation/widgets/tenant_admin_toast.dart';
 import '../../data/notifications_api.dart';
 import '../../domain/entities/notification_inbox_item.dart';
 import '../../domain/entities/realtime_notification_event.dart';
@@ -123,7 +127,43 @@ class NotificationInboxController
     if (RealtimeCashierRefreshPolicy.shouldRefreshOnlineOrders(event)) {
       _pendingOnlineOrdersRefresh = true;
     }
+    if (RealtimeCashierRefreshPolicy.shouldShowNewOrderToast(event)) {
+      _showNewOrderToast(event);
+    }
     _scheduleFanout();
+  }
+
+  /// Surfaces a new-order toast independent of the debounced REST fan-out
+  /// above, so the cashier sees it immediately rather than after the
+  /// authoritative refetch lands. Uses the root navigator's context rather
+  /// than a dedicated listener widget, since this controller has no
+  /// BuildContext of its own and lives above any single screen.
+  void _showNewOrderToast(RealtimeNotificationEvent event) {
+    // The realtime push itself isn't permission-filtered server-side (only
+    // the REST inbox list is) — every active staff member's socket receives
+    // it, so this client-side check is what actually keeps the toast from
+    // appearing for cashiers who can't see online orders at all.
+    final session = _ref.read(authSessionProvider);
+    final canViewOrders = session != null &&
+        session.isAuthenticated &&
+        (session.hasPermission(PosPermissionCodes.accessOnlineOrders) ||
+            session.hasPermission(PosPermissionCodes.viewOnlineOrders));
+    if (!canViewOrders) return;
+
+    final context = rootNavigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
+
+    final orderId = event.sourceReferenceId;
+    showAppToast(
+      context,
+      title: event.title.trim().isNotEmpty ? event.title : 'New order placed',
+      message: event.body,
+      type: AppToastType.info,
+      icon: Icons.storefront_rounded,
+      onTap: orderId == null || orderId.isEmpty
+          ? null
+          : () => context.push('/pos/online-orders/$orderId'),
+    );
   }
 
   void _scheduleFanout() {

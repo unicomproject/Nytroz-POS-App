@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../../core/access/effective_permission_set.dart';
 import '../../../../../core/access/permission_access_providers.dart';
@@ -84,8 +85,11 @@ class _PosNotificationsDialog extends ConsumerWidget {
 }
 
 /// Whether a notification row has any permitted presentational field.
-/// Action-only rows are omitted: open/mark-read/dismiss have no API surface
-/// in Chunk 9 Flutter (no gesture/action widgets invented).
+/// Mark-read/dismiss are still omitted: no API surface for them on the POS
+/// notifications endpoint. Tapping a row to open the order it refers to is
+/// supported (see [_NotificationTile]) and needs no additional permission
+/// beyond seeing the row itself — the backend already scopes which
+/// notifications a cashier receives to what they're allowed to view.
 bool notificationRowHasVisibleContent(
   PosNotificationItem item,
   EffectivePermissionSet permissions,
@@ -126,7 +130,7 @@ class _NotificationTile extends ConsumerWidget {
     ];
 
     // Denied title/body must not appear in Semantics / Tooltip / offstage.
-    // Open/mark-read/dismiss: no Flutter action surface or API in Chunk 9.
+    // Mark-read/dismiss: still no Flutter action surface or API for those.
     return Semantics(
       container: true,
       label: semanticParts.isEmpty ? 'Notification' : semanticParts.join('. '),
@@ -145,7 +149,15 @@ class _NotificationTile extends ConsumerWidget {
                 overflow: TextOverflow.ellipsis,
               )
             : null,
-        onTap: null,
+        trailing: item.isOnlineOrderNotification
+            ? const Icon(Icons.chevron_right_rounded)
+            : null,
+        onTap: item.isOnlineOrderNotification
+            ? () {
+                Navigator.of(context).pop();
+                context.push('/pos/online-orders/${item.sourceReferenceId}');
+              }
+            : null,
       ),
     );
   }
