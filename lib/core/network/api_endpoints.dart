@@ -108,6 +108,9 @@ class ApiEndpoints {
   static const posHome = '/api/v1/pos/home';
   static const posNotifications = '/api/v1/pos/notifications';
   static const posNotificationsTicket = '/api/v1/pos/notifications/ticket';
+  static const posNotificationsReadAll = '/api/v1/pos/notifications/read-all';
+  static String posNotificationRead(String id) =>
+      '/api/v1/pos/notifications/$id/read';
   static const posHardwareConfigurations =
       '/api/v1/pos/hardware/configurations';
   static const posHardwareTests = '/api/v1/pos/hardware/tests';

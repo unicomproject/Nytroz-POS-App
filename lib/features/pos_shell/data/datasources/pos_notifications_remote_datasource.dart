@@ -74,6 +74,14 @@ class PosNotificationsRemoteDatasource {
     );
   }
 
+  Future<void> markRead(String id) async {
+    await _dio.put<void>(ApiEndpoints.posNotificationRead(id));
+  }
+
+  Future<void> markAllRead() async {
+    await _dio.put<void>(ApiEndpoints.posNotificationsReadAll);
+  }
+
   Future<String?> getWebSocketTicket() async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
