@@ -86,6 +86,19 @@ class WizardProductCreateMapper {
             'externalCategoryName':
                 state.scanStepState.categoryResolution!.externalCategoryName!.trim(),
         },
+      if (state.scanStepState.brandResolution != null &&
+          state.scanStepState.brandResolution!.provider.trim().isNotEmpty &&
+          state.scanStepState.brandResolution!.externalBrandKey != null &&
+          state.scanStepState.brandResolution!.externalBrandKey!.trim().isNotEmpty)
+        'externalBrandMappingContext': {
+          'provider': state.scanStepState.brandResolution!.provider.trim(),
+          'externalBrandKey':
+              state.scanStepState.brandResolution!.externalBrandKey!.trim(),
+          if (state.scanStepState.brandResolution!.externalBrandName != null &&
+              state.scanStepState.brandResolution!.externalBrandName!.trim().isNotEmpty)
+            'externalBrandName':
+                state.scanStepState.brandResolution!.externalBrandName!.trim(),
+        },
     };
   }
 

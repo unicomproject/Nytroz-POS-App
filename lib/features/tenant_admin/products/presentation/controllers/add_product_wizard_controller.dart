@@ -26,6 +26,7 @@ import '../../domain/utils/variant_combination_generator.dart';
 import '../../domain/repositories/product_wizard_draft_local_repository.dart';
 import '../../domain/repositories/tenant_product_repository.dart';
 import '../../domain/usecases/get_product_setup.dart';
+import '../../../brands/domain/entities/brand.dart';
 
 class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   AddProductWizardController(
@@ -64,6 +65,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     required ExternalProductSuggestionDto suggestion,
     String barcode = '5000168003887',
     TenantCategoryResolutionDto? categoryResolution,
+    TenantBrandResolutionDto? brandResolution,
   }) {
     state = state.copyWith(
       scanStepState: state.scanStepState.copyWith(
@@ -74,6 +76,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         externalStatus: 'FOUND',
         externalSuggestion: suggestion,
         categoryResolution: categoryResolution,
+        brandResolution: brandResolution,
       ),
     );
   }
@@ -225,6 +228,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         clearExternalSuggestion: true,
         clearExternalStatus: true,
         clearCategoryResolution: true,
+        clearBrandResolution: true,
         clearLastError: true,
         clearInvalidReason: true,
       ),
@@ -239,6 +243,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         clearExternalSuggestion: true,
         clearExternalStatus: true,
         clearCategoryResolution: true,
+        clearBrandResolution: true,
         clearLastError: true,
         isBusy: false,
       ),
@@ -372,6 +377,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         clearExternalSuggestion: true,
         clearExternalStatus: true,
         clearCategoryResolution: true,
+        clearBrandResolution: true,
       ),
     );
 
@@ -495,6 +501,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
             externalSourceReference: response.sourceReference,
             externalRetryAllowed: response.retryAllowed,
             categoryResolution: response.categoryResolution,
+            brandResolution: response.brandResolution,
             isBusy: false,
           ),
         );
@@ -508,6 +515,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
             externalStatus: response.status,
             externalRetryAllowed: response.retryAllowed,
             clearCategoryResolution: true,
+        clearBrandResolution: true,
             lastError: 'External lookup temporarily unavailable. You can retry or continue manually.',
             isBusy: false,
           ),
@@ -522,6 +530,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           externalRetryAllowed: response.retryAllowed,
           clearExternalSuggestion: true,
           clearCategoryResolution: true,
+        clearBrandResolution: true,
           isBusy: false,
         ),
       );
@@ -533,6 +542,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
             panel: ScanBarcodePanel.externalNoMatch,
             clearExternalSuggestion: true,
             clearCategoryResolution: true,
+        clearBrandResolution: true,
             isBusy: false,
             clearLastError: true,
           ),
@@ -542,6 +552,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           scanStepState: state.scanStepState.copyWith(
             panel: ScanBarcodePanel.noLocalMatch,
             clearCategoryResolution: true,
+        clearBrandResolution: true,
             lastError: msg,
             isBusy: false,
           ),
@@ -555,6 +566,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
             panel: ScanBarcodePanel.externalNoMatch,
             clearExternalSuggestion: true,
             clearCategoryResolution: true,
+        clearBrandResolution: true,
             isBusy: false,
             clearLastError: true,
           ),
@@ -564,6 +576,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           scanStepState: state.scanStepState.copyWith(
             panel: ScanBarcodePanel.noLocalMatch,
             clearCategoryResolution: true,
+        clearBrandResolution: true,
             lastError: msg,
             isBusy: false,
           ),
@@ -804,6 +817,17 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           categoryId: mappedCat.id,
           fieldErrors: updatedErrors,
         );
+      }
+    }
+
+    // Brand resolution preselect: If backend returned mappedBrand, preselect
+    // brandId ONLY if present in current tenant createOptions brands. Remains
+    // user-editable afterward — this is a suggestion, never authoritative.
+    final mappedBrand = state.scanStepState.brandResolution?.mappedBrand;
+    if (mappedBrand != null && mappedBrand.id.isNotEmpty) {
+      final brandExists = next.createOptions?.brands.any((b) => b.id == mappedBrand.id) ?? false;
+      if (brandExists) {
+        next = next.copyWith(brandId: mappedBrand.id);
       }
     }
 
@@ -1204,6 +1228,22 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       clearBrandId: brandId == null,
       isDirty: true,
     );
+  }
+
+  /// Applies a Brand created via the Quick Add drawer: refreshes the canonical
+  /// create-options list (so the new Brand appears in the dropdown/options like
+  /// any other tenant Brand) and selects it as the wizard's final BrandId. The
+  /// Brand itself is already persisted (a deliberate Tenant Master Data action)
+  /// independent of whether this product create ultimately succeeds.
+  Future<void> applyQuickAddedBrand(Brand brand) async {
+    try {
+      final options = await _repository.getCreateOptions();
+      state = state.copyWith(createOptions: options);
+    } catch (_) {
+      // Non-fatal: the Brand was already created successfully server-side.
+      // Selecting it below remains valid even if this refresh failed.
+    }
+    updateBrand(brand.id);
   }
 
   void updateShortDescription(String val) {

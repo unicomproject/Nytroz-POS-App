@@ -619,6 +619,17 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
                           _LabelValue('Product Name', s!.productName!),
                         if (s?.brandText != null)
                           _LabelValue('Brand', s!.brandText!),
+                        if (scan.brandResolution?.mappedBrand != null)
+                          _LabelValue(
+                            'Tenant Brand',
+                            '${scan.brandResolution!.mappedBrand!.name} (Mapped)',
+                          )
+                        else if (scan.brandResolution != null &&
+                            scan.brandResolution!.suggestions.isNotEmpty)
+                          _LabelValue(
+                            'Tenant Brand',
+                            'Suggested: ${scan.brandResolution!.suggestions.map((b) => b.name).join(', ')}',
+                          ),
                         if ((s?.externalCategoryName ?? s?.categoryText) != null)
                           _LabelValue(
                             'External Category',

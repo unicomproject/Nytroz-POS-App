@@ -28,6 +28,7 @@ class ScanBarcodeStepState {
     this.externalSourceReference,
     this.externalRetryAllowed = false,
     this.categoryResolution,
+    this.brandResolution,
     this.noBarcodeReason,
     this.noBarcodeProductName = '',
     this.noBarcodeCategoryId,
@@ -50,6 +51,7 @@ class ScanBarcodeStepState {
   final String? externalSourceReference;
   final bool externalRetryAllowed;
   final TenantCategoryResolutionDto? categoryResolution;
+  final TenantBrandResolutionDto? brandResolution;
   final String? noBarcodeReason;
   final String noBarcodeProductName;
   final String? noBarcodeCategoryId;
@@ -80,6 +82,8 @@ class ScanBarcodeStepState {
     bool? externalRetryAllowed,
     TenantCategoryResolutionDto? categoryResolution,
     bool clearCategoryResolution = false,
+    TenantBrandResolutionDto? brandResolution,
+    bool clearBrandResolution = false,
     String? noBarcodeReason,
     bool clearNoBarcodeReason = false,
     String? noBarcodeProductName,
@@ -116,6 +120,9 @@ class ScanBarcodeStepState {
       categoryResolution: clearCategoryResolution
           ? null
           : (categoryResolution ?? this.categoryResolution),
+      brandResolution: clearBrandResolution
+          ? null
+          : (brandResolution ?? this.brandResolution),
       noBarcodeReason: clearNoBarcodeReason
           ? null
           : (noBarcodeReason ?? this.noBarcodeReason),

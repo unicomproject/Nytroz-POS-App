@@ -120,4 +120,152 @@ void main() {
       expect(json.containsKey('tenantId'), isFalse);
     });
   });
+
+  group('WizardProductCreateMapper - External Brand Mapping Context', () {
+    test('includes brand mapping context when brandResolution has provider and key', () {
+      const state = AddProductWizardState(
+        productName: 'Coca-Cola 330ml',
+        categoryId: 'cat-soft-drinks',
+        brandId: 'brand-coke',
+        productStructure: 'SIMPLE',
+        scanStepState: ScanBarcodeStepState(
+          candidateBarcode: '5449000000996',
+          brandResolution: TenantBrandResolutionDto(
+            provider: 'openfoodfacts',
+            externalBrandKey: 'coca cola',
+            externalBrandName: 'Coca-Cola',
+            mappedBrand: TenantBrandCandidateDto(
+              id: 'brand-coke',
+              name: 'Coca Cola',
+              code: 'COKE',
+              matchType: 'SAVED_MAPPING',
+            ),
+            suggestions: [],
+          ),
+        ),
+      );
+
+      final json = WizardProductCreateMapper.toWizardCreateJson(state);
+
+      expect(json['brandId'], 'brand-coke');
+      expect(json.containsKey('tenantId'), isFalse);
+
+      final mapping = json['externalBrandMappingContext'] as Map<String, dynamic>?;
+      expect(mapping, isNotNull);
+      expect(mapping!['provider'], 'openfoodfacts');
+      expect(mapping['externalBrandKey'], 'coca cola');
+      expect(mapping['externalBrandName'], 'Coca-Cola');
+    });
+
+    test('user override preserves user brandId while retaining external brand key in mapping context', () {
+      // Backend mapped to 'brand-coke', but user changed brand dropdown to 'brand-coke-zero'
+      const state = AddProductWizardState(
+        productName: 'Coca-Cola 330ml',
+        categoryId: 'cat-soft-drinks',
+        brandId: 'brand-coke-zero', // User override!
+        productStructure: 'SIMPLE',
+        scanStepState: ScanBarcodeStepState(
+          candidateBarcode: '5449000000996',
+          brandResolution: TenantBrandResolutionDto(
+            provider: 'openfoodfacts',
+            externalBrandKey: 'coca cola',
+            externalBrandName: 'Coca-Cola',
+            mappedBrand: TenantBrandCandidateDto(
+              id: 'brand-coke', // Different from state.brandId
+              name: 'Coca Cola',
+              code: 'COKE',
+              matchType: 'SAVED_MAPPING',
+            ),
+            suggestions: [],
+          ),
+        ),
+      );
+
+      final json = WizardProductCreateMapper.toWizardCreateJson(state);
+
+      // brandId must be the final user choice (state.brandId)
+      expect(json['brandId'], 'brand-coke-zero');
+      expect(json.containsKey('tenantId'), isFalse);
+
+      // Mapping context preserves the provider and external brand key so backend can update mapping
+      final mapping = json['externalBrandMappingContext'] as Map<String, dynamic>?;
+      expect(mapping, isNotNull);
+      expect(mapping!['provider'], 'openfoodfacts');
+      expect(mapping['externalBrandKey'], 'coca cola');
+      expect(mapping['externalBrandName'], 'Coca-Cola');
+    });
+
+    test('omits brand mapping context when brandResolution is null (e.g. local product flow)', () {
+      const state = AddProductWizardState(
+        productName: 'Custom Handcrafted Mug',
+        categoryId: 'cat-home',
+        productStructure: 'SIMPLE',
+        scanStepState: ScanBarcodeStepState(
+          candidateBarcode: '1234567890',
+          brandResolution: null,
+        ),
+      );
+
+      final json = WizardProductCreateMapper.toWizardCreateJson(state);
+
+      expect(json['productName'], 'Custom Handcrafted Mug');
+      expect(json.containsKey('externalBrandMappingContext'), isFalse);
+      expect(json.containsKey('brandId'), isFalse);
+    });
+
+    test('omits brand mapping context when external brand key is empty', () {
+      const state = AddProductWizardState(
+        productName: 'Mystery Product',
+        categoryId: 'cat-misc',
+        productStructure: 'SIMPLE',
+        scanStepState: ScanBarcodeStepState(
+          candidateBarcode: '9999999999',
+          brandResolution: TenantBrandResolutionDto(
+            provider: 'openfoodfacts',
+            externalBrandKey: '',
+            externalBrandName: null,
+            mappedBrand: null,
+            suggestions: [],
+          ),
+        ),
+      );
+
+      final json = WizardProductCreateMapper.toWizardCreateJson(state);
+
+      expect(json.containsKey('externalBrandMappingContext'), isFalse);
+    });
+
+    test('category and brand mapping contexts are independent and both included together', () {
+      const state = AddProductWizardState(
+        productName: 'Coca-Cola 330ml',
+        categoryId: 'cat-soft-drinks',
+        brandId: 'brand-coke',
+        productStructure: 'SIMPLE',
+        scanStepState: ScanBarcodeStepState(
+          candidateBarcode: '5449000000996',
+          categoryResolution: TenantCategoryResolutionDto(
+            provider: 'openfoodfacts',
+            externalCategoryKey: 'en:colas',
+            externalCategoryName: 'Colas',
+            suggestions: [],
+          ),
+          brandResolution: TenantBrandResolutionDto(
+            provider: 'openfoodfacts',
+            externalBrandKey: 'coca cola',
+            externalBrandName: 'Coca-Cola',
+            suggestions: [],
+          ),
+        ),
+      );
+
+      final json = WizardProductCreateMapper.toWizardCreateJson(state);
+
+      final categoryMapping = json['externalCategoryMappingContext'] as Map<String, dynamic>?;
+      final brandMapping = json['externalBrandMappingContext'] as Map<String, dynamic>?;
+      expect(categoryMapping, isNotNull);
+      expect(brandMapping, isNotNull);
+      expect(categoryMapping!['externalCategoryKey'], 'en:colas');
+      expect(brandMapping!['externalBrandKey'], 'coca cola');
+    });
+  });
 }
