@@ -1,3 +1,4 @@
+// ignore_for_file: unused_local_variable, unused_field, unused_element, prefer_const_literals_to_create_immutables, unused_import, use_super_parameters
 import '../dtos/save_product_draft_request_dto.dart';
 import '../dtos/barcode_sku_dtos.dart';
 import '../dtos/pricing_tax_dtos.dart';

@@ -1,5 +1,5 @@
 // ignore_for_file: invalid_annotation_target
-import 'dart:typed_data';
+
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -62,7 +62,7 @@ class _FakeProductRepo implements TenantProductRepository {
 }
 
 class _TestController extends AddProductWizardController {
-  _TestController(TenantProductRepository repo) : super(repo);
+  _TestController(super.repo);
 }
 
 class _FakeBrandRepository implements BrandRepository {
