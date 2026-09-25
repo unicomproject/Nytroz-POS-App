@@ -1,6 +1,7 @@
 import 'barcode_sku_dtos.dart';
 import 'pricing_tax_dtos.dart';
 import 'product_setup_scan_dtos.dart';
+import 'opening_stock_draft_dto.dart';
 
 class SaveProductDraftRequestDto {
   final String? productName;
@@ -19,9 +20,11 @@ class SaveProductDraftRequestDto {
   final int? expectedRowVersion;
   final List<String>? stagedMediaAssetIds;
   final String? productStructure;
+  final String? trackingMethod;
   final bool? batchTracking;
   final bool? expiryTracking;
   final bool? serialTracking;
+  final OpeningStockDraftDto? quantityDraft;
 
   final String? wizardAction;
 
@@ -54,6 +57,12 @@ class SaveProductDraftRequestDto {
   /// Scanner-first draft create only (B8).
   final ProductSetupScanBootstrapRequestDto? scanBootstrap;
 
+  /// Triggers composite Step 5 (Barcode & SKU) auto-generation during variant reconciliation.
+  final bool applyCompositeStep3Identifiers;
+
+  /// Base SKU to use for automatic variant SKU generation (backend-authoritative).
+  final String? autoSkuBase;
+
   const SaveProductDraftRequestDto({
     this.productName,
     this.shortName,
@@ -67,9 +76,11 @@ class SaveProductDraftRequestDto {
     this.trackInventory = false,
     this.allowOnlineSale = true,
     this.productStructure,
+    this.trackingMethod,
     this.batchTracking,
     this.expiryTracking,
     this.serialTracking,
+    this.quantityDraft,
     this.currentSetupStep = 1,
     this.advanceStep = false,
     this.wizardAction,
@@ -93,6 +104,8 @@ class SaveProductDraftRequestDto {
     this.confirmClearIncompatibleInitialTracking = false,
     this.initialTrackingAssignedVariantId,
     this.scanBootstrap,
+    this.applyCompositeStep3Identifiers = false,
+    this.autoSkuBase,
   });
 
   Map<String, dynamic> toJson() {
@@ -109,9 +122,11 @@ class SaveProductDraftRequestDto {
       'trackInventory': trackInventory,
       'allowOnlineSale': allowOnlineSale,
       if (productStructure != null) 'productStructure': productStructure,
+      if (trackingMethod != null) 'trackingMethod': trackingMethod,
       if (batchTracking != null) 'batchTracking': batchTracking,
       if (expiryTracking != null) 'expiryTracking': expiryTracking,
       if (serialTracking != null) 'serialTracking': serialTracking,
+      if (quantityDraft != null) 'quantityDraft': quantityDraft!.toJson(),
       'currentSetupStep': currentSetupStep,
       'advanceStep': advanceStep,
       if (wizardAction != null) 'wizardAction': wizardAction,
@@ -147,6 +162,9 @@ class SaveProductDraftRequestDto {
           initialTrackingAssignedVariantId!.isNotEmpty)
         'initialTrackingAssignedVariantId': initialTrackingAssignedVariantId,
       if (scanBootstrap != null) 'scanBootstrap': scanBootstrap!.toJson(),
+      if (applyCompositeStep3Identifiers) 'applyCompositeStep3Identifiers': true,
+      if (autoSkuBase != null && autoSkuBase!.trim().isNotEmpty)
+        'autoSkuBase': autoSkuBase!.trim(),
     };
   }
 }

@@ -172,17 +172,12 @@ class TenantProductRemoteDatasource {
     );
   }
 
-  Future<SkuCandidateResponseDto> generateSkuCandidate({
-    String purpose = 'NO_BARCODE_PRODUCT',
-    String? productNameHint,
-  }) async {
+  Future<SkuCandidateResponseDto> generateSkuCandidate(
+    GenerateSkuCandidateRequestDto request,
+  ) async {
     final response = await _dio.post<dynamic>(
       '$_productsPath/sku-candidates/generate',
-      data: {
-        'purpose': purpose,
-        if (productNameHint != null && productNameHint.trim().isNotEmpty)
-          'productName': productNameHint.trim(),
-      },
+      data: request.toJson(),
     );
 
     return SkuCandidateResponseDto.fromJson(

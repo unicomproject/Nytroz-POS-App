@@ -7,7 +7,7 @@ import '../../../domain/entities/barcode_sku_state.dart';
 
 /// Step 5 identifier grid.
 /// VARIANT: [checkbox] | Variant | SKU | Barcode | Status | Actions
-/// SIMPLE / BUNDLE: green selected dot | Variant | SKU | Barcode | Scan | Status | pencil
+/// SIMPLE: green selected dot | Variant | SKU | Barcode | Scan | Status | pencil
 class Step5IdentifierTable extends StatelessWidget {
   final List<BarcodeSkuAssignmentDto> assignments;
   final List<GeneratedVariantRow> allVariants;
@@ -19,8 +19,6 @@ class Step5IdentifierTable extends StatelessWidget {
   final void Function(BarcodeSkuAssignmentDto assignment)? onClear;
   final void Function(BarcodeSkuAssignmentDto assignment, String barcode)?
       onBarcodeChanged;
-  final void Function(BarcodeSkuAssignmentDto assignment, String sku)?
-      onSkuChanged;
   final void Function(BarcodeSkuAssignmentDto assignment, String barcode)?
       onScanComplete;
 
@@ -29,9 +27,6 @@ class Step5IdentifierTable extends StatelessWidget {
 
   /// When true with [inlineEditable], only selected rows accept input.
   final bool editOnlyWhenSelected;
-
-  /// Uncommitted SKU drafts keyed by clientCombinationKey (status stays Incomplete until Apply).
-  final Map<String, String> draftSkus;
 
   /// Uncommitted barcode drafts keyed by clientCombinationKey.
   final Map<String, String> draftBarcodes;
@@ -47,16 +42,14 @@ class Step5IdentifierTable extends StatelessWidget {
     this.onToggleSelect,
     this.onClear,
     this.onBarcodeChanged,
-    this.onSkuChanged,
     this.onScanComplete,
     this.inlineEditable = false,
     this.editOnlyWhenSelected = false,
-    this.draftSkus = const {},
     this.draftBarcodes = const {},
   });
 
   String _variantLabel(BarcodeSkuAssignmentDto assignment) {
-    if (productStructure == 'SIMPLE' || productStructure == 'BUNDLE') {
+    if (productStructure == 'SIMPLE') {
       return productName.isNotEmpty ? productName : 'Base Product';
     }
     if (assignment.clientCombinationKey == 'SIMPLE_DEFAULT') {
@@ -168,7 +161,7 @@ class Step5IdentifierTable extends StatelessWidget {
 
   bool get _showSelectionCheckbox => onToggleSelect != null;
 
-  /// SIMPLE / BUNDLE assignment row: green selected dot, Scan column, pencil.
+  /// SIMPLE assignment row: green selected dot, Scan column, pencil.
   bool get _useCompactSelectedRow => !_showSelectionCheckbox;
 
   Widget _buildHeader() {
@@ -235,14 +228,12 @@ class Step5IdentifierTable extends StatelessWidget {
     final selected = _useCompactSelectedRow ||
         selectedClientKeys.contains(assignment.clientCombinationKey);
     final canEditInline = inlineEditable &&
-        onSkuChanged != null &&
+        onBarcodeChanged != null &&
         (!editOnlyWhenSelected || selected);
     final isComplete = effectiveStatus == 'COMPLETE';
     final showCompleteFieldStyle = isComplete && !canEditInline;
     const accent = TenantAdminColors.posHomeAccentOrange;
     const completeGreen = Color(0xFF22C55E);
-    final displaySku =
-        draftSkus[assignment.clientCombinationKey] ?? assignment.sku ?? '';
     final displayBarcode = draftBarcodes[assignment.clientCombinationKey] ??
         assignment.barcode ??
         '';
@@ -347,36 +338,44 @@ class Step5IdentifierTable extends StatelessWidget {
           ),
           Expanded(
             flex: 2,
-            child: canEditInline
-                ? _InlineField(
-                    initialValue: displaySku,
-                    hint: 'SKU',
-                    enabled: true,
-                    onChanged: (v) => onSkuChanged!(assignment, v),
-                  )
-                : inlineEditable && editOnlyWhenSelected
-                    ? _InlineField(
-                        initialValue: displaySku,
-                        hint: selected ? 'SKU' : 'Select row to edit',
-                        enabled: false,
-                        isComplete: showCompleteFieldStyle,
-                        onChanged: (_) {},
-                      )
-                    : Text(
-                        hasSku ? assignment.sku! : '—',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: hasSku ? accent : Colors.grey,
-                          fontFamily: 'monospace',
-                        ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      hasSku ? assignment.sku! : 'Generating...',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: hasSku ? TenantAdminColors.bodyText : Colors.grey,
+                        fontFamily: 'monospace',
+                        fontWeight: hasSku ? FontWeight.w600 : FontWeight.w400,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Icon(Icons.lock_outline, size: 14, color: Colors.grey.shade400),
+                ],
+              ),
+            ),
           ),
           Expanded(
             flex: 2,
             child: canEditInline && onBarcodeChanged != null
                 ? _InlineField(
                     initialValue: displayBarcode,
-                    hint: 'Barcode',
+                    hint: 'Scan to assign',
+                    hintColor: const Color(0xFF1D4ED8),
+                    prefixIcon: const Icon(
+                      Icons.crop_free,
+                      size: 16,
+                      color: Color(0xFF1D4ED8),
+                    ),
                     enabled: true,
                     onChanged: (v) => onBarcodeChanged!(assignment, v),
                     onSubmitted: onScanComplete == null
@@ -388,7 +387,15 @@ class Step5IdentifierTable extends StatelessWidget {
                         onBarcodeChanged != null
                     ? _InlineField(
                         initialValue: displayBarcode,
-                        hint: selected ? 'Barcode' : 'Select row to edit',
+                        hint: selected ? 'Scan to assign' : 'Select row to edit',
+                        hintColor: selected ? const Color(0xFF1D4ED8) : null,
+                        prefixIcon: selected
+                            ? const Icon(
+                                Icons.crop_free,
+                                size: 16,
+                                color: Color(0xFF1D4ED8),
+                              )
+                            : null,
                         enabled: false,
                         isComplete: showCompleteFieldStyle,
                         onChanged: (_) {},
@@ -404,26 +411,6 @@ class Step5IdentifierTable extends StatelessWidget {
                         ),
                       ),
           ),
-          if (_useCompactSelectedRow)
-            SizedBox(
-              width: _scanWidth,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: IconButton(
-                  tooltip: 'Scan to replace barcode',
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints(minWidth: 36, minHeight: 36),
-                  icon: Icon(
-                    Icons.crop_free,
-                    size: 20,
-                    color: Colors.grey.shade600,
-                  ),
-                  onPressed: () => onEdit(assignment, index),
-                ),
-              ),
-            ),
           SizedBox(
             width: _statusWidth,
             child: Align(
@@ -454,23 +441,6 @@ class Step5IdentifierTable extends StatelessWidget {
                   : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconButton(
-                          tooltip: 'Scan barcode',
-                          visualDensity: VisualDensity.compact,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 32,
-                            minHeight: 32,
-                          ),
-                          icon: Icon(
-                            Icons.crop_free,
-                            size: 18,
-                            color: isComplete
-                                ? const Color(0xFF2563EB)
-                                : Colors.grey.shade600,
-                          ),
-                          onPressed: () => onEdit(assignment, index),
-                        ),
                         PopupMenuButton<String>(
                           tooltip: 'Row actions',
                           icon: Icon(
@@ -560,6 +530,8 @@ class _InlineField extends StatefulWidget {
   final ValueChanged<String>? onSubmitted;
   final bool enabled;
   final bool isComplete;
+  final Widget? prefixIcon;
+  final Color? hintColor;
 
   const _InlineField({
     required this.initialValue,
@@ -568,6 +540,8 @@ class _InlineField extends StatefulWidget {
     this.onSubmitted,
     this.enabled = true,
     this.isComplete = false,
+    this.prefixIcon,
+    this.hintColor,
   });
 
   @override
@@ -623,8 +597,15 @@ class _InlineFieldState extends State<_InlineField> {
       decoration: InputDecoration(
         isDense: true,
         hintText: widget.hint,
-        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+        hintStyle: TextStyle(
+          color: widget.hintColor ?? Colors.grey.shade400,
+          fontSize: 12,
+        ),
         filled: !widget.enabled || complete,
+        prefixIcon: _controller.text.isEmpty ? widget.prefixIcon : null,
+        prefixIconConstraints: widget.prefixIcon != null && _controller.text.isEmpty
+            ? const BoxConstraints(minWidth: 28, minHeight: 28)
+            : null,
         fillColor: complete
             ? completeFill
             : (widget.enabled ? null : Colors.grey.shade100),

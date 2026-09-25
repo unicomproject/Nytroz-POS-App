@@ -424,7 +424,6 @@ class _ProductTypeCell extends StatelessWidget {
     final raw = product.productStructure?.trim().toUpperCase() ?? '';
     return switch (raw) {
       'VARIANT' => 'Variant\nProduct',
-      'BUNDLE' => 'Bundle\nProduct',
       _ => 'Simple\nProduct',
     };
   }

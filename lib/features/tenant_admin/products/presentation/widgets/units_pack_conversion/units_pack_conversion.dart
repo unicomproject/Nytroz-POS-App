@@ -23,22 +23,31 @@ class UnitsPackConversionForm extends ConsumerStatefulWidget {
 
 class _UnitsPackConversionFormState
     extends ConsumerState<UnitsPackConversionForm> {
-  late final TextEditingController _itemsPerPurchaseController;
-  late final TextEditingController _purchaseUnitsPerOuterController;
+  late final TextEditingController _pack1ContainsController;
+  late final TextEditingController _pack2ContainsController;
 
   @override
   void initState() {
     super.initState();
-    _itemsPerPurchaseController = TextEditingController(
+    _pack1ContainsController = TextEditingController(
       text: widget.state.itemsPerPurchaseUnit != null
           ? _formatNumber(widget.state.itemsPerPurchaseUnit!)
           : '',
     );
-    _purchaseUnitsPerOuterController = TextEditingController(
-      text: widget.state.purchaseUnitsPerOuterPack != null
-          ? _formatNumber(widget.state.purchaseUnitsPerOuterPack!)
-          : '',
+    _pack2ContainsController = TextEditingController(
+      text: _getPack2ContainsText(widget.state),
     );
+  }
+
+  String _getPack2ContainsText(AddProductWizardState state) {
+    if (state.itemsPerPurchaseUnit != null &&
+        state.purchaseUnitsPerOuterPack != null &&
+        state.purchaseUnitsPerOuterPack! > 0) {
+      final totalBaseUnits =
+          state.itemsPerPurchaseUnit! * state.purchaseUnitsPerOuterPack!;
+      return _formatNumber(totalBaseUnits);
+    }
+    return '';
   }
 
   @override
@@ -49,25 +58,21 @@ class _UnitsPackConversionFormState
       final formatted = widget.state.itemsPerPurchaseUnit != null
           ? _formatNumber(widget.state.itemsPerPurchaseUnit!)
           : '';
-      if (_itemsPerPurchaseController.text != formatted) {
-        _itemsPerPurchaseController.text = formatted;
+      if (_pack1ContainsController.text != formatted) {
+        _pack1ContainsController.text = formatted;
       }
     }
-    if (widget.state.purchaseUnitsPerOuterPack !=
-        oldWidget.state.purchaseUnitsPerOuterPack) {
-      final formatted = widget.state.purchaseUnitsPerOuterPack != null
-          ? _formatNumber(widget.state.purchaseUnitsPerOuterPack!)
-          : '';
-      if (_purchaseUnitsPerOuterController.text != formatted) {
-        _purchaseUnitsPerOuterController.text = formatted;
-      }
+
+    final newPack2Text = _getPack2ContainsText(widget.state);
+    if (_pack2ContainsController.text != newPack2Text) {
+      _pack2ContainsController.text = newPack2Text;
     }
   }
 
   @override
   void dispose() {
-    _itemsPerPurchaseController.dispose();
-    _purchaseUnitsPerOuterController.dispose();
+    _pack1ContainsController.dispose();
+    _pack2ContainsController.dispose();
     super.dispose();
   }
 
@@ -88,6 +93,31 @@ class _UnitsPackConversionFormState
     }
   }
 
+  void _onPacksToggled(bool value) {
+    widget.controller.selectUnitModel(value ? 'MULTIPLE_UNITS' : 'SINGLE_UNIT');
+    if (!value) {
+      // Clear pack configurations when turning off
+      widget.controller.setPurchaseUnit(null);
+      widget.controller.setItemsPerPurchaseUnit(null);
+      widget.controller.setOuterPackUnit(null);
+      widget.controller.setPurchaseUnitsPerOuterPack(null);
+    }
+  }
+
+  void _onPack2ContainsChanged(String val) {
+    final state = widget.state;
+    final controller = widget.controller;
+    
+    final parsed = num.tryParse(val);
+    if (parsed != null && state.itemsPerPurchaseUnit != null && state.itemsPerPurchaseUnit! > 0) {
+      // Set the derived factor
+      final factor = parsed / state.itemsPerPurchaseUnit!;
+      controller.setPurchaseUnitsPerOuterPack(factor);
+    } else {
+      controller.setPurchaseUnitsPerOuterPack(null);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = widget.state;
@@ -95,534 +125,171 @@ class _UnitsPackConversionFormState
     final options = state.createOptions;
     final unitOptions = options?.units ?? const [];
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header
-          const Text(
-            'Units & Pack Conversion',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: TenantAdminColors.bodyText,
-            ),
-          ),
-          const SizedBox(height: TenantAdminSpacing.xs),
-          const Text(
-            'Configure the unit of measure used to manage this product.',
-            style: TextStyle(
-              fontSize: 14,
-              color: TenantAdminColors.mutedText,
-            ),
-          ),
-          const SizedBox(height: TenantAdminSpacing.md),
-
-          // Unit Model Card Selector
-          Row(
-            children: [
-              Expanded(
-                child: _buildUnitModelCard(
-                  title: 'Single Unit Only',
-                  description:
-                      'Use one unit for purchase, selling and stock counting.',
-                  icon: Icons.inventory_2_outlined,
-                  isSelected: state.unitModel == 'SINGLE_UNIT',
-                  onTap: () => controller.selectUnitModel('SINGLE_UNIT'),
-                ),
-              ),
-              const SizedBox(width: TenantAdminSpacing.md),
-              Expanded(
-                child: _buildUnitModelCard(
-                  title: 'Multiple Units & Pack Conversion',
-                  description:
-                      'Use different units and set conversion between them.',
-                  icon: Icons.layers_outlined,
-                  isSelected: state.unitModel == 'MULTIPLE_UNITS',
-                  onTap: () => controller.selectUnitModel('MULTIPLE_UNITS'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: TenantAdminSpacing.md),
-
-          // Form Section (State A or State B)
-          if (state.unitModel == 'SINGLE_UNIT')
-            _buildSingleUnitSection(state, controller, unitOptions)
-          else
-            _buildMultipleUnitsSection(state, controller, unitOptions),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUnitModelCard({
-    required String title,
-    required String description,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    const activeColor = TenantAdminColors.posHomeAccentOrange;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      child: Container(
-        padding: const EdgeInsets.all(TenantAdminSpacing.md),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? activeColor.withValues(alpha: 0.04)
-              : TenantAdminColors.surface,
-          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-          border: Border.all(
-            color: isSelected ? activeColor : TenantAdminColors.border,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              isSelected
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked,
-              color: isSelected ? activeColor : TenantAdminColors.mutedText,
-              size: 24,
-            ),
-            const SizedBox(width: TenantAdminSpacing.xs),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        icon,
-                        size: 20,
-                        color: isSelected
-                            ? activeColor
-                            : TenantAdminColors.mutedText,
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.xs),
-                      Flexible(
-                        child: Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected
-                                ? TenantAdminColors.bodyText
-                                : TenantAdminColors.bodyText,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.xs),
-                  Text(
-                    description,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: TenantAdminColors.mutedText,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // --- STATE A: SINGLE UNIT ONLY ---
-
-  Widget _buildSingleUnitSection(
-    AddProductWizardState state,
-    AddProductWizardController controller,
-    List<ProductUnitOption> unitOptions,
-  ) {
-    final selectedUnitId = state.productUnitId ?? state.baseUnitId;
-    final selectedUnit = _findUnit(selectedUnitId);
-    final unitError =
-        state.fieldErrors['productUnitId'] ?? state.fieldErrors['baseUnitId'];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 600;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (isWide)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _buildUomDropdown(
-                          label: 'Product Unit *',
-                          value: selectedUnitId,
-                          options: unitOptions,
-                          errorText: unitError,
-                          onChanged: (val) => controller.setProductUnit(val),
-                        ),
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.xl),
-                      const Spacer(),
-                    ],
-                  )
-                else
-                  _buildUomDropdown(
-                    label: 'Product Unit *',
-                    value: selectedUnitId,
-                    options: unitOptions,
-                    errorText: unitError,
-                    onChanged: (val) => controller.setProductUnit(val),
-                  ),
-                const SizedBox(height: TenantAdminSpacing.md),
-                _buildDecimalQuantityRule(state, controller),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: TenantAdminSpacing.md),
-
-        // Information Banner
-        Container(
-          padding: const EdgeInsets.all(TenantAdminSpacing.md),
-          decoration: BoxDecoration(
-            color: TenantAdminColors.subtleBackground,
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            border: Border.all(color: TenantAdminColors.border),
-          ),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.info_outline,
-                color: TenantAdminColors.posHomeAccentOrange,
-                size: 22,
-              ),
-              const SizedBox(width: TenantAdminSpacing.md),
-              Expanded(
-                child: Text(
-                  selectedUnit != null
-                      ? 'This product will be purchased, sold and counted in ${selectedUnit.name}. No pack conversion is applied.'
-                      : 'Select a Product Unit to configure basic unit settings. No pack conversion is applied.',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: TenantAdminColors.bodyText,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // --- STATE B: MULTIPLE UNITS & PACK CONVERSION ---
-
-  Widget _buildMultipleUnitsSection(
-    AddProductWizardState state,
-    AddProductWizardController controller,
-    List<ProductUnitOption> unitOptions,
-  ) {
+    final hasPacks = state.unitModel == 'MULTIPLE_UNITS';
     final baseUnit = _findUnit(state.baseUnitId);
-    final purchaseUnit = _findUnit(state.purchaseUnitId);
-    final outerPackUnit = _findUnit(state.outerPackUnitId);
+    final baseUnitName = baseUnit?.name ?? 'Base Unit';
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 900;
-            final isMedium = constraints.maxWidth >= 600;
-
-            if (isWide) {
-              return Column(
-                children: [
-                  // Row 1: Base Unit, Purchase Unit, Outer Pack Unit
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _buildUomDropdown(
-                          label: 'Base Unit *',
-                          value: state.baseUnitId,
-                          options: unitOptions,
-                          errorText: state.fieldErrors['baseUnitId'],
-                          onChanged: (val) => controller.setBaseUnit(val),
-                        ),
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.lg),
-                      Expanded(
-                        child: _buildUomDropdown(
-                          label: 'Purchase Unit *',
-                          value: state.purchaseUnitId,
-                          options: unitOptions,
-                          errorText: state.fieldErrors['purchaseUnitId'],
-                          onChanged: (val) => controller.setPurchaseUnit(val),
-                        ),
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.lg),
-                      Expanded(
-                        child: _buildUomDropdown(
-                          label: 'Outer Pack Unit',
-                          value: state.outerPackUnitId,
-                          options: unitOptions,
-                          errorText: state.fieldErrors['outerPackUnitId'],
-                          onChanged: (val) => controller.setOuterPackUnit(val),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-
-                  // Row 2: Selling Unit, Items per Purchase Unit, Purchase Units per Outer Pack
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _buildUomDropdown(
-                          label: 'Selling Unit *',
-                          value: state.sellingUnitId,
-                          options: unitOptions,
-                          errorText: state.fieldErrors['sellingUnitId'],
-                          onChanged: (val) => controller.setSellingUnit(val),
-                        ),
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.lg),
-                      Expanded(
-                        child: _buildNumberInput(
-                          label: 'Items per Purchase Unit *',
-                          controller: _itemsPerPurchaseController,
-                          errorText: state.fieldErrors['itemsPerPurchaseUnit'],
-                          hint: 'e.g. 6',
-                          onChanged: (val) {
-                            final parsed = num.tryParse(val);
-                            controller.setItemsPerPurchaseUnit(parsed);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.lg),
-                      Expanded(
-                        child: _buildNumberInput(
-                          label: 'Purchase Units per Outer Pack',
-                          controller: _purchaseUnitsPerOuterController,
-                          enabled: state.outerPackUnitId != null &&
-                              state.outerPackUnitId!.isNotEmpty,
-                          errorText:
-                              state.fieldErrors['purchaseUnitsPerOuterPack'],
-                          hint: 'e.g. 12',
-                          onChanged: (val) {
-                            final parsed = num.tryParse(val);
-                            controller.setPurchaseUnitsPerOuterPack(parsed);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              );
-            } else if (isMedium) {
-              return Column(
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _buildUomDropdown(
-                          label: 'Base Unit *',
-                          value: state.baseUnitId,
-                          options: unitOptions,
-                          errorText: state.fieldErrors['baseUnitId'],
-                          onChanged: (val) => controller.setBaseUnit(val),
-                        ),
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.lg),
-                      Expanded(
-                        child: _buildUomDropdown(
-                          label: 'Purchase Unit *',
-                          value: state.purchaseUnitId,
-                          options: unitOptions,
-                          errorText: state.fieldErrors['purchaseUnitId'],
-                          onChanged: (val) => controller.setPurchaseUnit(val),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _buildUomDropdown(
-                          label: 'Outer Pack Unit',
-                          value: state.outerPackUnitId,
-                          options: unitOptions,
-                          errorText: state.fieldErrors['outerPackUnitId'],
-                          onChanged: (val) => controller.setOuterPackUnit(val),
-                        ),
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.lg),
-                      Expanded(
-                        child: _buildUomDropdown(
-                          label: 'Selling Unit *',
-                          value: state.sellingUnitId,
-                          options: unitOptions,
-                          errorText: state.fieldErrors['sellingUnitId'],
-                          onChanged: (val) => controller.setSellingUnit(val),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _buildNumberInput(
-                          label: 'Items per Purchase Unit *',
-                          controller: _itemsPerPurchaseController,
-                          errorText: state.fieldErrors['itemsPerPurchaseUnit'],
-                          hint: 'e.g. 6',
-                          onChanged: (val) {
-                            final parsed = num.tryParse(val);
-                            controller.setItemsPerPurchaseUnit(parsed);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.lg),
-                      Expanded(
-                        child: _buildNumberInput(
-                          label: 'Purchase Units per Outer Pack',
-                          controller: _purchaseUnitsPerOuterController,
-                          enabled: state.outerPackUnitId != null &&
-                              state.outerPackUnitId!.isNotEmpty,
-                          errorText:
-                              state.fieldErrors['purchaseUnitsPerOuterPack'],
-                          hint: 'e.g. 12',
-                          onChanged: (val) {
-                            final parsed = num.tryParse(val);
-                            controller.setPurchaseUnitsPerOuterPack(parsed);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              );
-            } else {
-              return Column(
-                children: [
-                  _buildUomDropdown(
-                    label: 'Base Unit *',
-                    value: state.baseUnitId,
-                    options: unitOptions,
-                    errorText: state.fieldErrors['baseUnitId'],
-                    onChanged: (val) => controller.setBaseUnit(val),
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  _buildUomDropdown(
-                    label: 'Purchase Unit *',
-                    value: state.purchaseUnitId,
-                    options: unitOptions,
-                    errorText: state.fieldErrors['purchaseUnitId'],
-                    onChanged: (val) => controller.setPurchaseUnit(val),
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  _buildUomDropdown(
-                    label: 'Outer Pack Unit',
-                    value: state.outerPackUnitId,
-                    options: unitOptions,
-                    errorText: state.fieldErrors['outerPackUnitId'],
-                    onChanged: (val) => controller.setOuterPackUnit(val),
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  _buildUomDropdown(
-                    label: 'Selling Unit *',
-                    value: state.sellingUnitId,
-                    options: unitOptions,
-                    errorText: state.fieldErrors['sellingUnitId'],
-                    onChanged: (val) => controller.setSellingUnit(val),
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  _buildNumberInput(
-                    label: 'Items per Purchase Unit *',
-                    controller: _itemsPerPurchaseController,
-                    errorText: state.fieldErrors['itemsPerPurchaseUnit'],
-                    hint: 'e.g. 6',
-                    onChanged: (val) {
-                      final parsed = num.tryParse(val);
-                      controller.setItemsPerPurchaseUnit(parsed);
-                    },
-                  ),
-                  const SizedBox(height: TenantAdminSpacing.md),
-                  _buildNumberInput(
-                    label: 'Purchase Units per Outer Pack',
-                    controller: _purchaseUnitsPerOuterController,
-                    enabled: state.outerPackUnitId != null &&
-                        state.outerPackUnitId!.isNotEmpty,
-                    errorText: state.fieldErrors['purchaseUnitsPerOuterPack'],
-                    hint: 'e.g. 12',
-                    onChanged: (val) {
-                      final parsed = num.tryParse(val);
-                      controller.setPurchaseUnitsPerOuterPack(parsed);
-                    },
-                  ),
-                ],
-              );
-            }
+        _buildUomDropdown(
+          label: 'Base Unit *',
+          value: state.baseUnitId,
+          options: unitOptions,
+          errorText: state.fieldErrors['baseUnitId'],
+          onChanged: (val) {
+            controller.setBaseUnit(val);
+            // Also sync product unit and selling unit for simplicity as per existing controller mapping
+            controller.setProductUnit(val);
+            controller.setSellingUnit(val);
           },
         ),
         const SizedBox(height: TenantAdminSpacing.md),
+        
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: TenantAdminColors.border),
+            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          ),
+          child: SwitchListTile(
+            title: const Text(
+              'This product has packs/cases',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: const Text(
+              'Enable this if the product is also handled in packs, boxes, cases, cartons, or similar grouped units.',
+              style: TextStyle(fontSize: 12),
+            ),
+            value: hasPacks,
+            onChanged: _onPacksToggled,
+            activeColor: TenantAdminColors.posHomeAccentOrange,
+          ),
+        ),
 
-        // Decimal Quantity Rule
-        _buildDecimalQuantityRule(state, controller),
-        const SizedBox(height: TenantAdminSpacing.md),
+        if (hasPacks) ...[
+          const SizedBox(height: TenantAdminSpacing.xl),
+          const Text(
+            'Pack 1',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: TenantAdminSpacing.md),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 1,
+                child: _buildUomDropdown(
+                  label: 'Pack Type *',
+                  value: state.purchaseUnitId,
+                  options: unitOptions,
+                  errorText: state.fieldErrors['purchaseUnitId'],
+                  onChanged: (val) => controller.setPurchaseUnit(val),
+                ),
+              ),
+              const SizedBox(width: TenantAdminSpacing.md),
+              Expanded(
+                flex: 1,
+                child: _buildNumberInput(
+                  label: 'Contains *',
+                  controller: _pack1ContainsController,
+                  errorText: state.fieldErrors['itemsPerPurchaseUnit'],
+                  hint: 'e.g. 6',
+                  suffixText: baseUnitName,
+                  onChanged: (val) {
+                    final parsed = num.tryParse(val);
+                    controller.setItemsPerPurchaseUnit(parsed);
+                    // If Pack 2 exists, we need to recompute its factor based on new Pack 1
+                    if (state.outerPackUnitId != null && _pack2ContainsController.text.isNotEmpty) {
+                      _onPack2ContainsChanged(_pack2ContainsController.text);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
 
-        // Conversion Summary Card
+          if (state.outerPackUnitId != null || state.purchaseUnitsPerOuterPack != null) ...[
+             const SizedBox(height: TenantAdminSpacing.xl),
+             Row(
+               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+               children: [
+                 const Text(
+                  'Pack 2',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                 ),
+                 TextButton.icon(
+                   onPressed: () {
+                     controller.setOuterPackUnit(null);
+                     controller.setPurchaseUnitsPerOuterPack(null);
+                     _pack2ContainsController.clear();
+                   },
+                   icon: const Icon(Icons.delete_outline, size: 18),
+                   label: const Text('Remove Pack 2'),
+                   style: TextButton.styleFrom(foregroundColor: Colors.red),
+                 ),
+               ],
+             ),
+             const SizedBox(height: TenantAdminSpacing.sm),
+             Row(
+               crossAxisAlignment: CrossAxisAlignment.start,
+               children: [
+                 Expanded(
+                   flex: 1,
+                   child: _buildUomDropdown(
+                     label: 'Pack Type *',
+                     value: state.outerPackUnitId,
+                     options: unitOptions,
+                     errorText: state.fieldErrors['outerPackUnitId'],
+                     onChanged: (val) => controller.setOuterPackUnit(val),
+                   ),
+                 ),
+                 const SizedBox(width: TenantAdminSpacing.md),
+                 Expanded(
+                   flex: 1,
+                   child: _buildNumberInput(
+                     label: 'Contains *',
+                     controller: _pack2ContainsController,
+                     errorText: state.fieldErrors['purchaseUnitsPerOuterPack'],
+                     hint: 'e.g. 24',
+                     suffixText: baseUnitName,
+                     onChanged: _onPack2ContainsChanged,
+                   ),
+                 ),
+               ],
+             ),
+             const SizedBox(height: TenantAdminSpacing.sm),
+             const Text(
+               'Maximum 2 pack levels are currently supported.',
+               style: TextStyle(fontSize: 12, color: TenantAdminColors.mutedText),
+             ),
+          ] else ...[
+             const SizedBox(height: TenantAdminSpacing.md),
+             Align(
+               alignment: Alignment.centerLeft,
+               child: OutlinedButton.icon(
+                 onPressed: () {
+                   // Add Pack 2 by just initializing the ID to something or relying on user selection.
+                   // Since we check `outerPackUnitId != null || purchaseUnitsPerOuterPack != null`, we can set `outerPackUnitId = ''`.
+                   controller.setOuterPackUnit('');
+                 },
+                 icon: const Icon(Icons.add),
+                 label: const Text('Add Another Pack'),
+                 style: OutlinedButton.styleFrom(
+                   foregroundColor: TenantAdminColors.posHomeAccentOrange,
+                   side: const BorderSide(color: TenantAdminColors.posHomeAccentOrange),
+                 ),
+               ),
+             ),
+          ]
+        ],
+
+        const SizedBox(height: TenantAdminSpacing.xl),
         _buildConversionSummaryCard(
           baseUnit: baseUnit,
-          purchaseUnit: purchaseUnit,
-          outerPackUnit: outerPackUnit,
+          purchaseUnit: _findUnit(state.purchaseUnitId),
+          outerPackUnit: _findUnit(state.outerPackUnitId),
           itemsPerPurchase: state.itemsPerPurchaseUnit,
           purchaseUnitsPerOuter: state.purchaseUnitsPerOuterPack,
-        ),
-        const SizedBox(height: TenantAdminSpacing.md),
-
-        // Informational Note Panel
-        Container(
-          padding: const EdgeInsets.all(TenantAdminSpacing.md),
-          decoration: BoxDecoration(
-            color: TenantAdminColors.subtleBackground,
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            border: Border.all(color: TenantAdminColors.border),
-          ),
-          child: const Row(
-            children: [
-              Icon(
-                Icons.lightbulb_outline,
-                color: TenantAdminColors.posHomeAccentOrange,
-                size: 22,
-              ),
-              SizedBox(width: TenantAdminSpacing.md),
-              Expanded(
-                child: Text(
-                  'This conversion setup is useful for buying in cartons, stocking in packs, and selling in pieces. It helps maintain accurate inventory and smooth sales operations.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: TenantAdminColors.mutedText,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ],
     );
@@ -692,27 +359,24 @@ class _UnitsPackConversionFormState
     required String label,
     required TextEditingController controller,
     required ValueChanged<String> onChanged,
-    bool enabled = true,
     String? errorText,
     String? hint,
+    String? suffixText,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: enabled
-                ? TenantAdminColors.bodyText
-                : TenantAdminColors.mutedText,
+            color: TenantAdminColors.bodyText,
           ),
         ),
         const SizedBox(height: TenantAdminSpacing.xs),
         TextField(
           controller: controller,
-          enabled: enabled,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
@@ -720,10 +384,9 @@ class _UnitsPackConversionFormState
           decoration: InputDecoration(
             hintText: hint,
             errorText: errorText,
+            suffixText: suffixText,
             filled: true,
-            fillColor: enabled
-                ? TenantAdminColors.surface
-                : TenantAdminColors.subtleBackground,
+            fillColor: TenantAdminColors.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(TenantAdminRadius.md),
               borderSide: const BorderSide(color: TenantAdminColors.border),
@@ -746,173 +409,6 @@ class _UnitsPackConversionFormState
     );
   }
 
-  Widget _buildDecimalQuantityRule(
-    AddProductWizardState state,
-    AddProductWizardController controller,
-  ) {
-    final showFixedDecimalPlaces = state.unitModel == 'MULTIPLE_UNITS';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Decimal Quantity Rule',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: TenantAdminColors.bodyText,
-          ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.xs),
-        const Text(
-          'Choose how quantities are entered and sold',
-          style: TextStyle(
-            fontSize: 13,
-            color: TenantAdminColors.mutedText,
-          ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.md),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 600;
-            return isWide
-                ? Row(
-                    children: [
-                      Expanded(
-                        child: _buildDecimalRuleCard(
-                          title: 'Whole numbers only',
-                          subtitle: 'e.g. 1, 2, 3, 4...',
-                          isSelected: !state.allowDecimalQuantity,
-                          onTap: () =>
-                              controller.setAllowDecimalQuantity(false),
-                        ),
-                      ),
-                      const SizedBox(width: TenantAdminSpacing.md),
-                      Expanded(
-                        child: _buildDecimalRuleCard(
-                          title: 'Allow decimals',
-                          subtitle: 'e.g. 1.5, 2.25, 3.75...',
-                          isSelected: state.allowDecimalQuantity,
-                          onTap: () => controller.setAllowDecimalQuantity(true),
-                        ),
-                      ),
-                      if (showFixedDecimalPlaces) ...[
-                        const SizedBox(width: TenantAdminSpacing.md),
-                        Expanded(
-                          child: _buildDecimalRuleCard(
-                            title: 'Fixed decimal places',
-                            subtitle: 'e.g. 1.00, 2.00, 3.00...',
-                            isSelected: false,
-                            onTap: null,
-                          ),
-                        ),
-                      ],
-                    ],
-                  )
-                : Column(
-                    children: [
-                      _buildDecimalRuleCard(
-                        title: 'Whole numbers only',
-                        subtitle: 'e.g. 1, 2, 3, 4...',
-                        isSelected: !state.allowDecimalQuantity,
-                        onTap: () => controller.setAllowDecimalQuantity(false),
-                      ),
-                      const SizedBox(height: TenantAdminSpacing.sm),
-                      _buildDecimalRuleCard(
-                        title: 'Allow decimals',
-                        subtitle: 'e.g. 1.5, 2.25, 3.75...',
-                        isSelected: state.allowDecimalQuantity,
-                        onTap: () => controller.setAllowDecimalQuantity(true),
-                      ),
-                      if (showFixedDecimalPlaces) ...[
-                        const SizedBox(height: TenantAdminSpacing.sm),
-                        _buildDecimalRuleCard(
-                          title: 'Fixed decimal places',
-                          subtitle: 'e.g. 1.00, 2.00, 3.00...',
-                          isSelected: false,
-                          onTap: null,
-                        ),
-                      ],
-                    ],
-                  );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDecimalRuleCard({
-    required String title,
-    required String subtitle,
-    required bool isSelected,
-    required VoidCallback? onTap,
-  }) {
-    const activeColor = TenantAdminColors.posHomeAccentOrange;
-    final isDisabled = onTap == null;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-      child: Container(
-        padding: const EdgeInsets.all(TenantAdminSpacing.md),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? activeColor.withValues(alpha: 0.04)
-              : TenantAdminColors.surface,
-          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-          border: Border.all(
-            color: isSelected ? activeColor : TenantAdminColors.border,
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Radio<bool>(
-              value: true,
-              groupValue: isSelected ? true : false,
-              onChanged: isDisabled ? null : (_) => onTap(),
-              activeColor: activeColor,
-              visualDensity: const VisualDensity(
-                horizontal: VisualDensity.minimumDensity,
-                vertical: VisualDensity.minimumDensity,
-              ),
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            const SizedBox(width: TenantAdminSpacing.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDisabled
-                          ? TenantAdminColors.mutedText
-                          : (isSelected
-                              ? activeColor
-                              : TenantAdminColors.bodyText),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: TenantAdminColors.mutedText,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildConversionSummaryCard({
     required ProductUnitOption? baseUnit,
     required ProductUnitOption? purchaseUnit,
@@ -920,34 +416,20 @@ class _UnitsPackConversionFormState
     required num? itemsPerPurchase,
     required num? purchaseUnitsPerOuter,
   }) {
-    final lines = <String>[];
-
-    if (purchaseUnit != null &&
-        baseUnit != null &&
-        itemsPerPurchase != null &&
-        itemsPerPurchase > 0) {
-      lines.add(
-          '1 ${purchaseUnit.name} = ${_formatNumber(itemsPerPurchase)} ${baseUnit.name}s');
-    }
-
-    if (outerPackUnit != null &&
-        purchaseUnit != null &&
-        purchaseUnitsPerOuter != null &&
-        purchaseUnitsPerOuter > 0) {
-      lines.add(
-          '1 ${outerPackUnit.name} = ${_formatNumber(purchaseUnitsPerOuter)} ${purchaseUnit.name}s');
-
-      if (baseUnit != null &&
-          itemsPerPurchase != null &&
-          itemsPerPurchase > 0) {
-        final totalBase = itemsPerPurchase * purchaseUnitsPerOuter;
-        lines.add(
-            '1 ${outerPackUnit.name} = ${_formatNumber(totalBase)} ${baseUnit.name}s');
-      }
-    }
-
-    if (lines.isEmpty) {
+    if (baseUnit == null) {
       return const SizedBox.shrink();
+    }
+
+    final lines = <String>[];
+    lines.add('1 ${baseUnit.name} = 1 Base Unit');
+
+    if (purchaseUnit != null && itemsPerPurchase != null && itemsPerPurchase > 0) {
+      lines.add('1 ${purchaseUnit.name} = ${_formatNumber(itemsPerPurchase)} ${baseUnit.name}s');
+
+      if (outerPackUnit != null && purchaseUnitsPerOuter != null && purchaseUnitsPerOuter > 0) {
+        final totalBase = itemsPerPurchase * purchaseUnitsPerOuter;
+        lines.add('1 ${outerPackUnit.name} = ${_formatNumber(totalBase)} ${baseUnit.name}s');
+      }
     }
 
     return Container(
@@ -963,7 +445,7 @@ class _UnitsPackConversionFormState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Conversion Summary',
+            'Configuration Summary',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,

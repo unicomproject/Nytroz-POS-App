@@ -5,6 +5,7 @@ class ProductVariantRequestDto {
     this.barcode,
     required this.sellingPrice,
     this.discountPrice,
+    this.taxId,
     this.status,
   });
 
@@ -13,6 +14,7 @@ class ProductVariantRequestDto {
   final String? barcode;
   final double sellingPrice;
   final double? discountPrice;
+  final String? taxId;
   final String? status;
 
   Map<String, dynamic> toJson() {
@@ -24,6 +26,7 @@ class ProductVariantRequestDto {
         'barcode': barcode!.trim(),
       'sellingPrice': sellingPrice,
       if (discountPrice != null) 'discountPrice': discountPrice,
+      if (taxId != null && taxId!.trim().isNotEmpty) 'taxId': taxId,
       if (status != null && status!.trim().isNotEmpty) 'status': status!.trim(),
     };
   }

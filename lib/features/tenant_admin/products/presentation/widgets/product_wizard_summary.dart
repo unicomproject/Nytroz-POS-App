@@ -168,19 +168,11 @@ class ProductWizardSummary extends StatelessWidget {
                 ? brandName
                 : 'Not selected',
           ),
-          if (state.productStructure == 'BUNDLE')
-            _buildSummaryRow(
-              'Components',
-              state.componentsConfigured
-                  ? '${state.componentCount} Configured'
-                  : 'Not configured',
-            )
-          else
-            _buildSummaryRow(
-              'Inventory Tracking',
-              state.trackInventory ? 'Tracked' : 'Not Tracked',
-            ),
-          if (state.trackInventory && state.productStructure != 'BUNDLE') ...[
+          _buildSummaryRow(
+            'Inventory Tracking',
+            state.trackInventory ? 'Tracked' : 'Not Tracked',
+          ),
+          if (state.trackInventory) ...[
             _buildSummaryRow(
               'Unit Model',
               state.unitModel == 'MULTIPLE_UNITS'
@@ -320,8 +312,6 @@ class ProductWizardSummary extends StatelessWidget {
     switch (method) {
       case 'VARIANT_BASED':
         return 'Variant-based';
-      case 'COMPONENT_BASED':
-        return 'Component-based';
       case 'PRODUCT_BASED':
         return 'Product-based';
       default:
@@ -330,9 +320,6 @@ class ProductWizardSummary extends StatelessWidget {
   }
 
   String _deriveInventoryMethod(String structure, bool trackInventory) {
-    if (structure == 'BUNDLE') {
-      return 'Component-based';
-    }
     if (!trackInventory) {
       return 'Not Tracked';
     }

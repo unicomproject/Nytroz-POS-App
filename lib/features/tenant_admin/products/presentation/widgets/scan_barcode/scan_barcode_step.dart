@@ -1,3 +1,4 @@
+// ignore_for_file: unused_local_variable, unused_field, unused_element, prefer_const_literals_to_create_immutables, unused_import, use_super_parameters
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/add_pr
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/scan_barcode_step_state.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/product_form_fields.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/product_wizard_action_buttons.dart';
 
 /// Global Step 1 — Scan Barcode internal panels (S1-A … S1-R3).
 /// Visual family matches supplied Product Setup screens (cards, orange accent,
@@ -227,8 +229,7 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
         'Barcode is valid but not in your catalogue yet.',
       ScanBarcodePanel.externalLookup =>
         'Looking up product data for this barcode.',
-      ScanBarcodePanel.externalFound =>
-        'Review the matched product data before continuing.',
+      ScanBarcodePanel.externalFound => null,
       ScanBarcodePanel.externalNoMatch => null,
       ScanBarcodePanel.manualEntry =>
         'Enter the barcode digits. Leading zeros are preserved.',
@@ -600,154 +601,231 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
 
   Widget _buildExternalFound(BuildContext context, ScanBarcodeStepState scan) {
     final s = scan.externalSuggestion;
-    // Card height follows content; scroll when the viewport is shorter so
-    // actions stay pinned and visible (avoids bottom overflow on dense matches).
+
+    final imageSection = Container(
+      width: double.infinity,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: TenantAdminColors.subtleBackground,
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+      ),
+      child: (s?.imageCandidate ?? '').isNotEmpty
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+              child: Image.network(
+                s!.imageCandidate!,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Center(
+                  child: Icon(Icons.image_not_supported, size: 48, color: TenantAdminColors.border),
+                ),
+              ),
+            )
+          : const Center(
+              child: Icon(Icons.image_not_supported, size: 48, color: TenantAdminColors.border),
+            ),
+    );
+
+    // Middle side: details
+    final detailsSection = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                s?.productName ?? 'Unknown Product',
+                style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F5EF),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFD3EADD)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: TenantAdminColors.primary, size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Verified',
+                    style: TenantAdminTextStyles.body(context).copyWith(
+                      color: TenantAdminColors.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: TenantAdminSpacing.sm),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.sm, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8F0FE), // Light blue
+            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+            border: Border.all(color: const Color(0xFFD2E3FC)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.info_outline, color: Color(0xFF1967D2), size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Please review the details before importing.',
+                  style: TenantAdminTextStyles.body(context).copyWith(
+                    color: const Color(0xFF1967D2),
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (s?.brandText != null) _CompactLabelValue('Brand', s!.brandText!),
+        if (s?.categoryText != null) _CompactLabelValue('Category', s!.categoryText!),
+        if (s?.unitText != null) _CompactLabelValue('Unit', s!.unitText!),
+        if (s?.countryCode != null) _CompactLabelValue('Country', s!.countryCode!),
+        if (s?.shortDescription != null) _CompactLabelValue('Description', s!.shortDescription!),
+        if (s?.primaryGtin != null) _CompactLabelValue('Primary GTIN', s!.primaryGtin!),
+        if (scan.barcodeType != null) _CompactLabelValue('Barcode Type', scan.barcodeType!),
+      ],
+    );
+
+    // Right card: What's next
+    final whatsNextCard = Container(
+      padding: const EdgeInsets.all(TenantAdminSpacing.xl),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+        border: Border.all(color: TenantAdminColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "What's next?",
+            style: TenantAdminTextStyles.sectionTitle(context).copyWith(
+              fontSize: 18,
+            ),
+          ),
+          const SizedBox(height: TenantAdminSpacing.md),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFFF7F2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.assignment_outlined, color: Color(0xFFFF6B00), size: 32),
+          ),
+          const SizedBox(height: TenantAdminSpacing.md),
+          Text(
+            "We'll pre-fill the next steps using this information.",
+            style: TenantAdminTextStyles.body(context).copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: TenantAdminSpacing.sm),
+          Text(
+            "You can review and edit anything before completing the setup.",
+            style: TenantAdminTextStyles.muted(context),
+          ),
+          const SizedBox(height: TenantAdminSpacing.xl),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                side: const BorderSide(color: TenantAdminColors.border),
+                foregroundColor: TenantAdminColors.bodyText,
+              ),
+              onPressed: scan.isBusy
+                  ? null
+                  : () => widget.controller.backToNoLocalMatch(),
+              child: const Text('Search Again', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            ),
+          ),
+        ],
+      ),
+    );
+
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: SingleChildScrollView(
-                child: _PanelCard(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final twoCol = constraints.maxWidth >= 560;
-                      final rows = <Widget>[
-                        if (s?.productName != null)
-                          _LabelValue('Product Name', s!.productName!),
-                        if (s?.brandText != null)
-                          _LabelValue('Brand', s!.brandText!),
-                        if (scan.brandResolution?.mappedBrand != null)
-                          _LabelValue(
-                            'Tenant Brand',
-                            '${scan.brandResolution!.mappedBrand!.name} (Mapped)',
-                          )
-                        else if (scan.brandResolution != null &&
-                            scan.brandResolution!.suggestions.isNotEmpty)
-                          _LabelValue(
-                            'Tenant Brand',
-                            'Suggested: ${scan.brandResolution!.suggestions.map((b) => b.name).join(', ')}',
-                          ),
-                        if ((s?.externalCategoryName ?? s?.categoryText) != null)
-                          _LabelValue(
-                            'External Category',
-                            s!.externalCategoryName ?? s.categoryText!,
-                          ),
-                        if (s?.externalCategoryHierarchy != null &&
-                            s!.externalCategoryHierarchy!.isNotEmpty)
-                          _LabelValue(
-                            'Category Hierarchy',
-                            _formatHierarchy(s.externalCategoryHierarchy!),
-                          ),
-                        if (scan.categoryResolution?.mappedCategory != null)
-                          _LabelValue(
-                            'Tenant Category',
-                            '${scan.categoryResolution!.mappedCategory!.name} (Mapped)',
-                          )
-                        else if (scan.categoryResolution != null &&
-                            scan.categoryResolution!.suggestions.isNotEmpty)
-                          _LabelValue(
-                            'Tenant Category',
-                            'Suggested: ${scan.categoryResolution!.suggestions.map((c) => c.name).join(', ')}',
-                          ),
-                        if (s?.unitText != null)
-                          _LabelValue('Unit / Size', s!.unitText!),
-                        if (s?.countryCode != null)
-                          _LabelValue('Country', s!.countryCode!),
-                        if (s?.shortDescription != null)
-                          _LabelValue(
-                            'Short Description',
-                            s!.shortDescription!,
-                          ),
-                        if (s?.longDescription != null)
-                          _LabelValue(
-                            'Long Description',
-                            s!.longDescription!,
-                          ),
-                        if (s?.primaryGtin != null)
-                          _LabelValue('Primary GTIN', s!.primaryGtin!),
-                        if (scan.barcodeType != null)
-                          _LabelValue('Barcode Type', scan.barcodeType!),
-                        if (scan.identifierStandard != null)
-                          _LabelValue(
-                            'Identifier Standard',
-                            scan.identifierStandard!,
-                          ),
-                      ];
-
-                      final image = (s?.imageCandidate ?? '').isNotEmpty
-                          ? ClipRRect(
-                              borderRadius:
-                                  BorderRadius.circular(TenantAdminRadius.md),
-                              child: Image.network(
-                                s!.imageCandidate!,
-                                width: twoCol ? 120 : double.infinity,
-                                height: 120,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    const SizedBox.shrink(),
-                              ),
-                            )
-                          : null;
-
-                      if (!twoCol) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (image != null) ...[
-                              image,
-                              const SizedBox(height: TenantAdminSpacing.md),
-                            ],
-                            ...rows,
-                          ],
-                        );
-                      }
-
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: rows,
-                            ),
-                          ),
-                          if (image != null) ...[
-                            const SizedBox(width: TenantAdminSpacing.lg),
-                            image,
-                          ],
-                        ],
-                      );
-                    },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Left main card
+                Expanded(
+                  flex: 7,
+                  child: _PanelCard(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: imageSection,
+                        ),
+                        const SizedBox(width: TenantAdminSpacing.xl),
+                        Expanded(
+                          flex: 5,
+                          child: detailsSection,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: TenantAdminSpacing.lg),
+                // Right card
+                Expanded(
+                  flex: 3,
+                  child: whatsNextCard,
+                ),
+              ],
             ),
           ),
           const SizedBox(height: TenantAdminSpacing.lg),
-          Wrap(
-            spacing: TenantAdminSpacing.md,
-            runSpacing: TenantAdminSpacing.sm,
+          Row(
             children: [
-              FilledButton(
-                onPressed: scan.isBusy
-                    ? null
-                    : () => widget.controller.continueUseThisProduct(),
-                child: const Text('Use This Product'),
+              ProductWizardBackButton(
+                onPressed: () => widget.controller.backToNoLocalMatch(),
+                label: 'Back',
               ),
-              OutlinedButton(
+              const SizedBox(width: TenantAdminSpacing.md),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: TenantAdminColors.bodyText,
+                  side: const BorderSide(color: TenantAdminColors.border),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
+                  ),
+                ),
                 onPressed: scan.isBusy
                     ? null
                     : () => widget.controller.continueCreateManually(
                           applyExternalPrefill: false,
                         ),
-                child: const Text('Create Manually'),
+                icon: const Icon(Icons.add_circle_outline, size: 18),
+                label: const Text('Create Manually', style: TextStyle(fontWeight: FontWeight.w600)),
               ),
-              OutlinedButton(
-                onPressed: () => widget.controller.backToNoLocalMatch(),
-                child: const Text('Back'),
+              const Spacer(),
+              ProductWizardContinueButton(
+                onPressed: scan.isBusy
+                    ? null
+                    : () => widget.controller.continueUseThisProduct(),
+                label: 'Use This Product',
               ),
             ],
           ),
@@ -762,6 +840,7 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
   ) {
     return Expanded(
       child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -1307,6 +1386,7 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
     final isManual = scan.inputMode == 'MANUAL';
     return Expanded(
       child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -2135,6 +2215,32 @@ class _LabelValue extends StatelessWidget {
               value,
               style: TenantAdminTextStyles.body(context),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactLabelValue extends StatelessWidget {
+  const _CompactLabelValue(this.label, this.value);
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text(label, style: TenantAdminTextStyles.muted(context).copyWith(fontSize: 13)),
+          ),
+          Expanded(
+            child: Text(value, style: TenantAdminTextStyles.body(context).copyWith(fontSize: 13)),
           ),
         ],
       ),

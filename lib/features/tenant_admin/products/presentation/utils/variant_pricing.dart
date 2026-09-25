@@ -9,7 +9,11 @@ class VariantPricingRowView {
   final String clientCombinationKey;
   final String displayLabel;
   final String? sku;
+  final num? costPrice;
   final num? sellingPrice;
+  final String? taxId;
+  final String? taxName;
+  final num? taxRate;
 
   const VariantPricingRowView({
     required this.identityKey,
@@ -17,7 +21,11 @@ class VariantPricingRowView {
     required this.displayLabel,
     this.productVariantId,
     this.sku,
+    this.costPrice,
     this.sellingPrice,
+    this.taxId,
+    this.taxName,
+    this.taxRate,
   });
 
   bool get isPriced => sellingPrice != null && sellingPrice! > 0;
@@ -82,10 +90,14 @@ List<VariantPriceDto> reconcileVariantPricesWithIncluded({
       VariantPriceDto(
         productVariantId: id?.isNotEmpty == true ? id : null,
         clientCombinationKey: v.clientCombinationKey,
+        costPrice: match?.costPrice,
         sellingPrice: match?.sellingPrice,
         displayName: v.displayLabel?.trim().isNotEmpty == true
             ? v.displayLabel
             : v.combinationLabel,
+        taxId: match?.taxId,
+        taxName: match?.taxName,
+        taxRate: match?.taxRate,
       ),
     );
   }
@@ -131,7 +143,11 @@ List<VariantPricingRowView> buildVariantPricingRows({
       clientCombinationKey: v.clientCombinationKey,
       displayLabel: label,
       sku: skuByKey[v.clientCombinationKey] ?? stored?.sku,
+      costPrice: stored?.costPrice,
       sellingPrice: stored?.sellingPrice,
+      taxId: stored?.taxId,
+      taxName: stored?.taxName,
+      taxRate: stored?.taxRate,
     );
   }).toList();
 }
@@ -170,6 +186,9 @@ List<VariantPriceDto> buildVariantPriceSnapshot(
           sellingPrice: r.sellingPrice,
           displayName: r.displayLabel,
           sku: r.sku,
+          taxId: r.taxId,
+          taxName: r.taxName,
+          taxRate: r.taxRate,
         ),
       )
       .toList();

@@ -45,7 +45,7 @@ class TenantProduct {
   /// When true, [id] is [localDraftId], never a ProductId.
   final bool isLocalDraft;
 
-  /// Product type when known (SIMPLE / VARIANT / BUNDLE). Local drafts only.
+  /// Product type when known (SIMPLE / VARIANT). Local drafts only.
   final String? productStructure;
 }
 

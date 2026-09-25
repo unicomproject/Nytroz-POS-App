@@ -1,3 +1,4 @@
+import '../../data/dtos/opening_stock_draft_dto.dart';
 import '../../data/dtos/pricing_tax_dtos.dart';
 import 'staged_product_image.dart';
 import 'variant_configuration_state.dart';
@@ -52,17 +53,25 @@ class AddProductWizardState {
   final String longDescription;
 
   // Step 2 Form Fields (Canonical cross-step state)
-  final String productStructure; // 'SIMPLE', 'VARIANT', 'BUNDLE'
+  final String productStructure; // 'SIMPLE', 'VARIANT'
   final bool productStructureConfirmed;
+  final String? trackingMethod; // 'QUANTITY', 'BATCH', 'BATCH_EXPIRY', 'SKIP'
   final bool batchTracking;
   final bool expiryTracking;
   final bool serialTracking;
+  
+  // Step 5 Internal Flow State
+  final int trackingInternalStep; // 1 = Method, 2 = Opening Stock/Initial Details, 3 = Outlet Allocation
+  
+  // Step 5 Form Fields (Opening Stock)
+  final Map<String, OpeningStockOwnerDraftDto> openingStockDrafts;
 
   // Status & Options Toggles (Canonical cross-step state)
   final bool desiredPublishActive;
   final bool posSellable;
   final bool trackInventory;
   final bool allowOnlineSale;
+  final bool applySamePriceToAllVariants;
 
   // Step 3 Form Fields (Units & Pack Conversion)
   final String unitModel; // 'SINGLE_UNIT', 'MULTIPLE_UNITS'
@@ -116,6 +125,7 @@ class AddProductWizardState {
   final String? taxName;
   final num? taxRate;
   final bool taxExclusive;
+  final bool applySameTaxToAllVariants;
 
   /// VARIANT Step 6: keyed selling prices for included sellable variants.
   /// Identity = productVariantId when set, else clientCombinationKey.
@@ -145,13 +155,17 @@ class AddProductWizardState {
     this.longDescription = '',
     this.productStructure = 'SIMPLE',
     this.productStructureConfirmed = false,
+    this.trackingMethod,
     this.batchTracking = false,
     this.expiryTracking = false,
     this.serialTracking = false,
+    this.trackingInternalStep = 1,
+    this.openingStockDrafts = const {},
     this.desiredPublishActive = true,
     this.posSellable = true,
     this.trackInventory = false,
     this.allowOnlineSale = true,
+    this.applySamePriceToAllVariants = false,
     this.unitModel = 'SINGLE_UNIT',
     this.productUnitId,
     this.baseUnitId,
@@ -190,6 +204,7 @@ class AddProductWizardState {
     this.taxName,
     this.taxRate,
     this.taxExclusive = true,
+    this.applySameTaxToAllVariants = true,
     this.variantPrices = const [],
     this.initialBatchNumber = '',
     this.initialExpiryDate,
@@ -233,13 +248,18 @@ class AddProductWizardState {
     String? longDescription,
     String? productStructure,
     bool? productStructureConfirmed,
+    String? trackingMethod,
+    bool clearTrackingMethod = false,
     bool? batchTracking,
     bool? expiryTracking,
     bool? serialTracking,
+    int? trackingInternalStep,
+    Map<String, OpeningStockOwnerDraftDto>? openingStockDrafts,
     bool? desiredPublishActive,
     bool? posSellable,
     bool? trackInventory,
     bool? allowOnlineSale,
+    bool? applySamePriceToAllVariants,
     String? unitModel,
     String? productUnitId,
     bool clearProductUnitId = false,
@@ -294,6 +314,7 @@ class AddProductWizardState {
     num? taxRate,
     bool clearTaxRate = false,
     bool? taxExclusive,
+    bool? applySameTaxToAllVariants,
     List<VariantPriceDto>? variantPrices,
     String? initialBatchNumber,
     DateTime? initialExpiryDate,
@@ -325,13 +346,17 @@ class AddProductWizardState {
       productStructure: productStructure ?? this.productStructure,
       productStructureConfirmed:
           productStructureConfirmed ?? this.productStructureConfirmed,
+      trackingMethod: clearTrackingMethod ? null : (trackingMethod ?? this.trackingMethod),
       batchTracking: batchTracking ?? this.batchTracking,
       expiryTracking: expiryTracking ?? this.expiryTracking,
       serialTracking: serialTracking ?? this.serialTracking,
+      trackingInternalStep: trackingInternalStep ?? this.trackingInternalStep,
+      openingStockDrafts: openingStockDrafts ?? this.openingStockDrafts,
       desiredPublishActive: desiredPublishActive ?? this.desiredPublishActive,
       posSellable: posSellable ?? this.posSellable,
       trackInventory: trackInventory ?? this.trackInventory,
       allowOnlineSale: allowOnlineSale ?? this.allowOnlineSale,
+      applySamePriceToAllVariants: applySamePriceToAllVariants ?? this.applySamePriceToAllVariants,
       unitModel: unitModel ?? this.unitModel,
       productUnitId:
           clearProductUnitId ? null : (productUnitId ?? this.productUnitId),
@@ -384,6 +409,7 @@ class AddProductWizardState {
       taxName: clearTaxName ? null : (taxName ?? this.taxName),
       taxRate: clearTaxRate ? null : (taxRate ?? this.taxRate),
       taxExclusive: taxExclusive ?? this.taxExclusive,
+      applySameTaxToAllVariants: applySameTaxToAllVariants ?? this.applySameTaxToAllVariants,
       variantPrices: variantPrices ?? this.variantPrices,
       initialBatchNumber: initialBatchNumber ?? this.initialBatchNumber,
       initialExpiryDate: clearInitialExpiryDate

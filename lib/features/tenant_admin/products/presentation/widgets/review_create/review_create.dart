@@ -1,4 +1,7 @@
+// ignore_for_file: unused_local_variable, unused_field, unused_element, prefer_const_literals_to_create_immutables, unused_import, use_super_parameters
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nytroz_pos/features/tenant_admin/outlets/presentation/providers/outlet_visibility_provider.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/barcode_sku_dtos.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/add_product_wizard_state.dart';
@@ -11,7 +14,7 @@ import 'package:nytroz_pos/features/tenant_admin/products/presentation/utils/var
 /// Step 7 Review & Create — structure-aware projection of Steps 1–6.
 /// Card titles match the wizard stepper names. SIMPLE skips Product
 /// Configuration; VARIANT skips Units & Pack Conversion.
-class Step7ReviewCreate extends StatelessWidget {
+class Step7ReviewCreate extends ConsumerWidget {
   const Step7ReviewCreate({
     super.key,
     required this.state,
@@ -26,11 +29,14 @@ class Step7ReviewCreate extends StatelessWidget {
   String get _structure => state.productStructure.toUpperCase();
   bool get _isVariant => _structure == 'VARIANT';
   bool get _isSimple => _structure == 'SIMPLE';
-  bool get _isBundle => _structure == 'BUNDLE';
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final outletsAsync = ref.watch(outletListProvider);
+    final outletsList = outletsAsync.value?.items ?? [];
+    final Map<String, String> outletsMap = {for (final o in outletsList) o.id: o.name};
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(TenantAdminSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -57,9 +63,9 @@ class Step7ReviewCreate extends StatelessWidget {
           _ReviewCardGrid(
             children: [
               _basicDetailsCard(),
-              _productTypeTrackingCard(),
+              _productTypeTrackingCard(outletsMap),
               if (_isSimple) _unitsPackCard(),
-              if (_isVariant || _isBundle) _productConfigurationCard(),
+              if (_isVariant) _productConfigurationCard(),
               _barcodeSkuCard(),
               _pricingTaxCard(),
             ],
@@ -79,7 +85,7 @@ class Step7ReviewCreate extends StatelessWidget {
       title: 'Basic Details',
       icon: Icons.info_outline,
       iconColor: TenantAdminColors.info,
-      onEdit: _edit(1),
+      onEdit: _edit(2),
       rows: [
         _Row('Product Name', _dash(state.productName)),
         _Row('Product Code', _dash(state.internalCode)),
@@ -99,6 +105,11 @@ class Step7ReviewCreate extends StatelessWidget {
           badge:
               state.allowOnlineSale ? _BadgeTone.positive : _BadgeTone.negative,
         ),
+        _Row(
+          'Active Status',
+          _statusLabel(),
+          badge: _statusTone(),
+        ),
       ],
       customContent: _imagesContent(),
     );
@@ -108,66 +119,34 @@ class Step7ReviewCreate extends StatelessWidget {
   // Step 2 — Product Type & Tracking
   // ---------------------------------------------------------------------------
 
-  Widget _productTypeTrackingCard() {
+  Widget _productTypeTrackingCard(Map<String, String> outletsMap) {
+    List<String> labels = [];
+    if (state.trackInventory) labels.add('Quantity Tracking');
+    if (state.batchTracking && !state.expiryTracking) labels.add('Batch Tracking');
+    if (state.batchTracking && state.expiryTracking) labels.add('Batch + Expiry Tracking');
+    if (state.serialTracking) labels.add('Serial / IMEI Tracking');
+
+    String trackingLabel = labels.isEmpty ? 'Not configured' : labels.join(', ');
+    
     final rows = <_Row>[
-      _Row('Product Type', _formatProductType(state.productStructure)),
       _Row(
-        'Track Inventory',
-        state.trackInventory ? 'Yes' : 'No',
-        badge: state.trackInventory ? _BadgeTone.positive : _BadgeTone.negative,
+        'Tracking Method',
+        trackingLabel,
+        badge: state.trackingMethod != null && state.trackingMethod != 'SKIP' 
+            ? _BadgeTone.positive 
+            : _BadgeTone.neutral,
       ),
     ];
 
-    if (state.trackInventory && !_isBundle) {
-      rows.addAll([
-        _Row(
-          'Batch / Lot Tracking',
-          state.batchTracking ? 'Yes' : 'No',
-          badge: state.batchTracking ? _BadgeTone.positive : _BadgeTone.neutral,
-        ),
-        _Row(
-          'Expiry Date Tracking',
-          state.expiryTracking ? 'Yes' : 'No',
-          badge:
-              state.expiryTracking ? _BadgeTone.positive : _BadgeTone.neutral,
-        ),
-        _Row(
-          'Serial Number Tracking',
-          state.serialTracking ? 'Yes' : 'No',
-          badge:
-              state.serialTracking ? _BadgeTone.positive : _BadgeTone.neutral,
-        ),
-      ]);
-    }
-
-    rows.addAll([
-      _Row(
-        'POS Sellable',
-        state.posSellable ? 'Yes' : 'No',
-        badge: state.posSellable ? _BadgeTone.positive : _BadgeTone.negative,
-      ),
-      _Row(
-        'Allow Online Sale',
-        state.allowOnlineSale ? 'Yes' : 'No',
-        badge:
-            state.allowOnlineSale ? _BadgeTone.positive : _BadgeTone.negative,
-      ),
-      _Row(
-        'Active Status',
-        _statusLabel(),
-        badge: _statusTone(),
-      ),
-    ]);
-
-    rows.addAll(_compatibleTrackingRows());
+    rows.addAll(_compatibleTrackingRows(outletsMap));
 
     return _ReviewSectionCard(
-      title: 'Product Type & Tracking',
-      icon: Icons.local_offer_outlined,
+      title: 'Product Tracking',
+      icon: Icons.track_changes_outlined,
       iconColor: TenantAdminColors.success,
-      onEdit: _edit(2),
+      onEdit: _edit(5),
       rows: rows,
-      customContent: _isVariant ? _variantAssignment() : null,
+      customContent: _isVariant ? _variantAssignment(outletsMap) : null,
     );
   }
 
@@ -178,6 +157,7 @@ class Step7ReviewCreate extends StatelessWidget {
   Widget _unitsPackCard() {
     final isMultiple = state.unitModel == 'MULTIPLE_UNITS';
     final rows = <_Row>[
+      _Row('Product Type', _formatProductType(state.productStructure)),
       _Row(
         'Unit Model',
         isMultiple ? 'Multiple Units & Pack Conversion' : 'Single Unit Only',
@@ -227,8 +207,8 @@ class Step7ReviewCreate extends StatelessWidget {
     );
 
     return _ReviewSectionCard(
-      title: 'Units & Pack Conversion',
-      icon: Icons.balance,
+      title: 'Product Type & Configuration',
+      icon: Icons.inventory_2_outlined,
       iconColor: TenantAdminColors.info,
       onEdit: _edit(3),
       rows: rows,
@@ -236,34 +216,14 @@ class Step7ReviewCreate extends StatelessWidget {
   }
 
   // ---------------------------------------------------------------------------
-  // Step 4 — Product Configuration (VARIANT / BUNDLE)
+  // Step 4 — Product Configuration (VARIANT)
   // ---------------------------------------------------------------------------
 
   Widget _productConfigurationCard() {
-    if (_isBundle) {
-      return _ReviewSectionCard(
-        title: 'Product Configuration',
-        icon: Icons.grid_view,
-        iconColor: const Color(0xFF7C3AED),
-        onEdit: _edit(4),
-        rows: [
-          const _Row('Configuration Type', 'Bundle / Kit'),
-          _Row('Components', '${state.componentCount}'),
-          _Row(
-            'Components Configured',
-            state.componentsConfigured ? 'Yes' : 'No',
-            badge: state.componentsConfigured
-                ? _BadgeTone.positive
-                : _BadgeTone.neutral,
-          ),
-        ],
-      );
-    }
-
-    final validAttrs =
         state.step4State.attributeRows.where((a) => a.isValid).toList();
     final included = _includedVariants();
     final generated = state.step4State.generatedVariants;
+    final validAttrs = state.step4State.attributeRows.where((a) => a.isValid).toList();
     final naming = validAttrs
         .map((a) => a.templateName ?? 'Attribute')
         .where((n) => n.trim().isNotEmpty)
@@ -273,6 +233,7 @@ class Step7ReviewCreate extends StatelessWidget {
         : (included.first.displayLabel ?? included.first.combinationLabel);
 
     final rows = <_Row>[
+      _Row('Product Type', _formatProductType(state.productStructure)),
       _Row('Attributes', '${validAttrs.length}'),
       _Row('Variants Created', '${included.length}'),
       _Row('Total Generated', '${generated.length}'),
@@ -295,10 +256,10 @@ class Step7ReviewCreate extends StatelessWidget {
     rows.add(_Row('Example Variant', example));
 
     return _ReviewSectionCard(
-      title: 'Product Configuration',
-      icon: Icons.grid_view,
+      title: 'Product Type & Configuration',
+      icon: Icons.dashboard_customize_outlined,
       iconColor: const Color(0xFF7C3AED),
-      onEdit: _edit(4),
+      onEdit: _edit(3),
       rows: rows,
       customContent: included.isEmpty ? null : _variantNameList(included),
     );
@@ -317,7 +278,7 @@ class Step7ReviewCreate extends StatelessWidget {
       title: 'Barcode & SKU',
       icon: Icons.barcode_reader,
       iconColor: TenantAdminColors.info,
-      onEdit: _edit(5),
+      onEdit: _edit(1),
       rows: [
         _Row('SKU', _dash(state.step5State.baseSku)),
         _Row(
@@ -347,7 +308,7 @@ class Step7ReviewCreate extends StatelessWidget {
       title: 'Barcode & SKU',
       icon: Icons.barcode_reader,
       iconColor: TenantAdminColors.info,
-      onEdit: _edit(5),
+      onEdit: _edit(1),
       rows: [
         _Row('Variants with SKU', '$withSku of $total'),
         _Row('Variants with Barcode', '$withBarcode of $total'),
@@ -397,7 +358,7 @@ class Step7ReviewCreate extends StatelessWidget {
         title: 'Pricing & Tax',
         icon: Icons.attach_money,
         iconColor: TenantAdminColors.info,
-        onEdit: _edit(6),
+        onEdit: _edit(4),
         rows: _variantPricingTaxRows(),
         customContent: _variantPricingSummary(),
       );
@@ -436,7 +397,7 @@ class Step7ReviewCreate extends StatelessWidget {
       title: 'Pricing & Tax',
       icon: Icons.attach_money,
       iconColor: TenantAdminColors.info,
-      onEdit: _edit(6),
+      onEdit: _edit(4),
       rows: rows,
     );
   }
@@ -651,7 +612,7 @@ class Step7ReviewCreate extends StatelessWidget {
     );
   }
 
-  List<_Row> _compatibleTrackingRows() {
+  List<_Row> _compatibleTrackingRows(Map<String, String> outletsMap) {
     final plan = InitialTrackingCompatibility.evaluate(
       productStructure: state.productStructure,
       trackInventory: state.trackInventory,
@@ -663,6 +624,37 @@ class Step7ReviewCreate extends StatelessWidget {
       serial: state.initialSerialNumber,
     );
     final rows = <_Row>[];
+    
+    if (state.trackingMethod == 'QUANTITY') {
+      if (state.productStructure == 'SIMPLE') {
+        final draft = state.openingStockDrafts['SIMPLE'];
+        if (draft != null) {
+          rows.add(_Row('Opening Stock', '${draft.openingQuantity}'));
+          if (draft.openingQuantity > 0) {
+            if (draft.allocations.isNotEmpty) {
+              String allocStr = draft.allocations.map((a) {
+                final name = outletsMap[a.outletId] ?? 'Unknown Outlet';
+                return '$name: ${a.quantity}';
+              }).join('\n');
+              rows.add(_Row('Outlet Allocation', allocStr));
+            }
+          } else {
+            rows.add(const _Row('Outlet Allocation', 'Not required'));
+          }
+        }
+      } else if (state.productStructure == 'VARIANT') {
+        num totalOpeningStock = 0;
+        final variants = state.step4State.generatedVariants.where((v) => v.isIncluded).toList();
+        for (final v in variants) {
+          final draft = state.openingStockDrafts[v.clientCombinationKey];
+          if (draft != null) {
+            totalOpeningStock += draft.openingQuantity;
+          }
+        }
+        rows.add(_Row('Total Opening Stock', '$totalOpeningStock'));
+      }
+    }
+    
     if (plan.batchNumber != null && plan.batchNumber!.isNotEmpty) {
       rows.add(_Row('Initial Batch Number', plan.batchNumber!));
     }
@@ -679,54 +671,46 @@ class Step7ReviewCreate extends StatelessWidget {
     return rows;
   }
 
-  Widget? _variantAssignment() {
+  Widget? _variantAssignment(Map<String, String> outletsMap) {
+    if (!state.trackInventory) return null;
+
     final included = _includedVariants();
     if (included.isEmpty) return null;
-    final keys = included
-        .map((v) => v.productVariantId ?? v.clientCombinationKey)
-        .toSet();
-    final assignedId = state.initialTrackingAssignedVariantId;
-    final assignedInList = assignedId != null &&
-        assignedId.isNotEmpty &&
-        keys.contains(assignedId);
-    String? assignedLabel;
-    if (assignedInList) {
-      for (final v in included) {
-        final key = v.productVariantId ?? v.clientCombinationKey;
-        if (key == assignedId) {
-          assignedLabel = v.displayLabel ?? v.combinationLabel;
-          break;
-        }
-      }
-    }
-
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildInlineRow(
-          'Assigned Tracking Variant',
-          assignedLabel ?? 'Not assigned',
-        ),
-        if (controller != null) ...[
-          const SizedBox(height: TenantAdminSpacing.sm),
-          DropdownButtonFormField<String>(
-            value: assignedInList ? assignedId : null,
-            decoration: const InputDecoration(
-              isDense: true,
-              labelText: 'Assign tracking to variant',
+        const SizedBox(height: TenantAdminSpacing.md),
+        ...included.map((v) {
+          final draft = state.openingStockDrafts[v.clientCombinationKey];
+          final label = v.displayLabel ?? v.combinationLabel;
+          final openingQuantity = draft?.openingQuantity ?? 0;
+          
+          return Padding(
+            padding: const EdgeInsets.only(bottom: TenantAdminSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 4),
+                if (openingQuantity <= 0) ...[
+                  const Text('Opening Stock: 0', style: TextStyle(fontSize: 13)),
+                  const Text('Outlet Allocation: Not required', style: TextStyle(fontSize: 13, color: TenantAdminColors.mutedText)),
+                ] else ...[
+                  Text('Opening Stock: $openingQuantity', style: const TextStyle(fontSize: 13)),
+                  if (draft != null && draft.allocations.isNotEmpty)
+                    ...draft.allocations.map((a) {
+                      final name = outletsMap[a.outletId] ?? 'Unknown Outlet';
+                      return Padding(
+                        padding: const EdgeInsets.only(left: 8.0, top: 2.0),
+                        child: Text('  $name: ${a.quantity}', style: const TextStyle(fontSize: 13)),
+                      );
+                    })
+                ]
+              ],
             ),
-            items: included
-                .map(
-                  (v) => DropdownMenuItem(
-                    value: v.productVariantId ?? v.clientCombinationKey,
-                    child: Text(v.displayLabel ?? v.combinationLabel),
-                  ),
-                )
-                .toList(),
-            onChanged: (value) =>
-                controller!.setInitialTrackingAssignedVariantId(value),
-          ),
-        ],
+          );
+        }),
       ],
     );
   }
