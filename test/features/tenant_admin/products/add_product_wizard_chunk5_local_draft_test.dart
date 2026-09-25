@@ -29,8 +29,8 @@ class _TrackingRepo implements TenantProductRepository {
   }
 
   @override
-  Future<SkuCandidateResponseDto> generateSkuCandidate({String? productNameHint, String purpose = 'NO_BARCODE_PRODUCT'}) async {
-    throw UnimplementedError();
+  Future<SkuCandidateResponseDto> generateSkuCandidate(GenerateSkuCandidateRequestDto request) async {
+    return SkuCandidateResponseDto(candidate: 'AUTO-000001', reserved: false);
   }
 
   int saveDraftCallCount = 0;
@@ -167,25 +167,23 @@ void main() {
     controller = AddProductWizardController(repo, draftLocal: draftLocal);
   });
 
-  Future<void> fillSimpleThroughStep5() async {
+  Future<void> fillSimpleThroughStep3() async {
     await controller.initWizard();
     controller.skipScanStepForTesting();
     controller.updateProductName('Local Simple Draft');
-      controller.updateInternalCode('ITM-001');
+    controller.updateInternalCode('ITM-001');
     controller.updateCategory('cat-1');
     await controller.saveAndContinue();
     controller.setProductStructure('SIMPLE');
-    await controller.saveAndContinue();
     controller.selectUnitModel('SINGLE_UNIT');
     controller.setProductUnit('unit-1');
-    await controller.saveAndContinue();
     controller.updateSimpleBaseSku('LOCAL-SIMPLE-001');
   }
 
   group('Chunk 5 local Save Draft', () {
     test('1/2/3. first Save Draft creates localDraftId via local persistence',
         () async {
-      await fillSimpleThroughStep5();
+      await fillSimpleThroughStep3();
       expect(await controller.saveDraft(), isTrue);
       final id = controller.wizardState.localDraftId;
       expect(id, isNotNull);
@@ -199,7 +197,7 @@ void main() {
 
     test('4/5/6. Product List merge shows DRAFT without fake productId',
         () async {
-      await fillSimpleThroughStep5();
+      await fillSimpleThroughStep3();
       await controller.saveDraft();
       final drafts = await draftLocal.getAllDrafts();
       final backend = TenantProductListResult(
@@ -233,7 +231,7 @@ void main() {
     });
 
     test('7/8/9/10. reopen SIMPLE Draft restores step and state', () async {
-      await fillSimpleThroughStep5();
+      await fillSimpleThroughStep3();
       await controller.saveDraft();
       final id = controller.wizardState.localDraftId!;
 
@@ -241,7 +239,7 @@ void main() {
       await resumed.initWizard(resumeLocalDraftId: id);
 
       expect(resumed.wizardState.localDraftId, id);
-      expect(resumed.wizardState.currentStep, 5);
+      expect(resumed.wizardState.currentStep, 3);
       expect(resumed.wizardState.productName, 'Local Simple Draft');
       expect(resumed.wizardState.productStructure, 'SIMPLE');
       expect(resumed.wizardState.productUnitId, 'unit-1');
@@ -252,7 +250,7 @@ void main() {
     });
 
     test('11. Step 6 pricing/tax restores', () async {
-      await fillSimpleThroughStep5();
+      await fillSimpleThroughStep3();
       await controller.saveAndContinue(); // → 6
       controller.updateCostPrice(100);
       controller.updateStandardSellingPrice(150);
@@ -263,7 +261,7 @@ void main() {
 
       final resumed = AddProductWizardController(repo, draftLocal: draftLocal);
       await resumed.initWizard(resumeLocalDraftId: id);
-      expect(resumed.wizardState.currentStep, 6);
+      expect(resumed.wizardState.currentStep, 4);
       expect(resumed.wizardState.costPrice, 100);
       expect(resumed.wizardState.standardSellingPrice, 150);
       expect(resumed.wizardState.discountPrice, 140);
@@ -275,7 +273,7 @@ void main() {
 
     test('12/13. second Save Draft updates same localDraftId (no duplicate)',
         () async {
-      await fillSimpleThroughStep5();
+      await fillSimpleThroughStep3();
       await controller.saveDraft();
       final id = controller.wizardState.localDraftId!;
       controller.updateSimpleBaseSku('LOCAL-SIMPLE-002');
@@ -297,9 +295,6 @@ void main() {
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
       controller.setProductStructure('VARIANT');
-      await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 5);
-
       controller.addAttributeRow();
       controller.updateAttributeName(0, 'Color');
       controller.selectValues(0, ['Red', 'Blue']);
@@ -313,6 +308,7 @@ void main() {
           .map((v) => v.clientCombinationKey)
           .toList();
       await controller.saveAndContinue();
+      expect(controller.wizardState.currentStep, 4);
       var i = 0;
       for (final a in List.of(controller.wizardState.step5State.assignments)) {
         i++;
@@ -329,9 +325,7 @@ void main() {
 
       final resumed = AddProductWizardController(repo, draftLocal: draftLocal);
       await resumed.initWizard(resumeLocalDraftId: id);
-      expect(resumed.wizardState.currentStep, 5);
-      expect(resumed.isStepApplicable(4), isFalse);
-      expect(resumed.wizardState.currentStep, isNot(4));
+      expect(resumed.wizardState.currentStep, 4);
       expect(resumed.wizardState.step4State.generatedVariants.length, 4);
       final keysAfter = resumed.wizardState.step4State.generatedVariants
           .map((v) => v.clientCombinationKey)
@@ -346,7 +340,7 @@ void main() {
     });
 
     test('19. Cancel does not delete stored Draft', () async {
-      await fillSimpleThroughStep5();
+      await fillSimpleThroughStep3();
       await controller.saveDraft();
       final id = controller.wizardState.localDraftId!;
       expect(await localStore.getDraft(id), isNotNull);
@@ -356,7 +350,7 @@ void main() {
 
     test('20. local Draft never invokes backend Product detail/delete/update',
         () async {
-      await fillSimpleThroughStep5();
+      await fillSimpleThroughStep3();
       await controller.saveDraft();
       final id = controller.wizardState.localDraftId!;
       final resumed = AddProductWizardController(repo, draftLocal: draftLocal);
@@ -370,7 +364,7 @@ void main() {
     });
 
     test('21. backend real Product row remains distinguishable', () async {
-      await fillSimpleThroughStep5();
+      await fillSimpleThroughStep3();
       await controller.saveDraft();
       final draft = (await draftLocal.getAllDrafts()).first;
       final draftRow = ProductListLocalDraftMerger.toListRow(draft);
@@ -389,41 +383,42 @@ void main() {
 
     test('22. SIMPLE navigation regression', () async {
       await controller.initWizard();
-    controller.skipScanStepForTesting();
+      controller.skipScanStepForTesting();
       controller.updateProductName('Simple Still');
       controller.updateInternalCode('ITM-001');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
       controller.setProductStructure('SIMPLE');
-      await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 5);
       controller.selectUnitModel('SINGLE_UNIT');
       controller.setProductUnit('unit-1');
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 5);
+      expect(controller.wizardState.currentStep, 4);
     });
 
     test('23. VARIANT navigation regression', () async {
       await controller.initWizard();
-    controller.skipScanStepForTesting();
+      controller.skipScanStepForTesting();
       controller.updateProductName('Variant Still');
       controller.updateInternalCode('ITM-001');
       controller.updateCategory('cat-1');
       await controller.saveAndContinue();
       controller.setProductStructure('VARIANT');
+      controller.addAttributeRow();
+      controller.updateAttributeName(0, 'Size');
+      controller.selectValues(0, ['Small']);
+      await controller.generateVariants();
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 5);
-      expect(controller.isStepApplicable(4), isFalse);
+      expect(controller.wizardState.currentStep, 4);
     });
 
     test('24. Save & Continue remains zero Product persistence', () async {
-      await fillSimpleThroughStep5();
+      await fillSimpleThroughStep3();
       await controller.saveAndContinue();
       controller.updateCostPrice(10);
       controller.updateStandardSellingPrice(20);
       controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 7);
+      expect(controller.wizardState.currentStep, 5);
       expect(repo.saveDraftCallCount, 0);
       expect(repo.createProductCallCount, 0);
     });
@@ -442,7 +437,7 @@ void main() {
     });
 
     test('stale tax identity is preserved on restore', () async {
-      await fillSimpleThroughStep5();
+      await fillSimpleThroughStep3();
       await controller.saveAndContinue();
       controller.updateTaxId('deleted-tax', taxRate: 9, taxName: 'Gone Tax');
       await controller.saveDraft();

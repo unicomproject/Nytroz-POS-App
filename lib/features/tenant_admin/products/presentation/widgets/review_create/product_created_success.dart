@@ -37,8 +37,6 @@ class ProductCreateSuccessSnapshot {
     switch (productStructure.toUpperCase()) {
       case 'VARIANT':
         return 'Variant Product';
-      case 'BUNDLE':
-        return 'Bundle / Kit';
       case 'SIMPLE':
       default:
         return 'Simple Product';

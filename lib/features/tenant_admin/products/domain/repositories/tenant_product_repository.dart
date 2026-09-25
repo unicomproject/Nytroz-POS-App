@@ -41,10 +41,9 @@ abstract class TenantProductRepository {
     required String barcode,
     String? identifierStandard,
   });
-  Future<SkuCandidateResponseDto> generateSkuCandidate({
-    String purpose = 'NO_BARCODE_PRODUCT',
-    String? productNameHint,
-  });
+  Future<SkuCandidateResponseDto> generateSkuCandidate(
+    GenerateSkuCandidateRequestDto request,
+  );
 
   /// Creates a NEW DRAFT from an existing product (clears SKU/barcode; no stock).
   Future<ProductCreateResponseDto> duplicateProduct(String productId);

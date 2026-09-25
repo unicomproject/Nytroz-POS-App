@@ -5,7 +5,7 @@ import '../../../presentation/theme/tenant_admin_theme.dart';
 class ProductOptionDropdown extends StatelessWidget {
   const ProductOptionDropdown({
     super.key,
-    required this.label,
+    this.label,
     required this.hint,
     required this.icon,
     required this.value,
@@ -15,7 +15,7 @@ class ProductOptionDropdown extends StatelessWidget {
     this.errorText,
   });
 
-  final String label;
+  final String? label;
   final String hint;
   final IconData icon;
   final String? value;
@@ -33,18 +33,20 @@ class ProductOptionDropdown extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: TenantAdminColors.bodyText,
-            fontSize: 12.5,
-            fontWeight: FontWeight.w700,
-            height: 1.2,
+        if (label != null) ...[
+          Text(
+            label!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: TenantAdminColors.bodyText,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              height: 1.2,
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
+          const SizedBox(height: 6),
+        ],
         DropdownButtonFormField<String>(
           initialValue: effectiveValue,
           items: items,

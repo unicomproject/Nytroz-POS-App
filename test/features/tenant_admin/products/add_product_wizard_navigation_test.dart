@@ -26,7 +26,7 @@ class _TrackingRepo implements TenantProductRepository {
   }
 
   @override
-  Future<SkuCandidateResponseDto> generateSkuCandidate({String? productNameHint, String purpose = 'NO_BARCODE_PRODUCT'}) async {
+  Future<SkuCandidateResponseDto> generateSkuCandidate(GenerateSkuCandidateRequestDto request) async {
     throw UnimplementedError();
   }
 

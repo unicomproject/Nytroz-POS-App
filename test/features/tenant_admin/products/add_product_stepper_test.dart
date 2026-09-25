@@ -3,18 +3,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/widgets/add_product_stepper.dart';
 
 void main() {
-  test('scanner-first stepper has exact 7 labels without Barcode & SKU', () {
+  test('scanner-first stepper has exact 6 labels without Barcode & SKU', () {
     expect(AddProductStepper.steps, [
       'Scan Barcode',
       'Basic Details',
-      'Product Type & Tracking',
-      'Unit & Pack Conversion',
-      'Product Configuration',
+      'Product Type & Configuration',
       'Pricing & Tax',
+      'Product Tracking',
       'Review & Create',
     ]);
     expect(AddProductStepper.steps.contains('Barcode & SKU'), isFalse);
-    expect(AddProductStepper.steps.length, 7);
+    expect(AddProductStepper.steps.length, 6);
   });
 
   Future<void> pumpStepper(
@@ -47,7 +46,7 @@ void main() {
     expect(find.text('Scan Barcode'), findsWidgets);
   });
 
-  testWidgets('desktop shows all 7 scanner-first step labels', (tester) async {
+  testWidgets('desktop shows all 6 scanner-first step labels', (tester) async {
     await pumpStepper(tester, size: const Size(1280, 800));
 
     for (final label in AddProductStepper.steps) {

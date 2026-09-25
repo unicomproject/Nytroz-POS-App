@@ -249,7 +249,8 @@ class BarcodeSkuAssignmentDto {
   String get effectiveStatus {
     if (status == 'DUPLICATE' || status == 'INVALID') return status!;
     final hasSku = sku != null && sku!.trim().isNotEmpty;
-    if (hasSku) return 'COMPLETE';
+    final hasBarcode = barcode != null && barcode!.trim().isNotEmpty;
+    if (hasSku && hasBarcode) return 'COMPLETE';
     return 'INCOMPLETE';
   }
 }

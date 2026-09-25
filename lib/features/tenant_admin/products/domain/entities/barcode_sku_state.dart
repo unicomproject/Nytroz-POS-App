@@ -9,13 +9,13 @@ enum Step5StatusFilter {
 }
 
 class Step5BarcodeSkuState {
-  /// SIMPLE / BUNDLE: user-entered Base SKU (no productVariantId required).
+  /// SIMPLE: user-entered Base SKU (no productVariantId required).
   final String baseSku;
 
-  /// SIMPLE / BUNDLE: Parent Product Barcode (optional unless validated as required).
+  /// SIMPLE: Parent Product Barcode (optional unless validated as required).
   final String parentProductBarcode;
 
-  /// SIMPLE / BUNDLE: selected barcode type for parent barcode.
+  /// SIMPLE: selected barcode type for parent barcode.
   final String? parentBarcodeType;
 
   /// VARIANT (and shared list projection): per-target assignments.

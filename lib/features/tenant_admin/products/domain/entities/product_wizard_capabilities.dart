@@ -9,7 +9,6 @@ class ProductWizardCapabilities {
     required this.canManageProductMedia,
     required this.canManageProductChannels,
     required this.canManageVariants,
-    required this.canManageBundleComponents,
     required this.canManageBarcodes,
     required this.canManagePricing,
     required this.canViewProductCost,
@@ -25,7 +24,6 @@ class ProductWizardCapabilities {
   final bool canManageProductMedia;
   final bool canManageProductChannels;
   final bool canManageVariants;
-  final bool canManageBundleComponents;
   final bool canManageBarcodes;
   final bool canManagePricing;
   final bool canViewProductCost;
@@ -50,7 +48,6 @@ class ProductWizardCapabilities {
       canManageProductMedia: access.canManageProductMedia(),
       canManageProductChannels: access.canManageProductChannels(),
       canManageVariants: access.canManageVariants(),
-      canManageBundleComponents: access.canManageBundleComponents(),
       canManageBarcodes: access.canManageBarcodes(),
       canManagePricing: access.canManagePricing(),
       canViewProductCost: access.canViewProductCost(),
@@ -87,8 +84,17 @@ class InitialTrackingCompatibility {
     final structure = productStructure.trim().toUpperCase();
     final keepBatch = _trimOrNull(batch);
     final keepSerial = _trimOrNull(serial);
-    final isBundle = structure == 'BUNDLE';
-    final quantityOnly = !trackInventory || isBundle;
+    final skipTracking = !trackInventory && !batchTracking && !expiryTracking && !serialTracking;
+    final quantityOnly = trackInventory && !batchTracking && !expiryTracking && !serialTracking;
+
+    // If completely skipping tracking, clear all initial values
+    if (skipTracking) {
+      if (!hasAnyValues(batch: keepBatch, expiry: expiry, serial: keepSerial)) {
+        return InitialTrackingClearPlan.unchanged(
+            keepBatch, expiry, keepSerial);
+      }
+      return InitialTrackingClearPlan.requiresConfirmation(null, null, null);
+    }
 
     if (quantityOnly) {
       if (!hasAnyValues(batch: keepBatch, expiry: expiry, serial: keepSerial)) {

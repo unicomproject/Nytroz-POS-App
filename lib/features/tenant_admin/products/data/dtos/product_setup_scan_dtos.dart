@@ -203,6 +203,34 @@ class ExternalLookupProductBarcodeResponseDto {
   }
 }
 
+class GenerateSkuCandidateRequestDto {
+  const GenerateSkuCandidateRequestDto({
+    required this.purpose,
+    required this.categoryId,
+    required this.mode,
+    this.productId,
+    this.expectedRowVersion,
+    this.productName,
+  });
+
+  final String purpose;
+  final String categoryId;
+  final String mode;
+  final String? productId;
+  final int? expectedRowVersion;
+  final String? productName;
+
+  Map<String, dynamic> toJson() => {
+        'purpose': purpose,
+        'categoryId': categoryId,
+        'mode': mode,
+        if (productId != null) 'productId': productId,
+        if (expectedRowVersion != null)
+          'expectedRowVersion': expectedRowVersion,
+        if (productName != null) 'productName': productName,
+      };
+}
+
 class SkuCandidateResponseDto {
   const SkuCandidateResponseDto({
     required this.candidate,

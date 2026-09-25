@@ -131,6 +131,7 @@ class Step1BasicDetails extends StatelessWidget {
 
         final scrollable = SingleChildScrollView(
           primary: false,
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.only(bottom: TenantAdminSpacing.md),
           child: body,
         );

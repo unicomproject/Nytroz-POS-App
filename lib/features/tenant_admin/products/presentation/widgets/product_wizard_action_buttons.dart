@@ -149,13 +149,14 @@ class ProductWizardSkipButton extends StatelessWidget {
   }
 }
 
-/// Save & Continue — filled accent primary action (Publish on final step).
-class ProductWizardSaveAndContinueButton extends StatelessWidget {
-  const ProductWizardSaveAndContinueButton({
+/// Continue — filled accent primary action (Publish on final step, advance otherwise).
+/// Local-only navigation; does not POST/PUT Product Draft.
+class ProductWizardContinueButton extends StatelessWidget {
+  const ProductWizardContinueButton({
     super.key,
     required this.onPressed,
     this.loading = false,
-    this.label = 'Save & Continue',
+    this.label = 'Continue',
   });
 
   final VoidCallback? onPressed;
@@ -172,7 +173,7 @@ class ProductWizardSaveAndContinueButton extends StatelessWidget {
           ? _loadingIndicator(color: Colors.white)
           : const Icon(Icons.arrow_forward, size: 18),
       label: Text(
-        loading ? 'Saving...' : label,
+        loading ? 'Processing...' : label,
         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
       ),
     );

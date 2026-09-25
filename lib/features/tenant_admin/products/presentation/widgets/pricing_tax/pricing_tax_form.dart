@@ -124,8 +124,7 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
       state.createOptions?.taxes ?? const [],
       state,
     );
-    final isSimpleLike = state.productStructure == 'SIMPLE' ||
-        state.productStructure == 'BUNDLE';
+    final isSimpleLike = state.productStructure == 'SIMPLE';
 
     ref.listen(addProductWizardControllerProvider, (previous, next) {
       if (previous?.costPrice != next.costPrice ||
@@ -322,7 +321,7 @@ class _Step6PricingTaxFormState extends ConsumerState<Step6PricingTaxForm> {
         ),
         const SizedBox(height: TenantAdminSpacing.md),
         ProductOptionDropdown(
-          label: 'Tax Class *',
+          label: 'Tax Class',
           hint: 'Select tax class',
           icon: Icons.description_outlined,
           value: state.taxId,
@@ -634,8 +633,8 @@ class _TaxPreviewCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             canShowPreview
-                ? 'This is the amount customers will pay.'
-                : 'Enter selling price, select a tax class, then leave the price field to calculate the balance.',
+                ? 'Calculate final margins by setting the selling price and an optional tax class.'
+                : 'Enter selling price, select a tax class (optional), then leave the price field to calculate the balance.',
             style: const TextStyle(
               fontSize: 11,
               color: TenantAdminColors.mutedText,

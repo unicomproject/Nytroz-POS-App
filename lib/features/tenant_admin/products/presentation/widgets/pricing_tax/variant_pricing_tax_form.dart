@@ -27,7 +27,9 @@ class _Step6VariantPricingTaxFormState
     extends ConsumerState<Step6VariantPricingTaxForm> {
   final TextEditingController _bulkPriceController = TextEditingController();
   final Map<String, TextEditingController> _rowControllers = {};
+  final Map<String, TextEditingController> _costControllers = {};
   final Map<String, FocusNode> _rowFocusNodes = {};
+  final Map<String, FocusNode> _costFocusNodes = {};
   bool _syncing = false;
 
   @override
@@ -47,7 +49,13 @@ class _Step6VariantPricingTaxFormState
     for (final c in _rowControllers.values) {
       c.dispose();
     }
+    for (final c in _costControllers.values) {
+      c.dispose();
+    }
     for (final f in _rowFocusNodes.values) {
+      f.dispose();
+    }
+    for (final f in _costFocusNodes.values) {
       f.dispose();
     }
     super.dispose();
@@ -61,9 +69,12 @@ class _Step6VariantPricingTaxFormState
     for (final row in rows) {
       liveKeys.add(row.identityKey);
       final text = row.sellingPrice?.toString() ?? '';
+      final costText = row.costPrice?.toString() ?? '';
       final identityKey = row.identityKey;
       final clientKey = row.clientCombinationKey;
       final variantId = row.productVariantId;
+      
+      // Sync Selling Price
       final controller = _rowControllers.putIfAbsent(
         identityKey,
         () {
@@ -97,13 +108,50 @@ class _Step6VariantPricingTaxFormState
       if (!_rowFocusNodes[identityKey]!.hasFocus && controller.text != text) {
         controller.text = text;
       }
+      
+      // Sync Cost Price
+      final costController = _costControllers.putIfAbsent(
+        identityKey,
+        () {
+          final c = TextEditingController(text: costText);
+          c.addListener(() {
+            if (_syncing) return;
+            final liveRows = buildVariantPricingRows(
+              state: ref.read(addProductWizardControllerProvider),
+            );
+            VariantPricingRowView? current;
+            for (final r in liveRows) {
+              if (r.identityKey == identityKey) {
+                current = r;
+                break;
+              }
+            }
+            final val = num.tryParse(c.text);
+            ref
+                .read(addProductWizardControllerProvider.notifier)
+                .updateVariantCostPrice(
+                  clientCombinationKey:
+                      current?.clientCombinationKey ?? clientKey,
+                  productVariantId: current?.productVariantId ?? variantId,
+                  costPrice: c.text.trim().isEmpty ? null : val,
+                );
+          });
+          return c;
+        },
+      );
+      _costFocusNodes.putIfAbsent(identityKey, FocusNode.new);
+      if (!_costFocusNodes[identityKey]!.hasFocus && costController.text != costText) {
+        costController.text = costText;
+      }
     }
     final stale = _rowControllers.keys
         .where((k) => !liveKeys.contains(k))
         .toList(growable: false);
     for (final k in stale) {
       _rowControllers.remove(k)?.dispose();
+      _costControllers.remove(k)?.dispose();
       _rowFocusNodes.remove(k)?.dispose();
+      _costFocusNodes.remove(k)?.dispose();
     }
     _syncing = false;
   }
@@ -172,19 +220,14 @@ class _Step6VariantPricingTaxFormState
     if (rows.any((r) => !_rowControllers.containsKey(r.identityKey))) {
       _syncRowControllers();
     }
-    final status = deriveVariantPricingStatus(rows);
     final selectedTax = _selectedTax(state, widget.taxOptions);
     final effectiveRateLabel = _effectiveRateLabel(selectedTax, state);
 
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(TenantAdminSpacing.md),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final width = constraints.maxWidth.isFinite
-              ? constraints.maxWidth
-              : MediaQuery.sizeOf(context).width;
-          final wide = width >= TenantAdminBreakpoints.smallTablet;
-
           final mainColumn = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -205,22 +248,9 @@ class _Step6VariantPricingTaxFormState
                 ),
               ),
               const SizedBox(height: TenantAdminSpacing.md),
-              if (wide)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _productSummaryCard(state, status.total)),
-                    const SizedBox(width: TenantAdminSpacing.md),
-                    Expanded(child: _pricingStatusCard(status, currency)),
-                  ],
-                )
-              else ...[
-                _productSummaryCard(state, status.total),
-                const SizedBox(height: TenantAdminSpacing.md),
-                _pricingStatusCard(status, currency),
-              ],
-              const SizedBox(height: TenantAdminSpacing.md),
               _bulkPriceCard(currency),
+              const SizedBox(height: TenantAdminSpacing.md),
+              _taxSettingsHorizontalCard(state, effectiveRateLabel),
               const SizedBox(height: TenantAdminSpacing.md),
               _variantTable(state, rows, currency),
               if (state.fieldErrors['variantPrices'] != null) ...[
@@ -237,33 +267,7 @@ class _Step6VariantPricingTaxFormState
             ],
           );
 
-          final sideColumn = Column(
-            children: [
-              _taxSettingsCard(state, widget.taxOptions, effectiveRateLabel),
-              const SizedBox(height: TenantAdminSpacing.md),
-              _importantNoteCard(),
-            ],
-          );
-
-          if (!wide) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                mainColumn,
-                const SizedBox(height: TenantAdminSpacing.md),
-                sideColumn,
-              ],
-            );
-          }
-
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(flex: 4, child: mainColumn),
-              const SizedBox(width: TenantAdminSpacing.md),
-              Expanded(flex: 1, child: sideColumn),
-            ],
-          );
+          return mainColumn;
         },
       ),
     );
@@ -304,134 +308,7 @@ class _Step6VariantPricingTaxFormState
     );
   }
 
-  Widget _productSummaryCard(AddProductWizardState state, int total) {
-    final thumb = state.productImages.isNotEmpty
-        ? state.productImages.first.imageUrl
-        : null;
-    return _card(
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              width: 48,
-              height: 48,
-              color: TenantAdminColors.secondary,
-              child: thumb != null && thumb.isNotEmpty
-                  ? Image.network(thumb, fit: BoxFit.cover)
-                  : const Icon(Icons.inventory_2_outlined,
-                      color: TenantAdminColors.mutedText),
-            ),
-          ),
-          const SizedBox(width: TenantAdminSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  state.productName.trim().isEmpty
-                      ? 'Untitled Product'
-                      : state.productName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    color: TenantAdminColors.bodyText,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Wrap(
-                  spacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            TenantAdminColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Text(
-                        'Variant Product',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: TenantAdminColors.primary,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '$total Variants',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: TenantAdminColors.mutedText,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _pricingStatusCard(
-    VariantPricingDerivedStatus status,
-    String currency,
-  ) {
-    return _card(
-      child: Row(
-        children: [
-          Expanded(
-            child: _stat(
-              'Priced Variants',
-              '${status.priced} / ${status.total}',
-            ),
-          ),
-          Expanded(
-            child: _stat(
-              'Pending Variants',
-              '${status.pending} / ${status.total}',
-            ),
-          ),
-          Expanded(
-            child: _stat(
-              'Price Range',
-              status.priceRangeLabel(currency),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _stat(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: TenantAdminColors.mutedText,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: TenantAdminColors.bodyText,
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _bulkPriceCard(String currency) {
     return _card(
@@ -452,6 +329,7 @@ class _Step6VariantPricingTaxFormState
             style: TextStyle(fontSize: 12, color: TenantAdminColors.mutedText),
           ),
           const SizedBox(height: TenantAdminSpacing.sm),
+          const SizedBox(height: TenantAdminSpacing.sm),
           Row(
             children: [
               Expanded(
@@ -464,7 +342,7 @@ class _Step6VariantPricingTaxFormState
                   ],
                   decoration: InputDecoration(
                     prefixText: currency.isEmpty ? null : '$currency ',
-                    hintText: '0.00',
+                    hintText: 'Selling Price',
                     border: const OutlineInputBorder(),
                     isDense: true,
                   ),
@@ -474,7 +352,7 @@ class _Step6VariantPricingTaxFormState
               FilledButton.icon(
                 onPressed: _onApplyToAll,
                 icon: const Icon(Icons.copy_all_outlined, size: 18),
-                label: const Text('Apply to All'),
+                label: const Text('Apply Price'),
               ),
             ],
           ),
@@ -519,10 +397,17 @@ class _Step6VariantPricingTaxFormState
                 child: DataTable(
                   headingRowHeight: 40,
                   dataRowMinHeight: 52,
-                  dataRowMaxHeight: 64,
+                  dataRowMaxHeight: 80,
+                  columnSpacing: 24,
                   columns: [
                     const DataColumn(label: Text('Variant')),
-                    const DataColumn(label: Text('SKU')),
+                    DataColumn(
+                      label: Text(
+                        currency.isEmpty
+                            ? 'Cost Price'
+                            : 'Cost Price ($currency)',
+                      ),
+                    ),
                     DataColumn(
                       label: Text(
                         currency.isEmpty
@@ -530,8 +415,8 @@ class _Step6VariantPricingTaxFormState
                             : 'Selling Price ($currency)',
                       ),
                     ),
+                    const DataColumn(label: Text('Tax Class')),
                     const DataColumn(label: Text('Status')),
-                    const DataColumn(label: Text('')),
                   ],
                   rows: rows.map((row) {
                     final controller = _rowControllers[row.identityKey]!;
@@ -542,7 +427,7 @@ class _Step6VariantPricingTaxFormState
                       cells: [
                         DataCell(
                           SizedBox(
-                            width: 260,
+                            width: 180,
                             child: Text(
                               row.displayLabel,
                               maxLines: 2,
@@ -550,9 +435,54 @@ class _Step6VariantPricingTaxFormState
                             ),
                           ),
                         ),
-                        DataCell(Text(row.sku?.trim().isNotEmpty == true
-                            ? row.sku!
-                            : '—')),
+                        DataCell(
+                          SizedBox(
+                            width: 140,
+                            child: TextField(
+                              controller: _costControllers[row.identityKey],
+                              focusNode: _costFocusNodes[row.identityKey],
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[0-9.]'),
+                                ),
+                              ],
+                              decoration: InputDecoration(
+                                isDense: true,
+                                hintText: 'Enter cost',
+                                hintStyle: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontSize: 12,
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 10,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: const BorderSide(
+                                    color: TenantAdminColors.posHomeAccentOrange,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                         DataCell(
                           SizedBox(
                             width: 140,
@@ -571,20 +501,72 @@ class _Step6VariantPricingTaxFormState
                               decoration: InputDecoration(
                                 isDense: true,
                                 hintText: 'Enter price',
+                                hintStyle: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontSize: 12,
+                                ),
                                 errorText: error,
-                                border: const OutlineInputBorder(),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 10,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: const BorderSide(
+                                    color: TenantAdminColors.posHomeAccentOrange,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ),
-                        DataCell(_statusChip(row.isPriced)),
                         DataCell(
-                          IconButton(
-                            tooltip: 'Edit selling price',
-                            icon: const Icon(Icons.edit_outlined, size: 18),
-                            onPressed: () => focus.requestFocus(),
+                          SizedBox(
+                            width: 180,
+                            child: state.applySameTaxToAllVariants
+                              ? Text(row.taxName ?? state.taxName ?? 'None')
+                              : ProductOptionDropdown(
+                                  label: null,
+                                  hint: 'Select tax',
+                                  icon: Icons.description_outlined,
+                                  value: row.taxId,
+                                  items: [
+                                    for (final t in widget.taxOptions)
+                                      DropdownMenuItem(
+                                        value: t.id,
+                                        child: Text(t.dropdownLabel, overflow: TextOverflow.ellipsis),
+                                      ),
+                                  ],
+                                  onChanged: (id) {
+                                    ProductTaxOption? selected;
+                                    for (final t in widget.taxOptions) {
+                                      if (t.id == id) selected = t;
+                                    }
+                                    ref
+                                        .read(addProductWizardControllerProvider.notifier)
+                                        .updateVariantTaxId(
+                                          row.identityKey,
+                                          id,
+                                          taxRate: selected?.currentRate,
+                                          taxName: selected?.name,
+                                        );
+                                  },
+                                ),
                           ),
                         ),
+                        DataCell(_statusChip(row.isPriced)),
                       ],
                     );
                   }).toList(),
@@ -616,112 +598,143 @@ class _Step6VariantPricingTaxFormState
     );
   }
 
-  Widget _taxSettingsCard(
+  Widget _taxSettingsHorizontalCard(
     AddProductWizardState state,
-    List<ProductTaxOption> taxOptions,
     String effectiveRateLabel,
   ) {
     return _card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Tax Settings',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-              color: TenantAdminColors.bodyText,
-            ),
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          ProductOptionDropdown(
-            label: 'Tax Class *',
-            hint: 'Select tax class',
-            icon: Icons.description_outlined,
-            value: state.taxId,
-            items: [
-              for (final t in taxOptions)
-                DropdownMenuItem(
-                  value: t.id,
-                  child: Text(t.dropdownLabel, overflow: TextOverflow.ellipsis),
-                ),
-            ],
-            enabled: !state.isSubmitting && !state.isSavingDraft,
-            onChanged: (id) {
-              ProductTaxOption? selected;
-              for (final t in taxOptions) {
-                if (t.id == id) selected = t;
-              }
-              ref.read(addProductWizardControllerProvider.notifier).updateTaxId(
-                    id,
-                    taxRate: selected?.currentRate,
-                    taxName: selected?.name,
-                  );
-            },
-            errorText: state.fieldErrors['taxId'],
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          const Text(
-            'Effective Tax Rate',
-            style: TextStyle(
-              fontSize: 12,
-              color: TenantAdminColors.mutedText,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            effectiveRateLabel,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: TenantAdminColors.bodyText,
-            ),
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(TenantAdminSpacing.sm),
-            decoration: BoxDecoration(
-              color: TenantAdminColors.secondary,
-              borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-            ),
-            child: const Text(
-              'Tax will be calculated based on the selected tax class and applied to each variant price.',
-              style:
-                  TextStyle(fontSize: 12, color: TenantAdminColors.mutedText),
-            ),
-          ),
-          const SizedBox(height: TenantAdminSpacing.md),
-          const Text(
-            'Tax Presentation *',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: TenantAdminColors.bodyText,
-            ),
-          ),
-          const SizedBox(height: TenantAdminSpacing.sm),
           Row(
             children: [
               Expanded(
-                child: _taxModeCard(
-                  title: 'Tax Exclusive',
-                  subtitle: 'Tax added at checkout',
-                  selected: state.taxExclusive,
-                  onTap: () => ref
-                      .read(addProductWizardControllerProvider.notifier)
-                      .updateTaxExclusive(true),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tax Settings',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: TenantAdminColors.bodyText,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Configure how tax is calculated and presented.',
+                      style: TextStyle(fontSize: 12, color: TenantAdminColors.mutedText),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: TenantAdminSpacing.sm),
+              CheckboxMenuButton(
+                value: state.applySameTaxToAllVariants,
+                onChanged: (v) {
+                  if (v != null) {
+                    ref.read(addProductWizardControllerProvider.notifier).updateApplySameTaxToAllVariants(v);
+                  }
+                },
+                child: const Text('Apply same tax to all variants'),
+              ),
+            ],
+          ),
+          const SizedBox(height: TenantAdminSpacing.lg),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Expanded(
-                child: _taxModeCard(
-                  title: 'Tax Inclusive',
-                  subtitle: 'Tax included in price',
-                  selected: !state.taxExclusive,
-                  onTap: () => ref
-                      .read(addProductWizardControllerProvider.notifier)
-                      .updateTaxExclusive(false),
+                child: ProductOptionDropdown(
+                  label: 'Global Tax Class',
+                  hint: 'Select tax class',
+                  icon: Icons.description_outlined,
+                  value: state.taxId,
+                  items: [
+                    for (final t in widget.taxOptions)
+                      DropdownMenuItem(
+                        value: t.id,
+                        child: Text(t.dropdownLabel, overflow: TextOverflow.ellipsis),
+                      ),
+                  ],
+                  enabled: state.applySameTaxToAllVariants && !state.isSubmitting && !state.isSavingDraft,
+                  onChanged: (id) {
+                    ProductTaxOption? selected;
+                    for (final t in widget.taxOptions) {
+                      if (t.id == id) selected = t;
+                    }
+                    ref.read(addProductWizardControllerProvider.notifier).updateTaxId(
+                          id,
+                          taxRate: selected?.currentRate,
+                          taxName: selected?.name,
+                        );
+                  },
+                  errorText: state.fieldErrors['taxId'],
+                ),
+              ),
+              const SizedBox(width: TenantAdminSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Global Effective Tax Rate',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: TenantAdminColors.mutedText,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      effectiveRateLabel,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: TenantAdminColors.bodyText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: TenantAdminSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tax Presentation *',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: TenantAdminColors.bodyText,
+                      ),
+                    ),
+                    const SizedBox(height: TenantAdminSpacing.sm),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _taxModeCard(
+                            title: 'Tax Exclusive',
+                            subtitle: 'Added at checkout',
+                            selected: state.taxExclusive,
+                            onTap: () => ref
+                                .read(addProductWizardControllerProvider.notifier)
+                                .updateTaxExclusive(true),
+                          ),
+                        ),
+                        const SizedBox(width: TenantAdminSpacing.sm),
+                        Expanded(
+                          child: _taxModeCard(
+                            title: 'Tax Inclusive',
+                            subtitle: 'Included in price',
+                            selected: !state.taxExclusive,
+                            onTap: () => ref
+                                .read(addProductWizardControllerProvider.notifier)
+                                .updateTaxExclusive(false),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -776,33 +789,6 @@ class _Step6VariantPricingTaxFormState
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _importantNoteCard() {
-    return _card(
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Important Note',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-              color: TenantAdminColors.bodyText,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Each variant can have its own selling price. Use Apply to All only when you want the same starting price for every variant, then adjust individual variants if needed.',
-            style: TextStyle(
-              fontSize: 12,
-              color: TenantAdminColors.mutedText,
-              height: 1.4,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 import '../../data/dtos/barcode_sku_dtos.dart';
 import '../../data/dtos/pricing_tax_dtos.dart';
+import '../../data/dtos/opening_stock_draft_dto.dart';
 import 'add_product_wizard_state.dart';
 import 'staged_product_image.dart';
 import 'variant_configuration_state.dart';
@@ -69,6 +70,7 @@ class AddProductWizardStateCodec {
       'taxName': state.taxName,
       'taxRate': state.taxRate,
       'taxExclusive': state.taxExclusive,
+      'applySameTaxToAllVariants': state.applySameTaxToAllVariants,
       'variantPrices':
           state.variantPrices.map((e) => e.toSnapshotJson()).toList(),
       'initialBatchNumber': state.initialBatchNumber,
@@ -78,6 +80,8 @@ class AddProductWizardStateCodec {
           state.confirmClearIncompatibleInitialTracking,
       'initialTrackingAssignedVariantId':
           state.initialTrackingAssignedVariantId,
+      'openingStockDrafts': state.openingStockDrafts.map(
+          (k, v) => MapEntry(k, v.toJson())),
     };
   }
 
@@ -151,6 +155,7 @@ class AddProductWizardStateCodec {
       taxName: json['taxName']?.toString(),
       taxRate: json['taxRate'] as num?,
       taxExclusive: json['taxExclusive'] as bool? ?? true,
+      applySameTaxToAllVariants: json['applySameTaxToAllVariants'] as bool? ?? true,
       variantPrices: (json['variantPrices'] as List<dynamic>?)
               ?.whereType<Map>()
               .map((e) => VariantPriceDto.fromJson(
@@ -167,6 +172,12 @@ class AddProductWizardStateCodec {
           json['confirmClearIncompatibleInitialTracking'] as bool? ?? false,
       initialTrackingAssignedVariantId:
           json['initialTrackingAssignedVariantId']?.toString(),
+      openingStockDrafts: (json['openingStockDrafts'] as Map<String, dynamic>?)
+              ?.map((k, v) => MapEntry(
+                  k,
+                  OpeningStockOwnerDraftDto.fromJson(
+                      Map<String, dynamic>.from(v as Map)))) ??
+          const {},
       isDirty: false,
       isSubmitting: false,
       isSavingDraft: false,

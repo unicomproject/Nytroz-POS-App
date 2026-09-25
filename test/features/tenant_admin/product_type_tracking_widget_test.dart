@@ -1,4 +1,4 @@
-﻿import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_draft_response_dto.dart';
@@ -29,8 +29,8 @@ class WidgetTestFakeRepository implements TenantProductRepository {
   }
 
   @override
-  Future<SkuCandidateResponseDto> generateSkuCandidate({String? productNameHint, String purpose = 'NO_BARCODE_PRODUCT'}) async {
-    throw UnimplementedError();
+  Future<SkuCandidateResponseDto> generateSkuCandidate(GenerateSkuCandidateRequestDto request) async {
+    return SkuCandidateResponseDto(candidate: 'AUTO-000001', reserved: false);
   }
 
   @override
@@ -194,202 +194,45 @@ void main() {
   }
 
   group('ProductTypeTracking Widget Tests', () {
-    testWidgets('renders common header and structure cards', (tester) async {
-      await tester.pumpWidget(buildTestWidget(const AddProductWizardState()));
-
-      expect(find.text('Product Type *'), findsOneWidget);
-      expect(find.text('Simple Product'), findsOneWidget);
-      expect(find.text('Variant Product'), findsOneWidget);
-    });
-
-    testWidgets('renders SIMPLE content when SIMPLE structure selected',
-        (tester) async {
+    testWidgets('renders exactly 3 tracking cards and no duplicate skip UI', (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
-        productStructure: 'SIMPLE',
         productStructureConfirmed: true,
+        trackingInternalStep: 1,
       )));
 
-      expect(find.text('Tracking & Stock Rules'), findsOneWidget);
-      expect(find.text('Track Inventory'), findsOneWidget);
-      expect(find.text('Batch / Lot Tracking'), findsOneWidget);
-      expect(find.text('Expiry Date Tracking'), findsOneWidget);
-      expect(find.text('Serial Number Tracking'), findsOneWidget);
-      expect(
-          find.text(
-              'Units & Pack Conversion will be configured in the next stage.'),
-          findsOneWidget);
+      expect(find.text('Quantity'), findsOneWidget);
+      expect(find.text('Batch / Lot'), findsOneWidget);
+      expect(find.text('Batch + Expiry'), findsOneWidget);
+
+      expect(find.text('No Tracking'), findsNothing);
+      expect(find.text('Skip for Now'), findsNothing);
     });
 
-    testWidgets('renders VARIANT content when VARIANT structure selected',
+    testWidgets('tracking card selection updates controller state',
         (tester) async {
       await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
-        productStructure: 'VARIANT',
         productStructureConfirmed: true,
+        trackingInternalStep: 1,
       )));
 
-      expect(find.text('Inventory Tracking (Applied at Variant Level) *'), findsOneWidget);
-      expect(
-          find.text(
-              'Choose how you want to track inventory for this product variants.'),
-          findsOneWidget);
-      expect(
-          find.text(
-              'Inventory will be tracked by total quantity at variant level.'),
-          findsOneWidget);
-    });
+      // Initially no tracking method is selected in empty state
+      // (The UI might default to something, but let's test tapping)
+      await tester.tap(find.text('Batch / Lot'));
+      await tester.pumpAndSettle();
 
-    testWidgets('renders BUNDLE content when BUNDLE structure selected',
-        (tester) async {
-      await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
-        productStructure: 'BUNDLE',
-        productStructureConfirmed: true,
-      )));
+      expect(controller.wizardState.trackingMethod, 'BATCH');
+      
+      await tester.tap(find.text('Quantity'));
+      await tester.pumpAndSettle();
 
-      expect(find.text('Bundle Inventory Behaviour'), findsOneWidget);
-      expect(find.text('Component-based Inventory'), findsOneWidget);
-      expect(find.text('Component Stock Deduction'), findsOneWidget);
-      expect(find.text('Component Tracking Rules'), findsOneWidget);
-      expect(
-          find.text(
-              'Bundle components will be configured in Product Configuration.'),
-          findsOneWidget);
-    });
+      expect(controller.wizardState.trackingMethod, 'QUANTITY');
 
-    testWidgets('does not show incompatible tracking confirmation dialog',
-        (tester) async {
-      controller.updateInitialBatchNumber('BAT-001');
-      controller.updateInitialSerialNumber('SN-00001');
+      await tester.tap(find.text('Batch + Expiry'));
+      await tester.pumpAndSettle();
 
-      await tester.pumpWidget(buildTestWidget(controller.wizardState));
-      await tester.tap(find.text('Simple Product'));
-      await tester.pump();
+      expect(controller.wizardState.trackingMethod, 'BATCH_EXPIRY');
 
-      expect(find.text('Clear incompatible tracking values?'), findsNothing);
-      expect(find.text('Clear and continue'), findsNothing);
-      expect(controller.wizardState.productStructure, 'SIMPLE');
-      await tester.pump(const Duration(seconds: 1));
-    });
-
-    testWidgets('hides initial tracking until product type is selected',
-        (tester) async {
-      final batch = TextEditingController();
-      final serial = TextEditingController();
-      addTearDown(batch.dispose);
-      addTearDown(serial.dispose);
-
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: ProductTypeTracking(
-              state: const AddProductWizardState(productStructure: 'SIMPLE'),
-              controller: controller,
-              batchController: batch,
-              serialController: serial,
-            ),
-          ),
-        ),
-      ));
-
-      expect(find.text('Initial Tracking Details'), findsNothing);
-      expect(find.text('Tracking & Stock Rules'), findsNothing);
-    });
-
-    testWidgets('shows initial tracking after product type is selected',
-        (tester) async {
-      final batch = TextEditingController();
-      final serial = TextEditingController();
-      addTearDown(batch.dispose);
-      addTearDown(serial.dispose);
-
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: ProductTypeTracking(
-              state: const AddProductWizardState(
-                productStructure: 'SIMPLE',
-                productStructureConfirmed: true,
-              ),
-              controller: controller,
-              batchController: batch,
-              serialController: serial,
-            ),
-          ),
-        ),
-      ));
-
-      expect(find.text('Initial Tracking Details'), findsOneWidget);
-      expect(find.text('Initial Batch Number'), findsOneWidget);
-      expect(find.text('Initial Expiry Date'), findsOneWidget);
-      expect(find.text('Initial Serial Number'), findsOneWidget);
-      expect(find.text('Tracking & Stock Rules'), findsOneWidget);
-
-      final trackingTop =
-          tester.getTopLeft(find.text('Initial Tracking Details')).dy;
-      final rulesTop =
-          tester.getTopLeft(find.text('Tracking & Stock Rules')).dy;
-      expect(trackingTop, lessThan(rulesTop));
-    });
-
-    testWidgets('hides initial tracking for bundle products', (tester) async {
-      final batch = TextEditingController();
-      final serial = TextEditingController();
-      addTearDown(batch.dispose);
-      addTearDown(serial.dispose);
-
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: ProductTypeTracking(
-              state: const AddProductWizardState(
-                productStructure: 'BUNDLE',
-                productStructureConfirmed: true,
-              ),
-              controller: controller,
-              batchController: batch,
-              serialController: serial,
-            ),
-          ),
-        ),
-      ));
-
-      expect(find.text('Initial Tracking Details'), findsNothing);
-    });
-
-    testWidgets('structure card selection updates controller state',
-        (tester) async {
-      await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
-        productStructure: 'SIMPLE',
-      )));
-
-      await tester.tap(find.text('Variant Product'));
-      await tester.pump();
-
-      expect(controller.wizardState.productStructure, 'VARIANT');
-      await tester.pump(const Duration(seconds: 1));
-    });
-
-    testWidgets('toggling serial tracking disables batch and expiry in SIMPLE',
-        (tester) async {
-      // Build the widget tree first so tester.pump() advances the fake clock
-      // and flushes the auto-save timer triggered by state mutations below.
-      await tester.pumpWidget(buildTestWidget(const AddProductWizardState(
-        productStructure: 'SIMPLE',
-      )));
-
-      controller.setTrackInventory(true);
-      controller.setBatchTracking(true);
-      controller.setExpiryTracking(true);
-
-      expect(controller.wizardState.batchTracking, true);
-      expect(controller.wizardState.expiryTracking, true);
-
-      controller.setSerialTracking(true);
-
-      expect(controller.wizardState.serialTracking, true);
-      expect(controller.wizardState.batchTracking, false);
-      expect(controller.wizardState.expiryTracking, false);
-
-      // Advance fake clock to flush the pending 1-second auto-save timer.
+      // flush timer
       await tester.pump(const Duration(seconds: 1));
     });
   });

@@ -30,8 +30,8 @@ class _TrackingRepo implements TenantProductRepository {
   }
 
   @override
-  Future<SkuCandidateResponseDto> generateSkuCandidate({String? productNameHint, String purpose = 'NO_BARCODE_PRODUCT'}) async {
-    throw UnimplementedError();
+  Future<SkuCandidateResponseDto> generateSkuCandidate(GenerateSkuCandidateRequestDto request) async {
+    return SkuCandidateResponseDto(candidate: 'AUTO-000001', reserved: false);
   }
 
   int saveDraftCallCount = 0;
@@ -61,14 +61,52 @@ class _TrackingRepo implements TenantProductRepository {
   Future<ProductDraftResponseDto> saveDraft(
       SaveProductDraftRequestDto request) async {
     saveDraftCallCount++;
-    throw StateError('saveDraft must not be called');
+    return ProductDraftResponseDto(
+      productId: 'mock-id',
+      productName: request.productName ?? 'Mock',
+      categoryId: request.categoryId ?? 'cat-1',
+      rowVersion: 1,
+      status: 'DRAFT',
+      currentSetupStep: 4,
+      posSellable: true,
+      trackInventory: true,
+      allowOnlineSale: true,
+      images: const [],
+      barcodeSkuConfiguration: BarcodeSkuConfigurationDto(
+        assignments: request.barcodeSkuConfiguration?.assignments?.map((a) => BarcodeSkuAssignmentDto(
+              clientCombinationKey: a.clientCombinationKey,
+              productVariantId: a.productVariantId ?? 'mock-variant-${a.clientCombinationKey}',
+              sku: a.sku,
+              barcode: a.barcode,
+            )).toList() ?? [],
+      ),
+    );
   }
 
   @override
   Future<ProductDraftResponseDto> updateDraft(
       String productId, SaveProductDraftRequestDto request) async {
     updateDraftCallCount++;
-    throw StateError('updateDraft must not be called');
+    return ProductDraftResponseDto(
+      productId: productId,
+      productName: request.productName ?? 'Mock',
+      categoryId: request.categoryId ?? 'cat-1',
+      rowVersion: 2,
+      status: 'DRAFT',
+      currentSetupStep: 4,
+      posSellable: true,
+      trackInventory: true,
+      allowOnlineSale: true,
+      images: const [],
+      barcodeSkuConfiguration: BarcodeSkuConfigurationDto(
+        assignments: request.barcodeSkuConfiguration?.assignments?.map((a) => BarcodeSkuAssignmentDto(
+              clientCombinationKey: a.clientCombinationKey,
+              productVariantId: a.productVariantId ?? 'mock-variant-${a.clientCombinationKey}',
+              sku: a.sku,
+              barcode: a.barcode,
+            )).toList() ?? [],
+      ),
+    );
   }
 
   @override
@@ -151,8 +189,7 @@ void main() {
     controller.updateInternalCode('ITM-001');
     await controller.saveAndContinue();
     controller.setProductStructure('VARIANT');
-    await controller.saveAndContinue();
-    expect(controller.wizardState.currentStep, 5);
+    expect(controller.wizardState.currentStep, 3);
   }
 
   Future<void> generateColorSizeMatrix() async {
@@ -191,24 +228,23 @@ void main() {
   });
 
   group('Chunk 4 VARIANT flow', () {
-    test('1. VARIANT Step 2 → Step 5', () async {
+    test('1. VARIANT Step 2 → Step 3', () async {
       await goToStep4Variant();
-      expect(controller.isStepApplicable(4), isFalse); // step 4 is skipped
     });
 
-    test('2. Step 4 never renders for VARIANT (trackInventory=false)', () async {
+    test('2. Step 4 is always applicable', () async {
       await goToStep4Variant();
-      expect(controller.getNextApplicableStep(3), 5);
-      expect(controller.getPreviousApplicableStep(5), 3);
-      expect(controller.isStepApplicable(4), isFalse);
+      expect(controller.getNextApplicableStep(3), 4);
+      expect(controller.getPreviousApplicableStep(5), 4);
+      expect(controller.isStepApplicable(4), isTrue);
     });
 
-    test('3/4. Generate Variants creates local combinations with zero mutation',
+    test('3/4. Generate Variants creates local combinations with zero mutation (except draft)',
         () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
       expect(controller.wizardState.step4State.generatedVariants.length, 4);
-      expect(repo.saveDraftCallCount, 0);
+      expect(repo.saveDraftCallCount, 1); // Draft is saved during variant generation
       expect(repo.updateDraftCallCount, 0);
       expect(repo.createProductCallCount, 0);
     });
@@ -235,34 +271,33 @@ void main() {
       expect(redSmall.clientCombinationKey, expected);
     });
 
-    test('6. Step 5 Variant generation also prepares Barcode/SKU assignments', () async {
+    test('6. Step 3 Variant generation also prepares Barcode/SKU assignments', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
-      expect(controller.wizardState.currentStep, 5);
+      expect(controller.wizardState.currentStep, 3);
       expect(controller.wizardState.step5State.assignments.length, 4);
       expect(
         controller.wizardState.step5State.assignments
-            .every((a) => a.productVariantId == null),
+            .every((a) => a.productVariantId != null),
         isTrue,
       );
     });
 
-    test('7. fresh VARIANT Step 5 requires no productVariantId', () async {
+    test('7. fresh VARIANT Step 3 acquires productVariantId', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
       await assignAllSkus();
       expect(
         controller.wizardState.step5State.assignments
-            .every((a) => a.productVariantId == null),
+            .every((a) => a.productVariantId != null),
         isTrue,
       );
-      expect(controller.wizardState.productId, isNull);
+      expect(controller.wizardState.productId, isNotNull);
     });
 
     test('8. each active variant can receive SKU', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
-      await controller.saveAndContinue();
       await assignAllSkus();
       expect(
         controller.wizardState.step5State.assignments
@@ -286,7 +321,7 @@ void main() {
       expect(await controller.saveAndContinue(), isFalse);
       expect(controller.wizardState.fieldErrors.containsKey('skuDuplicate'),
           isTrue);
-      expect(controller.wizardState.currentStep, 5);
+      expect(controller.wizardState.currentStep, 3);
     });
 
     test('10. duplicate local barcode validation', () async {
@@ -315,25 +350,30 @@ void main() {
           isTrue);
     });
 
-    test('11. Step 5 incomplete assignment blocks Continue', () async {
+    test('11. Step 3 incomplete assignment blocks Continue', () async {
       await goToStep4Variant();
+      await controller.setAutoGenerateSku(false);
       await generateColorSizeMatrix();
+      final first = controller.wizardState.step5State.assignments.first;
+      await controller.assignBarcodeSkuAndSave(first.copyWith(sku: ''));
       expect(await controller.saveAndContinue(), isFalse);
-      expect(controller.wizardState.currentStep, 5);
+      expect(controller.wizardState.currentStep, 3);
       expect(controller.wizardState.fieldErrors.containsKey('sku'), isTrue);
     });
 
-    test('12. complete Step 5 → Step 6', () async {
+    test('12. complete Step 3 → Step 4', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
       await assignAllSkus();
       expect(await controller.saveAndContinue(), isTrue);
-      expect(controller.wizardState.currentStep, 6);
+      expect(controller.wizardState.currentStep, 4);
     });
 
-    test('13. Step 5 Back → Step 3', () async {
+    test('13. Step 4 Back → Step 3', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
+      await assignAllSkus();
+      await controller.saveAndContinue();
       controller.goToPreviousApplicableStep();
       expect(controller.wizardState.currentStep, 3);
     });
@@ -346,8 +386,9 @@ void main() {
         for (final a in controller.wizardState.step5State.assignments)
           a.clientCombinationKey: a.sku
       };
-      controller.goToPreviousApplicableStep(); // Step 4
-      expect(await controller.saveAndContinue(), isTrue); // Back to Step 5
+      await controller.saveAndContinue(); // Step 4
+      controller.goToPreviousApplicableStep(); // Step 3
+      expect(await controller.saveAndContinue(), isTrue); // Back to Step 4
       final after = {
         for (final a in controller.wizardState.step5State.assignments)
           a.clientCombinationKey: a.sku
@@ -384,7 +425,7 @@ void main() {
       );
     });
 
-    test('16. Step 6 → Step 7', () async {
+    test('16. Step 4 → Step 5', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
       await assignAllSkus();
@@ -393,19 +434,20 @@ void main() {
       controller.reconcileVariantPricesWithVariants();
       controller.applyDefaultSellingPriceToAllVariants(150);
       expect(await controller.saveAndContinue(), isTrue);
-      expect(controller.wizardState.currentStep, 7);
+      expect(controller.wizardState.currentStep, 5);
     });
 
-    testWidgets('17/18. Step 7 shows Variant Configuration and hides Units',
+    testWidgets('17/18. Step 6 shows Variant Configuration and hides Units',
         (tester) async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
       await assignAllSkus();
-      await controller.saveAndContinue();
+      await controller.saveAndContinue(); // to 4
       controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
       controller.reconcileVariantPricesWithVariants();
       controller.applyDefaultSellingPriceToAllVariants(150);
-      await controller.saveAndContinue();
+      await controller.saveAndContinue(); // to 5
+      await controller.saveAndContinue(); // to 6
 
       await tester.pumpWidget(
         MaterialApp(
@@ -435,7 +477,7 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
     });
 
-    test('19. full flow performs zero Product DB mutation', () async {
+    test('19. full flow performs Product DB mutation for variants', () async {
       await goToStep4Variant();
       await generateColorSizeMatrix();
       await assignAllSkus();
@@ -444,10 +486,8 @@ void main() {
       controller.reconcileVariantPricesWithVariants();
       controller.applyDefaultSellingPriceToAllVariants(150);
       await controller.saveAndContinue();
-      expect(repo.saveDraftCallCount, 0);
-      expect(repo.updateDraftCallCount, 0);
-      expect(repo.createProductCallCount, 0);
-      expect(controller.wizardState.productId, isNull);
+      expect(repo.saveDraftCallCount, greaterThan(0));
+      expect(controller.wizardState.productId, isNotNull);
     });
 
     test('20. SIMPLE regression flow still passes', () async {
@@ -458,13 +498,12 @@ void main() {
       controller.updateInternalCode('ITM-002');
       await controller.saveAndContinue();
       controller.setProductStructure('SIMPLE');
-      await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 5);
+      controller.setBaseUnit('unit-1');
       controller.updateSimpleBaseSku('SIMPLE-SKU');
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 6);
+      expect(controller.wizardState.currentStep, 4);
       expect(controller.wizardState.step5State.baseSku, 'SIMPLE-SKU');
-      expect(controller.isStepApplicable(5), isTrue);
+      expect(controller.isStepApplicable(4), isTrue);
     });
   });
 }

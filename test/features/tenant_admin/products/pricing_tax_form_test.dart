@@ -128,12 +128,12 @@ void main() {
       findsNothing,
     );
     expect(find.text('Standard Selling Price'), findsOneWidget);
-    expect(find.text('Tax Class *'), findsOneWidget);
+    expect(find.text('Tax Class'), findsOneWidget);
     expect(find.text('Tax Exclusive'), findsOneWidget);
     expect(find.text('Tax Inclusive'), findsOneWidget);
     expect(find.text('Tax Preview (Tax Exclusive)'), findsOneWidget);
     expect(find.text('LKR 862.50'), findsOneWidget);
-    expect(find.text('This is the amount customers will pay.'), findsOneWidget);
+    expect(find.text('Calculate final margins by setting the selling price and an optional tax class.'), findsOneWidget);
     expect(find.text('Cost Price *'), findsNothing);
     expect(find.text('Standard Rate (15%)'), findsOneWidget);
     expect(find.text('Effective Tax Rate'), findsNothing);
@@ -181,7 +181,7 @@ void main() {
     expect(find.text('LKR 850.00'), findsNothing);
     expect(
       find.text(
-        'Enter selling price, select a tax class, then leave the price field to calculate the balance.',
+        'Enter selling price, select a tax class (optional), then leave the price field to calculate the balance.',
       ),
       findsOneWidget,
     );
@@ -246,7 +246,7 @@ void main() {
     expect(find.text('LKR 850.00'), findsOneWidget);
     expect(find.text('LKR 833.33'), findsOneWidget);
     expect(find.text('LKR 16.67'), findsOneWidget);
-    expect(find.text('This is the amount customers will pay.'), findsOneWidget);
+    expect(find.text('Calculate final margins by setting the selling price and an optional tax class.'), findsOneWidget);
   });
 
   testWidgets('SIMPLE Tax Preview does not live-update while typing price',
@@ -355,7 +355,7 @@ void main() {
     expect(find.text('Effective Tax Rate'), findsNothing);
     expect(
       find.text(
-        'Enter selling price, select a tax class, then leave the price field to calculate the balance.',
+        'Enter selling price, select a tax class (optional), then leave the price field to calculate the balance.',
       ),
       findsOneWidget,
     );
@@ -365,7 +365,7 @@ void main() {
     List<VariantPriceDto> prices = const [],
   }) {
     return AddProductWizardState(
-      currentStep: 6,
+      currentStep: 4,
       productStructure: 'VARIANT',
       productName: 'AquaFlow Classic Water Bottle',
       taxId: 'tax-1',
@@ -500,7 +500,7 @@ void main() {
     expect(find.text('Default Selling Price'), findsNothing);
     expect(find.textContaining('Default Price'), findsNothing);
     await tester.enterText(find.byType(TextField).first, '650');
-    await tester.tap(find.widgetWithText(FilledButton, 'Apply to All'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Apply Price'));
     await tester.pumpAndSettle();
     expect(find.text('650'), findsWidgets);
     expect(find.text('Priced'), findsNWidgets(2));
@@ -509,7 +509,7 @@ void main() {
   testWidgets('UI-09 Apply to All then override one row', (tester) async {
     await pumpStep6(tester, variantWizard());
     await tester.enterText(find.byType(TextField).first, '650');
-    await tester.tap(find.widgetWithText(FilledButton, 'Apply to All'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Apply Price'));
     await tester.pumpAndSettle();
     final rowFields = find.byType(TextField);
     await tester.enterText(rowFields.at(1), '750');
@@ -534,7 +534,7 @@ void main() {
       ]),
     );
     await tester.enterText(find.byType(TextField).first, '500');
-    await tester.tap(find.widgetWithText(FilledButton, 'Apply to All'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Apply Price'));
     await tester.pumpAndSettle();
     expect(find.text('Apply price to all variants?'), findsOneWidget);
     expect(
@@ -546,9 +546,9 @@ void main() {
     expect(find.text('750'), findsOneWidget);
     expect(find.text('650'), findsWidgets);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Apply to All'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Apply Price'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Apply to All').last);
+    await tester.tap(find.widgetWithText(FilledButton, 'Apply to All'));
     await tester.pumpAndSettle();
     expect(find.text('500'), findsWidgets);
     expect(find.text('750'), findsNothing);
@@ -557,7 +557,7 @@ void main() {
   testWidgets('UI-15/16/17 common tax class; resolved rate; no per-row tax',
       (tester) async {
     await pumpStep6(tester, variantWizard());
-    expect(find.text('Tax Class *'), findsOneWidget);
+    expect(find.text('Global Tax Class'), findsOneWidget);
     expect(find.textContaining('15.00%'), findsOneWidget);
     expect(find.text('Tax Exclusive'), findsOneWidget);
     expect(find.text('Tax Inclusive'), findsOneWidget);
@@ -647,7 +647,7 @@ void main() {
     await tester.pumpAndSettle();
     final ok = await controller.saveAndContinue();
     expect(ok, isTrue);
-    expect(controller.wizardState.currentStep, 7);
+    expect(controller.wizardState.currentStep, 5);
   });
 
   testWidgets('UX-10 SIMPLE Step 6 unchanged — no bulk helper label',

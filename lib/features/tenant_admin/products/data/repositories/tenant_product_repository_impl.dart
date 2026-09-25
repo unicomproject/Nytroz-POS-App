@@ -122,6 +122,7 @@ class TenantProductRepositoryImpl implements TenantProductRepository {
               barcode: variant.barcode,
               sellingPrice: variant.sellingPrice,
               discountPrice: variant.discountPrice,
+              taxId: variant.taxId,
               status: variant.status,
             ),
           )
@@ -172,14 +173,10 @@ class TenantProductRepositoryImpl implements TenantProductRepository {
   }
 
   @override
-  Future<SkuCandidateResponseDto> generateSkuCandidate({
-    String purpose = 'NO_BARCODE_PRODUCT',
-    String? productNameHint,
-  }) {
-    return _remoteDatasource.generateSkuCandidate(
-      purpose: purpose,
-      productNameHint: productNameHint,
-    );
+  Future<SkuCandidateResponseDto> generateSkuCandidate(
+    GenerateSkuCandidateRequestDto request,
+  ) async {
+    return _remoteDatasource.generateSkuCandidate(request);
   }
 
   @override

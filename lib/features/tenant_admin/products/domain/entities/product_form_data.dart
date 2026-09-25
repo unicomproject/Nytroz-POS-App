@@ -5,6 +5,7 @@ class ProductVariantFormData {
     this.barcode,
     required this.sellingPrice,
     this.discountPrice,
+    this.taxId,
     required this.status,
   });
 
@@ -13,6 +14,7 @@ class ProductVariantFormData {
   final String? barcode;
   final double sellingPrice;
   final double? discountPrice;
+  final String? taxId;
   final String status;
 }
 
