@@ -250,6 +250,9 @@ bool isCurrentAuthoritativePricing({
     pricing.pricingInputFingerprint == checkoutPricingInputFingerprint(cart);
 
 List<PosCheckoutLineRequest> checkoutLinesFromCart(PosNewSaleCartState cart) {
+  if (cart.completedSaleId != null) {
+    throw StateError('This cart is completed. Use Start New Sale from the receipt.');
+  }
   return cart.itemList
       .map(
         (item) => PosCheckoutLineRequest(

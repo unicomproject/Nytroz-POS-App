@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nytroz_pos/shared/widgets/pos_action_buttons.dart';
 
 class ContinuePaymentButton extends StatelessWidget {
   const ContinuePaymentButton({
@@ -22,21 +23,24 @@ class ContinuePaymentButton extends StatelessWidget {
         onPressed: isLoading ? null : onPressed,
         style: FilledButton.styleFrom(
           backgroundColor: primaryColor,
-          disabledBackgroundColor: primaryColor.withValues(alpha: 0.35),
+          disabledBackgroundColor: PosPrimaryActionTokens.disabledBackground,
+          disabledForegroundColor: PosPrimaryActionTokens.disabledForeground,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
         ),
         child: Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 'Continue Payment',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: onPressed == null || isLoading
+                      ? PosPrimaryActionTokens.disabledForeground
+                      : Theme.of(context).colorScheme.onPrimary,
                 ),
               ),
             ),

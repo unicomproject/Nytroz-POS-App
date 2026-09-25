@@ -418,19 +418,35 @@ class PosPermissionAccess {
         granted.contains(PosPermissionCodes.viewOnlineOrderReady);
   }
 
-  static bool canNotifyOnlineOrderCustomer(Set<String> granted) {
-    return canViewOnlineOrderReady(granted) &&
-        granted.contains(PosPermissionCodes.notifyOnlineOrderCustomer);
-  }
-
   static bool canVerifyOnlineOrderPickup(Set<String> granted) {
     return canViewOnlineOrderReady(granted) &&
         granted.contains(PosPermissionCodes.verifyOnlineOrderPickup);
   }
 
-  static bool canCompleteOnlineOrderCollection(Set<String> granted) {
+  static bool canNotifyOnlineOrderCustomer(Set<String> granted) {
     return canViewOnlineOrderReady(granted) &&
-        granted.contains(PosPermissionCodes.completeOnlineOrderCollection);
+        granted.contains(PosPermissionCodes.notifyOnlineOrderCustomer);
+  }
+
+  static bool canScanCollectionQr(Set<String> granted) {
+    return canViewOnlineOrders(granted) &&
+        granted.contains(PosPermissionCodes.scanOnlineOrderCollectionQr);
+  }
+
+  static bool canValidateCollectionQr(Set<String> granted) {
+    return canScanCollectionQr(granted) &&
+        granted.contains(PosPermissionCodes.validateOnlineOrderCollectionQr);
+  }
+
+  static bool canManualCollectionLookup(Set<String> granted) {
+    return canViewOnlineOrders(granted) &&
+        granted.contains(PosPermissionCodes.manualOnlineOrderCollectionLookup);
+  }
+
+  static bool canHandoverCollection(Set<String> granted) {
+    return canViewOnlineOrders(granted) &&
+        granted.contains(PosPermissionCodes.handoverOnlineOrderCollection) &&
+        granted.contains(PosPermissionCodes.collectOnlineOrder);
   }
 
   /// Legacy broad movement.create — prefer [canCashIn]/[canCashOut]/[canCashDrop].

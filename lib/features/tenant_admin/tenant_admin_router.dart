@@ -40,6 +40,7 @@ import 'products/presentation/screens/product_detail_screen.dart';
 import 'products/presentation/screens/product_list_screen.dart';
 import 'products/presentation/screens/popular_products_curation_screen.dart';
 import 'brands/presentation/screens/brand_list_screen.dart';
+import 'brands/presentation/screens/brand_form_screen.dart';
 import 'categories/presentation/screens/add_category_screen.dart';
 import 'categories/presentation/screens/category_details_screen.dart';
 import 'categories/presentation/screens/category_list_screen.dart';
@@ -440,6 +441,14 @@ Widget _screenFor(TenantAdminRouteDefinition definition, GoRouterState state) {
     return const TaxManagementPage();
   }
 
+  if (definition.path == ProductsSidebarRoutes.addBrand) {
+    return const BrandFormScreen();
+  }
+
+  if (definition.path == ProductsSidebarRoutes.editBrandPattern) {
+    return BrandFormScreen(brandId: state.pathParameters['brandId']);
+  }
+
   if (definition.path == ProductsSidebarRoutes.variantTemplates) {
     return ProductsComingSoonScreen(
       title: definition.title,
@@ -710,6 +719,14 @@ bool _canAccessRoute(
 
   if (definition.path == ProductsSidebarRoutes.dashboard) {
     return accessChecker.canViewProductDashboard();
+  }
+
+  if (definition.path == ProductsSidebarRoutes.addBrand) {
+    return accessChecker.canCreateBrand();
+  }
+
+  if (definition.path == ProductsSidebarRoutes.editBrandPattern) {
+    return accessChecker.canUpdateBrand();
   }
 
   if (definition.path == ProductsSidebarRoutes.list ||

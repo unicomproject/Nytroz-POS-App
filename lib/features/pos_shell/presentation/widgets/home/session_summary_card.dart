@@ -60,12 +60,16 @@ class SessionSummaryCard extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                   ),
-                  Text(
-                    value,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      value,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                          ),
+                    ),
                   ),
                   if (supporting != null)
                     Text(

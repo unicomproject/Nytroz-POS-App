@@ -19,8 +19,18 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
   @override
   PosNewSaleCartState build() => const PosNewSaleCartState();
 
+  void completeSale(String saleId) {
+    if (saleId.isEmpty) throw ArgumentError.value(saleId, 'saleId');
+    state = state.copyWith(completedSaleId: saleId);
+  }
+
+  void startNextSale() {
+    state = const PosNewSaleCartState();
+  }
+
   /// Restores a previously persisted offline New Sale cart (restart recovery).
   void restoreRecoveredSale(PosNewSaleCartState recovered) {
+    if (state.completedSaleId != null) return;
     if (!recovered.hasItems) return;
     state = recovered;
   }
@@ -29,6 +39,9 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
     PosNewSaleProduct product, {
     int quantity = 1,
   }) {
+    if (state.completedSaleId != null) {
+      return PosCartMutationResult.productUnavailable;
+    }
     if (state.hasDiscount) {
       return PosCartMutationResult.discountMustBeRemoved;
     }
@@ -63,7 +76,7 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
     required PosNewSaleProduct product,
     required int quantity,
   }) {
-    if (state.hasDiscount) return false;
+    if (state.completedSaleId != null || state.hasDiscount) return false;
     _upsertCartItem(product, quantity, replaceKey: cartLineKey);
     return true;
   }
@@ -116,6 +129,7 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
   }
 
   bool decreaseQuantity(String cartLineKey) {
+    if (state.completedSaleId != null) return false;
     if (state.hasDiscount) return false;
     final existingItem = state.items[cartLineKey];
     if (existingItem == null) {
@@ -139,6 +153,7 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
   }
 
   bool increaseQuantity(String cartLineKey) {
+    if (state.completedSaleId != null) return false;
     if (state.hasDiscount) return false;
     final existingItem = state.items[cartLineKey];
     if (existingItem == null) {
@@ -150,6 +165,7 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
   }
 
   bool removeItem(String cartLineKey) {
+    if (state.completedSaleId != null) return false;
     if (state.hasDiscount) return false;
     if (!state.items.containsKey(cartLineKey)) {
       return false;
@@ -165,6 +181,7 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
   }
 
   void clear() {
+    if (state.completedSaleId != null) return;
     if (!state.hasItems && state.selectedCustomer == null) {
       return;
     }
@@ -173,10 +190,12 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
   }
 
   void restore(PosNewSaleCartState cart) {
+    if (state.completedSaleId != null) return;
     state = cart;
   }
 
   void setCustomer(PosCustomer? customer) {
+    if (state.completedSaleId != null) return;
     state = state.copyWith(
       selectedCustomer: customer,
       selectedCustomerSet: true,
@@ -184,6 +203,7 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
   }
 
   void applyCartDiscount(PosCartDiscount discount) {
+    if (state.completedSaleId != null) return;
     if (!state.hasItems) {
       return;
     }
@@ -199,6 +219,7 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
     required String cartLineKey,
     required PosCartDiscount discount,
   }) {
+    if (state.completedSaleId != null) return;
     final item = state.items[cartLineKey];
     if (item == null) {
       return;
@@ -225,10 +246,12 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
       };
 
   void clearCartDiscount() {
+    if (state.completedSaleId != null) return;
     state = state.copyWith(cartDiscountSet: true);
   }
 
   void clearItemDiscount(String cartLineKey) {
+    if (state.completedSaleId != null) return;
     final item = state.items[cartLineKey];
     if (item == null || item.discount == null) {
       return;
@@ -240,6 +263,7 @@ class PosNewSaleCartNotifier extends Notifier<PosNewSaleCartState> {
   }
 
   void clearDiscounts() {
+    if (state.completedSaleId != null) return;
     final hasDiscountObjects = state.cartDiscount != null ||
         state.items.values.any((item) => item.discount != null);
     if (!state.hasDiscount && !hasDiscountObjects) {
@@ -262,12 +286,14 @@ class PosNewSaleCartState {
     this.selectedCustomer,
     this.cartDiscount,
     this.editableSaleId,
+    this.completedSaleId,
   });
 
   final Map<String, PosNewSaleCartItem> items;
   final PosCustomer? selectedCustomer;
   final PosCartDiscount? cartDiscount;
   final String? editableSaleId;
+  final String? completedSaleId;
 
   bool get hasItems => items.isNotEmpty;
 
@@ -343,6 +369,7 @@ class PosNewSaleCartState {
     bool cartDiscountSet = false,
     String? editableSaleId,
     bool editableSaleIdSet = false,
+    String? completedSaleId,
   }) {
     return PosNewSaleCartState(
       items: items ?? this.items,
@@ -350,6 +377,7 @@ class PosNewSaleCartState {
           selectedCustomerSet ? selectedCustomer : this.selectedCustomer,
       cartDiscount: cartDiscountSet ? cartDiscount : this.cartDiscount,
       editableSaleId: editableSaleIdSet ? editableSaleId : this.editableSaleId,
+      completedSaleId: completedSaleId ?? this.completedSaleId,
     );
   }
 }

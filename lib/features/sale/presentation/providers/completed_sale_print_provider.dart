@@ -37,6 +37,8 @@ class CompletedSalePrintState {
     this.message,
     this.auditPending = false,
     this.auditMessage,
+    this.pendingReceipts = const [],
+    this.pendingActionId,
   });
 
   final CompletedSalePrintStatus status;
@@ -46,6 +48,8 @@ class CompletedSalePrintState {
   final String? message;
   final bool auditPending;
   final String? auditMessage;
+  final List<PrintOperation> pendingReceipts;
+  final String? pendingActionId;
 
   bool get canRetryPrint =>
       status == CompletedSalePrintStatus.notConfigured ||
@@ -61,6 +65,9 @@ class CompletedSalePrintState {
     String? message,
     bool? auditPending,
     String? auditMessage,
+    List<PrintOperation>? pendingReceipts,
+    String? pendingActionId,
+    bool clearPendingAction = false,
   }) {
     return CompletedSalePrintState(
       status: status ?? this.status,
@@ -70,6 +77,9 @@ class CompletedSalePrintState {
       message: message ?? this.message,
       auditPending: auditPending ?? this.auditPending,
       auditMessage: auditMessage ?? this.auditMessage,
+      pendingReceipts: pendingReceipts ?? this.pendingReceipts,
+      pendingActionId:
+          clearPendingAction ? null : pendingActionId ?? this.pendingActionId,
     );
   }
 }
@@ -195,6 +205,27 @@ class CompletedSalePrintController
 
   Future<void> recoverPendingOperations() => _initialize();
 
+  Future<void> printPendingReceipt(PrintOperation operation) async {
+    final store = _store;
+    if (store == null || state.pendingActionId != null) return;
+    state = state.copyWith(pendingActionId: operation.operationId);
+    await store.remove(operation.operationId);
+    await _print(
+      operation.receipt,
+      requestId: _newRequestId(),
+      isRetry: true,
+    );
+    await _refreshPendingReceipts(clearPendingAction: true);
+  }
+
+  Future<void> removePendingReceipt(PrintOperation operation) async {
+    final store = _store;
+    if (store == null || state.pendingActionId != null) return;
+    state = state.copyWith(pendingActionId: operation.operationId);
+    await store.remove(operation.operationId);
+    await _refreshPendingReceipts(clearPendingAction: true);
+  }
+
   Future<void> confirmPrinted(PrintOperation operation) async {
     // This is an audit-only resolution of an ambiguous physical attempt. It
     // must have its own idempotency identity; reusing the original request ID
@@ -222,12 +253,17 @@ class CompletedSalePrintController
       final operations = await _store?.load() ?? const <PrintOperation>[];
       for (final operation in operations) {
         if (operation.state == PrintOperationState.pendingPrint) {
-          await _print(
-            operation.receipt,
-            requestId: operation.printRequestId,
-            isRetry: false,
-            durableOperation: operation,
-          );
+          // Legacy pending work is deliberately held for cashier confirmation.
+          // Printer reconnect, app restart and provider initialization must not
+          // cause an unattended physical print.
+          await _persist(operation.copyWith(
+            state: PrintOperationState.awaitingConfirmation,
+            failureCategory: 'operator_confirmation_required',
+            failureMessage: 'Confirm Print Now from Receipt History.',
+          ));
+        } else if (operation.state ==
+            PrintOperationState.awaitingConfirmation) {
+          continue;
         } else if (operation.state == PrintOperationState.printing) {
           await _reconcileInterrupted(operation);
         } else if (operation.state == PrintOperationState.pendingAudit ||
@@ -239,6 +275,7 @@ class CompletedSalePrintController
           _showUnknown(operation);
         }
       }
+      await _refreshPendingReceipts();
     } finally {
       _recovering = false;
     }
@@ -368,6 +405,8 @@ class CompletedSalePrintController
       return;
     }
 
+    final deferredForConfirmation = result == null &&
+        operation.state == PrintOperationState.awaitingConfirmation;
     operation = operation.copyWith(
       state: PrintOperationState.pendingAudit,
       audit: audit,
@@ -382,19 +421,26 @@ class CompletedSalePrintController
       await _submitAuditOnce(receipt.saleId, audit);
       await _persist(operation.copyWith(
         state: result == null
-            ? PrintOperationState.printFailedConfirmed
+            ? deferredForConfirmation
+                ? PrintOperationState.awaitingConfirmation
+                : PrintOperationState.printFailedConfirmed
             : PrintOperationState.completed,
       ));
     } catch (_) {
-      _pendingAudit = audit;
       await _persist(operation.copyWith(
-        state: PrintOperationState.auditFailed,
+        state: deferredForConfirmation
+            ? PrintOperationState.awaitingConfirmation
+            : PrintOperationState.auditFailed,
       ));
-      state = state.copyWith(
-        auditPending: true,
-        auditMessage: 'Print status audit pending. Receipt will not reprint.',
-      );
+      if (!deferredForConfirmation) {
+        _pendingAudit = audit;
+        state = state.copyWith(
+          auditPending: true,
+          auditMessage: 'Print status audit pending. Receipt will not reprint.',
+        );
+      }
     }
+    await _refreshPendingReceipts();
   }
 
   Future<void> _recoverAudit(PrintOperation operation) async {
@@ -521,7 +567,28 @@ class CompletedSalePrintController
     await _store?.upsert(operation);
   }
 
+  Future<void> _refreshPendingReceipts(
+      {bool clearPendingAction = false}) async {
+    final pending = (await _store?.load() ?? const <PrintOperation>[])
+        .where((operation) =>
+            operation.state == PrintOperationState.pendingPrint ||
+            operation.state == PrintOperationState.awaitingConfirmation)
+        .toList(growable: false)
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    state = state.copyWith(
+      pendingReceipts: pending,
+      clearPendingAction: clearPendingAction,
+    );
+  }
+
   PrintOperationState _durableFailureState(Object error) {
+    if (error is PrinterNotConfiguredException ||
+        error is PrinterConnectionException ||
+        error is LocalPrintAgentException &&
+            (error.type == LocalPrintAgentFailureType.unreachable ||
+                error.type == LocalPrintAgentFailureType.printerUnavailable)) {
+      return PrintOperationState.awaitingConfirmation;
+    }
     if (error is LocalPrintAgentException &&
         (error.type == LocalPrintAgentFailureType.timeout ||
             error.type == LocalPrintAgentFailureType.duplicate ||

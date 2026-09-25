@@ -134,6 +134,9 @@ class _TrackingRepo implements TenantProductRepository {
           List<int> bytes, String fileName, String mimeType) =>
       throw UnimplementedError();
   @override
+  Future<StagedImageResponseDto> stageImageFromUrl(String imageUrl) =>
+      throw UnimplementedError();
+  @override
   Future<ProductImageResponseDto> uploadProductImage(String productId,
           List<int> bytes, String fileName, String mimeType) =>
       throw UnimplementedError();

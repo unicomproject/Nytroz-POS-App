@@ -112,6 +112,8 @@ class OnlineOrderSummaryCard extends StatelessWidget {
     this.count,
     this.content,
     this.minHeight,
+    this.selected = false,
+    this.onTap,
     super.key,
   }) : assert(count != null || content != null);
 
@@ -121,16 +123,22 @@ class OnlineOrderSummaryCard extends StatelessWidget {
   final int? count;
   final Widget? content;
   final double? minHeight;
+  final bool selected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final color = semantic.color;
-    return Container(
+    final card = AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
       constraints: BoxConstraints(minHeight: minHeight ?? 0),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: .055),
-        border: Border.all(color: const Color(0xFFE1E7F0)),
+        color: color.withValues(alpha: selected ? .14 : .055),
+        border: Border.all(
+          color: selected ? color : const Color(0xFFE1E7F0),
+          width: selected ? 1.6 : 1,
+        ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -150,6 +158,9 @@ class OnlineOrderSummaryCard extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                  ),
                 ),
                 if (content case final content?)
                   content
@@ -165,6 +176,20 @@ class OnlineOrderSummaryCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+    if (onTap == null) return card;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: selected ? '$title filter selected' : 'Filter by $title',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: card,
+        ),
       ),
     );
   }

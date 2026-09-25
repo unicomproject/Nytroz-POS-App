@@ -178,18 +178,22 @@ class PosHomeSummaryState {
     required this.transactionCount,
     required this.refundAmount,
     required this.refundCount,
+    required this.returnsApplicable,
     required this.discountAmount,
+    required this.discountsApplicable,
     required this.netSalesAmount,
   });
 
   final String scope;
   final String currencyCode;
-  final double grossSalesAmount;
-  final int transactionCount;
-  final double refundAmount;
-  final int refundCount;
-  final double discountAmount;
-  final double netSalesAmount;
+  final double? grossSalesAmount;
+  final int? transactionCount;
+  final double? refundAmount;
+  final int? refundCount;
+  final bool returnsApplicable;
+  final double? discountAmount;
+  final bool discountsApplicable;
+  final double? netSalesAmount;
 }
 
 class PosHomeActionAccess {

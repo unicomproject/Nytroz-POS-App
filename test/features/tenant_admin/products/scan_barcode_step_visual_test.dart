@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/add_product_wizard_state.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/entities/scan_barcode_step_state.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/tenant_product_repository.dart';
@@ -102,6 +103,36 @@ void main() {
       );
       expect(find.text('Searching Product Data'), findsOneWidget);
       expect(find.textContaining('Searching product data'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('S1-F external found no overflow with dense fields',
+        (tester) async {
+      await pumpScan(
+        tester,
+        size: const Size(1024, 700),
+        scan: const ScanBarcodeStepState(
+          panel: ScanBarcodePanel.externalFound,
+          candidateBarcode: '5410976080428',
+          barcodeType: 'UNKNOWN',
+          identifierStandard: 'GTIN13',
+          externalSuggestion: ExternalProductSuggestionDto(
+            productName: 'The original seashells',
+            brandText: 'Guylian',
+            categoryText: 'Bonbons',
+            unitText: '65 g',
+            countryCode: 'AUSTRALIA',
+            shortDescription: 'Filled Belgian chocolates',
+            longDescription: 'Filled Belgian chocolates',
+            primaryGtin: '5410976080428',
+          ),
+        ),
+      );
+      expect(find.text('Product Found'), findsOneWidget);
+      expect(find.text('Use This Product'), findsOneWidget);
+      expect(find.text('Create Manually'), findsOneWidget);
+      expect(find.text('Back'), findsOneWidget);
+      expect(find.text('The original seashells'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 

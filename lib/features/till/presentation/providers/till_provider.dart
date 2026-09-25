@@ -4,7 +4,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../../../core/storage/secure_storage_provider.dart';
 import '../../../device_activation/domain/entities/pos_device_context.dart';
 import '../../application/usecases/open_till.dart';
-import '../../data/datasources/till_remote_datasource.dart';
+import '../../data/datasources/remote/till_remote_datasource.dart';
 import '../../data/datasources/till_session_storage.dart';
 import '../../data/repositories/till_repository_impl.dart';
 import '../../domain/entities/open_till.dart';
@@ -125,9 +125,19 @@ class TillController extends StateNotifier<TillState> {
       return true;
     } on TillException catch (error) {
       state = state.copyWith(
-        isSubmitting: false,
+        isSubmitting: error.code == 'till_session.already_open',
         errorMessage: error.message,
       );
+      if (error.code == 'till_session.already_open') {
+        final recovered = await refreshCurrentSession(
+            deviceContext: deviceContext, force: true);
+        if (recovered && state.hasOpenSession) return true;
+        // No session after a race is not success; keep the conflict visible.
+        if (state.errorMessage == null) {
+          state = state.copyWith(errorMessage: error.message);
+        }
+        state = state.copyWith(isSubmitting: false);
+      }
       return false;
     } catch (_) {
       state = state.copyWith(

@@ -7,8 +7,7 @@ void main() {
         home: Scaffold(body: Center(child: child)),
       );
 
-  testWidgets('uses canonical gradient and renders label and icons',
-      (tester) async {
+  testWidgets('uses theme primary and renders label and icons', (tester) async {
     await tester.pumpWidget(host(
       PosPrimaryActionButton(
         label: 'Continue',
@@ -22,7 +21,8 @@ void main() {
         .widgetList<AnimatedContainer>(find.byType(AnimatedContainer))
         .first
         .decoration as BoxDecoration;
-    expect(decoration.gradient, PosPrimaryActionTokens.gradient);
+    expect(decoration.gradient, isNull);
+    expect(decoration.color, ThemeData().colorScheme.primary);
     expect(find.text('Continue'), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
     expect(find.byIcon(Icons.arrow_forward), findsOneWidget);

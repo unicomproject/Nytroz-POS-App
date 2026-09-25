@@ -1,3 +1,4 @@
+import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../../cart/presentation/providers/pos_new_sale_cart_provider.dart';
@@ -31,11 +32,11 @@ class CustomerCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: hasCustomer
-                ? const Color(0xFFF0FDF4)
+                ? TenantAdminColors.successSurface
                 : PaymentMethodStyle.subtleBackground,
             border: Border.all(
               color: hasCustomer
-                  ? const Color(0xFFBBF7D0)
+                  ? TenantAdminColors.successBorder
                   : PaymentMethodStyle.border,
             ),
             borderRadius: BorderRadius.circular(10),
@@ -45,20 +46,20 @@ class CustomerCard extends StatelessWidget {
               CircleAvatar(
                 radius: 20,
                 backgroundColor: hasCustomer
-                    ? const Color(0xFFDCFCE7)
-                    : const Color(0xFFF1F5F9),
+                    ? TenantAdminColors.successSurface
+                    : TenantAdminColors.subtleBackground,
                 child: hasCustomer
                     ? Text(
                         initials,
                         style: const TextStyle(
-                          color: Color(0xFF15803D),
+                          color: TenantAdminColors.success,
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                         ),
                       )
                     : const Icon(
                         Icons.person_outline_rounded,
-                        color: Color(0xFF64748B),
+                        color: TenantAdminColors.mutedText,
                         size: 20,
                       ),
               ),
@@ -86,7 +87,7 @@ class CustomerCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: TenantAdminColors.mutedText,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -97,7 +98,7 @@ class CustomerCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: TenantAdminColors.mutedText,
                         ),
                       ),
                     ],
@@ -110,7 +111,7 @@ class CustomerCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFDCFCE7),
+                              color: TenantAdminColors.successSurface,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
@@ -118,7 +119,7 @@ class CustomerCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF15803D),
+                                color: TenantAdminColors.success,
                               ),
                             ),
                           ),
@@ -128,30 +129,30 @@ class CustomerCard extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF15803D),
+                                color: TenantAdminColors.success,
                               ),
                             ),
                           ],
                         ],
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'Tap to change customer',
-                        key: ValueKey('payment-customer-change-hint'),
+                        key: const ValueKey('payment-customer-change-hint'),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFFFF6A00),
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ] else ...[
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'Tap to select customer',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFFFF6A00),
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ],
@@ -161,13 +162,13 @@ class CustomerCard extends StatelessWidget {
               if (hasCustomer)
                 const Icon(
                   Icons.check_circle_rounded,
-                  color: Color(0xFF16A34A),
+                  color: TenantAdminColors.success,
                   size: 22,
                 ),
               const SizedBox(width: 6),
               const Icon(
                 Icons.chevron_right_rounded,
-                color: Color(0xFF64748B),
+                color: TenantAdminColors.mutedText,
                 size: 20,
               ),
             ],
@@ -206,10 +207,13 @@ class PaymentInfoCard extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 56),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: success ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC),
+          color: success
+              ? TenantAdminColors.successSurface
+              : TenantAdminColors.subtleBackground,
           border: Border.all(
-            color:
-                success ? const Color(0xFFBBF7D0) : PaymentMethodStyle.border,
+            color: success
+                ? TenantAdminColors.successBorder
+                : PaymentMethodStyle.border,
           ),
           borderRadius: BorderRadius.circular(10),
         ),
@@ -217,13 +221,15 @@ class PaymentInfoCard extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 16,
-              backgroundColor:
-                  success ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
+              backgroundColor: success
+                  ? TenantAdminColors.successSurface
+                  : TenantAdminColors.subtleBackground,
               child: Icon(
                 icon,
                 size: 18,
-                color:
-                    success ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                color: success
+                    ? TenantAdminColors.success
+                    : TenantAdminColors.mutedText,
               ),
             ),
             const SizedBox(width: 10),
@@ -240,7 +246,7 @@ class PaymentInfoCard extends StatelessWidget {
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: success
-                          ? const Color(0xFF16A34A)
+                          ? TenantAdminColors.success
                           : PaymentMethodStyle.navy,
                     ),
                   ),
@@ -250,7 +256,7 @@ class PaymentInfoCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF64748B),
+                      color: TenantAdminColors.mutedText,
                     ),
                   ),
                 ],
@@ -261,8 +267,9 @@ class PaymentInfoCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color:
-                    success ? const Color(0xFF16A34A) : PaymentMethodStyle.navy,
+                color: success
+                    ? TenantAdminColors.success
+                    : PaymentMethodStyle.navy,
               ),
             ),
           ],

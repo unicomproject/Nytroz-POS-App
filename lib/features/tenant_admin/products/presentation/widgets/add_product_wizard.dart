@@ -346,6 +346,7 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
                     if (isStep6 && state.isSubmitting) {
                       return;
                     }
+
                     final success = await controller.saveAndContinue();
                     if (success && context.mounted) {
                       if (isStep6) {

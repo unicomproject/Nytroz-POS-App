@@ -18,14 +18,26 @@ import 'package:nytroz_pos/features/tenant_admin/products/domain/repositories/te
 import 'package:nytroz_pos/features/tenant_admin/products/presentation/controllers/add_product_wizard_controller.dart';
 
 class _CreateTrackingRepo implements TenantProductRepository {
+  ExternalLookupProductBarcodeResponseDto? nextExternalLookupResponse;
+
   @override
   Future<ResolveProductBarcodeResponseDto> resolveBarcode(ResolveProductBarcodeRequestDto request) async {
-    throw UnimplementedError();
+    return const ResolveProductBarcodeResponseDto(
+      outcome: 'VALID_NO_LOCAL_MATCH',
+      normalizedBarcode: '5449000000996',
+      barcodeType: 'EAN-13',
+    );
   }
 
   @override
   Future<ExternalLookupProductBarcodeResponseDto> externalLookupBarcode({required String barcode, String? identifierStandard}) async {
-    throw UnimplementedError();
+    if (nextExternalLookupResponse != null) {
+      return nextExternalLookupResponse!;
+    }
+    return const ExternalLookupProductBarcodeResponseDto(
+      status: 'NO_MATCH',
+      retryAllowed: false,
+    );
   }
 
   @override
@@ -106,6 +118,9 @@ class _CreateTrackingRepo implements TenantProductRepository {
   @override
   Future<StagedImageResponseDto> stageImage(
           List<int> bytes, String fileName, String mimeType) =>
+      throw UnimplementedError();
+  @override
+  Future<StagedImageResponseDto> stageImageFromUrl(String imageUrl) =>
       throw UnimplementedError();
   @override
   Future<ProductImageResponseDto> uploadProductImage(String productId,
@@ -206,6 +221,61 @@ void main() {
       expect((assignments.first as Map)['productVariantId'], isNull);
       expect(payload['pricingTax'], isA<Map>());
       expect((payload['pricingTax'] as Map)['taxClassId'], 'tax-1');
+    });
+
+    test(
+        'Regression: SIMPLE + Track Inventory OFF still includes a unit id '
+        'in the wizard-create payload and the API call actually succeeds '
+        '(barcode-sourced Product final create root cause)', () async {
+      // This reproduces the exact real-world defect: a barcode-sourced
+      // (external-lookup) SIMPLE product, created with Track Inventory left
+      // off — the common/default case — used to silently skip Step 4
+      // (Product Unit), so neither `productUnitId` nor `baseUnitId` was ever
+      // included in the wizard-create payload. The backend
+      // (ValidateWizardCreateRequest) unconditionally requires one of them
+      // for SIMPLE regardless of Track Inventory, so POST wizard-create
+      // failed with 400 "Product unit is required for SIMPLE products." —
+      // AFTER the wizard had already shown "Step Saved" for every prior
+      // step, and with no visible symptom until the very last click.
+      await controller.initWizard();
+      controller.skipScanStepForTesting();
+      controller.updateProductName('No Inventory Simple Product');
+      controller.updateCategory('cat-1');
+      controller.updateInternalCode('NO-INV-001');
+      await controller.saveAndContinue();
+      controller.setProductStructure('SIMPLE');
+      // Track Inventory deliberately left OFF (the default / common case).
+      expect(controller.wizardState.trackInventory, isFalse);
+      await controller.saveAndContinue();
+      // Step 4 (Product Unit) must not be skipped just because Track
+      // Inventory is off.
+      expect(controller.wizardState.currentStep, 4);
+      controller.selectUnitModel('SINGLE_UNIT');
+      controller.setProductUnit('unit-1');
+      await controller.saveAndContinue();
+      expect(controller.wizardState.currentStep, 5);
+      controller.updateSimpleBaseSku('NO-INV-001');
+      await controller.saveAndContinue();
+      controller.updateStandardSellingPrice(100);
+      controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
+      await controller.saveAndContinue();
+      expect(controller.wizardState.currentStep, 7);
+
+      final payload = WizardProductCreateMapper.toWizardCreateJson(
+        controller.wizardState,
+        idempotencyKey: 'idem-no-inv',
+      );
+      expect(
+        payload['productUnitId'] ?? payload['baseUnitId'],
+        isNotNull,
+        reason: 'Backend requires productUnitId/baseUnitId for every SIMPLE '
+            'product regardless of trackInventory — omitting it caused the '
+            'original silent create failure.',
+      );
+
+      expect(await controller.createProductFromWizard(), isTrue);
+      expect(repo.createFromWizardCallCount, 1);
+      expect(controller.wizardState.productId, isNotNull);
     });
 
     test('2/3. double submit ignored while submitting; one create call',
@@ -349,6 +419,177 @@ void main() {
       controller.setTrackingMethod('SKIP');
       await controller.saveAndContinue();
       expect(controller.wizardState.currentStep, 6);
+    });
+
+    test('19. mapped category preselected and kept sends mapped categoryId and mapping context', () async {
+      await controller.initWizard();
+      repo.nextExternalLookupResponse = const ExternalLookupProductBarcodeResponseDto(
+        status: 'FOUND',
+        retryAllowed: false,
+        suggestion: ExternalProductSuggestionDto(
+          productName: 'Cola 500ml',
+          brandText: 'Coca Cola',
+          categoryText: 'Beverages, Soft drinks',
+          externalCategoryKey: 'en:colas',
+          externalCategoryName: 'Colas',
+        ),
+        categoryResolution: TenantCategoryResolutionDto(
+          provider: 'openfoodfacts',
+          externalCategoryKey: 'en:colas',
+          externalCategoryName: 'Colas',
+          mappedCategory: TenantCategoryCandidateDto(
+            id: 'cat-1',
+            name: 'Apparel',
+            code: 'CAT1',
+            matchType: 'SAVED_MAPPING',
+          ),
+          suggestions: [],
+        ),
+      );
+
+      await controller.submitScanCandidate('5449000000996');
+      await controller.runExternalLookup();
+      await controller.continueUseThisProduct();
+
+      // Category is automatically preselected to 'cat-1'
+      expect(controller.wizardState.categoryId, 'cat-1');
+
+      // Complete wizard to step 7
+      controller.updateInternalCode('COLA-001');
+      await controller.saveAndContinue();
+      controller.setProductStructure('SIMPLE');
+      await controller.saveAndContinue();
+      controller.selectUnitModel('SINGLE_UNIT');
+      controller.setProductUnit('unit-1');
+      await controller.saveAndContinue();
+      controller.updateSimpleBaseSku('COLA-001');
+      await controller.saveAndContinue();
+      controller.updateStandardSellingPrice(2.50);
+      controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
+      await controller.saveAndContinue();
+
+      expect(await controller.createProductFromWizard(), isTrue);
+      expect(repo.createFromWizardCallCount, 1);
+      final payload = repo.lastWizardPayload!;
+      expect(payload['categoryId'], 'cat-1');
+      expect(payload.containsKey('tenantId'), isFalse);
+      expect(payload['externalCategoryMappingContext'], isNotNull);
+      final mapping = payload['externalCategoryMappingContext'] as Map;
+      expect(mapping['provider'], 'openfoodfacts');
+      expect(mapping['externalCategoryKey'], 'en:colas');
+      expect(mapping['externalCategoryName'], 'Colas');
+    });
+
+    test('20. mapped category preselected and user overrides sends user categoryId and original mapping context', () async {
+      await controller.initWizard();
+      repo.nextExternalLookupResponse = const ExternalLookupProductBarcodeResponseDto(
+        status: 'FOUND',
+        retryAllowed: false,
+        suggestion: ExternalProductSuggestionDto(
+          productName: 'Cola 500ml',
+          brandText: 'Coca Cola',
+          categoryText: 'Beverages, Soft drinks',
+          externalCategoryKey: 'en:colas',
+          externalCategoryName: 'Colas',
+        ),
+        categoryResolution: TenantCategoryResolutionDto(
+          provider: 'openfoodfacts',
+          externalCategoryKey: 'en:colas',
+          externalCategoryName: 'Colas',
+          mappedCategory: TenantCategoryCandidateDto(
+            id: 'cat-1',
+            name: 'Apparel',
+            code: 'CAT1',
+            matchType: 'SAVED_MAPPING',
+          ),
+          suggestions: [],
+        ),
+      );
+
+      await controller.submitScanCandidate('5449000000996');
+      await controller.runExternalLookup();
+      await controller.continueUseThisProduct();
+
+      // User changes dropdown to an override category
+      controller.updateCategory('cat-override-2');
+      expect(controller.wizardState.categoryId, 'cat-override-2');
+
+      // Complete wizard to step 7
+      controller.updateInternalCode('COLA-001');
+      await controller.saveAndContinue();
+      controller.setProductStructure('SIMPLE');
+      await controller.saveAndContinue();
+      controller.selectUnitModel('SINGLE_UNIT');
+      controller.setProductUnit('unit-1');
+      await controller.saveAndContinue();
+      controller.updateSimpleBaseSku('COLA-001');
+      await controller.saveAndContinue();
+      controller.updateStandardSellingPrice(2.50);
+      controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
+      await controller.saveAndContinue();
+
+      expect(await controller.createProductFromWizard(), isTrue);
+      final payload = repo.lastWizardPayload!;
+      // Crucial: CategoryId must be the overridden categoryId!
+      expect(payload['categoryId'], 'cat-override-2');
+      expect(payload.containsKey('tenantId'), isFalse);
+      final mapping = payload['externalCategoryMappingContext'] as Map;
+      expect(mapping['provider'], 'openfoodfacts');
+      expect(mapping['externalCategoryKey'], 'en:colas');
+    });
+
+    test('21. startFreshWizard clears externalCategoryMappingContext for next product', () async {
+      await controller.initWizard();
+      repo.nextExternalLookupResponse = const ExternalLookupProductBarcodeResponseDto(
+        status: 'FOUND',
+        retryAllowed: false,
+        suggestion: ExternalProductSuggestionDto(
+          productName: 'Cola 500ml',
+          externalCategoryKey: 'en:colas',
+          externalCategoryName: 'Colas',
+        ),
+        categoryResolution: TenantCategoryResolutionDto(
+          provider: 'openfoodfacts',
+          externalCategoryKey: 'en:colas',
+          externalCategoryName: 'Colas',
+          mappedCategory: TenantCategoryCandidateDto(
+            id: 'cat-1',
+            name: 'Apparel',
+            code: 'CAT1',
+            matchType: 'SAVED_MAPPING',
+          ),
+          suggestions: [],
+        ),
+      );
+
+      await controller.submitScanCandidate('5449000000996');
+      await controller.runExternalLookup();
+      await controller.continueUseThisProduct();
+
+      controller.updateInternalCode('COLA-001');
+      await controller.saveAndContinue();
+      controller.setProductStructure('SIMPLE');
+      await controller.saveAndContinue();
+      controller.selectUnitModel('SINGLE_UNIT');
+      controller.setProductUnit('unit-1');
+      await controller.saveAndContinue();
+      controller.updateSimpleBaseSku('COLA-001');
+      await controller.saveAndContinue();
+      controller.updateStandardSellingPrice(2.50);
+      controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
+      await controller.saveAndContinue();
+
+      expect(await controller.createProductFromWizard(), isTrue);
+
+      // Start fresh wizard for next product
+      await controller.startFreshWizard();
+      expect(controller.wizardState.scanStepState.categoryResolution, isNull);
+
+      // Fill and create non-external product
+      await fillSimpleToStep7();
+      expect(await controller.createProductFromWizard(), isTrue);
+      final nextPayload = repo.lastWizardPayload!;
+      expect(nextPayload.containsKey('externalCategoryMappingContext'), isFalse);
     });
   });
 }

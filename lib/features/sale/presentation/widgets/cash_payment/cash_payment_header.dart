@@ -104,8 +104,12 @@ class _TillStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = isOpen ? TenantAdminColors.success : TenantAdminColors.danger;
-    final bg = isOpen ? const Color(0xFFEFFAF3) : const Color(0xFFFFF1F2);
-    final border = isOpen ? const Color(0xFFBBE7C8) : const Color(0xFFFBCACA);
+    final bg = isOpen
+        ? TenantAdminColors.successSurface
+        : TenantAdminColors.dangerSurface;
+    final border = isOpen
+        ? TenantAdminColors.successBorder
+        : TenantAdminColors.dangerBorder;
 
     return Container(
       height: 36,

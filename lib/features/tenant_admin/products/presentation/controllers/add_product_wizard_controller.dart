@@ -28,6 +28,7 @@ import '../../domain/utils/variant_combination_generator.dart';
 import '../../domain/repositories/product_wizard_draft_local_repository.dart';
 import '../../domain/repositories/tenant_product_repository.dart';
 import '../../domain/usecases/get_product_setup.dart';
+import '../../../brands/domain/entities/brand.dart';
 
 class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   AddProductWizardController(
@@ -58,6 +59,28 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   void skipScanStepForTesting() {
     assert(state.currentStep == 1, 'skipScanStepForTesting called from step ${state.currentStep}');
     state = state.copyWith(currentStep: 2, lastCompletedSetupStep: 1);
+  }
+
+  /// Seeds S1-F external found state for Use This Product image carry-over tests.
+  @visibleForTesting
+  void seedExternalFoundForTesting({
+    required ExternalProductSuggestionDto suggestion,
+    String barcode = '5000168003887',
+    TenantCategoryResolutionDto? categoryResolution,
+    TenantBrandResolutionDto? brandResolution,
+  }) {
+    state = state.copyWith(
+      scanStepState: state.scanStepState.copyWith(
+        panel: ScanBarcodePanel.externalFound,
+        candidateBarcode: barcode,
+        barcodeType: 'UNKNOWN',
+        identifierStandard: 'GTIN13',
+        externalStatus: 'FOUND',
+        externalSuggestion: suggestion,
+        categoryResolution: categoryResolution,
+        brandResolution: brandResolution,
+      ),
+    );
   }
 
   void clearPageError() {
@@ -206,6 +229,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         clearLocalMatch: true,
         clearExternalSuggestion: true,
         clearExternalStatus: true,
+        clearCategoryResolution: true,
+        clearBrandResolution: true,
         clearLastError: true,
         clearInvalidReason: true,
       ),
@@ -219,6 +244,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         panel: ScanBarcodePanel.noLocalMatch,
         clearExternalSuggestion: true,
         clearExternalStatus: true,
+        clearCategoryResolution: true,
+        clearBrandResolution: true,
         clearLastError: true,
         isBusy: false,
       ),
@@ -355,6 +382,10 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         clearLastError: true,
         clearInvalidReason: true,
         clearLocalMatch: true,
+        clearExternalSuggestion: true,
+        clearExternalStatus: true,
+        clearCategoryResolution: true,
+        clearBrandResolution: true,
       ),
     );
 
@@ -477,6 +508,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
             externalSuggestion: response.suggestion,
             externalSourceReference: response.sourceReference,
             externalRetryAllowed: response.retryAllowed,
+            categoryResolution: response.categoryResolution,
+            brandResolution: response.brandResolution,
             isBusy: false,
           ),
         );
@@ -489,6 +522,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
             panel: ScanBarcodePanel.noLocalMatch,
             externalStatus: response.status,
             externalRetryAllowed: response.retryAllowed,
+            clearCategoryResolution: true,
+        clearBrandResolution: true,
             lastError: 'External lookup temporarily unavailable. You can retry or continue manually.',
             isBusy: false,
           ),
@@ -502,6 +537,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           externalStatus: response.status,
           externalRetryAllowed: response.retryAllowed,
           clearExternalSuggestion: true,
+          clearCategoryResolution: true,
+        clearBrandResolution: true,
           isBusy: false,
         ),
       );
@@ -512,6 +549,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           scanStepState: state.scanStepState.copyWith(
             panel: ScanBarcodePanel.externalNoMatch,
             clearExternalSuggestion: true,
+            clearCategoryResolution: true,
+        clearBrandResolution: true,
             isBusy: false,
             clearLastError: true,
           ),
@@ -520,6 +559,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         state = state.copyWith(
           scanStepState: state.scanStepState.copyWith(
             panel: ScanBarcodePanel.noLocalMatch,
+            clearCategoryResolution: true,
+        clearBrandResolution: true,
             lastError: msg,
             isBusy: false,
           ),
@@ -532,6 +573,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           scanStepState: state.scanStepState.copyWith(
             panel: ScanBarcodePanel.externalNoMatch,
             clearExternalSuggestion: true,
+            clearCategoryResolution: true,
+        clearBrandResolution: true,
             isBusy: false,
             clearLastError: true,
           ),
@@ -540,6 +583,8 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         state = state.copyWith(
           scanStepState: state.scanStepState.copyWith(
             panel: ScanBarcodePanel.noLocalMatch,
+            clearCategoryResolution: true,
+        clearBrandResolution: true,
             lastError: msg,
             isBusy: false,
           ),
@@ -657,6 +702,12 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         candidateBarcode: includeCandidate ? scan.candidateBarcode : null,
         barcodeType: includeCandidate ? scan.barcodeType : null,
       );
+
+      // Spec §24: external imageCandidate → server-side fetch/stage (non-fatal).
+      final imageCandidate = prefill?.imageCandidate?.trim();
+      if (imageCandidate != null && imageCandidate.isNotEmpty) {
+        await _stageExternalImageCandidate(imageCandidate);
+      }
     } catch (e) {
       state = state.copyWith(
         isSavingDraft: false,
@@ -665,6 +716,51 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           lastError: e.toString(),
         ),
       );
+    }
+  }
+
+  /// Stages an external suggestion image via backend fetch. Failures are ignored
+  /// so Product Setup continues without an image (PS1-T22).
+  Future<void> _stageExternalImageCandidate(String imageUrl) async {
+    try {
+      final stagedDto = await _repository.stageImageFromUrl(imageUrl);
+      final isFirst = state.stagedMediaAssets.isEmpty;
+      final newStaged = StagedProductImage(
+        mediaAssetId: stagedDto.mediaAssetId,
+        publicUrl: stagedDto.publicUrl,
+        fileName: stagedDto.fileName,
+        mimeType: stagedDto.mimeType,
+        fileSizeBytes: stagedDto.fileSizeBytes,
+        createdAt: stagedDto.createdAt,
+        status: stagedDto.status,
+        isPrimary: isFirst,
+        sortOrder: state.stagedMediaAssets.length + 1,
+      );
+
+      final updatedList =
+          List<StagedProductImage>.from(state.stagedMediaAssets)..add(newStaged);
+
+      final wizardImages = updatedList.map((e) {
+        return ProductWizardImageItem(
+          id: e.mediaAssetId,
+          mediaAssetId: e.mediaAssetId,
+          imageUrl: e.publicUrl ?? '',
+          fileName: e.fileName,
+          isPrimary: e.isPrimary,
+          sortOrder: e.sortOrder,
+          isStaged: true,
+          bytes: e.bytes,
+        );
+      }).toList();
+
+      state = state.copyWith(
+        stagedMediaAssets: updatedList,
+        productImages: wizardImages,
+        primaryImageId: isFirst ? stagedDto.mediaAssetId : state.primaryImageId,
+        isDirty: true,
+      );
+    } catch (_) {
+      // Non-fatal: continue to Basic Details without the external image.
     }
   }
 
@@ -726,6 +822,32 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
           parentBarcodeType: barcodeType,
         ),
       );
+    }
+
+    // Category resolution preselect: If backend returned mappedCategory,
+    // preselect categoryId ONLY if present in current tenant createOptions categories.
+    final mappedCat = state.scanStepState.categoryResolution?.mappedCategory;
+    if (mappedCat != null && mappedCat.id.isNotEmpty) {
+      final categoryExists = next.createOptions?.categories.any((c) => c.id == mappedCat.id) ?? false;
+      if (categoryExists) {
+        final updatedErrors = Map<String, String>.from(next.fieldErrors)
+          ..remove('categoryId');
+        next = next.copyWith(
+          categoryId: mappedCat.id,
+          fieldErrors: updatedErrors,
+        );
+      }
+    }
+
+    // Brand resolution preselect: If backend returned mappedBrand, preselect
+    // brandId ONLY if present in current tenant createOptions brands. Remains
+    // user-editable afterward — this is a suggestion, never authoritative.
+    final mappedBrand = state.scanStepState.brandResolution?.mappedBrand;
+    if (mappedBrand != null && mappedBrand.id.isNotEmpty) {
+      final brandExists = next.createOptions?.brands.any((b) => b.id == mappedBrand.id) ?? false;
+      if (brandExists) {
+        next = next.copyWith(brandId: mappedBrand.id);
+      }
     }
 
     state = next;
@@ -1115,6 +1237,22 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     );
   }
 
+  /// Applies a Brand created via the Quick Add drawer: refreshes the canonical
+  /// create-options list (so the new Brand appears in the dropdown/options like
+  /// any other tenant Brand) and selects it as the wizard's final BrandId. The
+  /// Brand itself is already persisted (a deliberate Tenant Master Data action)
+  /// independent of whether this product create ultimately succeeds.
+  Future<void> applyQuickAddedBrand(Brand brand) async {
+    try {
+      final options = await _repository.getCreateOptions();
+      state = state.copyWith(createOptions: options);
+    } catch (_) {
+      // Non-fatal: the Brand was already created successfully server-side.
+      // Selecting it below remains valid even if this refresh failed.
+    }
+    updateBrand(brand.id);
+  }
+
   void updateShortDescription(String val) {
     state = state.copyWith(
       shortDescription: val,
@@ -1233,6 +1371,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
     bool? batchTracking,
     bool? expiryTracking,
     bool? serialTracking,
+    bool forContinue = false,
   }) {
     return InitialTrackingCompatibility.evaluate(
       productStructure: productStructure ?? state.productStructure,
@@ -1243,6 +1382,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       batch: state.initialBatchNumber,
       expiry: state.initialExpiryDate,
       serial: state.initialSerialNumber,
+      forContinue: forContinue,
     );
   }
 
@@ -2536,10 +2676,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
         expiryTracking: false,
         serialTracking: false,
       );
-      final plan = previewTrackingClear();
-      if (plan.requiresConfirmation) {
-        applyInitialTrackingPlan(plan, confirmed: true);
-      }
+      // Keep Initial Tracking field values when skipping tracking configuration.
     }
     
     if (state.currentStep == 5) {

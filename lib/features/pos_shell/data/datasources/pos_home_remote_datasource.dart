@@ -317,11 +317,7 @@ class PosHomeDashboardPayload {
       businessLogoUrl: businessLogoUrl,
       deviceName: _string(device['name']),
       deviceStatus: _string(device['status']),
-      summary: summary.isEmpty
-          ? PosHomeSummaryPayload.zero(
-              currencyCode: _string(till['currencyCode'], fallback: 'LKR'),
-            )
-          : PosHomeSummaryPayload.fromJson(summary),
+      summary: summary.isEmpty ? null : PosHomeSummaryPayload.fromJson(summary),
     );
   }
 
@@ -458,50 +454,49 @@ class PosHomeSummaryPayload {
     required this.transactionCount,
     required this.refundAmount,
     required this.refundCount,
+    required this.returnsApplicable,
     required this.discountAmount,
+    required this.discountsApplicable,
     required this.netSalesAmount,
   });
 
   final String scope;
   final String currencyCode;
-  final double grossSalesAmount;
-  final int transactionCount;
-  final double refundAmount;
-  final int refundCount;
-  final double discountAmount;
-  final double netSalesAmount;
-
-  factory PosHomeSummaryPayload.zero({required String currencyCode}) {
-    return PosHomeSummaryPayload(
-      scope: 'CURRENT_TILL_SESSION',
-      currencyCode: currencyCode,
-      grossSalesAmount: 0,
-      transactionCount: 0,
-      refundAmount: 0,
-      refundCount: 0,
-      discountAmount: 0,
-      netSalesAmount: 0,
-    );
-  }
+  final double? grossSalesAmount;
+  final int? transactionCount;
+  final double? refundAmount;
+  final int? refundCount;
+  final bool returnsApplicable;
+  final double? discountAmount;
+  final bool discountsApplicable;
+  final double? netSalesAmount;
 
   factory PosHomeSummaryPayload.fromJson(Map<String, dynamic> json) {
     return PosHomeSummaryPayload(
       scope: json['scope']?.toString() ?? 'CURRENT_TILL_SESSION',
       currencyCode: json['currencyCode']?.toString() ?? '',
-      grossSalesAmount: _number(json['grossSalesAmount']),
-      transactionCount: _whole(json['transactionCount']),
-      refundAmount: _number(json['refundAmount']),
-      refundCount: _whole(json['refundCount']),
-      discountAmount: _number(json['discountAmount']),
-      netSalesAmount: _number(json['netSalesAmount']),
+      grossSalesAmount: _nullableNumber(json['grossSalesAmount']),
+      transactionCount: _nullableWhole(json['transactionCount']),
+      refundAmount: _nullableNumber(json['refundAmount']),
+      refundCount: _nullableWhole(json['refundCount']),
+      returnsApplicable: json['returnsApplicable'] == true,
+      discountAmount: _nullableNumber(json['discountAmount']),
+      discountsApplicable: json['discountsApplicable'] == true,
+      netSalesAmount: _nullableNumber(json['netSalesAmount']),
     );
   }
 
-  static double _number(Object? value) =>
-      value is num ? value.toDouble() : double.tryParse('$value') ?? 0;
+  static double? _nullableNumber(Object? value) => value == null
+      ? null
+      : value is num
+          ? value.toDouble()
+          : double.tryParse('$value');
 
-  static int _whole(Object? value) =>
-      value is num ? value.toInt() : int.tryParse('$value') ?? 0;
+  static int? _nullableWhole(Object? value) => value == null
+      ? null
+      : value is num
+          ? value.toInt()
+          : int.tryParse('$value');
 }
 
 class PosHomeCardsPayload {

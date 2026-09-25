@@ -16,13 +16,41 @@ void main() {
     final controller = container.read(posOnlineOrdersProvider.notifier);
 
     await controller.select('order-1');
+    expect(container.read(posOnlineOrdersProvider).selected?.order.status, 'NEW');
+    expect(
+        container.read(posOnlineOrdersProvider).selected?.fulfillmentVersion, 5);
+
     final result = await controller.startFulfillment('order-1');
 
     expect(result, isNotNull);
     expect(repository.startCalls, 1);
+    expect(repository.listCalls, greaterThanOrEqualTo(1));
     expect(repository.startedOrderId, 'order-1');
     expect(repository.startedOutletId, 'outlet-a');
     expect(repository.expectedVersion, 5);
+    final state = container.read(posOnlineOrdersProvider);
+    expect(state.selected?.fulfillmentStatus, 'PICKING');
+    expect(state.selected?.order.status, 'PREPARING');
+    expect(state.selected?.order.statusLabel, 'Preparing');
+    expect(state.selected?.fulfillmentVersion, 6);
+    expect(state.isStartingFulfillment, isFalse);
+  });
+
+  test('missing fulfillmentVersion blocks Start before POST', () async {
+    final repository = _FakeRepository(missingVersion: true);
+    final container = _container(repository);
+    addTearDown(container.dispose);
+    final controller = container.read(posOnlineOrdersProvider.notifier);
+
+    await controller.select('order-1');
+    final result = await controller.startFulfillment('order-1');
+
+    expect(result, isNull);
+    expect(repository.startCalls, 0);
+    expect(
+      container.read(posOnlineOrdersProvider).detailErrorMessage,
+      contains('fulfilment version'),
+    );
   });
 
   test('409 refreshes authoritative detail and does not return false success',
@@ -71,13 +99,20 @@ ProviderContainer _container(_FakeRepository repository) => ProviderContainer(
     );
 
 class _FakeRepository implements PosOnlineOrdersRepository {
-  _FakeRepository({this.conflict = false, this.delayOrderA = false});
+  _FakeRepository({
+    this.conflict = false,
+    this.delayOrderA = false,
+    this.missingVersion = false,
+  });
 
   final bool conflict;
   final bool delayOrderA;
+  final bool missingVersion;
   final Completer<void> _orderAGate = Completer<void>();
   int startCalls = 0;
   int detailCalls = 0;
+  int listCalls = 0;
+  bool _started = false;
   String? startedOutletId;
   String? startedOrderId;
   int? expectedVersion;
@@ -94,12 +129,24 @@ class _FakeRepository implements PosOnlineOrdersRepository {
   }) async {
     detailCalls++;
     if (delayOrderA && orderId == 'order-a') await _orderAGate.future;
+    if (missingVersion) {
+      return _detail(
+        orderId: orderId,
+        displayStatus: 'PENDING_CONFIRMATION',
+        displayLabel: 'Pending Confirmation',
+        fulfillmentStatus: 'PENDING',
+        version: null,
+      );
+    }
+    final afterStart = _started || (conflict && detailCalls > 1);
     return _detail(
       orderId: orderId,
-      status: conflict && detailCalls > 1 ? 'PICKING' : 'PENDING',
+      displayStatus: afterStart ? 'PREPARING' : 'NEW',
+      displayLabel: afterStart ? 'Preparing' : 'New',
+      fulfillmentStatus: afterStart ? 'PICKING' : 'PENDING',
       version: delayOrderA && orderId == 'order-b'
           ? 22
-          : conflict && detailCalls > 1
+          : afterStart
               ? 6
               : 5,
     );
@@ -118,13 +165,14 @@ class _FakeRepository implements PosOnlineOrdersRepository {
     this.expectedVersion = expectedVersion;
     if (conflict) {
       throw DioException(
-        requestOptions: RequestOptions(path: '/fulfilment/start'),
+        requestOptions: RequestOptions(path: '/fulfillment/start'),
         response: Response<void>(
-          requestOptions: RequestOptions(path: '/fulfilment/start'),
+          requestOptions: RequestOptions(path: '/fulfillment/start'),
           statusCode: 409,
         ),
       );
     }
+    _started = true;
     return const PosStartFulfillmentResult(
       orderId: 'order-1',
       fulfillmentOrderId: 'fulfillment-1',
@@ -138,24 +186,53 @@ class _FakeRepository implements PosOnlineOrdersRepository {
   Future<PosOnlineOrderPage> list(
     PosOnlineOrdersQuery query, {
     CancelToken? cancelToken,
-  }) async =>
-      const PosOnlineOrderPage(
-        items: [],
-        summary: PosOnlineOrderSummary(
-          total: 0,
-          pending: 0,
-          preparing: 0,
-          ready: 0,
-          overdue: 0,
-          newOrders: 0,
-          collected: 0,
-          cancelled: 0,
-        ),
-        page: 1,
-        pageSize: 20,
-        totalCount: 0,
-        totalPages: 0,
-      );
+  }) async {
+    listCalls++;
+    return PosOnlineOrderPage(
+      items: [
+        if (_started)
+          const PosOnlineOrder(
+            id: 'order-1',
+            orderNumber: 'ORDER-1',
+            customerName: 'Customer',
+            status: 'PREPARING',
+            statusLabel: 'Preparing',
+            paymentStatus: 'PAID',
+            currencyCode: 'LKR',
+            totalAmount: 100,
+            lineCount: 1,
+            unitCount: 1,
+          )
+        else
+          const PosOnlineOrder(
+            id: 'order-1',
+            orderNumber: 'ORDER-1',
+            customerName: 'Customer',
+            status: 'NEW',
+            statusLabel: 'New',
+            paymentStatus: 'PAID',
+            currencyCode: 'LKR',
+            totalAmount: 100,
+            lineCount: 1,
+            unitCount: 1,
+          ),
+      ],
+      summary: PosOnlineOrderSummary(
+        total: 1,
+        pending: 0,
+        preparing: _started ? 1 : 0,
+        ready: 0,
+        overdue: 0,
+        newOrders: _started ? 0 : 1,
+        collected: 0,
+        cancelled: 0,
+      ),
+      page: 1,
+      pageSize: 20,
+      totalCount: 1,
+      totalPages: 1,
+    );
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -163,16 +240,18 @@ class _FakeRepository implements PosOnlineOrdersRepository {
 
 PosOnlineOrderDetail _detail({
   String orderId = 'order-1',
-  required String status,
-  required int version,
+  required String displayStatus,
+  required String displayLabel,
+  required String fulfillmentStatus,
+  required int? version,
 }) =>
     PosOnlineOrderDetail(
       order: PosOnlineOrder(
         id: orderId,
         orderNumber: orderId.toUpperCase(),
         customerName: 'Customer',
-        status: 'ACCEPTED',
-        statusLabel: 'Accepted',
+        status: displayStatus,
+        statusLabel: displayLabel,
         paymentStatus: 'PAID',
         currencyCode: 'LKR',
         totalAmount: 100,
@@ -188,7 +267,7 @@ PosOnlineOrderDetail _detail({
       charges: 0,
       paid: 100,
       balanceDue: 0,
-      fulfillmentStatus: status,
+      fulfillmentStatus: fulfillmentStatus,
       fulfillmentVersion: version,
       lines: const [],
     );

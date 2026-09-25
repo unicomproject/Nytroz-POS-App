@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../../core/access/effective_permission_set.dart';
 import '../../../../../core/access/permission_access_providers.dart';
@@ -34,6 +37,7 @@ class _PosNotificationsDialog extends ConsumerWidget {
       PosPermissionCodes.notificationsMessagesList,
     );
     final state = ref.watch(posNotificationsProvider);
+    final unreadCount = state.asData?.value.unreadCount ?? 0;
 
     return AlertDialog(
       title: const Text('Notifications'),
@@ -74,6 +78,16 @@ class _PosNotificationsDialog extends ConsumerWidget {
               ),
       ),
       actions: [
+        if (canList && unreadCount > 0)
+          TextButton(
+            onPressed: () async {
+              await ref
+                  .read(posNotificationsRemoteDatasourceProvider)
+                  .markAllRead();
+              ref.invalidate(posNotificationsProvider);
+            },
+            child: const Text('Mark all read'),
+          ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Close'),
@@ -84,8 +98,11 @@ class _PosNotificationsDialog extends ConsumerWidget {
 }
 
 /// Whether a notification row has any permitted presentational field.
-/// Action-only rows are omitted: open/mark-read/dismiss have no API surface
-/// in Chunk 9 Flutter (no gesture/action widgets invented).
+/// Mark-read/dismiss are still omitted: no API surface for them on the POS
+/// notifications endpoint. Tapping a row to open the order it refers to is
+/// supported (see [_NotificationTile]) and needs no additional permission
+/// beyond seeing the row itself — the backend already scopes which
+/// notifications a cashier receives to what they're allowed to view.
 bool notificationRowHasVisibleContent(
   PosNotificationItem item,
   EffectivePermissionSet permissions,
@@ -96,8 +113,8 @@ bool notificationRowHasVisibleContent(
   final canBody = permissions.hasPermission(
     PosPermissionCodes.notificationsMessagesBody,
   );
-  // Timestamp / open / mark-read / dismiss / mark-all-read: no dedicated
-  // presentation or action widgets in current panel (no API). Not invented.
+  // Timestamp / dismiss: no dedicated presentation or action widgets in
+  // current panel (no API). Not invented.
   return (canTitle && item.title.trim().isNotEmpty) ||
       (canBody && item.body.trim().isNotEmpty);
 }
@@ -126,7 +143,6 @@ class _NotificationTile extends ConsumerWidget {
     ];
 
     // Denied title/body must not appear in Semantics / Tooltip / offstage.
-    // Open/mark-read/dismiss: no Flutter action surface or API in Chunk 9.
     return Semantics(
       container: true,
       label: semanticParts.isEmpty ? 'Notification' : semanticParts.join('. '),
@@ -145,8 +161,32 @@ class _NotificationTile extends ConsumerWidget {
                 overflow: TextOverflow.ellipsis,
               )
             : null,
-        onTap: null,
+        trailing: item.isOnlineOrderNotification
+            ? const Icon(Icons.chevron_right_rounded)
+            : null,
+        onTap: () => _handleTap(context),
       ),
     );
+  }
+
+  void _handleTap(BuildContext context) {
+    // Read the container directly (rather than this tile's own WidgetRef)
+    // so the pending mark-read call is unaffected by the dialog — and this
+    // tile — closing and disposing as part of the same tap when navigating.
+    final container = ProviderScope.containerOf(context, listen: false);
+
+    if (item.isOnlineOrderNotification) {
+      Navigator.of(context).pop();
+      context.push('/pos/online-orders/${item.sourceReferenceId}');
+    }
+
+    if (!item.isRead) {
+      unawaited(
+        container
+            .read(posNotificationsRemoteDatasourceProvider)
+            .markRead(item.id)
+            .then((_) => container.invalidate(posNotificationsProvider)),
+      );
+    }
   }
 }

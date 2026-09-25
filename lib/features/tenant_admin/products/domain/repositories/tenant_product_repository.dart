@@ -54,6 +54,10 @@ abstract class TenantProductRepository {
   Future<ProductDraftResponseDto> getSetup(String productId);
   Future<StagedImageResponseDto> stageImage(
       List<int> bytes, String fileName, String mimeType);
+
+  /// Server-side fetch + stage of an external imageCandidate URL.
+  Future<StagedImageResponseDto> stageImageFromUrl(String imageUrl);
+
   Future<ProductImageResponseDto> uploadProductImage(
       String productId, List<int> bytes, String fileName, String mimeType);
   Future<ProductDraftResponseDto> reorderProductImages(

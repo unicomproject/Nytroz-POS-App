@@ -20,4 +20,10 @@ class RealtimeCashierRefreshPolicy {
         type.startsWith('ecommerce.order_placed') ||
         type.startsWith('ecommerce.order_');
   }
+
+  /// A brand-new customer order landing (not a status change on an existing
+  /// one) is the only case that should interrupt the cashier with a toast —
+  /// the bell badge count already covers every other staff notification.
+  static bool shouldShowNewOrderToast(RealtimeNotificationEvent event) =>
+      event.type.trim().toLowerCase() == orderPlacedStaff;
 }

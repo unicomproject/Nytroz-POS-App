@@ -79,6 +79,32 @@ class WizardProductCreateMapper {
         },
       if (idempotencyKey != null && idempotencyKey.isNotEmpty)
         'idempotencyKey': idempotencyKey,
+      if (state.scanStepState.categoryResolution != null &&
+          state.scanStepState.categoryResolution!.provider.trim().isNotEmpty &&
+          state.scanStepState.categoryResolution!.externalCategoryKey != null &&
+          state.scanStepState.categoryResolution!.externalCategoryKey!.trim().isNotEmpty)
+        'externalCategoryMappingContext': {
+          'provider': state.scanStepState.categoryResolution!.provider.trim(),
+          'externalCategoryKey':
+              state.scanStepState.categoryResolution!.externalCategoryKey!.trim(),
+          if (state.scanStepState.categoryResolution!.externalCategoryName != null &&
+              state.scanStepState.categoryResolution!.externalCategoryName!.trim().isNotEmpty)
+            'externalCategoryName':
+                state.scanStepState.categoryResolution!.externalCategoryName!.trim(),
+        },
+      if (state.scanStepState.brandResolution != null &&
+          state.scanStepState.brandResolution!.provider.trim().isNotEmpty &&
+          state.scanStepState.brandResolution!.externalBrandKey != null &&
+          state.scanStepState.brandResolution!.externalBrandKey!.trim().isNotEmpty)
+        'externalBrandMappingContext': {
+          'provider': state.scanStepState.brandResolution!.provider.trim(),
+          'externalBrandKey':
+              state.scanStepState.brandResolution!.externalBrandKey!.trim(),
+          if (state.scanStepState.brandResolution!.externalBrandName != null &&
+              state.scanStepState.brandResolution!.externalBrandName!.trim().isNotEmpty)
+            'externalBrandName':
+                state.scanStepState.brandResolution!.externalBrandName!.trim(),
+        },
     };
   }
 

@@ -1083,17 +1083,17 @@ void main() {
       expect(action.onPressed, isNull);
     });
 
-    testWidgets('phone width POS Home shows the shared mobile top bar', (
+    testWidgets('phone width POS Home shows the shared dashboard top bar', (
       tester,
     ) async {
       await _pumpPosHome(tester, size: const Size(390, 844));
 
-      expect(find.byType(PosMobileTopBar), findsOneWidget);
+      expect(find.byType(PosTopBar), findsOneWidget);
       expect(find.byType(PosDesktopTopBar), findsNothing);
       expect(find.byType(PosSidebar), findsNothing);
     });
 
-    testWidgets('phone width New Sale shows the mobile top bar', (
+    testWidgets('phone width New Sale shows the shared sale top bar', (
       tester,
     ) async {
       await _pumpPosHome(
@@ -1111,7 +1111,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(PosNewSaleScreen), findsOneWidget);
-      expect(find.byType(PosMobileTopBar), findsOneWidget);
+      expect(find.byType(PosTopBar), findsOneWidget);
+      expect(find.byType(PosNewSaleTopBarContent), findsOneWidget);
       expect(find.byType(PosDesktopTopBar), findsNothing);
       expect(find.byType(PosSidebar), findsNothing);
     });

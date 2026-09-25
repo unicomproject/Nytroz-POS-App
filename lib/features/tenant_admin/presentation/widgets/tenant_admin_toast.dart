@@ -25,6 +25,14 @@ enum AppToastType {
 /// ```dart
 /// showAppToast(context, message: 'Draft saved successfully', title: 'Draft Saved');
 /// ```
+///
+/// [overlayState] lets a caller with no BuildContext of its own (e.g. a
+/// Riverpod controller reacting to a realtime event) supply the Overlay
+/// directly — via `someNavigatorKey.currentState?.overlay` — instead of
+/// via [Overlay.maybeOf]. That lookup walks up from [context] looking for
+/// an Overlay *ancestor*, which fails for a bare `navigatorKey.currentContext`:
+/// that context is the Navigator widget's own element, and the Overlay a
+/// Navigator provides is built as a *descendant* of it, not an ancestor.
 void showAppToast(
   BuildContext context, {
   required String message,
@@ -33,9 +41,11 @@ void showAppToast(
   IconData? icon,
   Duration duration = const Duration(seconds: 4),
   Color? backgroundColor,
+  VoidCallback? onTap,
+  OverlayState? overlayState,
 }) {
-  final overlayState = Overlay.maybeOf(context);
-  if (overlayState == null) return;
+  final resolvedOverlay = overlayState ?? Overlay.maybeOf(context);
+  if (resolvedOverlay == null) return;
 
   final toastStyle = _getToastStyle(type, backgroundColor, icon);
 
@@ -47,6 +57,14 @@ void showAppToast(
       message: message,
       icon: toastStyle.icon,
       backgroundColor: toastStyle.backgroundColor,
+      onTap: onTap == null
+          ? null
+          : () {
+              if (overlayEntry.mounted) {
+                overlayEntry.remove();
+              }
+              onTap();
+            },
       onDismiss: () {
         if (overlayEntry.mounted) {
           overlayEntry.remove();
@@ -55,7 +73,7 @@ void showAppToast(
     ),
   );
 
-  overlayState.insert(overlayEntry);
+  resolvedOverlay.insert(overlayEntry);
 
   Future.delayed(duration, () {
     if (overlayEntry.mounted) {
@@ -138,6 +156,7 @@ class _TopRightToastWidget extends StatefulWidget {
   final String message;
   final IconData icon;
   final Color backgroundColor;
+  final VoidCallback? onTap;
   final VoidCallback onDismiss;
 
   const _TopRightToastWidget({
@@ -145,6 +164,7 @@ class _TopRightToastWidget extends StatefulWidget {
     required this.message,
     required this.icon,
     required this.backgroundColor,
+    this.onTap,
     required this.onDismiss,
   });
 
@@ -209,8 +229,6 @@ class _TopRightToastWidgetState extends State<_TopRightToastWidget>
                 child: Container(
                   constraints:
                       const BoxConstraints(maxWidth: 380, minWidth: 280),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     color: widget.backgroundColor,
                     borderRadius: BorderRadius.circular(12),
@@ -227,67 +245,79 @@ class _TopRightToastWidgetState extends State<_TopRightToastWidget>
                       ),
                     ],
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.22),
-                          shape: BoxShape.circle,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: InkWell(
+                      onTap: widget.onTap,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
                         ),
-                        child: Icon(
-                          widget.icon,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Text(
-                              widget.title,
-                              style: const TextStyle(
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.22),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                widget.icon,
                                 color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                letterSpacing: 0.2,
+                                size: 20,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              widget.message,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                height: 1.2,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.title,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    widget.message,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            InkWell(
+                              onTap: _handleDismiss,
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      InkWell(
-                        onTap: _handleDismiss,
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.close,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),

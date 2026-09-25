@@ -25,7 +25,45 @@ void main() {
     expect(restored.initialExpiryDate?.year, 2027);
   });
 
-  test('Step 2 serial tracking requires confirmation before clearing batch', () {
+    test('Enabling batch keeps expiry until matching Expiry toggle or continue',
+        () {
+      final plan = InitialTrackingCompatibility.evaluate(
+        productStructure: 'SIMPLE',
+        trackInventory: true,
+        batchTracking: true,
+        expiryTracking: false,
+        serialTracking: false,
+        batch: 'Dark01',
+        expiry: DateTime(2027, 6, 30),
+        serial: null,
+      );
+
+      expect(plan.requiresConfirmation, isFalse);
+      expect(plan.batchNumber, 'Dark01');
+      expect(plan.expiryDate, DateTime(2027, 6, 30));
+    });
+
+    test(
+        'Track Inventory off keeps Initial Tracking values without confirmation',
+        () {
+      final plan = InitialTrackingCompatibility.evaluate(
+        productStructure: 'SIMPLE',
+        trackInventory: false,
+        batchTracking: false,
+        expiryTracking: false,
+        serialTracking: false,
+        batch: 'Dark01',
+        expiry: DateTime(2027, 6, 30),
+        serial: 'SN-1',
+        forContinue: true,
+      );
+
+      expect(plan.requiresConfirmation, isFalse);
+      expect(plan.batchNumber, 'Dark01');
+      expect(plan.serialNumber, 'SN-1');
+    });
+
+    test('Step 2 serial tracking requires confirmation before clearing batch', () {
     final plan = InitialTrackingCompatibility.evaluate(
       productStructure: 'SIMPLE',
       trackInventory: true,

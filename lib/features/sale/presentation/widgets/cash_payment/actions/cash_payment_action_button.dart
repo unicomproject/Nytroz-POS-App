@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nytroz_pos/shared/widgets/pos_action_buttons.dart';
 
 class CashPaymentActionButton extends StatelessWidget {
   const CashPaymentActionButton({
@@ -22,6 +23,9 @@ class CashPaymentActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     if (isPrimary) {
+      final foreground = onPressed == null || isLoading
+          ? PosPrimaryActionTokens.disabledForeground
+          : colors.onPrimary;
       return SizedBox(
         height: 54,
         child: FilledButton(
@@ -29,9 +33,9 @@ class CashPaymentActionButton extends StatelessWidget {
           onPressed: isLoading ? null : onPressed,
           style: FilledButton.styleFrom(
             backgroundColor: colors.primary,
-            foregroundColor: colors.onPrimary,
-            disabledBackgroundColor: colors.primary.withValues(alpha: 0.38),
-            disabledForegroundColor: colors.onPrimary.withValues(alpha: 0.7),
+            foregroundColor: foreground,
+            disabledBackgroundColor: PosPrimaryActionTokens.disabledBackground,
+            disabledForegroundColor: PosPrimaryActionTokens.disabledForeground,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -43,7 +47,7 @@ class CashPaymentActionButton extends StatelessWidget {
                   height: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.5,
-                    color: colors.onPrimary,
+                    color: foreground,
                   ),
                 )
               : Row(
@@ -54,12 +58,12 @@ class CashPaymentActionButton extends StatelessWidget {
                       height: 28,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: colors.onPrimary, width: 2),
+                        border: Border.all(color: foreground, width: 2),
                       ),
                       alignment: Alignment.center,
                       child: Icon(
                         Icons.check_rounded,
-                        color: colors.onPrimary,
+                        color: foreground,
                         size: 18,
                       ),
                     ),
@@ -73,7 +77,7 @@ class CashPaymentActionButton extends StatelessWidget {
                           style:
                               Theme.of(context).textTheme.titleSmall?.copyWith(
                                     fontWeight: FontWeight.w900,
-                                    color: colors.onPrimary,
+                                    color: foreground,
                                     fontSize: 15,
                                     letterSpacing: 0.4,
                                     height: 1.15,
@@ -86,8 +90,7 @@ class CashPaymentActionButton extends StatelessWidget {
                                 .textTheme
                                 .labelSmall
                                 ?.copyWith(
-                                  color:
-                                      colors.onPrimary.withValues(alpha: 0.85),
+                                  color: foreground.withValues(alpha: 0.85),
                                   fontSize: 11,
                                   height: 1.15,
                                   fontWeight: FontWeight.w400,

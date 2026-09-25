@@ -5379,6 +5379,130 @@ class _BrandColorPickerDialog extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
+        TextButton.icon(
+          onPressed: () async {
+            final custom = await showDialog<Color>(
+              context: context,
+              builder: (context) =>
+                  _HexColorInputDialog(initialColor: selectedColor),
+            );
+            if (custom != null && context.mounted) {
+              Navigator.pop(context, custom);
+            }
+          },
+          icon: const Icon(Icons.colorize_rounded, size: 18),
+          label: const Text('Custom colour'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Lets a tenant admin enter their exact brand hex code instead of picking
+/// from the fixed swatch grid, since a business's brand color rarely lands
+/// exactly on one of those presets.
+class _HexColorInputDialog extends StatefulWidget {
+  const _HexColorInputDialog({required this.initialColor});
+
+  final Color initialColor;
+
+  @override
+  State<_HexColorInputDialog> createState() => _HexColorInputDialogState();
+}
+
+class _HexColorInputDialogState extends State<_HexColorInputDialog> {
+  late final TextEditingController _controller;
+  Color? _previewColor;
+  String? _errorText;
+
+  @override
+  void initState() {
+    super.initState();
+    _previewColor = widget.initialColor;
+    _controller = TextEditingController(
+      text: _hexFromColor(widget.initialColor).replaceFirst('#', ''),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onChanged(String value) {
+    final normalized = value.trim().replaceFirst('#', '');
+    if (RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(normalized)) {
+      setState(() {
+        _previewColor = Color(int.parse('FF$normalized', radix: 16));
+        _errorText = null;
+      });
+    } else {
+      setState(() {
+        _previewColor = null;
+        _errorText = normalized.isEmpty ? null : 'Enter a valid 6-digit hex code';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Enter custom colour'),
+      content: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: _previewColor,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFCBD5E1)),
+            ),
+            child: _previewColor == null
+                ? const Icon(
+                    Icons.question_mark_rounded,
+                    size: 18,
+                    color: Color(0xFF94A3B8),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 160,
+            child: TextField(
+              controller: _controller,
+              autofocus: true,
+              maxLength: 7,
+              textCapitalization: TextCapitalization.characters,
+              decoration: InputDecoration(
+                prefixText: '#',
+                hintText: 'FF6A00',
+                errorText: _errorText,
+                counterText: '',
+              ),
+              onChanged: _onChanged,
+              onSubmitted: (_) {
+                if (_previewColor != null) {
+                  Navigator.pop(context, _previewColor);
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _previewColor == null
+              ? null
+              : () => Navigator.pop(context, _previewColor),
+          child: const Text('Select'),
+        ),
       ],
     );
   }

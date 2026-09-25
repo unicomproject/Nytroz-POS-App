@@ -384,100 +384,115 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
     if (match == null) {
       return const Text('Local match data missing.');
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _PanelCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if ((match.imageUrl ?? '').isNotEmpty)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-                      child: Image.network(
-                        match.imageUrl!,
-                        width: 96,
-                        height: 96,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: SingleChildScrollView(
+                child: _PanelCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if ((match.imageUrl ?? '').isNotEmpty)
+                            ClipRRect(
+                              borderRadius:
+                                  BorderRadius.circular(TenantAdminRadius.md),
+                              child: Image.network(
+                                match.imageUrl!,
+                                width: 96,
+                                height: 96,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    const SizedBox.shrink(),
+                              ),
+                            ),
+                          const Spacer(),
+                          if (match.canViewProduct || match.canEditProduct)
+                            Wrap(
+                              spacing: TenantAdminSpacing.sm,
+                              children: [
+                                if (match.canViewProduct)
+                                  FilledButton(
+                                    onPressed: () => context.go(
+                                      '/tenant-admin/products/${match.productId}',
+                                    ),
+                                    child: const Text('View Product'),
+                                  ),
+                                if (match.canEditProduct)
+                                  OutlinedButton(
+                                    onPressed: () => context.go(
+                                      '/tenant-admin/products/draft/${match.productId}',
+                                    ),
+                                    child: const Text('Edit Existing Product'),
+                                  ),
+                              ],
+                            ),
+                        ],
                       ),
-                    ),
-                  const Spacer(),
-                  if (match.canViewProduct || match.canEditProduct)
-                    Wrap(
-                      spacing: TenantAdminSpacing.sm,
-                      children: [
-                        if (match.canViewProduct)
-                          FilledButton(
-                            onPressed: () => context.go(
-                              '/tenant-admin/products/${match.productId}',
-                            ),
-                            child: const Text('View Product'),
-                          ),
-                        if (match.canEditProduct)
-                          OutlinedButton(
-                            onPressed: () => context.go(
-                              '/tenant-admin/products/draft/${match.productId}',
-                            ),
-                            child: const Text('Edit Existing Product'),
-                          ),
-                      ],
-                    ),
-                ],
-              ),
-              const SizedBox(height: TenantAdminSpacing.md),
-              _LabelValue('Product Name', match.productName),
-              if ((match.variantLabel ?? '').isNotEmpty)
-                _LabelValue('Variant', match.variantLabel!),
-              if ((match.brand ?? '').isNotEmpty)
-                _LabelValue('Brand', match.brand!),
-              if ((match.category ?? '').isNotEmpty)
-                _LabelValue('Category', match.category!),
-              if (match.sellingPrice != null)
-                _LabelValue(
-                  'Selling Price',
-                  '${match.currency ?? ''} ${match.sellingPrice}'.trim(),
+                      const SizedBox(height: TenantAdminSpacing.md),
+                      _LabelValue('Product Name', match.productName),
+                      if ((match.variantLabel ?? '').isNotEmpty)
+                        _LabelValue('Variant', match.variantLabel!),
+                      if ((match.brand ?? '').isNotEmpty)
+                        _LabelValue('Brand', match.brand!),
+                      if ((match.category ?? '').isNotEmpty)
+                        _LabelValue('Category', match.category!),
+                      if (match.sellingPrice != null)
+                        _LabelValue(
+                          'Selling Price',
+                          '${match.currency ?? ''} ${match.sellingPrice}'.trim(),
+                        ),
+                      _LabelValue(
+                        'Primary GTIN / Barcode',
+                        scan.candidateBarcode,
+                      ),
+                      if (scan.barcodeType != null)
+                        _LabelValue('Barcode Type', scan.barcodeType!),
+                      if ((match.sku ?? '').isNotEmpty)
+                        _LabelValue('SKU', match.sku!),
+                      _LabelValue('Status', match.status),
+                    ],
+                  ),
                 ),
-              _LabelValue('Primary GTIN / Barcode', scan.candidateBarcode),
-              if (scan.barcodeType != null)
-                _LabelValue('Barcode Type', scan.barcodeType!),
-              if ((match.sku ?? '').isNotEmpty) _LabelValue('SKU', match.sku!),
-              _LabelValue('Status', match.status),
+              ),
+            ),
+          ),
+          const SizedBox(height: TenantAdminSpacing.lg),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              OutlinedButton(
+                onPressed: () {
+                  if (scan.inputMode == 'MANUAL') {
+                    widget.controller.openManualBarcodeEntry();
+                  } else {
+                    widget.controller.backToScan();
+                  }
+                },
+                child: const Text('Back'),
+              ),
+              FilledButton.tonal(
+                onPressed: scan.isBusy
+                    ? null
+                    : () => widget.controller.createDuplicateFromLocalMatch(),
+                child: scan.isBusy
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Create Duplicate'),
+              ),
             ],
           ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.lg),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            OutlinedButton(
-              onPressed: () {
-                if (scan.inputMode == 'MANUAL') {
-                  widget.controller.openManualBarcodeEntry();
-                } else {
-                  widget.controller.backToScan();
-                }
-              },
-              child: const Text('Back'),
-            ),
-            FilledButton.tonal(
-              onPressed: scan.isBusy
-                  ? null
-                  : () => widget.controller.createDuplicateFromLocalMatch(),
-              child: scan.isBusy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Create Duplicate'),
-            ),
-          ],
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1773,16 +1788,6 @@ class _ScanBarcodeStepState extends ConsumerState<ScanBarcodeStep> {
       ],
     );
   }
-
-  List<Widget> _interleave(List<Widget> children, double gap) {
-    if (children.isEmpty) return children;
-    final out = <Widget>[children.first];
-    for (var i = 1; i < children.length; i++) {
-      out.add(SizedBox(height: gap));
-      out.add(children[i]);
-    }
-    return out;
-  }
 }
 
 class _BarcodeStatusRow extends StatelessWidget {
@@ -2168,6 +2173,21 @@ class _PanelCard extends StatelessWidget {
   }
 }
 
+String _formatHierarchy(List<String> hierarchy) {
+  return hierarchy.map((item) {
+    var text = item.trim();
+    if (text.contains(':')) {
+      text = text.split(':').last;
+    }
+    text = text.replaceAll('-', ' ').replaceAll('_', ' ');
+    if (text.isEmpty) return '';
+    return text.split(' ').map((word) {
+      if (word.isEmpty) return '';
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
+  }).where((segment) => segment.isNotEmpty).join(' > ');
+}
+
 class _LabelValue extends StatelessWidget {
   const _LabelValue(this.label, this.value);
 
@@ -2182,11 +2202,18 @@ class _LabelValue extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 160,
-            child: Text(label, style: TenantAdminTextStyles.muted(context)),
+            width: 168,
+            child: Text(
+              label,
+              style: TenantAdminTextStyles.muted(context),
+            ),
           ),
+          const SizedBox(width: TenantAdminSpacing.md),
           Expanded(
-            child: Text(value, style: TenantAdminTextStyles.body(context)),
+            child: Text(
+              value,
+              style: TenantAdminTextStyles.body(context),
+            ),
           ),
         ],
       ),

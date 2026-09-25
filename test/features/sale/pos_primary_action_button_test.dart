@@ -4,10 +4,16 @@ import 'package:nytroz_pos/features/sale/presentation/widgets/payment/pos_bottom
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
 
 void main() {
-  testWidgets('enabled primary action uses the cashier gradient theme',
+  testWidgets('enabled primary action uses the active tenant primary',
       (tester) async {
+    const tenantPrimary = Color(0xFFFF1493);
     await tester.pumpWidget(
       MaterialApp(
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: tenantPrimary).copyWith(
+            primary: tenantPrimary,
+          ),
+        ),
         home: Scaffold(
           body: PosPrimaryActionButton(
             key: const Key('primary-action'),
@@ -19,12 +25,8 @@ void main() {
     );
 
     final decoration = _buttonDecoration(tester);
-    final gradient = decoration.gradient! as LinearGradient;
-
-    expect(
-      gradient.colors,
-      [TenantAdminColors.navySoft, TenantAdminColors.primary],
-    );
+    expect(decoration.gradient, isNull);
+    expect(decoration.color, tenantPrimary);
   });
 
   testWidgets('disabled primary action uses the disabled surface',

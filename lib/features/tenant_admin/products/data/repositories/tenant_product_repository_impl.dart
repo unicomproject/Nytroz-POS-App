@@ -214,6 +214,11 @@ class TenantProductRepositoryImpl implements TenantProductRepository {
   }
 
   @override
+  Future<StagedImageResponseDto> stageImageFromUrl(String imageUrl) {
+    return _remoteDatasource.stageImageFromUrl(imageUrl);
+  }
+
+  @override
   Future<ProductImageResponseDto> uploadProductImage(
     String productId,
     List<int> bytes,

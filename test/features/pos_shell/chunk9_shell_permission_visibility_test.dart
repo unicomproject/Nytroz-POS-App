@@ -174,6 +174,8 @@ void main() {
         body: 'Secret body',
         isRead: false,
         createdAt: DateTime(2026, 1, 1),
+        eventCode: 'tenant.generic',
+        sourceReferenceId: null,
       );
       final set = EffectivePermissionSet.fromIterable([
         PosPermissionCodes.notificationsMessagesTitle,
@@ -188,6 +190,8 @@ void main() {
         body: 'Body',
         isRead: false,
         createdAt: DateTime(2026, 1, 1),
+        eventCode: 'tenant.generic',
+        sourceReferenceId: null,
       );
       expect(
         notificationRowHasVisibleContent(item, EffectivePermissionSet.empty),

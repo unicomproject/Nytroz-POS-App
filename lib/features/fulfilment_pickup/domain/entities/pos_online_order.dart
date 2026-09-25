@@ -292,6 +292,12 @@ class PosOnlineOrderDetail {
     this.serverTime,
     this.backendItemCount,
     this.backendUnitCount,
+    this.canPack = false,
+    this.isReadyForCollection = false,
+    this.readyAt,
+    this.collectedAt,
+    this.completedAt,
+    this.cancelledAt,
   });
 
   final PosOnlineOrder order;
@@ -323,6 +329,12 @@ class PosOnlineOrderDetail {
   final DateTime? serverTime;
   final int? backendItemCount;
   final double? backendUnitCount;
+  final bool canPack;
+  final bool isReadyForCollection;
+  final DateTime? readyAt;
+  final DateTime? collectedAt;
+  final DateTime? completedAt;
+  final DateTime? cancelledAt;
   final List<PosOnlineOrderLine> lines;
 
   int get itemCount => backendItemCount ?? lines.length;
@@ -390,6 +402,12 @@ class PosOnlineOrderDetail {
           json['itemCount'] == null ? null : _integer(json['itemCount']),
       backendUnitCount:
           json['unitCount'] == null ? null : _decimal(json['unitCount']),
+      canPack: json['canPack'] == true,
+      isReadyForCollection: json['isReadyForCollection'] == true,
+      readyAt: _date(json['readyAt']),
+      collectedAt: _date(json['collectedAt']),
+      completedAt: _date(json['completedAt']),
+      cancelledAt: _date(json['cancelledAt']),
       lines: lines,
     );
   }
@@ -611,12 +629,10 @@ class PosPickingOrder {
     final value = status.toUpperCase();
     return value == 'READY' || value == 'READY_FOR_COLLECTION';
   }
-
   bool get isPickupReady {
     final value = (pickupStatus ?? '').toUpperCase();
     return value == 'READY';
   }
-
   bool get isCollected {
     if (collectedAt != null) return true;
     final value = status.toUpperCase();
@@ -626,12 +642,10 @@ class PosPickingOrder {
         value == 'FULFILLED' ||
         pickup == 'COLLECTED';
   }
-
   bool get hasReadyNotification {
     final value = (readyNotificationStatus ?? '').toUpperCase();
     return value.isNotEmpty && value != 'NOT_SENT';
   }
-
   bool get isTerminal {
     final value = status.toUpperCase();
     return value == 'FULFILLED' ||
@@ -645,51 +659,53 @@ class PosPickingOrder {
         .whereType<Map>()
         .map((item) => PosPickingLine.fromJson(Map<String, dynamic>.from(item)))
         .toList(growable: false);
-    final derivedTotal =
-        lines.fold<double>(0, (total, line) => total + line.requestedQuantity);
-    final derivedPicked =
-        lines.fold<double>(0, (total, line) => total + line.pickedQuantity);
-    final derivedIssues = lines.where((line) => line.hasReportedIssue).length;
+    final derivedTotal = lines.fold<double>(
+        0, (total, line) => total + line.requestedQuantity);
+    final derivedPicked = lines.fold<double>(
+        0, (total, line) => total + line.pickedQuantity);
+    final derivedIssues =
+        lines.where((line) => line.hasReportedIssue).length;
     return PosPickingOrder(
-      orderId: _text(json['orderId']),
-      orderNumber: _text(json['orderNumber']),
-      fulfillmentOrderId: _text(json['fulfillmentOrderId']),
-      fulfillmentNumber: _text(json['fulfillmentNumber']),
-      status: _text(json['status']),
-      assignedToName: _text(json['assignedToName']),
-      assignedToTenantUserId: _optionalText(json['assignedToTenantUserId']),
-      customerName: _text(json['customerName']),
-      collectionAt: _date(json['collectionAt']),
-      outletId: _optionalText(json['outletId']),
-      outletName: _optionalText(json['outletName']),
-      totalLines: _integer(json['totalLines']),
-      pickedLines: _integer(json['pickedLines']),
-      totalUnits: json['totalUnits'] == null
-          ? derivedTotal
-          : _decimal(json['totalUnits']),
-      pickedUnits: json['pickedUnits'] == null
-          ? derivedPicked
-          : _decimal(json['pickedUnits']),
-      remainingUnits: json['remainingUnits'] == null
-          ? (derivedTotal - derivedPicked).clamp(0, derivedTotal).toDouble()
-          : _decimal(json['remainingUnits']),
-      canPack: json['canPack'] == true,
-      fulfillmentVersion: _integer(json['fulfillmentVersion']),
-      serverTime: _date(json['serverTime']),
-      notes: (json['notes'] as List? ?? const [])
-          .whereType<Map>()
-          .map((item) =>
-              PosPickingNote.fromJson(Map<String, dynamic>.from(item)))
-          .toList(growable: false),
-      lines: lines,
-      pickupStatus: _optionalText(json['pickupStatus']),
-      readyAt: _date(json['readyAt']),
-      collectedAt: _date(json['collectedAt']),
-      issueCount: json['issueCount'] == null
-          ? derivedIssues
-          : _integer(json['issueCount']),
-      readyNotificationStatus: _optionalText(json['readyNotificationStatus']),
-    );
+        orderId: _text(json['orderId']),
+        orderNumber: _text(json['orderNumber']),
+        fulfillmentOrderId: _text(json['fulfillmentOrderId']),
+        fulfillmentNumber: _text(json['fulfillmentNumber']),
+        status: _text(json['status']),
+        assignedToName: _text(json['assignedToName']),
+        assignedToTenantUserId: _optionalText(json['assignedToTenantUserId']),
+        customerName: _text(json['customerName']),
+        collectionAt: _date(json['collectionAt']),
+        outletId: _optionalText(json['outletId']),
+        outletName: _optionalText(json['outletName']),
+        totalLines: _integer(json['totalLines']),
+        pickedLines: _integer(json['pickedLines']),
+        totalUnits: json['totalUnits'] == null
+            ? derivedTotal
+            : _decimal(json['totalUnits']),
+        pickedUnits: json['pickedUnits'] == null
+            ? derivedPicked
+            : _decimal(json['pickedUnits']),
+        remainingUnits: json['remainingUnits'] == null
+            ? (derivedTotal - derivedPicked).clamp(0, derivedTotal).toDouble()
+            : _decimal(json['remainingUnits']),
+        canPack: json['canPack'] == true,
+        fulfillmentVersion: _integer(json['fulfillmentVersion']),
+        serverTime: _date(json['serverTime']),
+        notes: (json['notes'] as List? ?? const [])
+            .whereType<Map>()
+            .map((item) =>
+                PosPickingNote.fromJson(Map<String, dynamic>.from(item)))
+            .toList(growable: false),
+        lines: lines,
+        pickupStatus: _optionalText(json['pickupStatus']),
+        readyAt: _date(json['readyAt']),
+        collectedAt: _date(json['collectedAt']),
+        issueCount: json['issueCount'] == null
+            ? derivedIssues
+            : _integer(json['issueCount']),
+        readyNotificationStatus:
+            _optionalText(json['readyNotificationStatus']),
+      );
   }
 }
 
@@ -701,6 +717,7 @@ class PosFulfillmentCommandResult {
     required this.completedLines,
     this.packageNumber,
     this.fulfillmentOrderId,
+    this.collectionQrToken,
     this.updatedAt,
     this.canPack = false,
     this.fulfillmentVersion = 0,
@@ -711,6 +728,9 @@ class PosFulfillmentCommandResult {
   final int completedLines;
   final String? packageNumber;
   final String? fulfillmentOrderId;
+
+  /// Returned only when an order is first marked ready. It must remain transient.
+  final String? collectionQrToken;
   final DateTime? updatedAt;
   final bool canPack;
   final int fulfillmentVersion;
@@ -723,6 +743,7 @@ class PosFulfillmentCommandResult {
         completedLines: _integer(json['completedLines']),
         packageNumber: _optionalText(json['packageNumber']),
         fulfillmentOrderId: _optionalText(json['fulfillmentOrderId']),
+        collectionQrToken: _optionalText(json['collectionQrToken']),
         updatedAt: _date(json['updatedAt']),
         canPack: json['canPack'] == true,
         fulfillmentVersion: _integer(json['fulfillmentVersion']),
@@ -771,56 +792,6 @@ class PosNotifyReadyResult {
         eventNumber: _text(json['eventNumber']),
         alreadyExisted: json['alreadyExisted'] == true,
         createdMessageCount: _integer(json['createdMessageCount']),
-      );
-}
-
-class PosPickupVerifyResult {
-  const PosPickupVerifyResult({
-    required this.orderId,
-    required this.pickupOrderId,
-    required this.pickupStatus,
-    required this.verifiedAt,
-    this.remainingAttempts = 0,
-  });
-
-  final String orderId;
-  final String pickupOrderId;
-  final String pickupStatus;
-  final DateTime? verifiedAt;
-  final int remainingAttempts;
-
-  factory PosPickupVerifyResult.fromJson(Map<String, dynamic> json) =>
-      PosPickupVerifyResult(
-        orderId: _text(json['orderId']),
-        pickupOrderId: _text(json['pickupOrderId']),
-        pickupStatus: _text(json['pickupStatus']),
-        verifiedAt: _date(json['verifiedAt']),
-        remainingAttempts: _integer(json['remainingAttempts']),
-      );
-}
-
-class PosPickupCollectResult {
-  const PosPickupCollectResult({
-    required this.orderId,
-    required this.pickupOrderId,
-    required this.pickupStatus,
-    required this.orderStatus,
-    required this.collectedAt,
-  });
-
-  final String orderId;
-  final String pickupOrderId;
-  final String pickupStatus;
-  final String orderStatus;
-  final DateTime? collectedAt;
-
-  factory PosPickupCollectResult.fromJson(Map<String, dynamic> json) =>
-      PosPickupCollectResult(
-        orderId: _text(json['orderId']),
-        pickupOrderId: _text(json['pickupOrderId']),
-        pickupStatus: _text(json['pickupStatus']),
-        orderStatus: _text(json['orderStatus']),
-        collectedAt: _date(json['collectedAt']),
       );
 }
 

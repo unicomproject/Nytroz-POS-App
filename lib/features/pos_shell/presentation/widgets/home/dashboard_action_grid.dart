@@ -32,10 +32,17 @@ class DashboardActionGrid extends StatelessWidget {
     }
     return LayoutBuilder(
       builder: (context, constraints) {
-        final cardHeight = (constraints.maxHeight - TenantAdminSpacing.md) / 2;
+        final availableHeight = constraints.maxHeight;
+        final cardHeight =
+            ((availableHeight - TenantAdminSpacing.md) / 2).clamp(118.0, 180.0);
+        final isScrollable =
+            (cardHeight * 2 + TenantAdminSpacing.md) > availableHeight;
+
         return GridView.builder(
           padding: EdgeInsets.zero,
-          physics: const NeverScrollableScrollPhysics(),
+          physics: isScrollable
+              ? const ClampingScrollPhysics()
+              : const NeverScrollableScrollPhysics(),
           itemCount: cards.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,

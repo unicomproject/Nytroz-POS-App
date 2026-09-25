@@ -1,4 +1,4 @@
-import 'package:flutter_test/flutter_test.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/fulfilment_pickup/domain/entities/pos_online_order.dart';
 
 void main() {
@@ -238,6 +238,7 @@ void main() {
       'completedLines': 2,
       'packageNumber': 'PKG-CC-0001-01',
       'fulfillmentOrderId': 'fulfilment-1',
+      'collectionQrToken': 'opaque-one-time-collection-code',
       'updatedAt': '2026-08-25T10:30:00Z',
     });
 
@@ -246,38 +247,8 @@ void main() {
     expect(result.completedLines, 2);
     expect(result.packageNumber, 'PKG-CC-0001-01');
     expect(result.fulfillmentOrderId, 'fulfilment-1');
+    expect(result.collectionQrToken, 'opaque-one-time-collection-code');
     expect(result.updatedAt, isNotNull);
   });
 
-  test('parses a successful pickup verification response', () {
-    final result = PosPickupVerifyResult.fromJson({
-      'orderId': 'order-1',
-      'pickupOrderId': 'pickup-1',
-      'pickupStatus': 'VERIFIED',
-      'verifiedAt': '2026-09-15T10:30:00Z',
-      'remainingAttempts': 3,
-    });
-
-    expect(result.orderId, 'order-1');
-    expect(result.pickupOrderId, 'pickup-1');
-    expect(result.pickupStatus, 'VERIFIED');
-    expect(result.verifiedAt, isNotNull);
-    expect(result.remainingAttempts, 3);
-  });
-
-  test('parses a successful pickup collection response', () {
-    final result = PosPickupCollectResult.fromJson({
-      'orderId': 'order-1',
-      'pickupOrderId': 'pickup-1',
-      'pickupStatus': 'COLLECTED',
-      'orderStatus': 'COMPLETED',
-      'collectedAt': '2026-09-15T10:35:00Z',
-    });
-
-    expect(result.orderId, 'order-1');
-    expect(result.pickupOrderId, 'pickup-1');
-    expect(result.pickupStatus, 'COLLECTED');
-    expect(result.orderStatus, 'COMPLETED');
-    expect(result.collectedAt, isNotNull);
-  });
 }
