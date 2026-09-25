@@ -1,3 +1,4 @@
+// ignore_for_file: invalid_annotation_target
 import 'package:nytroz_pos/features/tenant_admin/products/data/dtos/product_setup_scan_dtos.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/products/data/datasources/local/product_wizard_draft_local_datasource.dart';

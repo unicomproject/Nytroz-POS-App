@@ -1,3 +1,4 @@
+// ignore_for_file: invalid_annotation_target
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/core/network/dio_error_message.dart';

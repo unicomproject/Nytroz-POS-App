@@ -1,3 +1,4 @@
+// ignore_for_file: invalid_annotation_target
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/device_activation/domain/entities/pos_device_context.dart';

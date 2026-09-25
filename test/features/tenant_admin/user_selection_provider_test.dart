@@ -1,3 +1,4 @@
+// ignore_for_file: invalid_annotation_target
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/features/tenant_admin/users/presentation/providers/tenant_user_providers.dart';

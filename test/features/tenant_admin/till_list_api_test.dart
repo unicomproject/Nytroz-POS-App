@@ -1,3 +1,4 @@
+// ignore_for_file: invalid_annotation_target
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

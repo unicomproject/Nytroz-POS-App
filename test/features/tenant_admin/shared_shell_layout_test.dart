@@ -1,3 +1,4 @@
+// ignore_for_file: invalid_annotation_target
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';

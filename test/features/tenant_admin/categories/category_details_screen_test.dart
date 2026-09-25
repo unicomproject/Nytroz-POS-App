@@ -1,3 +1,4 @@
+// ignore_for_file: invalid_annotation_target
 import 'dart:async';
 import 'dart:typed_data';
 

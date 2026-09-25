@@ -1,3 +1,4 @@
+// ignore_for_file: invalid_annotation_target
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nytroz_pos/shared/widgets/pos_action_buttons.dart';
