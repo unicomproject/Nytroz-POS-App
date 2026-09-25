@@ -370,8 +370,10 @@ void main() {
       controller.setProductStructure('SIMPLE');
       expect(controller.canSkipCurrentStep, isTrue);
       expect(await controller.skip(), isTrue);
-      // skip on SIMPLE goes to next applicable step (5 because trackInventory is false)
-      expect(controller.wizardState.currentStep, 5);
+      // SIMPLE always requires Step 4 (Product Unit) — backend wizard-create
+      // has no Track Inventory exemption for this field, so skip() must land
+      // on Step 4, not skip past it.
+      expect(controller.wizardState.currentStep, 4);
       expect(controller.wizardState.trackInventory, isFalse);
       expect(repo.saveDraftCallCount, 0);
     });
@@ -408,7 +410,9 @@ void main() {
       await controller.initWizard();
       await completeStep1(); // → step 3
       controller.setProductStructure('SIMPLE');
-      await controller.saveAndContinue(); // → step 5 (track=false, skips 4)
+      await controller.saveAndContinue(); // → step 4 (Product Unit)
+      expect(controller.wizardState.currentStep, 4);
+      expect(await controller.skip(), isTrue); // → step 5 without unit validation
       expect(controller.wizardState.currentStep, 5);
 
       expect(await controller.skip(), isTrue);

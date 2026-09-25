@@ -462,6 +462,12 @@ void main() {
       await controller.saveAndContinue();
       controller.setProductStructure('SIMPLE');
       await controller.saveAndContinue();
+      // SIMPLE always requires Step 4 (Product Unit) — backend wizard-create
+      // has no Track Inventory exemption for this field.
+      expect(controller.wizardState.currentStep, 4);
+      controller.selectUnitModel('SINGLE_UNIT');
+      controller.setProductUnit('unit-1');
+      await controller.saveAndContinue();
       expect(controller.wizardState.currentStep, 5);
       controller.updateSimpleBaseSku('SIMPLE-SKU');
       await controller.saveAndContinue();

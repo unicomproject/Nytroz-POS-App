@@ -154,6 +154,11 @@ void main() {
   late _TrackingRepo repo;
   late AddProductWizardController controller;
 
+  // Product Unit (Step 4) is required by the backend for every SIMPLE
+  // product regardless of Track Inventory — see ValidateWizardCreateRequest
+  // in TenantAdminProductService.cs, which has no trackInventory condition
+  // on the productUnitId/baseUnitId check. Step 4 must therefore never be
+  // skipped for SIMPLE, whatever `trackInventory` is set to here.
   Future<void> goToStep5Simple({bool trackInventory = true}) async {
     await controller.initWizard();
     controller.skipScanStepForTesting();
@@ -164,12 +169,10 @@ void main() {
     controller.setProductStructure('SIMPLE');
     controller.setTrackInventory(trackInventory);
     await controller.saveAndContinue();
-    if (trackInventory) {
-      expect(controller.wizardState.currentStep, 4);
-      controller.selectUnitModel('SINGLE_UNIT');
-      controller.setProductUnit('unit-1');
-      await controller.saveAndContinue();
-    }
+    expect(controller.wizardState.currentStep, 4);
+    controller.selectUnitModel('SINGLE_UNIT');
+    controller.setProductUnit('unit-1');
+    await controller.saveAndContinue();
     expect(controller.wizardState.currentStep, 5);
   }
 
@@ -198,9 +201,16 @@ void main() {
       expect(controller.wizardState.currentStep, 4);
     });
 
-    test('2. SIMPLE Track OFF → Step 5', () async {
+    test('2. SIMPLE Track OFF → Step 4 (Product Unit still required)',
+        () async {
+      // Regression test: Product Unit must be required for SIMPLE
+      // regardless of Track Inventory — a false-negative return of Step 5
+      // here previously let productUnitId stay null all the way to
+      // Review & Create, where POST wizard-create then failed server-side
+      // with "Product unit is required for SIMPLE products." after the
+      // wizard had already shown "Step Saved" for every prior step.
       await controller.initWizard();
-    controller.skipScanStepForTesting();
+      controller.skipScanStepForTesting();
       controller.updateProductName('A');
       controller.updateCategory('cat-1');
       controller.updateInternalCode('code-2');
@@ -208,12 +218,14 @@ void main() {
       controller.setProductStructure('SIMPLE');
       controller.setTrackInventory(false);
       await controller.saveAndContinue();
-      expect(controller.wizardState.currentStep, 5);
+      expect(controller.wizardState.currentStep, 4);
+      expect(controller.isStepApplicable(4), isTrue);
     });
 
-    test('3. Step 3 → Step 5 (skips Step 4)', () async {
+    test('3. Step 3 → Step 4 for SIMPLE even with Track Inventory off',
+        () async {
       await goToStep5Simple(trackInventory: false);
-      expect(controller.isStepApplicable(4), isFalse);
+      expect(controller.isStepApplicable(4), isTrue);
       expect(controller.wizardState.currentStep, 5);
     });
 

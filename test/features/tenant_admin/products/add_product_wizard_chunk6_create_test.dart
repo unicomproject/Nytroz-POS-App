@@ -223,6 +223,61 @@ void main() {
       expect((payload['pricingTax'] as Map)['taxClassId'], 'tax-1');
     });
 
+    test(
+        'Regression: SIMPLE + Track Inventory OFF still includes a unit id '
+        'in the wizard-create payload and the API call actually succeeds '
+        '(barcode-sourced Product final create root cause)', () async {
+      // This reproduces the exact real-world defect: a barcode-sourced
+      // (external-lookup) SIMPLE product, created with Track Inventory left
+      // off — the common/default case — used to silently skip Step 4
+      // (Product Unit), so neither `productUnitId` nor `baseUnitId` was ever
+      // included in the wizard-create payload. The backend
+      // (ValidateWizardCreateRequest) unconditionally requires one of them
+      // for SIMPLE regardless of Track Inventory, so POST wizard-create
+      // failed with 400 "Product unit is required for SIMPLE products." —
+      // AFTER the wizard had already shown "Step Saved" for every prior
+      // step, and with no visible symptom until the very last click.
+      await controller.initWizard();
+      controller.skipScanStepForTesting();
+      controller.updateProductName('No Inventory Simple Product');
+      controller.updateCategory('cat-1');
+      controller.updateInternalCode('NO-INV-001');
+      await controller.saveAndContinue();
+      controller.setProductStructure('SIMPLE');
+      // Track Inventory deliberately left OFF (the default / common case).
+      expect(controller.wizardState.trackInventory, isFalse);
+      await controller.saveAndContinue();
+      // Step 4 (Product Unit) must not be skipped just because Track
+      // Inventory is off.
+      expect(controller.wizardState.currentStep, 4);
+      controller.selectUnitModel('SINGLE_UNIT');
+      controller.setProductUnit('unit-1');
+      await controller.saveAndContinue();
+      expect(controller.wizardState.currentStep, 5);
+      controller.updateSimpleBaseSku('NO-INV-001');
+      await controller.saveAndContinue();
+      controller.updateStandardSellingPrice(100);
+      controller.updateTaxId('tax-1', taxRate: 15, taxName: 'VAT 15%');
+      await controller.saveAndContinue();
+      expect(controller.wizardState.currentStep, 7);
+
+      final payload = WizardProductCreateMapper.toWizardCreateJson(
+        controller.wizardState,
+        idempotencyKey: 'idem-no-inv',
+      );
+      expect(
+        payload['productUnitId'] ?? payload['baseUnitId'],
+        isNotNull,
+        reason: 'Backend requires productUnitId/baseUnitId for every SIMPLE '
+            'product regardless of trackInventory — omitting it caused the '
+            'original silent create failure.',
+      );
+
+      expect(await controller.createProductFromWizard(), isTrue);
+      expect(repo.createFromWizardCallCount, 1);
+      expect(controller.wizardState.productId, isNotNull);
+    });
+
     test('2/3. double submit ignored while submitting; one create call',
         () async {
       await fillSimpleToStep7();
@@ -341,7 +396,9 @@ void main() {
     test('17. SIMPLE navigation regression still reaches Step 7', () async {
       await fillSimpleToStep7();
       expect(controller.wizardState.currentStep, 7);
-      expect(controller.isStepApplicable(4), isFalse);
+      // SIMPLE always requires Step 4 (Product Unit) — backend wizard-create
+      // has no Track Inventory exemption for this field.
+      expect(controller.isStepApplicable(4), isTrue);
     });
 
     test('18. VARIANT navigation regression still reaches Step 7', () async {

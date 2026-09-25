@@ -1705,8 +1705,10 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   }
 
   /// Scanner-first:
-  /// SIMPLE/VARIANT: 1→2→3→4→5→6→7
-  /// BUNDLE: 1→2→3→5→6→7 (skip Unit & Pack)
+  /// SIMPLE: 1→2→3→4→5→6→7
+  /// VARIANT/BUNDLE: 1→2→3→5→6→7 (skip Unit & Pack — backend wizard-create
+  /// only requires productUnitId/baseUnitId for SIMPLE structure; see
+  /// ValidateWizardCreateRequest in TenantAdminProductService.cs)
   @visibleForTesting
   int getNextApplicableStep([int? fromStep]) {
     final step = fromStep ?? state.currentStep;
@@ -1717,13 +1719,17 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       case 2:
         return 3;
       case 3:
-        if (structure == 'BUNDLE') {
+        if (structure != 'SIMPLE') {
           return 5;
         }
-        // Units NOT_APPLICABLE when Track Inventory OFF.
-        if (!state.trackInventory) {
-          return 5;
-        }
+        // Product Unit is required by the backend for every SIMPLE product
+        // regardless of Track Inventory (ValidateWizardCreateRequest has no
+        // trackInventory condition on this check). It must never be skipped
+        // here for SIMPLE — doing so previously left productUnitId null and
+        // made POST wizard-create fail with "Product unit is required for
+        // SIMPLE products." only after the user had already reached Review
+        // & Create (root cause of barcode-sourced Product final create
+        // silently failing whenever Track Inventory was left off).
         return 4;
       case 4:
         return 5;
@@ -1746,10 +1752,7 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
       case 6:
         return 5;
       case 5:
-        if (structure == 'BUNDLE') {
-          return 3;
-        }
-        if (!state.trackInventory) {
+        if (structure != 'SIMPLE') {
           return 3;
         }
         return 4;
@@ -1768,10 +1771,9 @@ class AddProductWizardController extends StateNotifier<AddProductWizardState> {
   bool isStepApplicable(int step) {
     if (step < 1 || step > 7) return false;
     final structure = state.productStructure.toUpperCase();
-    // Scanner-first: BUNDLE skips Unit & Pack (step 4).
-    // Track Inventory OFF also makes Units NOT_APPLICABLE.
-    if (step == 4 &&
-        (structure == 'BUNDLE' || !state.trackInventory)) {
+    // Scanner-first: VARIANT/BUNDLE skip Unit & Pack (step 4). Product Unit
+    // is only required by the backend for SIMPLE — see getNextApplicableStep.
+    if (step == 4 && structure != 'SIMPLE') {
       return false;
     }
     return true;
