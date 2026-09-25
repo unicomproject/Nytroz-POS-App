@@ -408,7 +408,7 @@ void main() {
       controller.setProductStructure('VARIANT');
       controller.addAttributeRow();
       controller.updateAttributeName(0, 'Size');
-      controller.updateAttributeValues(0, 'Small');
+      controller.selectValues(0, ['Small']);
       controller.generateVariants();
       await controller.saveAndContinue();
       controller.updateVariantSellingPrice(

@@ -100,7 +100,6 @@ void main() {
         canManageProductMedia: true,
         canManageProductChannels: true,
         canManageVariants: true,
-        canManageBundleComponents: false,
         canManageBarcodes: true,
         canManagePricing: true,
         canViewProductCost: false,
