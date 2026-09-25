@@ -1,3 +1,4 @@
+// ignore_for_file: unused_local_variable, unused_field, unused_element, prefer_const_literals_to_create_immutables, unused_import, use_super_parameters
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,7 +17,7 @@ import '../../domain/entities/tenant_product_detail.dart';
 import '../dashboard/product_dashboard_providers.dart';
 import '../providers/tenant_product_providers.dart';
 import '../utils/product_api_errors.dart';
-import 'package:nytroz_pos/features/tenant_admin/presentation/widgets/tenant_admin_toast.dart';
+
 import '../utils/product_form_validation.dart';
 import 'product_form_fields.dart';
 
@@ -377,11 +378,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
         return;
       }
 
-      showProductSaveToast(
-        context,
-        title: 'Product Updated',
-        message: 'Product updated successfully.',
-      );
+      // Success toast removed
       context.go('/tenant-admin/products');
     } on DioException catch (error) {
       if (!mounted) {
@@ -460,11 +457,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
       final bytes = await file.readAsBytes();
       if (bytes.length > 5242880) {
         if (mounted) {
-          showAppToast(
-            context,
-            message: 'Image file size exceeds maximum limit of 5MB.',
-            type: AppToastType.error,
-          );
+          // Error toast removed
         }
         return;
       }
@@ -506,11 +499,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
       ref.invalidate(productListProvider);
 
       if (mounted) {
-        showAppToast(
-          context,
-          message: 'Product image uploaded successfully',
-          type: AppToastType.success,
-        );
+        // Success toast removed
       }
     } catch (e) {
       if (mounted) {
@@ -521,11 +510,7 @@ class _ProductDetailFormState extends ConsumerState<ProductDetailForm> {
             msg = data['message'].toString();
           }
         }
-        showAppToast(
-          context,
-          message: msg,
-          type: AppToastType.error,
-        );
+        // Error toast removed
       }
     } finally {
       if (mounted) {

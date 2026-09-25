@@ -19,6 +19,10 @@ void main() {
         RealtimeCashierRefreshPolicy.shouldRefreshOnlineOrders(event),
         isTrue,
       );
+      expect(
+        RealtimeCashierRefreshPolicy.shouldShowNewOrderToast(event),
+        isTrue,
+      );
     });
 
     test('empty type does not refresh', () {
@@ -35,6 +39,10 @@ void main() {
         RealtimeCashierRefreshPolicy.shouldRefreshOnlineOrders(event),
         isFalse,
       );
+      expect(
+        RealtimeCashierRefreshPolicy.shouldShowNewOrderToast(event),
+        isFalse,
+      );
     });
 
     test('non ecommerce event refreshes bell only', () {
@@ -49,6 +57,29 @@ void main() {
       );
       expect(
         RealtimeCashierRefreshPolicy.shouldRefreshOnlineOrders(event),
+        isFalse,
+      );
+      expect(
+        RealtimeCashierRefreshPolicy.shouldShowNewOrderToast(event),
+        isFalse,
+      );
+    });
+
+    test(
+        'order status change (not a new order) refreshes online orders '
+        'but does not toast', () {
+      const event = RealtimeNotificationEvent(
+        type: 'ecommerce.order_ready_for_collection.staff',
+        title: 'Order ready',
+        body: 'Order ORD-000001 is ready for collection',
+        sourceReferenceId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+      );
+      expect(
+        RealtimeCashierRefreshPolicy.shouldRefreshOnlineOrders(event),
+        isTrue,
+      );
+      expect(
+        RealtimeCashierRefreshPolicy.shouldShowNewOrderToast(event),
         isFalse,
       );
     });

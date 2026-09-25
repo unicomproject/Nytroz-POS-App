@@ -240,7 +240,7 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
       if (next.pageError != null && next.pageError != previous?.pageError) {
         showAppToast(
           context,
-          title: 'Validation Error',
+          title: 'Error',
           message: next.pageError!,
           type: AppToastType.error,
         );
@@ -280,7 +280,7 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
               final showScanTips =
                   state.currentStep == 1 && constraints.maxWidth >= 1180;
               return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
                     child: Container(
@@ -317,15 +317,14 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
             onSaveDraft: state.currentStep == 1
                 ? null
                 : () async {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                    // Small delay to allow focus change handlers to complete their synchronous state updates
+                    await Future.delayed(const Duration(milliseconds: 50));
                     final success = await controller.saveDraft();
                     if (success && context.mounted) {
                       ref.invalidate(localProductWizardDraftsProvider);
                       ref.invalidate(productListProvider);
-                      showProductSaveToast(
-                        context,
-                        title: 'Draft Saved',
-                        message: 'Draft saved locally on this device',
-                      );
+                      // Draft saved toast removed
                       context.go('/tenant-admin/products');
                     }
                   },
@@ -333,26 +332,24 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
                 ? () async {
                     final success = await controller.skip();
                     if (success && context.mounted) {
-                      showProductSaveToast(
-                        context,
-                        title: 'Step Skipped',
-                        message: 'Moved to the next step.',
-                      );
+                      // Skip toast removed
                     }
                   }
                 : null,
-            showSkip: state.currentStep >= 3 && state.currentStep <= 5,
-            onSaveAndContinue: state.currentStep == 1
+            showSkip: controller.canSkipCurrentStep,
+            onContinue: state.currentStep == 1
                 ? null
                 : () async {
-                    final isStep7 = state.currentStep == 7;
-                    if (isStep7 && state.isSubmitting) {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                    await Future.delayed(const Duration(milliseconds: 50));
+                    final isStep6 = state.currentStep == 6;
+                    if (isStep6 && state.isSubmitting) {
                       return;
                     }
 
                     final success = await controller.saveAndContinue();
                     if (success && context.mounted) {
-                      if (isStep7) {
+                      if (isStep6) {
                         ref.invalidate(localProductWizardDraftsProvider);
                         ref.invalidate(productListProvider);
                         ref.invalidate(productSummaryProvider);
@@ -363,18 +360,14 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
                           );
                         });
                       } else {
-                        showProductSaveToast(
-                          context,
-                          title: 'Step Saved',
-                          message: 'Progress saved. Continue to the next step.',
-                        );
+                        // Step saved toast removed
                       }
                     }
                   },
             isSavingDraft: state.isSavingDraft,
             isSubmitting: state.isSubmitting,
-            saveAndContinueLabel:
-                state.currentStep == 7 ? 'Create Product' : 'Save & Continue',
+            continueLabel: state.currentStep == 6 ? 'Create Product' : 'Continue',
+            backLabel: 'Back',
           ),
       ],
     );
@@ -400,64 +393,106 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           longDescriptionController: _longDescriptionController,
         );
       case 3:
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Product Type & Configuration',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: TenantAdminColors.bodyText,
+                ),
+              ),
+              const SizedBox(height: TenantAdminSpacing.md),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isNarrow = constraints.maxWidth < 680;
+                  final cards = [
+                    ProductStructureCard(
+                      structure: 'SIMPLE',
+                      title: 'Simple Product',
+                      description: 'Single SKU product with no variants (e.g., T-shirt)',
+                      icon: Icons.inventory_2_outlined,
+                      selected: state.productStructure == 'SIMPLE' && state.productStructureConfirmed,
+                      onSelected: () => controller.setProductStructure('SIMPLE'),
+                    ),
+                    ProductStructureCard(
+                      structure: 'VARIANT',
+                      title: 'Variant Product',
+                      description: 'Product with multiple options (e.g., T-shirt with size, color)',
+                      icon: Icons.dashboard_customize_outlined,
+                      selected: state.productStructure == 'VARIANT' && state.productStructureConfirmed,
+                      enabled: widget.capabilities?.canManageVariants ?? true,
+                      onSelected: () => controller.setProductStructure('VARIANT'),
+                    ),
+                  ];
+
+                  if (isNarrow) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        cards[0],
+                        const SizedBox(height: TenantAdminSpacing.md),
+                        cards[1],
+                      ],
+                    );
+                  }
+
+                  return IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: cards[0]),
+                        const SizedBox(width: TenantAdminSpacing.md),
+                        Expanded(child: cards[1]),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              if (state.productStructureConfirmed) ...[
+                if (state.productStructure == 'SIMPLE') ...[
+                  const SizedBox(height: TenantAdminSpacing.xl),
+                  const Divider(),
+                  const SizedBox(height: TenantAdminSpacing.xl),
+                  // Units
+                  UnitsPackConversionForm(
+                    state: state,
+                    controller: controller,
+                  ),
+                ],
+                
+                if (state.productStructure == 'VARIANT') ...[
+                  const SizedBox(height: TenantAdminSpacing.xl),
+                  Step4VariantConfigurationForm(
+                    state: state,
+                    controller: controller,
+                    formKey: _step4FormKey,
+                  ),
+                ],
+
+                const SizedBox(height: TenantAdminSpacing.xl),
+                const Step5BarcodeSkuForm(),
+              ],
+            ],
+          ),
+        );
+      case 4:
+        return const Step6PricingTaxForm();
+      case 5:
         return ProductTypeTracking(
           state: state,
           controller: controller,
           canManageVariants: widget.capabilities?.canManageVariants ?? true,
-          canManageBundleComponents:
-              widget.capabilities?.canManageBundleComponents ?? false,
           canUseAdvancedInventoryTracking:
               widget.capabilities?.canUseAdvancedInventoryTracking ?? true,
           batchController: _batchController,
           serialController: _serialController,
         );
-      case 4:
-        return UnitsPackConversionForm(
-          state: state,
-          controller: controller,
-        );
-      case 5:
-        switch (state.productStructure.toUpperCase()) {
-          case 'VARIANT':
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Step4VariantConfigurationForm(
-                    state: state,
-                    controller: controller,
-                    formKey: _step4FormKey,
-                  ),
-                ),
-                const SizedBox(height: TenantAdminSpacing.lg),
-                const Expanded(
-                  flex: 4,
-                  child: Step5BarcodeSkuForm(),
-                ),
-              ],
-            );
-          case 'BUNDLE':
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _buildStepPlaceholder('Bundle / Kit Composition'),
-                ),
-                const SizedBox(height: TenantAdminSpacing.lg),
-                const Expanded(
-                  child: Step5BarcodeSkuForm(),
-                ),
-              ],
-            );
-          case 'SIMPLE':
-          default:
-            // SIMPLE: sellable identity only (Barcode/SKU visual reused here).
-            return const Step5BarcodeSkuForm();
-        }
       case 6:
-        return const Step6PricingTaxForm();
-      case 7:
         return Step7ReviewCreate(
           state: state,
           controller: controller,
@@ -469,41 +504,6 @@ class _AddProductWizardState extends ConsumerState<AddProductWizard> {
           controller: controller,
         );
     }
-  }
-
-  Widget _buildStepPlaceholder(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: TenantAdminSpacing.xxl),
-      child: Center(
-        child: Column(
-          children: [
-            const Icon(
-              Icons.architecture_outlined,
-              size: 48,
-              color: TenantAdminColors.posHomeAccentOrange,
-            ),
-            const SizedBox(height: TenantAdminSpacing.md),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: TenantAdminColors.bodyText,
-              ),
-            ),
-            const SizedBox(height: TenantAdminSpacing.sm),
-            const Text(
-              'Bundle composition graph enhancement is out of scope for this release.',
-              style: TextStyle(
-                fontSize: 14,
-                color: TenantAdminColors.mutedText,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

@@ -162,23 +162,29 @@ class _EditVariantIdentifierDrawerState
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const _FieldLabel('SKU', required: true),
+                    const _FieldLabel('SKU (Auto-Generated)'),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _skuController,
-                      decoration: _inputDecoration(),
-                      validator: (val) {
-                        if (val == null || val.trim().isEmpty) {
-                          return 'SKU is required';
-                        }
-                        if (val.trim().length > 100) {
-                          return 'SKU cannot exceed 100 characters';
-                        }
-                        if (widget.existingSkus.contains(val.trim())) {
-                          return 'This SKU is already used by another variant';
-                        }
-                        return null;
-                      },
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        border: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(TenantAdminRadius.sm),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(TenantAdminRadius.sm),
+                          borderSide:
+                              const BorderSide(color: TenantAdminColors.border),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        suffixIcon: const Icon(Icons.lock_outline,
+                            size: 20, color: TenantAdminColors.mutedText),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     const _FieldLabel('Barcode', required: true),

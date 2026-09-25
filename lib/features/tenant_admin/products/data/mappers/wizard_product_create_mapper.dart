@@ -1,3 +1,4 @@
+// ignore_for_file: unused_local_variable, unused_field, unused_element, prefer_const_literals_to_create_immutables, unused_import, use_super_parameters
 import '../dtos/save_product_draft_request_dto.dart';
 import '../dtos/barcode_sku_dtos.dart';
 import '../dtos/pricing_tax_dtos.dart';
@@ -58,22 +59,112 @@ class WizardProductCreateMapper {
             .map((m) => m.mediaAssetId)
             .where((id) => id.isNotEmpty)
             .toList(),
-      if (includeTracking && state.initialBatchNumber.trim().isNotEmpty)
+      if (includeTracking && state.batchTracking && state.initialBatchNumber.trim().isNotEmpty)
         'initialBatchNumber': state.initialBatchNumber.trim(),
-      if (includeTracking && state.initialExpiryDate != null)
+      if (includeTracking && state.expiryTracking && state.initialExpiryDate != null)
         'initialExpiryDate': _dateOnly(state.initialExpiryDate!),
-      if (includeTracking && state.initialSerialNumber.trim().isNotEmpty)
+      if (includeTracking && state.serialTracking && state.initialSerialNumber.trim().isNotEmpty)
         'initialSerialNumber': state.initialSerialNumber.trim(),
       if (state.confirmClearIncompatibleInitialTracking)
         'confirmClearIncompatibleInitialTracking': true,
       if (includeTracking &&
           state.initialTrackingAssignedVariantId != null &&
-          state.initialTrackingAssignedVariantId!.isNotEmpty)
+          _isValidGuid(state.initialTrackingAssignedVariantId!))
         'initialTrackingAssignedVariantId':
             state.initialTrackingAssignedVariantId,
+      if (includeTracking && state.trackInventory && state.openingStockDrafts.isNotEmpty)
+        'quantityDraft': {
+          'stockOwners': state.openingStockDrafts.values
+              .map((draft) => draft.toJson())
+              .toList(),
+        },
       if (idempotencyKey != null && idempotencyKey.isNotEmpty)
         'idempotencyKey': idempotencyKey,
+      if (state.scanStepState.categoryResolution != null &&
+          state.scanStepState.categoryResolution!.provider.trim().isNotEmpty &&
+          state.scanStepState.categoryResolution!.externalCategoryKey != null &&
+          state.scanStepState.categoryResolution!.externalCategoryKey!.trim().isNotEmpty)
+        'externalCategoryMappingContext': {
+          'provider': state.scanStepState.categoryResolution!.provider.trim(),
+          'externalCategoryKey':
+              state.scanStepState.categoryResolution!.externalCategoryKey!.trim(),
+          if (state.scanStepState.categoryResolution!.externalCategoryName != null &&
+              state.scanStepState.categoryResolution!.externalCategoryName!.trim().isNotEmpty)
+            'externalCategoryName':
+                state.scanStepState.categoryResolution!.externalCategoryName!.trim(),
+        },
+      if (state.scanStepState.brandResolution != null &&
+          state.scanStepState.brandResolution!.provider.trim().isNotEmpty &&
+          state.scanStepState.brandResolution!.externalBrandKey != null &&
+          state.scanStepState.brandResolution!.externalBrandKey!.trim().isNotEmpty)
+        'externalBrandMappingContext': {
+          'provider': state.scanStepState.brandResolution!.provider.trim(),
+          'externalBrandKey':
+              state.scanStepState.brandResolution!.externalBrandKey!.trim(),
+          if (state.scanStepState.brandResolution!.externalBrandName != null &&
+              state.scanStepState.brandResolution!.externalBrandName!.trim().isNotEmpty)
+            'externalBrandName':
+                state.scanStepState.brandResolution!.externalBrandName!.trim(),
+        },
     };
+  }
+
+  static SaveProductDraftRequestDto toWizardDraftDto(
+    AddProductWizardState state, {
+    String? wizardAction,
+    bool advanceStep = false,
+  }) {
+    final structure = state.productStructure.toUpperCase();
+    final isVariant = structure == 'VARIANT';
+    final baseSku = state.step5State.baseSku.trim();
+    final shouldApplyAutoSku = isVariant && baseSku.isNotEmpty;
+
+    return SaveProductDraftRequestDto(
+      productName: state.productName.trim(),
+      productCode: state.internalCode.trim(),
+      categoryId: state.categoryId,
+      brandId: state.brandId,
+      shortDescription: state.shortDescription.trim(),
+      longDescription: state.longDescription.trim(),
+      desiredPublishActive: state.desiredPublishActive,
+      posSellable: state.posSellable,
+      allowOnlineSale: state.allowOnlineSale,
+      trackInventory: state.trackInventory,
+      trackingMethod: state.trackingMethod,
+      batchTracking: state.batchTracking,
+      expiryTracking: state.expiryTracking,
+      serialTracking: state.serialTracking,
+      productStructure: structure,
+      currentSetupStep: state.currentStep,
+      advanceStep: advanceStep,
+      wizardAction: wizardAction,
+      expectedRowVersion: state.rowVersion,
+      stagedMediaAssetIds: state.stagedMediaAssets
+          .map((m) => m.mediaAssetId)
+          .where((id) => id.isNotEmpty)
+          .toList(),
+      unitModel: state.unitModel,
+      productUnitId: state.productUnitId,
+      baseUnitId: state.baseUnitId ?? state.productUnitId,
+      sellingUnitId: state.sellingUnitId,
+      purchaseUnitId: state.purchaseUnitId,
+      outerPackUnitId: state.outerPackUnitId,
+      itemsPerPurchaseUnit: state.itemsPerPurchaseUnit,
+      purchaseUnitsPerOuterPack: state.purchaseUnitsPerOuterPack,
+      allowDecimalQuantity: state.allowDecimalQuantity,
+      variantConfiguration:
+          isVariant ? _variantConfiguration(state) : null,
+      barcodeSkuConfiguration: _barcodeSku(state, isVariant),
+      pricingTaxConfiguration: _pricingTax(state),
+      initialBatchNumber: state.batchTracking ? state.initialBatchNumber.trim() : '',
+      initialExpiryDate: state.expiryTracking ? state.initialExpiryDate : null,
+      initialSerialNumber: state.serialTracking ? state.initialSerialNumber.trim() : '',
+      confirmClearIncompatibleInitialTracking:
+          state.confirmClearIncompatibleInitialTracking,
+      initialTrackingAssignedVariantId: state.initialTrackingAssignedVariantId,
+      applyCompositeStep3Identifiers: false,
+      autoSkuBase: null,
+    );
   }
 
   static Map<String, dynamic> _simpleUnits(AddProductWizardState state) {
@@ -248,6 +339,7 @@ class WizardProductCreateMapper {
         discountPrice: null,
         taxId: state.taxId,
         taxExclusive: state.taxExclusive,
+        applySameTaxToAllVariants: state.applySameTaxToAllVariants,
         variantPrices: snapshot,
       );
     }
@@ -288,8 +380,19 @@ extension WizardCreatePricingJson on PricingTaxConfigurationDto {
       if (discountPrice != null) 'discountPrice': discountPrice,
       if (taxId != null) 'taxClassId': taxId,
       'taxExclusive': taxExclusive,
+      'applySameTaxToAllVariants': applySameTaxToAllVariants,
       if (variantPrices != null)
         'variantPrices': variantPrices!.map((e) => e.toSnapshotJson()).toList(),
     };
   }
+}
+
+// Validates that a string matches UUID/GUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).
+// Client-side combination keys like "Size:L|Color:Red" will return false.
+bool _isValidGuid(String value) {
+  if (value.isEmpty) return false;
+  final guidRegex = RegExp(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+  );
+  return guidRegex.hasMatch(value);
 }

@@ -9,6 +9,8 @@ class PosNotificationItem {
     required this.body,
     required this.isRead,
     required this.createdAt,
+    required this.eventCode,
+    required this.sourceReferenceId,
   });
 
   final String id;
@@ -16,6 +18,15 @@ class PosNotificationItem {
   final String body;
   final bool isRead;
   final DateTime? createdAt;
+  final String eventCode;
+  final String? sourceReferenceId;
+
+  /// Whether this notification is about a specific e-commerce order and can
+  /// be navigated to (as opposed to a generic staff notification).
+  bool get isOnlineOrderNotification =>
+      eventCode.startsWith('ecommerce.order_') &&
+      sourceReferenceId != null &&
+      sourceReferenceId!.isNotEmpty;
 
   factory PosNotificationItem.fromJson(Map<String, dynamic> json) =>
       PosNotificationItem(
@@ -24,6 +35,8 @@ class PosNotificationItem {
         body: json['body']?.toString() ?? '',
         isRead: json['isRead'] == true,
         createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
+        eventCode: json['eventCode']?.toString() ?? '',
+        sourceReferenceId: json['sourceReferenceId']?.toString(),
       );
 }
 
@@ -59,6 +72,14 @@ class PosNotificationsRemoteDatasource {
           : const [],
       unreadCount: (data['unreadCount'] as num?)?.toInt() ?? 0,
     );
+  }
+
+  Future<void> markRead(String id) async {
+    await _dio.put<void>(ApiEndpoints.posNotificationRead(id));
+  }
+
+  Future<void> markAllRead() async {
+    await _dio.put<void>(ApiEndpoints.posNotificationsReadAll);
   }
 
   Future<String?> getWebSocketTicket() async {

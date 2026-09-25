@@ -14,10 +14,9 @@ class AddProductStepper extends StatelessWidget {
   static const steps = [
     'Scan Barcode',
     'Basic Details',
-    'Product Type & Tracking',
-    'Unit & Pack Conversion',
-    'Product Configuration',
+    'Product Type & Configuration',
     'Pricing & Tax',
+    'Product Tracking',
     'Review & Create',
   ];
 

@@ -1,3 +1,4 @@
+// ignore_for_file: unused_local_variable, unused_field, unused_element, prefer_const_literals_to_create_immutables, unused_import, use_super_parameters
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../controllers/add_product_wizard_controller.dart';
@@ -5,7 +6,7 @@ import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin
 import '../../../domain/entities/add_product_wizard_state.dart';
 import '../../../domain/entities/variant_configuration_state.dart';
 import 'generated_variants_section.dart';
-import 'estimated_variant_count_card.dart';
+
 import 'variant_configuration_summary_card.dart';
 
 class Step4VariantConfigurationForm extends ConsumerStatefulWidget {
@@ -62,12 +63,12 @@ class _Step4VariantConfigurationFormState
 
     return Form(
       key: widget.formKey,
-      child: SingleChildScrollView(
-        child: LayoutBuilder(
+      child: LayoutBuilder(
           builder: (context, constraints) {
             final isCompact =
                 constraints.maxWidth < TenantAdminBreakpoints.smallTablet;
 
+            Widget? bottomSection;
             if (showingGeneratedView) {
               final generatedCard = _Step4SectionCard(
                 child: GeneratedVariantsSection(
@@ -82,7 +83,7 @@ class _Step4VariantConfigurationFormState
               );
 
               if (isCompact) {
-                return Column(
+                bottomSection = Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     generatedCard,
@@ -90,16 +91,16 @@ class _Step4VariantConfigurationFormState
                     summaryCard,
                   ],
                 );
+              } else {
+                bottomSection = Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: generatedCard),
+                    const SizedBox(width: TenantAdminSpacing.lg),
+                    SizedBox(width: 260, child: summaryCard),
+                  ],
+                );
               }
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: generatedCard),
-                  const SizedBox(width: TenantAdminSpacing.lg),
-                  SizedBox(width: 260, child: summaryCard),
-                ],
-              );
             }
 
             final headerText = Column(
@@ -180,40 +181,45 @@ class _Step4VariantConfigurationFormState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (isCompact) ...[
-                    headerText,
-                    const SizedBox(height: TenantAdminSpacing.md),
-                    actionButtons,
-                  ] else
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: headerText),
-                        actionButtons,
-                      ],
-                    ),
+                  headerText,
                   const SizedBox(height: TenantAdminSpacing.lg),
+                  
+                  // Top Chips Row
+                  _AttributeChipsRow(
+                    rows: step4State.attributeRows,
+                    controller: controller,
+                    state: state,
+                  ),
+                  
+                  const SizedBox(height: TenantAdminSpacing.lg),
+                  
+                  // Values Table
                   if (step4State.attributeRows.isEmpty)
                     _EmptyAttributesPlaceholder(
-                      onAdd: controller.addAttributeRow,
+                      onAdd: () => _promptAddAttributeName(context, controller, state),
                     )
                   else
-                    ReorderableListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      buildDefaultDragHandles: false,
-                      itemCount: step4State.attributeRows.length,
-                      onReorder: controller.reorderAttributeRows,
-                      itemBuilder: (context, index) {
-                        final row = step4State.attributeRows[index];
-                        return _AttributeCard(
-                          key: ValueKey(row.localId),
-                          index: index,
-                          row: row,
-                          controller: controller,
-                        );
-                      },
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: TenantAdminColors.border),
+                        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                        color: Colors.white,
+                      ),
+                      child: Column(
+                        children: [
+                          for (int i = 0; i < step4State.attributeRows.length; i++)
+                            _AttributeValuesRow(
+                              key: ValueKey(step4State.attributeRows[i].localId),
+                              index: i,
+                              row: step4State.attributeRows[i],
+                              controller: controller,
+                              isLast: i == step4State.attributeRows.length - 1,
+                              onEditName: () => _promptAddAttributeName(context, controller, state, i, step4State.attributeRows[i].templateName),
+                            ),
+                        ],
+                      ),
                     ),
+                  
                   const SizedBox(height: TenantAdminSpacing.lg),
                   Align(
                     alignment: Alignment.centerRight,
@@ -246,9 +252,9 @@ class _Step4VariantConfigurationFormState
                                 strokeWidth: 2,
                               ),
                             )
-                          : Text(
-                              hasGeneratedVariants ? 'Apply Changes' : 'Apply',
-                              style: const TextStyle(
+                          : const Text(
+                              'Apply',
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -258,33 +264,22 @@ class _Step4VariantConfigurationFormState
               ),
             );
 
-            final countCard = EstimatedVariantCountCard(
-              step4State: step4State,
-              isLoading: state.isSubmitting,
-            );
+            final Widget topSection = attributesCard;
 
-            if (isCompact) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  attributesCard,
-                  const SizedBox(height: TenantAdminSpacing.lg),
-                  countCard,
-                ],
-              );
+            if (bottomSection == null) {
+              return topSection;
             }
 
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(flex: 3, child: attributesCard),
-                const SizedBox(width: TenantAdminSpacing.lg),
-                Expanded(flex: 2, child: countCard),
+                topSection,
+                const SizedBox(height: TenantAdminSpacing.xl),
+                bottomSection,
               ],
             );
           },
         ),
-      ),
     );
   }
 }
@@ -368,73 +363,161 @@ class _EmptyAttributesPlaceholder extends StatelessWidget {
   }
 }
 
-class _AttributeCard extends StatefulWidget {
-  const _AttributeCard({
+Future<void> _promptAddAttributeName(BuildContext context, AddProductWizardController controller, AddProductWizardState state, [int? editingIndex, String? initialName]) async {
+  final name = await showDialog<String>(
+    context: context,
+    builder: (dialogContext) {
+      final nameController = TextEditingController(text: initialName ?? '');
+      return AlertDialog(
+        title: Text(editingIndex != null ? 'Edit Attribute Name' : 'Add Attribute'),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            hintText: 'e.g., Size, Color',
+          ),
+          textCapitalization: TextCapitalization.words,
+          onSubmitted: (val) => Navigator.of(dialogContext).pop(val.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(nameController.text.trim()),
+            child: Text(editingIndex != null ? 'Save' : 'Add'),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (name == null || name.isEmpty) return;
+  if (editingIndex != null) {
+    controller.updateAttributeName(editingIndex, name);
+  } else {
+    controller.addAttributeRow();
+    final newIndex = state.step4State.attributeRows.length; // Before adding, the length is the index of the newly added item
+    // Because addAttributeRow is synchronous, we can dispatch update immediately.
+    // However, it might be safer to post a frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.updateAttributeName(newIndex, name);
+    });
+  }
+}
+
+class _AttributeChipsRow extends StatelessWidget {
+  final List<AttributeConfigRow> rows;
+  final AddProductWizardController controller;
+  final AddProductWizardState state;
+
+  const _AttributeChipsRow({required this.rows, required this.controller, required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: TenantAdminSpacing.sm,
+      runSpacing: TenantAdminSpacing.sm,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        for (int i = 0; i < rows.length; i++)
+          _AttributeChip(
+            index: i,
+            row: rows[i],
+            controller: controller,
+            onEdit: () => _promptAddAttributeName(context, controller, state, i, rows[i].templateName),
+          ),
+        OutlinedButton.icon(
+          onPressed: () => _promptAddAttributeName(context, controller, state),
+          icon: const Icon(Icons.add, size: 16),
+          label: const Text('Add attribute'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: TenantAdminColors.bodyText,
+            side: BorderSide(color: TenantAdminColors.border, style: BorderStyle.solid),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(TenantAdminRadius.md)),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            minimumSize: Size.zero,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AttributeChip extends StatelessWidget {
+  final int index;
+  final AttributeConfigRow row;
+  final AddProductWizardController controller;
+  final VoidCallback onEdit;
+
+  const _AttributeChip({required this.index, required this.row, required this.controller, required this.onEdit});
+
+  @override
+  Widget build(BuildContext context) {
+    final displayName = (row.templateName ?? '').trim();
+    return InkWell(
+      borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+      onTap: onEdit,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: TenantAdminColors.subtleBackground,
+          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+          border: Border.all(color: TenantAdminColors.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.drag_indicator, size: 14, color: TenantAdminColors.mutedText),
+            const SizedBox(width: 6),
+            Text(
+              displayName.isEmpty ? 'Untitled Attribute' : displayName,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: TenantAdminColors.bodyText,
+              ),
+            ),
+            const SizedBox(width: 6),
+            InkWell(
+              onTap: () => controller.removeAttributeRow(index),
+              child: const Icon(Icons.close, size: 16, color: TenantAdminColors.mutedText),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AttributeValuesRow extends StatefulWidget {
+  const _AttributeValuesRow({
     super.key,
     required this.index,
     required this.row,
     required this.controller,
+    required this.isLast,
+    required this.onEditName,
   });
 
   final int index;
   final AttributeConfigRow row;
   final AddProductWizardController controller;
+  final bool isLast;
+  final VoidCallback onEditName;
 
   @override
-  State<_AttributeCard> createState() => _AttributeCardState();
+  State<_AttributeValuesRow> createState() => _AttributeValuesRowState();
 }
 
-class _AttributeCardState extends State<_AttributeCard> {
-  bool _isEditingName = false;
-  late TextEditingController _nameController;
-  late FocusNode _nameFocusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController =
-        TextEditingController(text: widget.row.templateName ?? '');
-    _nameFocusNode = FocusNode();
-    _nameFocusNode.addListener(_onNameFocusChange);
-    if ((widget.row.templateName ?? '').trim().isEmpty) {
-      _isEditingName = true;
-    }
-  }
-
-  @override
-  void didUpdateWidget(covariant _AttributeCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final name = widget.row.templateName ?? '';
-    if (name != oldWidget.row.templateName &&
-        name != _nameController.text &&
-        !_nameFocusNode.hasFocus) {
-      _nameController.text = name;
-    }
-  }
-
-  void _onNameFocusChange() {
-    if (!_nameFocusNode.hasFocus && _isEditingName) {
-      _commitName();
-    }
-  }
-
-  void _commitName() {
-    widget.controller.updateAttributeName(
-      widget.index,
-      _nameController.text.trim(),
-    );
-    setState(() {
-      _isEditingName = false;
-    });
-  }
-
+class _AttributeValuesRowState extends State<_AttributeValuesRow> {
   Future<void> _promptAddValue() async {
     final templateId = widget.row.templateId;
     if (templateId == null || templateId.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter an attribute name before adding values.'),
-        ),
+        const SnackBar(content: Text('Enter an attribute name before adding values.')),
       );
       return;
     }
@@ -448,22 +531,13 @@ class _AttributeCardState extends State<_AttributeCard> {
           content: TextField(
             controller: valueController,
             autofocus: true,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(border: OutlineInputBorder()),
             textCapitalization: TextCapitalization.words,
             onSubmitted: (val) => Navigator.of(dialogContext).pop(val.trim()),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () =>
-                  Navigator.of(dialogContext).pop(valueController.text.trim()),
-              child: const Text('Add'),
-            ),
+            TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.of(dialogContext).pop(valueController.text.trim()), child: const Text('Add')),
           ],
         );
       },
@@ -472,149 +546,92 @@ class _AttributeCardState extends State<_AttributeCard> {
     if (value == null || value.isEmpty) return;
     if (widget.row.selectedValues.any((x) => x.valueId == value)) return;
 
-    final newValues = widget.row.selectedValues.map((x) => x.valueId).toList()
-      ..add(value);
+    final newValues = widget.row.selectedValues.map((x) => x.valueId).toList()..add(value);
     widget.controller.selectValues(widget.index, newValues);
-  }
-
-  @override
-  void dispose() {
-    _nameFocusNode.removeListener(_onNameFocusChange);
-    _nameFocusNode.dispose();
-    _nameController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final row = widget.row;
     final displayName = (row.templateName ?? '').trim();
-    final isActive = row.isValid;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: TenantAdminSpacing.md),
-      child: Material(
-        color: TenantAdminColors.surface,
-        borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(TenantAdminRadius.md),
-            border: Border.all(color: TenantAdminColors.border),
-          ),
-          padding: const EdgeInsets.all(TenantAdminSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ReorderableDragStartListener(
-                    index: widget.index,
-                    child: const Padding(
-                      padding: EdgeInsets.only(
-                        top: 2,
-                        right: TenantAdminSpacing.sm,
-                      ),
-                      child: Icon(
-                        Icons.drag_indicator,
-                        color: TenantAdminColors.mutedText,
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: _isEditingName
-                        ? TextField(
-                            controller: _nameController,
-                            focusNode: _nameFocusNode,
-                            decoration: const InputDecoration(
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: TenantAdminSpacing.sm,
-                                vertical: TenantAdminSpacing.sm,
-                              ),
-                              border: OutlineInputBorder(),
-                            ),
-                            textCapitalization: TextCapitalization.words,
-                            onSubmitted: (_) => _commitName(),
-                          )
-                        : Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  displayName.isEmpty
-                                      ? 'Untitled Attribute'
-                                      : displayName,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: displayName.isEmpty
-                                        ? TenantAdminColors.mutedText
-                                        : TenantAdminColors.bodyText,
-                                  ),
-                                ),
-                              ),
-                              if (isActive) ...[
-                                const SizedBox(width: TenantAdminSpacing.sm),
-                                _ActiveBadge(),
-                              ],
-                            ],
-                          ),
-                  ),
-                  _IconActionButton(
-                    icon: Icons.edit_outlined,
-                    onPressed: () {
-                      setState(() {
-                        _isEditingName = true;
-                      });
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        _nameFocusNode.requestFocus();
-                      });
-                    },
-                  ),
-                  const SizedBox(width: TenantAdminSpacing.xs),
-                  _IconActionButton(
-                    icon: Icons.delete_outline,
-                    iconColor: TenantAdminColors.danger,
-                    borderColor: TenantAdminColors.dangerBorder,
-                    onPressed: () =>
-                        widget.controller.removeAttributeRow(widget.index),
-                  ),
-                ],
-              ),
-              const SizedBox(height: TenantAdminSpacing.lg),
-              const Text(
-                'Values',
-                style: TextStyle(
-                  fontSize: 13,
+    return Container(
+      decoration: BoxDecoration(
+        border: widget.isLast ? null : Border(bottom: BorderSide(color: TenantAdminColors.border.withValues(alpha: 0.5))),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: TenantAdminSpacing.lg, vertical: TenantAdminSpacing.md),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 140,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                displayName.isEmpty ? 'Untitled' : displayName,
+                style: const TextStyle(
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: TenantAdminColors.mutedText,
+                  color: TenantAdminColors.bodyText,
                 ),
               ),
-              const SizedBox(height: TenantAdminSpacing.sm),
-              Wrap(
-                spacing: TenantAdminSpacing.sm,
-                runSpacing: TenantAdminSpacing.sm,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  ...row.selectedValues.map(
-                    (value) => _ValueTag(
-                      label: value.valueName,
-                      onRemove: () {
-                        final newValues = row.selectedValues
-                            .where((x) => x.valueId != value.valueId)
-                            .map((x) => x.valueId)
-                            .toList();
-                        widget.controller.selectValues(widget.index, newValues);
-                      },
-                    ),
-                  ),
-                  _AddValueButton(onTap: _promptAddValue),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(width: TenantAdminSpacing.lg),
+          Expanded(
+            child: Wrap(
+              spacing: TenantAdminSpacing.sm,
+              runSpacing: TenantAdminSpacing.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                ...row.selectedValues.map(
+                  (value) => _ValueTag(
+                    label: value.valueName,
+                    onRemove: () {
+                      final newValues = row.selectedValues
+                          .where((x) => x.valueId != value.valueId)
+                          .map((x) => x.valueId)
+                          .toList();
+                      widget.controller.selectValues(widget.index, newValues);
+                    },
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _promptAddValue,
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('Add value'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: TenantAdminColors.bodyText,
+                    side: BorderSide(color: TenantAdminColors.border, style: BorderStyle.solid),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(TenantAdminRadius.md)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    minimumSize: Size.zero,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: TenantAdminSpacing.lg),
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _IconActionButton(
+                  icon: Icons.edit_outlined,
+                  onPressed: widget.onEditName,
+                ),
+                const SizedBox(width: TenantAdminSpacing.xs),
+                _IconActionButton(
+                  icon: Icons.delete_outline,
+                  iconColor: TenantAdminColors.danger,
+                  borderColor: TenantAdminColors.dangerBorder,
+                  onPressed: () => widget.controller.removeAttributeRow(widget.index),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

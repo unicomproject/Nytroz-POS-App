@@ -125,6 +125,9 @@ class ExternalProductSuggestionDto {
     this.imageCandidate,
     this.primaryGtin,
     this.identifierStandard,
+    this.externalCategoryKey,
+    this.externalCategoryName,
+    this.externalCategoryHierarchy,
   });
 
   final String? productName;
@@ -138,8 +141,17 @@ class ExternalProductSuggestionDto {
   final String? imageCandidate;
   final String? primaryGtin;
   final String? identifierStandard;
+  final String? externalCategoryKey;
+  final String? externalCategoryName;
+  final List<String>? externalCategoryHierarchy;
 
   factory ExternalProductSuggestionDto.fromJson(Map<String, dynamic> json) {
+    final hierarchyRaw = json['externalCategoryHierarchy'];
+    List<String>? hierarchy;
+    if (hierarchyRaw is List) {
+      hierarchy = hierarchyRaw.map((e) => e.toString()).toList();
+    }
+
     return ExternalProductSuggestionDto(
       productName: json['productName']?.toString(),
       shortName: json['shortName']?.toString(),
@@ -152,6 +164,9 @@ class ExternalProductSuggestionDto {
       imageCandidate: json['imageCandidate']?.toString(),
       primaryGtin: json['primaryGtin']?.toString(),
       identifierStandard: json['identifierStandard']?.toString(),
+      externalCategoryKey: json['externalCategoryKey']?.toString(),
+      externalCategoryName: json['externalCategoryName']?.toString(),
+      externalCategoryHierarchy: hierarchy,
     );
   }
 
@@ -168,6 +183,169 @@ class ExternalProductSuggestionDto {
         if (primaryGtin != null) 'primaryGtin': primaryGtin,
         if (identifierStandard != null)
           'identifierStandard': identifierStandard,
+        if (externalCategoryKey != null)
+          'externalCategoryKey': externalCategoryKey,
+        if (externalCategoryName != null)
+          'externalCategoryName': externalCategoryName,
+        if (externalCategoryHierarchy != null)
+          'externalCategoryHierarchy': externalCategoryHierarchy,
+      };
+}
+
+class TenantCategoryCandidateDto {
+  const TenantCategoryCandidateDto({
+    required this.id,
+    required this.name,
+    required this.code,
+    this.matchType,
+  });
+
+  final String id;
+  final String name;
+  final String code;
+  final String? matchType;
+
+  factory TenantCategoryCandidateDto.fromJson(Map<String, dynamic> json) {
+    return TenantCategoryCandidateDto(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      code: json['code']?.toString() ?? '',
+      matchType: json['matchType']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'code': code,
+        if (matchType != null) 'matchType': matchType,
+      };
+}
+
+class TenantCategoryResolutionDto {
+  const TenantCategoryResolutionDto({
+    required this.provider,
+    this.externalCategoryKey,
+    this.externalCategoryName,
+    this.mappedCategory,
+    this.suggestions = const [],
+  });
+
+  final String provider;
+  final String? externalCategoryKey;
+  final String? externalCategoryName;
+  final TenantCategoryCandidateDto? mappedCategory;
+  final List<TenantCategoryCandidateDto> suggestions;
+
+  factory TenantCategoryResolutionDto.fromJson(Map<String, dynamic> json) {
+    final mapped = json['mappedCategory'];
+    final suggestionsRaw = json['suggestions'];
+    final suggestions = <TenantCategoryCandidateDto>[];
+    if (suggestionsRaw is List) {
+      for (final item in suggestionsRaw) {
+        if (item is Map<String, dynamic>) {
+          suggestions.add(TenantCategoryCandidateDto.fromJson(item));
+        }
+      }
+    }
+
+    return TenantCategoryResolutionDto(
+      provider: json['provider']?.toString() ?? '',
+      externalCategoryKey: json['externalCategoryKey']?.toString(),
+      externalCategoryName: json['externalCategoryName']?.toString(),
+      mappedCategory: mapped is Map<String, dynamic>
+          ? TenantCategoryCandidateDto.fromJson(mapped)
+          : null,
+      suggestions: suggestions,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'provider': provider,
+        if (externalCategoryKey != null)
+          'externalCategoryKey': externalCategoryKey,
+        if (externalCategoryName != null)
+          'externalCategoryName': externalCategoryName,
+        if (mappedCategory != null)
+          'mappedCategory': mappedCategory!.toJson(),
+        'suggestions': suggestions.map((s) => s.toJson()).toList(),
+      };
+}
+
+class TenantBrandCandidateDto {
+  const TenantBrandCandidateDto({
+    required this.id,
+    required this.name,
+    required this.code,
+    this.matchType,
+  });
+
+  final String id;
+  final String name;
+  final String code;
+  final String? matchType;
+
+  factory TenantBrandCandidateDto.fromJson(Map<String, dynamic> json) {
+    return TenantBrandCandidateDto(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      code: json['code']?.toString() ?? '',
+      matchType: json['matchType']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'code': code,
+        if (matchType != null) 'matchType': matchType,
+      };
+}
+
+class TenantBrandResolutionDto {
+  const TenantBrandResolutionDto({
+    required this.provider,
+    this.externalBrandKey,
+    this.externalBrandName,
+    this.mappedBrand,
+    this.suggestions = const [],
+  });
+
+  final String provider;
+  final String? externalBrandKey;
+  final String? externalBrandName;
+  final TenantBrandCandidateDto? mappedBrand;
+  final List<TenantBrandCandidateDto> suggestions;
+
+  factory TenantBrandResolutionDto.fromJson(Map<String, dynamic> json) {
+    final mapped = json['mappedBrand'];
+    final suggestionsRaw = json['suggestions'];
+    final suggestions = <TenantBrandCandidateDto>[];
+    if (suggestionsRaw is List) {
+      for (final item in suggestionsRaw) {
+        if (item is Map<String, dynamic>) {
+          suggestions.add(TenantBrandCandidateDto.fromJson(item));
+        }
+      }
+    }
+
+    return TenantBrandResolutionDto(
+      provider: json['provider']?.toString() ?? '',
+      externalBrandKey: json['externalBrandKey']?.toString(),
+      externalBrandName: json['externalBrandName']?.toString(),
+      mappedBrand: mapped is Map<String, dynamic>
+          ? TenantBrandCandidateDto.fromJson(mapped)
+          : null,
+      suggestions: suggestions,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'provider': provider,
+        if (externalBrandKey != null) 'externalBrandKey': externalBrandKey,
+        if (externalBrandName != null) 'externalBrandName': externalBrandName,
+        if (mappedBrand != null) 'mappedBrand': mappedBrand!.toJson(),
+        'suggestions': suggestions.map((s) => s.toJson()).toList(),
       };
 }
 
@@ -177,12 +355,16 @@ class ExternalLookupProductBarcodeResponseDto {
     this.suggestion,
     this.sourceReference,
     required this.retryAllowed,
+    this.categoryResolution,
+    this.brandResolution,
   });
 
   final String status;
   final ExternalProductSuggestionDto? suggestion;
   final String? sourceReference;
   final bool retryAllowed;
+  final TenantCategoryResolutionDto? categoryResolution;
+  final TenantBrandResolutionDto? brandResolution;
 
   bool get isFound => status == 'FOUND';
   bool get isNoMatch => status == 'NO_MATCH';
@@ -192,6 +374,8 @@ class ExternalLookupProductBarcodeResponseDto {
     Map<String, dynamic> json,
   ) {
     final suggestion = json['suggestion'];
+    final resolution = json['categoryResolution'];
+    final brandResolution = json['brandResolution'];
     return ExternalLookupProductBarcodeResponseDto(
       status: json['status']?.toString() ?? 'NO_MATCH',
       suggestion: suggestion is Map<String, dynamic>
@@ -199,8 +383,42 @@ class ExternalLookupProductBarcodeResponseDto {
           : null,
       sourceReference: json['sourceReference']?.toString(),
       retryAllowed: json['retryAllowed'] as bool? ?? false,
+      categoryResolution: resolution is Map<String, dynamic>
+          ? TenantCategoryResolutionDto.fromJson(resolution)
+          : null,
+      brandResolution: brandResolution is Map<String, dynamic>
+          ? TenantBrandResolutionDto.fromJson(brandResolution)
+          : null,
     );
   }
+}
+
+class GenerateSkuCandidateRequestDto {
+  const GenerateSkuCandidateRequestDto({
+    required this.purpose,
+    required this.categoryId,
+    required this.mode,
+    this.productId,
+    this.expectedRowVersion,
+    this.productName,
+  });
+
+  final String purpose;
+  final String categoryId;
+  final String mode;
+  final String? productId;
+  final int? expectedRowVersion;
+  final String? productName;
+
+  Map<String, dynamic> toJson() => {
+        'purpose': purpose,
+        'categoryId': categoryId,
+        'mode': mode,
+        if (productId != null) 'productId': productId,
+        if (expectedRowVersion != null)
+          'expectedRowVersion': expectedRowVersion,
+        if (productName != null) 'productName': productName,
+      };
 }
 
 class SkuCandidateResponseDto {

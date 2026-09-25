@@ -19,6 +19,7 @@ import '../../shared/pos_session/pos_session_bootstrap_provider.dart';
 import '../../features/workspace/domain/workspace_access.dart';
 import '../../features/workspace/presentation/providers/workspace_selection_provider.dart';
 import '../../features/workspace/workspace_router.dart';
+import 'root_navigator_key.dart';
 
 class RouterRefreshNotifier extends ChangeNotifier {
   bool _isScheduled = false;
@@ -60,6 +61,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final refresh = ref.watch(routerRefreshProvider);
 
   final router = GoRouter(
+    navigatorKey: rootNavigatorKey,
     refreshListenable: refresh,
     initialLocation: posSessionBootRoute,
     // GoRouter uses the boot route on ordinary launches, but preserves a

@@ -8,6 +8,7 @@ import '../../../sale/presentation/widgets/new_sale/pos_barcode_scanner_listener
 import '../../../tenant_admin/presentation/screens/tenant_admin_forbidden_screen.dart';
 import '../../../tenant_admin/presentation/theme/tenant_admin_theme.dart';
 import '../providers/pos_online_order_collection_provider.dart';
+import '../utils/click_collect_qr.dart';
 import '../widgets/collection/collection_scan_widgets.dart';
 import '../widgets/online_order_ui.dart';
 
@@ -52,8 +53,12 @@ class _CollectionQrScanScreenState extends ConsumerState<CollectionQrScanScreen>
   }
 
   Future<void> _validateAndRoute(String token) async {
+    // The customer's QR encodes `CLICK_COLLECT:{tenantId}:{orderId}:{code}`;
+    // only the opaque code is a valid collection credential. Manual entry
+    // (or a scan of just the code) falls back to the raw value unchanged.
+    final code = ClickCollectQrPayload.tryParse(token)?.code ?? token.trim();
     final controller = ref.read(posOnlineOrderCollectionProvider.notifier);
-    await controller.validateToken(token);
+    await controller.validateToken(code);
     if (!mounted) return;
     final state = ref.read(posOnlineOrderCollectionProvider);
     switch (state.phase) {

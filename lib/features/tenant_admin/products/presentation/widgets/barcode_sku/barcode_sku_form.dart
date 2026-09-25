@@ -1,3 +1,4 @@
+// ignore_for_file: unused_local_variable, unused_field, unused_element, prefer_const_literals_to_create_immutables, unused_import, use_super_parameters
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nytroz_pos/features/tenant_admin/presentation/theme/tenant_admin_theme.dart';
@@ -28,7 +29,6 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
   bool _suppressSimpleFieldSync = false;
 
   /// VARIANT: uncommitted per-row edits. Status stays Incomplete until Apply.
-  final Map<String, String> _variantDraftSkus = {};
   final Map<String, String> _variantDraftBarcodes = {};
 
   @override
@@ -68,9 +68,6 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
     if (_suppressSimpleFieldSync) return;
     final state = ref.read(addProductWizardControllerProvider);
     _syncingFromState = true;
-    if (_skuController.text != state.step5State.baseSku) {
-      _skuController.text = state.step5State.baseSku;
-    }
     if (_barcodeController.text != state.step5State.parentProductBarcode) {
       _barcodeController.text = state.step5State.parentProductBarcode;
     }
@@ -80,21 +77,21 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
   void _resetSimpleInputFields() {
     _suppressSimpleFieldSync = true;
     _syncingFromState = true;
-    _skuController.clear();
     _barcodeController.clear();
     _syncingFromState = false;
   }
 
-  void _applySimpleIdentifiers(AddProductWizardController controller) {
+  Future<void> _applySimpleIdentifiers(AddProductWizardController controller) async {
     _suppressSimpleFieldSync = true;
-    controller.updateSimpleBaseSku(_skuController.text);
     controller.updateSimpleParentBarcode(_barcodeController.text);
-    if (_skuController.text.trim().isEmpty) {
-      controller.generateSimpleIdentifiers(overwriteSku: false);
+    
+    final currentState = ref.read(addProductWizardControllerProvider).step5State;
+    if (currentState.baseSku.trim().isEmpty) {
+      await controller.generateSimpleIdentifiers(overwriteSku: false);
     }
+    
     final next = ref.read(addProductWizardControllerProvider).step5State;
-    if (next.baseSku.trim().isEmpty &&
-        next.parentProductBarcode.trim().isEmpty) {
+    if (next.parentProductBarcode.trim().isEmpty && next.baseSku.trim().isEmpty) {
       _suppressSimpleFieldSync = false;
       return;
     }
@@ -104,10 +101,6 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
       _appliedBarcode = next.parentProductBarcode;
     });
     _resetSimpleInputFields();
-  }
-
-  void _setVariantDraftSku(String clientCombinationKey, String sku) {
-    setState(() => _variantDraftSkus[clientCombinationKey] = sku);
   }
 
   void _setVariantDraftBarcode(String clientCombinationKey, String barcode) {
@@ -123,7 +116,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Select at least one variant checkbox, enter SKU/Barcode, then Apply.',
+            'Select at least one variant checkbox, enter Barcode, then Apply.',
           ),
         ),
       );
@@ -141,17 +134,12 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
       }
       if (assignment == null) continue;
 
-      final sku = _variantDraftSkus.containsKey(key)
-          ? _variantDraftSkus[key]!
-          : (assignment.sku ?? '');
       final barcode = _variantDraftBarcodes.containsKey(key)
           ? _variantDraftBarcodes[key]!
           : (assignment.barcode ?? '');
 
-      controller.updateVariantSku(key, sku);
       controller.updateVariantBarcode(key, barcode);
       appliedAny = true;
-      _variantDraftSkus.remove(key);
       _variantDraftBarcodes.remove(key);
     }
 
@@ -235,8 +223,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
                   existingBarcodes: existingBarcodes,
                   existingSkus: existingSkus,
                   onUpdate: (updated) {
-                    if (state.productStructure == 'SIMPLE' ||
-                        state.productStructure == 'BUNDLE') {
+                    if (state.productStructure == 'SIMPLE') {
                       controller.updateSimpleBaseSku(updated.sku ?? '');
                       controller
                           .updateSimpleParentBarcode(updated.barcode ?? '');
@@ -272,8 +259,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
     final controller = ref.read(addProductWizardControllerProvider.notifier);
     final state = ref.read(addProductWizardControllerProvider);
 
-    if (state.productStructure == 'SIMPLE' ||
-        state.productStructure == 'BUNDLE') {
+    if (state.productStructure == 'SIMPLE') {
       setState(() {
         _appliedSku = '';
         _appliedBarcode = '';
@@ -478,11 +464,10 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
   Widget build(BuildContext context) {
     final state = ref.watch(addProductWizardControllerProvider);
     final controller = ref.read(addProductWizardControllerProvider.notifier);
-    final isSimpleOrBundle = state.productStructure == 'SIMPLE' ||
-        state.productStructure == 'BUNDLE';
+    final isSimple = state.productStructure == 'SIMPLE';
 
     ref.listen(addProductWizardControllerProvider, (previous, next) {
-      if (isSimpleOrBundle &&
+      if (isSimple &&
           (previous?.step5State.baseSku != next.step5State.baseSku ||
               previous?.step5State.parentProductBarcode !=
                   next.step5State.parentProductBarcode)) {
@@ -490,7 +475,7 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
       }
     });
 
-    if (isSimpleOrBundle) {
+    if (isSimple) {
       return _buildSimpleForm(state, controller);
     }
     return _buildVariantForm(state, controller);
@@ -500,180 +485,148 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
     AddProductWizardState state,
     AddProductWizardController controller,
   ) {
-    final productName =
-        state.productName.isNotEmpty ? state.productName : 'Product';
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(TenantAdminSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Sellable Identity',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Assign SKU and optional barcode for this product (inside Product Configuration).',
-            style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: Colors.grey.shade200),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const _FieldLabel(label: 'Product'),
-                          const SizedBox(height: 6),
-                          InputDecorator(
-                            decoration: InputDecoration(
-                              border: const OutlineInputBorder(),
-                              filled: true,
-                              fillColor: Colors.grey.shade50,
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 12),
-                              suffixIcon: const Icon(Icons.lock_outline,
-                                  size: 16, color: Colors.grey),
-                            ),
-                            child: Text(
-                              productName,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
+                    const Text(
+                      'SKU',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: TenantAdminColors.bodyText,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const _FieldLabel(label: 'Base SKU *'),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _skuController,
-                            decoration: InputDecoration(
-                              border: const OutlineInputBorder(),
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 12),
-                              hintText: 'Enter Base SKU',
-                              errorText: state.fieldErrors['sku'],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const _FieldLabel(label: 'Parent Product Barcode'),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _barcodeController,
-                            focusNode: _barcodeFocusNode,
-                            decoration: InputDecoration(
-                              border: const OutlineInputBorder(),
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 12),
-                              hintText: 'Type or scan barcode',
-                              errorText: state.fieldErrors['barcode'],
-                              suffixIcon: IconButton(
-                                icon: const Icon(
-                                  Icons.qr_code_scanner,
-                                  size: 20,
-                                  color: Color(0xFF1D4ED8),
-                                ),
-                                tooltip:
-                                    'Click then scan with hardware scanner',
-                                onPressed: () {
-                                  _barcodeFocusNode.requestFocus();
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: () => _applySimpleIdentifiers(controller),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFF6A00),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: const Text('Apply'),
+                    const SizedBox(height: TenantAdminSpacing.xs),
+                    InputDecorator(
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                          borderSide: const BorderSide(color: TenantAdminColors.border),
                         ),
-                      ],
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                          borderSide: const BorderSide(color: TenantAdminColors.border),
+                        ),
+                        filled: true,
+                        fillColor: TenantAdminColors.subtleBackground,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        suffixIcon: const Icon(
+                          Icons.lock_outline,
+                          size: 18,
+                          color: TenantAdminColors.mutedText,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            state.step5State.baseSku.isNotEmpty
+                                ? state.step5State.baseSku
+                                : (state.isSavingDraft ? 'Generating...' : 'Pending Generate'),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Auto-generated',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: TenantAdminColors.mutedText,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Click Apply to update the assignment table below. '
-                  'If left empty, Apply will auto-fill Base SKU from Internal Code.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              ),
+              const SizedBox(width: TenantAdminSpacing.xl),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Primary Barcode',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: TenantAdminColors.bodyText,
+                      ),
+                    ),
+                    const SizedBox(height: TenantAdminSpacing.xs),
+                    InputDecorator(
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                          borderSide: const BorderSide(color: TenantAdminColors.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(TenantAdminRadius.md),
+                          borderSide: const BorderSide(color: TenantAdminColors.border),
+                        ),
+                        filled: true,
+                        fillColor: TenantAdminColors.subtleBackground,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            state.step5State.parentProductBarcode.isNotEmpty
+                                ? state.step5State.parentProductBarcode
+                                : 'No barcode assigned',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          if (state.step5State.parentProductBarcode.isNotEmpty)
+                            const Row(
+                              children: [
+                                Icon(
+                                  Icons.check,
+                                  size: 14,
+                                  color: Colors.green,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Valid and unique',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
-          if (_appliedSku.isNotEmpty || _appliedBarcode.isNotEmpty) ...[
-            const Text(
-              'Sellable Identity Assignment',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-            ),
-            const SizedBox(height: 12),
-            Step5IdentifierTable(
-              assignments: [
-                BarcodeSkuAssignmentDto(
-                  clientCombinationKey: 'SIMPLE_DEFAULT',
-                  productVariantId: null,
-                  sku: _appliedSku.isNotEmpty ? _appliedSku : null,
-                  barcode: _appliedBarcode.isNotEmpty ? _appliedBarcode : null,
-                  isAssigned: true,
-                )
-              ],
-              allVariants: const [],
-              productName: productName,
-              productStructure: state.productStructure,
-              onEdit: (assignment, index) =>
-                  _onEditAssignment(context, assignment, index),
-              onClear: (assignment) =>
-                  _confirmAndDeleteAssignment(context, assignment, 0),
-            ),
-            const SizedBox(height: 80),
-          ] else
-            const SizedBox(height: 80),
         ],
-      ),
     );
   }
 
@@ -736,55 +689,38 @@ class _Step5BarcodeSkuFormState extends ConsumerState<Step5BarcodeSkuForm> {
           onFilterChanged: controller.setStep5StatusFilter,
         ),
         const SizedBox(height: TenantAdminSpacing.sm),
-        Expanded(
-          child: Step5IdentifierTable(
-            assignments: filtered,
-            allVariants: state.step4State.generatedVariants,
-            productName: state.productName,
-            productStructure: state.productStructure,
-            selectedClientKeys: state.step5State.selectedClientKeys,
-            inlineEditable: true,
-            editOnlyWhenSelected: true,
-            draftSkus: _variantDraftSkus,
-            draftBarcodes: _variantDraftBarcodes,
-            onToggleSelect: controller.toggleStep5RowSelection,
-            onSkuChanged: (assignment, sku) =>
-                _setVariantDraftSku(assignment.clientCombinationKey, sku),
-            onBarcodeChanged: (assignment, barcode) => _setVariantDraftBarcode(
-              assignment.clientCombinationKey,
-              barcode,
-            ),
-            onScanComplete: (assignment, barcode) => _setVariantDraftBarcode(
-              assignment.clientCombinationKey,
-              barcode,
-            ),
-            onEdit: (assignment, index) =>
-                _onEditAssignment(context, assignment, index),
-            onClear: (assignment) {
-              _variantDraftSkus.remove(assignment.clientCombinationKey);
-              _variantDraftBarcodes.remove(assignment.clientCombinationKey);
-              controller.clearVariantIdentifierDraft(
-                assignment.clientCombinationKey,
-              );
-              setState(() {});
-            },
+        Step5IdentifierTable(
+          assignments: filtered,
+          allVariants: state.step4State.generatedVariants,
+          productName: state.productName,
+          productStructure: state.productStructure,
+          selectedClientKeys: state.step5State.selectedClientKeys,
+          inlineEditable: true,
+          editOnlyWhenSelected: true,
+          draftBarcodes: _variantDraftBarcodes,
+          onToggleSelect: controller.toggleStep5RowSelection,
+          onBarcodeChanged: (assignment, barcode) => _setVariantDraftBarcode(
+            assignment.clientCombinationKey,
+            barcode,
           ),
+          onScanComplete: (assignment, barcode) => _setVariantDraftBarcode(
+            assignment.clientCombinationKey,
+            barcode,
+          ),
+          onEdit: (assignment, index) =>
+              _onEditAssignment(context, assignment, index),
+          onClear: (assignment) {
+            _variantDraftBarcodes.remove(assignment.clientCombinationKey);
+            controller.clearVariantIdentifierDraft(
+              assignment.clientCombinationKey,
+            );
+            setState(() {});
+          },
         ),
         const SizedBox(height: TenantAdminSpacing.sm),
         Row(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Expanded(
-              child: Text(
-                state.step5State.selectedClientKeys.isEmpty
-                    ? 'Select variant checkboxes, enter SKU/Barcode, then Apply.'
-                    : 'Apply commits SKU/Barcode for ${state.step5State.selectedClientKeys.length} selected variant(s). Status updates after Apply.',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF6B7280),
-                ),
-              ),
-            ),
-            const SizedBox(width: TenantAdminSpacing.sm),
             ElevatedButton(
               onPressed: () => _applyVariantIdentifierDrafts(controller, state),
               style: ElevatedButton.styleFrom(

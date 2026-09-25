@@ -4,7 +4,7 @@ import '../../../presentation/theme/tenant_admin_theme.dart';
 import '../../../presentation/widgets/tenant_admin_buttons.dart';
 import '../../../presentation/widgets/tenant_admin_page_scaffold.dart';
 import '../../../presentation/widgets/tenant_admin_search_field.dart';
-import 'package:nytroz_pos/features/tenant_admin/presentation/widgets/tenant_admin_toast.dart';
+
 import '../../../presentation/widgets/tenant_admin_states.dart';
 import '../../domain/entities/curated_popular_product.dart';
 import '../providers/popular_products_provider.dart';
@@ -49,22 +49,11 @@ class PopularProductsCurationScreen extends ConsumerWidget {
                             .read(popularProductsCurationProvider.notifier)
                             .save();
                         if (context.mounted) {
-                          showAppToast(
-                            context,
-                            title: 'Configuration Saved',
-                            message:
-                                'Popular products configuration saved successfully.',
-                            type: AppToastType.orange,
-                          );
+                          // Success toast removed
                         }
                       } catch (e) {
                         if (context.mounted) {
-                          showAppToast(
-                            context,
-                            title: 'Error Saving Configuration',
-                            message: 'Failed to save changes: ${e.toString()}',
-                            type: AppToastType.error,
-                          );
+                          // Error toast removed
                         }
                       }
                     }

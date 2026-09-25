@@ -5,25 +5,37 @@
 class VariantPriceDto {
   final String? productVariantId;
   final String? clientCombinationKey;
+  final num? costPrice;
   final num? sellingPrice;
   final String? displayName;
   final String? sku;
+  final String? taxId;
+  final String? taxName;
+  final num? taxRate;
 
   const VariantPriceDto({
     this.productVariantId,
     this.clientCombinationKey,
+    this.costPrice,
     this.sellingPrice,
     this.displayName,
     this.sku,
+    this.taxId,
+    this.taxName,
+    this.taxRate,
   });
 
   factory VariantPriceDto.fromJson(Map<String, dynamic> json) {
     return VariantPriceDto(
       productVariantId: json['productVariantId']?.toString(),
       clientCombinationKey: json['clientCombinationKey']?.toString(),
+      costPrice: json['costPrice'] as num?,
       sellingPrice: json['sellingPrice'] as num?,
       displayName: json['displayName']?.toString(),
       sku: json['sku']?.toString(),
+      taxId: json['taxId']?.toString() ?? json['taxClassId']?.toString(),
+      taxName: json['taxName']?.toString(),
+      taxRate: json['taxRate'] as num?,
     );
   }
 
@@ -36,7 +48,11 @@ class VariantPriceDto {
       if (clientCombinationKey != null &&
           clientCombinationKey!.trim().isNotEmpty)
         'clientCombinationKey': clientCombinationKey,
+      if (costPrice != null) 'costPrice': costPrice,
       'sellingPrice': sellingPrice,
+      if (taxId != null && taxId!.trim().isNotEmpty) 'taxId': taxId,
+      if (taxId != null && taxId!.trim().isNotEmpty) 'taxClassId': taxId,
+      if (taxRate != null) 'taxRate': taxRate,
     };
   }
 
@@ -55,18 +71,30 @@ class VariantPriceDto {
   VariantPriceDto copyWith({
     String? productVariantId,
     String? clientCombinationKey,
+    num? costPrice,
+    bool clearCostPrice = false,
     num? sellingPrice,
     bool clearSellingPrice = false,
     String? displayName,
     String? sku,
+    String? taxId,
+    bool clearTaxId = false,
+    String? taxName,
+    bool clearTaxName = false,
+    num? taxRate,
+    bool clearTaxRate = false,
   }) {
     return VariantPriceDto(
       productVariantId: productVariantId ?? this.productVariantId,
       clientCombinationKey: clientCombinationKey ?? this.clientCombinationKey,
+      costPrice: clearCostPrice ? null : (costPrice ?? this.costPrice),
       sellingPrice:
           clearSellingPrice ? null : (sellingPrice ?? this.sellingPrice),
       displayName: displayName ?? this.displayName,
       sku: sku ?? this.sku,
+      taxId: clearTaxId ? null : (taxId ?? this.taxId),
+      taxName: clearTaxName ? null : (taxName ?? this.taxName),
+      taxRate: clearTaxRate ? null : (taxRate ?? this.taxRate),
     );
   }
 }
@@ -78,6 +106,7 @@ class PricingTaxConfigurationDto {
   final String? taxId;
   final num? taxRate;
   final bool taxExclusive;
+  final bool applySameTaxToAllVariants;
 
   /// When non-null, VARIANT full-snapshot pricing graph.
   final List<VariantPriceDto>? variantPrices;
@@ -89,6 +118,7 @@ class PricingTaxConfigurationDto {
     this.taxId,
     this.taxRate,
     this.taxExclusive = true,
+    this.applySameTaxToAllVariants = true,
     this.variantPrices,
   });
 
@@ -101,6 +131,7 @@ class PricingTaxConfigurationDto {
       taxId: json['taxId']?.toString() ?? json['taxClassId']?.toString(),
       taxRate: json['taxRate'] as num? ?? json['taxRatePercentage'] as num?,
       taxExclusive: json['taxExclusive'] as bool? ?? true,
+      applySameTaxToAllVariants: json['applySameTaxToAllVariants'] as bool? ?? true,
       variantPrices: rawVariants is List
           ? rawVariants
               .whereType<Map>()
@@ -121,6 +152,7 @@ class PricingTaxConfigurationDto {
       if (taxId != null) 'taxClassId': taxId,
       if (taxRate != null) 'taxRate': taxRate,
       'taxExclusive': taxExclusive,
+      'applySameTaxToAllVariants': applySameTaxToAllVariants,
       if (variantPrices != null)
         'variantPrices': variantPrices!.map((e) => e.toSnapshotJson()).toList(),
     };
@@ -135,6 +167,7 @@ class PricingTaxConfigurationResponseDto {
   final String? taxName;
   final num? taxRate;
   final bool taxExclusive;
+  final bool applySameTaxToAllVariants;
   final List<VariantPriceDto>? variantPrices;
   final int? pricedVariantCount;
   final int? pendingVariantCount;
@@ -149,6 +182,7 @@ class PricingTaxConfigurationResponseDto {
     this.taxName,
     this.taxRate,
     this.taxExclusive = true,
+    this.applySameTaxToAllVariants = true,
     this.variantPrices,
     this.pricedVariantCount,
     this.pendingVariantCount,
@@ -168,6 +202,7 @@ class PricingTaxConfigurationResponseDto {
       taxName: json['taxName']?.toString(),
       taxRate: json['taxRate'] as num? ?? json['taxRatePercentage'] as num?,
       taxExclusive: json['taxExclusive'] as bool? ?? true,
+      applySameTaxToAllVariants: json['applySameTaxToAllVariants'] as bool? ?? true,
       variantPrices: rawVariants is List
           ? rawVariants
               .whereType<Map>()

@@ -49,22 +49,7 @@ class GeneratedVariantsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (MediaQuery.sizeOf(context).width <
-            TenantAdminBreakpoints.smallTablet) ...[
-          _buildHeader(context, accentColor),
-        ] else
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _buildHeader(context, accentColor)),
-              _buildRegenerateButton(context, accentColor),
-            ],
-          ),
-        if (MediaQuery.sizeOf(context).width <
-            TenantAdminBreakpoints.smallTablet) ...[
-          const SizedBox(height: TenantAdminSpacing.md),
-          _buildRegenerateButton(context, accentColor),
-        ],
+        _buildHeader(context, accentColor),
         const SizedBox(height: TenantAdminSpacing.lg),
         ...step4State.generatedVariants.map(
           (variant) => Padding(
@@ -112,63 +97,6 @@ class GeneratedVariantsSection extends ConsumerWidget {
             fontSize: 14,
             color: TenantAdminColors.mutedText,
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRegenerateButton(BuildContext context, Color accentColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        OutlinedButton.icon(
-          onPressed: state.isSavingDraft ? null : onRegenerate,
-          icon: state.isSavingDraft
-              ? SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: accentColor,
-                  ),
-                )
-              : Icon(Icons.refresh, size: 18, color: accentColor),
-          label: Text(
-            'Regenerate Variants',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: accentColor,
-            ),
-          ),
-          style: OutlinedButton.styleFrom(
-            side: BorderSide(color: accentColor),
-            padding: const EdgeInsets.symmetric(
-              horizontal: TenantAdminSpacing.lg,
-              vertical: TenantAdminSpacing.md,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(TenantAdminRadius.sm),
-            ),
-          ),
-        ),
-        const SizedBox(height: TenantAdminSpacing.sm),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(
-              Icons.info_outline,
-              size: 14,
-              color: TenantAdminColors.mutedText,
-            ),
-            SizedBox(width: TenantAdminSpacing.xs),
-            Text(
-              'Regenerate variants whenever you change attributes.',
-              style: TextStyle(
-                fontSize: 12,
-                color: TenantAdminColors.mutedText,
-              ),
-            ),
-          ],
         ),
       ],
     );

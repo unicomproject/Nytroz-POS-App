@@ -14,22 +14,24 @@ class WizardActionsFooter extends StatelessWidget {
     this.onCancel,
     this.onSaveDraft,
     this.onSkip,
-    this.onSaveAndContinue,
+    this.onContinue,
     this.showSkip = false,
     this.isSavingDraft = false,
     this.isSubmitting = false,
-    this.saveAndContinueLabel = 'Save & Continue',
+    this.continueLabel = 'Continue',
+    this.backLabel = 'Back',
   });
 
   final VoidCallback? onBack;
   final VoidCallback? onCancel;
   final VoidCallback? onSaveDraft;
   final VoidCallback? onSkip;
-  final VoidCallback? onSaveAndContinue;
+  final VoidCallback? onContinue;
   final bool showSkip;
   final bool isSavingDraft;
   final bool isSubmitting;
-  final String saveAndContinueLabel;
+  final String continueLabel;
+  final String backLabel;
 
   bool get _busy => isSavingDraft || isSubmitting;
 
@@ -51,7 +53,10 @@ class WizardActionsFooter extends StatelessWidget {
           final narrow = constraints.maxWidth < TenantAdminBreakpoints.mobile;
           final leftActions = <Widget>[
             if (onBack != null)
-              ProductWizardBackButton(onPressed: _busy ? null : onBack),
+              ProductWizardBackButton(
+                onPressed: _busy ? null : onBack,
+                label: backLabel,
+              ),
             if (onCancel != null)
               ProductWizardCancelButton(onPressed: _busy ? null : onCancel),
           ];
@@ -63,11 +68,11 @@ class WizardActionsFooter extends StatelessWidget {
               ),
             if (showSkip && onSkip != null)
               ProductWizardSkipButton(onPressed: _busy ? null : onSkip),
-            if (onSaveAndContinue != null)
-              ProductWizardSaveAndContinueButton(
-                onPressed: _busy ? null : onSaveAndContinue,
+            if (onContinue != null)
+              ProductWizardContinueButton(
+                onPressed: _busy ? null : onContinue,
                 loading: isSubmitting,
-                label: saveAndContinueLabel,
+                label: continueLabel,
               ),
           ];
 

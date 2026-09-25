@@ -1,6 +1,6 @@
 /// Step 5 barcode type inference and format checks.
 /// Mirrors backend [ProductBarcodeFormatValidator] for UX; server remains authoritative.
-/// SIMPLE/BUNDLE hide the type dropdown — type is still persisted internally.
+/// SIMPLE hide the type dropdown — type is still persisted internally.
 library;
 
 const String kBarcodeTypeEan13 = 'EAN13';

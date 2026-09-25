@@ -38,12 +38,21 @@ class NotificationSocketClient {
   int _reconnectAttempt = 0;
   bool _disposed = false;
   bool _wasConnected = false;
+  // Guards _openConnection against overlapping runs: _channel stays null for
+  // its entire async window (awaiting fetchToken/ticketProvider), so without
+  // this a second connect() call for the same session during that window
+  // isn't caught by the _channel != null check below and races a second
+  // connection into existence -- leaving two live sockets both feeding
+  // _eventController, so every push gets delivered (and handled) twice.
+  bool _connecting = false;
 
   Stream<RealtimeNotificationEvent> get events => _eventController.stream;
 
   void connect(String sessionKey, Future<String?> Function() fetchToken) {
     if (_disposed || sessionKey.isEmpty) return;
-    if (_currentSessionKey == sessionKey && _channel != null) return;
+    if (_currentSessionKey == sessionKey && (_channel != null || _connecting)) {
+      return;
+    }
     _currentSessionKey = sessionKey;
     _fetchToken = fetchToken;
     _reconnectAttempt = 0;
@@ -65,80 +74,85 @@ class NotificationSocketClient {
   }
 
   Future<void> _openConnection() async {
-    if (_disposed) return;
+    if (_disposed || _connecting) return;
     final sessionKey = _currentSessionKey;
     final fetchToken = _fetchToken;
     if (sessionKey == null || fetchToken == null) return;
 
-    _reconnectTimer?.cancel();
-    _reconnectTimer = null;
-    _teardownChannel();
-
-    String? token;
+    _connecting = true;
     try {
-      token = await fetchToken();
-    } catch (e) {
-      _handleDisconnected();
-      return;
-    }
-    if (token == null || _disposed) return;
+      _reconnectTimer?.cancel();
+      _reconnectTimer = null;
+      _teardownChannel();
 
-    final Map<String, String> queryParams;
-    if (ticketProvider != null) {
+      String? token;
       try {
-        final ticket = await ticketProvider!();
-        if (ticket != null && ticket.isNotEmpty) {
-          queryParams = {'ticket': ticket};
-        } else {
-          // Ticket retrieval failed; wait and retry with backoff rather than sending large JWT.
+        token = await fetchToken();
+      } catch (e) {
+        _handleDisconnected();
+        return;
+      }
+      if (token == null || _disposed) return;
+
+      final Map<String, String> queryParams;
+      if (ticketProvider != null) {
+        try {
+          final ticket = await ticketProvider!();
+          if (ticket != null && ticket.isNotEmpty) {
+            queryParams = {'ticket': ticket};
+          } else {
+            // Ticket retrieval failed; wait and retry with backoff rather than sending large JWT.
+            _scheduleReconnect();
+            return;
+          }
+        } catch (_) {
           _scheduleReconnect();
           return;
         }
-      } catch (_) {
-        _scheduleReconnect();
-        return;
+      } else {
+        queryParams = {'access_token': token};
       }
-    } else {
-      queryParams = {'access_token': token};
-    }
 
-    final uri = Uri.parse('$_wsBaseUrl${ApiEndpoints.tenantNotificationsSocketPath}')
-        .replace(queryParameters: queryParams);
+      final uri = Uri.parse('$_wsBaseUrl${ApiEndpoints.tenantNotificationsSocketPath}')
+          .replace(queryParameters: queryParams);
 
-    try {
-      final channel = WebSocketChannel.connect(uri);
-      _channel = channel;
-      void disconnected() {
-        if (identical(_channel, channel)) _handleDisconnected();
-      }
-      _subscription = channel.stream.listen(
-        _handleMessage,
-        onDone: disconnected,
-        onError: (_) => disconnected(),
-        cancelOnError: true,
-      );
-      // A stream listener is not evidence of a successful handshake.
-      // Ignore completion from disconnected or superseded connections.
       try {
-        await channel.ready;
-      } catch (_) {
-        disconnected();
-        return;
+        final channel = WebSocketChannel.connect(uri);
+        _channel = channel;
+        void disconnected() {
+          if (identical(_channel, channel)) _handleDisconnected();
+        }
+        _subscription = channel.stream.listen(
+          _handleMessage,
+          onDone: disconnected,
+          onError: (_) => disconnected(),
+          cancelOnError: true,
+        );
+        // A stream listener is not evidence of a successful handshake.
+        // Ignore completion from disconnected or superseded connections.
+        try {
+          await channel.ready;
+        } catch (_) {
+          disconnected();
+          return;
+        }
+        if (_disposed || !identical(_channel, channel)) return;
+        final isReconnect = _wasConnected;
+        _wasConnected = true;
+        _reconnectAttempt = 0;
+        if (isReconnect) {
+          onConnected?.call();
+        }
+      } catch (error) {
+        developer.log(
+          'Notification socket connect failed.',
+          name: 'notifications.socket',
+          error: error,
+        );
+        _scheduleReconnect();
       }
-      if (_disposed || !identical(_channel, channel)) return;
-      final isReconnect = _wasConnected;
-      _wasConnected = true;
-      _reconnectAttempt = 0;
-      if (isReconnect) {
-        onConnected?.call();
-      }
-    } catch (error) {
-      developer.log(
-        'Notification socket connect failed.',
-        name: 'notifications.socket',
-        error: error,
-      );
-      _scheduleReconnect();
+    } finally {
+      _connecting = false;
     }
   }
 

@@ -100,7 +100,7 @@ class ProductListLocalDraftMerger {
 
   static String _displaySku(ProductWizardDraft draft) {
     final structure = draft.productType.toUpperCase();
-    if (structure == 'SIMPLE' || structure == 'BUNDLE') {
+    if (structure == 'SIMPLE') {
       return draft.wizardState.step5State.baseSku;
     }
     final first = draft.wizardState.step5State.assignments
@@ -112,7 +112,7 @@ class ProductListLocalDraftMerger {
 
   static String? _displayBarcode(ProductWizardDraft draft) {
     final structure = draft.productType.toUpperCase();
-    if (structure == 'SIMPLE' || structure == 'BUNDLE') {
+    if (structure == 'SIMPLE') {
       final b = draft.wizardState.step5State.parentProductBarcode.trim();
       return b.isEmpty ? null : b;
     }

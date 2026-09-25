@@ -5,6 +5,7 @@ class ProductVariantRequestDto {
     this.barcode,
     required this.sellingPrice,
     this.discountPrice,
+    this.taxId,
     this.status,
   });
 
@@ -13,6 +14,7 @@ class ProductVariantRequestDto {
   final String? barcode;
   final double sellingPrice;
   final double? discountPrice;
+  final String? taxId;
   final String? status;
 
   Map<String, dynamic> toJson() {
@@ -24,6 +26,7 @@ class ProductVariantRequestDto {
         'barcode': barcode!.trim(),
       'sellingPrice': sellingPrice,
       if (discountPrice != null) 'discountPrice': discountPrice,
+      if (taxId != null && taxId!.trim().isNotEmpty) 'taxId': taxId,
       if (status != null && status!.trim().isNotEmpty) 'status': status!.trim(),
     };
   }
@@ -60,6 +63,7 @@ class ProductCreateRequestDto {
     this.expiryDate,
     this.expiryAlertDays,
     this.saveAsDraft = false,
+    this.externalCategoryMappingContext,
   });
 
   final String productName;
@@ -91,6 +95,7 @@ class ProductCreateRequestDto {
   final int? expiryAlertDays;
   final String status;
   final bool saveAsDraft;
+  final ExternalCategoryMappingContextDto? externalCategoryMappingContext;
 
   Map<String, dynamic> toJson() {
     return {
@@ -137,6 +142,38 @@ class ProductCreateRequestDto {
         'expiryAlertDays': expiryAlertDays,
       'status': status,
       'saveAsDraft': saveAsDraft,
+      if (externalCategoryMappingContext != null)
+        'externalCategoryMappingContext':
+            externalCategoryMappingContext!.toJson(),
+    };
+  }
+}
+
+class ExternalCategoryMappingContextDto {
+  final String provider;
+  final String externalCategoryKey;
+  final String? externalCategoryName;
+
+  const ExternalCategoryMappingContextDto({
+    required this.provider,
+    required this.externalCategoryKey,
+    this.externalCategoryName,
+  });
+
+  factory ExternalCategoryMappingContextDto.fromJson(Map<String, dynamic> json) {
+    return ExternalCategoryMappingContextDto(
+      provider: json['provider']?.toString() ?? '',
+      externalCategoryKey: json['externalCategoryKey']?.toString() ?? '',
+      externalCategoryName: json['externalCategoryName']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'provider': provider,
+      'externalCategoryKey': externalCategoryKey,
+      if (externalCategoryName != null && externalCategoryName!.trim().isNotEmpty)
+        'externalCategoryName': externalCategoryName!.trim(),
     };
   }
 }
